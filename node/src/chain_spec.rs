@@ -131,6 +131,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					hex!("e6f71b2580e5eef4c6a8166976282eac9524147b65cbcbf5895e1dfc767bf840").into(),
 					hex!("a60c413a74fe233132659161a102b5fc70101b7b27b4a678cf28b660d5597e6a").into(),
 					hex!("b8c2ff7e29908f6fd216c648709e1294b634e73e2aac111c948509db12a5343f").into(),
+					//Sudo
+					hex!("146d6b59fd1d6ac17312a33c2619dbf245f190a7c6a07b10d025e645ca9a5135").into(),
 				],
 				true,
 			)
