@@ -4187,6 +4187,7 @@ version = "3.0.0-monthly-2021-10"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "hex-literal",
  "jsonrpc-core",
  "pallet-contracts",
  "pallet-contracts-rpc",
@@ -4200,6 +4201,7 @@ dependencies = [
  "sc-executor",
  "sc-finality-grandpa",
  "sc-keystore",
+ "sc-network",
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",

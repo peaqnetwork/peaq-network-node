@@ -1,13 +1,13 @@
 [package]
 name = 'peaq-node'
 version = '3.0.0-monthly-2021-10'
-description = 'A fresh FRAME-based Substrate node, ready for hacking.'
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
-homepage = 'https://substrate.io/'
+description = 'A node of the peaq network.'
+authors = ['peaq network <https://github.com/peaqnetwork>']
+homepage = 'https://peaq.network/'
 edition = '2018'
 license = 'Unlicense'
 publish = false
-repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
+repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 build = 'build.rs'
 
 [[bin]]
@@ -177,6 +177,14 @@ version = '4.0.0-dev'
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-10'
 version = '4.0.0-dev'
+
+[dependencies.sc-network]
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-10'
+version = '0.10.0-dev'
+
+[dependencies.hex-literal]
+version = '0.3.3'
 
 [features]
 default = []

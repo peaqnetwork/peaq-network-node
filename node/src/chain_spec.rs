@@ -7,6 +7,9 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use sc_network::config::MultiaddrWithPeerId;
+use std::str::FromStr;
+use hex_literal::hex;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -67,7 +70,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 			)
 		},
 		// Bootnodes
-		vec![],
+		vec![
+		],
 		// Telemetry
 		None,
 		// Protocol ID
@@ -96,29 +100,49 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
+				vec![
+					(
+						AuraId::from_slice(&hex!("c0d50370df4900c0234dc2447c83c71d2cb2b9e8a2f0cbf51e0bedec11619b0a")),
+						GrandpaId::from_slice(&hex!("f28e8001386c013f42c34489fa6ba3b412103640fab66cf801d57f28a2b15066"))
+					),
+					(
+						AuraId::from_slice(&hex!("344d37ba3b5d262a75fe245f32bda90552bf3297e6c45ab49e2fee61739e6970")),
+						GrandpaId::from_slice(&hex!("ace38a477865e9e35b1158e09f6312625ffa0f71cafea3c21f09945472e6e929"))
+					),
+					(
+						AuraId::from_slice(&hex!("e6f71b2580e5eef4c6a8166976282eac9524147b65cbcbf5895e1dfc767bf840")),
+						GrandpaId::from_slice(&hex!("5ef30971c5793d9072f14dbe3460b3eb7846e940ad4e81420df0880fa7775119"))
+					),
+					(
+						AuraId::from_slice(&hex!("a60c413a74fe233132659161a102b5fc70101b7b27b4a678cf28b660d5597e6a")),
+						GrandpaId::from_slice(&hex!("c2ec9279d562b043cca04a64a132a6c659ece88b46634aaabeaaeb9534395fb2"))
+					),
+					(
+						AuraId::from_slice(&hex!("b8c2ff7e29908f6fd216c648709e1294b634e73e2aac111c948509db12a5343f")),
+						GrandpaId::from_slice(&hex!("09bbcf123d668ba7e22f1915e79a0ed3a67bcacf047929d23464561c17f89018"))
+					)
+				],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				hex!("146d6b59fd1d6ac17312a33c2619dbf245f190a7c6a07b10d025e645ca9a5135").into(),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+					hex!("c0d50370df4900c0234dc2447c83c71d2cb2b9e8a2f0cbf51e0bedec11619b0a").into(),
+					hex!("344d37ba3b5d262a75fe245f32bda90552bf3297e6c45ab49e2fee61739e6970").into(),
+					hex!("e6f71b2580e5eef4c6a8166976282eac9524147b65cbcbf5895e1dfc767bf840").into(),
+					hex!("a60c413a74fe233132659161a102b5fc70101b7b27b4a678cf28b660d5597e6a").into(),
+					hex!("b8c2ff7e29908f6fd216c648709e1294b634e73e2aac111c948509db12a5343f").into(),
 				],
 				true,
 			)
 		},
 		// Bootnodes
-		vec![],
+		vec![
+			MultiaddrWithPeerId::from_str("/dns/bn1.test.peaq.network/tcp/10333/p2p/12D3KooWMvNgWpG3KT2gzrD13GENVsLVNxSiF1fFvvnJpYBZVGDG").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn2.test.peaq.network/tcp/10333/p2p/12D3KooWFDQv8hMhXcY94qji1Zwofogq4acADdeC29L4WpnQ18CK").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn3.test.peaq.network/tcp/10333/p2p/12D3KooWF8HqBr36HpZUzS3ch2Se9g3RN7diwtX5RU9mjp3pLz7c").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn4.test.peaq.network/tcp/10333/p2p/12D3KooWFzJroYmo1fhuijMaZfvgUEJTJHaJpRA5D98ePMgn1Xki").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn5.test.peaq.network/tcp/10333/p2p/12D3KooWButzH7UYfqGmP6j9QhGZ92KcK1pewneXbpSQ3ddyS9BE").unwrap(),
+		],
 		// Telemetry
 		None,
 		// Protocol ID
