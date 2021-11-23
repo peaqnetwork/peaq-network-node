@@ -123,7 +123,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					)
 				],
 				// Sudo account
-				hex!("146d6b59fd1d6ac17312a33c2619dbf245f190a7c6a07b10d025e645ca9a5135").into(),
+				hex!("e43082fa42efb0b22be8991f3f62c84b9e3411ef23a25b6e95c2da0937167226").into(),
 				// Pre-funded accounts
 				vec![
 					hex!("c0d50370df4900c0234dc2447c83c71d2cb2b9e8a2f0cbf51e0bedec11619b0a").into(),
@@ -132,7 +132,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					hex!("a60c413a74fe233132659161a102b5fc70101b7b27b4a678cf28b660d5597e6a").into(),
 					hex!("b8c2ff7e29908f6fd216c648709e1294b634e73e2aac111c948509db12a5343f").into(),
 					//Sudo
-					hex!("146d6b59fd1d6ac17312a33c2619dbf245f190a7c6a07b10d025e645ca9a5135").into(),
+					hex!("e43082fa42efb0b22be8991f3f62c84b9e3411ef23a25b6e95c2da0937167226").into(),
 				],
 				true,
 			)
