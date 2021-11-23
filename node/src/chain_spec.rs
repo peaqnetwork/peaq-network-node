@@ -139,11 +139,11 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		},
 		// Bootnodes
 		vec![
-			MultiaddrWithPeerId::from_str("/dns/bn1.test.peaq.network/tcp/10333/p2p/12D3KooWPPgfvmaonCgVKpRVx6FbdtDNtXJDh19ppUUGz4qS9KoY").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn2.test.peaq.network/tcp/10333/p2p/12D3KooWKrSNAVWfFjLMGizcGcNwrWK1CsYL3Mwm7wV4aXza66ka").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn3.test.peaq.network/tcp/10333/p2p/12D3KooWA3TSY7VjqqiHgumPkCUpWuzjBhDZVCSZtKg9xn85TCwR").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn4.test.peaq.network/tcp/10333/p2p/12D3KooWA3p68a55qkgZWWKcGLkUGCD6jLF8SyyPxbyeP8yckXDw").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn5.test.peaq.network/tcp/10333/p2p/12D3KooWAbz5wSnF4gecBTxUNJkibmE2cmCJRbooDUkg1Pe8Y5B6").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn1.test.peaq.network/tcp/10333/p2p/12D3KooWAfuyTS1eM1aa14XaQUZ9Q17J5Po4mg8ccQQVsY6Mf1kg").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn2.test.peaq.network/tcp/10333/p2p/12D3KooWQ6SoNpbCtwTnDAS5Wj6z7h7jvnUWYN1PN3L2NH1xrWKB").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn3.test.peaq.network/tcp/10333/p2p/12D3KooWMZZkKXMRtHkjJDYcAMAZj9496oQ8tcaYCEA1FvJKgFtX").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn4.test.peaq.network/tcp/10333/p2p/12D3KooWPM4L2ijaf5mLmHF5KDsubKYTy9RbWvFcWiYLKSeLA2nE").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn5.test.peaq.network/tcp/10333/p2p/12D3KooWCvRzKLxJXTVZqEvNGtRHU2DzuW6bV54jW3LhRUWngaJS").unwrap(),
 		],
 		// Telemetry
 		None,
