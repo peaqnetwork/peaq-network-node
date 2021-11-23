@@ -102,35 +102,35 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				// Initial PoA authorities
 				vec![
 					(
-						AuraId::from_slice(&hex!("c0d50370df4900c0234dc2447c83c71d2cb2b9e8a2f0cbf51e0bedec11619b0a")),
-						GrandpaId::from_slice(&hex!("f28e8001386c013f42c34489fa6ba3b412103640fab66cf801d57f28a2b15066"))
+						AuraId::from_slice(&hex!("c0a03ff255c2db2ddb33acc9885c3607eea411006cbe5cc1511c29762c8f8e0c")),
+						GrandpaId::from_slice(&hex!("0c4f41c73ede92f54c621da69e434310d53b59c37b5f7148f23e33167115770b"))
 					),
 					(
-						AuraId::from_slice(&hex!("344d37ba3b5d262a75fe245f32bda90552bf3297e6c45ab49e2fee61739e6970")),
-						GrandpaId::from_slice(&hex!("ace38a477865e9e35b1158e09f6312625ffa0f71cafea3c21f09945472e6e929"))
+						AuraId::from_slice(&hex!("3661f26abbaa07d7df01e4c1348457ad9ede2f96c14f271beef7da0faadbe532")),
+						GrandpaId::from_slice(&hex!("69b44ae0c55c8284a4157141dc6bed6ea2d1e9d5b16a88b715a0dfada1659faa"))
 					),
 					(
-						AuraId::from_slice(&hex!("e6f71b2580e5eef4c6a8166976282eac9524147b65cbcbf5895e1dfc767bf840")),
-						GrandpaId::from_slice(&hex!("5ef30971c5793d9072f14dbe3460b3eb7846e940ad4e81420df0880fa7775119"))
+						AuraId::from_slice(&hex!("243d9dacf4835501479ec16b3a3c44661ee967b26de75dfeb3af2c8660e0f80a")),
+						GrandpaId::from_slice(&hex!("8107c34c8f6a5f968a5311c9911d92d78432d03be8f9bf7ed913cc089b3c6db1"))
 					),
 					(
-						AuraId::from_slice(&hex!("a60c413a74fe233132659161a102b5fc70101b7b27b4a678cf28b660d5597e6a")),
-						GrandpaId::from_slice(&hex!("c2ec9279d562b043cca04a64a132a6c659ece88b46634aaabeaaeb9534395fb2"))
+						AuraId::from_slice(&hex!("dc2318d3925aa5cb69f47219f31480a73d709ffaca323d06874f75fbed00e527")),
+						GrandpaId::from_slice(&hex!("1534240b466e40d055d67e1477f4fb4e04655d8405c7abe0e6d52844735c3e7d"))
 					),
 					(
-						AuraId::from_slice(&hex!("b8c2ff7e29908f6fd216c648709e1294b634e73e2aac111c948509db12a5343f")),
-						GrandpaId::from_slice(&hex!("09bbcf123d668ba7e22f1915e79a0ed3a67bcacf047929d23464561c17f89018"))
+						AuraId::from_slice(&hex!("920ff8bb3da346bdde5e1a43e05379651ef853df188499d53861cb2e221e1e6d")),
+						GrandpaId::from_slice(&hex!("23a16d750210fc8d6f3301f06345140c0356bbba4df52452d92a1b87b8af0c37"))
 					)
 				],
 				// Sudo account
 				hex!("e43082fa42efb0b22be8991f3f62c84b9e3411ef23a25b6e95c2da0937167226").into(),
 				// Pre-funded accounts
 				vec![
-					hex!("c0d50370df4900c0234dc2447c83c71d2cb2b9e8a2f0cbf51e0bedec11619b0a").into(),
-					hex!("344d37ba3b5d262a75fe245f32bda90552bf3297e6c45ab49e2fee61739e6970").into(),
-					hex!("e6f71b2580e5eef4c6a8166976282eac9524147b65cbcbf5895e1dfc767bf840").into(),
-					hex!("a60c413a74fe233132659161a102b5fc70101b7b27b4a678cf28b660d5597e6a").into(),
-					hex!("b8c2ff7e29908f6fd216c648709e1294b634e73e2aac111c948509db12a5343f").into(),
+					hex!("c0a03ff255c2db2ddb33acc9885c3607eea411006cbe5cc1511c29762c8f8e0c").into(),
+					hex!("3661f26abbaa07d7df01e4c1348457ad9ede2f96c14f271beef7da0faadbe532").into(),
+					hex!("243d9dacf4835501479ec16b3a3c44661ee967b26de75dfeb3af2c8660e0f80a").into(),
+					hex!("dc2318d3925aa5cb69f47219f31480a73d709ffaca323d06874f75fbed00e527").into(),
+					hex!("920ff8bb3da346bdde5e1a43e05379651ef853df188499d53861cb2e221e1e6d").into(),
 					//Sudo
 					hex!("e43082fa42efb0b22be8991f3f62c84b9e3411ef23a25b6e95c2da0937167226").into(),
 				],
