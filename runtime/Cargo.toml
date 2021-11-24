@@ -207,6 +207,11 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-10'
 version = '4.0.0-dev'
 
+[dependencies.peaq-did]
+default-features = false
+path = '../pallets/did'
+version = '0.1.0'
+
 [features]
 default = ['std']
 runtime-benchmarks = [
@@ -251,4 +256,5 @@ std = [
     'pallet-contracts/std',
     'pallet-contracts-primitives/std',
     'pallet-contracts-rpc-runtime-api/std',
+    'peaq-did/std',
 ]
