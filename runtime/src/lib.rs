@@ -611,4 +611,5 @@ impl_runtime_apis! {
 
 impl pallet_transaction::Config for Runtime {
 	type Event = Event;
+	type Currency = Balances;
 }

@@ -17,11 +17,13 @@ mod benchmarking;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::traits::{Currency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
 
 	type CallHash = [u8; 32];
 
+	/// [TODO] Could I import by other place?
 	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 	pub struct Timepoint<BlockNumber> {
 		/// The height of the chain at the point in time.
@@ -35,12 +37,14 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Currency: ReservableCurrency<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events
 	#[pallet::event]
@@ -49,13 +53,12 @@ pub mod pallet {
 	{
 		/// The consumer asks for the service
 		/// parameters. [consumer, provider, token_deposited]
-		ServiceRequested(T::AccountId, T::AccountId, u32),
+		ServiceRequested(T::AccountId, T::AccountId, BalanceOf<T>),
 
 		/// The consumer asks for the service
 		/// [TODO] I want to add the tx inside...
-		/// [TODO] How to add the Timepoint?
-		/// parameters. [provider, consumer, tx hash, tx hash, time point, call_hash]
-		ServiceDelivered(T::AccountId, T::AccountId, T::Hash, Timepoint<T::BlockNumber>, CallHash),
+		/// parameters. [provider, consumer, tx hash, token num, tx hash, time point, call_hash]
+		ServiceDelivered(T::AccountId, T::AccountId, BalanceOf<T>, T::Hash, Timepoint<T::BlockNumber>, CallHash),
 	}
 
 	// Errors inform users that something went wrong.
@@ -72,9 +75,11 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// [TODO] Jay implementation
 		/// [TODO] Need to check the weight
-		/// [TODO] Need to change the token_num to currency
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn request_service(origin: OriginFor<T>, provider: T::AccountId, token_num: u32) -> DispatchResult {
+		pub fn request_service(
+			origin: OriginFor<T>,
+			provider: T::AccountId,
+			token_num: BalanceOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Emit an event.
@@ -89,13 +94,14 @@ pub mod pallet {
 		pub fn delivery_server(
 			origin: OriginFor<T>,
 			consumer: T::AccountId,
+			token_num: BalanceOf<T>,
 			tx_hash: T::Hash,
 			timepoint: Timepoint<T::BlockNumber>,
 			call_hash: CallHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Emit an event.
-			Self::deposit_event(Event::ServiceDelivered(who, consumer, tx_hash, timepoint, call_hash));
+			Self::deposit_event(Event::ServiceDelivered(who, consumer, token_num, tx_hash, timepoint, call_hash));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
