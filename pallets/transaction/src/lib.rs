@@ -46,6 +46,10 @@ pub mod pallet {
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
+
+		/// The consumer asks for the service
+		/// parameters. [consumer, provider, token_deposited]
+		ServiceRequested(T::AccountId, T::AccountId, u32),
 	}
 
 	// Errors inform users that something went wrong.
@@ -80,7 +84,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// An example dispatchable that may throw a custom error.
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
 		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
 			let _who = ensure_signed(origin)?;
@@ -97,6 +100,18 @@ pub mod pallet {
 					Ok(())
 				},
 			}
+		}
+
+		/// [TODO] Jay implementation
+		/// [TODO] Need to check the weight
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn request_service(origin: OriginFor<T>, provider: T::AccountId, token_num: u32) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			// Emit an event.
+			Self::deposit_event(Event::ServiceRequested(who, provider, token_num));
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
 		}
 	}
 }
