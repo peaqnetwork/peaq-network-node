@@ -14,6 +14,8 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+type CallHash = [u8; 32];
+
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
@@ -42,7 +44,8 @@ pub mod pallet {
 	// https://docs.substrate.io/v3/runtime/events
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
+	pub enum Event<T: Config>
+	{
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
@@ -50,6 +53,12 @@ pub mod pallet {
 		/// The consumer asks for the service
 		/// parameters. [consumer, provider, token_deposited]
 		ServiceRequested(T::AccountId, T::AccountId, u32),
+
+		/// The consumer asks for the service
+		/// [TODO] I want to add the tx inside...
+		/// [TODO] How to add the Timepoint?
+		/// parameters. [provider, consumer, tx hash, tx hash, call_hash]
+		ServiceDelivered(T::AccountId, T::AccountId, T::Hash, CallHash),
 	}
 
 	// Errors inform users that something went wrong.
@@ -110,6 +119,22 @@ pub mod pallet {
 
 			// Emit an event.
 			Self::deposit_event(Event::ServiceRequested(who, provider, token_num));
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+		/// [TODO] Jay implementation
+		/// [TODO] Need to check the weight
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn deleivery_server(
+			origin: OriginFor<T>,
+			consumer: T::AccountId,
+			tx_hash: T::Hash,
+			call_hash: CallHash) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			// Emit an event.
+			Self::deposit_event(Event::ServiceDelivered(who, consumer, tx_hash, call_hash));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
