@@ -43,7 +43,7 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the template pallet.
 // pub use pallet_template;
 
-
+pub use pallet_transaction;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -354,7 +354,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-
+		TransactionCustomize: pallet_transaction::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -601,9 +601,14 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
+			// add_benchmark!(params, batches, pallet_transaction, TransactionModule);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}
 	}
+}
+
+impl pallet_transaction::Config for Runtime {
+	type Event = Event;
 }
