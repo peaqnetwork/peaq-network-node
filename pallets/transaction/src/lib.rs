@@ -18,9 +18,17 @@ mod benchmarking;
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
+	use scale_info::TypeInfo;
 
 	type CallHash = [u8; 32];
 
+	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+	pub struct Timepoint<BlockNumber> {
+		/// The height of the chain at the point in time.
+		height: BlockNumber,
+		/// The index of the extrinsic at the point in time.
+		index: u32,
+	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -46,8 +54,8 @@ pub mod pallet {
 		/// The consumer asks for the service
 		/// [TODO] I want to add the tx inside...
 		/// [TODO] How to add the Timepoint?
-		/// parameters. [provider, consumer, tx hash, tx hash, call_hash]
-		ServiceDelivered(T::AccountId, T::AccountId, T::Hash, CallHash),
+		/// parameters. [provider, consumer, tx hash, tx hash, time point, call_hash]
+		ServiceDelivered(T::AccountId, T::AccountId, T::Hash, Timepoint<T::BlockNumber>, CallHash),
 	}
 
 	// Errors inform users that something went wrong.
@@ -82,11 +90,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			consumer: T::AccountId,
 			tx_hash: T::Hash,
+			timepoint: Timepoint<T::BlockNumber>,
 			call_hash: CallHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Emit an event.
-			Self::deposit_event(Event::ServiceDelivered(who, consumer, tx_hash, call_hash));
+			Self::deposit_event(Event::ServiceDelivered(who, consumer, tx_hash, timepoint, call_hash));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
