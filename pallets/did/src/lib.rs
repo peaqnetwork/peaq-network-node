@@ -106,8 +106,8 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Creates a new attribute as part of a DID
-		/// with optional expiration
-		#[pallet::weight(0)]
+		/// with optional validity
+		#[pallet::weight(1_000)]
 		pub fn add_attribute(
 			origin: OriginFor<T>,
 			name: Vec<u8>,
@@ -142,8 +142,8 @@ pub mod pallet {
 		}
 
 		/// Update an existing attribute of a DID
-		/// with optional expiration
-		#[pallet::weight(0)]
+		/// with optional validity
+		#[pallet::weight(1_000)]
 		pub fn update_attribute(
 			origin: OriginFor<T>,
 			name: Vec<u8>,
@@ -171,7 +171,7 @@ pub mod pallet {
 		}
 
 		/// Read did attribute
-		#[pallet::weight(0)]
+		#[pallet::weight(1_000)]
 		pub fn read_attribute(origin: OriginFor<T>, name: Vec<u8>, nonce: u64) -> DispatchResult {
 			// Check that an extrinsic was signed and get the signer
 			// This fn returns an error if the extrinsic is not signed
@@ -189,7 +189,7 @@ pub mod pallet {
 		}
 
 		/// Delete an existing attribute of a DID
-		#[pallet::weight(0)]
+		#[pallet::weight(1_000)]
 		pub fn remove_attribute(origin: OriginFor<T>, name: Vec<u8>, nonce: u64) -> DispatchResult {
 			// Check that an extrinsic was signed and get the signer
 			// This fn returns an error if the extrinsic is not signed
