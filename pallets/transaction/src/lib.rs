@@ -19,11 +19,13 @@ pub mod pallet {
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_support::traits::{Currency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
+	use frame_system::{self as system};
 	use scale_info::TypeInfo;
 
 	type CallHash = [u8; 32];
 
-	/// [TODO] Could I import by other place?
+	// It's the same as multi-sig
+	// However, I don't want to import it, so just duplicated
 	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 	pub struct Timepoint<BlockNumber> {
 		/// The height of the chain at the point in time.
@@ -62,41 +64,43 @@ pub mod pallet {
 		/// The consumer asks for the service
 		/// [TODO] I want to add the tx inside...
 		/// parameters. [provider, consumer, tx hash, token num, tx hash, time point, call_hash]
-		ServiceDelivered(T::AccountId, T::AccountId, BalanceOf<T>, T::Hash, Timepoint<T::BlockNumber>, CallHash),
+		ServiceDelivered {
+			provider: T::AccountId,
+			consumer: T::AccountId,
+			token_num: BalanceOf<T>,
+			tx_hash: T::Hash,
+			time_point: Timepoint<T::BlockNumber>,
+			call_hash: CallHash,
+		},
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
-	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-	}
+	pub enum Error<T> {}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsics", which are often compared to transactions.
 	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// [TODO] Jay implementation
 		/// [TODO] Need to check the weight
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn request_service(
 			origin: OriginFor<T>,
 			provider: T::AccountId,
-			token_num: BalanceOf<T>) -> DispatchResult {
+			token_deposited: BalanceOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Emit an event.
 			Self::deposit_event(Event::ServiceRequested {
 				consumer: who,
-				provider: provider,
-				token_deposited: token_num
+				provider,
+				token_deposited,
 			});
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
 
-		/// [TODO] Jay implementation
 		/// [TODO] Need to check the weight
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn delivery_server(
@@ -104,14 +108,30 @@ pub mod pallet {
 			consumer: T::AccountId,
 			token_num: BalanceOf<T>,
 			tx_hash: T::Hash,
-			timepoint: Timepoint<T::BlockNumber>,
+			time_point: Timepoint<T::BlockNumber>,
 			call_hash: CallHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// Emit an event.
-			Self::deposit_event(Event::ServiceDelivered(who, consumer, token_num, tx_hash, timepoint, call_hash));
+			Self::deposit_event(Event::ServiceDelivered{
+				provider: who,
+				consumer,
+				token_num,
+				tx_hash,
+				time_point,
+				call_hash,
+			});
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn now() -> Timepoint<T::BlockNumber> {
+			Timepoint {
+				height: <system::Pallet<T>>::block_number(),
+				index: <system::Pallet<T>>::extrinsic_index().unwrap_or_default(),
+			}
 		}
 	}
 }
