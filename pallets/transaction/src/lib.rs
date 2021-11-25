@@ -82,7 +82,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// [TODO] Need to check the weight
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn request_service(
+		pub fn service_requested(
 			origin: OriginFor<T>,
 			provider: T::AccountId,
 			token_deposited: BalanceOf<T>) -> DispatchResult {
@@ -100,7 +100,7 @@ pub mod pallet {
 
 		/// [TODO] Need to check the weight
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn delivery_server(
+		pub fn service_delivered(
 			origin: OriginFor<T>,
 			consumer: T::AccountId,
 			token_num: BalanceOf<T>,

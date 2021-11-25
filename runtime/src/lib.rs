@@ -354,7 +354,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-		TransactionCustomize: pallet_transaction::{Pallet, Call, Storage, Event<T>},
+		Transaction: pallet_transaction::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
 	}
 );

@@ -1,7 +1,7 @@
 [package]
 name = 'pallet-transaction'
 version = '0.0.1-monthly-2021-11'
-description = 'A node of the peaq network.'
+description = 'A Transaction pallet as a message bridge for escrow wallet implementation.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
 edition = '2018'
