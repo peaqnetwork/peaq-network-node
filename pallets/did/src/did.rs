@@ -1,5 +1,12 @@
 use crate::structs::*;
-use frame_support::dispatch::DispatchResult;
+
+pub enum DidError {
+	NotFound,
+	NameExceedMaxChar,
+	AlreadyExist,
+	FailedCreate,
+	FailedUpdate,
+}
 
 pub trait Did<AccountId, BlockNumber, Moment, Signature> {
 	fn create_attribute(
@@ -7,6 +14,12 @@ pub trait Did<AccountId, BlockNumber, Moment, Signature> {
 		name: &[u8],
 		value: &[u8],
 		valid_for: Option<BlockNumber>,
-	) -> DispatchResult;
+	) -> Result<(), DidError>;
+	fn mutate_attribute(
+		owner: &AccountId,
+		name: &[u8],
+		value: &[u8],
+		valid_for: Option<BlockNumber>,
+	) -> Result<(), DidError>;
 	fn get_attribute(owner: &AccountId, name: &[u8]) -> Option<Attribute<BlockNumber, Moment>>;
 }
