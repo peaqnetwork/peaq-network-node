@@ -53,7 +53,11 @@ pub mod pallet {
 	{
 		/// The consumer asks for the service
 		/// parameters. [consumer, provider, token_deposited]
-		ServiceRequested(T::AccountId, T::AccountId, BalanceOf<T>),
+		ServiceRequested {
+			consumer: T::AccountId,
+			provider: T::AccountId,
+			token_deposited: BalanceOf<T>
+		},
 
 		/// The consumer asks for the service
 		/// [TODO] I want to add the tx inside...
@@ -83,7 +87,11 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			// Emit an event.
-			Self::deposit_event(Event::ServiceRequested(who, provider, token_num));
+			Self::deposit_event(Event::ServiceRequested {
+				consumer: who,
+				provider: provider,
+				token_deposited: token_num
+			});
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
