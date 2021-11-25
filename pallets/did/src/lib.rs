@@ -223,6 +223,10 @@ pub mod pallet {
 				nonce,
 			};
 
+			if <AttributeStore<T>>::contains_key((&owner, &id)) {
+				return Err(DidError::AlreadyExist);
+			}
+
 			<AttributeStore<T>>::insert((&owner, &id), new_attribute);
 
 			Ok(())
