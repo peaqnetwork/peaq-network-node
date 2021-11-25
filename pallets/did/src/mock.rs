@@ -40,7 +40,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = sr25519::Public;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -68,6 +68,8 @@ impl pallet_timestamp::Config for Test {
 
 impl peaq_did::Config for Test {
 	type Event = Event;
+	type Public = sr25519::Public;
+	type Signature = sr25519::Signature;
 	type Time = pallet_timestamp::Pallet<Test>;
 }
 
@@ -76,12 +78,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
-// pub fn account_pair(s: &str) -> sr25519::Pair {
-// 	sr25519::Pair::from_string(&format!("//{}", s), None).expect("static values are valid; qed")
-// }
+pub fn account_pair(s: &str) -> sr25519::Pair {
+	sr25519::Pair::from_string(&format!("//{}", s), None).expect("static values are valid; qed")
+}
 
-// pub fn account_key(s: &str) -> sr25519::Public {
-// 	sr25519::Pair::from_string(&format!("//{}", s), None)
-// 		.expect("static values are valid; qed")
-// 		.public()
-// }
+pub fn account_key(s: &str) -> sr25519::Public {
+	sr25519::Pair::from_string(&format!("//{}", s), None)
+		.expect("static values are valid; qed")
+		.public()
+}
