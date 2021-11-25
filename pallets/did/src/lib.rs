@@ -35,6 +35,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Event emitted when an attribute has been added. [who, attribute, block]
 		AttributeAdded(T::AccountId, Vec<u8>, Vec<u8>, Option<T::BlockNumber>),
+		/// Event emitted when an attribute is read successfully
+		AttributeRead(Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>),
 	}
 
 	#[pallet::error]
@@ -43,6 +45,8 @@ pub mod pallet {
 		AttributeNameExceedMax64,
 		// Attribute creation failed
 		AttributeCreationFailed,
+		// Attribute was not found
+		AttributeNotFound,
 	}
 
 	#[pallet::pallet]
@@ -50,6 +54,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
+	#[pallet::getter(fn attribute_of)]
 	pub(super) type AttributeStore<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -85,12 +90,30 @@ pub mod pallet {
 			// https://docs.substrate.io/v3/runtime/origins
 			let sender = ensure_signed(origin)?;
 
-			// Verify that the sender proof has not already been claimed
+			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
 			Self::create_attribute(&sender, &name, &value, valid_for)?;
 			Self::deposit_event(Event::AttributeAdded(sender, name, value, valid_for));
 
+			Ok(())
+		}
+
+		/// Read did attribute
+		#[pallet::weight(0)]
+		pub fn read_attribute(origin: OriginFor<T>, name: Vec<u8>) -> DispatchResult {
+			// Check that an extrinsic was signed and get the signer
+			// This fn returns an error if the extrinsic is not signed
+			// https://docs.substrate.io/v3/runtime/origins
+			let sender = ensure_signed(origin)?;
+
+			let attribute = Self::get_attribute(&sender, &name);
+			match attribute {
+				Some(attribute) => {
+					Self::deposit_event(Event::AttributeRead(attribute));
+				}
+				None => return Err(Error::<T>::AttributeNotFound.into()),
+			}
 			Ok(())
 		}
 	}
@@ -127,6 +150,22 @@ pub mod pallet {
 			<AttributeStore<T>>::insert((&owner, &id), new_attribute);
 
 			Ok(())
+		}
+
+		// Fetch an attribute from a did
+		fn get_attribute(
+			owner: &T::AccountId,
+			name: &[u8],
+		) -> Option<Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>> {
+			// Generate nounce for integrity check
+			let nonce = Self::nonce_of((&owner, name.to_vec()));
+			let id = (&owner, name, nonce).using_encoded(blake2_256);
+
+			if <AttributeStore<T>>::contains_key((&owner, &id)) {
+				Some(Self::attribute_of((&owner, &id)))
+			} else {
+				None
+			}
 		}
 	}
 }

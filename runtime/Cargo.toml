@@ -210,7 +210,7 @@ version = '4.0.0-dev'
 [dependencies.peaq-did]
 default-features = false
 path = '../pallets/did'
-version = '0.1.0'
+version = '0.0.1'
 
 [features]
 default = ['std']

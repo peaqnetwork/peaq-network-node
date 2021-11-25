@@ -1,6 +1,6 @@
 [package]
 name = "peaq-did"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 description = 'A pallet that handles peaq DID managment on peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
