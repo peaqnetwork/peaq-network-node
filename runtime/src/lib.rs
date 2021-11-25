@@ -334,8 +334,8 @@ impl pallet_sudo::Config for Runtime {
 /// Config the did in pallets/did
 impl peaq_did::Config for Runtime {
 	type Event = Event;
-	type Public = sp_runtime::MultiSigner;
-	type Signature = Signature;
+	// type Public = sp_runtime::MultiSigner;
+	// type Signature = Signature;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 }
 

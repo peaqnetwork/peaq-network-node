@@ -68,6 +68,12 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-10'  # or the latest monthly
 version = '4.0.0-dev'    # or the latest version
 
+[dependencies.pallet-timestamp]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+tag = 'monthly-2021-10'  # or the latest monthly
+version = '4.0.0-dev'    # or the latest version
+
 [features]
 default = ['std']
 runtime-benchmarks = ['frame-benchmarking']
@@ -81,5 +87,6 @@ std = [
     'sp-std/std',
 	'sp-io/std',
     'sp-core/std',
+	'pallet-timestamp/std',
 ]
 try-runtime = ['frame-support/try-runtime']

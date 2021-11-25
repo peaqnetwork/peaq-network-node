@@ -3,6 +3,15 @@
 pub mod did;
 pub mod structs;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 // Re-export did items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
@@ -15,7 +24,7 @@ pub mod pallet {
 	use frame_support::traits::Time as MomentTime;
 	use frame_system::pallet_prelude::*;
 	use sp_io::hashing::blake2_256;
-	use sp_runtime::traits::{IdentifyAccount, Member, Verify};
+	// use sp_runtime::traits::{IdentifyAccount, Member, Verify};
 	use sp_std::vec::Vec;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -23,8 +32,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Public: IdentifyAccount<AccountId = Self::AccountId>;
-		type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
+		// type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 		type Time: MomentTime;
 	}
 
@@ -54,8 +62,6 @@ pub mod pallet {
 		AttributeUpdateFailed,
 		// Attribute was not found
 		AttributeNotFound,
-		// Attribute already exist for a did
-		AttributeAlreadyExist,
 	}
 
 	impl<T: Config> Error<T> {
@@ -65,7 +71,6 @@ pub mod pallet {
 				DidError::NameExceedMaxChar => {
 					return Err(Error::<T>::AttributeNameExceedMax64.into())
 				}
-				DidError::AlreadyExist => return Err(Error::<T>::AttributeAlreadyExist.into()),
 				DidError::FailedCreate => return Err(Error::<T>::AttributeCreationFailed.into()),
 				DidError::FailedUpdate => return Err(Error::<T>::AttributeCreationFailed.into()),
 			}
@@ -194,8 +199,7 @@ pub mod pallet {
 	}
 
 	// implements the Did trait to satisfied the required methods
-	impl<T: Config>
-		Did<T::AccountId, T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment, T::Signature>
+	impl<T: Config> Did<T::AccountId, T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>
 		for Pallet<T>
 	{
 		// Add new attribute to a did
@@ -223,11 +227,10 @@ pub mod pallet {
 				nonce,
 			};
 
-			if <AttributeStore<T>>::contains_key((&owner, &id)) {
-				return Err(DidError::AlreadyExist);
-			}
+			let nonce = nonce.checked_add(1).unwrap();
 
 			<AttributeStore<T>>::insert((&owner, &id), new_attribute);
+			<AttributeNonce<T>>::insert((&owner, name.to_vec()), nonce);
 
 			Ok(())
 		}

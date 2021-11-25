@@ -3,12 +3,11 @@ use crate::structs::*;
 pub enum DidError {
 	NotFound,
 	NameExceedMaxChar,
-	AlreadyExist,
 	FailedCreate,
 	FailedUpdate,
 }
 
-pub trait Did<AccountId, BlockNumber, Moment, Signature> {
+pub trait Did<AccountId, BlockNumber, Moment> {
 	fn create_attribute(
 		owner: &AccountId,
 		name: &[u8],
