@@ -42,6 +42,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
 // pub use pallet_template;
+pub use peaq_did;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -602,6 +603,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			add_benchmark!(params, batches, peaq_did, Timestamp);
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
