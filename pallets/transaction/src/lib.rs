@@ -22,6 +22,7 @@ pub mod pallet {
 	use frame_system::{self as system};
 	use scale_info::TypeInfo;
 
+	// [TODO] Maybe it's worthy to move as a config
 	type CallHash = [u8; 32];
 
 	// It's the same as multi-sig
@@ -62,7 +63,6 @@ pub mod pallet {
 		},
 
 		/// The consumer asks for the service
-		/// [TODO] I want to add the tx inside...
 		/// parameters. [provider, consumer, tx hash, token num, tx hash, time point, call_hash]
 		ServiceDelivered {
 			provider: T::AccountId,
@@ -111,6 +111,8 @@ pub mod pallet {
 			time_point: Timepoint<T::BlockNumber>,
 			call_hash: CallHash) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+
+			// [TODO] We can check wehther the tx is the same as the timepoint
 
 			// Emit an event.
 			Self::deposit_event(Event::ServiceDelivered{
