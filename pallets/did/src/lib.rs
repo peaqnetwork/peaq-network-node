@@ -40,6 +40,8 @@ pub mod pallet {
 		AttributeRead(Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>),
 		/// Event emitted when an attribute has been updated. [who, attribute, block]
 		AttributeUpdated(T::AccountId, Vec<u8>, Vec<u8>, Option<T::BlockNumber>),
+		/// Event emitted when an attribute has been deleted. [who, attibute name, block]
+		AttributeRemoved(T::AccountId, Vec<u8>, Option<T::BlockNumber>),
 	}
 
 	#[pallet::error]
@@ -167,8 +169,31 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		/// Delete an existing attribute of a DID
+		#[pallet::weight(0)]
+		pub fn remove_attribute(origin: OriginFor<T>, name: Vec<u8>) -> DispatchResult {
+			// Check that an extrinsic was signed and get the signer
+			// This fn returns an error if the extrinsic is not signed
+			// https://docs.substrate.io/v3/runtime/origins
+			let sender = ensure_signed(origin)?;
+
+			// Verify that the name len is 64 max
+			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
+
+			match Self::delete_attribute(&sender, &name) {
+				Ok(()) => {
+					// Get the block number from the FRAME system pallet
+					let current_block = Some(<frame_system::Pallet<T>>::block_number());
+					Self::deposit_event(Event::AttributeRemoved(sender, name, current_block));
+				}
+				Err(e) => return Error::<T>::dispatch_error(e),
+			};
+			Ok(())
+		}
 	}
 
+	// implements the Did trait to satisfied the required methods
 	impl<T: Config>
 		Did<T::AccountId, T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment, T::Signature>
 		for Pallet<T>
@@ -187,7 +212,7 @@ pub mod pallet {
 				None => u32::max_value().into(),
 			};
 
-			// Generate nounce for integrity check
+			// Generate nonce for integrity check
 			let nonce = Self::nonce_of((&owner, name.to_vec()));
 			let id = (&owner, name, nonce).using_encoded(blake2_256);
 			let new_attribute = Attribute {
@@ -246,6 +271,19 @@ pub mod pallet {
 				return Some(Self::attribute_of((&owner, &id)));
 			}
 			None
+		}
+
+		// Delete an attribute from a did
+		fn delete_attribute(owner: &T::AccountId, name: &[u8]) -> Result<(), DidError> {
+			// Generate nounce for integrity check
+			let nonce = Self::nonce_of((&owner, name.to_vec()));
+			let id = (&owner, name, nonce).using_encoded(blake2_256);
+
+			if !<AttributeStore<T>>::contains_key((&owner, &id)) {
+				return Err(DidError::NotFound);
+			}
+			<AttributeStore<T>>::remove((&owner, &id));
+			Ok(())
 		}
 	}
 }
