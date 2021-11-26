@@ -1,3 +1,11 @@
+// Credit:: based on pallet-DID from https://github.com/substrate-developer-hub/pallet-did
+//
+//
+//! # PEAQ DID Pallet
+//!
+//! The DID pallet allows resolving and management for PEAQ DIDs (Decentralized Identifiers).
+//! DID compliant with: https://w3c-ccg.github.io/did-spec/
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod did;
