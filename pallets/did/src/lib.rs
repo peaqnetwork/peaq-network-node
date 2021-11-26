@@ -122,7 +122,7 @@ pub mod pallet {
 			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
-			match Self::create_attribute(&sender, &name, &value, valid_for) {
+			match Self::create(&sender, &name, &value, valid_for) {
 				Ok(()) => {
 					let nonce = Self::nonce_of((&sender, name.to_vec()));
 
@@ -159,7 +159,7 @@ pub mod pallet {
 			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
-			match Self::mutate_attribute(&sender, nonce, &name, &value, valid_for) {
+			match Self::update(&sender, nonce, &name, &value, valid_for) {
 				Ok(()) => {
 					Self::deposit_event(Event::AttributeUpdated(
 						sender, name, value, valid_for, nonce,
@@ -178,7 +178,7 @@ pub mod pallet {
 			// https://docs.substrate.io/v3/runtime/origins
 			let sender = ensure_signed(origin)?;
 
-			let attribute = Self::get_attribute(&sender, &name, nonce);
+			let attribute = Self::read(&sender, &name, nonce);
 			match attribute {
 				Some(attribute) => {
 					Self::deposit_event(Event::AttributeRead(attribute));
@@ -199,7 +199,7 @@ pub mod pallet {
 			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
-			match Self::delete_attribute(&sender, &name, nonce) {
+			match Self::delete(&sender, &name, nonce) {
 				Ok(()) => {
 					// Get the block number from the FRAME system pallet
 					Self::deposit_event(Event::AttributeRemoved(sender, name, nonce));
@@ -215,7 +215,7 @@ pub mod pallet {
 		for Pallet<T>
 	{
 		// Add new attribute to a did
-		fn create_attribute(
+		fn create(
 			owner: &T::AccountId,
 			name: &[u8],
 			value: &[u8],
@@ -250,7 +250,7 @@ pub mod pallet {
 		}
 
 		// Update existing attribute on a did
-		fn mutate_attribute(
+		fn update(
 			owner: &T::AccountId,
 			nonce: u64,
 			name: &[u8],
@@ -266,7 +266,7 @@ pub mod pallet {
 			};
 
 			// Get attribute
-			let attribute = Self::get_attribute(owner, name, nonce);
+			let attribute = Self::read(owner, name, nonce);
 
 			match attribute {
 				Some(mut attr) => {
@@ -282,7 +282,7 @@ pub mod pallet {
 		}
 
 		// Fetch an attribute from a did
-		fn get_attribute(
+		fn read(
 			owner: &T::AccountId,
 			name: &[u8],
 			nonce: u64,
@@ -296,7 +296,7 @@ pub mod pallet {
 		}
 
 		// Delete an attribute from a did
-		fn delete_attribute(owner: &T::AccountId, name: &[u8], nonce: u64) -> Result<(), DidError> {
+		fn delete(owner: &T::AccountId, name: &[u8], nonce: u64) -> Result<(), DidError> {
 			let id = (&owner, name, nonce).using_encoded(blake2_256);
 
 			if !<AttributeStore<T>>::contains_key((&owner, &id)) {
