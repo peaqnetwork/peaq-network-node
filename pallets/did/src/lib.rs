@@ -222,9 +222,11 @@ pub mod pallet {
 			valid_for: Option<T::BlockNumber>,
 		) -> Result<(), DidError> {
 			let now_timestamp = T::Time::now();
-			let now_block_number = <frame_system::Pallet<T>>::block_number();
 			let validity: T::BlockNumber = match valid_for {
-				Some(blocks) => now_block_number + blocks,
+				Some(blocks) => {
+					let now_block_number = <frame_system::Pallet<T>>::block_number();
+					now_block_number + blocks
+				}
 				None => u32::max_value().into(),
 			};
 
@@ -255,9 +257,11 @@ pub mod pallet {
 			value: &[u8],
 			valid_for: Option<T::BlockNumber>,
 		) -> Result<(), DidError> {
-			let now_block_number = <frame_system::Pallet<T>>::block_number();
 			let validity: T::BlockNumber = match valid_for {
-				Some(blocks) => now_block_number + blocks,
+				Some(blocks) => {
+					let now_block_number = <frame_system::Pallet<T>>::block_number();
+					now_block_number + blocks
+				}
 				None => u32::max_value().into(),
 			};
 
