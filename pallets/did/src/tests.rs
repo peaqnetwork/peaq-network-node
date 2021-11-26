@@ -5,29 +5,28 @@ use frame_support::{assert_noop, assert_ok};
 fn add_attribute_test() {
 	new_test_ext().execute_with(|| {
 		let acct = "Iredia";
-		let identity = account_key(acct);
+		let acct2 = "Iredia2";
+		let origin = account_key(acct);
+		let did_account = account_key(acct2);
 		let name = b"id";
 		let attribute = b"did:pq:1234567890";
 
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 0);
-
 		assert_ok!(PeaqDID::add_attribute(
-			Origin::signed(identity),
+			Origin::signed(origin),
+			did_account,
 			name.to_vec(),
 			attribute.to_vec(),
 			None
 		));
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 1);
 
 		// Test for duplicate entry
 		assert_ok!(PeaqDID::add_attribute(
-			Origin::signed(identity),
+			Origin::signed(origin),
+			did_account,
 			name.to_vec(),
 			attribute.to_vec(),
 			None
 		));
-
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 2);
 	});
 }
 
@@ -35,36 +34,36 @@ fn add_attribute_test() {
 fn update_attribute_test() {
 	new_test_ext().execute_with(|| {
 		let acct = "Iredia";
-		let identity = account_key(acct);
+		let acct2 = "Iredia2";
+		let origin = account_key(acct);
+		let did_account = account_key(acct2);
 		let name = b"id";
 		let attribute = b"did:pq:1234567890";
 
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 0);
-
 		assert_ok!(PeaqDID::add_attribute(
-			Origin::signed(identity),
+			Origin::signed(origin),
+			did_account,
 			name.to_vec(),
 			attribute.to_vec(),
 			None
 		));
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 1);
 
 		assert_ok!(PeaqDID::update_attribute(
-			Origin::signed(identity),
+			Origin::signed(origin),
+			did_account,
 			name.to_vec(),
 			attribute.to_vec(),
 			None,
-			0
 		));
 
 		// Test update non-existing attribute
 		assert_noop!(
 			PeaqDID::update_attribute(
-				Origin::signed(identity),
+				Origin::signed(origin),
+				account_key("invalid"),
 				name.to_vec(),
 				attribute.to_vec(),
 				None,
-				100
 			),
 			Error::<Test>::AttributeNotFound
 		);
@@ -75,25 +74,28 @@ fn update_attribute_test() {
 fn read_attribute_test() {
 	new_test_ext().execute_with(|| {
 		let acct = "Iredia";
-		let identity = account_key(acct);
+		let acct2 = "Iredia2";
+		let origin = account_key(acct);
+		let did_account = account_key(acct2);
 		let name = b"id";
 		let attribute = b"did:pq:1234567890";
 
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 0);
-
 		assert_ok!(PeaqDID::add_attribute(
-			Origin::signed(identity),
+			Origin::signed(origin),
+			did_account,
 			name.to_vec(),
 			attribute.to_vec(),
 			None
 		));
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 1);
-
-		assert_ok!(PeaqDID::read_attribute(Origin::signed(identity), name.to_vec(), 0));
 
 		// Test read non-existing attribute
 		assert_noop!(
-			PeaqDID::read_attribute(Origin::signed(identity), name.to_vec(), 100),
+			PeaqDID::read_attribute(
+				Origin::signed(origin),
+				origin,
+				account_key("invalid"),
+				name.to_vec()
+			),
 			Error::<Test>::AttributeNotFound
 		);
 	});
@@ -103,25 +105,27 @@ fn read_attribute_test() {
 fn remove_attribute_test() {
 	new_test_ext().execute_with(|| {
 		let acct = "Iredia";
-		let identity = account_key(acct);
+		let acct2 = "Iredia2";
+		let origin = account_key(acct);
+		let did_account = account_key(acct2);
 		let name = b"id";
 		let attribute = b"did:pq:1234567890";
 
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 0);
-
 		assert_ok!(PeaqDID::add_attribute(
-			Origin::signed(identity),
+			Origin::signed(origin),
+			did_account,
 			name.to_vec(),
 			attribute.to_vec(),
 			None
 		));
-		assert_eq!(PeaqDID::nonce_of((identity, name.to_vec())), 1);
-
-		assert_ok!(PeaqDID::remove_attribute(Origin::signed(identity), name.to_vec(), 0));
 
 		// Test remove non-existing attribute
 		assert_noop!(
-			PeaqDID::remove_attribute(Origin::signed(identity), name.to_vec(), 100),
+			PeaqDID::remove_attribute(
+				Origin::signed(origin),
+				account_key("invalid"),
+				name.to_vec()
+			),
 			Error::<Test>::AttributeNotFound
 		);
 	});

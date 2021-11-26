@@ -43,14 +43,14 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event emitted when an attribute has been added. [who, name, value, validity, nonce]
-		AttributeAdded(T::AccountId, Vec<u8>, Vec<u8>, Option<T::BlockNumber>, u64),
+		/// Event emitted when an attribute has been added. [who, did_account, name, value, validity]
+		AttributeAdded(T::AccountId, T::AccountId, Vec<u8>, Vec<u8>, Option<T::BlockNumber>),
 		/// Event emitted when an attribute is read successfully
 		AttributeRead(Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>),
-		/// Event emitted when an attribute has been updated. [who, name, validity, nonce]
-		AttributeUpdated(T::AccountId, Vec<u8>, Vec<u8>, Option<T::BlockNumber>, u64),
-		/// Event emitted when an attribute has been deleted. [who, name, nonce]
-		AttributeRemoved(T::AccountId, Vec<u8>, u64),
+		/// Event emitted when an attribute has been updated. [who, did_account, name, validity]
+		AttributeUpdated(T::AccountId, T::AccountId, Vec<u8>, Vec<u8>, Option<T::BlockNumber>),
+		/// Event emitted when an attribute has been deleted. [who, did_acount name]
+		AttributeRemoved(T::AccountId, T::AccountId, Vec<u8>),
 	}
 
 	#[pallet::error]
@@ -92,11 +92,6 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn nonce_of)]
-	pub(super) type AttributeNonce<T: Config> =
-		StorageMap<_, Twox64Concat, (T::AccountId, Vec<u8>), u64, ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
@@ -110,6 +105,7 @@ pub mod pallet {
 		#[pallet::weight(1_000)]
 		pub fn add_attribute(
 			origin: OriginFor<T>,
+			did_account: T::AccountId,
 			name: Vec<u8>,
 			value: Vec<u8>,
 			valid_for: Option<T::BlockNumber>,
@@ -122,17 +118,14 @@ pub mod pallet {
 			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
-			match Self::create(&sender, &name, &value, valid_for) {
+			match Self::create(&sender, &did_account, &name, &value, valid_for) {
 				Ok(()) => {
-					let nonce = Self::nonce_of((&sender, name.to_vec()));
-
-					let nonce = match nonce {
-						0u64 => 0u64,
-						_ => nonce - 1u64,
-					};
-
 					Self::deposit_event(Event::AttributeAdded(
-						sender, name, value, valid_for, nonce,
+						sender,
+						did_account,
+						name,
+						value,
+						valid_for,
 					));
 				}
 				Err(e) => return Error::<T>::dispatch_error(e),
@@ -146,10 +139,10 @@ pub mod pallet {
 		#[pallet::weight(1_000)]
 		pub fn update_attribute(
 			origin: OriginFor<T>,
+			did_account: T::AccountId,
 			name: Vec<u8>,
 			value: Vec<u8>,
 			valid_for: Option<T::BlockNumber>,
-			nonce: u64,
 		) -> DispatchResult {
 			// Check that an extrinsic was signed and get the signer
 			// This fn returns an error if the extrinsic is not signed
@@ -159,10 +152,14 @@ pub mod pallet {
 			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
-			match Self::update(&sender, nonce, &name, &value, valid_for) {
+			match Self::update(&sender, &did_account, &name, &value, valid_for) {
 				Ok(()) => {
 					Self::deposit_event(Event::AttributeUpdated(
-						sender, name, value, valid_for, nonce,
+						sender,
+						did_account,
+						name,
+						value,
+						valid_for,
 					));
 				}
 				Err(e) => return Error::<T>::dispatch_error(e),
@@ -172,13 +169,18 @@ pub mod pallet {
 
 		/// Read did attribute
 		#[pallet::weight(1_000)]
-		pub fn read_attribute(origin: OriginFor<T>, name: Vec<u8>, nonce: u64) -> DispatchResult {
+		pub fn read_attribute(
+			origin: OriginFor<T>,
+			owner: T::AccountId,
+			did_account: T::AccountId,
+			name: Vec<u8>,
+		) -> DispatchResult {
 			// Check that an extrinsic was signed and get the signer
 			// This fn returns an error if the extrinsic is not signed
 			// https://docs.substrate.io/v3/runtime/origins
-			let sender = ensure_signed(origin)?;
+			ensure_signed(origin)?;
 
-			let attribute = Self::read(&sender, &name, nonce);
+			let attribute = Self::read(&owner, &did_account, &name);
 			match attribute {
 				Some(attribute) => {
 					Self::deposit_event(Event::AttributeRead(attribute));
@@ -190,7 +192,11 @@ pub mod pallet {
 
 		/// Delete an existing attribute of a DID
 		#[pallet::weight(1_000)]
-		pub fn remove_attribute(origin: OriginFor<T>, name: Vec<u8>, nonce: u64) -> DispatchResult {
+		pub fn remove_attribute(
+			origin: OriginFor<T>,
+			did_account: T::AccountId,
+			name: Vec<u8>,
+		) -> DispatchResult {
 			// Check that an extrinsic was signed and get the signer
 			// This fn returns an error if the extrinsic is not signed
 			// https://docs.substrate.io/v3/runtime/origins
@@ -199,10 +205,10 @@ pub mod pallet {
 			// Verify that the name len is 64 max
 			ensure!(name.len() <= 64, Error::<T>::AttributeNameExceedMax64);
 
-			match Self::delete(&sender, &name, nonce) {
+			match Self::delete(&sender, &did_account, &name) {
 				Ok(()) => {
 					// Get the block number from the FRAME system pallet
-					Self::deposit_event(Event::AttributeRemoved(sender, name, nonce));
+					Self::deposit_event(Event::AttributeRemoved(sender, did_account, name));
 				}
 				Err(e) => return Error::<T>::dispatch_error(e),
 			};
@@ -217,6 +223,7 @@ pub mod pallet {
 		// Add new attribute to a did
 		fn create(
 			owner: &T::AccountId,
+			did_account: &T::AccountId,
 			name: &[u8],
 			value: &[u8],
 			valid_for: Option<T::BlockNumber>,
@@ -230,21 +237,16 @@ pub mod pallet {
 				None => u32::max_value().into(),
 			};
 
-			// Generate nonce for integrity check
-			let nonce = Self::nonce_of((&owner, name.to_vec()));
-			let id = (&owner, name, nonce).using_encoded(blake2_256);
+			// Generate id for integrity check
+			let id = (&owner, &did_account, name).using_encoded(blake2_256);
 			let new_attribute = Attribute {
 				name: (&name).to_vec(),
 				value: (&value).to_vec(),
 				validity,
 				created: now_timestamp,
-				nonce,
 			};
 
-			let nonce = nonce.checked_add(1).unwrap();
-
 			<AttributeStore<T>>::insert((&owner, &id), new_attribute);
-			<AttributeNonce<T>>::mutate((&owner, name.to_vec()), |n| *n = nonce);
 
 			Ok(())
 		}
@@ -252,7 +254,7 @@ pub mod pallet {
 		// Update existing attribute on a did
 		fn update(
 			owner: &T::AccountId,
-			nonce: u64,
+			did_address: &T::AccountId,
 			name: &[u8],
 			value: &[u8],
 			valid_for: Option<T::BlockNumber>,
@@ -266,11 +268,11 @@ pub mod pallet {
 			};
 
 			// Get attribute
-			let attribute = Self::read(owner, name, nonce);
+			let attribute = Self::read(owner, did_address, name);
 
 			match attribute {
 				Some(mut attr) => {
-					let id = (&owner, name, nonce).using_encoded(blake2_256);
+					let id = (&owner, name, did_address).using_encoded(blake2_256);
 					attr.value = (&value).to_vec();
 					attr.validity = validity;
 
@@ -284,10 +286,10 @@ pub mod pallet {
 		// Fetch an attribute from a did
 		fn read(
 			owner: &T::AccountId,
+			did_address: &T::AccountId,
 			name: &[u8],
-			nonce: u64,
 		) -> Option<Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>> {
-			let id = (&owner, name, nonce).using_encoded(blake2_256);
+			let id = (&owner, did_address, name).using_encoded(blake2_256);
 
 			if <AttributeStore<T>>::contains_key((&owner, &id)) {
 				return Some(Self::attribute_of((&owner, &id)));
@@ -296,8 +298,12 @@ pub mod pallet {
 		}
 
 		// Delete an attribute from a did
-		fn delete(owner: &T::AccountId, name: &[u8], nonce: u64) -> Result<(), DidError> {
-			let id = (&owner, name, nonce).using_encoded(blake2_256);
+		fn delete(
+			owner: &T::AccountId,
+			did_address: &T::AccountId,
+			name: &[u8],
+		) -> Result<(), DidError> {
+			let id = (&owner, did_address, name).using_encoded(blake2_256);
 
 			if !<AttributeStore<T>>::contains_key((&owner, &id)) {
 				return Err(DidError::NotFound);

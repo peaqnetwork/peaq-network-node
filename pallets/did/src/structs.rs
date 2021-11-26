@@ -12,5 +12,4 @@ pub struct Attribute<BlockNumber, Moment> {
 	pub value: Vec<u8>,
 	pub validity: BlockNumber,
 	pub created: Moment,
-	pub nonce: u64,
 }
