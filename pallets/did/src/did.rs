@@ -5,6 +5,7 @@ pub enum DidError {
 	NameExceedMaxChar,
 	FailedCreate,
 	FailedUpdate,
+	AlreadyExist,
 }
 
 pub trait Did<AccountId, BlockNumber, Moment> {

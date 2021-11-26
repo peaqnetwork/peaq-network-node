@@ -57,6 +57,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		// Name is greater that 64
 		AttributeNameExceedMax64,
+		// Attribute already exist
+		AttributeAlreadyExist,
 		// Attribute creation failed
 		AttributeCreationFailed,
 		// Attribute creation failed
@@ -69,6 +71,7 @@ pub mod pallet {
 		fn dispatch_error(err: DidError) -> DispatchResult {
 			match err {
 				DidError::NotFound => return Err(Error::<T>::AttributeNotFound.into()),
+				DidError::AlreadyExist => return Err(Error::<T>::AttributeAlreadyExist.into()),
 				DidError::NameExceedMaxChar => {
 					return Err(Error::<T>::AttributeNameExceedMax64.into())
 				}
@@ -228,6 +231,14 @@ pub mod pallet {
 			value: &[u8],
 			valid_for: Option<T::BlockNumber>,
 		) -> Result<(), DidError> {
+			// Generate id for integrity check
+			let id = (&owner, &did_account, name).using_encoded(blake2_256);
+
+			// Check if attribute already exists
+			if <AttributeStore<T>>::contains_key((&owner, &id)) {
+				return Err(DidError::AlreadyExist);
+			}
+
 			let now_timestamp = T::Time::now();
 			let validity: T::BlockNumber = match valid_for {
 				Some(blocks) => {
@@ -237,8 +248,6 @@ pub mod pallet {
 				None => u32::max_value().into(),
 			};
 
-			// Generate id for integrity check
-			let id = (&owner, &did_account, name).using_encoded(blake2_256);
 			let new_attribute = Attribute {
 				name: (&name).to_vec(),
 				value: (&value).to_vec(),

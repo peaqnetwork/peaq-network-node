@@ -20,13 +20,16 @@ fn add_attribute_test() {
 		));
 
 		// Test for duplicate entry
-		assert_ok!(PeaqDID::add_attribute(
-			Origin::signed(origin),
-			did_account,
-			name.to_vec(),
-			attribute.to_vec(),
-			None
-		));
+		assert_noop!(
+			PeaqDID::add_attribute(
+				Origin::signed(origin),
+				did_account,
+				name.to_vec(),
+				attribute.to_vec(),
+				None
+			),
+			Error::<Test>::AttributeAlreadyExist
+		);
 	});
 }
 
