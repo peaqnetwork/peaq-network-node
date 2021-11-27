@@ -1,15 +1,15 @@
+use hex_literal::hex;
 use peaq_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 	SystemConfig, WASM_BINARY,
 };
+use sc_network::config::MultiaddrWithPeerId;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use sc_network::config::MultiaddrWithPeerId;
 use std::str::FromStr;
-use hex_literal::hex;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -43,12 +43,12 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
-    properties.insert("tokenSymbol".into(), "PEAQ".into());
-    properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenSymbol".into(), "PEAQ".into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"PEAQ-dev",
+		"peaq-dev",
 		// ID
 		"peaq-substrate-dev",
 		ChainType::Development,
@@ -70,8 +70,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 			)
 		},
 		// Bootnodes
-		vec![
-		],
+		vec![],
 		// Telemetry
 		None,
 		// Protocol ID
@@ -87,12 +86,12 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
-    properties.insert("tokenSymbol".into(), "PEAQ".into());
-    properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenSymbol".into(), "PEAQ".into());
+	properties.insert("tokenDecimals".into(), 18.into());
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"PEAQ-testnet",
+		"peaq-testnet",
 		// ID
 		"peaq-substrate-testnet",
 		ChainType::Local,
