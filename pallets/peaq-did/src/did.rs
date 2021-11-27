@@ -2,6 +2,7 @@ use crate::structs::*;
 
 pub enum DidError {
 	NotFound,
+	AuthorizationFailed,
 	NameExceedMaxChar,
 	FailedCreate,
 	FailedUpdate,
@@ -9,6 +10,7 @@ pub enum DidError {
 }
 
 pub trait Did<AccountId, BlockNumber, Moment> {
+	fn is_owner(owner: &AccountId, did_address: &AccountId) -> Result<(), DidError>;
 	fn create(
 		owner: &AccountId,
 		did_address: &AccountId,
