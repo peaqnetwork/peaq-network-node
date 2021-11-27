@@ -212,6 +212,11 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-10'
 version = '4.0.0-dev'
 
+[dependencies.peaq-did]
+default-features = false
+path = '../pallets/peaq-did'
+version = '0.0.1'
+
 [dependencies.pallet-multisig]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
@@ -265,4 +270,5 @@ std = [
     'pallet-contracts/std',
     'pallet-contracts-primitives/std',
     'pallet-contracts-rpc-runtime-api/std',
+    'peaq-did/std',
 ]

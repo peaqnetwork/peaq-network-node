@@ -26,10 +26,10 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{KeyOwnerProofSystem, Randomness, StorageInfo, Nothing},
+	traits::{KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight, DispatchClass
+		DispatchClass, IdentityFee, Weight,
 	},
 	StorageValue,
 };
@@ -42,6 +42,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
 // pub use pallet_template;
+pub use peaq_did;
 
 pub use pallet_transaction;
 
@@ -126,16 +127,14 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-
 // Contracts price units.
 pub const MILLICENTS: Balance = 1_000_000_000;
 pub const CENTS: Balance = 1_000 * MILLICENTS;
 pub const DOLLARS: Balance = 100 * CENTS;
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
-    items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
-
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -159,7 +158,6 @@ parameter_types! {
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
-	
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -246,7 +244,6 @@ impl pallet_grandpa::Config for Runtime {
 	type WeightInfo = ();
 	type MaxAuthorities = MaxAuthorities;
 }
-
 
 // For ink
 parameter_types! {
@@ -337,6 +334,13 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+/// Config the did in pallets/did
+impl peaq_did::Config for Runtime {
+	type Event = Event;
+	type Public = sp_runtime::MultiSigner;
+	type Signature = Signature;
+	type Time = pallet_timestamp::Pallet<Runtime>;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -354,6 +358,8 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
+		// Include the custom pallets
+		PeaqDid: peaq_did::{Pallet, Call, Storage, Event<T>},
 		Transaction: pallet_transaction::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
 	}
@@ -601,6 +607,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			add_benchmark!(params, batches, peaq_did, Timestamp);
 			// add_benchmark!(params, batches, pallet_multisig, MultiSig);
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
 			// add_benchmark!(params, batches, pallet_transaction, TransactionModule);
