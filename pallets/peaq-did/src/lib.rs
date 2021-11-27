@@ -98,7 +98,7 @@ pub mod pallet {
 	pub(super) type AttributeStore<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		(T::AccountId, [u8; 32]),
+		[u8; 32],
 		Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>,
 		ValueQuery,
 	>;
@@ -191,7 +191,7 @@ pub mod pallet {
 			// https://docs.substrate.io/v3/runtime/origins
 			ensure_signed(origin)?;
 
-			let attribute = Self::read(&owner, &did_account, &name);
+			let attribute = Self::read(&did_account, &name);
 			match attribute {
 				Some(attribute) => {
 					Self::deposit_event(Event::AttributeRead(attribute));
@@ -240,10 +240,10 @@ pub mod pallet {
 			valid_for: Option<T::BlockNumber>,
 		) -> Result<(), DidError> {
 			// Generate id for integrity check
-			let id = (&owner, &did_account, name).using_encoded(blake2_256);
+			let id = (&did_account, name).using_encoded(blake2_256);
 
 			// Check if attribute already exists
-			if <AttributeStore<T>>::contains_key((&owner, &id)) {
+			if <AttributeStore<T>>::contains_key(&id) {
 				return Err(DidError::AlreadyExist);
 			}
 
@@ -263,7 +263,7 @@ pub mod pallet {
 				created: now_timestamp,
 			};
 
-			<AttributeStore<T>>::insert((&owner, &id), new_attribute);
+			<AttributeStore<T>>::insert(&id, new_attribute);
 
 			Ok(())
 		}
@@ -285,15 +285,15 @@ pub mod pallet {
 			};
 
 			// Get attribute
-			let attribute = Self::read(owner, did_address, name);
+			let attribute = Self::read(did_address, name);
 
 			match attribute {
 				Some(mut attr) => {
-					let id = (&owner, name, did_address).using_encoded(blake2_256);
+					let id = (did_address, name).using_encoded(blake2_256);
 					attr.value = (&value).to_vec();
 					attr.validity = validity;
 
-					<AttributeStore<T>>::mutate((&owner, &id), |a| *a = attr);
+					<AttributeStore<T>>::mutate(&id, |a| *a = attr);
 					Ok(())
 				}
 				None => Err(DidError::NotFound),
@@ -302,14 +302,13 @@ pub mod pallet {
 
 		// Fetch an attribute from a did
 		fn read(
-			owner: &T::AccountId,
 			did_address: &T::AccountId,
 			name: &[u8],
 		) -> Option<Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>> {
-			let id = (&owner, did_address, name).using_encoded(blake2_256);
+			let id = (did_address, name).using_encoded(blake2_256);
 
-			if <AttributeStore<T>>::contains_key((&owner, &id)) {
-				return Some(Self::attribute_of((&owner, &id)));
+			if <AttributeStore<T>>::contains_key(&id) {
+				return Some(Self::attribute_of(&id));
 			}
 			None
 		}
@@ -320,12 +319,12 @@ pub mod pallet {
 			did_address: &T::AccountId,
 			name: &[u8],
 		) -> Result<(), DidError> {
-			let id = (&owner, did_address, name).using_encoded(blake2_256);
+			let id = (did_address, name).using_encoded(blake2_256);
 
-			if !<AttributeStore<T>>::contains_key((&owner, &id)) {
+			if !<AttributeStore<T>>::contains_key(&id) {
 				return Err(DidError::NotFound);
 			}
-			<AttributeStore<T>>::remove((&owner, &id));
+			<AttributeStore<T>>::remove(&id);
 			Ok(())
 		}
 	}
