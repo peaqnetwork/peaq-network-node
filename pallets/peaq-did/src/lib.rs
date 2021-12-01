@@ -260,7 +260,7 @@ pub mod pallet {
 			valid_for: Option<T::BlockNumber>,
 		) -> Result<(), DidError> {
 			// Generate id for integrity check
-			let id = (&did_account, name).using_encoded(blake2_256);
+			let id = Self::get_hashed_key_for_attr(&did_account, &name);
 
 			// Check if attribute already exists
 			if <AttributeStore<T>>::contains_key(&id) {
@@ -322,7 +322,9 @@ pub mod pallet {
 
 			match attribute {
 				Some(mut attr) => {
-					let id = (did_account, name).using_encoded(blake2_256);
+
+					let id = Self::get_hashed_key_for_attr(&did_account, &name);
+
 					attr.value = (&value).to_vec();
 					attr.validity = validity;
 
@@ -338,8 +340,9 @@ pub mod pallet {
 			did_account: &T::AccountId,
 			name: &[u8],
 		) -> Option<Attribute<T::BlockNumber, <<T as Config>::Time as MomentTime>::Moment>> {
-			let id = (did_account, name).using_encoded(blake2_256);
 
+			let id = Self::get_hashed_key_for_attr(&did_account, &name);
+			
 			if <AttributeStore<T>>::contains_key(&id) {
 				return Some(Self::attribute_of(&id));
 			}
@@ -360,13 +363,24 @@ pub mod pallet {
 				_ => (),
 			}
 
-			let id = (did_account, name).using_encoded(blake2_256);
+			let id = Self::get_hashed_key_for_attr(&did_account, &name);
 
 			if !<AttributeStore<T>>::contains_key(&id) {
 				return Err(DidError::NotFound);
 			}
 			<AttributeStore<T>>::remove(&id);
 			Ok(())
+		}
+
+		fn get_hashed_key_for_attr(
+			did_account: &T::AccountId,
+			name: &[u8]
+		) -> [u8; 32] {
+
+			let mut bytes_in_name: Vec<u8> = name.to_vec();
+			let mut bytes_to_hash: Vec<u8> = did_account.encode().as_slice().to_vec();
+			bytes_to_hash.append(&mut bytes_in_name);
+			blake2_256(&bytes_to_hash[..])
 		}
 	}
 }

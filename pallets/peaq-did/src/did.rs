@@ -27,4 +27,5 @@ pub trait Did<AccountId, BlockNumber, Moment> {
 	) -> Result<(), DidError>;
 	fn read(did_address: &AccountId, name: &[u8]) -> Option<Attribute<BlockNumber, Moment>>;
 	fn delete(owner: &AccountId, did_address: &AccountId, name: &[u8]) -> Result<(), DidError>;
+	fn get_hashed_key_for_attr(did_account: &AccountId, name: &[u8]) -> [u8; 32];
 }
