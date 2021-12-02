@@ -1,5 +1,7 @@
 use crate::{mock::*, Error};
 use frame_support::{assert_noop, assert_ok};
+use hex_literal::hex;
+use crate::did::Did;
 
 #[test]
 fn add_attribute_test() {
@@ -151,5 +153,22 @@ fn remove_attribute_test() {
 			PeaqDID::remove_attribute(Origin::signed(origin), did_account, b"name".to_vec()),
 			Error::<Test>::AttributeNotFound
 		);
+	});
+}
+
+#[test]
+fn hashed_key_correctness_test() {
+	
+	new_test_ext().execute_with(||{
+
+		let did_account = sp_core::sr25519::Public::from_raw(
+			hex!("6031188a7c447201a20c044b5e93a6857683a0186a2e02c799974c94a6e4331d"));
+		let name = b"id";
+		let expected_result = hex!("01621935bef7de2129d77df46f9fc533054dbc82b03df3f4f0ac1ebeab878919");
+
+		assert_eq!(PeaqDID::get_hashed_key_for_attr(
+			&did_account,
+			&name[..]
+		), expected_result)
 	});
 }

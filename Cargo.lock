@@ -4236,6 +4236,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
