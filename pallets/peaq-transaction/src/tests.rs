@@ -1,9 +1,9 @@
-use crate as pallet_transaction;
+use crate as peaq_transaction;
 use crate::mock::*;
 use frame_support::assert_ok;
 use sp_io::hashing::blake2_256;
 
-fn now() -> pallet_transaction::Timepoint<u64> {
+fn now() -> peaq_transaction::Timepoint<u64> {
 	TransactionModule::now()
 }
 
@@ -13,7 +13,7 @@ fn service_requested_success() {
 		// Dispatch a signed extrinsic.
 		assert_ok!(TransactionModule::service_requested(Origin::signed(1), 2, 42));
 		System::assert_last_event(
-			pallet_transaction::Event::ServiceRequested {
+			peaq_transaction::Event::ServiceRequested {
 				consumer: 1,
 				provider: 2,
 				token_deposited: 42,
@@ -34,7 +34,7 @@ fn service_delivered_success() {
 			Origin::signed(1), 2, 42, tx_hash, timepoint, hash));
 
 		System::assert_last_event(
-			pallet_transaction::Event::ServiceDelivered {
+			peaq_transaction::Event::ServiceDelivered {
 				provider: 1,
 				consumer: 2,
 				token_num: 42,

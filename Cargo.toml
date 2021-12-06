@@ -6,5 +6,6 @@ members = [
     'node',
     'pallets/template',
     'pallets/peaq-did',
+    'pallets/peaq-transaction',
     'runtime',
 ]

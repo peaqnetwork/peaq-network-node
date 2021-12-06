@@ -17,10 +17,10 @@ default-features = false
 path = '../pallets/template'
 version = '3.0.0-monthly-2021-10'
 
-[dependencies.pallet-transaction]
+[dependencies.peaq-transaction]
 default-features = false
-path = '../pallets/transaction'
-version = '0.0.1-monthly-2021-11'
+path = '../pallets/peaq-transaction'
+version = '0.0.1'
 
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
@@ -233,7 +233,7 @@ runtime-benchmarks = [
     'hex-literal',
     'pallet-balances/runtime-benchmarks',
     'pallet-template/runtime-benchmarks',
-    'pallet-transaction/runtime-benchmarks',
+    'peaq-transaction/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'pallet-contracts/runtime-benchmarks',
@@ -251,7 +251,6 @@ std = [
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-template/std',
-    'pallet-transaction/std',
     'pallet-timestamp/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-transaction-payment/std',
@@ -271,4 +270,5 @@ std = [
     'pallet-contracts-primitives/std',
     'pallet-contracts-rpc-runtime-api/std',
     'peaq-did/std',
+    'peaq-transaction/std',
 ]
