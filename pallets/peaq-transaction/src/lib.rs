@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod structs;
+
 pub use pallet::*;
 
 #[cfg(test)]
@@ -17,28 +19,7 @@ pub mod pallet {
 	use frame_support::traits::{Currency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
 	use frame_system::{self as system};
-	use scale_info::TypeInfo;
-
-	// [TODO] Maybe it's worthy to move as a config
-	type CallHash = [u8; 32];
-
-	// It's the same as multi-sig
-	// However, I don't want to import it, so just duplicated
-	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
-	pub struct Timepoint<BlockNumber> {
-		/// The height of the chain at the point in time.
-		height: BlockNumber,
-		/// The index of the extrinsic at the point in time.
-		index: u32,
-	}
-
-	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
-	pub struct DeliveredInfo<Balance, Hash, BlockNumber> {
-		pub token_num: Balance,
-		pub tx_hash: Hash,
-		pub time_point: Timepoint<BlockNumber>,
-		pub call_hash: CallHash,
-	}
+	use crate::structs::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]

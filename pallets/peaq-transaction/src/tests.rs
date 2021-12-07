@@ -2,8 +2,9 @@ use crate as peaq_transaction;
 use crate::mock::*;
 use frame_support::assert_ok;
 use sp_io::hashing::blake2_256;
+use crate::structs::*;
 
-fn now() -> peaq_transaction::Timepoint<u64> {
+fn now() -> Timepoint<u64> {
 	TransactionModule::now()
 }
 
@@ -26,13 +27,13 @@ fn service_requested_success() {
 #[test]
 fn service_delivered_success() {
 	new_test_ext().execute_with(|| {
-		let refund_info = peaq_transaction::DeliveredInfo {
+		let refund_info = DeliveredInfo {
 			token_num: 25,
 			tx_hash: blake2_256(b"refund tx hash").into(),
 			time_point: now(),
 			call_hash: blake2_256(b"refund call hash"),
 		};
-		let spent_info = peaq_transaction::DeliveredInfo {
+		let spent_info = DeliveredInfo {
 			token_num: 20,
 			tx_hash: blake2_256(b"spent tx hash").into(),
 			time_point: now(),
