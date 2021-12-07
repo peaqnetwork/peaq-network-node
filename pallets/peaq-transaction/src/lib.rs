@@ -32,6 +32,14 @@ pub mod pallet {
 		index: u32,
 	}
 
+	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+	pub struct DeliveredInfo<Balance, Hash, BlockNumber> {
+		pub token_num: Balance,
+		pub tx_hash: Hash,
+		pub time_point: Timepoint<BlockNumber>,
+		pub call_hash: CallHash,
+	}
+
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -64,10 +72,8 @@ pub mod pallet {
 		ServiceDelivered {
 			provider: T::AccountId,
 			consumer: T::AccountId,
-			token_num: BalanceOf<T>,
-			tx_hash: T::Hash,
-			time_point: Timepoint<T::BlockNumber>,
-			call_hash: CallHash,
+			refund_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>,
+			spent_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>,
 		},
 	}
 
@@ -103,10 +109,8 @@ pub mod pallet {
 		pub fn service_delivered(
 			origin: OriginFor<T>,
 			consumer: T::AccountId,
-			token_num: BalanceOf<T>,
-			tx_hash: T::Hash,
-			time_point: Timepoint<T::BlockNumber>,
-			call_hash: CallHash) -> DispatchResult {
+			refund_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>,
+			spent_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// [TODO] We can check wehther the tx is the same as the timepoint
@@ -115,10 +119,8 @@ pub mod pallet {
 			Self::deposit_event(Event::ServiceDelivered{
 				provider: who,
 				consumer,
-				token_num,
-				tx_hash,
-				time_point,
-				call_hash,
+				refund_info,
+				spent_info,
 			});
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
