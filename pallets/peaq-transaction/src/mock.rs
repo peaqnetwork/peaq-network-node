@@ -1,4 +1,4 @@
-use crate as pallet_transaction;
+use crate as peaq_transaction;
 
 use frame_support::parameter_types;
 use frame_system as system;
@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionModule: pallet_transaction::{Pallet, Call, Storage, Event<T>},
+		TransactionModule: peaq_transaction::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -71,7 +71,7 @@ impl pallet_balances::Config for Test {
     type WeightInfo = ();
 }
 
-impl pallet_transaction::Config for Test {
+impl peaq_transaction::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 }

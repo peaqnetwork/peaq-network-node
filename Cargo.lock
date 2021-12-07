@@ -3966,21 +3966,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-transaction"
-version = "0.0.1-monthly-2021-11"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-transaction-payment"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?tag=monthly-2021-10#bf9683eee40f82cc4e01a05cd375b0e8bba3c8ef"
@@ -4309,11 +4294,11 @@ dependencies = [
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
- "pallet-transaction",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "peaq-did",
+ "peaq-transaction",
  "scale-info",
  "sp-api",
  "sp-block-builder",
@@ -4327,6 +4312,21 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+]
+
+[[package]]
+name = "peaq-transaction"
+version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
