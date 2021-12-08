@@ -2,8 +2,9 @@ use crate as peaq_transaction;
 use crate::mock::*;
 use frame_support::assert_ok;
 use sp_io::hashing::blake2_256;
+use crate::structs::*;
 
-fn now() -> peaq_transaction::Timepoint<u64> {
+fn now() -> Timepoint<u64> {
 	TransactionModule::now()
 }
 
@@ -26,21 +27,28 @@ fn service_requested_success() {
 #[test]
 fn service_delivered_success() {
 	new_test_ext().execute_with(|| {
-		let hash = blake2_256(b"call hash");
-		let tx_hash = blake2_256(b"tx hash").into();
-		let timepoint = now();
+		let refund_info = DeliveredInfo {
+			token_num: 25,
+			tx_hash: blake2_256(b"refund tx hash").into(),
+			time_point: now(),
+			call_hash: blake2_256(b"refund call hash"),
+		};
+		let spent_info = DeliveredInfo {
+			token_num: 20,
+			tx_hash: blake2_256(b"spent tx hash").into(),
+			time_point: now(),
+			call_hash: blake2_256(b"spent call hash"),
+		};
 
 		assert_ok!(TransactionModule::service_delivered(
-			Origin::signed(1), 2, 42, tx_hash, timepoint, hash));
+			Origin::signed(1), 2, refund_info.clone(), spent_info.clone()));
 
 		System::assert_last_event(
 			peaq_transaction::Event::ServiceDelivered {
 				provider: 1,
 				consumer: 2,
-				token_num: 42,
-				tx_hash: tx_hash,
-				time_point: timepoint,
-				call_hash: hash,
+				refund_info: refund_info.clone(),
+				spent_info: spent_info.clone(),
 			}
 			.into(),
 		);

@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod structs;
+
 pub use pallet::*;
 
 #[cfg(test)]
@@ -17,20 +19,7 @@ pub mod pallet {
 	use frame_support::traits::{Currency, ReservableCurrency};
 	use frame_system::pallet_prelude::*;
 	use frame_system::{self as system};
-	use scale_info::TypeInfo;
-
-	// [TODO] Maybe it's worthy to move as a config
-	type CallHash = [u8; 32];
-
-	// It's the same as multi-sig
-	// However, I don't want to import it, so just duplicated
-	#[derive(Copy, Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
-	pub struct Timepoint<BlockNumber> {
-		/// The height of the chain at the point in time.
-		height: BlockNumber,
-		/// The index of the extrinsic at the point in time.
-		index: u32,
-	}
+	use crate::structs::*;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -64,10 +53,8 @@ pub mod pallet {
 		ServiceDelivered {
 			provider: T::AccountId,
 			consumer: T::AccountId,
-			token_num: BalanceOf<T>,
-			tx_hash: T::Hash,
-			time_point: Timepoint<T::BlockNumber>,
-			call_hash: CallHash,
+			refund_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>,
+			spent_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>,
 		},
 	}
 
@@ -103,10 +90,8 @@ pub mod pallet {
 		pub fn service_delivered(
 			origin: OriginFor<T>,
 			consumer: T::AccountId,
-			token_num: BalanceOf<T>,
-			tx_hash: T::Hash,
-			time_point: Timepoint<T::BlockNumber>,
-			call_hash: CallHash) -> DispatchResult {
+			refund_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>,
+			spent_info: DeliveredInfo<BalanceOf<T>, T::Hash, T::BlockNumber>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// [TODO] We can check wehther the tx is the same as the timepoint
@@ -115,10 +100,8 @@ pub mod pallet {
 			Self::deposit_event(Event::ServiceDelivered{
 				provider: who,
 				consumer,
-				token_num,
-				tx_hash,
-				time_point,
-				call_hash,
+				refund_info,
+				spent_info,
 			});
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
