@@ -1,15 +1,15 @@
 use hex_literal::hex;
 use peaq_node_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_network::config::MultiaddrWithPeerId;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H160, U256};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::str::FromStr;
+use std::{collections::BTreeMap, str::FromStr};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -167,21 +167,52 @@ fn testnet_genesis(
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 		},
 		grandpa: GrandpaConfig {
-			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+			authorities: initial_authorities
+				.iter()
+				.map(|x| (x.1.clone(), 1))
+				.collect(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: root_key,
 		},
+		evm: EVMConfig {
+			accounts: {
+				let mut map = BTreeMap::new();
+				map.insert(
+					// H160 address of Alice dev account
+					// Derived from SS58 (42 prefix) address
+					// SS58: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+					// hex: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+					// Using the full hex key, truncating to the first 20 bytes (the first 40 hex chars)
+					H160::from_str("d43593c715fdd31c61141abd04a99fd6822c8558")
+						.expect("internal H160 is valid; qed"),
+					pallet_evm::GenesisAccount {
+						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+							.expect("internal U256 is valid; qed"),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
+					},
+				);
+				map
+			},
+		},
+		ethereum: EthereumConfig {},
+		dynamic_fee: Default::default(),
+		base_fee: Default::default(),
 	}
 }

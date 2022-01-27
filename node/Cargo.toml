@@ -1,10 +1,10 @@
 [package]
 name = 'peaq-node'
-version = '3.0.0-monthly-2021-10'
+version = '3.0.0-polkadot-v0.9.13'
 description = 'A node of the peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
-edition = '2018'
+edition = '2021'
 license = 'Unlicense'
 publish = false
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
@@ -17,175 +17,246 @@ name = 'peaq-node'
 targets = ['x86_64-unknown-linux-gnu']
 
 [build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '3.0.0'
 
 [dependencies.peaq-node-runtime]
 path = '../runtime'
-version = '3.0.0-monthly-2021-10'
+version = '3.0.0-polkadot-v0.9.13'
 
 [dependencies]
+structopt = "0.3.8"
+async-trait = "0.1"
+jsonrpc-pubsub = "18.0.0"
+futures = "0.3"
+log = "0.4.8"
+
 jsonrpc-core = '18.0.0'
-structopt = '0.3.8'
 
 [dependencies.frame-benchmarking]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.frame-benchmarking-cli]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.pallet-transaction-payment-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-basic-authorship]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-cli]
 features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-client-api]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-executor]
 features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-keystore]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-rpc-api]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-service]
 features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sc-telemetry]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-transaction-pool-api]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-api]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-block-builder]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-blockchain]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sp-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.sp-core]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-runtime]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sp-timestamp]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.substrate-frame-rpc-system]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
+
+[dependencies.sp-inherents]
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 
 [dependencies.pallet-contracts]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.pallet-contracts-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 [dependencies.sc-network]
-git = 'https://github.com/paritytech/substrate.git'
-tag = 'monthly-2021-10'
+git = 'https://github.com/purestake/substrate'
+branch = 'moonbeam-polkadot-v0.9.13'
 version = '0.10.0-dev'
 
 [dependencies.hex-literal]
 version = '0.3.3'
 
+
+# EVM
+[dependencies.fc-consensus]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+
+[dependencies.fc-db]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+
+[dependencies.fc-mapping-sync]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+
+[dependencies.fc-rpc]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+features = [ "rpc_binary_search_estimate" ]
+
+[dependencies.fc-rpc-core]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+
+[dependencies.fp-consensus]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+
+[dependencies.fp-rpc]
+git = "https://github.com/purestake/frontier"
+rev = '7927173a7'
+
+[dependencies.pallet-base-fee]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
+
+[dependencies.pallet-dynamic-fee]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
+
+[dependencies.pallet-ethereum]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
+
+[dependencies.pallet-evm]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
+
+
+[dependencies.sc-consensus-manual-seal]
+default-features = false
+git = 'https://github.com/purestake/substrate'
+branch = "moonbeam-polkadot-v0.9.13"
+
+
 [features]
-default = []
-runtime-benchmarks = ['peaq-node-runtime/runtime-benchmarks']
+default = ['aura']
+aura = ["peaq-node-runtime/aura"]
+manual-seal = ["peaq-node-runtime/manual-seal"]
+runtime-benchmarks = [
+	'peaq-node-runtime/runtime-benchmarks',
+]
