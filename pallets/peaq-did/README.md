@@ -1,10 +1,64 @@
 
-# Peaq DID
+# Peaq Pallet DID
 
 #### Introduction
 The peaq DID standard supports machines to discover each other, carry out transactions, verify claims, preserve privacy and  remain sovereign.
 
 A core value proposition of peaq DID is the standardization of machine interaction through a consortium of diverse industry leaders in a self sovereign world by providing standard interfaces for discovery which allows two participants to successfully engage in a transaction.
+
+#### Installation
+* Import the pallet dependecies by adding below snippets to your `runtime/src/Cargo.toml` file.
+```
+# --snip--
+
+[dependencies.peaq-pallet-did]
+default-features = false
+git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+version = '0.0.1'
+
+# --snip--
+
+[features]
+default = ['std']
+runtime-benchmarks = [
+  # --snip--
+  'peaq-pallet-did/runtime-benchmarks',
+]
+std = [
+  'peaq-pallet-did/std',
+  # --snip--
+]
+```
+
+* Implement peaq did pallet on your runtime by adding below snippets to `runtime/src/lib.rs` file.
+```
+# --snip--
+
+pub use peaq_pallet_did;
+
+# --snip--
+
+/// Config the did in pallets/did
+impl peaq_pallet_did::Config for Runtime {
+	type Event = Event;
+	type Public = sp_runtime::MultiSigner;
+	type Signature = Signature;
+	type Time = pallet_timestamp::Pallet<Runtime>;
+}
+```
+
+* Add PeaqDid parameter type to the runtime construct on your `runtime/src/lib.rs` file using below snippet.
+```
+# --snip--
+PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
+# --snip--
+```
+
+### Usage
+* After installation, build your node
+* Run and connect your node to Polkadorjs App
+* Check for `PeaqDid` under `developer - Extrinsics` tab.
+
 
 ### Peaq DID Format
 The peaq DID method shall be identified by the method name peaq in lower case and follow the below given format
@@ -37,7 +91,7 @@ This version of the MVP will involve creating a DID Pallet that has Four Extrins
 * Dispatch error if it doesn't exists
 * Owner can only remove attributes they own.
 
-For the purpose of simplicity and MVP v1 requirements, Authentication and Authorization was noot added in this version. We are trying to create a foundation where more features like the ones mentioned above can be implemented on different iterations. We are proposing two type of DID-documents with different attributes although no restrictions on this current version but just to reference minimum attributes required on different types of DID. The following schema is defined based on our current use-cases.
+For the purpose of simplicity and MVP v1 requirements, Authentication and Authorization was not added in this version. We are trying to create a foundation where more features like those mentioned above can be implemented on different iterations. We are proposing two type of DID-documents with different attributes although no restrictions on this current version but just to reference minimum attributes required on different types of DID. The following schema is defined based on our current use-cases.
 
 ### Consumer DID
 ```
