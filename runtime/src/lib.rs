@@ -42,7 +42,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 /// Import the template pallet.
 // pub use pallet_template;
-pub use peaq_did;
+pub use peaq_pallet_did;
 
 pub use peaq_transaction;
 
@@ -335,7 +335,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 /// Config the did in pallets/did
-impl peaq_did::Config for Runtime {
+impl peaq_pallet_did::Config for Runtime {
 	type Event = Event;
 	type Public = sp_runtime::MultiSigner;
 	type Signature = Signature;
@@ -359,7 +359,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
 		// Include the custom pallets
-		PeaqDid: peaq_did::{Pallet, Call, Storage, Event<T>},
+		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
 		Transaction: peaq_transaction::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
 	}
@@ -607,7 +607,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, peaq_did, Timestamp);
+			add_benchmark!(params, batches, peaq_pallet_did, Timestamp);
 			// add_benchmark!(params, batches, pallet_multisig, MultiSig);
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
 			// add_benchmark!(params, batches, peaq_transaction, TransactionModule);
@@ -617,7 +617,6 @@ impl_runtime_apis! {
 		}
 	}
 }
-
 
 impl peaq_transaction::Config for Runtime {
 	type Event = Event;

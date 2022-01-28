@@ -3934,20 +3934,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-template"
-version = "3.0.0-monthly-2021-10"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?tag=monthly-2021-10#bf9683eee40f82cc4e01a05cd375b0e8bba3c8ef"
@@ -4215,23 +4201,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-did"
-version = "0.0.1"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "peaq-node"
 version = "3.0.0-monthly-2021-10"
 dependencies = [
@@ -4292,12 +4261,11 @@ dependencies = [
  "pallet-multisig",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
- "pallet-template",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
- "peaq-did",
+ "peaq-pallet-did",
  "peaq-transaction",
  "scale-info",
  "sp-api",
@@ -4312,6 +4280,23 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+]
+
+[[package]]
+name = "peaq-pallet-did"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?tag=initial-2022-01#8d89788c04cdaf9ac8ec30f41bea2e2d0f3abd0b"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
