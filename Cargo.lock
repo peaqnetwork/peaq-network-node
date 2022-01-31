@@ -4266,7 +4266,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "peaq-pallet-did",
- "peaq-transaction",
+ "peaq-pallet-transaction",
  "scale-info",
  "sp-api",
  "sp-block-builder",
@@ -4300,8 +4300,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-transaction"
+name = "peaq-pallet-transaction"
 version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?tag=initial-2022-01#e6b6f05e7ce0cee4fdd4de14b1a48dc82b2b6437"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
