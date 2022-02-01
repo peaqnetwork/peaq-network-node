@@ -44,7 +44,7 @@ pub use sp_runtime::{Perbill, Permill};
 // pub use pallet_template;
 pub use peaq_pallet_did;
 
-pub use peaq_transaction;
+pub use peaq_pallet_transaction;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -360,7 +360,7 @@ construct_runtime!(
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
-		Transaction: peaq_transaction::{Pallet, Call, Storage, Event<T>},
+		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -610,7 +610,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, peaq_pallet_did, Timestamp);
 			// add_benchmark!(params, batches, pallet_multisig, MultiSig);
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
-			// add_benchmark!(params, batches, peaq_transaction, TransactionModule);
+			// add_benchmark!(params, batches, peaq_pallet_transaction, TransactionModule);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -618,7 +618,7 @@ impl_runtime_apis! {
 	}
 }
 
-impl peaq_transaction::Config for Runtime {
+impl peaq_pallet_transaction::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 }

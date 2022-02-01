@@ -12,11 +12,6 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-[dependencies.peaq-transaction]
-default-features = false
-path = '../pallets/peaq-transaction'
-version = '0.0.1'
-
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-10'
@@ -213,6 +208,13 @@ git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
 tag = 'initial-2022-01'
 version = '0.0.1'
 
+[dependencies.peaq-pallet-transaction]
+default-features = false
+git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
+tag = 'initial-2022-01'
+version = '0.0.1'
+
+
 [dependencies.pallet-multisig]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
@@ -228,7 +230,6 @@ runtime-benchmarks = [
     'frame-system/runtime-benchmarks',
     'hex-literal',
     'pallet-balances/runtime-benchmarks',
-    'peaq-transaction/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'pallet-contracts/runtime-benchmarks',
@@ -264,5 +265,5 @@ std = [
     'pallet-contracts-primitives/std',
     'pallet-contracts-rpc-runtime-api/std',
     'peaq-pallet-did/std',
-    'peaq-transaction/std',
+    'peaq-pallet-transaction/std',
 ]
