@@ -91,7 +91,7 @@ where
 	})
 }
 
-/// Instantiate all Full RPC extensions.
+/// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
@@ -136,8 +136,6 @@ where
 		fee_history_limit,
 		fee_history_cache,
 		enable_dev_signer,
-		// overrides,
-		// block_data_cache,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
