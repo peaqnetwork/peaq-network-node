@@ -229,8 +229,7 @@ branch = 'moonbeam-polkadot-v0.9.13'
 version = '4.0.0-dev'
 
 
-# ### Frontier
-# [TODO] 
+# ### Ethereum
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/purestake/substrate'
@@ -286,7 +285,6 @@ rev = '7927173a7'
 # git = 'https://github.com/purestake/frontier'
 # rev = '7927173a7'
 
-# [TODO] Why in moonbeam/frontier it doesn't inside the features?
 [dependencies.pallet-evm-precompile-modexp]
 default-features = false
 git = 'https://github.com/purestake/frontier'
