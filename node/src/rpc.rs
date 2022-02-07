@@ -22,7 +22,9 @@ use sc_service::TransactionPool;
 use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_blockchain::{
+	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata
+};
 use sp_runtime::traits::BlakeTwo256;
 
 //For ink! contracts
@@ -108,9 +110,11 @@ where
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
+	BE::Blockchain: BlockchainBackend<Block>,
 	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 {
 	use fc_rpc::{
@@ -163,7 +167,7 @@ where
 		client.clone(),
 		pool.clone(),
 		graph,
-		peaq_node_runtime::TransactionConverter,
+		Some(peaq_node_runtime::TransactionConverter),
 		network.clone(),
 		signers,
 		overrides.clone(),

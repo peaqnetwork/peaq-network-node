@@ -238,67 +238,67 @@ branch = 'moonbeam-polkadot-v0.9.13'
 [dependencies.fp-evm]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fp-rpc]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fp-self-contained]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-base-fee]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-dynamic-fee]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-ethereum]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm-precompile-blake2]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm-precompile-bn128]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm-precompile-dispatch]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm-precompile-modexp]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm-precompile-sha3fips]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm-precompile-simple]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 
 [features]

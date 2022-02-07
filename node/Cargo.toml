@@ -199,52 +199,52 @@ version = '0.3.3'
 # EVM
 [dependencies.fc-consensus]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fc-db]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fc-mapping-sync]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fc-rpc]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 features = [ "rpc_binary_search_estimate" ]
 
 [dependencies.fc-rpc-core]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fp-consensus]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.fp-rpc]
 git = "https://github.com/purestake/frontier"
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-base-fee]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-dynamic-fee]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-ethereum]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 [dependencies.pallet-evm]
 default-features = false
 git = 'https://github.com/purestake/frontier'
-rev = '7927173a7'
+branch = 'moonbeam-polkadot-v0.9.13'
 
 
 [dependencies.sc-consensus-manual-seal]
