@@ -54,7 +54,8 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 mod precompiles;
-use precompiles::FrontierPrecompiles;
+pub use precompiles::PeaqPrecompiles;
+pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
@@ -386,7 +387,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 parameter_types! {
 	pub const ChainId: u64 = 9999;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
+	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 }
 
 impl pallet_evm::Config for Runtime {
@@ -399,7 +400,7 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = FrontierPrecompiles<Self>;
+	type PrecompilesType = PeaqPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;

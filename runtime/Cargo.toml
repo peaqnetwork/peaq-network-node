@@ -270,20 +270,20 @@ default-features = false
 git = 'https://github.com/purestake/frontier'
 rev = '7927173a7'
 
-# [dependencies.pallet-evm-precompile-blake2]
-# default-features = false
-# git = 'https://github.com/purestake/frontier'
-# rev = '7927173a7'
+[dependencies.pallet-evm-precompile-blake2]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
 
-# [dependencies.pallet-evm-precompile-bn128]
-# default-features = false
-# git = 'https://github.com/purestake/frontier'
-# rev = '7927173a7'
+[dependencies.pallet-evm-precompile-bn128]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
 
-# [dependencies.pallet-evm-precompile-dispatch]
-# default-features = false
-# git = 'https://github.com/purestake/frontier'
-# rev = '7927173a7'
+[dependencies.pallet-evm-precompile-dispatch]
+default-features = false
+git = 'https://github.com/purestake/frontier'
+rev = '7927173a7'
 
 [dependencies.pallet-evm-precompile-modexp]
 default-features = false

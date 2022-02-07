@@ -1,7 +1,7 @@
 use hex_literal::hex;
 use peaq_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles,
 };
 use sc_network::config::MultiaddrWithPeerId;
 use sc_service::{ChainType, Properties};
@@ -163,6 +163,12 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+	// This is supposed the be the simplest bytecode to revert without returning any data.
+	// We will pre-deploy it under all of our precompiles to ensure they can be called from
+	// within contracts.
+	// (PUSH1 0x00 PUSH1 0x00 REVERT)
+	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
+
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -192,6 +198,18 @@ fn testnet_genesis(
 		evm: EVMConfig {
 			accounts: {
 				let mut map = BTreeMap::new();
+				for addr in Precompiles::used_addresses() {
+					map.insert(
+						addr,
+						pallet_evm::GenesisAccount {
+							nonce: Default::default(),
+							balance: Default::default(),
+							storage: Default::default(),
+							code: revert_bytecode.clone(),
+						}
+					);
+				}
+				// [TODO] We should remove it in the future
 				map.insert(
 					// H160 address of Alice dev account
 					// Derived from SS58 (42 prefix) address
