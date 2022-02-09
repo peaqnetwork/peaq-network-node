@@ -8,4 +8,4 @@ members = [
 ]
 
 [patch.crates-io]
-ethereum = { git = "https://github.com/purestake/ethereum", branch = "tgm-0.11.1-typeinfo-patch" }
+ethereum = { git = "https://github.com/peaqnetwork/ethereum", branch = "tgm-0.11.1-typeinfo-patch" }
