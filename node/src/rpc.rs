@@ -163,11 +163,22 @@ where
 
 	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
 
+	enum Never {}
+	impl<T> fp_rpc::ConvertTransaction<T> for Never {
+		fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
+			// The Never type is not instantiable, but this method requires the type to be
+			// instantiated to be called (`&self` parameter), so if the code compiles we have the
+			// guarantee that this function will never be called.
+			unreachable!()
+		}
+	}
+	let convert_transaction: Option<Never> = None;
+
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		graph,
-		Some(peaq_node_runtime::TransactionConverter),
+		convert_transaction,
 		network.clone(),
 		signers,
 		overrides.clone(),

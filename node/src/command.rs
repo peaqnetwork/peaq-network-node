@@ -127,6 +127,8 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
+		// ExportGenesisState and ExortGenesisWasm uses for Substrate-based Polkadot parachains,
+		// so won't porting it now.
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
@@ -134,7 +136,7 @@ pub fn run() -> sc_cli::Result<()> {
 				runner.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config))
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
-				     `--features runtime-benchmarks`."
+					 `--features runtime-benchmarks`."
 					.into()
 				)
 			}
@@ -147,3 +149,4 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 	}
 }
+//[TODO].... Subcommand::ExportGenesisState
