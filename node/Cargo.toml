@@ -17,8 +17,8 @@ name = 'peaq-node'
 targets = ['x86_64-unknown-linux-gnu']
 
 [build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '3.0.0'
 
 [dependencies.peaq-node-runtime]
@@ -35,161 +35,161 @@ log = "0.4.8"
 jsonrpc-core = '18.0.0'
 
 [dependencies.frame-benchmarking]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.frame-benchmarking-cli]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.pallet-transaction-payment-rpc]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-basic-authorship]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-cli]
 features = ['wasmtime']
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-client-api]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-consensus]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-consensus-aura]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-executor]
 features = ['wasmtime']
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-finality-grandpa]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-keystore]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-rpc]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-rpc-api]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-service]
 features = ['wasmtime']
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sc-telemetry]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-transaction-pool]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-transaction-pool-api]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sp-api]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sp-block-builder]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sp-blockchain]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sp-consensus]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sp-consensus-aura]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.sp-core]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.1.0-dev'
 
 [dependencies.sp-finality-grandpa]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sp-runtime]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.1.0-dev'
 
 [dependencies.sp-timestamp]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.substrate-frame-rpc-system]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sp-inherents]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 
 
 [dependencies.pallet-contracts]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.pallet-contracts-rpc]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '4.0.0-dev'
 
 [dependencies.sc-network]
-git = 'https://github.com/purestake/substrate'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.16'
 version = '0.10.0-dev'
 
 [dependencies.hex-literal]
@@ -198,59 +198,59 @@ version = '0.3.3'
 
 # EVM
 [dependencies.fc-consensus]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.fc-db]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.fc-mapping-sync]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.fc-rpc]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 features = [ "rpc_binary_search_estimate" ]
 
 [dependencies.fc-rpc-core]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.fp-consensus]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.fp-rpc]
-git = "https://github.com/purestake/frontier"
-branch = 'moonbeam-polkadot-v0.9.16'
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.pallet-base-fee]
 default-features = false
-git = 'https://github.com/purestake/frontier'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/frontier'
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.pallet-dynamic-fee]
 default-features = false
-git = 'https://github.com/purestake/frontier'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/frontier'
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.pallet-ethereum]
 default-features = false
-git = 'https://github.com/purestake/frontier'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/frontier'
+branch = 'peaq-polkadot-v0.9.16'
 
 [dependencies.pallet-evm]
 default-features = false
-git = 'https://github.com/purestake/frontier'
-branch = 'moonbeam-polkadot-v0.9.16'
+git = 'https://github.com/peaqnetwork/frontier'
+branch = 'peaq-polkadot-v0.9.16'
 
 
 [dependencies.sc-consensus-manual-seal]
 default-features = false
-git = 'https://github.com/purestake/substrate'
-branch = "moonbeam-polkadot-v0.9.16"
+git = 'https://github.com/peaqnetwork/substrate'
+branch = "peaq-polkadot-v0.9.16"
 
 
 [features]
