@@ -76,7 +76,6 @@ where
 	}
 
 	fn is_precompile(&self, address: H160) -> bool {
-		// Self::used_addresses().find(|x| x == &address).is_some()
 		Self::used_addresses().any(|x| x == address)
 	}
 }
