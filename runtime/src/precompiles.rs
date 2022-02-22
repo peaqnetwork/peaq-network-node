@@ -11,6 +11,15 @@ use pallet_evm_precompile_dispatch::Dispatch;
 
 pub struct PeaqPrecompiles<R>(PhantomData<R>);
 
+impl<R> Default for PeaqPrecompiles<R>
+where
+	R: pallet_evm::Config,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<R> PeaqPrecompiles<R>
 where
 	R: pallet_evm::Config,
@@ -24,7 +33,7 @@ where
 	pub fn used_addresses() -> impl Iterator<Item = H160> {
 		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 1024, 1025, 1026]
 			.into_iter()
-			.map(|x| hash(x))
+			.map(hash)
 	}
 
 }
@@ -67,7 +76,7 @@ where
 	}
 
 	fn is_precompile(&self, address: H160) -> bool {
-		Self::used_addresses().find(|x| x == &address).is_some()
+		Self::used_addresses().any(|x| x == address)
 	}
 }
 

@@ -75,6 +75,8 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		None,
 		// Protocol ID
 		None,
+		// Fork ID
+		None,
 		// Properties
 		Some(properties),
 		// Extensions
@@ -101,24 +103,44 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				// Initial PoA authorities
 				vec![
 					(
-						AuraId::from_slice(&hex!("c0a03ff255c2db2ddb33acc9885c3607eea411006cbe5cc1511c29762c8f8e0c")),
-						GrandpaId::from_slice(&hex!("0c4f41c73ede92f54c621da69e434310d53b59c37b5f7148f23e33167115770b"))
+						AuraId::try_from(
+							&hex!("c0a03ff255c2db2ddb33acc9885c3607eea411006cbe5cc1511c29762c8f8e0c") as &[u8]
+						).unwrap(),
+						GrandpaId::try_from(
+							&hex!("0c4f41c73ede92f54c621da69e434310d53b59c37b5f7148f23e33167115770b") as &[u8]
+						).unwrap()
 					),
 					(
-						AuraId::from_slice(&hex!("3661f26abbaa07d7df01e4c1348457ad9ede2f96c14f271beef7da0faadbe532")),
-						GrandpaId::from_slice(&hex!("69b44ae0c55c8284a4157141dc6bed6ea2d1e9d5b16a88b715a0dfada1659faa"))
+						AuraId::try_from(
+							&hex!("3661f26abbaa07d7df01e4c1348457ad9ede2f96c14f271beef7da0faadbe532") as &[u8]
+						).unwrap(),
+						GrandpaId::try_from(
+							&hex!("69b44ae0c55c8284a4157141dc6bed6ea2d1e9d5b16a88b715a0dfada1659faa") as &[u8]
+						).unwrap()
 					),
 					(
-						AuraId::from_slice(&hex!("243d9dacf4835501479ec16b3a3c44661ee967b26de75dfeb3af2c8660e0f80a")),
-						GrandpaId::from_slice(&hex!("8107c34c8f6a5f968a5311c9911d92d78432d03be8f9bf7ed913cc089b3c6db1"))
+						AuraId::try_from(
+							&hex!("243d9dacf4835501479ec16b3a3c44661ee967b26de75dfeb3af2c8660e0f80a") as &[u8]
+						).unwrap(),
+						GrandpaId::try_from(
+							&hex!("8107c34c8f6a5f968a5311c9911d92d78432d03be8f9bf7ed913cc089b3c6db1") as &[u8]
+						).unwrap()
 					),
 					(
-						AuraId::from_slice(&hex!("dc2318d3925aa5cb69f47219f31480a73d709ffaca323d06874f75fbed00e527")),
-						GrandpaId::from_slice(&hex!("1534240b466e40d055d67e1477f4fb4e04655d8405c7abe0e6d52844735c3e7d"))
+						AuraId::try_from(
+							&hex!("dc2318d3925aa5cb69f47219f31480a73d709ffaca323d06874f75fbed00e527") as &[u8]
+						).unwrap(),
+						GrandpaId::try_from(
+							&hex!("1534240b466e40d055d67e1477f4fb4e04655d8405c7abe0e6d52844735c3e7d") as &[u8]
+						).unwrap()
 					),
 					(
-						AuraId::from_slice(&hex!("920ff8bb3da346bdde5e1a43e05379651ef853df188499d53861cb2e221e1e6d")),
-						GrandpaId::from_slice(&hex!("23a16d750210fc8d6f3301f06345140c0356bbba4df52452d92a1b87b8af0c37"))
+						AuraId::try_from(
+							&hex!("920ff8bb3da346bdde5e1a43e05379651ef853df188499d53861cb2e221e1e6d") as &[u8]
+						).unwrap(),
+						GrandpaId::try_from(
+							&hex!("23a16d750210fc8d6f3301f06345140c0356bbba4df52452d92a1b87b8af0c37") as &[u8]
+						).unwrap()
 					)
 				],
 				// Sudo account
@@ -147,6 +169,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Telemetry
 		None,
 		// Protocol ID
+		None,
+		// Fork ID
 		None,
 		// Properties
 		Some(properties),
@@ -193,7 +217,7 @@ fn testnet_genesis(
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
-			key: root_key,
+			key: Some(root_key),
 		},
 		evm: EVMConfig {
 			accounts: Precompiles::used_addresses()
