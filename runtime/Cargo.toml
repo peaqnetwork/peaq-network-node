@@ -212,13 +212,13 @@ version = '4.0.0-dev'
 [dependencies.peaq-pallet-did]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'feature/1201858376455514_upgrade_to_0.9.16'
+branch = 'dev'
 version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'feature/1201858376455514_upgrade_to_0.9.16'
+branch = 'dev'
 version = '0.0.1'
 
 
