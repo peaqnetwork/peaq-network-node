@@ -4867,7 +4867,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feature/1201858376455514_upgrade_to_0.9.16#aa353d03bdd2478e75b9d0672807a627f1aedf5a"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#6b2801893283990acd09bac73dda65e32e69d2d9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4884,7 +4884,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=feature/1201858376455514_upgrade_to_0.9.16#587fe3c9309a166d94b787264fb2f05b426fa328"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#f1148ebfdd33ef99c7547656f6534ab11ad1f21b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
