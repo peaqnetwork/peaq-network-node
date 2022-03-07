@@ -3,15 +3,15 @@ name = "peaq-evm-tracer"
 authors = ['peaq network <https://github.com/peaqnetwork>']
 edition = "2021"
 homepage = 'https://peaq.network/'
-// [TODO]
+# [TODO]
 license = "GPL-3.0-only"
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.1.0"
 
 [dependencies]
 
-evm-tracing-events = { path = "../primitives/rpc/evm-tracing-events", default-features = false, features = [ "evm-tracing" ] }
-peaq-primitives-ext = { path = "../primitives/ext", default-features = false }
+evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", default-features = false, features = [ "evm-tracing" ] }
+peaq-primitives-ext = { path = "../../primitives/ext", default-features = false }
 
 # Substrate
 codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
@@ -39,7 +39,7 @@ std = [
 	"evm/std",
 	"evm/with-serde",
 	"fp-evm/std",
-	"moonbeam-primitives-ext/std",
+	"peaq-primitives-ext/std",
 	"pallet-evm/std",
 	"sp-core/std",
 	"sp-runtime/std",
