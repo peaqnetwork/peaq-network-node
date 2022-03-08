@@ -1,0 +1,22 @@
+[package]
+name = "peaq-client-evm-tracing"
+authors = ['peaq network <https://github.com/peaqnetwork>']
+edition = "2021"
+homepage = 'https://peaq.network/'
+# [TODO]
+license = "GPL-3.0-only"
+repository = 'https://github.com/peaqnetwork/peaq-network-node/'
+version = "0.1.0"
+
+[dependencies]
+ethereum-types = { version = "0.12.1" }
+hex = { version = "0.4", features = [ "serde" ] }
+serde = { version = "1.0", features = [ "derive" ] }
+serde_json = { version = "1.0" }
+
+evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events" }
+peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
+
+# Substrate
+codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
+sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.16" }
