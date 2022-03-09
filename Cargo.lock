@@ -4768,6 +4768,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "peaq-client-evm-tracing"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types",
+ "evm-tracing-events",
+ "hex",
+ "parity-scale-codec",
+ "peaq-rpc-primitives-debug",
+ "serde",
+ "serde_json",
+ "sp-std",
+]
+
+[[package]]
 name = "peaq-evm-tracer"
 version = "0.1.0"
 dependencies = [
@@ -4813,6 +4827,11 @@ dependencies = [
  "pallet-evm",
  "pallet-transaction-payment-rpc",
  "peaq-node-runtime",
+ "peaq-rpc-debug",
+ "peaq-rpc-primitives-debug",
+ "peaq-rpc-primitives-txpool",
+ "peaq-rpc-trace",
+ "peaq-rpc-txpool",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
@@ -4842,6 +4861,7 @@ dependencies = [
  "structopt",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
+ "tokio",
 ]
 
 [[package]]
@@ -4952,6 +4972,88 @@ dependencies = [
 ]
 
 [[package]]
+name = "peaq-rpc-core-debug"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "peaq-client-evm-tracing",
+ "peaq-rpc-core-types",
+ "serde",
+ "serde_json",
+ "sp-core",
+]
+
+[[package]]
+name = "peaq-rpc-core-trace"
+version = "0.6.0"
+dependencies = [
+ "ethereum-types",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "peaq-client-evm-tracing",
+ "peaq-rpc-core-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "peaq-rpc-core-txpool"
+version = "0.6.0"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fc-rpc-core",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "peaq-rpc-core-types"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "peaq-rpc-debug"
+version = "0.1.0"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fc-consensus",
+ "fc-db",
+ "fc-rpc",
+ "fp-rpc",
+ "futures 0.3.21",
+ "hex-literal",
+ "jsonrpc-core",
+ "peaq-client-evm-tracing",
+ "peaq-rpc-core-debug",
+ "peaq-rpc-core-types",
+ "peaq-rpc-primitives-debug",
+ "sc-client-api",
+ "sc-utils",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "tokio",
+]
+
+[[package]]
 name = "peaq-rpc-primitives-debug"
 version = "0.1.0"
 dependencies = [
@@ -4976,6 +5078,60 @@ dependencies = [
  "ethereum",
  "parity-scale-codec",
  "sp-api",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-rpc-trace"
+version = "0.6.0"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fc-consensus",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-rpc",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "peaq-client-evm-tracing",
+ "peaq-rpc-core-trace",
+ "peaq-rpc-core-types",
+ "peaq-rpc-primitives-debug",
+ "sc-client-api",
+ "sc-network",
+ "sc-utils",
+ "serde",
+ "sha3 0.9.1",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-transaction-pool",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "peaq-rpc-txpool"
+version = "0.6.0"
+dependencies = [
+ "ethereum-types",
+ "fc-rpc",
+ "frame-system",
+ "jsonrpc-core",
+ "peaq-rpc-core-txpool",
+ "peaq-rpc-primitives-txpool",
+ "rlp",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "serde",
+ "sha3 0.9.1",
+ "sp-api",
+ "sp-blockchain",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -8090,7 +8246,19 @@ dependencies = [
  "pin-project-lite 0.2.8",
  "signal-hook-registry",
  "socket2 0.4.4",
+ "tokio-macros",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

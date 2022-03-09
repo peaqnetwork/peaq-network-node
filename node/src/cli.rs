@@ -1,6 +1,7 @@
 #[cfg(feature = "manual-seal")]
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
+use crate::cli_opt::EthApi;
 
 #[cfg(feature = "manual-seal")]
 arg_enum! {
@@ -32,6 +33,35 @@ pub struct RunCmd {
 	/// Choose sealing method.
 	#[structopt(long = "sealing")]
 	pub sealing: Sealing,
+
+	/// Enable EVM tracing module on a non-authority node.
+	#[structopt(
+		long,
+		// [TODO]????
+		conflicts_with = "validator",
+		require_delimiter = true
+	)]
+	pub ethapi: Vec<EthApi>,
+
+	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.
+	#[structopt(long, default_value = "10")]
+	pub ethapi_max_permits: u32,
+
+	/// Maximum number of trace entries a single request of `trace_filter` is allowed to return.
+	/// A request asking for more or an unbounded one going over this limit will both return an
+	/// error.
+	#[structopt(long, default_value = "500")]
+	pub ethapi_trace_max_count: u32,
+
+	/// Duration (in seconds) after which the cache of `trace_filter` for a given block will be
+	/// discarded.
+	#[structopt(long, default_value = "300")]
+	pub ethapi_trace_cache_duration: u64,
+
+	/// Size of the LRU cache for block data and their transaction statuses.
+	#[structopt(long, default_value = "3000")]
+	pub eth_log_block_cache: usize,
+
 
 	#[structopt(long = "enable-dev-signer")]
 	pub enable_dev_signer: bool,

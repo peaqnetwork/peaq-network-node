@@ -30,6 +30,21 @@ use sp_runtime::traits::BlakeTwo256;
 //For ink! contracts
 use pallet_contracts_rpc::{Contracts, ContractsApi};
 
+use sp_runtime::traits::Block as BlockT;
+use sc_service::TaskManager;
+pub mod tracing;
+
+pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
+	pub task_manager: &'a TaskManager,
+	pub client: Arc<C>,
+	pub substrate_backend: Arc<BE>,
+	pub frontier_backend: Arc<fc_db::Backend<B>>,
+	pub filter_pool: Option<FilterPool>,
+	pub overrides: Arc<OverrideHandle<B>>,
+	pub fee_history_limit: u64,
+	pub fee_history_cache: FeeHistoryCache,
+}
+
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
 	/// The client instance to use.

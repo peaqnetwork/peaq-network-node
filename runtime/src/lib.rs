@@ -641,7 +641,9 @@ impl_runtime_apis! {
 
 	impl peaq_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
+		    #[allow(unused_variables)]
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			#[allow(unused_variables)]
 			traced_transaction: &EthereumTransaction,
 		) -> Result<
 			(),
@@ -677,7 +679,9 @@ impl_runtime_apis! {
 		}
 
 		fn trace_block(
+			#[allow(unused_variables)]
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			#[allow(unused_variables)]
 			known_transactions: Vec<H256>,
 		) -> Result<
 			(),

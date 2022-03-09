@@ -253,6 +253,32 @@ git = 'https://github.com/peaqnetwork/substrate'
 branch = "peaq-polkadot-v0.9.16"
 
 
+# Tracing
+[dependencies.peaq-rpc-debug]
+path = '../client/rpc/debug'
+
+[dependencies.peaq-rpc-primitives-debug]
+path = '../primitives/rpc/debug'
+
+[dependencies.peaq-rpc-primitives-txpool]
+path = '../primitives/rpc/txpool'
+
+[dependencies.peaq-rpc-trace]
+path = '../client/rpc/trace'
+
+[dependencies.peaq-rpc-txpool]
+path = '../client/rpc/txpool'
+
+[dependencies.tokio]
+version = "1.13.0"
+features = [ "macros", "sync" ]
+
+# peaq-rpc-debug = { path = "../../client/rpc/debug" }
+# peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
+# peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool" }
+# peaq-rpc-trace = { path = "../../client/rpc/trace" }
+# peaq-rpc-txpool = { path = "../../client/rpc/txpool" }
+
 [features]
 default = ['aura']
 aura = ["peaq-node-runtime/aura"]
