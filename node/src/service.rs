@@ -301,6 +301,7 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 
 /// Builds a new service for a full client.
 pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> Result<TaskManager, ServiceError> {
+    // [TODO] Ned to check
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -387,10 +388,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 	let enable_dev_signer = cli.run.enable_dev_signer;
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+
+    // [TODO] Ned to check
 	let overrides = crate::rpc::overrides_handle(client.clone());
+	let fee_history_limit = rpc_config.fee_history_limit;
 
 	let ethapi_cmd = rpc_config.ethapi.clone();
-	let fee_history_limit = rpc_config.fee_history_limit;
 	let tracing_requesters =
 		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 			crate::rpc::tracing::spawn_tracing_tasks(
@@ -419,6 +422,8 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		let network = network.clone();
 		let ethapi_cmd = ethapi_cmd.clone();
 		let filter_pool = filter_pool.clone();
+		// [TODO]
+		// let backend = backend.clone();
 		let frontier_backend = frontier_backend.clone();
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
@@ -435,10 +440,15 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				network: network.clone(),
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),
+				// [TODO]
+				// backend: backend.clone(),
+				// frontier_backend: frontier_backend.clone(),
 				max_past_logs,
 				fee_history_limit,
 				fee_history_cache: fee_history_cache.clone(),
 				command_sink: Some(command_sink.clone()),
+				ethapi_cmd: ethapi_cmd.clone(),
+				eth_log_block_cache: rpc_config.eth_log_block_cache,
 			};
 
 			#[allow(unused_mut)]

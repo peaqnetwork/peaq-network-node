@@ -37,7 +37,6 @@ pub struct RunCmd {
 	/// Enable EVM tracing module on a non-authority node.
 	#[structopt(
 		long,
-		// [TODO]????
 		conflicts_with = "validator",
 		require_delimiter = true
 	)]
@@ -61,7 +60,6 @@ pub struct RunCmd {
 	/// Size of the LRU cache for block data and their transaction statuses.
 	#[structopt(long, default_value = "3000")]
 	pub eth_log_block_cache: usize,
-
 
 	#[structopt(long = "enable-dev-signer")]
 	pub enable_dev_signer: bool,
