@@ -34,12 +34,15 @@ use std::{
 };
 
 use crate::cli_opt::RpcConfig;
-
+pub type HostFunctions = (
+	frame_benchmarking::benchmarking::HostFunctions,
+	peaq_primitives_ext::peaq_ext::HostFunctions,
+);
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	type ExtendHostFunctions = HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		peaq_node_runtime::api::dispatch(method, data)

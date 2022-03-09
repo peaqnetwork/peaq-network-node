@@ -68,7 +68,7 @@ fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
-	let _ = validate_trace_environment(&cli)?;
+	// let _ = validate_trace_environment(&cli)?;
 
 	match &cli.subcommand {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),

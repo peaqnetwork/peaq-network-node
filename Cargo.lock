@@ -4827,6 +4827,7 @@ dependencies = [
  "pallet-evm",
  "pallet-transaction-payment-rpc",
  "peaq-node-runtime",
+ "peaq-primitives-ext",
  "peaq-rpc-debug",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",

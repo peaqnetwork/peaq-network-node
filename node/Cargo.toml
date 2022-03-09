@@ -254,6 +254,9 @@ branch = "peaq-polkadot-v0.9.16"
 
 
 # Tracing
+[dependencies.peaq-primitives-ext]
+path = '../primitives/ext'
+
 [dependencies.peaq-rpc-debug]
 path = '../client/rpc/debug'
 
