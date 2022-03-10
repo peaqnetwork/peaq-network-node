@@ -331,8 +331,7 @@ path = "../primitives/rpc/txpool"
 default-features = false
 
 [features]
-# default = ["std", "aura"]
-default = ["std", "aura", "evm-tracing"]
+default = ["std", "aura"]
 aura = []
 manual-seal = []
 runtime-benchmarks = [
