@@ -1,4 +1,3 @@
-// [TODO] Should I remove the Moonbeam's license??
 // Copyright 2019-2022 PureStake Inc.
 // This file is part of Moonbeam.
 

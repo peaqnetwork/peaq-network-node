@@ -99,6 +99,16 @@ where
 			(None, None)
 		};
 
+	// `trace_filter` cache task. Essential.
+	// Proxies rpc requests to it's handler.
+	if let Some(trace_filter_task) = trace_filter_task {
+		params.task_manager.spawn_essential_handle().spawn(
+			"trace-filter-cache",
+			Some("eth-tracing"),
+			trace_filter_task,
+		);
+	}
+
 	let (debug_task, debug_requester) = if rpc_config.ethapi.contains(&EthApiCmd::Debug) {
 		let (debug_task, debug_requester) = DebugHandler::task(
 			Arc::clone(&params.client),
@@ -111,16 +121,6 @@ where
 	} else {
 		(None, None)
 	};
-
-	// `trace_filter` cache task. Essential.
-	// Proxies rpc requests to it's handler.
-	if let Some(trace_filter_task) = trace_filter_task {
-		params.task_manager.spawn_essential_handle().spawn(
-			"trace-filter-cache",
-			Some("eth-tracing"),
-			trace_filter_task,
-		);
-	}
 
 	// `debug` task if enabled. Essential.
 	// Proxies rpc requests to it's handler.

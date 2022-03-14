@@ -497,7 +497,10 @@ where
 									trace_api_version, e
 								))
 							})?
-							.map_err(|e| internal_err(format!("DispatchError: {:?}", e)))?;
+							.map_err(|e| {
+								panic!("Invalid enum value");
+								internal_err(format!("DispatchError: {:?}", e))
+							})?;
 					} else {
 						// Pre-london update, legacy transactions.
 						let _result = match transaction {

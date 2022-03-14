@@ -48,7 +48,6 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 }
 
 /// Full client dependencies.
-//[TODO]
 //pub struct FullDeps<C, P, A: ChainApi, BE> {
 pub struct FullDeps<C, P, A: ChainApi> {
 	/// The client instance to use.
@@ -69,11 +68,6 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
 	pub backend: Arc<fc_db::Backend<Block>>,
-	// // [TODO]
-	// /// Frontier Backend.
-	// pub frontier_backend: Arc<fc_db::Backend<Block>>,
-	// /// Backend.
-	// pub backend: Arc<BE>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
@@ -124,8 +118,6 @@ where
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
-	// [TODO]
-	// deps: FullDeps<C, P, A, BE>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	overrides: Arc<OverrideHandle<Block>>,
 ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
@@ -169,9 +161,6 @@ where
 		filter_pool,
 		command_sink,
 		backend,
-		// [TODO]
-		// backend: _,
-		// frontier_backend,
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
@@ -224,8 +213,6 @@ where
 		signers,
 		overrides.clone(),
 		backend.clone(),
-		// [TODO]
-		// frontier_backend.clone(),
 		is_authority,
 		max_past_logs,
 		block_data_cache.clone(),
@@ -238,8 +225,6 @@ where
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
 			client.clone(),
 			backend,
-			// [TODO]
-			// frontier_backend,
 			filter_pool.clone(),
 			500_usize, // max stored filters
 			overrides.clone(),

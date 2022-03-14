@@ -431,7 +431,6 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	// [TODO]...
 	pub DefaultBaseFeePerGas: U256 = U256::from(1024);
 }
 

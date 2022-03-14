@@ -3,7 +3,6 @@ name = "peaq-rpc-txpool"
 authors = ['peaq network <https://github.com/peaqnetwork>']
 edition = "2021"
 homepage = 'https://peaq.network/'
-# [TODO]
 license = "GPL-3.0-only"
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
