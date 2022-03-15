@@ -2,6 +2,7 @@ use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
 	service::{self, frontier_database_dir},
+	cli_opt::{EthApi, RpcConfig},
 };
 use peaq_node_runtime::Block;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
@@ -47,9 +48,27 @@ impl SubstrateCli for Cli {
 	}
 }
 
+fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
+	if (cli.run.ethapi.contains(&EthApi::Debug) || cli.run.ethapi.contains(&EthApi::Trace))
+		&& cli
+			.run
+			.base
+			.import_params
+			.wasm_runtime_overrides
+			.is_none()
+	{
+		return Err(
+			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
+				.into(),
+		);
+	}
+	Ok(())
+}
+
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
+	let _ = validate_trace_environment(&cli)?;
 
 	match &cli.subcommand {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -144,7 +163,17 @@ pub fn run() -> sc_cli::Result<()> {
 		None => {
 			let runner = cli.create_runner(&cli.run.base)?;
 			runner.run_node_until_exit(|config| async move {
-				service::new_full(config, &cli).map_err(sc_cli::Error::Service)
+			let rpc_config = RpcConfig {
+				ethapi: cli.run.ethapi.clone(),
+				ethapi_max_permits: cli.run.ethapi_max_permits,
+				ethapi_trace_max_count: cli.run.ethapi_trace_max_count,
+				ethapi_trace_cache_duration: cli.run.ethapi_trace_cache_duration,
+				eth_log_block_cache: cli.run.eth_log_block_cache,
+				max_past_logs: cli.run.max_past_logs,
+				fee_history_limit: cli.run.fee_history_limit,
+			};
+
+				service::new_full(config, &cli, rpc_config).map_err(sc_cli::Error::Service)
 			})
 		}
 	}

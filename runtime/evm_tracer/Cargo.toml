@@ -1,0 +1,46 @@
+[package]
+name = "peaq-evm-tracer"
+authors = ['peaq network <https://github.com/peaqnetwork>']
+edition = "2021"
+homepage = 'https://peaq.network/'
+license = "GPL-3.0-only"
+repository = 'https://github.com/peaqnetwork/peaq-network-node/'
+version = "0.1.0"
+
+[dependencies]
+
+evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", default-features = false, features = [ "evm-tracing" ] }
+peaq-primitives-ext = { path = "../../primitives/ext", default-features = false }
+
+# Substrate
+codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
+sp-core = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.16", default-features = false }
+sp-io = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.16", default-features = false }
+sp-runtime = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.16", default-features = false }
+sp-std = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.16", default-features = false }
+
+# Frontier
+ethereum-types = { version = "0.12.1", default-features = false }
+evm = { version = "0.33.1", default-features = false, features = [ "with-codec" ] }
+evm-gasometer = { version = "0.33.0", default-features = false }
+evm-runtime = { version = "0.33.0", default-features = false }
+fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.16", default-features = false }
+pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.16", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"ethereum-types/std",
+	"evm-gasometer/std",
+	"evm-runtime/std",
+	"evm-tracing-events/std",
+	"evm/std",
+	"evm/with-serde",
+	"fp-evm/std",
+	"peaq-primitives-ext/std",
+	"pallet-evm/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

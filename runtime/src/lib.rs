@@ -23,7 +23,9 @@ use sp_runtime::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount, NumberFor,
 		PostDispatchInfoOf, Verify,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
+	transaction_validity::{
+		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
+	},
 	ApplyExtrinsicResult, MultiSignature,
 };
 use sp_std::{marker::PhantomData, prelude::*};
@@ -40,6 +42,7 @@ pub use frame_support::{
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		IdentityFee, Weight,
+		GetDispatchInfo
 	},
 	ConsensusEngineId, StorageValue,
 };
@@ -56,6 +59,8 @@ pub use sp_runtime::{Perbill, Permill};
 mod precompiles;
 pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
+
+use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
@@ -125,7 +130,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2,
+	spec_version: 3,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -426,7 +431,6 @@ impl pallet_dynamic_fee::Config for Runtime {
 
 frame_support::parameter_types! {
 	pub IsActive: bool = true;
-	// [TODO]...
 	pub DefaultBaseFeePerGas: U256 = U256::from(1024);
 }
 
@@ -533,9 +537,11 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(&self, signed_info: &Self::SignedInfo) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
+			Call::Ethereum(ref call) => {
+				Some(validate_self_contained_inner(&self, &call, signed_info))
+			}
 			_ => None,
 		}
 	}
@@ -560,6 +566,41 @@ impl fp_self_contained::SelfContainedCall for Call {
 			)),
 			_ => None,
 		}
+	}
+}
+
+fn validate_self_contained_inner(
+	call: &Call,
+	eth_call: &pallet_ethereum::Call<Runtime>,
+	signed_info: &<Call as fp_self_contained::SelfContainedCall>::SignedInfo
+) -> TransactionValidity {
+	if let pallet_ethereum::Call::transact { ref transaction } = eth_call {
+		// Previously, ethereum transactions were contained in an unsigned
+		// extrinsic, we now use a new form of dedicated extrinsic defined by
+		// frontier, but to keep the same behavior as before, we must perform
+		// the controls that were performed on the unsigned extrinsic.
+		use sp_runtime::traits::SignedExtension as _;
+		let input_len = match transaction {
+			pallet_ethereum::Transaction::Legacy(t) => t.input.len(),
+			pallet_ethereum::Transaction::EIP2930(t) => t.input.len(),
+			pallet_ethereum::Transaction::EIP1559(t) => t.input.len(),
+		};
+		let extra_validation = SignedExtra::validate_unsigned(
+			call,
+			&call.get_dispatch_info(),
+			input_len,
+		)?;
+		// Then, do the controls defined by the ethereum pallet.
+		// use fp_self_contained::SelfContainedCall as _;
+		let self_contained_validation = eth_call
+			.validate_self_contained(signed_info)
+			.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
+
+		Ok(extra_validation.combine_with(self_contained_validation))
+	} else {
+		Err(TransactionValidityError::Unknown(
+			sp_runtime::transaction_validity::UnknownTransaction::CannotLookup
+		))
 	}
 }
 
@@ -634,6 +675,112 @@ impl_runtime_apis! {
 	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
 		fn account_nonce(account: AccountId) -> Index {
 			System::account_nonce(account)
+		}
+	}
+
+	impl peaq_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
+		fn trace_transaction(
+		    #[allow(unused_variables)]
+			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			#[allow(unused_variables)]
+			traced_transaction: &EthereumTransaction,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			#[cfg(feature = "evm-tracing")]
+			{
+				use peaq_evm_tracer::tracer::EvmTracer;
+				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
+				// transactions that preceded the requested transaction.
+				for ext in extrinsics.into_iter() {
+					let _ = match &ext.0.function {
+						Call::Ethereum(transact { transaction }) => {
+							if transaction == traced_transaction {
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+								return Ok(());
+							} else {
+								Executive::apply_extrinsic(ext)
+							}
+						}
+						_ => Executive::apply_extrinsic(ext),
+					};
+				}
+
+				Err(sp_runtime::DispatchError::Other(
+					"Failed to find Ethereum transaction among the extrinsics.",
+				))
+			}
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+
+		fn trace_block(
+			#[allow(unused_variables)]
+			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			#[allow(unused_variables)]
+			known_transactions: Vec<H256>,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			#[cfg(feature = "evm-tracing")]
+			{
+				use peaq_evm_tracer::tracer::EvmTracer;
+
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+
+				// Apply all extrinsics. Ethereum extrinsics are traced.
+				for ext in extrinsics.into_iter() {
+					match &ext.0.function {
+						Call::Ethereum(transact { transaction }) => {
+							if known_transactions.contains(&transaction.hash()) {
+								// Each known extrinsic is a new call stack.
+								EvmTracer::emit_new();
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+							} else {
+								let _ = Executive::apply_extrinsic(ext);
+							}
+						}
+						_ => {
+							let _ = Executive::apply_extrinsic(ext);
+						}
+					};
+				}
+
+				Ok(())
+			}
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+	}
+
+	impl peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block> for Runtime {
+		fn extrinsic_filter(
+			xts_ready: Vec<<Block as BlockT>::Extrinsic>,
+			xts_future: Vec<<Block as BlockT>::Extrinsic>,
+		) -> TxPoolResponse {
+			TxPoolResponse {
+				ready: xts_ready
+					.into_iter()
+					.filter_map(|xt| match xt.0.function {
+						Call::Ethereum(transact { transaction }) => Some(transaction),
+						_ => None,
+					})
+					.collect(),
+				future: xts_future
+					.into_iter()
+					.filter_map(|xt| match xt.0.function {
+						Call::Ethereum(transact { transaction }) => Some(transaction),
+						_ => None,
+					})
+					.collect(),
+			}
 		}
 	}
 

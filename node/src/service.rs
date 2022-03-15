@@ -3,6 +3,7 @@
 use crate::cli::Cli;
 #[cfg(feature = "manual-seal")]
 use crate::cli::Sealing;
+use crate::cli_opt::EthApi as EthApiCmd;
 use async_trait::async_trait;
 use fc_consensus::FrontierBlockImport;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
@@ -32,11 +33,16 @@ use std::{
 	time::Duration,
 };
 
+use crate::cli_opt::RpcConfig;
+pub type HostFunctions = (
+	frame_benchmarking::benchmarking::HostFunctions,
+	peaq_primitives_ext::peaq_ext::HostFunctions,
+);
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	type ExtendHostFunctions = HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		peaq_node_runtime::api::dispatch(method, data)
@@ -297,7 +303,7 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, ServiceError> {
+pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -384,13 +390,38 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 	let enable_dev_signer = cli.run.enable_dev_signer;
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+
 	let overrides = crate::rpc::overrides_handle(client.clone());
-	let fee_history_limit = cli.run.fee_history_limit;
+	let fee_history_limit = rpc_config.fee_history_limit;
+
+	let ethapi_cmd = rpc_config.ethapi.clone();
+	let tracing_requesters =
+		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+			crate::rpc::tracing::spawn_tracing_tasks(
+				&rpc_config,
+				crate::rpc::SpawnTasksParams {
+					task_manager: &task_manager,
+					client: client.clone(),
+					substrate_backend: backend.clone(),
+					frontier_backend: frontier_backend.clone(),
+					filter_pool: filter_pool.clone(),
+					overrides: overrides.clone(),
+					fee_history_limit,
+					fee_history_cache: fee_history_cache.clone(),
+				},
+			)
+		} else {
+			crate::rpc::tracing::RpcRequesters {
+				debug: None,
+				trace: None,
+			}
+		};
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let network = network.clone();
+		let ethapi_cmd = ethapi_cmd.clone();
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
 		let overrides = overrides.clone();
@@ -412,13 +443,25 @@ pub fn new_full(mut config: Configuration, cli: &Cli) -> Result<TaskManager, Ser
 				fee_history_limit,
 				fee_history_cache: fee_history_cache.clone(),
 				command_sink: Some(command_sink.clone()),
+				ethapi_cmd: ethapi_cmd.clone(),
+				eth_log_block_cache: rpc_config.eth_log_block_cache,
 			};
 
-			Ok(crate::rpc::create_full(
+			#[allow(unused_mut)]
+			let mut io = crate::rpc::create_full(
 				deps,
 				subscription_task_executor.clone(),
 				overrides.clone(),
-			))
+			);
+			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+				crate::rpc::tracing::extend_with_tracing(
+					client.clone(),
+					tracing_requesters.clone(),
+					rpc_config.ethapi_trace_max_count,
+					&mut io,
+				);
+			}
+			Ok(io)
 		})
 	};
 

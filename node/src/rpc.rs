@@ -30,7 +30,25 @@ use sp_runtime::traits::BlakeTwo256;
 //For ink! contracts
 use pallet_contracts_rpc::{Contracts, ContractsApi};
 
+use sp_runtime::traits::Block as BlockT;
+use sc_service::TaskManager;
+pub mod tracing;
+use crate::cli_opt::EthApi as EthApiCmd;
+use peaq_rpc_txpool::{TxPool, TxPoolServer};
+
+pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
+	pub task_manager: &'a TaskManager,
+	pub client: Arc<C>,
+	pub substrate_backend: Arc<BE>,
+	pub frontier_backend: Arc<fc_db::Backend<B>>,
+	pub filter_pool: Option<FilterPool>,
+	pub overrides: Arc<OverrideHandle<B>>,
+	pub fee_history_limit: u64,
+	pub fee_history_cache: FeeHistoryCache,
+}
+
 /// Full client dependencies.
+//pub struct FullDeps<C, P, A: ChainApi, BE> {
 pub struct FullDeps<C, P, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
@@ -59,6 +77,10 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// Manual seal command sink
 	pub command_sink:
 		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
+	/// The list of optional RPC extensions.
+	pub ethapi_cmd: Vec<EthApiCmd>,
+	/// Size of the LRU cache for block data and their transaction statuses.
+	pub eth_log_block_cache: usize,
 }
 
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
@@ -102,6 +124,7 @@ pub fn create_full<C, P, BE, A>(
 where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
+	// BE::Blockchain: BlockchainBackend<Block>,
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: BlockchainEvents<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
@@ -111,6 +134,8 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
+	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
+	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -140,6 +165,8 @@ where
 		fee_history_limit,
 		fee_history_cache,
 		enable_dev_signer,
+		ethapi_cmd,
+		eth_log_block_cache,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -161,7 +188,10 @@ where
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
 
-	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
+	let block_data_cache = Arc::new(EthBlockDataCache::new(
+		eth_log_block_cache,
+		eth_log_block_cache,
+	));
 
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
@@ -177,7 +207,7 @@ where
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
-		graph,
+		graph.clone(),
 		convert_transaction,
 		network.clone(),
 		signers,
@@ -186,7 +216,7 @@ where
 		is_authority,
 		max_past_logs,
 		block_data_cache.clone(),
-		fc_rpc::format::Legacy,
+		fc_rpc::format::Geth,
 		fee_history_limit,
 		fee_history_cache,
 	)));
@@ -196,7 +226,7 @@ where
 			client.clone(),
 			backend,
 			filter_pool.clone(),
-			500 as usize, // max stored filters
+			500_usize, // max stored filters
 			overrides.clone(),
 			max_past_logs,
 			block_data_cache.clone(),
@@ -211,17 +241,24 @@ where
 	)));
 
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
-
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool.clone(),
+		pool,
 		client.clone(),
-		network.clone(),
+		network,
 		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
 			HexEncodedIdProvider::default(),
 			Arc::new(subscription_task_executor),
 		),
 		overrides,
 	)));
+
+	// Debug/Tracing doesn't setup here
+	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
+		io.extend_with(TxPoolServer::to_delegate(TxPool::new(
+			Arc::clone(&client),
+			graph,
+		)));
+	}
 
 	match command_sink {
 		Some(command_sink) => {

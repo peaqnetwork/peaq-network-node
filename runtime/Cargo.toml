@@ -4,7 +4,7 @@ version = '3.0.0-polkadot-v0.9.16'
 description = 'A node of the peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
-edition = '2018'
+edition = '2021'
 license = 'Unlicense'
 publish = false
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
@@ -28,6 +28,16 @@ default-features = false
 features = ['derive']
 optional = true
 version = '1.0.101'
+
+[dependencies.rlp]
+default-features = false
+optional = true
+version = '0.5'
+
+[dependencies.sha3]
+default-features = false
+optional = true
+version = '0.8'
 
 [dependencies.frame-benchmarking]
 default-features = false
@@ -301,6 +311,25 @@ git = 'https://github.com/peaqnetwork/frontier'
 branch = 'peaq-polkadot-v0.9.16'
 
 
+# Tracing
+[dependencies.evm-tracing-events]
+path = "../primitives/rpc/evm-tracing-events"
+optional = true
+default-features = false
+
+[dependencies.peaq-evm-tracer]
+path = "evm_tracer"
+optional = true
+default-features = false
+
+[dependencies.peaq-rpc-primitives-debug]
+path = "../primitives/rpc/debug"
+default-features = false
+
+[dependencies.peaq-rpc-primitives-txpool]
+path = "../primitives/rpc/txpool"
+default-features = false
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -364,4 +393,18 @@ std = [
 	'pallet-evm-precompile-sha3fips/std',
 	'sp-std/std',
 	'fp-rpc/std',
+
+	# Tracing
+	'evm-tracing-events/std',
+	'peaq-evm-tracer/std',
+	'peaq-rpc-primitives-debug/std',
+	'peaq-rpc-primitives-txpool/std',
+]
+
+# Must be enabled for tracing runtimes only
+evm-tracing = [
+	'evm-tracing-events',
+	'peaq-evm-tracer',
+	'rlp',
+	'sha3'
 ]
