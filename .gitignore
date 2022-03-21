@@ -14,3 +14,11 @@
 
 # direnv cache
 .direnv
+
+# VIM: Temperory files
+*~
+
+# VIM: Swap-files
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+.gdf_*

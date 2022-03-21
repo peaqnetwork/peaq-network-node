@@ -1,0 +1,19 @@
+[package]
+name = "peaq-rpc-core-txpool"
+authors = ['peaq network <https://github.com/peaqnetwork>']
+edition = "2021"
+homepage = 'https://peaq.network/'
+license = "GPL-3.0-only"
+repository = 'https://github.com/peaqnetwork/peaq-network-node/'
+version = "0.6.0"
+
+[dependencies]
+ethereum = { version = "0.11.1", default-features = false, features = [ "with-codec" ] }
+ethereum-types = "0.12.1"
+jsonrpc-core = "18.0.0"
+jsonrpc-core-client = "18.0.0"
+jsonrpc-derive = "18.0.0"
+serde = { version = "1.0", features = [ "derive" ] }
+serde_json = "1.0"
+
+fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.16" }
