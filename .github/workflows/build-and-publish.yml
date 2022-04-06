@@ -28,9 +28,10 @@ jobs:
 #         password: ${{ secrets.DOCKER_PASSWORD }}
         registry: ghcr.io
         image: ghcr.io/peaqnetwork/peaq-node-builder:latest
-        options: -v ${{ github.workspace }}:/work -e CARGO_TARGET_DIR="/work/target_runtime"
+        options: -v ${{ github.workspace }}:/work
         run: |
           cd /work
+          
           echo "Building tracing enabled wasm"
           cargo build --release -p peaq-node-runtime --features "std aura evm-tracing"
           
@@ -44,7 +45,7 @@ jobs:
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
-        cwd: /work/target_runtime/release
+        cwd: ./target/release/
         files: |
           ./peaq-node
         outPath: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
@@ -53,7 +54,7 @@ jobs:
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
-        cwd: /work/target_runtime/release/wbuild/peaq-node-runtime/
+        cwd: ./target/release/wbuild/peaq-node-runtime/
         files: |
           ./peaq_node_runtime.wasm
         outPath: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
