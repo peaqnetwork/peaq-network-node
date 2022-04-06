@@ -44,7 +44,7 @@ jobs:
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
-        cwd: ./target_runtime/release
+        cwd: /work/target_runtime/release
         files: |
           ./peaq-node
         outPath: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
@@ -53,7 +53,7 @@ jobs:
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
-        cwd: ./target_runtime/release/wbuild/peaq-node-runtime/
+        cwd: /work/target_runtime/release/wbuild/peaq-node-runtime/
         files: |
           ./peaq_node_runtime.wasm
         outPath: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
