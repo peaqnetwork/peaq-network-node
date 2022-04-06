@@ -58,15 +58,22 @@ jobs:
           ./peaq_node_runtime.wasm
         outPath: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
 
-
-    - name: Upload peaq-node
-      uses: actions/upload-artifact@v3
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        name: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-        path: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+        files: |
+          peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+          peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
 
-    - name: Upload peaq-node-runtime-with-tracing
-      uses: actions/upload-artifact@v3
-      with:
-        name: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
-        path: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+#     - name: Upload peaq-node
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+#         path: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+
+#     - name: Upload peaq-node-runtime-with-tracing
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+#         path: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
