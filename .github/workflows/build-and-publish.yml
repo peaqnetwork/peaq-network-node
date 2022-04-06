@@ -27,7 +27,7 @@ jobs:
 #         username: ${{ secrets.DOCKER_USERNAME }}
 #         password: ${{ secrets.DOCKER_PASSWORD }}
         registry: ghcr.io
-        image: peaqnetwork/peaq-node-builder:latest
+        image: ghcr.io/peaqnetwork/peaq-node-builder:latest
         options: -v ${{ github.workspace }}:/work
         run: |
           cd /work
