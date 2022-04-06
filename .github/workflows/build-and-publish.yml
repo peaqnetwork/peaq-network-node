@@ -44,7 +44,7 @@ jobs:
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
-        cwd: ./target/release
+        cwd: ./target_runtime/release
         files: |
           ./peaq-node
         outPath: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
