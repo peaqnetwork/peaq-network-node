@@ -21,33 +21,60 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     
-    - name: Compile non tracing node
+    - name: Compile node
       uses: addnab/docker-run-action@v2
       with:
 #         username: ${{ secrets.DOCKER_USERNAME }}
 #         password: ${{ secrets.DOCKER_PASSWORD }}
-        registry: gcr.io
-        image: peaqnetwork/peaq-node-builder:latest
+        registry: ghcr.io
+        image: ghcr.io/peaqnetwork/peaq-node-builder:latest
         options: -v ${{ github.workspace }}:/work
         run: |
           cd /work
+          
+          echo "Building tracing enabled wasm"
+          cargo build --release -p peaq-node-runtime --features "std aura evm-tracing"
+          
+          echo "Building network node"
           cargo build --release
 
     - uses: tenhaus/get-release-or-tag@v2
       id: tag
         
-    - name: Compress action step
+    - name: Compress peaq node
       uses: a7ul/tar-action@v1.1.0
-      id: compress
       with:
         command: c
-        cwd: ./target/release
+        cwd: ./target/release/
         files: |
           ./peaq-node
         outPath: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-        
 
-    - uses: actions/upload-artifact@v3
+    - name: Compress tracing enabled wasm runtime
+      uses: a7ul/tar-action@v1.1.0
       with:
-        name: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-        path: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+        command: c
+        cwd: ./target/release/wbuild/peaq-node-runtime/
+        files: |
+          ./peaq_node_runtime.wasm
+        outPath: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+          peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+
+#     - name: Upload peaq-node
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+#         path: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
+
+#     - name: Upload peaq-node-runtime-with-tracing
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+#         path: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
