@@ -104,67 +104,67 @@ pub fn agung_net_config() -> Result<ChainSpec, String> {
 				vec![
 					(
 						AuraId::try_from(
-							&hex!("c0a03ff255c2db2ddb33acc9885c3607eea411006cbe5cc1511c29762c8f8e0c") as &[u8]
+							&hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416") as &[u8]
 						).unwrap(),
 						GrandpaId::try_from(
-							&hex!("0c4f41c73ede92f54c621da69e434310d53b59c37b5f7148f23e33167115770b") as &[u8]
+							&hex!("f45dc8a48fd2cd4e59bf53c4a36a36c0964a14ab76742d891d837731af2c60cc") as &[u8]
 						).unwrap()
 					),
 					(
 						AuraId::try_from(
-							&hex!("3661f26abbaa07d7df01e4c1348457ad9ede2f96c14f271beef7da0faadbe532") as &[u8]
+							&hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e") as &[u8]
 						).unwrap(),
 						GrandpaId::try_from(
-							&hex!("69b44ae0c55c8284a4157141dc6bed6ea2d1e9d5b16a88b715a0dfada1659faa") as &[u8]
+							&hex!("a4af12973c4c027600fd198e9226781f1ce3755a74ae5efc726dbd4ebf958854") as &[u8]
 						).unwrap()
 					),
 					(
 						AuraId::try_from(
-							&hex!("243d9dacf4835501479ec16b3a3c44661ee967b26de75dfeb3af2c8660e0f80a") as &[u8]
+							&hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750") as &[u8]
 						).unwrap(),
 						GrandpaId::try_from(
-							&hex!("8107c34c8f6a5f968a5311c9911d92d78432d03be8f9bf7ed913cc089b3c6db1") as &[u8]
+							&hex!("3f6fca05fe7ba7f7625d855dfd2b0af911c192294111530f24df7d0b28892885") as &[u8]
 						).unwrap()
 					),
 					(
 						AuraId::try_from(
-							&hex!("dc2318d3925aa5cb69f47219f31480a73d709ffaca323d06874f75fbed00e527") as &[u8]
+							&hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a") as &[u8]
 						).unwrap(),
 						GrandpaId::try_from(
-							&hex!("1534240b466e40d055d67e1477f4fb4e04655d8405c7abe0e6d52844735c3e7d") as &[u8]
+							&hex!("43f6612faccb685e36009a63d5000aab6551b901bcda9ae708923d19dd033128") as &[u8]
 						).unwrap()
 					),
 					(
 						AuraId::try_from(
-							&hex!("920ff8bb3da346bdde5e1a43e05379651ef853df188499d53861cb2e221e1e6d") as &[u8]
+							&hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073") as &[u8]
 						).unwrap(),
 						GrandpaId::try_from(
-							&hex!("23a16d750210fc8d6f3301f06345140c0356bbba4df52452d92a1b87b8af0c37") as &[u8]
+							&hex!("050f8fe5db72dcba0ea5f7d976a042d2899d696714464838ba431a806b5dd7d6") as &[u8]
 						).unwrap()
 					)
 				],
 				// Sudo account
-				hex!("e43082fa42efb0b22be8991f3f62c84b9e3411ef23a25b6e95c2da0937167226").into(),
+				hex!("f6f16b29e9ba748f41c1bf361d1925359b256edc99ba5c57541e07cc79465202").into(),
 				// Pre-funded accounts
 				vec![
-					hex!("c0a03ff255c2db2ddb33acc9885c3607eea411006cbe5cc1511c29762c8f8e0c").into(),
-					hex!("3661f26abbaa07d7df01e4c1348457ad9ede2f96c14f271beef7da0faadbe532").into(),
-					hex!("243d9dacf4835501479ec16b3a3c44661ee967b26de75dfeb3af2c8660e0f80a").into(),
-					hex!("dc2318d3925aa5cb69f47219f31480a73d709ffaca323d06874f75fbed00e527").into(),
-					hex!("920ff8bb3da346bdde5e1a43e05379651ef853df188499d53861cb2e221e1e6d").into(),
+					hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416").into(),
+					hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e").into(),
+					hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750").into(),
+					hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a").into(),
+					hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073").into(),
 					//Sudo
-					hex!("e43082fa42efb0b22be8991f3f62c84b9e3411ef23a25b6e95c2da0937167226").into(),
+					hex!("f6f16b29e9ba748f41c1bf361d1925359b256edc99ba5c57541e07cc79465202").into(),
 				],
 				true,
 			)
 		},
 		// Bootnodes
 		vec![
-			MultiaddrWithPeerId::from_str("/dns/bn1.agung.peaq.network/tcp/10333/p2p/12D3KooWAfuyTS1eM1aa14XaQUZ9Q17J5Po4mg8ccQQVsY6Mf1kg").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn2.agung.peaq.network/tcp/10333/p2p/12D3KooWQ6SoNpbCtwTnDAS5Wj6z7h7jvnUWYN1PN3L2NH1xrWKB").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn3.agung.peaq.network/tcp/10333/p2p/12D3KooWMZZkKXMRtHkjJDYcAMAZj9496oQ8tcaYCEA1FvJKgFtX").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn4.agung.peaq.network/tcp/10333/p2p/12D3KooWPM4L2ijaf5mLmHF5KDsubKYTy9RbWvFcWiYLKSeLA2nE").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn5.agung.peaq.network/tcp/10333/p2p/12D3KooWCvRzKLxJXTVZqEvNGtRHU2DzuW6bV54jW3LhRUWngaJS").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn1.agung.peaq.network/tcp/10333/p2p/12D3KooWMJps5U6mBp2JUJpewuSAz2wbEf59Rm98kgwDj5LZd5rW").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn2.agung.peaq.network/tcp/10333/p2p/12D3KooW9pipmGRbECY9gwD6ArJVvC9CP24XxdoCUSq8eY2dJ5Cd").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn3.agung.peaq.network/tcp/10333/p2p/12D3KooWPafWKojir1pCGmN5DwW6yQ33exdEMSUz5xX6t3EPAwqS").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn4.agung.peaq.network/tcp/10333/p2p/12D3KooWCumywbmYpGLBTDXxcbw7rzM9WNU1Hyqs6P6ftCsHBxmV").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn5.agung.peaq.network/tcp/10333/p2p/12D3KooWAo4D2rXY3kZM4zqSkxHNSS8Q1eonYX4F5x811Qd9y4gb").unwrap(),
 		],
 		// Telemetry
 		None,
