@@ -1,0 +1,9 @@
+FROM ubuntu:20.04
+
+WORKDIR /opt/network
+ADD target/release/peaq-node /opt/network/peaq-node
+
+ENV CHAINSPEC=agung
+EXPOSE 9933 9944 1033
+
+CMD /opt/network/peaq-node --ws-external --rpc-external --chain $CHAINSPEC

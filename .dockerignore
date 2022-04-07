@@ -1,0 +1,13 @@
+client/*
+docks/*
+node/*
+pallets/*
+primitives/*
+runtime/*
+scripts/*
+target/release/build/*
+target/release/deps/*
+target/release/examples/*
+target/release/incremental/*
+target/release/*.d
+target/release/*.rlib
