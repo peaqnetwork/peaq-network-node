@@ -53,7 +53,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		"peaq-substrate-dev",
 		ChainType::Development,
 		move || {
-			testnet_genesis(
+			configure_genesis(
 				wasm_binary,
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
@@ -84,21 +84,21 @@ pub fn development_config() -> Result<ChainSpec, String> {
 	))
 }
 
-pub fn local_testnet_config() -> Result<ChainSpec, String> {
+pub fn agung_net_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "PEAQ".into());
+	properties.insert("tokenSymbol".into(), "AGNG".into());
 	properties.insert("tokenDecimals".into(), 18.into());
 
 	Ok(ChainSpec::from_genesis(
 		// Name
-		"peaq-testnet",
+		"agung-network",
 		// ID
-		"peaq-substrate-testnet",
+		"agung-substrate-testnet",
 		ChainType::Local,
 		move || {
-			testnet_genesis(
+			configure_genesis(
 				wasm_binary,
 				// Initial PoA authorities
 				vec![
@@ -160,11 +160,11 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		},
 		// Bootnodes
 		vec![
-			MultiaddrWithPeerId::from_str("/dns/bn1.test.peaq.network/tcp/10333/p2p/12D3KooWAfuyTS1eM1aa14XaQUZ9Q17J5Po4mg8ccQQVsY6Mf1kg").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn2.test.peaq.network/tcp/10333/p2p/12D3KooWQ6SoNpbCtwTnDAS5Wj6z7h7jvnUWYN1PN3L2NH1xrWKB").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn3.test.peaq.network/tcp/10333/p2p/12D3KooWMZZkKXMRtHkjJDYcAMAZj9496oQ8tcaYCEA1FvJKgFtX").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn4.test.peaq.network/tcp/10333/p2p/12D3KooWPM4L2ijaf5mLmHF5KDsubKYTy9RbWvFcWiYLKSeLA2nE").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn5.test.peaq.network/tcp/10333/p2p/12D3KooWCvRzKLxJXTVZqEvNGtRHU2DzuW6bV54jW3LhRUWngaJS").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn1.agung.peaq.network/tcp/10333/p2p/12D3KooWAfuyTS1eM1aa14XaQUZ9Q17J5Po4mg8ccQQVsY6Mf1kg").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn2.agung.peaq.network/tcp/10333/p2p/12D3KooWQ6SoNpbCtwTnDAS5Wj6z7h7jvnUWYN1PN3L2NH1xrWKB").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn3.agung.peaq.network/tcp/10333/p2p/12D3KooWMZZkKXMRtHkjJDYcAMAZj9496oQ8tcaYCEA1FvJKgFtX").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn4.agung.peaq.network/tcp/10333/p2p/12D3KooWPM4L2ijaf5mLmHF5KDsubKYTy9RbWvFcWiYLKSeLA2nE").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn5.agung.peaq.network/tcp/10333/p2p/12D3KooWCvRzKLxJXTVZqEvNGtRHU2DzuW6bV54jW3LhRUWngaJS").unwrap(),
 		],
 		// Telemetry
 		None,
@@ -180,7 +180,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 }
 
 /// Configure initial storage state for FRAME modules.
-fn testnet_genesis(
+fn configure_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	root_key: AccountId,
