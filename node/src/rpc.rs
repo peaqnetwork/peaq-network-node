@@ -3,13 +3,13 @@
 use std::{collections::BTreeMap, sync::Arc};
 
 use fc_rpc::{
-	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
+	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use peaq_node_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Hash, Index};
 use jsonrpc_pubsub::manager::SubscriptionManager;
-use pallet_ethereum::EthereumStorageSchema;
+use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
@@ -79,8 +79,10 @@ pub struct FullDeps<C, P, A: ChainApi> {
 		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
 	/// The list of optional RPC extensions.
 	pub ethapi_cmd: Vec<EthApiCmd>,
-	/// Size of the LRU cache for block data and their transaction statuses.
-	pub eth_log_block_cache: usize,
+	/// Ethereum data access overrides.
+	pub overrides: Arc<OverrideHandle<Block>>,
+	/// Cache for Ethereum block data.
+	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 }
 
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
@@ -118,8 +120,7 @@ where
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
-	subscription_task_executor: SubscriptionTaskExecutor,
-	overrides: Arc<OverrideHandle<Block>>,
+	subscription_task_executor: SubscriptionTaskExecutor
 ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
 where
 	BE: Backend<Block> + 'static,
@@ -166,7 +167,8 @@ where
 		fee_history_cache,
 		enable_dev_signer,
 		ethapi_cmd,
-		eth_log_block_cache,
+		overrides,
+		block_data_cache,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -187,11 +189,6 @@ where
 	if enable_dev_signer {
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
-
-	let block_data_cache = Arc::new(EthBlockDataCache::new(
-		eth_log_block_cache,
-		eth_log_block_cache,
-	));
 
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
@@ -214,7 +211,6 @@ where
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
-		max_past_logs,
 		block_data_cache.clone(),
 		fc_rpc::format::Geth,
 		fee_history_limit,
@@ -227,7 +223,6 @@ where
 			backend,
 			filter_pool.clone(),
 			500_usize, // max stored filters
-			overrides.clone(),
 			max_past_logs,
 			block_data_cache.clone(),
 		)));

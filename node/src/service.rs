@@ -417,6 +417,14 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			}
 		};
 
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		rpc_config.eth_log_block_cache as u64,
+		rpc_config.eth_statuses_cache as u64,
+		prometheus_registry.clone(),
+	));
+
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
@@ -427,6 +435,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let max_past_logs = cli.run.max_past_logs;
+		let block_data_cache = block_data_cache.clone();
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = crate::rpc::FullDeps {
@@ -444,14 +453,14 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				fee_history_cache: fee_history_cache.clone(),
 				command_sink: Some(command_sink.clone()),
 				ethapi_cmd: ethapi_cmd.clone(),
-				eth_log_block_cache: rpc_config.eth_log_block_cache,
+				block_data_cache: block_data_cache.clone(),
+				overrides: overrides.clone(),
 			};
 
 			#[allow(unused_mut)]
 			let mut io = crate::rpc::create_full(
 				deps,
 				subscription_task_executor.clone(),
-				overrides.clone(),
 			);
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 				crate::rpc::tracing::extend_with_tracing(
@@ -487,6 +496,8 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			client.clone(),
 			backend.clone(),
 			frontier_backend.clone(),
+			3,
+			0,
 			SyncStrategy::Normal,
 		)
 		.for_each(|()| futures::future::ready(())),
