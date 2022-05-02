@@ -881,7 +881,7 @@ where
 		let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
 		proxy.using(f)?;
 		let mut traces: Vec<_> =
-			moonbeam_client_evm_tracing::formatters::TraceFilter::format(proxy)
+			peaq_client_evm_tracing::formatters::TraceFilter::format(proxy)
 				.ok_or(internal_err("Fail to format proxy"))?;
 		// Fill missing data.
 		for trace in traces.iter_mut() {

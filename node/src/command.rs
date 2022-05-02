@@ -7,6 +7,7 @@ use crate::{
 use peaq_node_runtime::Block;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+use frame_benchmarking_cli::BenchmarkCmd;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -145,7 +146,7 @@ pub fn run() -> sc_cli::Result<()> {
 					backend,
 					..
 				} = service::new_partial(&config, &cli)?;
-				Ok((cmd.run(client, backend), task_manager))
+				Ok((cmd.run(client, backend, None), task_manager))
 			})
 		}
 		// ExportGenesisState and ExortGenesisWasm uses for Substrate-based Polkadot parachains,
@@ -153,8 +154,31 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
+				match cmd {
+					BenchmarkCmd::Pallet(cmd) => {
+						return runner.sync_run(|config| {
+							cmd.run::<Block, service::ExecutorDispatch>(config)
+						})
+					}
+					BenchmarkCmd::Block(cmd) => {
+						return runner.sync_run(|mut config| {
+							let params = service::new_partial(&mut config, &cli)?;
 
-				runner.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config))
+							cmd.run(params.client)
+						})
+					}
+					BenchmarkCmd::Storage(cmd) => {
+							return runner.sync_run(|mut config| {
+								let params = service::new_partial(&mut config, &cli)?;
+
+								let db = params.backend.expose_db();
+								let storage = params.backend.expose_storage();
+
+								cmd.run(config, params.client, db, storage)
+						})
+					}
+					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
 					 `--features runtime-benchmarks`."

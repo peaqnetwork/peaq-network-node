@@ -1,6 +1,6 @@
 use hex_literal::hex;
 use peaq_node_runtime::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig, GrandpaConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles,
 };
 use sc_network::config::MultiaddrWithPeerId;
@@ -224,7 +224,7 @@ fn configure_genesis(
 				.map(|addr| {
 					(
 						addr.into(),
-						pallet_evm::GenesisAccount {
+						GenesisAccount {
 							nonce: Default::default(),
 							balance: Default::default(),
 							storage: Default::default(),
