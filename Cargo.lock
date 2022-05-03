@@ -791,9 +791,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.14"
+version = "3.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "535434c063ced786eb04aaf529308092c5ab60889e8fe24275d15de07b01fa97"
+checksum = "85a35a599b11c089a7f49105658d089b8f2cf0882993c17daf6de15285c2c35d"
 dependencies = [
  "atty",
  "bitflags",
@@ -1536,7 +1536,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -1555,7 +1555,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -1569,7 +1569,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -1586,7 +1586,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -1628,7 +1628,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -1735,7 +1735,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -1747,7 +1747,7 @@ dependencies = [
 [[package]]
 name = "fp-dynamic-fee"
 version = "1.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "async-trait",
  "sp-core",
@@ -1757,7 +1757,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "evm",
  "parity-scale-codec",
@@ -1769,7 +1769,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -1786,7 +1786,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -1802,7 +1802,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -1836,7 +1836,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "Inflector",
  "chrono",
- "clap 3.1.14",
+ "clap 3.1.15",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -2339,9 +2339,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c21d40587b92fa6a6c6e3c1bdbf87d75511db5672f9c93175574b3a00df1758"
+checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
 dependencies = [
  "ahash",
 ]
@@ -3554,9 +3554,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.16"
+version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6389c490849ff5bc16be905ae24bc913a9c8892e19b2341dbc175e14c341c2b8"
+checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if 1.0.0",
  "value-bag",
@@ -3694,7 +3694,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6566c70c1016f525ced45d7b7f97730a2bafb037c788211d0c186ef5b2189f0a"
 dependencies = [
  "hash-db",
- "hashbrown 0.12.0",
+ "hashbrown 0.12.1",
  "parity-util-mem",
 ]
 
@@ -4078,9 +4078,9 @@ dependencies = [
 
 [[package]]
 name = "num-traits"
-version = "0.2.14"
+version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
+checksum = "578ede34cf02f8924ab9447f50c28075b4d3e5b269972345e7e0372b38c6cdcd"
 dependencies = [
  "autocfg",
  "libm",
@@ -4248,7 +4248,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -4347,7 +4347,7 @@ dependencies = [
 [[package]]
 name = "pallet-dynamic-fee"
 version = "4.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "async-trait",
  "fp-dynamic-fee",
@@ -4366,7 +4366,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -4395,7 +4395,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "evm",
  "fp-evm",
@@ -4421,7 +4421,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-blake2"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
 ]
@@ -4429,7 +4429,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-bn128"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
  "sp-core",
@@ -4439,7 +4439,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-dispatch"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -4449,7 +4449,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
  "num",
@@ -4458,7 +4458,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
  "tiny-keccak",
@@ -4467,7 +4467,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#32a62ed6823a1ceffa5dc7016f1b8b9e9d6a529d"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.19#8bd0ed416f5eb2702afd993d53e7e72e40eec6a1"
 dependencies = [
  "fp-evm",
  "ripemd",
@@ -4625,9 +4625,9 @@ dependencies = [
 
 [[package]]
 name = "parity-db"
-version = "0.3.11"
+version = "0.3.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3e7f385d61562f5834282b90aa50b41f38a35cf64d5209b8b05487b50553dbe"
+checksum = "6e73cd0b0a78045276b19eaae8eaaa20e44a1da9a0217ff934a810d9492ae701"
 dependencies = [
  "blake2-rfc",
  "crc32fast",
@@ -4696,7 +4696,7 @@ checksum = "c32561d248d352148124f036cac253a644685a21dc9fea383eb4907d7bd35a8f"
 dependencies = [
  "cfg-if 1.0.0",
  "ethereum-types",
- "hashbrown 0.12.0",
+ "hashbrown 0.12.1",
  "impl-trait-for-tuples",
  "lru 0.7.5",
  "parity-util-mem-derive",
@@ -4866,7 +4866,7 @@ name = "peaq-node"
 version = "3.0.0-polkadot-v0.9.19"
 dependencies = [
  "async-trait",
- "clap 3.1.14",
+ "clap 3.1.15",
  "fc-consensus",
  "fc-db",
  "fc-mapping-sync",
@@ -6091,7 +6091,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
  "chrono",
- "clap 3.1.14",
+ "clap 3.1.15",
  "fdlimit",
  "futures 0.3.21",
  "hex",
@@ -8356,9 +8356,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.18.0"
+version = "1.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f48b6d60512a392e34dbf7fd456249fd2de3c83669ab642e021903f4015185b"
+checksum = "dce653fb475565de9f6fb0614b28bca8df2c430c0cf84bcd9c843f15de5414cc"
 dependencies = [
  "bytes 1.1.0",
  "libc",
@@ -8544,7 +8544,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d32d034c0d3db64b43c31de38e945f15b40cd4ca6d2dcfc26d4798ce8de4ab83"
 dependencies = [
  "hash-db",
- "hashbrown 0.12.0",
+ "hashbrown 0.12.1",
  "log",
  "rustc-hex",
  "smallvec",
@@ -8698,9 +8698,9 @@ checksum = "3ed742d4ea2bd1176e236172c8429aaf54486e7ac098db29ffe6529e0ce50973"
 
 [[package]]
 name = "unicode-xid"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
 name = "universal-hash"
@@ -8779,9 +8779,9 @@ checksum = "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d"
 
 [[package]]
 name = "value-bag"
-version = "1.0.0-alpha.8"
+version = "1.0.0-alpha.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79923f7731dc61ebfba3633098bf3ac533bbd35ccd8c57e7088d9a5eebe0263f"
+checksum = "2209b78d1249f7e6f3293657c9779fe31ced465df091bbd433a1cf88e916ec55"
 dependencies = [
  "ctor",
  "version_check",
