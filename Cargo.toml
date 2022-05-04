@@ -16,6 +16,6 @@ inherits = "release"
 lto = true
 
 [profile.release]
-# Moonbeam runtime requires unwinding.
+# Peaq runtime requires unwinding.
 opt-level = 3
 panic = "unwind"

@@ -386,7 +386,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
-	let enable_dev_signer = cli.run.enable_dev_signer;
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
@@ -443,7 +442,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				graph: pool.pool().clone(),
 				deny_unsafe,
 				is_authority,
-				enable_dev_signer,
 				network: network.clone(),
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),

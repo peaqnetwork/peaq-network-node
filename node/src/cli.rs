@@ -68,9 +68,6 @@ pub struct RunCmd {
 	#[clap(long, default_value = "300000000")]
 	pub eth_statuses_cache: usize,
 
-	#[clap(long = "enable-dev-signer")]
-	pub enable_dev_signer: bool,
-
 	/// Maximum number of logs in a query.
 	#[clap(long, default_value = "10000")]
 	pub max_past_logs: u32,

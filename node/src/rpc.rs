@@ -60,8 +60,6 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub deny_unsafe: DenyUnsafe,
 	/// The Node authority flag
 	pub is_authority: bool,
-	/// Whether to enable dev signer
-	pub enable_dev_signer: bool,
 	/// Network service
 	pub network: Arc<NetworkService<Block, Hash>>,
 	/// EthFilterApi pool.
@@ -144,8 +142,8 @@ where
 	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 {
 	use fc_rpc::{
-		EthApi, EthApiServer, EthDevSigner, EthFilterApi, EthFilterApiServer, EthPubSubApi,
-		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
+		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi,
+		EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
 		Web3ApiServer,
 	};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -165,7 +163,6 @@ where
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
-		enable_dev_signer,
 		ethapi_cmd,
 		overrides,
 		block_data_cache,
@@ -185,10 +182,8 @@ where
 		ContractsApi::to_delegate(Contracts::new(client.clone()))
 	);
 
-	let mut signers = Vec::new();
-	if enable_dev_signer {
-		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
-	}
+	// TODO: are we supporting signing?
+	let signers = Vec::new();
 
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
