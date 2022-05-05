@@ -3,6 +3,7 @@ use structopt::clap::arg_enum;
 
 use clap::Parser;
 use crate::cli_opt::EthApi;
+use std::path::PathBuf;
 
 #[cfg(feature = "manual-seal")]
 arg_enum! {
@@ -122,8 +123,33 @@ pub enum Subcommand {
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
 
+    /// Export the genesis state of the parachain.
+    #[clap(name = "export-genesis-state")]
+    ExportGenesisState(ExportGenesisStateCommand),
+
 	/// Sub-commands concerned with benchmarking.
 	/// The pallet benchmarking moved to the `pallet` sub-command.
 	#[clap(subcommand)]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }
+
+/// Command for exporting the genesis state of the parachain
+#[derive(Debug, clap::Parser)]
+pub struct ExportGenesisStateCommand {
+    /// Output file name or stdout if unspecified.
+    #[clap(parse(from_os_str))]
+    pub output: Option<PathBuf>,
+
+    /// Id of the parachain this state is for.
+    #[clap(long, default_value = "5566")]
+    pub parachain_id: u32,
+
+    /// Write output in binary. Default is to write in hex.
+    #[clap(short, long)]
+    pub raw: bool,
+
+    /// The name of the chain for that the genesis state should be exported.
+    #[clap(long)]
+    pub chain: Option<String>,
+}
+

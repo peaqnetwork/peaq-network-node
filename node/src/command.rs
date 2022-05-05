@@ -5,9 +5,16 @@ use crate::{
 	cli_opt::{EthApi, RpcConfig},
 };
 use peaq_node_runtime::Block;
+use sp_runtime::traits::Block as _;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 use frame_benchmarking_cli::BenchmarkCmd;
+
+// Parachain
+use codec::Encode;
+use sp_core::hexdisplay::HexDisplay;
+use cumulus_client_service::genesis::generate_genesis_block;
+use std::io::Write;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -36,6 +43,7 @@ impl SubstrateCli for Cli {
 		2021
 	}
 
+	// [TODO]
 	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
 			"dev" => Box::new(chain_spec::development_config()?),
@@ -186,6 +194,32 @@ pub fn run() -> sc_cli::Result<()> {
 				)
 			}
 		}
+        Some(Subcommand::ExportGenesisState(params)) => {
+            let mut builder = sc_cli::LoggerBuilder::new("");
+            builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
+            let _ = builder.init();
+
+			// [TODO]??? moonbeam
+            let spec = cli.load_spec(&params.chain.clone().unwrap_or_default())?;
+            let state_version = Cli::native_runtime_version(&spec).state_version();
+
+            let block: Block = generate_genesis_block(&spec, state_version)?;
+            let raw_header = block.header().encode();
+            let output_buf = if params.raw {
+                raw_header
+            } else {
+                format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+            };
+
+            if let Some(output) = &params.output {
+                std::fs::write(output, output_buf)?;
+            } else {
+                std::io::stdout().write_all(&output_buf)?;
+            }
+
+            Ok(())
+        }
+
 		None => {
 			let runner = cli.create_runner(&cli.run.base)?;
 			runner.run_node_until_exit(|config| async move {

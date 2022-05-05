@@ -16,6 +16,10 @@ name = 'peaq-node'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
+[dependencies.codec]
+package = 'parity-scale-codec'
+version = '3.0.0'
+
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
@@ -23,6 +27,7 @@ branch = 'peaq-polkadot-v0.9.19'
 [dependencies.peaq-node-runtime]
 path = '../runtime'
 version = '3.0.0-polkadot-v0.9.19'
+default-features = false
 
 [dependencies]
 structopt = "0.3.8"
@@ -248,6 +253,16 @@ path = '../client/rpc/txpool'
 [dependencies.tokio]
 version = "1.13.0"
 features = [ "macros", "sync" ]
+
+
+## Parachain
+[dependencies.cumulus-client-service]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.sc-tracing]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
 
 # peaq-rpc-debug = { path = "../../client/rpc/debug" }
 # peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
