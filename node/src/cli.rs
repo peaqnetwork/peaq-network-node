@@ -127,6 +127,10 @@ pub enum Subcommand {
     #[clap(name = "export-genesis-state")]
     ExportGenesisState(ExportGenesisStateCommand),
 
+    /// Export the genesis wasm of the parachain.
+    #[clap(name = "export-genesis-wasm")]
+    ExportGenesisWasm(ExportGenesisWasmCommand),
+
 	/// Sub-commands concerned with benchmarking.
 	/// The pallet benchmarking moved to the `pallet` sub-command.
 	#[clap(subcommand)]
@@ -153,3 +157,18 @@ pub struct ExportGenesisStateCommand {
     pub chain: Option<String>,
 }
 
+/// Command for exporting the genesis wasm file.
+#[derive(Debug, clap::Parser)]
+pub struct ExportGenesisWasmCommand {
+    /// Output file name or stdout if unspecified.
+    #[clap(parse(from_os_str))]
+    pub output: Option<PathBuf>,
+
+    /// Write output in binary. Default is to write in hex.
+    #[clap(short, long)]
+    pub raw: bool,
+
+    /// The name of the chain for that the genesis wasm file should be exported.
+    #[clap(long)]
+    pub chain: Option<String>,
+}

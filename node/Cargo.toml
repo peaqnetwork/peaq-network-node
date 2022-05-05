@@ -27,7 +27,6 @@ branch = 'peaq-polkadot-v0.9.19'
 [dependencies.peaq-node-runtime]
 path = '../runtime'
 version = '3.0.0-polkadot-v0.9.19'
-default-features = false
 
 [dependencies]
 structopt = "0.3.8"

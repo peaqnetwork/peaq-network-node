@@ -6,7 +6,7 @@ use crate::{
 };
 use peaq_node_runtime::Block;
 use sp_runtime::traits::Block as _;
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
+use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli, Result};
 use sc_service::PartialComponents;
 use frame_benchmarking_cli::BenchmarkCmd;
 
@@ -43,8 +43,7 @@ impl SubstrateCli for Cli {
 		2021
 	}
 
-	// [TODO]
-	fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
 			"dev" => Box::new(chain_spec::development_config()?),
 			"agung" => Box::new(chain_spec::agung_net_config()?),
@@ -75,6 +74,17 @@ fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
 	}
 	Ok(())
 }
+
+#[allow(clippy::borrowed_box)]
+fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<Vec<u8>> {
+    let mut storage = chain_spec.build_storage()?;
+
+    storage
+        .top
+        .remove(sp_core::storage::well_known_keys::CODE)
+        .ok_or_else(|| "Could not find wasm file in genesis state!".into())
+}
+
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
@@ -157,8 +167,6 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend, None), task_manager))
 			})
 		}
-		// ExportGenesisState and ExortGenesisWasm uses for Substrate-based Polkadot parachains,
-		// so won't porting it now.
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
@@ -209,6 +217,27 @@ pub fn run() -> sc_cli::Result<()> {
                 raw_header
             } else {
                 format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+            };
+
+            if let Some(output) = &params.output {
+                std::fs::write(output, output_buf)?;
+            } else {
+                std::io::stdout().write_all(&output_buf)?;
+            }
+
+            Ok(())
+        }
+        Some(Subcommand::ExportGenesisWasm(params)) => {
+            let mut builder = sc_cli::LoggerBuilder::new("");
+            builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
+            let _ = builder.init();
+
+            let raw_wasm_blob =
+                extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
+            let output_buf = if params.raw {
+                raw_wasm_blob
+            } else {
+                format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
             };
 
             if let Some(output) = &params.output {
