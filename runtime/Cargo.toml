@@ -84,11 +84,6 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
 
-[dependencies.pallet-grandpa]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.19'
-
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
@@ -326,7 +321,6 @@ std = [
     'frame-system/std',
     'pallet-aura/std',
     'pallet-balances/std',
-    'pallet-grandpa/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-timestamp/std',
