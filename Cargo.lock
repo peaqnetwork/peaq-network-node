@@ -1454,6 +1454,65 @@ dependencies = [
 ]
 
 [[package]]
+name = "cumulus-pallet-aura-ext"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "pallet-aura",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-consensus-aura",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "cumulus-pallet-parachain-system"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-pallet-parachain-system-proc-macro",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "environmental",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "log",
+ "pallet-balances",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-externalities",
+ "sp-inherents",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+ "sp-version",
+ "xcm",
+]
+
+[[package]]
+name = "cumulus-pallet-parachain-system-proc-macro"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
@@ -1467,6 +1526,59 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-trie",
+]
+
+[[package]]
+name = "cumulus-primitives-parachain-inherent"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "async-trait",
+ "cumulus-primitives-core",
+ "cumulus-relay-chain-interface",
+ "cumulus-test-relay-sproof-builder",
+ "parity-scale-codec",
+ "sc-client-api",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-storage",
+ "sp-trie",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-primitives-timestamp"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "futures 0.3.21",
+ "parity-scale-codec",
+ "sp-inherents",
+ "sp-std",
+ "sp-timestamp",
+]
+
+[[package]]
+name = "cumulus-primitives-utility"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "parity-scale-codec",
+ "polkadot-core-primitives",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
+ "xcm",
 ]
 
 [[package]]
@@ -1491,6 +1603,19 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
+]
+
+[[package]]
+name = "cumulus-test-relay-sproof-builder"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
 ]
 
 [[package]]
@@ -5051,6 +5176,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collator-selection"
+version = "3.0.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-collective"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
@@ -5796,6 +5941,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "parachain-info"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6107,6 +6265,11 @@ dependencies = [
 name = "peaq-node-runtime"
 version = "3.0.0-polkadot-v0.9.19"
 dependencies = [
+ "cumulus-pallet-aura-ext",
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
+ "cumulus-primitives-timestamp",
+ "cumulus-primitives-utility",
  "evm-tracing-events",
  "fp-evm",
  "fp-rpc",
@@ -6119,8 +6282,10 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
@@ -6135,16 +6300,21 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-multisig",
  "pallet-randomness-collective-flip",
+ "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "parachain-info",
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
  "peaq-pallet-transaction",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
  "rlp",
  "scale-info",
  "serde",
