@@ -22,7 +22,6 @@ use sc_keystore::LocalKeystore;
 use sc_network::warp_request_handler::WarpSyncProvider;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
-use sp_consensus::SlotData;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_core::U256;
 use sp_inherents::{InherentData, InherentIdentifier};
@@ -245,7 +244,7 @@ pub fn new_partial(
 			frontier_backend.clone(),
 		);
 
-		let slot_duration = sc_consensus_aura::slot_duration(&*client)?.slot_duration();
+		let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 		let target_gas_price = cli.run.target_gas_price;
 
 		let import_queue =
@@ -257,7 +256,7 @@ pub fn new_partial(
 					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
 					let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 							*timestamp,
 							slot_duration,
 						);
@@ -387,7 +386,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
-	let enable_dev_signer = cli.run.enable_dev_signer;
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
@@ -417,6 +415,14 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			}
 		};
 
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		rpc_config.eth_log_block_cache as u64,
+		rpc_config.eth_statuses_cache as u64,
+		prometheus_registry.clone(),
+	));
+
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
@@ -427,6 +433,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let max_past_logs = cli.run.max_past_logs;
+		let block_data_cache = block_data_cache.clone();
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = crate::rpc::FullDeps {
@@ -435,7 +442,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				graph: pool.pool().clone(),
 				deny_unsafe,
 				is_authority,
-				enable_dev_signer,
 				network: network.clone(),
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),
@@ -444,14 +450,14 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				fee_history_cache: fee_history_cache.clone(),
 				command_sink: Some(command_sink.clone()),
 				ethapi_cmd: ethapi_cmd.clone(),
-				eth_log_block_cache: rpc_config.eth_log_block_cache,
+				block_data_cache: block_data_cache.clone(),
+				overrides: overrides.clone(),
 			};
 
 			#[allow(unused_mut)]
 			let mut io = crate::rpc::create_full(
 				deps,
 				subscription_task_executor.clone(),
-				overrides.clone(),
 			);
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 				crate::rpc::tracing::extend_with_tracing(
@@ -487,6 +493,8 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			client.clone(),
 			backend.clone(),
 			frontier_backend.clone(),
+			3,
+			0,
 			SyncStrategy::Normal,
 		)
 		.for_each(|()| futures::future::ready(())),
@@ -609,7 +617,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
 			let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-			let raw_slot_duration = slot_duration.slot_duration();
 			let target_gas_price = cli.run.target_gas_price;
 
 			let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _, _>(
@@ -623,9 +630,9 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 						let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
 						let slot =
-							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 								*timestamp,
-								raw_slot_duration,
+								slot_duration,
 							);
 
 						let dynamic_fee =

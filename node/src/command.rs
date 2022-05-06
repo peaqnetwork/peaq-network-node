@@ -7,6 +7,7 @@ use crate::{
 use peaq_node_runtime::Block;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+use frame_benchmarking_cli::BenchmarkCmd;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -18,6 +19,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn description() -> String {
+		//[TODO]
 		env!("CARGO_PKG_DESCRIPTION").into()
 	}
 
@@ -26,6 +28,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
+		//[TODO]
 		"support.anonymous.an".into()
 	}
 
@@ -143,7 +146,7 @@ pub fn run() -> sc_cli::Result<()> {
 					backend,
 					..
 				} = service::new_partial(&config, &cli)?;
-				Ok((cmd.run(client, backend), task_manager))
+				Ok((cmd.run(client, backend, None), task_manager))
 			})
 		}
 		// ExportGenesisState and ExortGenesisWasm uses for Substrate-based Polkadot parachains,
@@ -151,8 +154,31 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
+				match cmd {
+					BenchmarkCmd::Pallet(cmd) => {
+						return runner.sync_run(|config| {
+							cmd.run::<Block, service::ExecutorDispatch>(config)
+						})
+					}
+					BenchmarkCmd::Block(cmd) => {
+						return runner.sync_run(|mut config| {
+							let params = service::new_partial(&mut config, &cli)?;
 
-				runner.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config))
+							cmd.run(params.client)
+						})
+					}
+					BenchmarkCmd::Storage(cmd) => {
+							return runner.sync_run(|mut config| {
+								let params = service::new_partial(&mut config, &cli)?;
+
+								let db = params.backend.expose_db();
+								let storage = params.backend.expose_storage();
+
+								cmd.run(config, params.client, db, storage)
+						})
+					}
+					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
 					 `--features runtime-benchmarks`."
@@ -169,8 +195,9 @@ pub fn run() -> sc_cli::Result<()> {
 				ethapi_trace_max_count: cli.run.ethapi_trace_max_count,
 				ethapi_trace_cache_duration: cli.run.ethapi_trace_cache_duration,
 				eth_log_block_cache: cli.run.eth_log_block_cache,
-				max_past_logs: cli.run.max_past_logs,
+				eth_statuses_cache: cli.run.eth_statuses_cache,
 				fee_history_limit: cli.run.fee_history_limit,
+				max_past_logs: cli.run.max_past_logs,
 			};
 
 				service::new_full(config, &cli, rpc_config).map_err(sc_cli::Error::Service)

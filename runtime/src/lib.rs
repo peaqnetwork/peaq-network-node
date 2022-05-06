@@ -6,6 +6,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+#[cfg(feature = "std")]
+pub use fp_evm::GenesisAccount;
+
 use codec::Encode;
 use pallet_evm::FeeCalculator;
 use pallet_grandpa::{
@@ -41,7 +44,7 @@ pub use frame_support::{
 	traits::{Nothing, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight,
+		ConstantMultiplier, IdentityFee, Weight,
 		GetDispatchInfo
 	},
 	ConsensusEngineId, StorageValue,
@@ -358,9 +361,9 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = IdentityFee<Balance>;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = ();
 }
 
@@ -414,11 +417,12 @@ impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
+	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
 frame_support::parameter_types! {
@@ -821,7 +825,7 @@ impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
+			_access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -831,6 +835,7 @@ impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
 			<Runtime as pallet_evm::Config>::Runner::call(
 				from,
 				to,
@@ -840,7 +845,8 @@ impl_runtime_apis! {
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
-				access_list.unwrap_or_default(),
+				Vec::new(),
+				is_transactional,
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -854,7 +860,7 @@ impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
+			_access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -864,6 +870,7 @@ impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
@@ -872,7 +879,8 @@ impl_runtime_apis! {
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
-				access_list.unwrap_or_default(),
+				Vec::new(),
+				is_transactional,
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}

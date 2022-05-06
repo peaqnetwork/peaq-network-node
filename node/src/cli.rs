@@ -1,6 +1,7 @@
 #[cfg(feature = "manual-seal")]
 use structopt::clap::arg_enum;
-use structopt::StructOpt;
+
+use clap::Parser;
 use crate::cli_opt::EthApi;
 
 #[cfg(feature = "manual-seal")]
@@ -23,73 +24,83 @@ impl Default for Sealing {
 }
 
 #[allow(missing_docs)]
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub struct RunCmd {
 	#[allow(missing_docs)]
-	#[structopt(flatten)]
+	#[clap(flatten)]
 	pub base: sc_cli::RunCmd,
 
 	#[cfg(feature = "manual-seal")]
 	/// Choose sealing method.
-	#[structopt(long = "sealing")]
+	#[clap(long = "sealing")]
 	pub sealing: Sealing,
 
 	/// Enable EVM tracing module on a non-authority node.
-	#[structopt(
+	#[clap(
 		long,
 		conflicts_with = "validator",
-		require_delimiter = true
+		use_value_delimiter = true,
+		require_value_delimiter = true,
+		multiple_values = true
 	)]
 	pub ethapi: Vec<EthApi>,
 
 	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.
-	#[structopt(long, default_value = "10")]
+	#[clap(long, default_value = "10")]
 	pub ethapi_max_permits: u32,
 
 	/// Maximum number of trace entries a single request of `trace_filter` is allowed to return.
 	/// A request asking for more or an unbounded one going over this limit will both return an
 	/// error.
-	#[structopt(long, default_value = "500")]
+	#[clap(long, default_value = "500")]
 	pub ethapi_trace_max_count: u32,
 
 	/// Duration (in seconds) after which the cache of `trace_filter` for a given block will be
 	/// discarded.
-	#[structopt(long, default_value = "300")]
+	#[clap(long, default_value = "300")]
 	pub ethapi_trace_cache_duration: u64,
 
 	/// Size of the LRU cache for block data and their transaction statuses.
-	#[structopt(long, default_value = "3000")]
+	#[clap(long, default_value = "3000")]
 	pub eth_log_block_cache: usize,
 
-	#[structopt(long = "enable-dev-signer")]
-	pub enable_dev_signer: bool,
+	/// Size in bytes of the LRU cache for transactions statuses data.
+	#[clap(long, default_value = "300000000")]
+	pub eth_statuses_cache: usize,
 
 	/// Maximum number of logs in a query.
-	#[structopt(long, default_value = "10000")]
+	#[clap(long, default_value = "10000")]
 	pub max_past_logs: u32,
 
 	/// Maximum fee history cache size.
-	#[structopt(long, default_value = "2048")]
+	#[clap(long, default_value = "2048")]
 	pub fee_history_limit: u64,
 
 	/// The dynamic-fee pallet target gas price set by block author
-	#[structopt(long, default_value = "1")]
+	#[clap(long, default_value = "1")]
 	pub target_gas_price: u64,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+#[clap(
+	propagate_version = true,
+	args_conflicts_with_subcommands = true,
+	subcommand_negates_reqs = true
+)]
 pub struct Cli {
-	#[structopt(subcommand)]
+	#[clap(subcommand)]
 	pub subcommand: Option<Subcommand>,
 
-	#[structopt(flatten)]
+	#[clap(flatten)]
 	pub run: RunCmd,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Subcommand)]
 pub enum Subcommand {
 	/// Key management cli utilities
+	#[clap(subcommand)]
 	Key(sc_cli::KeySubcommand),
+
 	/// Build a chain specification.
 	BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -111,7 +122,8 @@ pub enum Subcommand {
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
 
-	/// The custom benchmark subcommand benchmarking runtime pallets.
-	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
+	/// Sub-commands concerned with benchmarking.
+	/// The pallet benchmarking moved to the `pallet` sub-command.
+	#[clap(subcommand)]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }

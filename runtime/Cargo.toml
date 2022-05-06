@@ -1,6 +1,6 @@
 [package]
 name = 'peaq-node-runtime'
-version = '3.0.0-polkadot-v0.9.16'
+version = '3.0.0-polkadot-v0.9.19'
 description = 'A node of the peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
@@ -14,14 +14,13 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [build-dependencies.substrate-wasm-builder]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '5.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.codec]
 default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
-version = '2.0.0'
+version = '3.0.0'
 
 [dependencies.serde]
 default-features = false
@@ -43,39 +42,33 @@ version = '0.8'
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 optional = true
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.frame-executive]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.frame-system-benchmarking]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 optional = true
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.frame-system-rpc-runtime-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.hex-literal]
 optional = true
@@ -84,231 +77,208 @@ version = '0.3.1'
 [dependencies.pallet-aura]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-balances]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-grandpa]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-sudo]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-transaction-payment]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-transaction-payment-rpc-runtime-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.scale-info]
 default-features = false
 features = ['derive']
-version = '1.0'
+version = '2.0.1'
 
 
 [dependencies.sp-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-block-builder]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-consensus-aura]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '0.10.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-core]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.1.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-inherents]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-offchain]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.1.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-session]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-transaction-pool]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.sp-version]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-contracts]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-contracts-primitives]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-contracts-rpc-runtime-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.peaq-pallet-did]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
 branch = 'dev'
-version = '0.0.1'
+# version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
 branch = 'dev'
-version = '0.0.1'
+# version = '0.0.1'
 
 
 [dependencies.pallet-multisig]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
-version = '4.0.0-dev'
+branch = 'peaq-polkadot-v0.9.19'
 
 
 # ### Ethereum
 [dependencies.sp-io]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.fp-evm]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.fp-rpc]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.fp-self-contained]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-base-fee]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-dynamic-fee]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-ethereum]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm-precompile-blake2]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm-precompile-bn128]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm-precompile-dispatch]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm-precompile-modexp]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm-precompile-sha3fips]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-evm-precompile-simple]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.16'
+branch = 'peaq-polkadot-v0.9.19'
 
 
 # Tracing

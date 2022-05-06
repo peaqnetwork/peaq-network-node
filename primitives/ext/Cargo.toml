@@ -8,15 +8,15 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.1.0"
 
 [dependencies]
-ethereum-types = { version = "0.12.1", default-features = false }
+ethereum-types = { version = "0.13.1", default-features = false }
 
 evm-tracing-events = { path = "../rpc/evm-tracing-events", default-features = false }
 
 # Substrate
-codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-externalities = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.16", default-features = false }
-sp-runtime-interface = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.16", default-features = false }
-sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.16", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+sp-externalities = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
+sp-runtime-interface = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
+sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
 
 [features]
 default = [ "std" ]
