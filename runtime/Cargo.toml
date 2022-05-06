@@ -193,13 +193,13 @@ branch = 'peaq-polkadot-v0.9.19'
 [dependencies.peaq-pallet-did]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'feature/1202195929123640_to_0.9.19'
+branch = 'dev'
 # version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'feature/1202195929123640_to_0.9.19'
+branch = 'dev'
 # version = '0.0.1'
 
 
