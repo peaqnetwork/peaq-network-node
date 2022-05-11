@@ -1,5 +1,5 @@
 use crate::{
-	chain_spec,
+	parachain::chain_spec,
 	cli::{Cli, Subcommand},
 	service::{self, frontier_database_dir},
 	cli_opt::{EthApi, RpcConfig},
@@ -46,7 +46,7 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
 			"dev" => Box::new(chain_spec::development_config()?),
-			"agung" => Box::new(chain_spec::agung_net_config()?),
+			// "agung" => Box::new(chain_spec::agung_net_config()?),
 			path => Box::new(chain_spec::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),

@@ -256,13 +256,92 @@ features = [ "macros", "sync" ]
 
 
 ## Parachain
+[dependencies.sc-tracing]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-cli]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-network]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
 [dependencies.cumulus-client-service]
 git = "https://github.com/peaqnetwork/cumulus"
 branch = "peaq-polkadot-v0.9.19"
 
-[dependencies.sc-tracing]
+[dependencies.cumulus-client-consensus-aura]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-consensus-common]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-consensus-relay-chain]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-relay-chain-interface]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-relay-chain-inprocess-interface]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-relay-chain-rpc-interface]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-primitives-core]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-primitives-parachain-inherent]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.substrate-prometheus-endpoint]
 git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.19"
+
+# polkadot dependencies
+[dependencies.polkadot-primitives]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.polkadot-parachain]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.polkadot-service]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.polkadot-cli]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+optional = true
+
+[dependencies.sp-session]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
+
+[dependencies.sp-keystore]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
+
+[dependencies.sp-transaction-pool]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
+
+[dependencies.sp-offchain]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
+
 
 # peaq-rpc-debug = { path = "../../client/rpc/debug" }
 # peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
