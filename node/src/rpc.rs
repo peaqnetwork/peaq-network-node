@@ -48,7 +48,6 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 }
 
 /// Full client dependencies.
-//pub struct FullDeps<C, P, A: ChainApi, BE> {
 pub struct FullDeps<C, P, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
@@ -67,12 +66,15 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// Backend.
 	pub backend: Arc<fc_db::Backend<Block>>,
 	/// Maximum number of logs in a query.
+	// [TODO] backend in moonbeam
+	// [TODO] Not in astar
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Manual seal command sink
+	// [TODO] Not in astar
 	pub command_sink:
 		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
 	/// The list of optional RPC extensions.
@@ -83,6 +85,7 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 }
 
+// [OKAY]
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
@@ -115,6 +118,7 @@ where
 	})
 }
 
+// [OKAY]
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
@@ -128,6 +132,7 @@ where
 	C: BlockchainEvents<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
+	// [TODO] can api remove???
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
