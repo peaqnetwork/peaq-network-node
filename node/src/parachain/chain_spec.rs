@@ -41,7 +41,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
 	(get_account_id_from_seed::<sr25519::Public>(s), get_from_seed::<AuraId>(s))
 }
 
-pub fn development_config() -> Result<ChainSpec, String> {
+pub fn development_config(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
@@ -66,7 +66,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 				],
-				true,
+				para_id.into(),
 			)
 		},
 		// Bootnodes

@@ -3,9 +3,10 @@ use crate::{
 	cli::{Cli, Subcommand},
 	service::{self, frontier_database_dir},
 	cli_opt::{EthApi, RpcConfig},
+	primitives::Block,
 };
-use peaq_node_runtime::Block;
-use sp_runtime::traits::Block as _;
+
+use sp_runtime::traits::Block as BlockT;
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli, Result};
 use sc_service::PartialComponents;
 use frame_benchmarking_cli::BenchmarkCmd;

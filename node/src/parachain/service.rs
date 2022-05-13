@@ -13,7 +13,7 @@ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
 use fc_consensus::FrontierBlockImport;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use futures::{lock::Mutex, StreamExt};
+use futures::StreamExt;
 use polkadot_service::CollatorPair;
 use sc_client_api::{BlockchainEvents, ExecutorProvider};
 use sc_consensus::import_queue::BasicQueue;
@@ -34,45 +34,23 @@ use sc_service::BasePath;
 
 use crate::cli_opt::EthApi as EthApiCmd;
 use crate::cli_opt::RpcConfig;
-use peaq_node_runtime::RuntimeApi;
 use fc_rpc::EthTask;
+use sc_cli::SubstrateCli;
 
-
-pub type HostFunctions = (
-	frame_benchmarking::benchmarking::HostFunctions,
-	peaq_primitives_ext::peaq_ext::HostFunctions,
-);
-// Our native executor instance.
-pub struct ExecutorDispatch;
-
-impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
-	type ExtendHostFunctions = HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		peaq_node_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		peaq_node_runtime::native_version()
-	}
-}
-
-type FullClient =
-	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
-type FullBackend = sc_service::TFullBackend<Block>;
 
 /// dev network runtime executor.
 pub mod dev {
 	pub use peaq_node_runtime::RuntimeApi;
 
-	/// Shiden runtime executor.
+	pub type HostFunctions = (
+		frame_benchmarking::benchmarking::HostFunctions,
+		peaq_primitives_ext::peaq_ext::HostFunctions,
+	);
+	// Our native executor instance.
 	pub struct Executor;
-	impl sc_executor::NativeExecutionDispatch for Executor {
-		#[cfg(not(feature = "runtime-benchmarks"))]
-		type ExtendHostFunctions = ();
 
-		#[cfg(feature = "runtime-benchmarks")]
-		type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	impl sc_executor::NativeExecutionDispatch for Executor {
+		type ExtendHostFunctions = HostFunctions;
 
 		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 			peaq_node_runtime::api::dispatch(method, data)
@@ -83,6 +61,11 @@ pub mod dev {
 		}
 	}
 }
+
+type FullClient<RuntimeApi, Executor> =
+	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
+type FullBackend = TFullBackend<Block>;
+
 
 //[TODO] Move out
 pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
@@ -117,22 +100,21 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	build_import_queue: BIQ,
 ) -> Result<
 	PartialComponents<
-		FullClient,
+		FullClient<RuntimeApi, Executor>,
 		FullBackend,
 		(),
-		sc_consensus::DefaultImportQueue<Block, FullClient>,
-		sc_transaction_pool::FullPool<Block, FullClient>,
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			/*
-			 * //[TODO] QQ?
-			 * FrontierBlockImport<
-			 *	 Block,
-			 *	 Arc<FullClient<RuntimeApi, Executor>>,
-			 *	 FullClient<RuntimeApi, Executor>,
-			 * >,
-			 */
+			FrontierBlockImport<
+				Block,
+				Arc<FullClient<RuntimeApi, Executor>>,
+				FullClient<RuntimeApi, Executor>,
+			>,
+			Option<FilterPool>,
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
+			// [TODO]
 			Arc<fc_db::Backend<Block>>,
 			FeeHistoryCache,
 		),
@@ -141,7 +123,7 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 >
 where
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient> + Send + Sync + 'static,
+		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
     /*
 	 * RuntimeApi::RuntimeApi:
 	 *     RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
@@ -156,15 +138,16 @@ where
 			StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>,
 		> + sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>,
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient>,
+		Arc<FullClient<RuntimeApi, Executor>>,
 		FrontierBlockImport<
 			Block,
-			Arc<FullClient>,
-			FullClient,
+			Arc<FullClient<RuntimeApi, Executor>>,
+			FullClient<RuntimeApi, Executor>,
 		>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -172,7 +155,7 @@ where
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
-			FullClient,
+			FullClient<RuntimeApi, Executor>,
 		>,
 		sc_service::Error,
 	>,
@@ -230,8 +213,8 @@ where
 		client.clone(),
 	);
 
-	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
-	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(std::sync::Mutex::new(BTreeMap::new())));
+	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
 	let frontier_backend = open_frontier_backend(config)?;
 
@@ -306,10 +289,10 @@ async fn build_relay_chain_interface(
  *     build_consensus: BIC,
  * ) -> sc_service::error::Result<(
  *     TaskManager,
- *     Arc<FullClient>,
+ *     Arc<FullClient<RuntimeApi, Executor>>,
  * )>
  * where
- *     RuntimeApi: ConstructRuntimeApi<Block, FullClient>
+ *     RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>
  *         + Send
  *         + Sync
  *         + 'static,
@@ -321,7 +304,7 @@ async fn build_relay_chain_interface(
  *             StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>,
  *         > + sp_offchain::OffchainWorkerApi<Block>
  *         + sp_block_builder::BlockBuilder<Block>
- *         + frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+ *         + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
  *         + pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
  *         + fp_rpc::EthereumRuntimeRPCApi<Block>
  *         + fp_rpc::ConvertTransactionRuntimeApi<Block>
@@ -329,11 +312,11 @@ async fn build_relay_chain_interface(
  *     sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
  *     Executor: sc_executor::NativeExecutionDispatch + 'static,
  *     BIQ: FnOnce(
- *         Arc<FullClient>,
+ *         Arc<FullClient<RuntimeApi, Executor>>,
  *         FrontierBlockImport<
  *             Block,
- *             Arc<FullClient>,
- *             FullClient,
+ *             Arc<FullClient<RuntimeApi, Executor>>,
+ *             FullClient<RuntimeApi, Executor>,
  *         >,
  *         &Configuration,
  *         Option<TelemetryHandle>,
@@ -341,12 +324,12 @@ async fn build_relay_chain_interface(
  *     ) -> Result<
  *         sc_consensus::DefaultImportQueue<
  *             Block,
- *             FullClient,
+ *             FullClient<RuntimeApi, Executor>,
  *         >,
  *         sc_service::Error,
  *     >,
  *     BIC: FnOnce(
- *         Arc<FullClient>,
+ *         Arc<FullClient<RuntimeApi, Executor>>,
  *         Option<&Registry>,
  *         Option<TelemetryHandle>,
  *         &TaskManager,
@@ -354,7 +337,7 @@ async fn build_relay_chain_interface(
  *         Arc<
  *             sc_transaction_pool::FullPool<
  *                 Block,
- *                 FullClient,
+ *                 FullClient<RuntimeApi, Executor>,
  *             >,
  *         >,
  *         Arc<NetworkService<Block, Hash>>,
@@ -541,7 +524,6 @@ async fn build_relay_chain_interface(
  *                 fee_history_limit,
  *                 fee_history_cache: fee_history_cache.clone(),
  *                 network: network.clone(),
- *                 xcm_senders: None,
  *                 block_data_cache: block_data_cache.clone(),
  *                 overrides: overrides.clone(),
  *             };
@@ -651,10 +633,10 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<FullClient>,
+	Arc<FullClient<RuntimeApi, Executor>>,
 )>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient>
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -666,8 +648,9 @@ where
 			StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>,
 		> + sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
-		+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>
@@ -677,11 +660,11 @@ where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient>,
+		Arc<FullClient<RuntimeApi, Executor>>,
 		FrontierBlockImport<
 			Block,
-			Arc<FullClient>,
-			FullClient,
+			Arc<FullClient<RuntimeApi, Executor>>,
+			FullClient<RuntimeApi, Executor>,
 		>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -689,12 +672,12 @@ where
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
-			FullClient,
+			FullClient<RuntimeApi, Executor>,
 		>,
 		sc_service::Error,
 	>,
 	BIC: FnOnce(
-		Arc<FullClient>,
+		Arc<FullClient<RuntimeApi, Executor>>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -702,7 +685,7 @@ where
 		Arc<
 			sc_transaction_pool::FullPool<
 				Block,
-				FullClient,
+				FullClient<RuntimeApi, Executor>,
 			>,
 		>,
 		Arc<NetworkService<Block, Hash>>,
@@ -718,12 +701,12 @@ where
 
 	let params = new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, build_import_queue)?;
     let (
-         _block_import,
-         filter_pool,
-         mut telemetry,
-         telemetry_worker_handle,
-         frontier_backend,
-         fee_history_cache,
+        _block_import,
+        filter_pool,
+        mut telemetry,
+        telemetry_worker_handle,
+        frontier_backend,
+        fee_history_cache,
     ) = params.other;
 
 	let client = params.client.clone();
@@ -766,8 +749,8 @@ where
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let fee_history_limit = rpc_config.fee_history_limit;
 
-	let filter_pool: FilterPool = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
-	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
+	// let filter_pool: FilterPool = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
+	// let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 	let overrides = crate::rpc::overrides_handle(client.clone());
 
 	// [TODO] Below checking // rpc::spawn_essential_tasks
@@ -790,7 +773,7 @@ where
 	);
 
 	// Spawn Frontier EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
+	if let Some(filter_pool_2) = filter_pool.clone() {
 		// Each filter is allowed to stay in the pool for 100 blocks.
 		const FILTER_RETAIN_THRESHOLD: u64 = 100;
 		task_manager.spawn_essential_handle().spawn(
@@ -798,7 +781,7 @@ where
 			Some("frontier"),
 			EthTask::filter_pool_task(
 				Arc::clone(&client),
-				filter_pool,
+				filter_pool_2,
 				FILTER_RETAIN_THRESHOLD
 			),
 		);
@@ -817,7 +800,7 @@ where
 		EthTask::fee_history_task(
 			Arc::clone(&client),
 			Arc::clone(&overrides),
-			fee_history_cache,
+			fee_history_cache.clone(),
 			fee_history_limit,
 		),
 	);
@@ -826,9 +809,9 @@ where
 	let ethapi_cmd = rpc_config.ethapi.clone();
 	let tracing_requesters =
 		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-			rpc::tracing::spawn_tracing_tasks(
+			crate::rpc::tracing::spawn_tracing_tasks(
 				&rpc_config,
-				rpc::SpawnTasksParams {
+				crate::rpc::SpawnTasksParams {
 					task_manager: &task_manager,
 					client: client.clone(),
 					substrate_backend: backend.clone(),
@@ -840,7 +823,7 @@ where
 				},
 			)
 		} else {
-			rpc::tracing::RpcRequesters {
+			crate::rpc::tracing::RpcRequesters {
 				debug: None,
 				trace: None,
 			}
@@ -874,14 +857,13 @@ where
 		let block_data_cache = block_data_cache.clone();
 
 		Box::new(move |deny_unsafe, _| {
-			let deps = rpc::FullDeps {
-				backend: backend.clone(),
+			let deps = crate::rpc::FullDeps {
+				backend: frontier_backend.clone(),
 				client: client.clone(),
 				command_sink: None,
 				deny_unsafe,
 				ethapi_cmd: ethapi_cmd.clone(),
 				filter_pool: filter_pool.clone(),
-				frontier_backend: frontier_backend.clone(),
 				graph: pool.pool().clone(),
 				pool: pool.clone(),
 				is_authority,
@@ -889,18 +871,17 @@ where
 				fee_history_limit,
 				fee_history_cache: fee_history_cache.clone(),
 				network: network.clone(),
-				xcm_senders: None,
 				block_data_cache: block_data_cache.clone(),
 				overrides: overrides.clone(),
 			};
 			#[allow(unused_mut)]
-			let mut io = rpc::create_full(deps, subscription_task_executor.clone());
+			let mut io = crate::rpc::create_full(deps, subscription_task_executor.clone());
 			// This node support WASM contracts
 			io.extend_with(pallet_contracts_rpc::ContractsApi::to_delegate(
 				pallet_contracts_rpc::Contracts::new(client.clone()),
 			));
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-				rpc::tracing::extend_with_tracing(
+				crate::rpc::tracing::extend_with_tracing(
 					client.clone(),
 					tracing_requesters.clone(),
 					rpc_config.ethapi_trace_max_count,
@@ -988,11 +969,11 @@ where
 
 /// Build the import queue.
 pub fn build_import_queue<RuntimeApi, Executor>(
-	client: Arc<FullClient>,
+	client: Arc<FullClient<RuntimeApi, Executor>>,
 	block_import: FrontierBlockImport<
 		Block,
-		Arc<FullClient>,
-		FullClient,
+		Arc<FullClient<RuntimeApi, Executor>>,
+		FullClient<RuntimeApi, Executor>,
 	>,
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
@@ -1000,12 +981,12 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		FullClient,
+		FullClient<RuntimeApi, Executor>,
 	>,
 	sc_service::Error,
 >
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient>
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -1076,7 +1057,7 @@ where
 	))
 }
 
-pub async fn start_dev_node(
+pub async fn start_dev_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
@@ -1084,9 +1065,31 @@ pub async fn start_dev_node(
 	rpc_config: RpcConfig,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<FullClient>,
-)> {
-	start_contracts_node_impl::<dev::RuntimeApi, dev::Executor, _, _>(
+	Arc<FullClient<RuntimeApi, Executor>>,
+)>
+where
+	RuntimeApi:
+		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::Metadata<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_api::ApiExt<
+			Block,
+			StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>,
+		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
+		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>
+		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
+		+ pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>,
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+{
+	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(
 		parachain_config,
 		polkadot_config,
 		collator_options,

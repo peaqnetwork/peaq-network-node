@@ -37,6 +37,7 @@ futures = { version = "0.3.1", features = [ "compat" ] }
 log = "0.4.8"
 clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
+url = "2.2.2"
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
@@ -327,20 +328,20 @@ branch = "peaq-polkadot-v0.9.19"
 optional = true
 
 [dependencies.sp-session]
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.19"
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.sp-keystore]
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.19"
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.sp-transaction-pool]
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.19"
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.sp-offchain]
-git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.19"
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
 
 
 # peaq-rpc-debug = { path = "../../client/rpc/debug" }
