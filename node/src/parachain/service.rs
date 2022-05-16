@@ -223,7 +223,7 @@ where
 
 	let import_queue = build_import_queue(
 		client.clone(),
-		frontier_block_import,
+		frontier_block_import.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
@@ -849,7 +849,8 @@ where
 		let network = network.clone();
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
-		let backend = backend.clone();
+		// [TODO]
+		let _backend = backend.clone();
 		let ethapi_cmd = ethapi_cmd.clone();
 		let max_past_logs = rpc_config.max_past_logs;
 		let overrides = overrides.clone();

@@ -238,7 +238,7 @@ pub fn run() -> sc_cli::Result<()> {
 						})
 					}
 					BenchmarkCmd::Block(cmd) => {
-						return runner.sync_run(|mut config| {
+						return runner.sync_run(|config| {
 							let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 								&config,
 								parachain::build_import_queue)?;
@@ -247,7 +247,7 @@ pub fn run() -> sc_cli::Result<()> {
 						})
 					}
 					BenchmarkCmd::Storage(cmd) => {
-							return runner.sync_run(|mut config| {
+							return runner.sync_run(|config| {
 							let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 								&config,
 								parachain::build_import_queue)?;
