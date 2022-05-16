@@ -1,5 +1,5 @@
 use peaq_node_runtime::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
+	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 };
 use sc_service::{ChainType, Properties};
@@ -7,6 +7,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use cumulus_primitives_core::ParaId;
+use crate::parachain::Extensions;
 
 // [TODO] Agung
 // use hex_literal::hex;
@@ -17,7 +18,7 @@ use cumulus_primitives_core::ParaId;
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -80,7 +81,11 @@ pub fn development_config(para_id: u32) -> Result<ChainSpec, String> {
 		// Properties
 		Some(properties),
 		// Extensions
-		None,
+		Extensions {
+			bad_blocks: Default::default(),
+			relay_chain: "test-service".into(),
+			para_id: para_id,
+		},
 	))
 }
 
@@ -221,9 +226,7 @@ fn configure_genesis(
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
 				.collect::<Vec<_>>(),
 		},
-		aura: AuraConfig {
-			authorities: initial_authorities.iter().map(|x| (x.1.clone())).collect(),
-		},
+		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),

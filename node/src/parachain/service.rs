@@ -255,12 +255,12 @@ async fn build_relay_chain_interface(
 	parachain_config: &Configuration,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	task_manager: &mut TaskManager,
-	collator_options: CollatorOptions,
+	relay_chain_rpc_url: Option<url::Url>,
 ) -> RelayChainResult<(
 	Arc<(dyn RelayChainInterface + 'static)>,
 	Option<CollatorPair>,
 )> {
-	match collator_options.relay_chain_rpc_url {
+	match relay_chain_rpc_url {
 		Some(relay_chain_url) => Ok((
 			Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>,
 			None,
@@ -626,7 +626,6 @@ async fn build_relay_chain_interface(
 async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
-	collator_options: CollatorOptions,
 	id: ParaId,
 	rpc_config: RpcConfig,
 	build_import_queue: BIQ,
@@ -718,7 +717,7 @@ where
 		&parachain_config,
 		telemetry_worker_handle,
 		&mut task_manager,
-		collator_options.clone(),
+		rpc_config.relay_chain_rpc_url.clone(),
 	)
 	.await
 	.map_err(|e| match e {
@@ -1061,7 +1060,6 @@ where
 pub async fn start_dev_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
-	collator_options: CollatorOptions,
 	id: ParaId,
 	rpc_config: RpcConfig,
 ) -> sc_service::error::Result<(
@@ -1093,7 +1091,6 @@ where
 	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(
 		parachain_config,
 		polkadot_config,
-		collator_options,
 		id,
 		rpc_config,
         |client,

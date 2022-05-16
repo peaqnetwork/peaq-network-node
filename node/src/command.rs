@@ -315,7 +315,6 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
-			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 
@@ -328,7 +327,7 @@ pub fn run() -> sc_cli::Result<()> {
 					eth_statuses_cache: cli.run.eth_statuses_cache,
 					fee_history_limit: cli.run.fee_history_limit,
 					max_past_logs: cli.run.max_past_logs,
-					relay_chain_rpc_url: cli.run.relay_chain_rpc_url,
+					relay_chain_rpc_url: cli.run.base.relay_chain_rpc_url,
 				};
 
 
@@ -373,7 +372,7 @@ pub fn run() -> sc_cli::Result<()> {
 				);
 
 				start_dev_node::<dev::RuntimeApi, dev::Executor>(
-					config, polkadot_config, collator_options, id, rpc_config)
+					config, polkadot_config, id, rpc_config)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)

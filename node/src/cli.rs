@@ -6,9 +6,6 @@ use crate::cli_opt::EthApi;
 use std::path::PathBuf;
 use crate::parachain::Extensions;
 
-use url::Url;
-use cumulus_client_cli::CollatorOptions;
-
 #[cfg(feature = "manual-seal")]
 arg_enum! {
 	/// Available Sealing methods.
@@ -87,20 +84,6 @@ pub struct RunCmd {
 	/// The dynamic-fee pallet target gas price set by block author
 	#[clap(long, default_value = "1")]
 	pub target_gas_price: u64,
-
-	#[clap(
-		long,
-		parse(try_from_str),
-		conflicts_with = "collator",
-		conflicts_with = "validator",
-		conflicts_with = "alice",
-		conflicts_with = "bob",
-		conflicts_with = "charlie",
-		conflicts_with = "dave",
-		conflicts_with = "eve",
-		conflicts_with = "ferdie"
-	)]
-	pub relay_chain_rpc_url: Option<Url>,
 }
 
 impl std::ops::Deref for RunCmd {
@@ -110,17 +93,6 @@ impl std::ops::Deref for RunCmd {
 		&self.base
 	}
 }
-
-impl RunCmd {
-	/// Create [`CollatorOptions`] representing options only relevant to parachain collator nodes
-	pub fn collator_options(&self) -> CollatorOptions {
-		CollatorOptions {
-			relay_chain_rpc_url: self.relay_chain_rpc_url.clone(),
-		}
-	}
-}
-
-
 
 #[derive(Debug, Parser)]
 #[clap(
