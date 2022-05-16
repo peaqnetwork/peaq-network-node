@@ -4,6 +4,10 @@ use structopt::clap::arg_enum;
 use clap::Parser;
 use crate::cli_opt::EthApi;
 use std::path::PathBuf;
+use crate::parachain::Extensions;
+
+use url::Url;
+use cumulus_client_cli::CollatorOptions;
 
 #[cfg(feature = "manual-seal")]
 arg_enum! {
@@ -29,12 +33,15 @@ impl Default for Sealing {
 pub struct RunCmd {
 	#[allow(missing_docs)]
 	#[clap(flatten)]
-	pub base: sc_cli::RunCmd,
+	pub base: cumulus_client_cli::RunCmd,
 
 	#[cfg(feature = "manual-seal")]
 	/// Choose sealing method.
 	#[clap(long = "sealing")]
 	pub sealing: Sealing,
+
+	#[clap(long, default_value = "5566")]
+	pub parachain_id: u32,
 
 	/// Enable EVM tracing module on a non-authority node.
 	#[clap(
@@ -80,7 +87,40 @@ pub struct RunCmd {
 	/// The dynamic-fee pallet target gas price set by block author
 	#[clap(long, default_value = "1")]
 	pub target_gas_price: u64,
+
+	#[clap(
+		long,
+		parse(try_from_str),
+		conflicts_with = "collator",
+		conflicts_with = "validator",
+		conflicts_with = "alice",
+		conflicts_with = "bob",
+		conflicts_with = "charlie",
+		conflicts_with = "dave",
+		conflicts_with = "eve",
+		conflicts_with = "ferdie"
+	)]
+	pub relay_chain_rpc_url: Option<Url>,
 }
+
+impl std::ops::Deref for RunCmd {
+	type Target = cumulus_client_cli::RunCmd;
+
+	fn deref(&self) -> &Self::Target {
+		&self.base
+	}
+}
+
+impl RunCmd {
+	/// Create [`CollatorOptions`] representing options only relevant to parachain collator nodes
+	pub fn collator_options(&self) -> CollatorOptions {
+		CollatorOptions {
+			relay_chain_rpc_url: self.relay_chain_rpc_url.clone(),
+		}
+	}
+}
+
+
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -92,8 +132,13 @@ pub struct Cli {
 	#[clap(subcommand)]
 	pub subcommand: Option<Subcommand>,
 
+	#[allow(missing_docs)]
 	#[clap(flatten)]
 	pub run: RunCmd,
+
+	/// Relaychain arguments
+	#[clap(raw = true)]
+	pub relaychain_args: Vec<String>,
 }
 
 #[derive(Debug, clap::Subcommand)]
@@ -123,13 +168,13 @@ pub enum Subcommand {
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
 
-    /// Export the genesis state of the parachain.
-    #[clap(name = "export-genesis-state")]
-    ExportGenesisState(ExportGenesisStateCommand),
+	/// Export the genesis state of the parachain.
+	#[clap(name = "export-genesis-state")]
+	ExportGenesisState(ExportGenesisStateCommand),
 
-    /// Export the genesis wasm of the parachain.
-    #[clap(name = "export-genesis-wasm")]
-    ExportGenesisWasm(ExportGenesisWasmCommand),
+	/// Export the genesis wasm of the parachain.
+	#[clap(name = "export-genesis-wasm")]
+	ExportGenesisWasm(ExportGenesisWasmCommand),
 
 	/// Sub-commands concerned with benchmarking.
 	/// The pallet benchmarking moved to the `pallet` sub-command.
@@ -140,35 +185,68 @@ pub enum Subcommand {
 /// Command for exporting the genesis state of the parachain
 #[derive(Debug, clap::Parser)]
 pub struct ExportGenesisStateCommand {
-    /// Output file name or stdout if unspecified.
-    #[clap(parse(from_os_str))]
-    pub output: Option<PathBuf>,
+	/// Output file name or stdout if unspecified.
+	#[clap(parse(from_os_str))]
+	pub output: Option<PathBuf>,
 
-    /// Id of the parachain this state is for.
-    #[clap(long, default_value = "5566")]
-    pub parachain_id: u32,
+	/// Id of the parachain this state is for.
+	#[clap(long, default_value = "5566")]
+	pub parachain_id: u32,
 
-    /// Write output in binary. Default is to write in hex.
-    #[clap(short, long)]
-    pub raw: bool,
+	/// Write output in binary. Default is to write in hex.
+	#[clap(short, long)]
+	pub raw: bool,
 
-    /// The name of the chain for that the genesis state should be exported.
-    #[clap(long)]
-    pub chain: Option<String>,
+	/// The name of the chain for that the genesis state should be exported.
+	#[clap(long)]
+	pub chain: Option<String>,
 }
 
 /// Command for exporting the genesis wasm file.
 #[derive(Debug, clap::Parser)]
 pub struct ExportGenesisWasmCommand {
-    /// Output file name or stdout if unspecified.
-    #[clap(parse(from_os_str))]
-    pub output: Option<PathBuf>,
+	/// Output file name or stdout if unspecified.
+	#[clap(parse(from_os_str))]
+	pub output: Option<PathBuf>,
 
-    /// Write output in binary. Default is to write in hex.
-    #[clap(short, long)]
-    pub raw: bool,
+	/// Write output in binary. Default is to write in hex.
+	#[clap(short, long)]
+	pub raw: bool,
 
-    /// The name of the chain for that the genesis wasm file should be exported.
-    #[clap(long)]
-    pub chain: Option<String>,
+	/// The name of the chain for that the genesis wasm file should be exported.
+	#[clap(long)]
+	pub chain: Option<String>,
+}
+
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub struct RelayChainCli {
+	/// The actual relay chain cli object.
+	pub base: polkadot_cli::RunCmd,
+
+	/// Optional chain id that should be passed to the relay chain.
+	pub chain_id: Option<String>,
+
+	/// The base path that should be used by the relay chain.
+	pub base_path: Option<PathBuf>,
+}
+
+impl RelayChainCli {
+	/// Parse the relay chain CLI parameters using the para chain `Configuration`.
+	pub fn new<'a>(
+		para_config: &sc_service::Configuration,
+		relay_chain_args: impl Iterator<Item = &'a String>,
+	) -> Self {
+		let extension = Extensions::try_get(&*para_config.chain_spec);
+		let chain_id = extension.map(|e| e.relay_chain.clone());
+		let base_path = para_config
+			.base_path
+			.as_ref()
+			.map(|x| x.path().join("polkadot"));
+		Self {
+			base_path,
+			chain_id,
+			base: polkadot_cli::RunCmd::parse_from(relay_chain_args),
+		}
+	}
 }

@@ -38,6 +38,7 @@ log = "0.4.8"
 clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
 url = "2.2.2"
+serde = { version = "1.0", features = [ "derive" ] }
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
@@ -343,6 +344,10 @@ branch = "peaq-polkadot-v0.9.19"
 git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.19"
 
+[dependencies.sc-chain-spec]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
 
 # peaq-rpc-debug = { path = "../../client/rpc/debug" }
 # peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
@@ -351,9 +356,13 @@ branch = "peaq-polkadot-v0.9.19"
 # peaq-rpc-txpool = { path = "../../client/rpc/txpool" }
 
 [features]
-default = ['aura']
+default = [
+	"aura",
+	"polkadot-cli"
+	]
 aura = ["peaq-node-runtime/aura"]
 manual-seal = ["peaq-node-runtime/manual-seal"]
 runtime-benchmarks = [
-	'peaq-node-runtime/runtime-benchmarks',
+	"peaq-node-runtime/runtime-benchmarks",
+	"polkadot-cli/runtime-benchmarks"
 ]
