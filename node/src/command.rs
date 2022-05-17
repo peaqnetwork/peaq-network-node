@@ -158,8 +158,7 @@ pub fn run() -> sc_cli::Result<()> {
 					..
 				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 					&config,
-					parachain::build_import_queue,
-					cli.run.target_gas_price)?;
+					parachain::build_import_queue)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -172,8 +171,7 @@ pub fn run() -> sc_cli::Result<()> {
 					..
 				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 					&config,
-					parachain::build_import_queue,
-					cli.run.target_gas_price)?;
+					parachain::build_import_queue)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		}
@@ -186,8 +184,7 @@ pub fn run() -> sc_cli::Result<()> {
 					..
 				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 					&config,
-					parachain::build_import_queue,
-					cli.run.target_gas_price)?;
+					parachain::build_import_queue)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		}
@@ -201,8 +198,7 @@ pub fn run() -> sc_cli::Result<()> {
 					..
 				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 					&config,
-					parachain::build_import_queue,
-					cli.run.target_gas_price)?;
+					parachain::build_import_queue)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -228,8 +224,7 @@ pub fn run() -> sc_cli::Result<()> {
 					..
 				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 					&config,
-					parachain::build_import_queue,
-					cli.run.target_gas_price)?;
+					parachain::build_import_queue)?;
 				Ok((cmd.run(client, backend, None), task_manager))
 			})
 		}
@@ -246,8 +241,7 @@ pub fn run() -> sc_cli::Result<()> {
 						return runner.sync_run(|config| {
 							let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 								&config,
-								parachain::build_import_queue,
-								cli.run.target_gas_price)?;
+								parachain::build_import_queue)?;
 
 							cmd.run(params.client)
 						})
@@ -256,8 +250,7 @@ pub fn run() -> sc_cli::Result<()> {
 							return runner.sync_run(|config| {
 							let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
 								&config,
-								parachain::build_import_queue,
-								cli.run.target_gas_price)?;
+								parachain::build_import_queue)?;
 
 								let db = params.backend.expose_db();
 								let storage = params.backend.expose_storage();
@@ -379,7 +372,7 @@ pub fn run() -> sc_cli::Result<()> {
 				);
 
 				start_dev_node::<dev::RuntimeApi, dev::Executor>(
-					config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
+					config, polkadot_config, id, rpc_config)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)

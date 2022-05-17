@@ -37,7 +37,6 @@ use crate::cli_opt::RpcConfig;
 use fc_rpc::EthTask;
 use sc_cli::SubstrateCli;
 
-use sp_core::U256;
 
 /// dev network runtime executor.
 pub mod dev {
@@ -99,7 +98,6 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
-	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -154,7 +152,6 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-		u64,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
@@ -230,7 +227,6 @@ where
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
-		target_gas_price,
 	)?;
 
 	let params = PartialComponents {
@@ -632,7 +628,6 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	polkadot_config: Configuration,
 	id: ParaId,
 	rpc_config: RpcConfig,
-	target_gas_price: u64,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
@@ -673,7 +668,6 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-		u64,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
@@ -704,10 +698,7 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 	// [TODO]..
-	let params = new_partial::<RuntimeApi, Executor, BIQ>(
-		&parachain_config,
-		build_import_queue,
-		target_gas_price)?;
+	let params = new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, build_import_queue)?;
     let (
 	// [TODO]..
         _block_import,
@@ -994,7 +985,6 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-	target_gas_price: u64,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
@@ -1042,10 +1032,7 @@ where
 						slot_duration,
 					);
 
-					let dynamic_fee =
-						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-					Ok((time, slot, dynamic_fee))
+					Ok((time, slot))
 				},
 				can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(
 					client2.executor().clone(),
@@ -1082,7 +1069,6 @@ pub async fn start_dev_node<RuntimeApi, Executor>(
 	polkadot_config: Configuration,
 	id: ParaId,
 	rpc_config: RpcConfig,
-	target_gas_price: u64,
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<FullClient<RuntimeApi, Executor>>,
@@ -1114,13 +1100,11 @@ where
 		polkadot_config,
 		id,
 		rpc_config,
-		target_gas_price,
         |client,
          block_import,
          config,
          telemetry,
-         task_manager,
-		 target_gas_price| {
+         task_manager| {
             let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
             let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
@@ -1144,10 +1128,7 @@ where
                             slot_duration,
                         );
 
-					let dynamic_fee =
-						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-                    Ok((time, slot, dynamic_fee))
+                    Ok((time, slot))
                 },
                 registry: config.prometheus_registry().clone(),
                 can_author_with,
@@ -1212,10 +1193,7 @@ where
                                     "Failed to create parachain inherent",
                                 )
                             })?;
-							let dynamic_fee =
-								fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-                            Ok((time, slot, parachain_inherent, dynamic_fee))
+                            Ok((time, slot, parachain_inherent))
                         }
                     },
                 block_import: client.clone(),
