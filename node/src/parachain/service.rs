@@ -37,6 +37,7 @@ use crate::cli_opt::RpcConfig;
 use fc_rpc::EthTask;
 use sc_cli::SubstrateCli;
 
+use sp_core::U256;
 
 /// dev network runtime executor.
 pub mod dev {
@@ -98,6 +99,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
+	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -152,6 +154,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
+		u64,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
@@ -187,7 +190,6 @@ where
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
 		)?;
-
 	let client = Arc::new(client);
 
 	let telemetry_worker_handle = telemetry.as_ref().map(|(worker, _)| worker.handle());
@@ -213,6 +215,7 @@ where
 		client.clone(),
 	);
 
+	// [TODO]
 	let filter_pool: Option<FilterPool> = Some(Arc::new(std::sync::Mutex::new(BTreeMap::new())));
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
@@ -227,6 +230,7 @@ where
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
+		target_gas_price,
 	)?;
 
 	let params = PartialComponents {
@@ -628,6 +632,7 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	polkadot_config: Configuration,
 	id: ParaId,
 	rpc_config: RpcConfig,
+	target_gas_price: u64,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
@@ -668,6 +673,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
+		u64,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
@@ -697,14 +703,20 @@ where
 	}
 
 	let parachain_config = prepare_node_config(parachain_config);
-
-	let params = new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, build_import_queue)?;
+	// [TODO]..
+	let params = new_partial::<RuntimeApi, Executor, BIQ>(
+		&parachain_config,
+		build_import_queue,
+		target_gas_price)?;
     let (
+	// [TODO]..
         _block_import,
+	// [TODO]..
         filter_pool,
         mut telemetry,
         telemetry_worker_handle,
         frontier_backend,
+	// [TODO]..
         fee_history_cache,
     ) = params.other;
 
@@ -717,6 +729,7 @@ where
 		&parachain_config,
 		telemetry_worker_handle,
 		&mut task_manager,
+		// [TODO]...
 		rpc_config.relay_chain_rpc_url.clone(),
 	)
 	.await
@@ -744,12 +757,14 @@ where
 			warp_sync: None,
 		})?;
 
+	// [QQQ???]
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let fee_history_limit = rpc_config.fee_history_limit;
 
 	// let filter_pool: FilterPool = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 	// let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
+	// [TODO]..
 	let overrides = crate::rpc::overrides_handle(client.clone());
 
 	// [TODO] Below checking // rpc::spawn_essential_tasks
@@ -844,11 +859,12 @@ where
 	// [TODO] Move to Moonbeam
 	let rpc_extensions_builder = {
 		let client = client.clone();
-		let pool = transaction_pool.clone();
 		let network = network.clone();
+		let pool = transaction_pool.clone();
+
+		// [TODO]
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
-		// [TODO]
 		let _backend = backend.clone();
 		let ethapi_cmd = ethapi_cmd.clone();
 		let max_past_logs = rpc_config.max_past_logs;
@@ -978,6 +994,7 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
+	target_gas_price: u64,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
@@ -1025,7 +1042,10 @@ where
 						slot_duration,
 					);
 
-					Ok((time, slot))
+					let dynamic_fee =
+						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+
+					Ok((time, slot, dynamic_fee))
 				},
 				can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(
 					client2.executor().clone(),
@@ -1062,6 +1082,7 @@ pub async fn start_dev_node<RuntimeApi, Executor>(
 	polkadot_config: Configuration,
 	id: ParaId,
 	rpc_config: RpcConfig,
+	target_gas_price: u64,
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<FullClient<RuntimeApi, Executor>>,
@@ -1093,11 +1114,13 @@ where
 		polkadot_config,
 		id,
 		rpc_config,
+		target_gas_price,
         |client,
          block_import,
          config,
          telemetry,
-         task_manager| {
+         task_manager,
+		 target_gas_price| {
             let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
             let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
@@ -1121,7 +1144,10 @@ where
                             slot_duration,
                         );
 
-                    Ok((time, slot))
+					let dynamic_fee =
+						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+
+                    Ok((time, slot, dynamic_fee))
                 },
                 registry: config.prometheus_registry().clone(),
                 can_author_with,
@@ -1186,7 +1212,10 @@ where
                                     "Failed to create parachain inherent",
                                 )
                             })?;
-                            Ok((time, slot, parachain_inherent))
+							let dynamic_fee =
+								fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+
+                            Ok((time, slot, parachain_inherent, dynamic_fee))
                         }
                     },
                 block_import: client.clone(),

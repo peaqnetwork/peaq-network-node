@@ -232,6 +232,11 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = "peaq-polkadot-v0.9.19"
 
+[dependencies.fp-dynamic-fee]
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.19'
+
+
 
 # Tracing
 [dependencies.peaq-primitives-ext]
