@@ -57,7 +57,9 @@ pub fn development_config(para_id: u32) -> Result<ChainSpec, String> {
 			configure_genesis(
 				wasm_binary,
 				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice")],
+				vec![
+					authority_keys_from_seed("Alice"),
+				],
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
@@ -66,6 +68,7 @@ pub fn development_config(para_id: u32) -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
 				],
 				para_id.into(),
 			)

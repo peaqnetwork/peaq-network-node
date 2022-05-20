@@ -135,7 +135,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 // [TODO] Check whether we should remove it
 // NOTE: Currently it is not possible to change the slot duration after the chain has started.
@@ -317,7 +317,7 @@ impl pallet_timestamp::Config for Runtime {
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 	#[cfg(feature = "aura")]
-	type OnTimestampSet = Aura;
+	type OnTimestampSet = ();
 	// [TODO] Need to check whether we should remove it
 	#[cfg(feature = "manual-seal")]
 	type OnTimestampSet = ();
