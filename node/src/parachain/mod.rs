@@ -18,7 +18,7 @@ pub use chain_spec::{
 };
 
 pub use service::{
-    build_import_queue, new_partial, dev, start_dev_node,
+    build_import_queue, new_partial, dev, start_node,
 	dev::Executor,
 };
 
