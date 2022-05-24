@@ -473,7 +473,7 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const MaxCandidates: u32 = 200;
-	pub const MinCandidates: u32 = 5;
+	pub const MinCandidates: u32 = 0;
 	pub const MaxInvulnerables: u32 = 20;
 }
 
@@ -505,7 +505,7 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = 1 * HOURS;
+	pub const SessionPeriod: BlockNumber = 1 * MINUTES;
 	pub const SessionOffset: BlockNumber = 0;
 }
 

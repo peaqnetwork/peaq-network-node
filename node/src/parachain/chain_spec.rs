@@ -1,4 +1,4 @@
-use peaq_node_runtime::{
+use peaq_dev_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 };
@@ -189,8 +189,8 @@ pub fn development_config(para_id: u32) -> Result<ChainSpec, String> {
  * }
  */
 
-fn session_keys(aura: AuraId) -> peaq_node_runtime::opaque::SessionKeys {
-    peaq_node_runtime::opaque::SessionKeys { aura }
+fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
+    peaq_dev_runtime::opaque::SessionKeys { aura }
 }
 
 /// Configure initial storage state for FRAME modules.
@@ -223,7 +223,7 @@ fn configure_genesis(
 		},
 		// [TODO]...
 		// block_reward
-		session: peaq_node_runtime::SessionConfig {
+		session: peaq_dev_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
@@ -235,7 +235,7 @@ fn configure_genesis(
 			key: Some(root_key),
 		},
 		aura_ext: Default::default(),
-		collator_selection: peaq_node_runtime::CollatorSelectionConfig {
+		collator_selection: peaq_dev_runtime::CollatorSelectionConfig {
 			desired_candidates: 200,
 			// [TODO]...
 			candidacy_bond: 32_000,

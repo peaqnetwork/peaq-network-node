@@ -216,7 +216,7 @@ dependencies = [
  "parking",
  "polling",
  "slab",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "waker-fn",
  "winapi 0.3.9",
 ]
@@ -384,6 +384,20 @@ name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
+
+[[package]]
+name = "backoff"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b62ddb9cb1ec0a098ad4bbf9344d0713fa193ae1a80af55febcff2627b6a00c1"
+dependencies = [
+ "futures-core",
+ "getrandom 0.2.6",
+ "instant",
+ "pin-project-lite 0.2.9",
+ "rand 0.8.5",
+ "tokio",
+]
 
 [[package]]
 name = "backtrace"
@@ -717,6 +731,160 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-header-chain"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-runtime",
+ "finality-grandpa",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-message-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-runtime",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-messages"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bitvec",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-polkadot-core"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-version",
+]
+
+[[package]]
+name = "bp-rococo"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-messages",
+ "bp-polkadot-core",
+ "bp-runtime",
+ "frame-support",
+ "parity-scale-codec",
+ "smallvec",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+ "sp-version",
+]
+
+[[package]]
+name = "bp-runtime"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "frame-support",
+ "hash-db",
+ "num-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
+name = "bp-test-utils"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-header-chain",
+ "ed25519-dalek",
+ "finality-grandpa",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-wococo"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-messages",
+ "bp-polkadot-core",
+ "bp-rococo",
+ "bp-runtime",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "bridge-runtime-common"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-message-dispatch",
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "hash-db",
+ "pallet-bridge-dispatch",
+ "pallet-bridge-grandpa",
+ "pallet-bridge-messages",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
 name = "bs58"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -799,9 +967,9 @@ checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
 
 [[package]]
 name = "camino"
-version = "1.0.7"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f3132262930b0522068049f5870a856ab8affc80c70d08b6ecb785771a6fc23"
+checksum = "869119e97797867fd90f5e22af7d0bd274bd4635ebb9eb68c04f3f513ae6c412"
 dependencies = [
  "serde",
 ]
@@ -933,9 +1101,9 @@ dependencies = [
 
 [[package]]
 name = "clang-sys"
-version = "1.3.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cc00842eed744b858222c4c9faf7243aafc6d33f92f96935263ef4d8a41ce21"
+checksum = "bf6b561dcf059c85bbe388e0a7b0a1469acb3934cc0cfa148613a830629e3049"
 dependencies = [
  "glob",
  "libc",
@@ -959,9 +1127,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.17"
+version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47582c09be7c8b32c0ab3a6181825ababb713fde6fff20fc573a3870dd45c6a0"
+checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
 dependencies = [
  "atty",
  "bitflags",
@@ -976,9 +1144,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.7"
+version = "3.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3aab4734e083b809aaf5794e14e756d1c798d2c69c7f7de7a09a2f5214993c1"
+checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1285,7 +1453,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1a816186fa68d9e426e3cb4ae4dff1fcd8e4a2c34b781bf7a822574a0d0aac8"
 dependencies = [
- "sct",
+ "sct 0.6.1",
 ]
 
 [[package]]
@@ -1323,7 +1491,7 @@ name = "cumulus-client-cli"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
 dependencies = [
- "clap 3.1.17",
+ "clap 3.1.18",
  "sc-cli",
  "sc-service",
  "url 2.2.2",
@@ -1354,6 +1522,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "cumulus-client-consensus-aura"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "async-trait",
+ "cumulus-client-consensus-common",
+ "cumulus-primitives-core",
+ "futures 0.3.21",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-slots",
+ "sc-telemetry",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
+ "tracing",
+]
+
+[[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
@@ -1371,6 +1568,30 @@ dependencies = [
  "sp-consensus",
  "sp-runtime",
  "sp-trie",
+ "tracing",
+]
+
+[[package]]
+name = "cumulus-client-consensus-relay-chain"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "async-trait",
+ "cumulus-client-consensus-common",
+ "cumulus-primitives-core",
+ "cumulus-relay-chain-interface",
+ "futures 0.3.21",
+ "parking_lot 0.12.0",
+ "sc-client-api",
+ "sc-consensus",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "substrate-prometheus-endpoint",
  "tracing",
 ]
 
@@ -1582,6 +1803,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "cumulus-relay-chain-inprocess-interface"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "async-trait",
+ "cumulus-primitives-core",
+ "cumulus-relay-chain-interface",
+ "futures 0.3.21",
+ "futures-timer",
+ "parking_lot 0.12.0",
+ "polkadot-client",
+ "polkadot-service",
+ "sc-client-api",
+ "sc-consensus-babe",
+ "sc-network",
+ "sc-service",
+ "sc-telemetry",
+ "sc-tracing",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "tracing",
+]
+
+[[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
@@ -1603,6 +1852,32 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
+]
+
+[[package]]
+name = "cumulus-relay-chain-rpc-interface"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "async-trait",
+ "backoff",
+ "cumulus-primitives-core",
+ "cumulus-relay-chain-interface",
+ "futures 0.3.21",
+ "futures-timer",
+ "jsonrpsee",
+ "parity-scale-codec",
+ "parking_lot 0.12.0",
+ "polkadot-service",
+ "sc-client-api",
+ "sc-rpc-api",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-storage",
+ "tracing",
+ "url 2.2.2",
 ]
 
 [[package]]
@@ -1780,7 +2055,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4d33be9473d06f75f58220f71f7a9317aca647dc061dbd3c361b0bef505fbea"
 dependencies = [
  "byteorder",
- "quick-error 1.2.3",
+ "quick-error",
 ]
 
 [[package]]
@@ -1835,9 +2110,9 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "1.4.1"
+version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d5c4b5e5959dc2c2b89918d8e2cc40fcdd623cef026ed09d2f0ee05199dc8e4"
+checksum = "1e9c280362032ea4203659fc489832d0204ef09f247a0506f170dafcac08c369"
 dependencies = [
  "signature",
 ]
@@ -2484,7 +2759,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "Inflector",
  "chrono",
- "clap 3.1.17",
+ "clap 3.1.18",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -2836,8 +3111,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a1387e07917c711fb4ee4f48ea0adb04a3c9739e53ef85bf43ae1edc2937a8b"
 dependencies = [
  "futures-io",
- "rustls",
- "webpki",
+ "rustls 0.19.1",
+ "webpki 0.21.4",
 ]
 
 [[package]]
@@ -2998,22 +3273,22 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio",
- "tokio-util 0.7.1",
+ "tokio-util 0.7.2",
  "tracing",
 ]
 
 [[package]]
 name = "handlebars"
-version = "4.2.2"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99d6a30320f094710245150395bc763ad23128d6a1ebbad7594dc4164b62c56b"
+checksum = "d113a9853e5accd30f43003560b5563ffbb007e3f325e8b103fa0d0029c6e6df"
 dependencies = [
  "log",
  "pest",
  "pest_derive",
- "quick-error 2.0.1",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -3144,14 +3419,14 @@ checksum = "ff8670570af52249509a86f5e3e18a08c60b177071826898fde8997cf5f6bfbb"
 dependencies = [
  "bytes 1.1.0",
  "fnv",
- "itoa 1.0.1",
+ "itoa 1.0.2",
 ]
 
 [[package]]
 name = "http-body"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ff4f84919677303da5f147645dbea6b1881f368d03ac84e1dc09031ebd7b2c6"
+checksum = "d5f38f16d184e36f2408a55281cd658ecbd3ca05cce6d6510a176eca393e26d1"
 dependencies = [
  "bytes 1.1.0",
  "http",
@@ -3191,9 +3466,9 @@ dependencies = [
  "http-body",
  "httparse",
  "httpdate",
- "itoa 1.0.1",
+ "itoa 1.0.2",
  "pin-project-lite 0.2.9",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "tokio",
  "tower-service",
  "tracing",
@@ -3210,11 +3485,27 @@ dependencies = [
  "futures-util",
  "hyper",
  "log",
- "rustls",
- "rustls-native-certs",
+ "rustls 0.19.1",
+ "rustls-native-certs 0.5.0",
  "tokio",
- "tokio-rustls",
- "webpki",
+ "tokio-rustls 0.22.0",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "hyper-rustls"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d87c48c02e0dc5e3b849a2041db3029fd066650f8f717c07bf8ed78ccb895cac"
+dependencies = [
+ "http",
+ "hyper",
+ "log",
+ "rustls 0.20.6",
+ "rustls-native-certs 0.6.2",
+ "tokio",
+ "tokio-rustls 0.23.4",
+ "webpki-roots 0.22.3",
 ]
 
 [[package]]
@@ -3408,9 +3699,9 @@ checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "itoa"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
 
 [[package]]
 name = "jobserver"
@@ -3543,7 +3834,7 @@ dependencies = [
  "log",
  "tokio",
  "tokio-stream",
- "tokio-util 0.6.9",
+ "tokio-util 0.6.10",
  "unicase",
 ]
 
@@ -3563,6 +3854,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpsee"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91dc760c341fa81173f9a434931aaf32baad5552b0230cc6c93e8fb7eaad4c19"
+dependencies = [
+ "jsonrpsee-core",
+ "jsonrpsee-http-client",
+ "jsonrpsee-proc-macros",
+ "jsonrpsee-types",
+ "jsonrpsee-ws-client",
+]
+
+[[package]]
+name = "jsonrpsee-client-transport"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "765f7a36d5087f74e3b3b47805c2188fef8eb54afcb587b078d9f8ebfe9c7220"
+dependencies = [
+ "futures 0.3.21",
+ "http",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
+ "pin-project 1.0.10",
+ "rustls-native-certs 0.6.2",
+ "soketto",
+ "thiserror",
+ "tokio",
+ "tokio-rustls 0.23.4",
+ "tokio-util 0.7.2",
+ "tracing",
+ "webpki-roots 0.22.3",
+]
+
+[[package]]
 name = "jsonrpsee-core"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3573,12 +3898,47 @@ dependencies = [
  "async-trait",
  "beef",
  "futures-channel",
+ "futures-util",
  "hyper",
  "jsonrpsee-types",
+ "rustc-hash",
  "serde",
  "serde_json",
  "soketto",
  "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-http-client"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92709e0b8255691f4df954a0176b1cbc3312f151e7ed2e643812e8bd121f1d1c"
+dependencies = [
+ "async-trait",
+ "hyper",
+ "hyper-rustls 0.23.0",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-proc-macros"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7291c72805bc7d413b457e50d8ef3e87aa554da65ecbbc278abb7dfc283e7f0"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3593,6 +3953,17 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-ws-client"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd66d18bab78d956df24dd0d2e41e4c00afbb818fda94a98264bdd12ce8506ac"
+dependencies = [
+ "jsonrpsee-client-transport",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
 ]
 
 [[package]]
@@ -3621,6 +3992,107 @@ checksum = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 dependencies = [
  "winapi 0.2.8",
  "winapi-build",
+]
+
+[[package]]
+name = "kusama-runtime"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "beefy-primitives",
+ "bitvec",
+ "frame-benchmarking",
+ "frame-election-provider-support",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
+ "hex-literal",
+ "kusama-runtime-constants",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-bags-list",
+ "pallet-balances",
+ "pallet-bounties",
+ "pallet-child-bounties",
+ "pallet-collective",
+ "pallet-democracy",
+ "pallet-election-provider-multi-phase",
+ "pallet-elections-phragmen",
+ "pallet-gilt",
+ "pallet-grandpa",
+ "pallet-identity",
+ "pallet-im-online",
+ "pallet-indices",
+ "pallet-membership",
+ "pallet-mmr-primitives",
+ "pallet-multisig",
+ "pallet-nicks",
+ "pallet-offences",
+ "pallet-offences-benchmarking",
+ "pallet-preimage",
+ "pallet-proxy",
+ "pallet-recovery",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-session-benchmarking",
+ "pallet-society",
+ "pallet-staking",
+ "pallet-staking-reward-fn",
+ "pallet-timestamp",
+ "pallet-tips",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
+ "pallet-utility",
+ "pallet-vesting",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "polkadot-runtime-parachains",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "smallvec",
+ "sp-api",
+ "sp-arithmetic",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "static_assertions",
+ "substrate-wasm-builder",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
+name = "kusama-runtime-constants"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "frame-support",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "smallvec",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -3688,9 +4160,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.125"
+version = "0.2.126"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5916d2ae698f6de9bfb891ad7a8d65c09d232dc58cc4ac433c7da3b2fd84bc2b"
+checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 
 [[package]]
 name = "libloading"
@@ -3923,7 +4395,7 @@ dependencies = [
  "log",
  "rand 0.8.5",
  "smallvec",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "void",
 ]
 
@@ -4131,7 +4603,7 @@ dependencies = [
  "libc",
  "libp2p-core",
  "log",
- "socket2 0.4.5",
+ "socket2 0.4.4",
 ]
 
 [[package]]
@@ -4175,7 +4647,7 @@ dependencies = [
  "rw-stream-sink",
  "soketto",
  "url 2.2.2",
- "webpki-roots",
+ "webpki-roots 0.21.1",
 ]
 
 [[package]]
@@ -4914,9 +5386,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.10.0"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f3e037eac156d1775da914196f0f37741a274155e34a0b7e427c35d2a2ecb9"
+checksum = "7b10983b38c53aebdf33f542c6275b0f58a238129d00c4ae0e6fb59738d783ca"
 
 [[package]]
 name = "opaque-debug"
@@ -4970,9 +5442,9 @@ dependencies = [
 
 [[package]]
 name = "os_str_bytes"
-version = "6.0.0"
+version = "6.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
+checksum = "029d8d0b2f198229de29dca79676f2738ff952edf3fde542eb8bf94d8c21b435"
 
 [[package]]
 name = "owning_ref"
@@ -5059,14 +5531,19 @@ name = "pallet-bags-list"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
  "log",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]
@@ -5145,6 +5622,7 @@ name = "pallet-bounties"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5158,10 +5636,71 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-bridge-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-message-dispatch",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-bridge-grandpa"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bp-header-chain",
+ "bp-runtime",
+ "bp-test-utils",
+ "finality-grandpa",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
+name = "pallet-bridge-messages"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "bitvec",
+ "bp-message-dispatch",
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-child-bounties"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5359,6 +5898,7 @@ name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5483,6 +6023,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-gilt"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
@@ -5526,6 +6081,7 @@ name = "pallet-im-online"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5545,6 +6101,7 @@ name = "pallet-indices"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -5629,6 +6186,7 @@ name = "pallet-multisig"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -5670,6 +6228,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-offences-benchmarking"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "frame-benchmarking",
+ "frame-election-provider-support",
+ "frame-support",
+ "frame-system",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-grandpa",
+ "pallet-im-online",
+ "pallet-offences",
+ "pallet-session",
+ "pallet-staking",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
@@ -5690,6 +6271,7 @@ name = "pallet-proxy"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -5709,6 +6291,20 @@ dependencies = [
  "parity-scale-codec",
  "safe-mix",
  "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-recovery"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -5751,10 +6347,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-session-benchmarking"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-session",
+ "pallet-staking",
+ "rand 0.7.3",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-society"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rand_chacha 0.2.2",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-staking"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
@@ -5762,6 +6389,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",
+ "rand_chacha 0.2.2",
  "scale-info",
  "serde",
  "sp-application-crypto",
@@ -5780,6 +6408,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "pallet-staking-reward-fn"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "log",
+ "sp-arithmetic",
 ]
 
 [[package]]
@@ -5819,6 +6456,7 @@ name = "pallet-tips"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5882,6 +6520,7 @@ name = "pallet-treasury"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
@@ -5898,6 +6537,7 @@ name = "pallet-utility"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -5913,6 +6553,7 @@ name = "pallet-vesting"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5934,6 +6575,23 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "pallet-xcm-benchmarks"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std",
  "xcm",
@@ -6173,96 +6831,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-evm-tracer"
-version = "0.1.0"
-dependencies = [
- "ethereum-types",
- "evm",
- "evm-gasometer",
- "evm-runtime",
- "evm-tracing-events",
- "fp-evm",
- "pallet-evm",
- "parity-scale-codec",
- "peaq-primitives-ext",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "peaq-node"
-version = "3.0.0-polkadot-v0.9.19"
-dependencies = [
- "async-trait",
- "clap 3.1.17",
- "cumulus-client-service",
- "fc-consensus",
- "fc-db",
- "fc-mapping-sync",
- "fc-rpc",
- "fc-rpc-core",
- "fp-consensus",
- "fp-rpc",
- "fp-storage",
- "frame-benchmarking",
- "frame-benchmarking-cli",
- "futures 0.3.21",
- "hex-literal",
- "jsonrpc-core",
- "jsonrpc-pubsub",
- "log",
- "pallet-base-fee",
- "pallet-contracts",
- "pallet-contracts-rpc",
- "pallet-dynamic-fee",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-transaction-payment-rpc",
- "parity-scale-codec",
- "peaq-node-runtime",
- "peaq-primitives-ext",
- "peaq-rpc-debug",
- "peaq-rpc-primitives-debug",
- "peaq-rpc-primitives-txpool",
- "peaq-rpc-trace",
- "peaq-rpc-txpool",
- "sc-basic-authorship",
- "sc-cli",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-aura",
- "sc-consensus-manual-seal",
- "sc-executor",
- "sc-finality-grandpa",
- "sc-keystore",
- "sc-network",
- "sc-rpc",
- "sc-rpc-api",
- "sc-service",
- "sc-telemetry",
- "sc-tracing",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-core",
- "sp-finality-grandpa",
- "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "structopt",
- "substrate-build-script-utils",
- "substrate-frame-rpc-system",
- "tokio",
-]
-
-[[package]]
-name = "peaq-node-runtime"
+name = "peaq-dev-runtime"
 version = "3.0.0-polkadot-v0.9.19"
 dependencies = [
  "cumulus-pallet-aura-ext",
@@ -6332,6 +6901,117 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+]
+
+[[package]]
+name = "peaq-evm-tracer"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "evm-tracing-events",
+ "fp-evm",
+ "pallet-evm",
+ "parity-scale-codec",
+ "peaq-primitives-ext",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-node"
+version = "3.0.0-polkadot-v0.9.19"
+dependencies = [
+ "async-trait",
+ "clap 3.1.18",
+ "cumulus-client-cli",
+ "cumulus-client-consensus-aura",
+ "cumulus-client-consensus-common",
+ "cumulus-client-consensus-relay-chain",
+ "cumulus-client-network",
+ "cumulus-client-service",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-relay-chain-inprocess-interface",
+ "cumulus-relay-chain-interface",
+ "cumulus-relay-chain-rpc-interface",
+ "fc-consensus",
+ "fc-db",
+ "fc-mapping-sync",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-consensus",
+ "fp-rpc",
+ "fp-storage",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "futures 0.3.21",
+ "hex-literal",
+ "jsonrpc-core",
+ "jsonrpc-pubsub",
+ "log",
+ "pallet-base-fee",
+ "pallet-contracts",
+ "pallet-contracts-rpc",
+ "pallet-dynamic-fee",
+ "pallet-ethereum",
+ "pallet-evm",
+ "pallet-transaction-payment-rpc",
+ "parity-scale-codec",
+ "peaq-dev-runtime",
+ "peaq-primitives-ext",
+ "peaq-rpc-debug",
+ "peaq-rpc-primitives-debug",
+ "peaq-rpc-primitives-txpool",
+ "peaq-rpc-trace",
+ "peaq-rpc-txpool",
+ "polkadot-cli",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-service",
+ "sc-basic-authorship",
+ "sc-chain-spec",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-telemetry",
+ "sc-tracing",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "structopt",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
+ "substrate-prometheus-endpoint",
+ "tokio",
+ "url 2.2.2",
 ]
 
 [[package]]
@@ -6766,6 +7446,30 @@ dependencies = [
  "sc-network",
  "thiserror",
  "tracing-gum",
+]
+
+[[package]]
+name = "polkadot-cli"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "clap 3.1.18",
+ "frame-benchmarking-cli",
+ "futures 0.3.21",
+ "log",
+ "polkadot-client",
+ "polkadot-node-core-pvf",
+ "polkadot-node-metrics",
+ "polkadot-performance-test",
+ "polkadot-service",
+ "sc-cli",
+ "sc-service",
+ "sc-tracing",
+ "sp-core",
+ "sp-trie",
+ "substrate-build-script-utils",
+ "thiserror",
+ "try-runtime-cli",
 ]
 
 [[package]]
@@ -7392,6 +8096,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "polkadot-performance-test"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "env_logger",
+ "kusama-runtime",
+ "log",
+ "polkadot-erasure-coding",
+ "polkadot-node-core-pvf",
+ "polkadot-node-primitives",
+ "quote",
+ "thiserror",
+]
+
+[[package]]
 name = "polkadot-primitives"
 version = "0.9.19"
 source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
@@ -7460,12 +8179,15 @@ source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.
 dependencies = [
  "beefy-primitives",
  "bitvec",
+ "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "hex-literal",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -7487,10 +8209,12 @@ dependencies = [
  "pallet-multisig",
  "pallet-nicks",
  "pallet-offences",
+ "pallet-offences-benchmarking",
  "pallet-preimage",
  "pallet-proxy",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-session-benchmarking",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-timestamp",
@@ -7540,6 +8264,7 @@ source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.
 dependencies = [
  "beefy-primitives",
  "bitvec",
+ "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
@@ -7547,6 +8272,7 @@ dependencies = [
  "libsecp256k1",
  "log",
  "pallet-authorship",
+ "pallet-babe",
  "pallet-bags-list",
  "pallet-balances",
  "pallet-beefy-mmr",
@@ -7610,6 +8336,7 @@ dependencies = [
  "bitflags",
  "bitvec",
  "derive_more",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -7630,6 +8357,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
+ "sp-application-crypto",
  "sp-core",
  "sp-inherents",
  "sp-io",
@@ -7638,6 +8366,7 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
+ "static_assertions",
  "xcm",
  "xcm-executor",
 ]
@@ -7653,6 +8382,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.21",
  "hex-literal",
+ "kusama-runtime",
  "kvdb",
  "kvdb-rocksdb",
  "lru 0.7.5",
@@ -7696,6 +8426,7 @@ dependencies = [
  "polkadot-runtime-constants",
  "polkadot-runtime-parachains",
  "polkadot-statement-distribution",
+ "rococo-runtime",
  "sc-authority-discovery",
  "sc-basic-authorship",
  "sc-block-builder",
@@ -7738,6 +8469,7 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "thiserror",
  "tracing-gum",
+ "westend-runtime",
 ]
 
 [[package]]
@@ -7872,24 +8604,24 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.38"
+version = "1.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9027b48e9d4c9175fa2218adf3557f91c1137021739951d4932f5f8268ac48aa"
+checksum = "c54b25569025b7fc9651de43004ae593a75ad88543b17178aa5e1b9c4f15f56f"
 dependencies = [
- "unicode-xid",
+ "unicode-ident",
 ]
 
 [[package]]
 name = "prometheus"
-version = "0.13.0"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7f64969ffd5dd8f39bd57a68ac53c163a095ed9d0fb707146da1b27025a3504"
+checksum = "cface98dfa6d645ea4c789839f176e4b072265d085bfcc48eaa8d137f58d3c39"
 dependencies = [
  "cfg-if 1.0.0",
  "fnv",
  "lazy_static",
  "memchr",
- "parking_lot 0.11.2",
+ "parking_lot 0.12.0",
  "thiserror",
 ]
 
@@ -7960,12 +8692,6 @@ name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
-
-[[package]]
-name = "quick-error"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
 
 [[package]]
 name = "quicksink"
@@ -8101,9 +8827,9 @@ checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "rayon"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd249e82c21598a9a426a4e00dd7adc1d640b22445ec8545feef801d1a74c221"
+checksum = "bd99e5772ead8baa5215278c9b15bf92087709e9c1b2d1f97cdb5a183c933a7d"
 dependencies = [
  "autocfg",
  "crossbeam-deque",
@@ -8113,9 +8839,9 @@ dependencies = [
 
 [[package]]
 name = "rayon-core"
-version = "1.9.2"
+version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f51245e1e62e1f1629cbfec37b5793bbabcaeb90f30e94d2ba03564687353e4"
+checksum = "258bcdb5ac6dad48491bb2992db6b7cf74878b0384908af124823d118c99683f"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-deque",
@@ -8189,9 +8915,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.5.5"
+version = "1.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a11647b6b25ff05a515cb92c365cec08801e83423a235b51e231e1808747286"
+checksum = "d83f127d94bdbcda4c8cc2e50f6f84f4b611f69c902699ca385a39c3a75f9ff1"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -8209,9 +8935,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.25"
+version = "0.6.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
+checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "region"
@@ -8223,6 +8949,23 @@ dependencies = [
  "libc",
  "mach",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "remote-externalities"
+version = "0.10.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "env_logger",
+ "jsonrpsee",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-version",
 ]
 
 [[package]]
@@ -8241,14 +8984,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
- "quick-error 1.2.3",
+ "quick-error",
 ]
 
 [[package]]
 name = "retain_mut"
-version = "0.1.7"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c31b5c4033f8fdde8700e4657be2c497e7288f01515be52168c631e2e4d4086"
+checksum = "4389f1d5789befaf6029ebd9f7dac4af7f7e3d61b69d4f30e2ac02b57e7712b0"
 
 [[package]]
 name = "ring"
@@ -8303,6 +9046,95 @@ checksum = "620f4129485ff1a7128d184bc687470c21c7951b64779ebc9cfdad3dcd920290"
 dependencies = [
  "libc",
  "librocksdb-sys",
+]
+
+[[package]]
+name = "rococo-runtime"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "beefy-merkle-tree",
+ "beefy-primitives",
+ "bp-messages",
+ "bp-rococo",
+ "bp-runtime",
+ "bp-wococo",
+ "bridge-runtime-common",
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "hex-literal",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-beefy",
+ "pallet-beefy-mmr",
+ "pallet-bridge-dispatch",
+ "pallet-bridge-grandpa",
+ "pallet-bridge-messages",
+ "pallet-collective",
+ "pallet-grandpa",
+ "pallet-im-online",
+ "pallet-indices",
+ "pallet-membership",
+ "pallet-mmr",
+ "pallet-mmr-primitives",
+ "pallet-multisig",
+ "pallet-offences",
+ "pallet-proxy",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-utility",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "polkadot-runtime-parachains",
+ "rococo-runtime-constants",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "smallvec",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
+name = "rococo-runtime-constants"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "frame-support",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "smallvec",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -8383,8 +9215,20 @@ dependencies = [
  "base64",
  "log",
  "ring",
- "sct",
- "webpki",
+ "sct 0.6.1",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "rustls"
+version = "0.20.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aab8ee6c7097ed6057f43c187a62418d0c05a4bd5f18b3571db50ee0f9ce033"
+dependencies = [
+ "log",
+ "ring",
+ "sct 0.7.0",
+ "webpki 0.22.0",
 ]
 
 [[package]]
@@ -8394,9 +9238,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a07b7c1885bd8ed3831c289b7870b13ef46fe0e856d288c30d9cc17d75a2092"
 dependencies = [
  "openssl-probe",
- "rustls",
+ "rustls 0.19.1",
  "schannel",
  "security-framework",
+]
+
+[[package]]
+name = "rustls-native-certs"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0167bac7a9f490495f3c33013e7722b53cb087ecbe082fb0c6387c96f634ea50"
+dependencies = [
+ "openssl-probe",
+ "rustls-pemfile",
+ "schannel",
+ "security-framework",
+]
+
+[[package]]
+name = "rustls-pemfile"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7522c9de787ff061458fe9a829dc790a3f5b22dc571694fc5883f448b94d9a9"
+dependencies = [
+ "base64",
 ]
 
 [[package]]
@@ -8418,9 +9283,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73b4b750c782965c211b42f022f59af1fbceabdd026623714f104152f1ec149f"
+checksum = "f3f6f92acf49d1b98f7a81226834412ada05458b7364277387724a237f062695"
 
 [[package]]
 name = "safe-mix"
@@ -8560,7 +9425,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
  "chrono",
- "clap 3.1.17",
+ "clap 3.1.18",
  "fdlimit",
  "futures 0.3.21",
  "hex",
@@ -9101,7 +9966,7 @@ dependencies = [
  "futures-timer",
  "hex",
  "hyper",
- "hyper-rustls",
+ "hyper-rustls 0.22.1",
  "num_cpus",
  "once_cell",
  "parity-scale-codec",
@@ -9428,9 +10293,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.1.1"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8980cafbe98a7ee7a9cc16b32ebce542c77883f512d83fbf2ddc8f6a85ea74c9"
+checksum = "c46be926081c9f4dd5dd9b6f1d3e3229f2360bc6502dd8836f84a93b7c75e99a"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -9442,9 +10307,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.1.1"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4260c630e8a8a33429d1688eff2f163f24c65a4e1b1578ef6b565061336e4b6f"
+checksum = "50e334bb10a245e28e5fd755cabcafd96cfcd167c99ae63a46924ca8d8703a3c"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -9454,12 +10319,12 @@ dependencies = [
 
 [[package]]
 name = "schannel"
-version = "0.1.19"
+version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f05ba609c234e60bee0d547fe94a4c7e9da733d1c962cf6e59efa4cd9c8bc75"
+checksum = "88d6731146462ea25d9244b2ed5fd1d716d25c52e4d54aa4fb0f3c4e9854dbe2"
 dependencies = [
  "lazy_static",
- "winapi 0.3.9",
+ "windows-sys",
 ]
 
 [[package]]
@@ -9497,6 +10362,16 @@ name = "sct"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b362b83898e0e69f38515b82ee15aa80636befe47c3b6d3d89a911e78fc228ce"
+dependencies = [
+ "ring",
+ "untrusted",
+]
+
+[[package]]
+name = "sct"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d53dcdb7c9f8158937a7981b48accfd39a43af418591a5d008c7b22b5e1b7ca4"
 dependencies = [
  "ring",
  "untrusted",
@@ -9642,7 +10517,7 @@ version = "1.0.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
 dependencies = [
- "itoa 1.0.1",
+ "itoa 1.0.2",
  "ryu",
  "serde",
 ]
@@ -9769,9 +10644,9 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 
 [[package]]
 name = "signal-hook"
-version = "0.3.13"
+version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "647c97df271007dcea485bb74ffdb57f2e683f1306c854f468a0c244badabf2d"
+checksum = "a253b5e89e2698464fc26b545c9edceb338e18a89effeeecfea192c3025be29d"
 dependencies = [
  "libc",
  "signal-hook-registry",
@@ -9877,12 +10752,12 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.4.5"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca642ba17f8b2995138b1d7711829c92e98c0a25ea019de790f4f09279c4e296"
+checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
 dependencies = [
  "libc",
- "windows-sys",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -10618,9 +11493,9 @@ dependencies = [
 
 [[package]]
 name = "ss58-registry"
-version = "1.17.0"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b84a70894df7a73666e0694f44b41a9571625e9546fb58a0818a565d2c7e084"
+checksum = "ceb8b72a924ccfe7882d0e26144c114503760a4d1248bb5cd06c8ab2d55404cc"
 dependencies = [
  "Inflector",
  "num-format",
@@ -10877,13 +11752,13 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.92"
+version = "1.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ff7c592601f11445996a06f8ad0c27f094a58857c2f89e97974ab9235b92c52"
+checksum = "fbaf6116ab8924f39d52792136fb74fd60a80194cf1b1c6ffa6453eef1c3f942"
 dependencies = [
  "proc-macro2",
  "quote",
- "unicode-xid",
+ "unicode-ident",
 ]
 
 [[package]]
@@ -11085,7 +11960,7 @@ dependencies = [
  "parking_lot 0.12.0",
  "pin-project-lite 0.2.9",
  "signal-hook-registry",
- "socket2 0.4.5",
+ "socket2 0.4.4",
  "tokio-macros",
  "winapi 0.3.9",
 ]
@@ -11107,9 +11982,20 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc6844de72e57df1980054b38be3a9f4702aba4858be64dd700181a8a6d0e1b6"
 dependencies = [
- "rustls",
+ "rustls 0.19.1",
  "tokio",
- "webpki",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "tokio-rustls"
+version = "0.23.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c43ee83903113e03984cb9e5cebe6c04a5116269e900e3ddba8f068a62adda59"
+dependencies = [
+ "rustls 0.20.6",
+ "tokio",
+ "webpki 0.22.0",
 ]
 
 [[package]]
@@ -11125,9 +12011,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.6.9"
+version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e99e1983e5d376cd8eb4b66604d2e99e79f5bd988c3055891dcd8c9e2604cc0"
+checksum = "36943ee01a6d67977dd3f84a5a1d2efeb4ada3a1ae771cadfaa535d9d9fc6507"
 dependencies = [
  "bytes 1.1.0",
  "futures-core",
@@ -11139,12 +12025,13 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0edfdeb067411dba2044da6d1cb2df793dd35add7888d73c16e3381ded401764"
+checksum = "f988a1a1adc2fb21f9c12aa96441da33a1728193ae0b95d2be22dbd17fcb4e5c"
 dependencies = [
  "bytes 1.1.0",
  "futures-core",
+ "futures-io",
  "futures-sink",
  "pin-project-lite 0.2.9",
  "tokio",
@@ -11358,6 +12245,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
+name = "try-runtime-cli"
+version = "0.10.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "clap 3.1.18",
+ "jsonrpsee",
+ "log",
+ "parity-scale-codec",
+ "remote-externalities",
+ "sc-chain-spec",
+ "sc-cli",
+ "sc-executor",
+ "sc-service",
+ "serde",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-version",
+ "zstd",
+]
+
+[[package]]
 name = "tt-call"
 version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11413,6 +12325,12 @@ name = "unicode-bidi"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "099b7128301d285f79ddd55b9a83d5e6b9e97c92e0ea0daebee7263e932de992"
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d22af068fba1eb5edcb4aea19d382b2a3deb4c8f9d475c589b6ada9e0fd493ee"
 
 [[package]]
 name = "unicode-normalization"
@@ -11901,12 +12819,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "webpki"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
+dependencies = [
+ "ring",
+ "untrusted",
+]
+
+[[package]]
 name = "webpki-roots"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aabe153544e473b775453675851ecc86863d2a81d786d741f6b76778f2a48940"
 dependencies = [
- "webpki",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.22.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44d8de8415c823c8abd270ad483c6feeac771fad964890779f9a8cb24fbbc1bf"
+dependencies = [
+ "webpki 0.22.0",
 ]
 
 [[package]]
@@ -11916,6 +12853,104 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d743fdedc5c64377b5fc2bc036b01c7fd642205a0d96356034ae3404d49eb7fb"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "westend-runtime"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "beefy-primitives",
+ "bitvec",
+ "frame-benchmarking",
+ "frame-election-provider-support",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
+ "hex-literal",
+ "log",
+ "pallet-authority-discovery",
+ "pallet-authorship",
+ "pallet-babe",
+ "pallet-bags-list",
+ "pallet-balances",
+ "pallet-collective",
+ "pallet-democracy",
+ "pallet-election-provider-multi-phase",
+ "pallet-elections-phragmen",
+ "pallet-grandpa",
+ "pallet-identity",
+ "pallet-im-online",
+ "pallet-indices",
+ "pallet-membership",
+ "pallet-mmr-primitives",
+ "pallet-multisig",
+ "pallet-nicks",
+ "pallet-offences",
+ "pallet-offences-benchmarking",
+ "pallet-preimage",
+ "pallet-proxy",
+ "pallet-recovery",
+ "pallet-scheduler",
+ "pallet-session",
+ "pallet-session-benchmarking",
+ "pallet-society",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
+ "pallet-utility",
+ "pallet-vesting",
+ "pallet-xcm",
+ "pallet-xcm-benchmarks",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "polkadot-runtime-parachains",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "serde_derive",
+ "smallvec",
+ "sp-api",
+ "sp-authority-discovery",
+ "sp-block-builder",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
+ "westend-runtime-constants",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
+name = "westend-runtime-constants"
+version = "0.9.19"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
+dependencies = [
+ "frame-support",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "smallvec",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -12098,6 +13133,7 @@ name = "xcm-executor"
 version = "0.9.19"
 source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.19#b3a343c5654bc5f77fdf2c3b990082d4728fcc52"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "impl-trait-for-tuples",
  "log",

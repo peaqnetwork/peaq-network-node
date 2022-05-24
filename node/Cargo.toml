@@ -24,8 +24,8 @@ version = '3.0.0'
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
 
-[dependencies.peaq-node-runtime]
-path = '../runtime'
+[dependencies.peaq-dev-runtime]
+path = '../runtime/peaq-dev'
 version = '3.0.0-polkadot-v0.9.19'
 default-features = false
 
@@ -360,9 +360,9 @@ default = [
 	"aura",
 	"polkadot-cli"
 	]
-aura = ["peaq-node-runtime/aura"]
-manual-seal = ["peaq-node-runtime/manual-seal"]
+aura = ["peaq-dev-runtime/aura"]
+manual-seal = ["peaq-dev-runtime/manual-seal"]
 runtime-benchmarks = [
-	"peaq-node-runtime/runtime-benchmarks",
+	"peaq-dev-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]

@@ -1,5 +1,5 @@
 [package]
-name = 'peaq-node-runtime'
+name = 'peaq-dev-runtime'
 version = '3.0.0-polkadot-v0.9.19'
 description = 'A node of the peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
@@ -278,21 +278,21 @@ branch = 'peaq-polkadot-v0.9.19'
 
 # Tracing
 [dependencies.evm-tracing-events]
-path = "../primitives/rpc/evm-tracing-events"
+path = "../../primitives/rpc/evm-tracing-events"
 optional = true
 default-features = false
 
 [dependencies.peaq-evm-tracer]
-path = "evm_tracer"
+path = "../evm_tracer"
 optional = true
 default-features = false
 
 [dependencies.peaq-rpc-primitives-debug]
-path = "../primitives/rpc/debug"
+path = "../../primitives/rpc/debug"
 default-features = false
 
 [dependencies.peaq-rpc-primitives-txpool]
-path = "../primitives/rpc/txpool"
+path = "../../primitives/rpc/txpool"
 default-features = false
 
 

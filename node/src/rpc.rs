@@ -7,7 +7,6 @@ use fc_rpc::{
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use peaq_node_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Hash, Index};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
@@ -35,6 +34,8 @@ use sc_service::TaskManager;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
 use peaq_rpc_txpool::{TxPool, TxPoolServer};
+
+use crate::primitives::*;
 
 pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,

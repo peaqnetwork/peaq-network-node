@@ -40,7 +40,7 @@ use sc_cli::SubstrateCli;
 
 /// dev network runtime executor.
 pub mod dev {
-	pub use peaq_node_runtime::RuntimeApi;
+	pub use peaq_dev_runtime::RuntimeApi;
 
 	pub type HostFunctions = (
 		frame_benchmarking::benchmarking::HostFunctions,
@@ -53,11 +53,11 @@ pub mod dev {
 		type ExtendHostFunctions = HostFunctions;
 
 		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-			peaq_node_runtime::api::dispatch(method, data)
+			peaq_dev_runtime::api::dispatch(method, data)
 		}
 
 		fn native_version() -> sc_executor::NativeVersion {
-			peaq_node_runtime::native_version()
+			peaq_dev_runtime::native_version()
 		}
 	}
 }
