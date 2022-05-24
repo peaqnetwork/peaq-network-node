@@ -29,6 +29,11 @@ path = '../runtime/peaq-dev'
 version = '3.0.0-polkadot-v0.9.19'
 default-features = false
 
+[dependencies.agung-runtime]
+path = '../runtime/agung'
+version = '3.0.0-polkadot-v0.9.19'
+default-features = false
+
 [dependencies]
 structopt = "0.3.8"
 async-trait = "0.1"

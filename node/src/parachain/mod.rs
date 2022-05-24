@@ -14,15 +14,11 @@ pub mod dev_chain_spec;
 pub mod agung_chain_spec;
 
 pub use dev_chain_spec::{
-	development_config, ChainSpec,
-};
-
-pub use agung_chain_spec::{
-	agung_net_config
+	ChainSpec,
 };
 
 pub use service::{
-    build_import_queue, new_partial, dev, start_node,
+    build_import_queue, new_partial, dev, start_node, agung,
 	dev::Executor,
 };
 

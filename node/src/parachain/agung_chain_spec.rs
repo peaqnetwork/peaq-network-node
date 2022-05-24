@@ -14,7 +14,7 @@ use hex_literal::hex;
 use sc_network::config::MultiaddrWithPeerId;
 use std::str::FromStr;
 
-pub fn agung_net_config(para_id: u32) -> Result<ChainSpec, String> {
+pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();

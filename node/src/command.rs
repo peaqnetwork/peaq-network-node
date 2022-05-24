@@ -1,7 +1,7 @@
 use crate::{
 	parachain,
 	cli::{Cli, Subcommand, RelayChainCli},
-	parachain::service::{self, frontier_database_dir, start_node, dev},
+	parachain::service::{self, frontier_database_dir, start_node, dev, agung},
 	cli_opt::{EthApi, RpcConfig},
 	primitives::Block,
 };
@@ -26,6 +26,29 @@ use sc_service::{
 	config::{BasePath, PrometheusConfig},
 };
 use std::{io::Write, net::SocketAddr};
+
+trait IdentifyChain {
+	fn is_dev(&self) -> bool;
+	fn is_agung(&self) -> bool;
+}
+
+impl IdentifyChain for dyn sc_service::ChainSpec {
+	fn is_dev(&self) -> bool {
+		self.id().starts_with("dev")
+	}
+	fn is_agung(&self) -> bool {
+		self.id().starts_with("agung")
+	}
+}
+
+impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
+	fn is_dev(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_dev(self)
+	}
+	fn is_agung(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_agung(self)
+	}
+}
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -56,16 +79,20 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"dev" => Box::new(parachain::dev_chain_spec::development_config(self.run.parachain_id)?),
-			"agung" => Box::new(parachain::agung_chain_spec::agung_net_config(self.run.parachain_id)?),
+			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&peaq_dev_runtime::VERSION
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		if chain_spec.is_agung() {
+			&agung_runtime::VERSION
+		} else {
+			&peaq_dev_runtime::VERSION
+		}
 	}
 }
 
@@ -151,57 +178,111 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					import_queue,
-					..
-				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-					&config,
-					parachain::build_import_queue)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
+			if runner.config().chain_spec.is_agung() {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						import_queue,
+						..
+					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, import_queue), task_manager))
+				})
+			} else {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						import_queue,
+						..
+					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, import_queue), task_manager))
+				})
+			}
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					..
-				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-					&config,
-					parachain::build_import_queue)?;
-				Ok((cmd.run(client, config.database), task_manager))
-			})
+			if runner.config().chain_spec.is_agung() {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						..
+					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, config.database), task_manager))
+				})
+			} else {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						..
+					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, config.database), task_manager))
+				})
+			}
 		}
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					..
-				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-					&config,
-					parachain::build_import_queue)?;
-				Ok((cmd.run(client, config.chain_spec), task_manager))
-			})
+			if runner.config().chain_spec.is_agung() {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						..
+					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, config.chain_spec), task_manager))
+				})
+			} else {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						..
+					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, config.chain_spec), task_manager))
+				})
+			}
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					import_queue,
-					..
-				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-					&config,
-					parachain::build_import_queue)?;
-				Ok((cmd.run(client, import_queue), task_manager))
-			})
+			if runner.config().chain_spec.is_agung() {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						import_queue,
+						..
+					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, import_queue), task_manager))
+				})
+			} else {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						import_queue,
+						..
+					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, import_queue), task_manager))
+				})
+			}
 		}
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -217,47 +298,91 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					backend,
-					..
-				} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-					&config,
-					parachain::build_import_queue)?;
-				Ok((cmd.run(client, backend, None), task_manager))
-			})
+			if runner.config().chain_spec.is_agung() {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						backend,
+						..
+					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, backend, None), task_manager))
+				})
+			} else {
+				runner.async_run(|config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						backend,
+						..
+					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+						&config,
+						parachain::build_import_queue)?;
+					Ok((cmd.run(client, backend, None), task_manager))
+				})
+			}
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
+				let chain_spec = &runner.config().chain_spec;
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
-						return runner.sync_run(|config| {
-							cmd.run::<Block, dev::Executor>(config)
-						})
+						if chain_spec.is_agung() {
+							return runner.sync_run(|config| {
+								cmd.run::<Block, agung::Executor>(config)
+							})
+						} else {
+							return runner.sync_run(|config| {
+								cmd.run::<Block, dev::Executor>(config)
+							})
+						}
 					}
 					BenchmarkCmd::Block(cmd) => {
-						return runner.sync_run(|config| {
-							let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-								&config,
-								parachain::build_import_queue)?;
+						if chain_spec.is_agung() {
+							return runner.sync_run(|config| {
+								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+									&config,
+									parachain::build_import_queue)?;
 
-							cmd.run(params.client)
-						})
+								cmd.run(params.client)
+							})
+						} else {
+							return runner.sync_run(|config| {
+								let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+									&config,
+									parachain::build_import_queue)?;
+
+								cmd.run(params.client)
+							})
+						}
 					}
 					BenchmarkCmd::Storage(cmd) => {
+						if chain_spec.is_agung() {
 							return runner.sync_run(|config| {
-							let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-								&config,
-								parachain::build_import_queue)?;
+								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+									&config,
+									parachain::build_import_queue)?;
 
-								let db = params.backend.expose_db();
-								let storage = params.backend.expose_storage();
+									let db = params.backend.expose_db();
+									let storage = params.backend.expose_storage();
 
-								cmd.run(config, params.client, db, storage)
-						})
+									cmd.run(config, params.client, db, storage)
+							})
+						} else {
+							return runner.sync_run(|config| {
+								let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
+									&config,
+									parachain::build_import_queue)?;
+
+									let db = params.backend.expose_db();
+									let storage = params.backend.expose_storage();
+
+									cmd.run(config, params.client, db, storage)
+							})
+						}
 					}
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 				}
@@ -331,11 +456,6 @@ pub fn run() -> sc_cli::Result<()> {
 					relay_chain_rpc_url: cli.run.base.relay_chain_rpc_url,
 				};
 
-
-				// if config.chain_spec.is_dev() {
-				// 	return local::start_node(config).map_err(Into::into);
-				// }
-
 				let polkadot_cli = RelayChainCli::new(
 					&config,
 					[RelayChainCli::executable_name().to_string()]
@@ -372,11 +492,19 @@ pub fn run() -> sc_cli::Result<()> {
 					}
 				);
 
-				start_node::<dev::RuntimeApi, dev::Executor>(
-					config, polkadot_config, id, rpc_config)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				if config.chain_spec.is_agung() {
+					start_node::<agung::RuntimeApi, agung::Executor>(
+						config, polkadot_config, id, rpc_config)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				} else {
+					start_node::<dev::RuntimeApi, dev::Executor>(
+						config, polkadot_config, id, rpc_config)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				}
 			})
 		}
 	}

@@ -2,6 +2,7 @@
 members = [
     'node',
     'runtime/peaq-dev',
+    'runtime/agung',
 ]
 
 # make sure dev builds with backtrace do
