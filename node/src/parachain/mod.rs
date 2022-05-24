@@ -10,11 +10,15 @@ mod shell_upgrade;
 pub mod service;
 
 /// Parachain specs.
-pub mod chain_spec;
+pub mod dev_chain_spec;
+pub mod agung_chain_spec;
 
-pub use chain_spec::{
+pub use dev_chain_spec::{
 	development_config, ChainSpec,
-	// agung_net_config
+};
+
+pub use agung_chain_spec::{
+	agung_net_config
 };
 
 pub use service::{

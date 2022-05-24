@@ -56,9 +56,9 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"dev" => Box::new(parachain::chain_spec::development_config(self.run.parachain_id)?),
-			// "agung" => Box::new(parachain::chain_spec::agung_net_config()?),
-			path => Box::new(parachain::chain_spec::ChainSpec::from_json_file(
+			"dev" => Box::new(parachain::dev_chain_spec::development_config(self.run.parachain_id)?),
+			"agung" => Box::new(parachain::agung_chain_spec::agung_net_config(self.run.parachain_id)?),
+			path => Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
 				std::path::PathBuf::from(path),
 			)?),
 		})
