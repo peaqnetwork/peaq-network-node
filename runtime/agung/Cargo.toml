@@ -379,7 +379,6 @@ default-features = false
 [features]
 default = ["std", "aura"]
 aura = []
-manual-seal = []
 runtime-benchmarks = [
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',

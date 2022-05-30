@@ -1,29 +1,7 @@
-#[cfg(feature = "manual-seal")]
-use structopt::clap::arg_enum;
-
 use clap::Parser;
 use crate::cli_opt::EthApi;
 use std::path::PathBuf;
 use crate::parachain::Extensions;
-
-#[cfg(feature = "manual-seal")]
-arg_enum! {
-	/// Available Sealing methods.
-	#[derive(Debug, Copy, Clone, StructOpt)]
-	pub enum Sealing {
-		// Seal using rpc method.
-		Manual,
-		// Seal when transaction is executed.
-		Instant,
-	}
-}
-
-#[cfg(feature = "manual-seal")]
-impl Default for Sealing {
-	fn default() -> Sealing {
-		Sealing::Manual
-	}
-}
 
 #[allow(missing_docs)]
 #[derive(Debug, Parser)]
@@ -31,11 +9,6 @@ pub struct RunCmd {
 	#[allow(missing_docs)]
 	#[clap(flatten)]
 	pub base: cumulus_client_cli::RunCmd,
-
-	#[cfg(feature = "manual-seal")]
-	/// Choose sealing method.
-	#[clap(long = "sealing")]
-	pub sealing: Sealing,
 
 	#[clap(long, default_value = "2000")]
 	pub parachain_id: u32,

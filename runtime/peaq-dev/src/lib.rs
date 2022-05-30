@@ -318,9 +318,6 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = ();
 	#[cfg(feature = "aura")]
 	type OnTimestampSet = ();
-	// [TODO] Need to check whether we should remove it
-	#[cfg(feature = "manual-seal")]
-	type OnTimestampSet = ();
 }
 
 parameter_types! {

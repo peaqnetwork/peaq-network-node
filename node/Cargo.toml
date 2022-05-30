@@ -366,7 +366,6 @@ default = [
 	"polkadot-cli"
 	]
 aura = ["peaq-dev-runtime/aura"]
-manual-seal = ["peaq-dev-runtime/manual-seal"]
 runtime-benchmarks = [
 	"peaq-dev-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"

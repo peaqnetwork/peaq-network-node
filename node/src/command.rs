@@ -124,10 +124,10 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn description() -> String {
-		"Peaq Collator\n\nThe command-line arguments provided first will be \
+		"Peaq Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
-		peaq-collator [parachain-args] -- [relaychain-args]"
+		peaq-node [parachain-args] -- [relaychain-args]"
 			.into()
 	}
 
