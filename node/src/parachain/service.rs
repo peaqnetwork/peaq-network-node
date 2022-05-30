@@ -404,7 +404,6 @@ where
 			warp_sync: None,
 		})?;
 
-	// [TODO QQQ???]
 	let subscription_task_executor =
 		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let fee_history_limit = rpc_config.fee_history_limit;
