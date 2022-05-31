@@ -399,7 +399,6 @@ pub fn run() -> sc_cli::Result<()> {
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			// [TODO]??? moonbeam
 			let spec = cli.load_spec(&params.chain.clone().unwrap_or_default())?;
 			let state_version = Cli::native_runtime_version(&spec).state_version();
 

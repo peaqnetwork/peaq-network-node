@@ -7053,7 +7053,6 @@ dependencies = [
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-aura",
- "sc-consensus-manual-seal",
  "sc-executor",
  "sc-finality-grandpa",
  "sc-keystore",
@@ -9715,42 +9714,6 @@ dependencies = [
  "sc-consensus",
  "sp-blockchain",
  "sp-runtime",
-]
-
-[[package]]
-name = "sc-consensus-manual-seal"
-version = "0.10.0-dev"
-source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
-dependencies = [
- "assert_matches",
- "async-trait",
- "futures 0.3.21",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "log",
- "parity-scale-codec",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-aura",
- "sc-consensus-babe",
- "sc-consensus-epochs",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
- "serde",
- "sp-api",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-consensus-babe",
- "sp-consensus-slots",
- "sp-core",
- "sp-inherents",
- "sp-keystore",
- "sp-runtime",
- "sp-timestamp",
- "substrate-prometheus-endpoint",
- "thiserror",
 ]
 
 [[package]]

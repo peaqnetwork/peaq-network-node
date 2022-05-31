@@ -514,7 +514,6 @@ where
 			let deps = crate::rpc::FullDeps {
 				backend: frontier_backend.clone(),
 				client: client.clone(),
-				command_sink: None,
 				deny_unsafe,
 				ethapi_cmd: ethapi_cmd.clone(),
 				filter_pool: filter_pool.clone(),
