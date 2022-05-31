@@ -105,8 +105,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Extensions
 		Extensions {
 			bad_blocks: Default::default(),
-			// [TODO]
-			relay_chain: "rococo-test".into(),
+			relay_chain: "rococo-local".into(),
 			para_id: para_id,
 		},
 	))
@@ -140,8 +139,6 @@ fn configure_genesis(
 				.map(|k| (k, 1 << 78))
 				.collect(),
 		},
-		// [TODO]...
-		// block_reward
 		session: peaq_dev_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()

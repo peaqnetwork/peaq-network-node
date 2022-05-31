@@ -116,8 +116,6 @@ fn configure_genesis(
 				.map(|k| (k, 1 << 78))
 				.collect(),
 		},
-		// [TODO]...
-		// block_reward
 		session: peaq_dev_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
@@ -132,7 +130,6 @@ fn configure_genesis(
 		aura_ext: Default::default(),
 		collator_selection: peaq_dev_runtime::CollatorSelectionConfig {
 			desired_candidates: 200,
-			// [TODO]...
 			candidacy_bond: 32_000,
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect::<Vec<_>>(),
 		},

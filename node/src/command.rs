@@ -60,8 +60,11 @@ impl SubstrateCli for Cli {
 	}
 
 	fn description() -> String {
-		//[TODO]
-		env!("CARGO_PKG_DESCRIPTION").into()
+		"Peaq Node\n\nThe command-line arguments provided first will be \
+		passed to the parachain node, while the arguments provided after -- will be passed \
+		to the relaychain node.\n\n\
+		peaq-node [parachain-args] -- [relaychain-args]"
+			.into()
 	}
 
 	fn author() -> String {
@@ -69,8 +72,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		//[TODO]
-		"support.anonymous.an".into()
+		"https://github.com/peaqnetwork/peaq-network-node/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -136,8 +138,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn support_url() -> String {
-		//[TODO]
-		"support.anonymous.an".into()
+		"https://github.com/peaqnetwork/peaq-network-node/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {

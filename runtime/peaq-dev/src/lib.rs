@@ -325,7 +325,6 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	// [TODO] Check whether we need to have the MaxReserves
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
@@ -343,7 +342,6 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-// [TODO] Should we change the pallet_transaction_payment confituration?
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -988,7 +986,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	//[TODO] pub struct TransactionConverter;?????
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
 		fn convert_transaction(
 				transaction: pallet_ethereum::Transaction
