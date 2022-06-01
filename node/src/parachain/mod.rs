@@ -13,13 +13,9 @@ pub mod service;
 pub mod dev_chain_spec;
 pub mod agung_chain_spec;
 
-pub use dev_chain_spec::{
-	ChainSpec,
-};
-
 pub use service::{
-    build_import_queue, new_partial, dev, start_node, agung,
-	dev::Executor,
+    build_import_queue, new_partial, start_node,
+	dev, agung,
 };
 
 /// Node `ChainSpec` extensions.

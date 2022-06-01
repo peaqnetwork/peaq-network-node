@@ -1,4 +1,4 @@
-use peaq_dev_runtime::{
+use agung_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 };
@@ -6,13 +6,17 @@ use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use cumulus_primitives_core::ParaId;
 use crate::parachain::Extensions;
-use crate::parachain::dev_chain_spec::{
-	ChainSpec, session_keys
-};
 
 use hex_literal::hex;
 use sc_network::config::MultiaddrWithPeerId;
 use std::str::FromStr;
+
+/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+
+fn session_keys(aura: AuraId) -> agung_runtime::opaque::SessionKeys {
+    agung_runtime::opaque::SessionKeys { aura }
+}
 
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
@@ -139,7 +143,7 @@ fn configure_genesis(
 				.map(|k| (k, 1 << 78))
 				.collect(),
 		},
-		session: peaq_dev_runtime::SessionConfig {
+		session: agung_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
@@ -151,7 +155,7 @@ fn configure_genesis(
 			key: Some(root_key),
 		},
 		aura_ext: Default::default(),
-		collator_selection: peaq_dev_runtime::CollatorSelectionConfig {
+		collator_selection: agung_runtime::CollatorSelectionConfig {
 			desired_candidates: 0,
 			candidacy_bond: 32_000,
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect::<Vec<_>>(),

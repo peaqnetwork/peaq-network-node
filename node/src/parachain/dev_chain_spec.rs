@@ -84,7 +84,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	))
 }
 
-pub fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
+fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
     peaq_dev_runtime::opaque::SessionKeys { aura }
 }
 

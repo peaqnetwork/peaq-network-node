@@ -1,4 +1,4 @@
-//! Substrate Peaq Node CLI library.
+//! Peaq Node CLI library.
 #![warn(missing_docs)]
 
 mod parachain;
