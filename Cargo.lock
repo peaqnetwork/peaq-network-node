@@ -7019,6 +7019,7 @@ dependencies = [
  "fc-rpc",
  "fc-rpc-core",
  "fp-consensus",
+ "fp-dynamic-fee",
  "fp-rpc",
  "fp-storage",
  "frame-benchmarking",

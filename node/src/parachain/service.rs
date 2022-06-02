@@ -37,6 +37,7 @@ use crate::cli_opt::RpcConfig;
 use fc_rpc::EthTask;
 use sc_cli::SubstrateCli;
 
+use sp_core::U256;
 
 /// dev network runtime executor.
 pub mod dev {
@@ -119,6 +120,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
+	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -167,6 +169,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
+		u64,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
@@ -231,6 +234,7 @@ where
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
+		target_gas_price,
 	)?;
 
 	let params = PartialComponents {
@@ -289,6 +293,7 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	polkadot_config: Configuration,
 	id: ParaId,
 	rpc_config: RpcConfig,
+	target_gas_price: u64,
 	build_import_queue: BIQ,
 	build_consensus: BIC,
 ) -> sc_service::error::Result<(
@@ -329,6 +334,7 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
+		u64,
 	) -> Result<
 		sc_consensus::DefaultImportQueue<
 			Block,
@@ -358,15 +364,16 @@ where
 	}
 
 	let parachain_config = prepare_node_config(parachain_config);
-	let params = new_partial::<RuntimeApi, Executor, BIQ>(&parachain_config, build_import_queue)?;
-    let (
-        _block_import,
-        filter_pool,
-        mut telemetry,
-        telemetry_worker_handle,
-        frontier_backend,
-        fee_history_cache,
-    ) = params.other;
+	let params = new_partial::<RuntimeApi, Executor, BIQ>(
+		&parachain_config, build_import_queue, target_gas_price)?;
+	let (
+		_block_import,
+		filter_pool,
+		mut telemetry,
+		telemetry_worker_handle,
+		frontier_backend,
+		fee_history_cache,
+	) = params.other;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -631,6 +638,7 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
+	target_gas_price: u64,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
@@ -676,9 +684,11 @@ where
 					sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 						*time,
 						slot_duration,
-					);
+						);
+					let dynamic_fee =
+						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-					Ok((time, slot))
+					Ok((time, slot, dynamic_fee))
 				},
 				can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(
 					client2.executor().clone(),
@@ -715,6 +725,7 @@ pub async fn start_node<RuntimeApi, Executor>(
 	polkadot_config: Configuration,
 	id: ParaId,
 	rpc_config: RpcConfig,
+	target_gas_price: u64,
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<FullClient<RuntimeApi, Executor>>,
@@ -746,116 +757,124 @@ where
 		polkadot_config,
 		id,
 		rpc_config,
-        |client,
-         block_import,
-         config,
-         telemetry,
-         task_manager| {
-            let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-            let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
+		target_gas_price,
+		|client,
+		 block_import,
+		 config,
+		 telemetry,
+		 task_manager,
+		 target_gas_price| {
+			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+			let can_author_with = sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-            cumulus_client_consensus_aura::import_queue::<
-                sp_consensus_aura::sr25519::AuthorityPair,
-                _,
-                _,
-                _,
-                _,
-                _,
-                _,
-            >(cumulus_client_consensus_aura::ImportQueueParams {
-                block_import,
-                client,
-                create_inherent_data_providers: move |_, _| async move {
-                    let time = sp_timestamp::InherentDataProvider::from_system_time();
+			cumulus_client_consensus_aura::import_queue::<
+				sp_consensus_aura::sr25519::AuthorityPair,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+			>(cumulus_client_consensus_aura::ImportQueueParams {
+				block_import,
+				client,
+				create_inherent_data_providers: move |_, _| async move {
+					let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-                    let slot =
-                        sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                            *time,
-                            slot_duration,
-                        );
+					let slot =
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+							*time,
+							slot_duration,
+						);
 
-                    Ok((time, slot))
-                },
-                registry: config.prometheus_registry().clone(),
-                can_author_with,
-                spawner: &task_manager.spawn_essential_handle(),
-                telemetry,
-            })
-            .map_err(Into::into)
-        },
-        |client,
-         prometheus_registry,
-         telemetry,
-         task_manager,
-         relay_chain_interface,
-         transaction_pool,
-         sync_oracle,
-         keystore,
-         force_authoring| {
-            let spawn_handle = task_manager.spawn_handle();
+					let dynamic_fee =
+						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-            let slot_duration =
-                cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
+					Ok((time, slot, dynamic_fee))
+				},
+				registry: config.prometheus_registry().clone(),
+				can_author_with,
+				spawner: &task_manager.spawn_essential_handle(),
+				telemetry,
+			})
+			.map_err(Into::into)
+		},
+		|client,
+		 prometheus_registry,
+		 telemetry,
+		 task_manager,
+		 relay_chain_interface,
+		 transaction_pool,
+		 sync_oracle,
+		 keystore,
+		 force_authoring| {
+			let spawn_handle = task_manager.spawn_handle();
 
-            let proposer_factory =
-                sc_basic_authorship::ProposerFactory::with_proof_recording(
-                    spawn_handle,
-                    client.clone(),
-                    transaction_pool,
-                    prometheus_registry,
-                    telemetry.clone(),
-                );
+			let slot_duration =
+				cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
 
-            Ok(AuraConsensus::build::<
-                sp_consensus_aura::sr25519::AuthorityPair,
-                _,
-                _,
-                _,
-                _,
-                _,
-                _,
-            >(BuildAuraConsensusParams {
-                proposer_factory,
-                create_inherent_data_providers:
-                    move |_, (relay_parent, validation_data)| {
-                        let relay_chain_for_aura = relay_chain_interface.clone();
-                        async move {
-                            let parachain_inherent =
-                                cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
-                                    relay_parent,
-                                    &relay_chain_for_aura,
-                                    &validation_data,
-                                    id,
-                                ).await;
-                            let time = sp_timestamp::InherentDataProvider::from_system_time();
-                            let slot =
-                                sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                                    *time,
-                                    slot_duration,
-                                );
+			let proposer_factory =
+				sc_basic_authorship::ProposerFactory::with_proof_recording(
+					spawn_handle,
+					client.clone(),
+					transaction_pool,
+					prometheus_registry,
+					telemetry.clone(),
+				);
 
-                            let parachain_inherent = parachain_inherent.ok_or_else(|| {
-                                Box::<dyn std::error::Error + Send + Sync>::from(
-                                    "Failed to create parachain inherent",
-                                )
-                            })?;
-                            Ok((time, slot, parachain_inherent))
-                        }
-                    },
-                block_import: client.clone(),
-                para_client: client.clone(),
-                backoff_authoring_blocks: Option::<()>::None,
-                sync_oracle,
-                keystore,
-                force_authoring,
-                slot_duration,
-                // We got around 500ms for proposing
-                block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
-                // And a maximum of 750ms if slots are skipped
-                max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
-                telemetry,
-            })
-        )
-    })
+			Ok(AuraConsensus::build::<
+				sp_consensus_aura::sr25519::AuthorityPair,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+			>(BuildAuraConsensusParams {
+				proposer_factory,
+				create_inherent_data_providers:
+					move |_, (relay_parent, validation_data)| {
+						let relay_chain_for_aura = relay_chain_interface.clone();
+						async move {
+							let parachain_inherent =
+								cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
+									relay_parent,
+									&relay_chain_for_aura,
+									&validation_data,
+									id,
+								).await;
+							let time = sp_timestamp::InherentDataProvider::from_system_time();
+							let slot =
+								sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+									*time,
+									slot_duration,
+								);
+
+							let parachain_inherent = parachain_inherent.ok_or_else(|| {
+								Box::<dyn std::error::Error + Send + Sync>::from(
+									"Failed to create parachain inherent",
+								)
+							})?;
+							let dynamic_fee =
+								fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+
+							Ok((time, slot, parachain_inherent, dynamic_fee))
+						}
+					},
+				block_import: client.clone(),
+				para_client: client.clone(),
+				backoff_authoring_blocks: Option::<()>::None,
+				sync_oracle,
+				keystore,
+				force_authoring,
+				slot_duration,
+				// We got around 500ms for proposing
+				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
+				// And a maximum of 750ms if slots are skipped
+				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
+				telemetry,
+			})
+		)
+	})
 	.await
 }

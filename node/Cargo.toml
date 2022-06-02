@@ -347,6 +347,10 @@ branch = "peaq-polkadot-v0.9.19"
 git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.19"
 
+[dependencies.fp-dynamic-fee]
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.19'
+
 
 # peaq-rpc-debug = { path = "../../client/rpc/debug" }
 # peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
