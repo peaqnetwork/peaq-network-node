@@ -357,8 +357,12 @@ default = [
 	"aura",
 	"polkadot-cli"
 	]
-aura = ["peaq-dev-runtime/aura"]
+aura = [
+	"peaq-dev-runtime/aura",
+	"agung-runtime/aura"
+]
 runtime-benchmarks = [
+	"agung-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
