@@ -352,12 +352,6 @@ git = "https://github.com/peaqnetwork/frontier"
 branch = 'peaq-polkadot-v0.9.19'
 
 
-# peaq-rpc-debug = { path = "../../client/rpc/debug" }
-# peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
-# peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool" }
-# peaq-rpc-trace = { path = "../../client/rpc/trace" }
-# peaq-rpc-txpool = { path = "../../client/rpc/txpool" }
-
 [features]
 default = [
 	"aura",
