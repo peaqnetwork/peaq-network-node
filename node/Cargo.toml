@@ -16,13 +16,23 @@ name = 'peaq-node'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
+[dependencies.codec]
+package = 'parity-scale-codec'
+version = '3.0.0'
+
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
 
-[dependencies.peaq-node-runtime]
-path = '../runtime'
+[dependencies.peaq-dev-runtime]
+path = '../runtime/peaq-dev'
 version = '3.0.0-polkadot-v0.9.19'
+default-features = false
+
+[dependencies.agung-runtime]
+path = '../runtime/agung'
+version = '3.0.0-polkadot-v0.9.19'
+default-features = false
 
 [dependencies]
 structopt = "0.3.8"
@@ -32,6 +42,8 @@ futures = { version = "0.3.1", features = [ "compat" ] }
 log = "0.4.8"
 clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
+url = "2.2.2"
+serde = { version = "1.0", features = [ "derive" ] }
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
@@ -220,12 +232,6 @@ git = 'https://github.com/peaqnetwork/frontier'
 branch = 'peaq-polkadot-v0.9.19'
 
 
-[dependencies.sc-consensus-manual-seal]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = "peaq-polkadot-v0.9.19"
-
-
 # Tracing
 [dependencies.peaq-primitives-ext]
 path = '../primitives/ext'
@@ -249,16 +255,114 @@ path = '../client/rpc/txpool'
 version = "1.13.0"
 features = [ "macros", "sync" ]
 
-# peaq-rpc-debug = { path = "../../client/rpc/debug" }
-# peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
-# peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool" }
-# peaq-rpc-trace = { path = "../../client/rpc/trace" }
-# peaq-rpc-txpool = { path = "../../client/rpc/txpool" }
+
+## Parachain
+[dependencies.sc-tracing]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-cli]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-network]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-service]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-consensus-aura]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-consensus-common]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-client-consensus-relay-chain]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-relay-chain-interface]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-relay-chain-inprocess-interface]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-relay-chain-rpc-interface]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-primitives-core]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-primitives-parachain-inherent]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.substrate-prometheus-endpoint]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+# polkadot dependencies
+[dependencies.polkadot-primitives]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.polkadot-parachain]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.polkadot-service]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.polkadot-cli]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+optional = true
+
+[dependencies.sp-session]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.sp-keystore]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.sp-transaction-pool]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.sp-offchain]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.sc-chain-spec]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.fp-dynamic-fee]
+git = "https://github.com/peaqnetwork/frontier"
+branch = 'peaq-polkadot-v0.9.19'
+
 
 [features]
-default = ['aura']
-aura = ["peaq-node-runtime/aura"]
-manual-seal = ["peaq-node-runtime/manual-seal"]
+default = [
+	"aura",
+	"polkadot-cli"
+	]
+aura = [
+	"peaq-dev-runtime/aura",
+	"agung-runtime/aura"
+]
 runtime-benchmarks = [
-	'peaq-node-runtime/runtime-benchmarks',
+	"agung-runtime/runtime-benchmarks",
+	"peaq-dev-runtime/runtime-benchmarks",
+	"polkadot-cli/runtime-benchmarks"
 ]

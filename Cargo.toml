@@ -1,7 +1,8 @@
 [workspace]
 members = [
     'node',
-    'runtime',
+    'runtime/peaq-dev',
+    'runtime/agung',
 ]
 
 # make sure dev builds with backtrace do
