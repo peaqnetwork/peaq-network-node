@@ -6685,6 +6685,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "parachain-staking"
+version = "1.6.2"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
