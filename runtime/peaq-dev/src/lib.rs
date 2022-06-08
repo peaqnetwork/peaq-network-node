@@ -23,12 +23,13 @@ use sp_runtime::{
 		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount,
 		// NumberFor,
 		OpaqueKeys,
-		PostDispatchInfoOf, Verify,
+		PostDispatchInfoOf, Verify, ConvertInto,
 	},
 	transaction_validity::{
 		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
 	},
 	ApplyExtrinsicResult, MultiSignature,
+	Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
@@ -49,6 +50,7 @@ pub use frame_support::{
 	ConsensusEngineId, StorageValue, PalletId,
 };
 pub use pallet_balances::Call as BalancesCall;
+use parachain_staking::InflationInfo;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner};
@@ -145,6 +147,8 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+// Julian year as Substrate handles it
+pub const YEARS: BlockNumber = DAYS * 36525 / 100;
 
 // Contracts price units.
 pub const MILLICENTS: Balance = 1_000_000_000;
@@ -494,7 +498,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = (CollatorSelection,);
+	type EventHandler = ParachainStaking;
 }
 
 parameter_types! {
@@ -505,14 +509,104 @@ parameter_types! {
 impl pallet_session::Config for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ShouldEndSession = pallet_session::PeriodicSessions<SessionPeriod, SessionOffset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<SessionPeriod, SessionOffset>;
-	type SessionManager = CollatorSelection;
+	type ValidatorIdOf = ConvertInto;
+	type ShouldEndSession = ParachainStaking;
+	type NextSessionRotation = ParachainStaking;
+	type SessionManager = ParachainStaking;
 	type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = opaque::SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
+
+
+
+pub mod staking {
+	use super::*;
+
+	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
+
+	/// Inflation configuration which is used at genesis
+	pub fn inflation_config() -> InflationInfo {
+		InflationInfo::new(
+			YEARS.into(),
+			// max collator staking rate
+			Perquintill::from_percent(30),
+			// collator reward rate
+			Perquintill::from_percent(20),
+			// max delegator staking rate
+			Perquintill::from_percent(10),
+			// delegator reward rate
+			Perquintill::from_percent(5),
+		)
+	}
+
+
+	parameter_types! {
+			/// Minimum round length is 1 hour
+			pub const MinBlocksPerRound: BlockNumber = 1 * MINUTES;
+			/// Default length of a round/session is 2 hours
+			pub const DefaultBlocksPerRound: BlockNumber = 2 * MINUTES;
+			/// Unstaked balance can be unlocked after 7 days
+			pub const StakeDuration: BlockNumber = 3 * MINUTES;
+			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
+			pub const ExitQueueDelay: u32 = 2;
+			/// Minimum 16 collators selected per round, default at genesis and minimum forever after
+			pub const MinCollators: u32 = 4;
+			/// At least 4 candidates which cannot leave the network if there are no other candidates.
+			pub const MinRequiredCollators: u32 = 4;
+			/// We only allow one delegation per round.
+			pub const MaxDelegationsPerRound: u32 = 1;
+			/// Maximum 25 delegators per collator at launch, might be increased later
+			#[derive(Debug, PartialEq)]
+			pub const MaxDelegatorsPerCollator: u32 = 25;
+			/// Maximum 1 collator per delegator at launch, will be increased later
+			#[derive(Debug, PartialEq)]
+			pub const MaxCollatorsPerDelegator: u32 = 1;
+			/// Minimum stake required to be reserved to be a collator is 32_000
+			pub const MinCollatorStake: Balance = 32_000;
+			/// Minimum stake required to be reserved to be a delegator is 1000
+			pub const MinDelegatorStake: Balance = 20_000;
+			/// Maximum number of collator candidates
+			#[derive(Debug, PartialEq)]
+			pub const MaxCollatorCandidates: u32 = 16;
+			/// Maximum number of concurrent requests to unlock unstaked balance
+			pub const MaxUnstakeRequests: u32 = 10;
+			/// The starting block number for the network rewards
+			pub const NetworkRewardStart: BlockNumber = YEARS.saturating_mul(5);
+			/// The rate in percent for the network rewards
+			pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(0);
+	}
+}
+
+impl parachain_staking::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type CurrencyBalance = Balance;
+
+	type MinBlocksPerRound = staking::MinBlocksPerRound;
+	type DefaultBlocksPerRound = staking::DefaultBlocksPerRound;
+	type StakeDuration = staking::StakeDuration;
+	type ExitQueueDelay = staking::ExitQueueDelay;
+	type MinCollators = staking::MinCollators;
+	type MinRequiredCollators = staking::MinRequiredCollators;
+	type MaxDelegationsPerRound = staking::MaxDelegationsPerRound;
+	type MaxDelegatorsPerCollator = staking::MaxDelegatorsPerCollator;
+	type MaxCollatorsPerDelegator = staking::MaxCollatorsPerDelegator;
+	type MinCollatorStake = staking::MinCollatorStake;
+	type MinCollatorCandidateStake = staking::MinCollatorStake;
+	type MaxTopCandidates = staking::MaxCollatorCandidates;
+	type MinDelegation = staking::MinDelegatorStake;
+	type MinDelegatorStake = staking::MinDelegatorStake;
+	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
+	type NetworkRewardRate = staking::NetworkRewardRate;
+	type NetworkRewardStart = staking::NetworkRewardStart;
+
+	type NetworkRewardBeneficiary = ();
+	type WeightInfo = ();
+
+	const BLOCKS_PER_YEAR: Self::BlockNumber = YEARS;
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -546,6 +640,7 @@ construct_runtime!(
 		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config},
+		ParachainStaking: parachain_staking,
 
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
 		ParachainInfo: parachain_info::{Pallet, Storage, Config},
