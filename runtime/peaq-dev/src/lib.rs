@@ -24,6 +24,7 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf, Verify, ConvertInto,
+		AccountIdConversion,
 	},
 	transaction_validity::{
 		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
@@ -42,6 +43,7 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{FindAuthor, KeyOwnerProofSystem, Randomness},
 	traits::{Nothing, StorageInfo, Contains},
+	traits::{OnUnbalanced, Currency},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, IdentityFee, Weight,
@@ -71,6 +73,7 @@ pub use peaq_pallet_transaction;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
+use frame_support::pallet_prelude::Get;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -565,6 +568,48 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+
+pub struct ToStakingPot;
+impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
+    fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+        let staking_pot = PotId::get().into_account();
+        Balances::resolve_creating(&staking_pot, amount);
+    }
+}
+
+pub struct DappsStakingTvlProvider();
+impl Get<Balance> for DappsStakingTvlProvider {
+    fn get() -> Balance {
+        0
+    }
+}
+
+parameter_types! {
+    pub const RewardAmount: Balance = 266_400;
+}
+
+impl pallet_block_reward::Config for Runtime {
+    type Currency = Balances;
+    type DappsStakingTvlProvider = DappsStakingTvlProvider;
+    type BeneficiaryPayout = BeneficiaryPayout;
+    type RewardAmount = RewardAmount;
+    type Event = Event;
+    type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
+}
+
+pub struct BeneficiaryPayout();
+impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
+    fn treasury(_reward: NegativeImbalance) {
+    }
+
+    fn collators(reward: NegativeImbalance) {
+        ToStakingPot::on_unbalanced(reward);
+    }
+
+    fn dapps_staking(_stakers: NegativeImbalance, _dapps: NegativeImbalance) {
+    }
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -601,6 +646,7 @@ construct_runtime!(
 
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
 		ParachainInfo: parachain_info::{Pallet, Storage, Config},
+		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config, Event<T>},
 	}
 );
 

@@ -5679,6 +5679,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-block-reward"
+version = "2.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-bounties"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
@@ -6920,6 +6938,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-block-reward",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
@@ -7023,6 +7042,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "log",
  "pallet-base-fee",
+ "pallet-block-reward",
  "pallet-contracts",
  "pallet-contracts-rpc",
  "pallet-dynamic-fee",

@@ -2,11 +2,15 @@ use peaq_dev_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 	staking, Balance, ParachainStakingConfig,
+	BlockRewardConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{
+	traits::{IdentifyAccount, Verify},
+	Perbill,
+};
 use cumulus_primitives_core::ParaId;
 use crate::parachain::Extensions;
 
@@ -95,7 +99,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 }
 
 fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
-    peaq_dev_runtime::opaque::SessionKeys { aura }
+	peaq_dev_runtime::opaque::SessionKeys { aura }
 }
 
 /// Configure initial storage state for FRAME modules.
@@ -105,7 +109,7 @@ fn configure_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-    parachain_id: ParaId,
+	parachain_id: ParaId,
 ) -> GenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
@@ -137,6 +141,17 @@ fn configure_genesis(
 			stakers,
 			reward_rate_config: staking::reward_rate_config(),
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
+		block_reward: BlockRewardConfig {
+			// Make sure sum is 100
+			reward_config: pallet_block_reward::RewardDistributionConfig {
+				base_treasury_percent: Perbill::from_percent(10),
+				base_staker_percent: Perbill::from_percent(20),
+				dapps_percent: Perbill::from_percent(20),
+				collators_percent: Perbill::from_percent(5),
+				adjustable_percent: Perbill::from_percent(45),
+				ideal_dapps_staking_tvl: Perbill::from_percent(40),
+			},
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {

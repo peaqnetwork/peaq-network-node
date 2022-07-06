@@ -351,6 +351,10 @@ branch = "peaq-polkadot-v0.9.19"
 git = "https://github.com/peaqnetwork/frontier"
 branch = 'peaq-polkadot-v0.9.19'
 
+[dependencies.pallet-block-reward]
+path = '../pallets/block-reward'
+default-features = false
+
 
 [features]
 default = [
