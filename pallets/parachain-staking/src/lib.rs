@@ -549,10 +549,12 @@ pub mod pallet {
 				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
 			}
 			// check for InflationInfo update
+			// [TODO] Need to remove
 			if now > T::BLOCKS_PER_YEAR.saturated_into::<T::BlockNumber>() {
 				post_weight = post_weight.saturating_add(Self::adjust_reward_rates(now));
 			}
 			// check for network reward
+			// [TODO] Need to remove
 			if now > T::NetworkRewardStart::get() {
 				T::NetworkRewardBeneficiary::on_unbalanced(Self::get_network_reward());
 				post_weight = post_weight.saturating_add(<T as Config>::WeightInfo::on_initialize_network_rewards());
@@ -632,6 +634,7 @@ pub mod pallet {
 	pub(crate) type TopCandidates<T: Config> =
 		StorageValue<_, OrderedSet<Stake<T::AccountId, BalanceOf<T>>, T::MaxTopCandidates>, ValueQuery>;
 
+	/// [TODO] Need to remove
 	/// Inflation configuration.
 	#[pallet::storage]
 	#[pallet::getter(fn inflation_config)]
@@ -656,6 +659,7 @@ pub mod pallet {
 	#[pallet::getter(fn max_candidate_stake)]
 	pub(crate) type MaxCollatorCandidateStake<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	/// [TODO] Should remove
 	/// The year in which the last automatic reduction of the reward rates
 	/// occurred.
 	///
@@ -687,6 +691,7 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				stakers: Default::default(),
+				// [TODO] Need to change to another type (delegator + collator)
 				inflation_config: Default::default(),
 				max_candidate_stake: Default::default(),
 			}
@@ -701,6 +706,7 @@ pub mod pallet {
 				"Invalid inflation configuration"
 			);
 
+			// [TODO] Need to check
 			<InflationConfig<T>>::put(self.inflation_config.clone());
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
 
@@ -760,6 +766,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// [TODO] Need to change
 		/// Set the annual inflation rate to derive per-round inflation.
 		///
 		/// The inflation details are considered valid if the annual reward rate
@@ -2677,6 +2684,7 @@ pub mod pallet {
 			}
 		}
 
+		/// [TODO] Should remove
 		/// Annually reduce the reward rates for collators and delegators.
 		///
 		/// # <weight>
@@ -2747,6 +2755,7 @@ pub mod pallet {
 			})
 		}
 
+		/// [TODO] Need to remove
 		/// Calculates the network rewards per block with the current data and
 		/// issues these rewards to the network. The imbalance will be handled
 		/// in `on_initialize` by adding it to the free balance of
@@ -2785,6 +2794,104 @@ pub mod pallet {
 		// T::MaxTopCandidates>, ) -> Result<(), DispatchError> {
 		// 	todo!()
 		// }
+
+		fn kilt_reward_mechanism(author: T::AccountId) {
+			let mut reads = Weight::one();
+			let mut writes = Weight::zero();
+			// should always include state except if the collator has been forcedly removed
+			// via `force_remove_candidate` in the current or previous round
+			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
+				// [TODO]
+				// Fix number
+				// calculate the reward, by collator
+				// calculate total number of delegator in this collator
+				// reward them
+				let total_issuance = T::Currency::total_issuance();
+				let TotalStake {
+					collators: total_collators,
+					delegators: total_delegators,
+				} = <TotalCollatorStake<T>>::get();
+				let c_staking_rate = Perquintill::from_rational(total_collators, total_issuance);
+				let d_staking_rate = Perquintill::from_rational(total_delegators, total_issuance);
+				let inflation_config = <InflationConfig<T>>::get();
+				let authors = pallet_session::Pallet::<T>::validators();
+				let authors_per_round = <BalanceOf<T>>::from(authors.len().saturated_into::<u128>());
+
+				// Reward collator
+				let amt_due_collator =
+					inflation_config
+						.collator
+						.compute_reward::<T>(state.stake, c_staking_rate, authors_per_round);
+				Self::do_reward(&author, amt_due_collator);
+				writes = writes.saturating_add(Weight::one());
+
+				// Reward delegators
+				for Stake { owner, amount } in state.delegators {
+					if amount >= T::MinDelegatorStake::get() {
+						let due =
+							inflation_config
+								.delegator
+								.compute_reward::<T>(amount, d_staking_rate, authors_per_round);
+						Self::do_reward(&owner, due);
+						writes = writes.saturating_add(Weight::one());
+					}
+				}
+				reads = reads.saturating_add(4);
+			}
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(reads, writes),
+				DispatchClass::Mandatory,
+			);
+		}
+
+		fn peaq_reward_mechanism(author: T::AccountId) {
+			let mut reads = Weight::one();
+			let mut writes = Weight::zero();
+			let mut delegator_sum = T::CurrencyBalance::from(0u128);
+			// should always include state except if the collator has been forcedly removed
+			// via `force_remove_candidate` in the current or previous round
+			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
+				for Stake { owner: _owner, amount } in state.delegators {
+					if amount >= T::MinDelegatorStake::get() {
+						delegator_sum += amount;
+					}
+				}
+			}
+			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
+				let inflation_config = <InflationConfig<T>>::get();
+
+				let issue_number = T::CurrencyBalance::from(1000u128);
+				let collator_percentage = Perquintill::from_percent(30);
+				let delegator_percentage = Perquintill::from_percent(70);
+
+				let collator_reward =
+					inflation_config
+						.collator
+						.compute_collator_reward::<T>(issue_number, collator_percentage);
+				Self::do_reward(&author, collator_reward);
+				writes = writes.saturating_add(Weight::one());
+
+				// Reward delegators
+				for Stake { owner, amount } in state.delegators {
+					if amount >= T::MinDelegatorStake::get() {
+						let staking_rate = Perquintill::from_rational(amount, delegator_sum);
+						let delegator_reward =
+							inflation_config
+								.delegator
+								.compute_delegator_reward::<T>(issue_number, delegator_percentage, staking_rate);
+						Self::do_reward(&owner, delegator_reward);
+						writes = writes.saturating_add(Weight::one());
+					}
+				}
+				reads = reads.saturating_add(4);
+			}
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(reads, writes),
+				DispatchClass::Mandatory,
+			);
+		}
 	}
 
 	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
@@ -2823,48 +2930,8 @@ pub mod pallet {
 		/// - Writes: (D + 1) * Balance
 		/// # </weight>
 		fn note_author(author: T::AccountId) {
-			let mut reads = Weight::one();
-			let mut writes = Weight::zero();
-			// should always include state except if the collator has been forcedly removed
-			// via `force_remove_candidate` in the current or previous round
-			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				let total_issuance = T::Currency::total_issuance();
-				let TotalStake {
-					collators: total_collators,
-					delegators: total_delegators,
-				} = <TotalCollatorStake<T>>::get();
-				let c_staking_rate = Perquintill::from_rational(total_collators, total_issuance);
-				let d_staking_rate = Perquintill::from_rational(total_delegators, total_issuance);
-				let inflation_config = <InflationConfig<T>>::get();
-				let authors = pallet_session::Pallet::<T>::validators();
-				let authors_per_round = <BalanceOf<T>>::from(authors.len().saturated_into::<u128>());
-
-				// Reward collator
-				let amt_due_collator =
-					inflation_config
-						.collator
-						.compute_reward::<T>(state.stake, c_staking_rate, authors_per_round);
-				Self::do_reward(&author, amt_due_collator);
-				writes = writes.saturating_add(Weight::one());
-
-				// Reward delegators
-				for Stake { owner, amount } in state.delegators {
-					if amount >= T::MinDelegatorStake::get() {
-						let due =
-							inflation_config
-								.delegator
-								.compute_reward::<T>(amount, d_staking_rate, authors_per_round);
-						Self::do_reward(&owner, due);
-						writes = writes.saturating_add(Weight::one());
-					}
-				}
-				reads = reads.saturating_add(4);
-			}
-
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads, writes),
-				DispatchClass::Mandatory,
-			);
+			// Self::kilt_reward_mechanism(author);
+			Self::peaq_reward_mechanism(author);
 		}
 
 		fn note_uncle(_author: T::AccountId, _age: T::BlockNumber) {

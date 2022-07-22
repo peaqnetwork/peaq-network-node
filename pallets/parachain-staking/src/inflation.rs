@@ -96,6 +96,24 @@ impl StakingInfo {
 		let reward = (self.reward_rate.per_block * stake).saturating_mul(authors_per_round);
 		reduction * reward
 	}
+
+	pub fn compute_collator_reward<T: Config>(
+		&self,
+		issue_number: BalanceOf<T>,
+		collator_percentage: Perquintill,
+	) -> BalanceOf<T> {
+		collator_percentage * issue_number
+	}
+
+	pub fn compute_delegator_reward<T: Config>(
+		&self,
+		issue_number: BalanceOf<T>,
+		delegator_percentage: Perquintill,
+		staking_rate: Perquintill,
+	) -> BalanceOf<T> {
+		staking_rate * delegator_percentage *  issue_number
+	}
+
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
