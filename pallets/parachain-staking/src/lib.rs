@@ -548,11 +548,6 @@ pub mod pallet {
 				Self::deposit_event(Event::NewRound(round.first, round.current));
 				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
 			}
-			// check for InflationInfo update
-			// [TODO] Need to remove
-			if now > T::BLOCKS_PER_YEAR.saturated_into::<T::BlockNumber>() {
-				post_weight = post_weight.saturating_add(Self::adjust_reward_rates(now));
-			}
 			// check for network reward
 			// [TODO] Need to remove
 			if now > T::NetworkRewardStart::get() {
@@ -2682,48 +2677,6 @@ pub mod pallet {
 			if let Ok(imb) = T::Currency::deposit_into_existing(who, reward) {
 				Self::deposit_event(Event::Rewarded(who.clone(), imb.peek()));
 			}
-		}
-
-		/// [TODO] Should remove
-		/// Annually reduce the reward rates for collators and delegators.
-		///
-		/// # <weight>
-		/// Weight: O(1)
-		/// - Reads: LastRewardReduction, InflationConfig
-		/// - Writes: LastRewardReduction, InflationConfig
-		/// # </weight>
-		fn adjust_reward_rates(now: T::BlockNumber) -> Weight {
-			let year = now / T::BLOCKS_PER_YEAR;
-			let last_update = <LastRewardReduction<T>>::get();
-			if year > last_update {
-				let inflation = <InflationConfig<T>>::get();
-				// collator reward rate decreases by 2% of the previous one per year
-				let c_reward_rate = inflation.collator.reward_rate.annual * Perquintill::from_percent(98);
-				// delegator reward rate should be 6% in 2nd year and 0% afterwards
-				let d_reward_rate = if year == T::BlockNumber::one() {
-					Perquintill::from_percent(6)
-				} else {
-					Perquintill::zero()
-				};
-
-				let new_inflation = InflationInfo::new(
-					T::BLOCKS_PER_YEAR.saturated_into(),
-					inflation.collator.max_rate,
-					c_reward_rate,
-					inflation.delegator.max_rate,
-					d_reward_rate,
-				);
-				<InflationConfig<T>>::put(new_inflation.clone());
-				<LastRewardReduction<T>>::put(year);
-				Self::deposit_event(Event::RoundInflationSet(
-					new_inflation.collator.max_rate,
-					new_inflation.collator.reward_rate.per_block,
-					new_inflation.delegator.max_rate,
-					new_inflation.delegator.reward_rate.per_block,
-				));
-				<T as Config>::WeightInfo::on_initialize_new_year();
-			}
-			T::DbWeight::get().reads(1)
 		}
 
 		/// Checks whether a delegator can still delegate in this round, e.g.,
