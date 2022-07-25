@@ -184,7 +184,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier, LockableCurrency, OnUnbalanced,
+			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier, LockableCurrency,
 			ReservableCurrency, StorageVersion, WithdrawReasons,
 		},
 		BoundedVec,
@@ -203,7 +203,7 @@ pub mod pallet {
 	use crate::{
 		set::OrderedSet,
 		types::{
-			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator, NegativeImbalanceOf,
+			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
 			RoundInfo, Stake, StakeOf, TotalStake,
 		},
 	};
@@ -330,21 +330,6 @@ pub mod pallet {
 		/// set of candidates/delegators until they unlock their funds.
 		#[pallet::constant]
 		type MaxUnstakeRequests: Get<u32>;
-
-		/// The starting block number for the network rewards. Once the current
-		/// block number exceeds this start, the beneficiary will receive the
-		/// configured reward in each block.
-		#[pallet::constant]
-		type NetworkRewardStart: Get<<Self as frame_system::Config>::BlockNumber>;
-
-		/// The rate in percent for the network rewards which are based on the
-		/// maximum number of collators and the maximum amount a collator can
-		/// stake.
-		#[pallet::constant]
-		type NetworkRewardRate: Get<Perquintill>;
-
-		/// The beneficiary to receive the network rewards.
-		type NetworkRewardBeneficiary: OnUnbalanced<NegativeImbalanceOf<Self>>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -547,12 +532,6 @@ pub mod pallet {
 
 				Self::deposit_event(Event::NewRound(round.first, round.current));
 				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
-			}
-			// check for network reward
-			// [TODO] Need to remove
-			if now > T::NetworkRewardStart::get() {
-				T::NetworkRewardBeneficiary::on_unbalanced(Self::get_network_reward());
-				post_weight = post_weight.saturating_add(<T as Config>::WeightInfo::on_initialize_network_rewards());
 			}
 			post_weight
 		}
@@ -2706,34 +2685,6 @@ pub mod pallet {
 				round: round.current,
 				counter: counter.saturating_add(1),
 			})
-		}
-
-		/// [TODO] Need to remove
-		/// Calculates the network rewards per block with the current data and
-		/// issues these rewards to the network. The imbalance will be handled
-		/// in `on_initialize` by adding it to the free balance of
-		/// `NetworkRewardBeneficiary`.
-		///
-		/// The expected rewards are the product of
-		///  * the current total maximum collator rewards
-		///  * and the configured NetworkRewardRate
-		///
-		/// `col_reward_rate_per_block * col_max_stake * max_num_of_collators *
-		/// NetworkRewardRate`
-		///
-		/// # <weight>
-		/// Weight: O(1)
-		/// - Reads: InflationConfig, MaxCollatorCandidateStake,
-		///   MaxSelectedCandidates
-		/// # </weight>
-		fn get_network_reward() -> NegativeImbalanceOf<T> {
-			// Multiplication with Perquintill cannot overflow
-			let max_col_rewards = InflationConfig::<T>::get().collator.reward_rate.per_block
-				* MaxCollatorCandidateStake::<T>::get()
-				* MaxSelectedCandidates::<T>::get().into();
-			let network_reward = T::NetworkRewardRate::get() * max_col_rewards;
-
-			T::Currency::issue(network_reward)
 		}
 
 		// [Post-launch TODO] Think about Collator stake or total stake?

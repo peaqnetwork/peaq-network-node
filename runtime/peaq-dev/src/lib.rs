@@ -571,10 +571,6 @@ pub mod staking {
 			pub const MaxCollatorCandidates: u32 = 16;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
-			/// The starting block number for the network rewards
-			pub const NetworkRewardStart: BlockNumber = YEARS.saturating_mul(5);
-			/// The rate in percent for the network rewards
-			pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(0);
 	}
 }
 
@@ -598,10 +594,7 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegation = staking::MinDelegatorStake;
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
-	type NetworkRewardRate = staking::NetworkRewardRate;
-	type NetworkRewardStart = staking::NetworkRewardStart;
 
-	type NetworkRewardBeneficiary = ();
 	type WeightInfo = ();
 
 	const BLOCKS_PER_YEAR: Self::BlockNumber = YEARS;

@@ -20,10 +20,10 @@
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{self as stake, types::NegativeImbalanceOf};
+use crate::{self as stake};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize, OnUnbalanced},
+	traits::{GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 };
 use pallet_authorship::EventHandler;
@@ -47,7 +47,6 @@ pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
 pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
-pub(crate) const TREASURY_ACC: AccountId = u64::MAX;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -144,16 +143,6 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
-	pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
-}
-
-pub struct ToBeneficiary();
-impl OnUnbalanced<NegativeImbalanceOf<Test>> for ToBeneficiary {
-	fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<Test>) {
-		// Must resolve into existing but better to be safe.
-		<Test as Config>::Currency::resolve_creating(&TREASURY_ACC, amount);
-	}
 }
 
 impl Config for Test {
@@ -175,9 +164,6 @@ impl Config for Test {
 	type MinDelegatorStake = MinDelegatorStake;
 	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
-	type NetworkRewardRate = NetworkRewardRate;
-	type NetworkRewardStart = NetworkRewardStart;
-	type NetworkRewardBeneficiary = ToBeneficiary;
 	type WeightInfo = ();
 	const BLOCKS_PER_YEAR: Self::BlockNumber = 5 * 60 * 24 * 36525 / 100;
 }

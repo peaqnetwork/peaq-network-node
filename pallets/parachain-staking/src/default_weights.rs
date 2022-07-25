@@ -49,7 +49,6 @@ pub trait WeightInfo {
 	fn on_initialize_no_action() -> Weight;
 	fn on_initialize_round_update() -> Weight;
 	fn on_initialize_new_year() -> Weight;
-	fn on_initialize_network_rewards() -> Weight;
 	fn force_new_round() -> Weight;
 	fn set_inflation() -> Weight;
 	fn set_max_selected_candidates(n: u32, m: u32, ) -> Weight;
@@ -91,17 +90,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(26_228_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
-	// Storage: ParachainStaking Round (r:1 w:1)
-	// Storage: ParachainStaking LastRewardReduction (r:1 w:1)
-	// Storage: ParachainStaking InflationConfig (r:1 w:1)
-	// Storage: ParachainStaking MaxCollatorCandidateStake (r:1 w:0)
-	// Storage: ParachainStaking MaxSelectedCandidates (r:1 w:0)
-	// Storage: System Account (r:1 w:1)
-	fn on_initialize_network_rewards() -> Weight {
-		(55_319_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: ParachainStaking ForceNewRound (r:0 w:1)
 	fn force_new_round() -> Weight {
@@ -371,17 +359,6 @@ impl WeightInfo for () {
 		(26_228_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
-	}
-	// Storage: ParachainStaking Round (r:1 w:1)
-	// Storage: ParachainStaking LastRewardReduction (r:1 w:1)
-	// Storage: ParachainStaking InflationConfig (r:1 w:1)
-	// Storage: ParachainStaking MaxCollatorCandidateStake (r:1 w:0)
-	// Storage: ParachainStaking MaxSelectedCandidates (r:1 w:0)
-	// Storage: System Account (r:1 w:1)
-	fn on_initialize_network_rewards() -> Weight {
-		(55_319_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 	// Storage: ParachainStaking ForceNewRound (r:0 w:1)
 	fn force_new_round() -> Weight {
