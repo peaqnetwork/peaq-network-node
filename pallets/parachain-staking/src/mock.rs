@@ -44,7 +44,6 @@ pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
 
 pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
-pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
 
@@ -222,11 +221,8 @@ impl Default for ExtBuilder {
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
 			inflation_config: InflationInfo::new(
-				<Test as Config>::BLOCKS_PER_YEAR,
 				Perquintill::from_percent(10),
-				Perquintill::from_percent(15),
 				Perquintill::from_percent(40),
-				Perquintill::from_percent(10),
 			),
 		}
 	}
@@ -255,17 +251,12 @@ impl ExtBuilder {
 	pub(crate) fn with_inflation(
 		mut self,
 		col_max: u64,
-		col_rewards: u64,
 		d_max: u64,
-		d_rewards: u64,
 		blocks_per_round: BlockNumber,
 	) -> Self {
 		self.inflation_config = InflationInfo::new(
-			<Test as Config>::BLOCKS_PER_YEAR,
 			Perquintill::from_percent(col_max),
-			Perquintill::from_percent(col_rewards),
 			Perquintill::from_percent(d_max),
-			Perquintill::from_percent(d_rewards),
 		);
 		self.blocks_per_round = blocks_per_round;
 

@@ -528,15 +528,10 @@ pub mod staking {
 	/// Inflation configuration which is used at genesis
 	pub fn inflation_config() -> InflationInfo {
 		InflationInfo::new(
-			YEARS.into(),
 			// max collator staking rate
 			Perquintill::from_percent(30),
-			// collator reward rate
-			Perquintill::from_percent(20),
 			// max delegator staking rate
 			Perquintill::from_percent(10),
-			// delegator reward rate
-			Perquintill::from_percent(5),
 		)
 	}
 

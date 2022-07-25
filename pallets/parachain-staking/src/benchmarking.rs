@@ -134,19 +134,6 @@ benchmarks! {
 		assert_eq!(<Round<T>>::get().current, 1u32);
 	}
 
-	on_initialize_new_year {
-		let old = <InflationConfig<T>>::get();
-		assert_eq!(<LastRewardReduction<T>>::get(), T::BlockNumber::zero());
-		let block = (T::BLOCKS_PER_YEAR + 1u32.into()).saturated_into::<T::BlockNumber>();
-	}: { Pallet::<T>::on_initialize(block) }
-	verify {
-		let new = <InflationConfig<T>>::get();
-		assert_eq!(<LastRewardReduction<T>>::get(), T::BlockNumber::one());
-		assert_eq!(new.collator.max_rate, old.collator.max_rate);
-		assert_eq!(new.delegator.max_rate, old.delegator.max_rate);
-		assert!(new.collator.reward_rate.annual < old.collator.reward_rate.annual);
-	}
-
 	force_new_round {
 		let round = <Round<T>>::get();
 		let now = System::<T>::block_number();
@@ -173,11 +160,8 @@ benchmarks! {
 
 	set_inflation {
 		let inflation = InflationInfo::new(
-			T::BLOCKS_PER_YEAR.saturated_into(),
 			Perquintill::from_percent(10),
-			Perquintill::from_percent(15),
 			Perquintill::from_percent(40),
-			Perquintill::from_percent(10)
 		);
 	}: _(RawOrigin::Root, inflation.collator.max_rate, inflation.collator.reward_rate.annual, inflation.delegator.max_rate, inflation.delegator.reward_rate.annual)
 	verify {

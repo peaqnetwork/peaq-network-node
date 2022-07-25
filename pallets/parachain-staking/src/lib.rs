@@ -177,7 +177,7 @@ use types::ReplacedDelegator;
 #[pallet]
 pub mod pallet {
 	use super::*;
-	pub use crate::inflation::{InflationInfo, RewardRate, StakingInfo};
+	pub use crate::inflation::{InflationInfo, StakingInfo};
 
 	use frame_support::{
 		assert_ok,
@@ -506,7 +506,7 @@ pub mod pallet {
 		/// Inflation configuration for future validation rounds has changed.
 		/// \[maximum collator's staking rate, maximum collator's reward rate,
 		/// maximum delegator's staking rate, maximum delegator's reward rate\]
-		RoundInflationSet(Perquintill, Perquintill, Perquintill, Perquintill),
+		RoundInflationSet(Perquintill, Perquintill),
 		/// The maximum number of collator candidates selected in future
 		/// validation rounds has changed. \[old value, new value\]
 		MaxSelectedCandidatesSet(u32, u32),
@@ -633,16 +633,6 @@ pub mod pallet {
 	#[pallet::getter(fn max_candidate_stake)]
 	pub(crate) type MaxCollatorCandidateStake<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
-	/// [TODO] Should remove
-	/// The year in which the last automatic reduction of the reward rates
-	/// occurred.
-	///
-	/// It starts at zero at genesis and increments by one every BLOCKS_PER_YEAR
-	/// many blocks.
-	#[pallet::storage]
-	#[pallet::getter(fn last_reward_reduction)]
-	pub(crate) type LastRewardReduction<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
-
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
 		Option<<T as frame_system::Config>::AccountId>,
@@ -676,7 +666,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			assert!(
-				self.inflation_config.is_valid(T::BLOCKS_PER_YEAR.saturated_into()),
+				self.inflation_config.is_valid(),
 				"Invalid inflation configuration"
 			);
 
@@ -762,29 +752,22 @@ pub mod pallet {
 		pub fn set_inflation(
 			origin: OriginFor<T>,
 			collator_max_rate_percentage: Perquintill,
-			collator_annual_reward_rate_percentage: Perquintill,
 			delegator_max_rate_percentage: Perquintill,
-			delegator_annual_reward_rate_percentage: Perquintill,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			let inflation = InflationInfo::new(
-				T::BLOCKS_PER_YEAR.saturated_into(),
 				collator_max_rate_percentage,
-				collator_annual_reward_rate_percentage,
 				delegator_max_rate_percentage,
-				delegator_annual_reward_rate_percentage,
 			);
 
 			ensure!(
-				inflation.is_valid(T::BLOCKS_PER_YEAR.saturated_into()),
+				inflation.is_valid(),
 				Error::<T>::InvalidSchedule
 			);
 			Self::deposit_event(Event::RoundInflationSet(
 				inflation.collator.max_rate,
-				inflation.collator.reward_rate.per_block,
 				inflation.delegator.max_rate,
-				inflation.delegator.reward_rate.per_block,
 			));
 			<InflationConfig<T>>::put(inflation);
 			Ok(())
@@ -2705,11 +2688,6 @@ pub mod pallet {
 			// should always include state except if the collator has been forcedly removed
 			// via `force_remove_candidate` in the current or previous round
 			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				// [TODO]
-				// Fix number
-				// calculate the reward, by collator
-				// calculate total number of delegator in this collator
-				// reward them
 				let total_issuance = T::Currency::total_issuance();
 				let TotalStake {
 					collators: total_collators,
