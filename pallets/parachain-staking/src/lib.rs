@@ -766,8 +766,8 @@ pub mod pallet {
 				Error::<T>::InvalidSchedule
 			);
 			Self::deposit_event(Event::RoundInflationSet(
-				inflation.collator.max_rate,
-				inflation.delegator.max_rate,
+				inflation.collator.rate,
+				inflation.delegator.rate,
 			));
 			<InflationConfig<T>>::put(inflation);
 			Ok(())
@@ -2681,51 +2681,6 @@ pub mod pallet {
 		// T::MaxTopCandidates>, ) -> Result<(), DispatchError> {
 		// 	todo!()
 		// }
-
-		fn kilt_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::one();
-			let mut writes = Weight::zero();
-			// should always include state except if the collator has been forcedly removed
-			// via `force_remove_candidate` in the current or previous round
-			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				let total_issuance = T::Currency::total_issuance();
-				let TotalStake {
-					collators: total_collators,
-					delegators: total_delegators,
-				} = <TotalCollatorStake<T>>::get();
-				let c_staking_rate = Perquintill::from_rational(total_collators, total_issuance);
-				let d_staking_rate = Perquintill::from_rational(total_delegators, total_issuance);
-				let inflation_config = <InflationConfig<T>>::get();
-				let authors = pallet_session::Pallet::<T>::validators();
-				let authors_per_round = <BalanceOf<T>>::from(authors.len().saturated_into::<u128>());
-
-				// Reward collator
-				let amt_due_collator =
-					inflation_config
-						.collator
-						.compute_reward::<T>(state.stake, c_staking_rate, authors_per_round);
-				Self::do_reward(&author, amt_due_collator);
-				writes = writes.saturating_add(Weight::one());
-
-				// Reward delegators
-				for Stake { owner, amount } in state.delegators {
-					if amount >= T::MinDelegatorStake::get() {
-						let due =
-							inflation_config
-								.delegator
-								.compute_reward::<T>(amount, d_staking_rate, authors_per_round);
-						Self::do_reward(&owner, due);
-						writes = writes.saturating_add(Weight::one());
-					}
-				}
-				reads = reads.saturating_add(4);
-			}
-
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads, writes),
-				DispatchClass::Mandatory,
-			);
-		}
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
 			let mut reads = Weight::one();

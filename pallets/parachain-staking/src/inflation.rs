@@ -20,7 +20,11 @@
 use crate::{pallet::Config, types::BalanceOf};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::Saturating, Perquintill, RuntimeDebug};
+use sp_runtime::{Perquintill, RuntimeDebug};
+
+use sp_runtime::{
+    traits::{CheckedAdd},
+};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -29,8 +33,8 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 pub struct StakingInfo {
-	/// Maximum staking rate.
-	pub max_rate: Perquintill,
+	/// Maximum collator rate.
+	pub rate: Perquintill,
 }
 
 impl MaxEncodedLen for StakingInfo {
@@ -42,29 +46,10 @@ impl MaxEncodedLen for StakingInfo {
 
 
 impl StakingInfo {
-	pub fn new(max_rate: Perquintill) -> Self {
+	pub fn new(rate: Perquintill) -> Self {
 		StakingInfo {
-			max_rate,
+			rate,
 		}
-	}
-
-	/// Calculate newly minted rewards on coinbase, e.g.,
-	/// reward = rewards_per_block * staking_rate.
-	///
-	/// NOTE: If we exceed the max staking rate, the reward will be reduced by
-	/// max_rate / current_rate.
-	pub fn compute_reward<T: Config>(
-		&self,
-		stake: BalanceOf<T>,
-		current_staking_rate: Perquintill,
-		authors_per_round: BalanceOf<T>,
-	) -> BalanceOf<T> {
-		// Perquintill automatically bounds to [0, 100]% in case staking_rate is greater
-		// than self.max_rate
-		let reduction = Perquintill::from_rational(self.max_rate.deconstruct(), current_staking_rate.deconstruct());
-		// multiplication with perbill cannot overflow
-		let reward = stake.saturating_mul(authors_per_round);
-		reduction * reward
 	}
 
 	pub fn compute_collator_reward<T: Config>(
@@ -87,10 +72,16 @@ impl StakingInfo {
 }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct InflationInfo {
 	pub collator: StakingInfo,
 	pub delegator: StakingInfo,
+}
+
+impl Default for InflationInfo {
+	fn default() -> Self {
+		InflationInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
+	}
 }
 
 impl InflationInfo {
@@ -99,15 +90,15 @@ impl InflationInfo {
 	///
 	/// Example: InflationInfo::new(Perquintill_from_percent(10), ...)
 	pub fn new(
-		collator_max_rate_percentage: Perquintill,
-		delegator_max_rate_percentage: Perquintill,
+		collator_rate: Perquintill,
+		delegator_rate: Perquintill,
 	) -> Self {
 		Self {
 			collator: StakingInfo::new(
-				collator_max_rate_percentage,
+				collator_rate,
 			),
 			delegator: StakingInfo::new(
-				delegator_max_rate_percentage,
+				delegator_rate,
 			),
 		}
 	}
@@ -115,7 +106,23 @@ impl InflationInfo {
 	/// Check whether the annual reward rate is approx. the per_block reward
 	/// rate multiplied with the number of blocks per year
 	pub fn is_valid(&self) -> bool {
-		true
+
+        let variables = vec![
+            &self.collator.rate,
+            &self.delegator.rate,
+        ];
+
+        let mut accumulator = Perquintill::zero();
+        for config_param in variables {
+            let result = accumulator.checked_add(config_param);
+            if let Some(mid_result) = result {
+                accumulator = mid_result;
+            } else {
+                return false;
+            }
+        }
+
+        Perquintill::one() == accumulator
 	}
 }
 

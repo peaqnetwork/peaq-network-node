@@ -221,8 +221,8 @@ impl Default for ExtBuilder {
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
 			inflation_config: InflationInfo::new(
-				Perquintill::from_percent(10),
-				Perquintill::from_percent(40),
+				Perquintill::from_percent(30),
+				Perquintill::from_percent(70),
 			),
 		}
 	}

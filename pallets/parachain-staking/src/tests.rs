@@ -507,7 +507,7 @@ fn exit_queue_with_events() {
 			(9, 33),
 		])
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
-		.with_inflation(100, 40, BLOCKS_PER_ROUND)
+		.with_inflation(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert_eq!(CandidatePool::<Test>::count(), 6);
@@ -613,7 +613,7 @@ fn execute_leave_candidates_with_delay() {
 			(10, 100),
 		])
 		.with_delegators(vec![(11, 1, 110), (12, 1, 120), (13, 2, 130), (14, 2, 140)])
-		.with_inflation(100, 40, BLOCKS_PER_ROUND)
+		.with_inflation(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert_eq!(CandidatePool::<Test>::count(), 10);
@@ -1453,8 +1453,8 @@ fn revoke_delegation_or_leave_delegators() {
 
 #[test]
 fn round_transitions() {
-	let col_max = 10;
-	let d_max = 40;
+	let col_max = 40;
+	let d_max = 60;
 	let inflation = InflationInfo::new(
 		Perquintill::from_percent(col_max),
 		Perquintill::from_percent(d_max),
@@ -1584,7 +1584,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_inflation(10, 40, 5)
+		.with_inflation(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			let inflation = StakePallet::inflation_config();
@@ -1680,7 +1680,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		.with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 10_000_000 * DECIMALS)])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS)])
-		.with_inflation(10, 40, 5)
+		.with_inflation(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(Origin::signed(2), 1));
@@ -1701,7 +1701,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS), (3, 1, 10_000_000 * DECIMALS)])
-		.with_inflation(10, 40, 5)
+		.with_inflation(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(Origin::signed(3), 1));
@@ -1733,7 +1733,7 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_inflation(10, 40, 5)
+		.with_inflation(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			let inflation = StakePallet::inflation_config();
@@ -1831,7 +1831,7 @@ fn should_not_reward_delegators_below_min_stake() {
 		.with_balances(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS), (3, 10 * DECIMALS), (4, 5)])
 		.with_collators(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS)])
 		.with_delegators(vec![(3, 2, 10 * DECIMALS)])
-		.with_inflation(10, 40, 5)
+		.with_inflation(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			// impossible but lets assume it happened
@@ -2798,7 +2798,7 @@ fn candidate_leaves() {
  *		 .with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 90_000_000 * DECIMALS)])
  *		 .with_collators(vec![(1, 10_000_000 * DECIMALS)])
  *		 .with_delegators(vec![(2, 1, 40_000_000 * DECIMALS)])
- *		 .with_inflation(10, 40, 5)
+ *		 .with_inflation(30, 70, 5)
  *		 .build()
  *		 .execute_with(|| {
  *			 let inflation_0 = StakePallet::inflation_config();
