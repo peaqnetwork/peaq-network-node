@@ -84,7 +84,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ParachainStaking Round (r:1 w:1)
-	// Storage: ParachainStaking InflationConfig (r:1 w:1)
+	// Storage: ParachainStaking RewardRateConfig (r:1 w:1)
 	fn on_initialize_new_year() -> Weight {
 		(26_228_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
@@ -95,7 +95,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(1_768_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: ParachainStaking InflationConfig (r:0 w:1)
+	// Storage: ParachainStaking RewardRateConfig (r:0 w:1)
 	fn set_reward_rate() -> Weight {
 		(12_952_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -352,7 +352,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ParachainStaking Round (r:1 w:1)
-	// Storage: ParachainStaking InflationConfig (r:1 w:1)
+	// Storage: ParachainStaking RewardRateConfig (r:1 w:1)
 	fn on_initialize_new_year() -> Weight {
 		(26_228_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
@@ -363,8 +363,7 @@ impl WeightInfo for () {
 		(1_768_000 as Weight)
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// [TODO] Change name
-	// Storage: ParachainStaking InflationConfig (r:0 w:1)
+	// Storage: ParachainStaking RewardRateConfig (r:0 w:1)
 	fn set_reward_rate() -> Weight {
 		(12_952_000 as Weight)
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))

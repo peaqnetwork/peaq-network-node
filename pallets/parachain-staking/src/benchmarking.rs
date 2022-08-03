@@ -159,13 +159,13 @@ benchmarks! {
 	}
 
 	set_reward_rate {
-		let reward_rate = InflationInfo::new(
+		let reward_rate = RewardRateInfo::new(
 			Perquintill::from_percent(60),
 			Perquintill::from_percent(40),
 		);
 	}: _(RawOrigin::Root, reward_rate.collator_rate, reward_rate.delegator_rate)
 	verify {
-		assert_eq!(<InflationConfig<T>>::get(), reward_rate);
+		assert_eq!(<RewardRateConfig<T>>::get(), reward_rate);
 	}
 
 	set_max_selected_candidates {

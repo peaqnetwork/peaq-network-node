@@ -16,7 +16,7 @@
 
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
-//! Helper methods for computing issuance based on inflation
+//! Helper methods for computing issuance based on reward rate
 use crate::{pallet::Config, types::BalanceOf};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -31,22 +31,21 @@ use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-pub struct InflationInfo {
+pub struct RewardRateInfo {
 	pub collator_rate: Perquintill,
 	pub delegator_rate: Perquintill,
 }
 
-impl Default for InflationInfo {
+impl Default for RewardRateInfo {
 	fn default() -> Self {
-		InflationInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
+		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
 	}
 }
 
-impl InflationInfo {
-	/// Create a new inflation info from the max staking rates and annual reward
-	/// rates for collators and delegators.
+impl RewardRateInfo {
+	/// Create a new reward rate info for collators and delegators.
 	///
-	/// Example: InflationInfo::new(Perquintill_from_percent(10), ...)
+	/// Example: RewardRateInfo::new(Perquintill_from_percent(10), ...)
 	pub fn new(
 		collator_rate: Perquintill,
 		delegator_rate: Perquintill,

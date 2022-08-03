@@ -37,7 +37,7 @@ use crate::{
 	types::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake, StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event, InflationInfo, STAKING_ID,
+	CandidatePool, Config, Error, Event, RewardRateInfo, STAKING_ID,
 };
 
 #[test]
@@ -1455,7 +1455,7 @@ fn revoke_delegation_or_leave_delegators() {
 fn round_transitions() {
 	let col_rate = 40;
 	let del_rate = 60;
-	let reward_rate = InflationInfo::new(
+	let reward_rate = RewardRateInfo::new(
 		Perquintill::from_percent(col_rate),
 		Perquintill::from_percent(del_rate),
 	);
@@ -1552,7 +1552,7 @@ fn round_transitions() {
 
 			assert_eq!(
 				StakePallet::reward_rate_config(),
-				InflationInfo::new(
+				RewardRateInfo::new(
 					Perquintill::from_percent(col_rate),
 					Perquintill::from_percent(del_rate),
 				)
@@ -2188,7 +2188,7 @@ fn set_max_selected_candidates_total_stake() {
  *         .with_collators(vec![(1, 10)])
  *         .build()
  *         .execute_with(|| {
- *             let mut invalid_reward_rate = InflationInfo {
+ *             let mut invalid_reward_rate = RewardRateInfo {
  *                 collator: StakingInfo {
  *                     max_rate: Perquintill::one(),
  *                 },
@@ -2807,7 +2807,7 @@ fn candidate_leaves() {
  *			 System::set_block_number(<Test as Config>::BLOCKS_PER_YEAR);
  *			 roll_to(<Test as Config>::BLOCKS_PER_YEAR + 1, vec![]);
  *			 assert_eq!(StakePallet::last_reward_reduction(), 1u64);
- *			 let reward_rate_1 = InflationInfo::new(
+ *			 let reward_rate_1 = RewardRateInfo::new(
  *				 reward_rate_0.collator.max_rate,
  *				 reward_rate_0.delegator.max_rate,
  *			 );
@@ -2832,7 +2832,8 @@ fn candidate_leaves() {
  *			 System::set_block_number(2 * <Test as Config>::BLOCKS_PER_YEAR);
  *			 roll_to(2 * <Test as Config>::BLOCKS_PER_YEAR + 1, vec![]);
  *			 assert_eq!(StakePallet::last_reward_reduction(), 2u64);
- *			 let reward_rate_2 = InflationInfo::new(
+ *			 let reward_rate_2 = RewardRateInfo::new(
+ *               // [TODO] Change name
  *				 reward_rate_0.collator.max_rate,
  *				 reward_rate_0.delegator.max_rate,
  *			 );

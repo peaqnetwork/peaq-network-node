@@ -164,8 +164,7 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-mod inflation;
-pub mod migrations;
+mod reward_rate;
 mod set;
 mod types;
 
@@ -177,7 +176,7 @@ use types::ReplacedDelegator;
 #[pallet]
 pub mod pallet {
 	use super::*;
-	pub use crate::inflation::InflationInfo;
+	pub use crate::reward_rate::RewardRateInfo;
 
 	use frame_support::{
 		assert_ok,
@@ -607,10 +606,10 @@ pub mod pallet {
 	pub(crate) type TopCandidates<T: Config> =
 		StorageValue<_, OrderedSet<Stake<T::AccountId, BalanceOf<T>>, T::MaxTopCandidates>, ValueQuery>;
 
-	/// Inflation configuration.
+	/// Reward rate configuration.
 	#[pallet::storage]
 	#[pallet::getter(fn reward_rate_config)]
-	pub(crate) type RewardRateConfig<T: Config> = StorageValue<_, InflationInfo, ValueQuery>;
+	pub(crate) type RewardRateConfig<T: Config> = StorageValue<_, RewardRateInfo, ValueQuery>;
 
 	/// The funds waiting to be unstaked.
 	///
@@ -644,7 +643,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
-		pub reward_rate_config: InflationInfo,
+		pub reward_rate_config: RewardRateInfo,
 		pub max_candidate_stake: BalanceOf<T>,
 	}
 
@@ -750,7 +749,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			// [TODO] Chanage name
-			let reward_rate = InflationInfo::new(
+			let reward_rate = RewardRateInfo::new(
 				collator_max_rate_percentage,
 				delegator_max_rate_percentage,
 			);
@@ -2728,7 +2727,7 @@ pub mod pallet {
 	{
 		/// Compute coinbase rewards for block production and distribute it to
 		/// collator's (block producer) and its delegators according to their
-		/// stake and the current InflationInfo.
+		/// stake and the current RewardRateInfo.
 		///
 		/// The rewards are split between collators and delegators with
 		/// different reward rates. Rewards are immediately available without any restrictions

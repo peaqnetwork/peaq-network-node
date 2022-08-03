@@ -50,7 +50,7 @@ pub use frame_support::{
 	ConsensusEngineId, StorageValue, PalletId,
 };
 pub use pallet_balances::Call as BalancesCall;
-use parachain_staking::InflationInfo;
+use parachain_staking::RewardRateInfo;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner};
@@ -525,9 +525,9 @@ pub mod staking {
 
 	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
 
-	/// Inflation configuration which is used at genesis
-	pub fn reward_rate_config() -> InflationInfo {
-		InflationInfo::new(
+	/// Reward rate configuration which is used at genesis
+	pub fn reward_rate_config() -> RewardRateInfo {
+		RewardRateInfo::new(
 			Perquintill::from_percent(30),
 			Perquintill::from_percent(70),
 		)

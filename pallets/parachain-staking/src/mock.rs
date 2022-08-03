@@ -208,7 +208,7 @@ pub(crate) struct ExtBuilder {
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
 	// reward_rate config
-	reward_rate_config: InflationInfo,
+	reward_rate_config: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -220,7 +220,7 @@ impl Default for ExtBuilder {
 			delegators: vec![],
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
-			reward_rate_config: InflationInfo::new(
+			reward_rate_config: RewardRateInfo::new(
 				Perquintill::from_percent(30),
 				Perquintill::from_percent(70),
 			),
@@ -254,7 +254,7 @@ impl ExtBuilder {
 		del_reward: u64,
 		blocks_per_round: BlockNumber,
 	) -> Self {
-		self.reward_rate_config = InflationInfo::new(
+		self.reward_rate_config = RewardRateInfo::new(
 			Perquintill::from_percent(col_reward),
 			Perquintill::from_percent(del_reward),
 		);
