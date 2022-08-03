@@ -177,7 +177,7 @@ use types::ReplacedDelegator;
 #[pallet]
 pub mod pallet {
 	use super::*;
-	pub use crate::inflation::{InflationInfo, StakingInfo};
+	pub use crate::inflation::InflationInfo;
 
 	use frame_support::{
 		assert_ok,
@@ -766,8 +766,8 @@ pub mod pallet {
 				Error::<T>::InvalidSchedule
 			);
 			Self::deposit_event(Event::RoundInflationSet(
-				inflation.collator.rate,
-				inflation.delegator.rate,
+				inflation.collator_rate,
+				inflation.delegator_rate,
 			));
 			<InflationConfig<T>>::put(inflation);
 			Ok(())
@@ -2699,13 +2699,10 @@ pub mod pallet {
 				let inflation_config = <InflationConfig<T>>::get();
 
 				let issue_number = T::CurrencyBalance::from(1000u128);
-				let collator_percentage = Perquintill::from_percent(30);
-				let delegator_percentage = Perquintill::from_percent(70);
 
 				let collator_reward =
 					inflation_config
-						.collator
-						.compute_collator_reward::<T>(issue_number, collator_percentage);
+						.compute_collator_reward::<T>(issue_number);
 				Self::do_reward(&author, collator_reward);
 				writes = writes.saturating_add(Weight::one());
 
@@ -2715,8 +2712,7 @@ pub mod pallet {
 						let staking_rate = Perquintill::from_rational(amount, delegator_sum);
 						let delegator_reward =
 							inflation_config
-								.delegator
-								.compute_delegator_reward::<T>(issue_number, delegator_percentage, staking_rate);
+								.compute_delegator_reward::<T>(issue_number, staking_rate);
 						Self::do_reward(&owner, delegator_reward);
 						writes = writes.saturating_add(Weight::one());
 					}

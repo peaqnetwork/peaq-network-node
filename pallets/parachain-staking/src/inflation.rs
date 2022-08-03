@@ -29,53 +29,11 @@ use sp_runtime::{
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-/// Staking info (staking rate and reward rate) for collators and delegators.
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
-pub struct StakingInfo {
-	/// Maximum collator rate.
-	pub rate: Perquintill,
-}
-
-impl MaxEncodedLen for StakingInfo {
-	fn max_encoded_len() -> usize {
-		// Perquintill is at most u128
-		u128::max_encoded_len()
-	}
-}
-
-
-impl StakingInfo {
-	pub fn new(rate: Perquintill) -> Self {
-		StakingInfo {
-			rate,
-		}
-	}
-
-	pub fn compute_collator_reward<T: Config>(
-		&self,
-		issue_number: BalanceOf<T>,
-		collator_percentage: Perquintill,
-	) -> BalanceOf<T> {
-		collator_percentage * issue_number
-	}
-
-	pub fn compute_delegator_reward<T: Config>(
-		&self,
-		issue_number: BalanceOf<T>,
-		delegator_percentage: Perquintill,
-		staking_rate: Perquintill,
-	) -> BalanceOf<T> {
-		staking_rate * delegator_percentage *  issue_number
-	}
-
-}
-
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct InflationInfo {
-	pub collator: StakingInfo,
-	pub delegator: StakingInfo,
+	pub collator_rate: Perquintill,
+	pub delegator_rate: Perquintill,
 }
 
 impl Default for InflationInfo {
@@ -94,35 +52,34 @@ impl InflationInfo {
 		delegator_rate: Perquintill,
 	) -> Self {
 		Self {
-			collator: StakingInfo::new(
-				collator_rate,
-			),
-			delegator: StakingInfo::new(
-				delegator_rate,
-			),
+			collator_rate,
+			delegator_rate,
 		}
 	}
 
 	/// Check whether the annual reward rate is approx. the per_block reward
 	/// rate multiplied with the number of blocks per year
 	pub fn is_valid(&self) -> bool {
+		if let Some(result) = self.collator_rate.checked_add(&self.delegator_rate) {
+			Perquintill::one() == result
+		} else {
+			false
+		}
+	}
 
-        let variables = vec![
-            &self.collator.rate,
-            &self.delegator.rate,
-        ];
+	pub fn compute_collator_reward<T: Config>(
+		&self,
+		issue_number: BalanceOf<T>,
+	) -> BalanceOf<T> {
+		self.collator_rate * issue_number
+	}
 
-        let mut accumulator = Perquintill::zero();
-        for config_param in variables {
-            let result = accumulator.checked_add(config_param);
-            if let Some(mid_result) = result {
-                accumulator = mid_result;
-            } else {
-                return false;
-            }
-        }
-
-        Perquintill::one() == accumulator
+	pub fn compute_delegator_reward<T: Config>(
+		&self,
+		issue_number: BalanceOf<T>,
+		staking_rate: Perquintill,
+	) -> BalanceOf<T> {
+		self.delegator_rate * staking_rate * issue_number
 	}
 }
 

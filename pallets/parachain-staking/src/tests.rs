@@ -1594,24 +1594,17 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			// compute rewards
 			let c_rewards: BalanceOf<Test> =
 				inflation
-					.collator
-					.compute_collator_reward::<Test>(1000, Perquintill::from_percent(30));
+					.compute_collator_reward::<Test>(1000);
 			let d_rewards: BalanceOf<Test> =
 				inflation
-					.delegator
-					.compute_delegator_reward::<Test>(1000, Perquintill::from_percent(70),
-					Perquintill::one());
+					.compute_delegator_reward::<Test>(1000, Perquintill::one());
 
 			let d_1_rewards: BalanceOf<Test> =
 				inflation
-					.delegator
-					.compute_delegator_reward::<Test>(1000, Perquintill::from_percent(70),
-					Perquintill::from_float(2./3.));
+					.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2./3.));
 			let d_2_rewards: BalanceOf<Test> =
 				inflation
-					.delegator
-					.compute_delegator_reward::<Test>(1000, Perquintill::from_percent(70),
-					Perquintill::from_float(1./3.));
+					.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1./3.));
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
@@ -1751,13 +1744,10 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			let rewards_5 = Balances::free_balance(&5).saturating_sub(20_000_000 * DECIMALS);
 			let c_rewards: BalanceOf<Test> =
 				inflation
-					.collator
-					.compute_collator_reward::<Test>(1000, Perquintill::from_percent(30));
+					.compute_collator_reward::<Test>(1000);
 			let d_rewards: BalanceOf<Test> =
 				inflation
-					.delegator
-					.compute_delegator_reward::<Test>(1000, Perquintill::from_percent(70),
-                    Perquintill::one());
+					.compute_delegator_reward::<Test>(1000, Perquintill::one());
 			let expected_collator_rewards = end_block as u128 * c_rewards;
 			let expected_delegator_rewards = end_block as u128 * d_rewards;
 
@@ -3417,8 +3407,7 @@ fn authorities_per_round() {
 			roll_to(4, authors.clone());
 			let reward_0 =
 				inflation
-					.collator
-					.compute_collator_reward::<Test>(1000, Perquintill::from_percent(30));
+					.compute_collator_reward::<Test>(1000);
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(Origin::root(), 10));
