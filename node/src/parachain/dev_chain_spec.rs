@@ -135,7 +135,7 @@ fn configure_genesis(
 		},
 		parachain_staking: ParachainStakingConfig {
 			stakers,
-			inflation_config: staking::inflation_config(),
+			reward_rate_config: staking::reward_rate_config(),
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
 		aura: Default::default(),

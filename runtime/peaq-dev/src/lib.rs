@@ -526,12 +526,10 @@ pub mod staking {
 	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
 
 	/// Inflation configuration which is used at genesis
-	pub fn inflation_config() -> InflationInfo {
+	pub fn reward_rate_config() -> InflationInfo {
 		InflationInfo::new(
-			// max collator staking rate
 			Perquintill::from_percent(30),
-			// max delegator staking rate
-			Perquintill::from_percent(10),
+			Perquintill::from_percent(70),
 		)
 	}
 

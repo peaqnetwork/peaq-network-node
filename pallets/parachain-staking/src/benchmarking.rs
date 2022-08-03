@@ -158,14 +158,14 @@ benchmarks! {
 		assert!(!<ForceNewRound<T>>::get());
 	}
 
-	set_inflation {
-		let inflation = InflationInfo::new(
-			Perquintill::from_percent(10),
+	set_reward_rate {
+		let reward_rate = InflationInfo::new(
+			Perquintill::from_percent(60),
 			Perquintill::from_percent(40),
 		);
-	}: _(RawOrigin::Root, inflation.collator.max_rate, inflation.collator.reward_rate.annual, inflation.delegator.max_rate, inflation.delegator.reward_rate.annual)
+	}: _(RawOrigin::Root, reward_rate.collator_rate, reward_rate.delegator_rate)
 	verify {
-		assert_eq!(<InflationConfig<T>>::get(), inflation);
+		assert_eq!(<InflationConfig<T>>::get(), reward_rate);
 	}
 
 	set_max_selected_candidates {

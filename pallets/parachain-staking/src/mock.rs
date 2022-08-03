@@ -207,8 +207,8 @@ pub(crate) struct ExtBuilder {
 	collators: Vec<(AccountId, Balance)>,
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
-	// inflation config
-	inflation_config: InflationInfo,
+	// reward_rate config
+	reward_rate_config: InflationInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -220,7 +220,7 @@ impl Default for ExtBuilder {
 			delegators: vec![],
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
-			inflation_config: InflationInfo::new(
+			reward_rate_config: InflationInfo::new(
 				Perquintill::from_percent(30),
 				Perquintill::from_percent(70),
 			),
@@ -248,15 +248,15 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_inflation(
+	pub(crate) fn with_reward_rate(
 		mut self,
-		col_max: u64,
-		d_max: u64,
+		col_reward: u64,
+		del_reward: u64,
 		blocks_per_round: BlockNumber,
 	) -> Self {
-		self.inflation_config = InflationInfo::new(
-			Perquintill::from_percent(col_max),
-			Perquintill::from_percent(d_max),
+		self.reward_rate_config = InflationInfo::new(
+			Perquintill::from_percent(col_reward),
+			Perquintill::from_percent(del_reward),
 		);
 		self.blocks_per_round = blocks_per_round;
 
@@ -289,7 +289,7 @@ impl ExtBuilder {
 		}
 		stake::GenesisConfig::<Test> {
 			stakers,
-			inflation_config: self.inflation_config.clone(),
+			reward_rate_config: self.reward_rate_config.clone(),
 			max_candidate_stake: 160_000_000 * DECIMALS,
 		}
 		.assimilate_storage(&mut t)

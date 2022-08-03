@@ -50,7 +50,7 @@ pub trait WeightInfo {
 	fn on_initialize_round_update() -> Weight;
 	fn on_initialize_new_year() -> Weight;
 	fn force_new_round() -> Weight;
-	fn set_inflation() -> Weight;
+	fn set_reward_rate() -> Weight;
 	fn set_max_selected_candidates(n: u32, m: u32, ) -> Weight;
 	fn set_blocks_per_round() -> Weight;
 	fn force_remove_candidate(n: u32, m: u32, ) -> Weight;
@@ -96,7 +96,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ParachainStaking InflationConfig (r:0 w:1)
-	fn set_inflation() -> Weight {
+	fn set_reward_rate() -> Weight {
 		(12_952_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -363,8 +363,9 @@ impl WeightInfo for () {
 		(1_768_000 as Weight)
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+	// [TODO] Change name
 	// Storage: ParachainStaking InflationConfig (r:0 w:1)
-	fn set_inflation() -> Weight {
+	fn set_reward_rate() -> Weight {
 		(12_952_000 as Weight)
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}

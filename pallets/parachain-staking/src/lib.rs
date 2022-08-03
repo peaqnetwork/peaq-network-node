@@ -105,7 +105,7 @@
 //! ## Interface
 //!
 //! ### Dispatchable Functions
-//! - `set_inflation` - Change the inflation configuration. Requires sudo.
+//! - `set_reward_rate` - Change the reward rate configuration. Requires sudo.
 //! - `set_max_selected_candidates` - Change the number of collator candidates
 //!   which can be selected to be in the set of block authors. Requires sudo.
 //! - `set_blocks_per_round` - Change the number of blocks of a round. Shorter
@@ -417,7 +417,7 @@ pub mod pallet {
 		/// The number of selected candidates per staking round is
 		/// below the minimum value allowed.
 		CannotSetBelowMin,
-		/// An invalid inflation configuration is trying to be set.
+		/// An invalid reward rate configuration is trying to be set.
 		InvalidSchedule,
 		/// The staking reward being unlocked does not exist.
 		/// Max unlocking requests reached.
@@ -503,10 +503,9 @@ pub mod pallet {
 		/// A collator or a delegator has received a reward.
 		/// \[account, amount of reward\]
 		Rewarded(T::AccountId, BalanceOf<T>),
-		/// Inflation configuration for future validation rounds has changed.
-		/// \[maximum collator's staking rate, maximum collator's reward rate,
-		/// maximum delegator's staking rate, maximum delegator's reward rate\]
-		RoundInflationSet(Perquintill, Perquintill),
+		/// Reware rate configuration for future validation rounds has changed.
+		/// \[collator's reward rate,delegator's reward rate\]
+		RoundRewardRateSet(Perquintill, Perquintill),
 		/// The maximum number of collator candidates selected in future
 		/// validation rounds has changed. \[old value, new value\]
 		MaxSelectedCandidatesSet(u32, u32),
@@ -608,11 +607,10 @@ pub mod pallet {
 	pub(crate) type TopCandidates<T: Config> =
 		StorageValue<_, OrderedSet<Stake<T::AccountId, BalanceOf<T>>, T::MaxTopCandidates>, ValueQuery>;
 
-	/// [TODO] Need to remove
 	/// Inflation configuration.
 	#[pallet::storage]
-	#[pallet::getter(fn inflation_config)]
-	pub(crate) type InflationConfig<T: Config> = StorageValue<_, InflationInfo, ValueQuery>;
+	#[pallet::getter(fn reward_rate_config)]
+	pub(crate) type RewardRateConfig<T: Config> = StorageValue<_, InflationInfo, ValueQuery>;
 
 	/// The funds waiting to be unstaked.
 	///
@@ -646,7 +644,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
-		pub inflation_config: InflationInfo,
+		pub reward_rate_config: InflationInfo,
 		pub max_candidate_stake: BalanceOf<T>,
 	}
 
@@ -655,8 +653,7 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				stakers: Default::default(),
-				// [TODO] Need to change to another type (delegator + collator)
-				inflation_config: Default::default(),
+				reward_rate_config: Default::default(),
 				max_candidate_stake: Default::default(),
 			}
 		}
@@ -666,12 +663,11 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			assert!(
-				self.inflation_config.is_valid(),
-				"Invalid inflation configuration"
+				self.reward_rate_config.is_valid(),
+				"Invalid reward_rate configuration"
 			);
 
-			// [TODO] Need to check
-			<InflationConfig<T>>::put(self.inflation_config.clone());
+			<RewardRateConfig<T>>::put(self.reward_rate_config.clone());
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
 
 			// Setup delegate & collators
@@ -718,7 +714,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account]
 		/// - Writes: ForceNewRound
 		/// # </weight>
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_inflation())]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
 		pub fn force_new_round(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -731,45 +727,44 @@ pub mod pallet {
 		}
 
 		/// [TODO] Need to change
-		/// Set the annual inflation rate to derive per-round inflation.
-		///
-		/// The inflation details are considered valid if the annual reward rate
-		/// is approximately the per-block reward rate multiplied by the
-		/// estimated* total number of blocks per year.
+		/// Set the reward_rate rate.
 		///
 		/// The estimated average block time is twelve seconds.
 		///
 		/// The dispatch origin must be Root.
 		///
-		/// Emits `RoundInflationSet`.
+		/// Emits `RoundRewardRateSet`.
 		///
 		/// # <weight>
 		/// Weight: O(1)
 		/// - Reads: [Origin Account]
-		/// - Writes: InflationConfig
+		/// - Writes: RewardRateConfig
 		/// # </weight>
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_inflation())]
-		pub fn set_inflation(
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
+		pub fn set_reward_rate(
 			origin: OriginFor<T>,
+			// [TODO] Change name
 			collator_max_rate_percentage: Perquintill,
 			delegator_max_rate_percentage: Perquintill,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			let inflation = InflationInfo::new(
+			// [TODO] Chanage name
+			let reward_rate = InflationInfo::new(
 				collator_max_rate_percentage,
 				delegator_max_rate_percentage,
 			);
 
 			ensure!(
-				inflation.is_valid(),
+				reward_rate.is_valid(),
 				Error::<T>::InvalidSchedule
 			);
-			Self::deposit_event(Event::RoundInflationSet(
-				inflation.collator_rate,
-				inflation.delegator_rate,
+			Self::deposit_event(Event::RoundRewardRateSet(
+				reward_rate.collator_rate,
+				reward_rate.delegator_rate,
 			));
-			<InflationConfig<T>>::put(inflation);
+			// [TODO] Change name
+			<RewardRateConfig<T>>::put(reward_rate);
 			Ok(())
 		}
 
@@ -2696,12 +2691,12 @@ pub mod pallet {
 				}
 			}
 			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				let inflation_config = <InflationConfig<T>>::get();
+				let reward_rate_config = <RewardRateConfig<T>>::get();
 
 				let issue_number = T::CurrencyBalance::from(1000u128);
 
 				let collator_reward =
-					inflation_config
+					reward_rate_config
 						.compute_collator_reward::<T>(issue_number);
 				Self::do_reward(&author, collator_reward);
 				writes = writes.saturating_add(Weight::one());
@@ -2711,7 +2706,7 @@ pub mod pallet {
 					if amount >= T::MinDelegatorStake::get() {
 						let staking_rate = Perquintill::from_rational(amount, delegator_sum);
 						let delegator_reward =
-							inflation_config
+							reward_rate_config
 								.compute_delegator_reward::<T>(issue_number, staking_rate);
 						Self::do_reward(&owner, delegator_reward);
 						writes = writes.saturating_add(Weight::one());
@@ -2736,9 +2731,7 @@ pub mod pallet {
 		/// stake and the current InflationInfo.
 		///
 		/// The rewards are split between collators and delegators with
-		/// different reward rates and maximum staking rates. The latter is
-		/// required to have at most our targeted inflation because rewards are
-		/// minted. Rewards are immediately available without any restrictions
+		/// different reward rates. Rewards are immediately available without any restrictions
 		/// after minting.
 		///
 		/// If the current staking rate is below the maximum, each collator and
@@ -2758,7 +2751,7 @@ pub mod pallet {
 		/// Weight: O(D) where D is the number of delegators of this collator
 		/// block author bounded by `MaxDelegatorsPerCollator`.
 		/// - Reads: CandidatePool, TotalCollatorStake, Balance,
-		///   InflationConfig, MaxSelectedCandidates, Validators,
+		///   RewardRateConfig, MaxSelectedCandidates, Validators,
 		///   DisabledValidators
 		/// - Writes: (D + 1) * Balance
 		/// # </weight>
