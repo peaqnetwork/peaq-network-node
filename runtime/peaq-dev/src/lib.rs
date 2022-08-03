@@ -568,6 +568,7 @@ pub mod staking {
 }
 
 impl parachain_staking::Config for Runtime {
+	type PotId = PotId;
 	type Event = Event;
 	type Currency = Balances;
 	type CurrencyBalance = Balance;

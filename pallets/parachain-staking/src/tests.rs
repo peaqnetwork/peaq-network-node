@@ -1609,7 +1609,6 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
 				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
-			// let d_rewards: Balance = 3 * 2469135802453333 / 2;
 			let user_1 = Balances::usable_balance(&1);
 			let user_2 = Balances::usable_balance(&2);
 			let user_3 = Balances::usable_balance(&3);
@@ -1663,7 +1662,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
 			// should not receive rewards due to revoked delegation
 			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
-		});
+	});
 }
 
 #[test]
@@ -2180,57 +2179,31 @@ fn set_max_selected_candidates_total_stake() {
 		});
 }
 
-/*
- * #[test]
- * fn update_reward_rate() {
- *     ExtBuilder::default()
- *         .with_balances(vec![(1, 10)])
- *         .with_collators(vec![(1, 10)])
- *         .build()
- *         .execute_with(|| {
- *             let mut invalid_reward_rate = RewardRateInfo {
- *                 collator: StakingInfo {
- *                     max_rate: Perquintill::one(),
- *                 },
- *                 delegator: StakingInfo {
- *                     max_rate: Perquintill::one(),
- *                 },
- *             };
- *             assert!(!invalid_reward_rate.is_valid(<Test as Config>::BLOCKS_PER_YEAR));
- *             invalid_reward_rate.collator.reward_rate.per_block = Perquintill::zero();
- *             assert!(!invalid_reward_rate.is_valid(<Test as Config>::BLOCKS_PER_YEAR));
- *
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 Origin::root(),
- *                 Perquintill::from_percent(0),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(100),
- *             ));
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 Origin::root(),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(0),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(100),
- *             ));
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 Origin::root(),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(0),
- *                 Perquintill::from_percent(100),
- *             ));
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 Origin::root(),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(0),
- *             ));
- *         });
- * }
- */
+#[test]
+fn update_reward_rate() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 10)])
+		.with_collators(vec![(1, 10)])
+		.build()
+		.execute_with(|| {
+			let mut invalid_reward_rate = RewardRateInfo {
+				collator_rate: Perquintill::one(),
+				delegator_rate: Perquintill::one(),
+			};
+			assert!(!invalid_reward_rate.is_valid());
+
+			assert_ok!(StakePallet::set_reward_rate(
+				Origin::root(),
+				Perquintill::from_percent(0),
+				Perquintill::from_percent(100),
+			));
+			assert_ok!(StakePallet::set_reward_rate(
+				Origin::root(),
+				Perquintill::from_percent(100),
+				Perquintill::from_percent(0),
+			));
+		});
+}
 
 #[test]
 fn unlock_unstaked() {
@@ -2780,79 +2753,6 @@ fn candidate_leaves() {
 			assert_eq!(StakePallet::unstaking(12), unstaking);
 		});
 }
-
-/*
- * #[test]
- * fn adjust_reward_rates() {
- *	 ExtBuilder::default()
- *		 .with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 90_000_000 * DECIMALS)])
- *		 .with_collators(vec![(1, 10_000_000 * DECIMALS)])
- *		 .with_delegators(vec![(2, 1, 40_000_000 * DECIMALS)])
- *		 .with_reward_rate(30, 70, 5)
- *		 .build()
- *		 .execute_with(|| {
- *			 let reward_rate_0 = StakePallet::reward_rate_config();
- *			 let num_of_years = 3 * <Test as Config>::BLOCKS_PER_YEAR;
- *			 // 1 authors every block
- *			 let authors: Vec<Option<AccountId>> = (0u64..=num_of_years).map(|_| Some(1u64)).collect();
- *
- *			 // reward once in first year
- *			 roll_to(2, authors.clone());
- *			 let c_rewards_0 = Balances::free_balance(&1).saturating_sub(10_000_000 * DECIMALS);
- *			 let d_rewards_0 = Balances::free_balance(&2).saturating_sub(90_000_000 * DECIMALS);
- *			 assert!(!c_rewards_0.is_zero());
- *			 assert!(!d_rewards_0.is_zero());
- *
- *			 // finish first year
- *			 System::set_block_number(<Test as Config>::BLOCKS_PER_YEAR);
- *			 roll_to(<Test as Config>::BLOCKS_PER_YEAR + 1, vec![]);
- *			 assert_eq!(StakePallet::last_reward_reduction(), 1u64);
- *			 let reward_rate_1 = RewardRateInfo::new(
- *				 reward_rate_0.collator.max_rate,
- *				 reward_rate_0.delegator.max_rate,
- *			 );
- *			 assert_eq!(StakePallet::reward_rate_config(), reward_rate_1);
- *			 // reward once in 2nd year
- *			 roll_to(<Test as Config>::BLOCKS_PER_YEAR + 2, authors.clone());
- *			 let c_rewards_1 = Balances::free_balance(&1)
- *				 .saturating_sub(10_000_000 * DECIMALS)
- *				 .saturating_sub(c_rewards_0);
- *			 let d_rewards_1 = Balances::free_balance(&2)
- *				 .saturating_sub(90_000_000 * DECIMALS)
- *				 .saturating_sub(d_rewards_0);
- *			 assert!(
- *				 c_rewards_0 > c_rewards_1,
- *				 "left {:?}, right {:?}",
- *				 c_rewards_0,
- *				 c_rewards_1
- *			 );
- *			 assert!(d_rewards_0 > d_rewards_1);
- *
- *			 // finish 2nd year
- *			 System::set_block_number(2 * <Test as Config>::BLOCKS_PER_YEAR);
- *			 roll_to(2 * <Test as Config>::BLOCKS_PER_YEAR + 1, vec![]);
- *			 assert_eq!(StakePallet::last_reward_reduction(), 2u64);
- *			 let reward_rate_2 = RewardRateInfo::new(
- *               // [TODO] Change name
- *				 reward_rate_0.collator.max_rate,
- *				 reward_rate_0.delegator.max_rate,
- *			 );
- *			 assert_eq!(StakePallet::reward_rate_config(), reward_rate_2);
- *			 // reward once in 3rd year
- *			 roll_to(2 * <Test as Config>::BLOCKS_PER_YEAR + 2, authors);
- *			 let c_rewards_2 = Balances::free_balance(&1)
- *				 .saturating_sub(10_000_000 * DECIMALS)
- *				 .saturating_sub(c_rewards_0)
- *				 .saturating_sub(c_rewards_1);
- *			 let d_rewards_2 = Balances::free_balance(&2)
- *				 .saturating_sub(90_000_000 * DECIMALS)
- *				 .saturating_sub(d_rewards_0)
- *				 .saturating_sub(d_rewards_1);
- *			 assert!(c_rewards_1 > c_rewards_2);
- *			 assert!(d_rewards_2.is_zero());
- *		 });
- * }
- */
 
 #[test]
 fn increase_max_candidate_stake() {

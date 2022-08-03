@@ -183,17 +183,19 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier, LockableCurrency,
+			Currency, EstimateNextSessionRotation, Get, LockIdentifier, LockableCurrency,
 			ReservableCurrency, StorageVersion, WithdrawReasons,
+			ExistenceRequirement::KeepAlive,
 		},
 		BoundedVec,
+		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_balances::{BalanceLock, Locks};
 	use pallet_session::ShouldEndSession;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{Convert, One, SaturatedConversion, Saturating, StaticLookup, Zero},
+		traits::{Convert, One, SaturatedConversion, Saturating, StaticLookup, Zero, AccountIdConversion, CheckedSub},
 		Permill, Perquintill,
 	};
 	use sp_staking::SessionIndex;
@@ -329,6 +331,10 @@ pub mod pallet {
 		/// set of candidates/delegators until they unlock their funds.
 		#[pallet::constant]
 		type MaxUnstakeRequests: Get<u32>;
+
+		/// Account Identifier from which the internal Pot is generated.
+		#[pallet::constant]
+		type PotId: Get<PalletId>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -725,7 +731,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// [TODO] Need to change
 		/// Set the reward_rate rate.
 		///
 		/// The estimated average block time is twelve seconds.
@@ -742,16 +747,14 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
 		pub fn set_reward_rate(
 			origin: OriginFor<T>,
-			// [TODO] Change name
-			collator_max_rate_percentage: Perquintill,
-			delegator_max_rate_percentage: Perquintill,
+			collator_rate: Perquintill,
+			delegator_rate: Perquintill,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			// [TODO] Chanage name
 			let reward_rate = RewardRateInfo::new(
-				collator_max_rate_percentage,
-				delegator_max_rate_percentage,
+				collator_rate,
+				delegator_rate,
 			);
 
 			ensure!(
@@ -762,7 +765,6 @@ pub mod pallet {
 				reward_rate.collator_rate,
 				reward_rate.delegator_rate,
 			));
-			// [TODO] Change name
 			<RewardRateConfig<T>>::put(reward_rate);
 			Ok(())
 		}
@@ -2628,10 +2630,9 @@ pub mod pallet {
 		/// - Reads: Balance
 		/// - Writes: Balance
 		/// # </weight>
-		fn do_reward(who: &T::AccountId, reward: BalanceOf<T>) {
-			// mint
-			if let Ok(imb) = T::Currency::deposit_into_existing(who, reward) {
-				Self::deposit_event(Event::Rewarded(who.clone(), imb.peek()));
+		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
+			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
+				Self::deposit_event(Event::Rewarded(who.clone(), reward));
 			}
 		}
 
@@ -2690,14 +2691,17 @@ pub mod pallet {
 				}
 			}
 			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				let reward_rate_config = <RewardRateConfig<T>>::get();
+				let pot = Self::account_id();
+				let issue_number = T::Currency::free_balance(&pot)
+					.checked_sub(&T::Currency::minimum_balance())
+					.unwrap_or_else(Zero::zero);
 
-				let issue_number = T::CurrencyBalance::from(1000u128);
+				let reward_rate_config = <RewardRateConfig<T>>::get();
 
 				let collator_reward =
 					reward_rate_config
 						.compute_collator_reward::<T>(issue_number);
-				Self::do_reward(&author, collator_reward);
+				Self::do_reward(&pot, &author, collator_reward);
 				writes = writes.saturating_add(Weight::one());
 
 				// Reward delegators
@@ -2707,7 +2711,7 @@ pub mod pallet {
 						let delegator_reward =
 							reward_rate_config
 								.compute_delegator_reward::<T>(issue_number, staking_rate);
-						Self::do_reward(&owner, delegator_reward);
+						Self::do_reward(&pot, &owner, delegator_reward);
 						writes = writes.saturating_add(Weight::one());
 					}
 				}
@@ -2718,6 +2722,11 @@ pub mod pallet {
 				T::DbWeight::get().reads_writes(reads, writes),
 				DispatchClass::Mandatory,
 			);
+		}
+
+		/// Get a unique, inaccessible account id from the `PotId`.
+		pub fn account_id() -> T::AccountId {
+			T::PotId::get().into_account()
 		}
 	}
 
@@ -2733,19 +2742,6 @@ pub mod pallet {
 		/// different reward rates. Rewards are immediately available without any restrictions
 		/// after minting.
 		///
-		/// If the current staking rate is below the maximum, each collator and
-		/// delegator receives the corresponding `reward_rate * stake /
-		/// blocks_per_year`. Since a collator can only author blocks every
-		/// `MaxSelectedCandidates` many rounds, we multiply the reward with
-		/// this number. As a result, a collator who has been in the set of
-		/// selected candidates, eventually receives `reward_rate * stake` after
-		/// one year.
-		///
-		/// However, if the current staking rate exceeds the max staking rate,
-		/// the reward will be reduced by `max_rate / current_rate`. E.g., if
-		/// the current rate is at 50% and the max rate at 40%, the reward is
-		/// reduced by 20%.
-		///
 		/// # <weight>
 		/// Weight: O(D) where D is the number of delegators of this collator
 		/// block author bounded by `MaxDelegatorsPerCollator`.
@@ -2755,7 +2751,6 @@ pub mod pallet {
 		/// - Writes: (D + 1) * Balance
 		/// # </weight>
 		fn note_author(author: T::AccountId) {
-			// Self::kilt_reward_mechanism(author);
 			Self::peaq_reward_mechanism(author);
 		}
 

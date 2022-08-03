@@ -23,8 +23,9 @@ use super::*;
 use crate::{self as stake};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{GenesisBuild, OnFinalize, OnInitialize},
+	traits::{GenesisBuild, OnFinalize, OnInitialize, Currency},
 	weights::Weight,
+	PalletId,
 };
 use pallet_authorship::EventHandler;
 use sp_consensus_aura::sr25519::AuthorityId;
@@ -127,6 +128,7 @@ impl pallet_authorship::Config for Test {
 }
 
 parameter_types! {
+	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const MinBlocksPerRound: BlockNumber = 3;
 	pub const StakeDuration: u32 = 2;
 	pub const ExitQueueDelay: u32 = 2;
@@ -163,6 +165,7 @@ impl Config for Test {
 	type MinDelegatorStake = MinDelegatorStake;
 	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
+	type PotId = PotId;
 	type WeightInfo = ();
 	const BLOCKS_PER_YEAR: Self::BlockNumber = 5 * 60 * 24 * 36525 / 100;
 }
@@ -339,6 +342,7 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
+			Balances::make_free_balance_be(&StakePallet::account_id(), 1000 + Balances::minimum_balance());
 			StakePallet::note_author(*author);
 		}
 		<AllPalletsReversedWithSystemFirst as OnFinalize<u64>>::on_finalize(System::block_number());
