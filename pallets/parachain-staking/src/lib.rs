@@ -338,8 +338,6 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
-
-		const BLOCKS_PER_YEAR: Self::BlockNumber;
 	}
 
 	#[pallet::error]

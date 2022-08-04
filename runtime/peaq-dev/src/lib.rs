@@ -590,8 +590,6 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = ();
-
-	const BLOCKS_PER_YEAR: Self::BlockNumber = YEARS;
 }
 
 

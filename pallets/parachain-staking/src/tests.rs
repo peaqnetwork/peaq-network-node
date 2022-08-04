@@ -1731,7 +1731,10 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			let reward_rate = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
-			let end_block: BlockNumber = num_of_years * Test::BLOCKS_PER_YEAR as BlockNumber;
+
+			const BLOCKS_PER_YEAR: BlockNumber = 5 * 60 * 24 * 36525 / 100;
+
+			let end_block: BlockNumber = num_of_years * BLOCKS_PER_YEAR as BlockNumber;
 			// set round robin authoring
 			let authors: Vec<Option<AccountId>> = (0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
 			roll_to(end_block, authors);
