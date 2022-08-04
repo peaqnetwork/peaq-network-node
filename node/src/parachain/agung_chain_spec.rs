@@ -1,6 +1,7 @@
 use agung_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
+	staking, Balance, ParachainStakingConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -32,6 +33,40 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		move || {
 			configure_genesis(
 				wasm_binary,
+				// stakers
+				vec![
+					(
+						AccountId::try_from(
+							&hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					), (
+						AccountId::try_from(
+							&hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					), (
+						AccountId::try_from(
+							&hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					), (
+						AccountId::try_from(
+							&hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					), (
+						AccountId::try_from(
+							&hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					)
+				],
 				// Initial PoA authorities
 				vec![
 					(
@@ -118,6 +153,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
 	wasm_binary: &[u8],
+	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
@@ -149,17 +185,17 @@ fn configure_genesis(
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
 				.collect::<Vec<_>>(),
 		},
+		parachain_staking: ParachainStakingConfig {
+			stakers,
+			reward_rate_config: staking::reward_rate_config(),
+			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
 		aura_ext: Default::default(),
-		collator_selection: agung_runtime::CollatorSelectionConfig {
-			desired_candidates: 0,
-			candidacy_bond: 32_000,
-			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect::<Vec<_>>(),
-		},
 		evm: EVMConfig {
 			accounts: Precompiles::used_addresses()
 				.map(|addr| {

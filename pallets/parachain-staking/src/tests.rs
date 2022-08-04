@@ -2189,7 +2189,7 @@ fn update_reward_rate() {
 		.with_collators(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
-			let mut invalid_reward_rate = RewardRateInfo {
+			let invalid_reward_rate = RewardRateInfo {
 				collator_rate: Perquintill::one(),
 				delegator_rate: Perquintill::one(),
 			};

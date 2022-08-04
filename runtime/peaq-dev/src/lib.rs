@@ -147,8 +147,6 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
-// Julian year as Substrate handles it
-pub const YEARS: BlockNumber = DAYS * 36525 / 100;
 
 // Contracts price units.
 pub const MILLICENTS: Balance = 1_000_000_000;
@@ -194,9 +192,6 @@ pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
 	fn contains(call: &Call) -> bool {
 		match call {
-			// These modules are not allowed to be called by transactions:
-			// To leave collator just shutdown it, next session funds will be released
-			Call::CollatorSelection(pallet_collator_selection::Call::leave_intent { .. }) => false,
 			// Other modules should works:
 			_ => true,
 		}
@@ -469,25 +464,6 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 200;
-	pub const MinCandidates: u32 = 0;
-	pub const MaxInvulnerables: u32 = 20;
-}
-
-impl pallet_collator_selection::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type UpdateOrigin = frame_system::EnsureRoot<AccountId>;
-	type PotId = PotId;
-	type MaxCandidates = MaxCandidates;
-	type MinCandidates = MinCandidates;
-	type MaxInvulnerables = MaxInvulnerables;
-	// should be a multiple of session or things will get inconsistent
-	type KickThreshold = SessionPeriod;
-	type ValidatorId = <Self as frame_system::Config>::AccountId;
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ValidatorRegistration = Session;
-	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -518,8 +494,6 @@ impl pallet_session::Config for Runtime {
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
 
-
-
 pub mod staking {
 	use super::*;
 
@@ -532,7 +506,6 @@ pub mod staking {
 			Perquintill::from_percent(70),
 		)
 	}
-
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
@@ -622,7 +595,6 @@ construct_runtime!(
 
 		// // Parachain
 		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
-		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config},
 		ParachainStaking: parachain_staking,

@@ -144,11 +144,6 @@ fn configure_genesis(
 			key: Some(root_key),
 		},
 		aura_ext: Default::default(),
-		collator_selection: peaq_dev_runtime::CollatorSelectionConfig {
-			desired_candidates: 200,
-			candidacy_bond: 32_000,
-			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect::<Vec<_>>(),
-		},
 		evm: EVMConfig {
 			accounts: Precompiles::used_addresses()
 				.map(|addr| {

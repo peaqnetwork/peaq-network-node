@@ -327,11 +327,6 @@ git = "https://github.com/peaqnetwork/cumulus"
 branch = "peaq-polkadot-v0.9.19"
 default-features = false
 
-[dependencies.pallet-collator-selection]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
-default-features = false
-
 # polkadot dependencies
 [dependencies.polkadot-parachain]
 git = "https://github.com/peaqnetwork/polkadot"
@@ -375,6 +370,10 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.19"
 default-features = false
 
+[dependencies.parachain-staking]
+path = "../../pallets/parachain-staking"
+default-features = false
+
 
 [features]
 default = ["std", "aura"]
@@ -389,6 +388,7 @@ runtime-benchmarks = [
 	'pallet-timestamp/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
 	'pallet-contracts/runtime-benchmarks',
+	'parachain-staking/runtime-benchmarks',
 ]
 std = [
 	'codec/std',
@@ -450,7 +450,6 @@ std = [
 	"cumulus-primitives-timestamp/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
-    "pallet-collator-selection/std",
 	"parachain-info/std",
 
     "polkadot-parachain/std",
@@ -462,6 +461,8 @@ std = [
 
     "pallet-session/std",
     "pallet-authorship/std",
+
+    "parachain-staking/std",
 ]
 
 # Must be enabled for tracing runtimes only
