@@ -21,6 +21,7 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         lp_percent: Zero::zero(),
+		machines_percent: Zero::zero(),
     };
     assert!(reward_config.is_consistent());
 
@@ -31,6 +32,7 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         lp_percent: Zero::zero(),
+		machines_percent: Zero::zero(),
     };
     assert!(reward_config.is_consistent());
 
@@ -41,6 +43,7 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         lp_percent: Zero::zero(),
+		machines_percent: Zero::zero(),
     };
     assert!(!reward_config.is_consistent());
 
@@ -50,8 +53,9 @@ fn reward_distribution_config_is_consistent() {
         treasury_percent: Perbill::from_percent(3),
         dapps_staker_percent: Perbill::from_percent(14),
         dapps_percent: Perbill::from_percent(52),
-        collators_percent: Perbill::from_percent(29),
+        collators_percent: Perbill::from_percent(25),
         lp_percent: Perbill::from_percent(2),
+		machines_percent: Perbill::from_percent(4),
     };
     assert!(reward_config.is_consistent());
 }
@@ -71,9 +75,10 @@ fn reward_distribution_config_not_consistent() {
         treasury_percent: Perbill::from_percent(10),
         dapps_staker_percent: Perbill::from_percent(20),
         dapps_percent: Perbill::from_percent(20),
-        collators_percent: Perbill::from_percent(47),
+        collators_percent: Perbill::from_percent(40),
         lp_percent: Perbill::from_percent(2),
-    };
+  		machines_percent: Perbill::from_percent(7),
+  };
     assert!(!reward_config.is_consistent());
 
     // 3
@@ -82,8 +87,9 @@ fn reward_distribution_config_not_consistent() {
         treasury_percent: Perbill::from_percent(10),
         dapps_staker_percent: Perbill::from_percent(20),
         dapps_percent: Perbill::from_percent(20),
-        collators_percent: Perbill::from_percent(49),
+        collators_percent: Perbill::from_percent(45),
         lp_percent: Perbill::from_percent(2),
+		machines_percent: Perbill::from_percent(4),
     };
     assert!(!reward_config.is_consistent());
 }
@@ -118,8 +124,9 @@ pub fn set_configuration_is_ok() {
             treasury_percent: Perbill::from_percent(3),
             dapps_staker_percent: Perbill::from_percent(14),
             dapps_percent: Perbill::from_percent(18),
-            collators_percent: Perbill::from_percent(63),
+            collators_percent: Perbill::from_percent(60),
             lp_percent: Perbill::from_percent(2),
+			machines_percent: Perbill::from_percent(3),
         };
         assert!(reward_config.is_consistent());
 
@@ -169,8 +176,9 @@ pub fn reward_distribution_as_expected() {
             treasury_percent: Perbill::from_percent(10),
             dapps_staker_percent: Perbill::from_percent(20),
             dapps_percent: Perbill::from_percent(25),
-            collators_percent: Perbill::from_percent(43),
+            collators_percent: Perbill::from_percent(40),
             lp_percent: Perbill::from_percent(2),
+			machines_percent: Perbill::from_percent(3),
         };
         assert!(reward_config.is_consistent());
         assert_ok!(BlockReward::set_configuration(
@@ -196,10 +204,11 @@ pub fn reward_distribution_no_adjustable_part() {
     ExternalityBuilder::build().execute_with(|| {
         let reward_config = RewardDistributionConfig {
             treasury_percent: Perbill::from_percent(10),
-            dapps_staker_percent: Perbill::from_percent(45),
+            dapps_staker_percent: Perbill::from_percent(40),
             dapps_percent: Perbill::from_percent(40),
             collators_percent: Perbill::from_percent(3),
             lp_percent: Perbill::from_percent(2),
+			machines_percent: Perbill::from_percent(5),
         };
         assert!(reward_config.is_consistent());
         assert_ok!(BlockReward::set_configuration(
@@ -232,6 +241,7 @@ struct FreeBalanceSnapshot {
     dapps_stakers: Balance,
     dapps: Balance,
     lp_users: Balance,
+	machines: Balance,
 }
 
 impl FreeBalanceSnapshot {
@@ -247,6 +257,7 @@ impl FreeBalanceSnapshot {
             dapps_stakers: <TestRuntime as Config>::Currency::free_balance(&STAKERS_POT.into_account()),
             dapps: <TestRuntime as Config>::Currency::free_balance(&DAPPS_POT.into_account()),
             lp_users: <TestRuntime as Config>::Currency::free_balance(&LP_POT.into_account()),
+            machines: <TestRuntime as Config>::Currency::free_balance(&MACHINE_POT.into_account()),
         }
     }
 
@@ -257,6 +268,7 @@ impl FreeBalanceSnapshot {
             && self.dapps_stakers.is_zero()
             && self.dapps.is_zero()
             && self.lp_users.is_zero()
+			&& self.machines.is_zero()
     }
 
     /// Asserts that `post_reward_state` is as expected.
@@ -280,6 +292,9 @@ impl FreeBalanceSnapshot {
         assert_eq!(
             self.lp_users + rewards.lp_reward, post_reward_state.lp_users
         );
+        assert_eq!(
+            self.machines + rewards.machines_reward, post_reward_state.machines
+        );
     }
 }
 
@@ -291,6 +306,7 @@ struct Rewards {
     dapps_reward: Balance,
     collators_reward: Balance,
     lp_reward: Balance,
+	machines_reward: Balance,
 }
 
 impl Rewards {
@@ -303,6 +319,7 @@ impl Rewards {
         let dapps_reward = reward_config.dapps_percent * BLOCK_REWARD;
         let collators_reward = reward_config.collators_percent * BLOCK_REWARD;
         let lp_reward = reward_config.lp_percent * BLOCK_REWARD;
+        let machines_reward = reward_config.machines_percent * BLOCK_REWARD;
 
         Self {
             treasury_reward,
@@ -310,6 +327,7 @@ impl Rewards {
             dapps_reward,
             collators_reward,
             lp_reward,
+			machines_reward,
         }
     }
 }
