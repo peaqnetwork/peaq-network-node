@@ -21,7 +21,6 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         adjustable_percent: Zero::zero(),
-        ideal_dapps_staking_tvl: Zero::zero(),
     };
     assert!(reward_config.is_consistent());
 
@@ -32,7 +31,6 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         adjustable_percent: Zero::zero(),
-        ideal_dapps_staking_tvl: Zero::zero(),
     };
     assert!(reward_config.is_consistent());
 
@@ -43,7 +41,6 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         adjustable_percent: Perbill::from_percent(100),
-        ideal_dapps_staking_tvl: Perbill::from_percent(13),
     };
     assert!(reward_config.is_consistent());
 
@@ -55,7 +52,6 @@ fn reward_distribution_config_is_consistent() {
         dapps_percent: Perbill::from_percent(18),
         collators_percent: Perbill::from_percent(31),
         adjustable_percent: Perbill::from_percent(34),
-        ideal_dapps_staking_tvl: Zero::zero(),
     };
     assert!(reward_config.is_consistent());
 }
@@ -84,7 +80,6 @@ fn reward_distribution_config_not_consistent() {
         dapps_percent: Perbill::from_percent(20),
         collators_percent: Perbill::from_percent(30),
         adjustable_percent: Perbill::from_percent(19),
-        ideal_dapps_staking_tvl: Zero::zero(),
     };
     assert!(!reward_config.is_consistent());
 
@@ -96,7 +91,6 @@ fn reward_distribution_config_not_consistent() {
         dapps_percent: Perbill::from_percent(20),
         collators_percent: Perbill::from_percent(31),
         adjustable_percent: Perbill::from_percent(20),
-        ideal_dapps_staking_tvl: Zero::zero(),
     };
     assert!(!reward_config.is_consistent());
 }
@@ -133,7 +127,6 @@ pub fn set_configuration_is_ok() {
             dapps_percent: Perbill::from_percent(18),
             collators_percent: Perbill::from_percent(31),
             adjustable_percent: Perbill::from_percent(34),
-            ideal_dapps_staking_tvl: Perbill::from_percent(87),
         };
         assert!(reward_config.is_consistent());
 
@@ -185,7 +178,6 @@ pub fn reward_distribution_as_expected() {
             dapps_percent: Perbill::from_percent(25),
             collators_percent: Perbill::from_percent(5),
             adjustable_percent: Perbill::from_percent(40),
-            ideal_dapps_staking_tvl: Perbill::from_percent(50),
         };
         assert!(reward_config.is_consistent());
         assert_ok!(BlockReward::set_configuration(
@@ -218,7 +210,6 @@ pub fn reward_distribution_no_adjustable_part() {
             dapps_percent: Perbill::from_percent(40),
             collators_percent: Perbill::from_percent(5),
             adjustable_percent: Perbill::zero(),
-            ideal_dapps_staking_tvl: Perbill::from_percent(50), // this is irrelevant
         };
         assert!(reward_config.is_consistent());
         assert_ok!(BlockReward::set_configuration(
@@ -252,7 +243,6 @@ pub fn reward_distribution_all_zero_except_one() {
             dapps_percent: Perbill::zero(),
             collators_percent: Perbill::zero(),
             adjustable_percent: Perbill::one(),
-            ideal_dapps_staking_tvl: Perbill::from_percent(50), // this is irrelevant
         };
         assert!(reward_config.is_consistent());
         assert_ok!(BlockReward::set_configuration(
@@ -358,13 +348,7 @@ impl Rewards {
         let tvl_percentage = Perbill::from_rational(tvl, future_total_issuance);
 
         // Calculate factor for adjusting staker reward portion
-        let factor = if reward_config.ideal_dapps_staking_tvl <= tvl_percentage
-            || reward_config.ideal_dapps_staking_tvl.is_zero()
-        {
-            Perbill::one()
-        } else {
-            tvl_percentage / reward_config.ideal_dapps_staking_tvl
-        };
+        let factor = Perbill::one();
 
         // Adjustable reward portions
         let adjustable_staker_reward = factor * adjustable_reward;

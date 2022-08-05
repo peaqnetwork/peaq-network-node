@@ -217,11 +217,7 @@ pub mod pallet {
             let adjustable_balance = distro_params.adjustable_percent * block_reward.peek();
 
             // Calculate total staker and treasury reward balance
-            let adjustable_staker_part = if distro_params.ideal_dapps_staking_tvl.is_zero() {
-                adjustable_balance
-            } else {
-                Self::tvl_percentage() / distro_params.ideal_dapps_staking_tvl * adjustable_balance
-            };
+            let adjustable_staker_part = adjustable_balance;
 
             let total_staker_balance = base_staker_balance + adjustable_staker_part;
 
@@ -251,8 +247,6 @@ pub mod pallet {
 
 /// List of configuration parameters used to calculate reward distribution portions for all the beneficiaries.
 ///
-/// Note that if `ideal_dapps_staking_tvl` is set to `Zero`, entire `adjustable_percent` goes to the stakers.
-///
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct RewardDistributionConfig {
@@ -271,9 +265,6 @@ pub struct RewardDistributionConfig {
     /// Adjustable reward percentage that either goes to treasury or to stakers
     #[codec(compact)]
     pub adjustable_percent: Perbill,
-    /// Target dapps-staking TVL percentage at which adjustable inflation towards stakers becomes saturated
-    #[codec(compact)]
-    pub ideal_dapps_staking_tvl: Perbill,
 }
 
 impl Default for RewardDistributionConfig {
@@ -286,7 +277,6 @@ impl Default for RewardDistributionConfig {
             dapps_percent: Perbill::from_percent(25),
             collators_percent: Perbill::from_percent(10),
             adjustable_percent: Zero::zero(),
-            ideal_dapps_staking_tvl: Zero::zero(),
         }
     }
 }

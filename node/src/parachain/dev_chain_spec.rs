@@ -150,7 +150,6 @@ fn configure_genesis(
 				dapps_percent: Perbill::from_percent(20),
 				collators_percent: Perbill::from_percent(5),
 				adjustable_percent: Perbill::from_percent(45),
-				ideal_dapps_staking_tvl: Perbill::from_percent(40),
 			},
 		},
 		aura: Default::default(),
