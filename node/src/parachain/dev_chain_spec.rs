@@ -145,11 +145,10 @@ fn configure_genesis(
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
-				base_treasury_percent: Perbill::from_percent(10),
-				base_staker_percent: Perbill::from_percent(20),
+				treasury_percent: Perbill::from_percent(10),
+				dapps_staker_percent: Perbill::from_percent(20),
 				dapps_percent: Perbill::from_percent(20),
-				collators_percent: Perbill::from_percent(5),
-				adjustable_percent: Perbill::from_percent(45),
+				collators_percent: Perbill::from_percent(50),
 			},
 		},
 		aura: Default::default(),

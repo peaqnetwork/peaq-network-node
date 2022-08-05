@@ -209,27 +209,19 @@ pub mod pallet {
             let distro_params = Self::reward_config();
 
             // Pre-calculate balance which will be deposited for each beneficiary
-            let base_staker_balance = distro_params.base_staker_percent * block_reward.peek();
+            let dapp_staker_balance = distro_params.dapps_staker_percent * block_reward.peek();
             let dapps_balance = distro_params.dapps_percent * block_reward.peek();
             let collator_balance = distro_params.collators_percent * block_reward.peek();
 
-            // This is part that's distributed between stakers and treasury
-            let adjustable_balance = distro_params.adjustable_percent * block_reward.peek();
-
-            // Calculate total staker and treasury reward balance
-            let adjustable_staker_part = adjustable_balance;
-
-            let total_staker_balance = base_staker_balance + adjustable_staker_part;
-
             // Prepare imbalances
             let (dapps_imbalance, remainder) = block_reward.split(dapps_balance);
-            let (stakers_imbalance, remainder) = remainder.split(total_staker_balance);
+            let (dapp_stakers_imbalance, remainder) = remainder.split(dapp_staker_balance);
             let (collator_imbalance, treasury_imbalance) = remainder.split(collator_balance);
 
             // Payout beneficiaries
             T::BeneficiaryPayout::treasury(treasury_imbalance);
             T::BeneficiaryPayout::collators(collator_imbalance);
-            T::BeneficiaryPayout::dapps_staking(stakers_imbalance, dapps_imbalance);
+            T::BeneficiaryPayout::dapps_staking(dapp_stakers_imbalance, dapps_imbalance);
         }
 
         /// Provides TVL as percentage of total issuance
@@ -252,19 +244,16 @@ pub mod pallet {
 pub struct RewardDistributionConfig {
     /// Base percentage of reward that goes to treasury
     #[codec(compact)]
-    pub base_treasury_percent: Perbill,
+    pub treasury_percent: Perbill,
     /// Base percentage of reward that goes to stakers
     #[codec(compact)]
-    pub base_staker_percent: Perbill,
+    pub dapps_staker_percent: Perbill,
     /// Percentage of rewards that goes to dApps
     #[codec(compact)]
     pub dapps_percent: Perbill,
     /// Percentage of reward that goes to collators
     #[codec(compact)]
     pub collators_percent: Perbill,
-    /// Adjustable reward percentage that either goes to treasury or to stakers
-    #[codec(compact)]
-    pub adjustable_percent: Perbill,
 }
 
 impl Default for RewardDistributionConfig {
@@ -272,11 +261,10 @@ impl Default for RewardDistributionConfig {
     /// Should be overriden by desired params.
     fn default() -> Self {
         RewardDistributionConfig {
-            base_treasury_percent: Perbill::from_percent(40),
-            base_staker_percent: Perbill::from_percent(25),
+            treasury_percent: Perbill::from_percent(40),
+            dapps_staker_percent: Perbill::from_percent(25),
             dapps_percent: Perbill::from_percent(25),
             collators_percent: Perbill::from_percent(10),
-            adjustable_percent: Zero::zero(),
         }
     }
 }
@@ -289,11 +277,10 @@ impl RewardDistributionConfig {
         // https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.try_reduce
 
         let variables = vec![
-            &self.base_treasury_percent,
-            &self.base_staker_percent,
+            &self.treasury_percent,
+            &self.dapps_staker_percent,
             &self.dapps_percent,
             &self.collators_percent,
-            &self.adjustable_percent,
         ];
 
         let mut accumulator = Perbill::zero();
