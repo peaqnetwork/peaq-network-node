@@ -103,6 +103,7 @@ pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
 pub(crate) const STAKERS_POT: PalletId = PalletId(*b"mokstakr");
 pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
+pub(crate) const LP_POT: PalletId = PalletId(*b"moklpusr");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -123,6 +124,10 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
     ) {
         Balances::resolve_creating(&STAKERS_POT.into_account(), stakers);
         Balances::resolve_creating(&DAPPS_POT.into_account(), dapps);
+    }
+
+    fn lp_users(reward: NegativeImbalanceOf<TestRuntime>) {
+        Balances::resolve_creating(&LP_POT.into_account(), reward);
     }
 }
 
