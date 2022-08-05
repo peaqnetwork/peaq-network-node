@@ -25,16 +25,7 @@
 //! ## Usage
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
-//! 2. `DappsStakingTvlProvider` handler should be defined as an impl of `TvlProvider` trait. For example:
-//! ```nocompile
-//! pub struct TvlProvider();
-//! impl Get<Balance> for TvlProvider {
-//!     fn tvl() -> Balance {
-//!         DappsStaking::total_locked_value()
-//!     }
-//! }
-//! ```
-//! 3. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For example:
+//! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For example:
 //! ```nocompile
 //! pub struct BeneficiaryPayout();
 //! impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
@@ -52,7 +43,7 @@
 //!     }
 //! }
 //! ```
-//! 4. Set `RewardAmount` to desired block reward value in native currency.
+//! 3. Set `RewardAmount` to desired block reward value in native currency.
 //!
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -61,12 +52,11 @@ pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
 use frame_support::{
-    log,
     traits::{Currency, Get, Imbalance, OnTimestampSet},
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 use sp_runtime::{
-    traits::{CheckedAdd, Zero},
+    traits::{CheckedAdd},
     Perbill,
 };
 use sp_std::vec;
@@ -102,9 +92,6 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// The currency trait.
         type Currency: Currency<Self::AccountId>;
-
-        /// Provides information about how much value is locked by dapps staking
-        type DappsStakingTvlProvider: Get<BalanceOf<Self>>;
 
         /// Used to payout rewards
         type BeneficiaryPayout: BeneficiaryPayout<NegativeImbalanceOf<Self>>;
@@ -222,17 +209,6 @@ pub mod pallet {
             T::BeneficiaryPayout::treasury(treasury_imbalance);
             T::BeneficiaryPayout::collators(collator_imbalance);
             T::BeneficiaryPayout::dapps_staking(dapp_stakers_imbalance, dapps_imbalance);
-        }
-
-        /// Provides TVL as percentage of total issuance
-        fn tvl_percentage() -> Perbill {
-            let total_issuance = T::Currency::total_issuance();
-            if total_issuance.is_zero() {
-                log::warn!("Total issuance is zero - this should be impossible.");
-                Zero::zero()
-            } else {
-                Perbill::from_rational(T::DappsStakingTvlProvider::get(), total_issuance)
-            }
         }
     }
 }

@@ -1,7 +1,7 @@
 use crate::{self as pallet_block_reward, NegativeImbalanceOf};
 
 use frame_support::{
-    construct_runtime, parameter_types, sp_io::TestExternalities, traits::Currency, traits::Get,
+    construct_runtime, parameter_types, sp_io::TestExternalities, traits::Currency,
     PalletId,
 };
 
@@ -96,25 +96,13 @@ impl pallet_timestamp::Config for TestRuntime {
 }
 
 // A fairly high block reward so we can detect slight changes in reward distribution
-// due to TVL changes.
 pub(crate) const BLOCK_REWARD: Balance = 1_000_000;
-
-// This gives us enough flexibility to get valid percentages by controlling issuance.
-pub(crate) const TVL: Balance = 1_000_000_000;
 
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
 pub(crate) const STAKERS_POT: PalletId = PalletId(*b"mokstakr");
 pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
-
-// Type used as TVL provider
-pub struct TvlProvider();
-impl Get<Balance> for TvlProvider {
-    fn get() -> Balance {
-        TVL
-    }
-}
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -146,7 +134,6 @@ impl pallet_block_reward::Config for TestRuntime {
     type Event = Event;
     type Currency = Balances;
     type RewardAmount = RewardAmount;
-    type DappsStakingTvlProvider = TvlProvider;
     type BeneficiaryPayout = BeneficiaryPayout;
     type WeightInfo = ();
 }

@@ -578,20 +578,12 @@ impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
     }
 }
 
-pub struct DappsStakingTvlProvider();
-impl Get<Balance> for DappsStakingTvlProvider {
-    fn get() -> Balance {
-        0
-    }
-}
-
 parameter_types! {
     pub const RewardAmount: Balance = 266_400;
 }
 
 impl pallet_block_reward::Config for Runtime {
     type Currency = Balances;
-    type DappsStakingTvlProvider = DappsStakingTvlProvider;
     type BeneficiaryPayout = BeneficiaryPayout;
     type RewardAmount = RewardAmount;
     type Event = Event;
