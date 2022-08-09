@@ -73,7 +73,6 @@ pub use peaq_pallet_transaction;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
-use frame_support::pallet_prelude::Get;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -316,8 +315,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
-	#[cfg(feature = "aura")]
-	type OnTimestampSet = ();
+	type OnTimestampSet = BlockReward;
 }
 
 parameter_types! {
@@ -579,7 +577,7 @@ impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
 }
 
 parameter_types! {
-    pub const RewardAmount: Balance = 266_400;
+    pub const RewardAmount: Balance = 1_000_000;
 }
 
 impl pallet_block_reward::Config for Runtime {
@@ -600,6 +598,15 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
     }
 
     fn dapps_staking(_stakers: NegativeImbalance, _dapps: NegativeImbalance) {
+    }
+
+    fn lp_users(_reward: NegativeImbalance) {
+    }
+
+    fn machines(_reward: NegativeImbalance) {
+    }
+
+    fn machines_subsidization(_reward: NegativeImbalance) {
     }
 }
 

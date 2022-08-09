@@ -2696,10 +2696,14 @@ pub mod pallet {
 
 				let reward_rate_config = <RewardRateConfig<T>>::get();
 
-				let collator_reward =
-					reward_rate_config
-						.compute_collator_reward::<T>(issue_number);
-				Self::do_reward(&pot, &author, collator_reward);
+				if delegator_sum == T::CurrencyBalance::from(0u128) {
+					Self::do_reward(&pot, &author, issue_number);
+				} else {
+					let collator_reward =
+						reward_rate_config
+							.compute_collator_reward::<T>(issue_number);
+					Self::do_reward(&pot, &author, collator_reward);
+				}
 				writes = writes.saturating_add(Weight::one());
 
 				// Reward delegators
