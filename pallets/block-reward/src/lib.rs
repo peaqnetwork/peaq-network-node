@@ -201,13 +201,16 @@ pub mod pallet {
             let collator_balance = distro_params.collators_percent * block_reward.peek();
             let lp_balance = distro_params.lp_percent * block_reward.peek();
             let	machines_balance = distro_params.machines_percent * block_reward.peek();
+            let	machines_subsidization_balance = distro_params.machines_subsidization_percent * block_reward.peek();
 
             // Prepare imbalances
             let (dapps_imbalance, remainder) = block_reward.split(dapps_balance);
             let (dapp_stakers_imbalance, remainder) = remainder.split(dapp_staker_balance);
             let (collator_imbalance, remainder) = remainder.split(collator_balance);
             let (lp_imbalance, remainder) = remainder.split(lp_balance);
-            let (machines_imbalance, treasury_imbalance) = remainder.split(machines_balance);
+            let (machines_imbalance, remainder) = remainder.split(machines_balance);
+            let (machines_subsidization_balance, treasury_imbalance) =
+			remainder.split(machines_subsidization_balance);
 
             // Payout beneficiaries
             T::BeneficiaryPayout::treasury(treasury_imbalance);
@@ -215,6 +218,7 @@ pub mod pallet {
             T::BeneficiaryPayout::dapps_staking(dapp_stakers_imbalance, dapps_imbalance);
             T::BeneficiaryPayout::lp_users(lp_imbalance);
             T::BeneficiaryPayout::machines(machines_imbalance);
+            T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
         }
     }
 }
@@ -242,6 +246,9 @@ pub struct RewardDistributionConfig {
     /// Percentage of reward that goes to machines
     #[codec(compact)]
     pub machines_percent: Perbill,
+    /// Percentage of reward that goes to machines subsidization
+    #[codec(compact)]
+    pub machines_subsidization_percent: Perbill,
 }
 
 impl Default for RewardDistributionConfig {
@@ -251,10 +258,11 @@ impl Default for RewardDistributionConfig {
         RewardDistributionConfig {
             treasury_percent: Perbill::from_percent(15),
             dapps_staker_percent: Perbill::from_percent(25),
-            dapps_percent: Perbill::from_percent(25),
+            dapps_percent: Perbill::from_percent(20),
             collators_percent: Perbill::from_percent(10),
             lp_percent: Perbill::from_percent(20),
             machines_percent: Perbill::from_percent(5),
+            machines_subsidization_percent: Perbill::from_percent(5),
         }
     }
 }
@@ -273,6 +281,7 @@ impl RewardDistributionConfig {
             &self.collators_percent,
             &self.lp_percent,
             &self.machines_percent,
+            &self.machines_subsidization_percent,
         ];
 
         let mut accumulator = Perbill::zero();
@@ -311,4 +320,7 @@ pub trait BeneficiaryPayout<Imbalance> {
 
     /// Payout Machines
     fn machines(reward: Imbalance);
+
+    /// Payout Machines
+    fn machines_subsidization(reward: Imbalance);
 }

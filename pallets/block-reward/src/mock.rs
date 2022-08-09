@@ -103,8 +103,9 @@ pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
 pub(crate) const STAKERS_POT: PalletId = PalletId(*b"mokstakr");
 pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
-pub(crate) const LP_POT: PalletId = PalletId(*b"moklpusr");
-pub(crate) const MACHINE_POT: PalletId = PalletId(*b"mokmachi");
+pub(crate) const LP_POT: PalletId = PalletId(*b"lpreward");
+pub(crate) const MACHINE_POT: PalletId = PalletId(*b"machiner");
+pub(crate) const MACHINE_SUBSIDIZATION_POT: PalletId = PalletId(*b"subsidiz");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -133,6 +134,10 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 
     fn machines(reward: NegativeImbalanceOf<TestRuntime>) {
         Balances::resolve_creating(&MACHINE_POT.into_account(), reward);
+    }
+
+    fn machines_subsidization(reward: NegativeImbalanceOf<TestRuntime>) {
+        Balances::resolve_creating(&MACHINE_SUBSIDIZATION_POT.into_account(), reward);
     }
 }
 
