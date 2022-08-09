@@ -2,11 +2,15 @@ use agung_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 	staking, Balance, ParachainStakingConfig,
+	BlockRewardConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use cumulus_primitives_core::ParaId;
 use crate::parachain::Extensions;
+use sp_runtime::{
+	Perbill,
+};
 
 use hex_literal::hex;
 use sc_network::config::MultiaddrWithPeerId;
@@ -189,6 +193,18 @@ fn configure_genesis(
 			stakers,
 			reward_rate_config: staking::reward_rate_config(),
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
+		block_reward: BlockRewardConfig {
+			// Make sure sum is 100
+			reward_config: pallet_block_reward::RewardDistributionConfig {
+				treasury_percent: Perbill::from_percent(20),
+				dapps_staker_percent: Perbill::from_percent(15),
+				dapps_percent: Perbill::from_percent(10),
+				collators_percent: Perbill::from_percent(10),
+				lp_percent: Perbill::from_percent(25),
+				machines_percent: Perbill::from_percent(10),
+				machines_subsidization_percent: Perbill::from_percent(10),
+			},
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {

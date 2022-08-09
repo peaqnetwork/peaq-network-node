@@ -374,6 +374,10 @@ default-features = false
 path = "../../pallets/parachain-staking"
 default-features = false
 
+[dependencies.pallet-block-reward]
+path = "../../pallets/block-reward"
+default-features = false
+
 
 [features]
 default = ["std", "aura"]
