@@ -17,7 +17,6 @@ fn reward_distribution_config_is_consistent() {
     // 1
     let reward_config = RewardDistributionConfig {
         treasury_percent: Perbill::from_percent(100),
-        dapps_staker_percent: Zero::zero(),
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         lp_percent: Zero::zero(),
@@ -29,8 +28,7 @@ fn reward_distribution_config_is_consistent() {
     // 2
     let reward_config = RewardDistributionConfig {
         treasury_percent: Zero::zero(),
-        dapps_staker_percent: Perbill::from_percent(100),
-        dapps_percent: Zero::zero(),
+        dapps_percent: Perbill::from_percent(100),
         collators_percent: Zero::zero(),
         lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
@@ -41,7 +39,6 @@ fn reward_distribution_config_is_consistent() {
     // 3
     let reward_config = RewardDistributionConfig {
         treasury_percent: Zero::zero(),
-        dapps_staker_percent: Zero::zero(),
         dapps_percent: Zero::zero(),
         collators_percent: Zero::zero(),
         lp_percent: Zero::zero(),
@@ -54,8 +51,7 @@ fn reward_distribution_config_is_consistent() {
     // 100%
     let reward_config = RewardDistributionConfig {
         treasury_percent: Perbill::from_percent(3),
-        dapps_staker_percent: Perbill::from_percent(10),
-        dapps_percent: Perbill::from_percent(52),
+        dapps_percent: Perbill::from_percent(62),
         collators_percent: Perbill::from_percent(25),
         lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(4),
@@ -77,8 +73,7 @@ fn reward_distribution_config_not_consistent() {
     // 99%
     let reward_config = RewardDistributionConfig {
         treasury_percent: Perbill::from_percent(10),
-        dapps_staker_percent: Perbill::from_percent(20),
-        dapps_percent: Perbill::from_percent(20),
+        dapps_percent: Perbill::from_percent(40),
         collators_percent: Perbill::from_percent(33),
         lp_percent: Perbill::from_percent(2),
   		machines_percent: Perbill::from_percent(7),
@@ -90,8 +85,7 @@ fn reward_distribution_config_not_consistent() {
     // 101%
     let reward_config = RewardDistributionConfig {
         treasury_percent: Perbill::from_percent(10),
-        dapps_staker_percent: Perbill::from_percent(20),
-        dapps_percent: Perbill::from_percent(20),
+        dapps_percent: Perbill::from_percent(40),
         collators_percent: Perbill::from_percent(40),
         lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(4),
@@ -128,8 +122,7 @@ pub fn set_configuration_is_ok() {
         // custom config so it differs from the default one
         let reward_config = RewardDistributionConfig {
             treasury_percent: Perbill::from_percent(3),
-            dapps_staker_percent: Perbill::from_percent(10),
-            dapps_percent: Perbill::from_percent(18),
+            dapps_percent: Perbill::from_percent(28),
             collators_percent: Perbill::from_percent(60),
             lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(3),
@@ -181,8 +174,7 @@ pub fn reward_distribution_as_expected() {
         // Prepare a custom config (easily discernable percentages for visual verification)
         let reward_config = RewardDistributionConfig {
             treasury_percent: Perbill::from_percent(10),
-            dapps_staker_percent: Perbill::from_percent(15),
-            dapps_percent: Perbill::from_percent(25),
+            dapps_percent: Perbill::from_percent(40),
             collators_percent: Perbill::from_percent(40),
             lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(3),
@@ -212,8 +204,7 @@ pub fn reward_distribution_no_adjustable_part() {
     ExternalityBuilder::build().execute_with(|| {
         let reward_config = RewardDistributionConfig {
             treasury_percent: Perbill::from_percent(10),
-            dapps_staker_percent: Perbill::from_percent(35),
-            dapps_percent: Perbill::from_percent(40),
+            dapps_percent: Perbill::from_percent(75),
             collators_percent: Perbill::from_percent(3),
             lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(5),
@@ -247,7 +238,6 @@ pub fn reward_distribution_no_adjustable_part() {
 struct FreeBalanceSnapshot {
     treasury: Balance,
     collators: Balance,
-    dapps_stakers: Balance,
     dapps: Balance,
     lp_users: Balance,
 	machines: Balance,
@@ -264,7 +254,6 @@ impl FreeBalanceSnapshot {
             collators: <TestRuntime as Config>::Currency::free_balance(
                 &COLLATOR_POT.into_account(),
             ),
-            dapps_stakers: <TestRuntime as Config>::Currency::free_balance(&STAKERS_POT.into_account()),
             dapps: <TestRuntime as Config>::Currency::free_balance(&DAPPS_POT.into_account()),
             lp_users: <TestRuntime as Config>::Currency::free_balance(&LP_POT.into_account()),
             machines: <TestRuntime as Config>::Currency::free_balance(&MACHINE_POT.into_account()),
@@ -277,7 +266,6 @@ impl FreeBalanceSnapshot {
     fn is_zero(&self) -> bool {
         self.treasury.is_zero()
             && self.collators.is_zero()
-            && self.dapps_stakers.is_zero()
             && self.dapps.is_zero()
             && self.lp_users.is_zero()
 			&& self.machines.is_zero()
@@ -296,10 +284,6 @@ impl FreeBalanceSnapshot {
         assert_eq!(
             self.treasury + rewards.treasury_reward,
             post_reward_state.treasury
-        );
-        assert_eq!(
-            self.dapps_stakers + rewards.dapps_staker_reward,
-            post_reward_state.dapps_stakers
         );
         assert_eq!(
             self.collators + rewards.collators_reward,
@@ -323,7 +307,6 @@ impl FreeBalanceSnapshot {
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 struct Rewards {
     treasury_reward: Balance,
-    dapps_staker_reward: Balance,
     dapps_reward: Balance,
     collators_reward: Balance,
     lp_reward: Balance,
@@ -337,7 +320,6 @@ impl Rewards {
     ///
     fn calculate(reward_config: &RewardDistributionConfig) -> Self {
         let treasury_reward = reward_config.treasury_percent * BLOCK_REWARD;
-        let dapps_staker_reward = reward_config.dapps_staker_percent * BLOCK_REWARD;
         let dapps_reward = reward_config.dapps_percent * BLOCK_REWARD;
         let collators_reward = reward_config.collators_percent * BLOCK_REWARD;
         let lp_reward = reward_config.lp_percent * BLOCK_REWARD;
@@ -346,7 +328,6 @@ impl Rewards {
 
         Self {
             treasury_reward,
-            dapps_staker_reward,
             dapps_reward,
             collators_reward,
             lp_reward,

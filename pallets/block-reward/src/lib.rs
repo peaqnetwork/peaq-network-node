@@ -38,8 +38,8 @@
 //!         Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
 //!      }
 //!
-//!     fn dapps_staking(stakers: NegativeImbalanceOf<T>, dapps: NegativeImbalanceOf<T>) {
-//!         DappsStaking::rewards(stakers, dapps);
+//!     fn dapps_staking(reward: NegativeImbalanceOf<T>) {
+//!         DappsStaking::rewards(reward);
 //!     }
 //! }
 //! ```
@@ -196,7 +196,6 @@ pub mod pallet {
             let distro_params = Self::reward_config();
 
             // Pre-calculate balance which will be deposited for each beneficiary
-            let dapp_staker_balance = distro_params.dapps_staker_percent * block_reward.peek();
             let dapps_balance = distro_params.dapps_percent * block_reward.peek();
             let collator_balance = distro_params.collators_percent * block_reward.peek();
             let lp_balance = distro_params.lp_percent * block_reward.peek();
@@ -205,7 +204,6 @@ pub mod pallet {
 
             // Prepare imbalances
             let (dapps_imbalance, remainder) = block_reward.split(dapps_balance);
-            let (dapp_stakers_imbalance, remainder) = remainder.split(dapp_staker_balance);
             let (collator_imbalance, remainder) = remainder.split(collator_balance);
             let (lp_imbalance, remainder) = remainder.split(lp_balance);
             let (machines_imbalance, remainder) = remainder.split(machines_balance);
@@ -215,7 +213,7 @@ pub mod pallet {
             // Payout beneficiaries
             T::BeneficiaryPayout::treasury(treasury_imbalance);
             T::BeneficiaryPayout::collators(collator_imbalance);
-            T::BeneficiaryPayout::dapps_staking(dapp_stakers_imbalance, dapps_imbalance);
+            T::BeneficiaryPayout::dapps_staking(dapps_imbalance);
             T::BeneficiaryPayout::lp_users(lp_imbalance);
             T::BeneficiaryPayout::machines(machines_imbalance);
             T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
@@ -231,9 +229,6 @@ pub struct RewardDistributionConfig {
     /// Base percentage of reward that goes to treasury
     #[codec(compact)]
     pub treasury_percent: Perbill,
-    /// Base percentage of reward that goes to stakers
-    #[codec(compact)]
-    pub dapps_staker_percent: Perbill,
     /// Percentage of rewards that goes to dApps
     #[codec(compact)]
     pub dapps_percent: Perbill,
@@ -257,8 +252,7 @@ impl Default for RewardDistributionConfig {
     fn default() -> Self {
         RewardDistributionConfig {
             treasury_percent: Perbill::from_percent(15),
-            dapps_staker_percent: Perbill::from_percent(25),
-            dapps_percent: Perbill::from_percent(20),
+            dapps_percent: Perbill::from_percent(45),
             collators_percent: Perbill::from_percent(10),
             lp_percent: Perbill::from_percent(20),
             machines_percent: Perbill::from_percent(5),
@@ -276,7 +270,6 @@ impl RewardDistributionConfig {
 
         let variables = vec![
             &self.treasury_percent,
-            &self.dapps_staker_percent,
             &self.dapps_percent,
             &self.collators_percent,
             &self.lp_percent,
@@ -307,13 +300,7 @@ pub trait BeneficiaryPayout<Imbalance> {
     fn collators(reward: Imbalance);
 
     /// Payout reward to dapps staking
-    ///
-    /// # Arguments
-    ///
-    /// * `stakers` - reward that goes towards staker reward pot
-    /// * `dapps`   - reward that goes towards dapps reward pot
-    ///
-    fn dapps_staking(stakers: Imbalance, dapps: Imbalance);
+    fn dapps_staking(dapps: Imbalance);
 
     /// Payout LP users
     fn lp_users(reward: Imbalance);

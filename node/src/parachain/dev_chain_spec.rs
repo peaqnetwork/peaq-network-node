@@ -146,8 +146,7 @@ fn configure_genesis(
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
 				treasury_percent: Perbill::from_percent(20),
-				dapps_staker_percent: Perbill::from_percent(15),
-				dapps_percent: Perbill::from_percent(10),
+				dapps_percent: Perbill::from_percent(25),
 				collators_percent: Perbill::from_percent(10),
 				lp_percent: Perbill::from_percent(25),
 				machines_percent: Perbill::from_percent(10),
