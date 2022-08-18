@@ -49,7 +49,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		"peaq-dev",
-		"peaq-substrate-dev",
+		"dev-testnet",
 		ChainType::Development,
 		move || {
 			configure_genesis(
@@ -92,7 +92,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Extensions
 		Extensions {
 			bad_blocks: Default::default(),
-			relay_chain: "test-service".into(),
+			relay_chain: "rococo-local".into(),
 			para_id: para_id,
 		},
 	))

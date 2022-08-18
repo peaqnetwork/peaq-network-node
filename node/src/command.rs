@@ -507,12 +507,14 @@ pub fn run() -> sc_cli::Result<()> {
 				);
 
 				if config.chain_spec.is_agung() {
+					info!("Agung network start");
 					start_node::<agung::RuntimeApi, agung::Executor>(
 						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
 				} else {
+					info!("Dev network start");
 					start_node::<dev::RuntimeApi, dev::Executor>(
 						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
 						.await

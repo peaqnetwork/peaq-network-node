@@ -32,7 +32,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		"agung-network",
-		"agung-substrate-testnet",
+		"agung-testnet",
 		ChainType::Local,
 		move || {
 			configure_genesis(
