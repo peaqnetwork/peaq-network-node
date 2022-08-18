@@ -91,7 +91,7 @@ impl SubstrateCli for Cli {
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_agung() {
-			&agung_runtime::VERSION
+			&peaq_agung_runtime::VERSION
 		} else {
 			&peaq_dev_runtime::VERSION
 		}

@@ -1,4 +1,4 @@
-use agung_runtime::{
+use peaq_agung_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 	staking, Balance, ParachainStakingConfig,
@@ -19,8 +19,8 @@ use std::str::FromStr;
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
-fn session_keys(aura: AuraId) -> agung_runtime::opaque::SessionKeys {
-    agung_runtime::opaque::SessionKeys { aura }
+fn session_keys(aura: AuraId) -> peaq_agung_runtime::opaque::SessionKeys {
+    peaq_agung_runtime::opaque::SessionKeys { aura }
 }
 
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
@@ -183,7 +183,7 @@ fn configure_genesis(
 				.map(|k| (k, 1 << 78))
 				.collect(),
 		},
-		session: agung_runtime::SessionConfig {
+		session: peaq_agung_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))

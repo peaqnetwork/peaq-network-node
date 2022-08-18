@@ -29,7 +29,7 @@ path = '../runtime/peaq-dev'
 version = '3.0.0-polkadot-v0.9.19'
 default-features = false
 
-[dependencies.agung-runtime]
+[dependencies.peaq-agung-runtime]
 path = '../runtime/agung'
 version = '3.0.0-polkadot-v0.9.19'
 default-features = false
@@ -363,10 +363,10 @@ default = [
 	]
 aura = [
 	"peaq-dev-runtime/aura",
-	"agung-runtime/aura"
+	"peaq-agung-runtime/aura"
 ]
 runtime-benchmarks = [
-	"agung-runtime/runtime-benchmarks",
+	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
