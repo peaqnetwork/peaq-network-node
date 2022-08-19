@@ -1,0 +1,19 @@
+FROM ubuntu:20.04
+
+WORKDIR /opt/network
+ADD target/release/peaq-node /usr/local/bin
+
+RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq-node peaq-node && \
+	mkdir -p /data /peaq-node/.local/share/peaq-node && \
+	chown -R peaq-node:peaq-node /data && \
+	ln -s /data /peaq-node/.local/share/peaq-node && \
+# unclutter and minimize the attack surface
+	rm -rf /usr/bin /usr/sbin && \
+# Sanity checks
+	/usr/local/bin/peaq-node --version
+
+USER peaq-node
+EXPOSE 30333 9933 9944 9615
+VOLUME ["/data"]
+
+ENTRYPOINT ["/usr/local/bin/peaq-node"]
