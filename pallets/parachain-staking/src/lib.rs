@@ -291,7 +291,7 @@ pub mod pallet {
 
 		/// Maximum number of delegators a single collator can have.
 		#[pallet::constant]
-		type MaxDelegatorsPerCollator: Get<u32> + Debug + PartialEq;
+		type MaxDelegatorsPerCollator: Get<u32> + Debug + Clone + PartialEq;
 
 		/// Maximum number of collators a single delegator can delegate.
 		#[pallet::constant]
@@ -2682,13 +2682,11 @@ pub mod pallet {
 			// should always include state except if the collator has been forcedly removed
 			// via `force_remove_candidate` in the current or previous round
 			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				for Stake { owner: _owner, amount } in state.delegators {
+				for Stake { owner: _owner, amount } in state.delegators.clone() {
 					if amount >= T::MinDelegatorStake::get() {
 						delegator_sum += amount;
 					}
 				}
-			}
-			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
 				let pot = Self::account_id();
 				let issue_number = T::Currency::free_balance(&pot)
 					.checked_sub(&T::Currency::minimum_balance())
