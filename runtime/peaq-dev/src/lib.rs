@@ -208,7 +208,7 @@ parameter_types! {
 			// Operational transactions have some extra reserved space, so that they
 			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
 			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
+				MAXIMUM_BLOCK_WEIGHT - (NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT)
 			);
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
