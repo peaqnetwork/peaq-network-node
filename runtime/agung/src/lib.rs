@@ -509,11 +509,11 @@ pub mod staking {
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
-			pub const MinBlocksPerRound: BlockNumber = 1 * MINUTES;
+			pub const MinBlocksPerRound: BlockNumber = 1 * HOURS;
 			/// Default length of a round/session is 2 hours
-			pub const DefaultBlocksPerRound: BlockNumber = 2 * MINUTES;
+			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
 			/// Unstaked balance can be unlocked after 7 days
-			pub const StakeDuration: BlockNumber = 3 * MINUTES;
+			pub const StakeDuration: BlockNumber = 7 * DAYS;
 			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
 			pub const ExitQueueDelay: u32 = 2;
 			/// Minimum 16 collators selected per round, default at genesis and minimum forever after
