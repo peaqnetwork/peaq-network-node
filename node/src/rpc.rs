@@ -7,14 +7,12 @@ use fc_rpc::{
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use peaq_node_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Hash, Index};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
-use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApi};
 use sc_network::NetworkService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
@@ -36,6 +34,8 @@ pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
 use peaq_rpc_txpool::{TxPool, TxPoolServer};
 
+use crate::primitives::*;
+
 pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
@@ -48,7 +48,6 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 }
 
 /// Full client dependencies.
-//pub struct FullDeps<C, P, A: ChainApi, BE> {
 pub struct FullDeps<C, P, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
@@ -72,9 +71,6 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
-	/// Manual seal command sink
-	pub command_sink:
-		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
 	/// The list of optional RPC extensions.
 	pub ethapi_cmd: Vec<EthApiCmd>,
 	/// Ethereum data access overrides.
@@ -135,11 +131,11 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
+	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
 	BE::Blockchain: BlockchainBackend<Block>,
-	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 {
 	use fc_rpc::{
 		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi,
@@ -158,7 +154,6 @@ where
 		is_authority,
 		network,
 		filter_pool,
-		command_sink,
 		backend,
 		max_past_logs,
 		fee_history_limit,
@@ -248,17 +243,6 @@ where
 			Arc::clone(&client),
 			graph,
 		)));
-	}
-
-	match command_sink {
-		Some(command_sink) => {
-			io.extend_with(
-				// We provide the rpc handler with the sending end of the channel to allow the rpc
-				// send EngineCommands to the background block authorship task.
-				ManualSealApi::to_delegate(ManualSeal::new(command_sink)),
-			);
-		}
-		_ => {}
 	}
 
 	io
