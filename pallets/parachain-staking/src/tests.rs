@@ -1599,6 +1599,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 				reward_rate
 					.compute_delegator_reward::<Test>(1000, Perquintill::one());
 
+			let c_total_rewards = c_rewards + d_rewards;
 			let d_1_rewards: BalanceOf<Test> =
 				reward_rate
 					.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2./3.));
@@ -1657,7 +1658,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			// 2 is block author for 5th block
 			roll_to(6, authors);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + 2 * c_rewards);
+			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards + c_total_rewards);
 			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
 			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
 			// should not receive rewards due to revoked delegation
@@ -3310,8 +3311,8 @@ fn authorities_per_round() {
 			// roll to last block of round 0
 			roll_to(4, authors.clone());
 			let reward_0 =
-				reward_rate
-					.compute_collator_reward::<Test>(1000);
+				reward_rate.compute_collator_reward::<Test>(1000) +
+				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(Origin::root(), 10));

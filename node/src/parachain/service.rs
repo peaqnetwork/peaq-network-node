@@ -64,7 +64,7 @@ pub mod dev {
 }
 
 pub mod agung {
-	pub use agung_runtime::RuntimeApi;
+	pub use peaq_agung_runtime::RuntimeApi;
 
 	pub type HostFunctions = (
 		frame_benchmarking::benchmarking::HostFunctions,
@@ -77,11 +77,11 @@ pub mod agung {
 		type ExtendHostFunctions = HostFunctions;
 
 		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-			agung_runtime::api::dispatch(method, data)
+			peaq_agung_runtime::api::dispatch(method, data)
 		}
 
 		fn native_version() -> sc_executor::NativeVersion {
-			agung_runtime::native_version()
+			peaq_agung_runtime::native_version()
 		}
 	}
 }

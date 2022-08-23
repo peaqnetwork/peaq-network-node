@@ -1,12 +1,16 @@
-use agung_runtime::{
+use peaq_agung_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 	staking, Balance, ParachainStakingConfig,
+	BlockRewardConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use cumulus_primitives_core::ParaId;
 use crate::parachain::Extensions;
+use sp_runtime::{
+	Perbill,
+};
 
 use hex_literal::hex;
 use sc_network::config::MultiaddrWithPeerId;
@@ -15,8 +19,8 @@ use std::str::FromStr;
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
-fn session_keys(aura: AuraId) -> agung_runtime::opaque::SessionKeys {
-    agung_runtime::opaque::SessionKeys { aura }
+fn session_keys(aura: AuraId) -> peaq_agung_runtime::opaque::SessionKeys {
+    peaq_agung_runtime::opaque::SessionKeys { aura }
 }
 
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
@@ -28,7 +32,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		"agung-network",
-		"agung-substrate-testnet",
+		"agung-testnet",
 		ChainType::Local,
 		move || {
 			configure_genesis(
@@ -179,7 +183,7 @@ fn configure_genesis(
 				.map(|k| (k, 1 << 78))
 				.collect(),
 		},
-		session: agung_runtime::SessionConfig {
+		session: peaq_agung_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
@@ -189,6 +193,17 @@ fn configure_genesis(
 			stakers,
 			reward_rate_config: staking::reward_rate_config(),
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
+		block_reward: BlockRewardConfig {
+			// Make sure sum is 100
+			reward_config: pallet_block_reward::RewardDistributionConfig {
+				treasury_percent: Perbill::from_percent(20),
+				dapps_percent: Perbill::from_percent(25),
+				collators_percent: Perbill::from_percent(10),
+				lp_percent: Perbill::from_percent(25),
+				machines_percent: Perbill::from_percent(10),
+				machines_subsidization_percent: Perbill::from_percent(10),
+			},
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {

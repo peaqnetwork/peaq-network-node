@@ -1,5 +1,5 @@
 [package]
-name = 'agung-runtime'
+name = 'peaq-agung-runtime'
 version = '3.0.0-polkadot-v0.9.19'
 description = 'A node of the peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
@@ -375,6 +375,10 @@ default-features = false
 
 [dependencies.parachain-staking]
 path = "../../pallets/parachain-staking"
+default-features = false
+
+[dependencies.pallet-block-reward]
+path = "../../pallets/block-reward"
 default-features = false
 
 
