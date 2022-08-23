@@ -1,6 +1,7 @@
 use peaq_dev_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
+	staking, Balance, ParachainStakingConfig,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -34,6 +35,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
 	(get_account_id_from_seed::<sr25519::Public>(s), get_from_seed::<AuraId>(s))
 }
 
+
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -48,6 +50,14 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		move || {
 			configure_genesis(
 				wasm_binary,
+				// stakers
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					)
+				],
 				// Initial PoA authorities
 				vec![
 					authority_keys_from_seed("Alice"),
@@ -91,6 +101,7 @@ fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
 	wasm_binary: &[u8],
+	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
@@ -122,17 +133,17 @@ fn configure_genesis(
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
 				.collect::<Vec<_>>(),
 		},
+		parachain_staking: ParachainStakingConfig {
+			stakers,
+			reward_rate_config: staking::reward_rate_config(),
+			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
 		aura_ext: Default::default(),
-		collator_selection: peaq_dev_runtime::CollatorSelectionConfig {
-			desired_candidates: 200,
-			candidacy_bond: 32_000,
-			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect::<Vec<_>>(),
-		},
 		evm: EVMConfig {
 			accounts: Precompiles::used_addresses()
 				.map(|addr| {
