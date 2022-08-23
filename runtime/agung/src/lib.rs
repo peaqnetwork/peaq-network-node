@@ -523,7 +523,7 @@ pub mod staking {
 			/// We only allow one delegation per round.
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// Maximum 25 delegators per collator at launch, might be increased later
-			#[derive(Debug, PartialEq, Clone)]
+			#[derive(Debug, PartialEq)]
 			pub const MaxDelegatorsPerCollator: u32 = 25;
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq)]
