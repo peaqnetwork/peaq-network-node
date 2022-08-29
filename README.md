@@ -44,7 +44,7 @@ Once the project has been built, the following command can be used to explore al
 subcommands:
 
 ```sh
-./target/release/node-template -h
+./target/release/peaq-node -h
 ```
 
 ## Run
@@ -58,19 +58,19 @@ node.
 This command will start the single-node development chain with persistent state:
 
 ```bash
-./target/release/node-template --dev
+./target/release/peaq-node --dev
 ```
 
 Purge the development chain's state:
 
 ```bash
-./target/release/node-template purge-chain --dev
+./target/release/peaq-node purge-chain --dev
 ```
 
 Start the development chain with detailed logging:
 
 ```bash
-RUST_BACKTRACE=1 ./target/release/node-template -ldebug --dev
+RUST_BACKTRACE=1 ./target/release/peaq-node -ldebug --dev
 ```
 
 ### Connect with Polkadot-JS Apps Front-end
@@ -128,7 +128,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/node-template --help
+./target/release/peaq-node --help
 ```
 
 ### Runtime
@@ -189,16 +189,27 @@ Then run the following command to start a single node development chain.
 
 This command will firstly compile your code, and then start a local development network. You can
 also replace the default command
-(`cargo build --release && ./target/release/node-template --dev --ws-external`)
+(`cargo build --release && ./target/release/peaq-node --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
 # Run Substrate node without re-compiling
-./scripts/docker_run.sh ./target/release/node-template --dev --ws-external
+./scripts/docker_run.sh ./target/release/peaq-node --dev --ws-external
 
 # Purge the local dev chain
-./scripts/docker_run.sh ./target/release/node-template purge-chain --dev
+./scripts/docker_run.sh ./target/release/peaq-node purge-chain --dev
 
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
 ```
+
+### Parachain Launch
+
+1. Please use the [peaq-node-builder](https://github.com/peaqnetwork/peaq-node-builder) to build the project
+
+2. Create the docker images
+```sh
+docker build -f scripts/Dockerfile.parachain-launch -t peaqtest .
+```
+
+3. Please use the [parachain-launch](https://github.com/peaqnetwork/parachain-launch) to run the local parachain
