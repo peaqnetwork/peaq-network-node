@@ -17,6 +17,7 @@
 //!
 //! - `set_configuration` - used to change reward distribution configuration parameters
 //! - `set_block_issue_reward` - used to change block issue reward configuration parameter
+//! - `set_hard_cap` - used to change the hard cap parameter
 //!
 //! ### Other
 //!
@@ -45,6 +46,7 @@
 //! }
 //! ```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
+//! 4. Set `HardCap` to hardcap in the genesis configuration.
 //!
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -113,6 +115,10 @@ pub mod pallet {
 	#[pallet::getter(fn block_issue_reward)]
 	pub(crate) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn hard_cap)]
+	pub(crate) type HardCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(crate) fn deposit_event)]
     pub enum Event<T: Config> {
@@ -121,6 +127,9 @@ pub mod pallet {
 
         /// Setup the block issue reward
         BlockIssueRewardChanged(BalanceOf<T>),
+
+        /// Setup the hard cap
+        HardCapChanged(BalanceOf<T>),
     }
 
     #[pallet::error]
@@ -130,19 +139,19 @@ pub mod pallet {
     }
 
     #[pallet::genesis_config]
-	// [TODO] Add the hard cap
 	pub struct GenesisConfig<T: Config> {
         pub reward_config: RewardDistributionConfig,
 		pub block_issue_reward: BalanceOf<T>,
+        pub hard_cap: BalanceOf<T>,
     }
 
     #[cfg(feature = "std")]
-	// [TODO] Add the hard cap
 	impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
                 reward_config: Default::default(),
 				block_issue_reward: Default::default(),
+                hard_cap: Default::default(),
             }
         }
     }
@@ -152,14 +161,13 @@ pub mod pallet {
         fn build(&self) {
             assert!(self.reward_config.is_consistent());
             RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
-
 			BlockIssueReward::<T>::put(self.block_issue_reward.clone());
+            HardCap::<T>::put(self.hard_cap.clone());
         }
     }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-		//[TODO] Setup the hard cap
         /// Sets the reward distribution configuration parameters which will be used from next block reward distribution.
         ///
         /// It is mandatory that all components of configuration sum up to one whole (**100%**),
@@ -210,13 +218,37 @@ pub mod pallet {
 
             Ok(().into())
         }
-    }
 
+        /// Sets the hard cap parameter which will be used from limit the block reward.
+        ///
+        /// - `limit` - hardcap limit param
+        ///
+        /// Emits `HardCapChanged` with config embeded into event itself.
+        ///
+        #[pallet::weight(T::WeightInfo::set_hard_cap())]
+        pub fn set_hard_cap(
+            origin: OriginFor<T>,
+            limit: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            ensure_root(origin)?;
+
+            HardCap::<T>::put(limit.clone());
+
+            Self::deposit_event(Event::<T>::HardCapChanged(
+                limit,
+            ));
+
+            Ok(().into())
+        }
+
+    }
 
     impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
         fn on_timestamp_set(_moment: Moment) {
-			// [TODO] If issue token > hard cap
-			// return
+            if T::Currency::total_issuance() >= Self::hard_cap() {
+                return;
+            }
+
             let inflation = T::Currency::issue(Self::block_issue_reward());
             Self::distribute_rewards(inflation);
         }

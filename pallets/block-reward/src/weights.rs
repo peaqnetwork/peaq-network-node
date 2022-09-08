@@ -9,6 +9,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
     fn set_configuration() -> Weight;
 	fn set_block_issue_reward() -> Weight;
+	fn set_hard_cap() -> Weight;
 }
 
 /// Weights for pallet-reward-distribution using the Substrate node and recommended hardware.
@@ -23,6 +24,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn set_block_issue_reward() -> Weight {
 		T::DbWeight::get().writes(1 as Weight)
 	}
+
+	// Storage: Currency HardCapStorage (r:0 w:1)
+	fn set_hard_cap() -> Weight {
+		T::DbWeight::get().writes(1 as Weight)
+	}
 }
 
 // For backwards compatibility and tests
@@ -34,6 +40,11 @@ impl WeightInfo for () {
 
 	// Storage: Currency BlockIssueRewardStorage (r:0 w:1)
 	fn set_block_issue_reward() -> Weight {
+		RocksDbWeight::get().writes(1 as Weight)
+	}
+
+	// Storage: Currency HardCapStorage (r:0 w:1)
+	fn set_hard_cap() -> Weight {
 		RocksDbWeight::get().writes(1 as Weight)
 	}
 }

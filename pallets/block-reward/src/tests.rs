@@ -178,6 +178,38 @@ pub fn set_block_issue_reward_is_ok() {
 }
 
 #[test]
+pub fn set_hardcap_is_failure() {
+    ExternalityBuilder::build().execute_with(|| {
+        assert_noop!(
+            BlockReward::set_hard_cap(
+                Origin::signed(1), Default::default()
+            ),
+            BadOrigin
+        );
+    })
+}
+
+#[test]
+pub fn set_hardcap_is_ok() {
+    ExternalityBuilder::build().execute_with(|| {
+        let limit = 3_123_456 as Balance;
+        // custom config so it differs from the default one
+        assert_ok!(BlockReward::set_hard_cap(
+            Origin::root(),
+            limit.clone()
+        ));
+        System::assert_last_event(mock::Event::BlockReward(
+            Event::HardCapChanged(limit.clone()),
+        ));
+
+        assert_eq!(
+            HardCap::<TestRuntime>::get(),
+            limit
+        );
+    })
+}
+
+#[test]
 pub fn inflation_and_total_issuance_as_expected() {
     ExternalityBuilder::build().execute_with(|| {
         let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
@@ -193,6 +225,38 @@ pub fn inflation_and_total_issuance_as_expected() {
                 (block + 1) * BLOCK_REWARD + init_issuance
             );
         }
+    })
+}
+
+#[test]
+pub fn harcap_reaches() {
+    ExternalityBuilder::build().execute_with(|| {
+        let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
+        let block_limits = 3 as u128;
+
+        assert_ok!(BlockReward::set_hard_cap(
+            Origin::root(),
+            BLOCK_REWARD * block_limits
+        ));
+
+        for block in 0..block_limits {
+            assert_eq!(
+                <TestRuntime as Config>::Currency::total_issuance(),
+                block * BLOCK_REWARD + init_issuance
+            );
+            BlockReward::on_timestamp_set(0);
+            assert_eq!(
+                <TestRuntime as Config>::Currency::total_issuance(),
+                (block + 1) * BLOCK_REWARD + init_issuance
+            );
+        }
+
+        
+        BlockReward::on_timestamp_set(0);
+        assert_eq!(
+            <TestRuntime as Config>::Currency::total_issuance(),
+            block_limits * BLOCK_REWARD + init_issuance
+        );
     })
 }
 

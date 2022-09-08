@@ -98,6 +98,7 @@ impl pallet_timestamp::Config for TestRuntime {
 
 // A fairly high block reward so we can detect slight changes in reward distribution
 pub(crate) const BLOCK_REWARD: Balance = 1_000_000;
+pub(crate) const HARD_CAP: Balance = 900_000_000;
 
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
@@ -163,6 +164,7 @@ impl ExternalityBuilder {
         pallet_block_reward::GenesisConfig::<TestRuntime> {
             reward_config: pallet_block_reward::RewardDistributionConfig::default(),
             block_issue_reward: BLOCK_REWARD,
+            hard_cap: HARD_CAP,
         }
         .assimilate_storage(&mut storage)
         .ok();
