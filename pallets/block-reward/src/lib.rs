@@ -98,6 +98,7 @@ pub mod pallet {
 
         /// The amount of issuance for each block.
         #[pallet::constant]
+		// [TODO] Remove the constant
         type RewardAmount: Get<BalanceOf<Self>>;
 
         /// The overarching event type.
@@ -126,11 +127,15 @@ pub mod pallet {
     }
 
     #[pallet::genesis_config]
+	// [TODO] Add block reward
+	// [TODO] Add the hard cap
     pub struct GenesisConfig {
         pub reward_config: RewardDistributionConfig,
     }
 
     #[cfg(feature = "std")]
+	// [TODO] Add block reward
+	// [TODO] Add the hard cap
     impl Default for GenesisConfig {
         fn default() -> Self {
             Self {
@@ -149,6 +154,8 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+		//[TODO] Setup the block reward
+		//[TODO] Setup the hard cap
         /// Sets the reward distribution configuration parameters which will be used from next block reward distribution.
         ///
         /// It is mandatory that all components of configuration sum up to one whole (**100%**),
@@ -181,6 +188,8 @@ pub mod pallet {
 
     impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
         fn on_timestamp_set(_moment: Moment) {
+			// [TODO] If issue token > hard cap
+			// return
             let inflation = T::Currency::issue(T::RewardAmount::get());
             Self::distribute_rewards(inflation);
         }
