@@ -16,6 +16,7 @@
 //! ### Dispatchable Function
 //!
 //! - `set_configuration` - used to change reward distribution configuration parameters
+//! - `set_block_issue_reward` - used to change block issue reward configuration parameter
 //!
 //! ### Other
 //!
@@ -43,7 +44,7 @@
 //!     }
 //! }
 //! ```
-//! 3. Set `RewardAmount` to desired block reward value in native currency.
+//! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
 //!
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -52,7 +53,7 @@ pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
 use frame_support::{
-    traits::{Currency, Get, Imbalance, OnTimestampSet},
+    traits::{Currency, Imbalance, OnTimestampSet},
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 use sp_runtime::{
@@ -96,11 +97,6 @@ pub mod pallet {
         /// Used to payout rewards
         type BeneficiaryPayout: BeneficiaryPayout<NegativeImbalanceOf<Self>>;
 
-        /// The amount of issuance for each block.
-        #[pallet::constant]
-		// [TODO] Remove the constant
-        type RewardAmount: Get<BalanceOf<Self>>;
-
         /// The overarching event type.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -113,11 +109,18 @@ pub mod pallet {
     pub type RewardDistributionConfigStorage<T: Config> =
         StorageValue<_, RewardDistributionConfig, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn block_issue_reward)]
+	pub(crate) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
     #[pallet::event]
     #[pallet::generate_deposit(pub(crate) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Distribution configuration has been updated.
         DistributionConfigurationChanged(RewardDistributionConfig),
+
+        /// Setup the block issue reward
+        BlockIssueRewardChanged(BalanceOf<T>),
     }
 
     #[pallet::error]
@@ -127,34 +130,35 @@ pub mod pallet {
     }
 
     #[pallet::genesis_config]
-	// [TODO] Add block reward
 	// [TODO] Add the hard cap
-    pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
         pub reward_config: RewardDistributionConfig,
+		pub block_issue_reward: BalanceOf<T>,
     }
 
     #[cfg(feature = "std")]
-	// [TODO] Add block reward
 	// [TODO] Add the hard cap
-    impl Default for GenesisConfig {
+	impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
                 reward_config: Default::default(),
+				block_issue_reward: Default::default(),
             }
         }
     }
 
     #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             assert!(self.reward_config.is_consistent());
-            RewardDistributionConfigStorage::<T>::put(self.reward_config.clone())
+            RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
+
+			BlockIssueReward::<T>::put(self.block_issue_reward.clone());
         }
     }
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-		//[TODO] Setup the block reward
 		//[TODO] Setup the hard cap
         /// Sets the reward distribution configuration parameters which will be used from next block reward distribution.
         ///
@@ -184,13 +188,36 @@ pub mod pallet {
 
             Ok(().into())
         }
+
+        /// Sets the block issue reward parameters which will be used from next block reward distribution.
+        ///
+        /// - `block_reward` - block reward param
+        ///
+        /// Emits `BlockIssueRewardChanged` with config embeded into event itself.
+        ///
+        #[pallet::weight(T::WeightInfo::set_block_issue_reward())]
+        pub fn set_block_issue_reward(
+            origin: OriginFor<T>,
+            block_reward: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            ensure_root(origin)?;
+
+            BlockIssueReward::<T>::put(block_reward.clone());
+
+            Self::deposit_event(Event::<T>::BlockIssueRewardChanged(
+                block_reward,
+            ));
+
+            Ok(().into())
+        }
     }
+
 
     impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
         fn on_timestamp_set(_moment: Moment) {
 			// [TODO] If issue token > hard cap
 			// return
-            let inflation = T::Currency::issue(T::RewardAmount::get());
+            let inflation = T::Currency::issue(Self::block_issue_reward());
             Self::distribute_rewards(inflation);
         }
     }

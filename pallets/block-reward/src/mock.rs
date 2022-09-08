@@ -3,6 +3,7 @@ use crate::{self as pallet_block_reward, NegativeImbalanceOf};
 use frame_support::{
     construct_runtime, parameter_types, sp_io::TestExternalities, traits::Currency,
     PalletId,
+	traits::{GenesisBuild},
 };
 
 use sp_core::H256;
@@ -138,14 +139,9 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
     }
 }
 
-parameter_types! {
-    pub const RewardAmount: Balance = BLOCK_REWARD;
-}
-
 impl pallet_block_reward::Config for TestRuntime {
     type Event = Event;
     type Currency = Balances;
-    type RewardAmount = RewardAmount;
     type BeneficiaryPayout = BeneficiaryPayout;
     type WeightInfo = ();
 }
@@ -161,6 +157,12 @@ impl ExternalityBuilder {
         // This will cause some initial issuance
         pallet_balances::GenesisConfig::<TestRuntime> {
             balances: vec![(1, 9000), (2, 800), (3, 10000)],
+        }
+        .assimilate_storage(&mut storage)
+        .ok();
+        pallet_block_reward::GenesisConfig::<TestRuntime> {
+            reward_config: pallet_block_reward::RewardDistributionConfig::default(),
+            block_issue_reward: BLOCK_REWARD,
         }
         .assimilate_storage(&mut storage)
         .ok();

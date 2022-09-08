@@ -146,6 +146,38 @@ pub fn set_configuration_is_ok() {
 }
 
 #[test]
+pub fn set_block_issue_reward_is_failure() {
+    ExternalityBuilder::build().execute_with(|| {
+        assert_noop!(
+            BlockReward::set_block_issue_reward(
+                Origin::signed(1), Default::default()
+            ),
+            BadOrigin
+        );
+    })
+}
+
+#[test]
+pub fn set_block_issue_reward_is_ok() {
+    ExternalityBuilder::build().execute_with(|| {
+        let reward = 3_123_456 as Balance;
+        // custom config so it differs from the default one
+        assert_ok!(BlockReward::set_block_issue_reward(
+            Origin::root(),
+            reward.clone()
+        ));
+        System::assert_last_event(mock::Event::BlockReward(
+            Event::BlockIssueRewardChanged(reward.clone()),
+        ));
+
+        assert_eq!(
+            BlockIssueReward::<TestRuntime>::get(),
+            reward
+        );
+    })
+}
+
+#[test]
 pub fn inflation_and_total_issuance_as_expected() {
     ExternalityBuilder::build().execute_with(|| {
         let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
