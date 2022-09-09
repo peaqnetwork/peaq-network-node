@@ -26,6 +26,7 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf, Verify, ConvertInto,
+		AccountIdConversion,
 	},
 	transaction_validity::{
 		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
@@ -67,10 +68,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{
-	traits::AccountIdConversion,
-	Perbill, Permill
-};
+pub use sp_runtime::{Perbill, Permill};
 
 mod precompiles;
 pub use precompiles::PeaqPrecompiles;
@@ -164,9 +162,10 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
 // Contracts price units.
-pub const MILLICENTS: Balance = 1_000_000_000;
-pub const CENTS: Balance = 1_000 * MILLICENTS;
-pub const DOLLARS: Balance = 100 * CENTS;
+pub const TOKEN_DECIMALS : u32 = 18;
+pub const MILLICENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 3);
+pub const CENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2);
+pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
@@ -669,14 +668,9 @@ impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
     }
 }
 
-parameter_types! {
-    pub const RewardAmount: Balance = 1_000_000;
-}
-
 impl pallet_block_reward::Config for Runtime {
     type Currency = Balances;
     type BeneficiaryPayout = BeneficiaryPayout;
-    type RewardAmount = RewardAmount;
     type Event = Event;
     type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
 }
@@ -739,7 +733,7 @@ construct_runtime!(
 
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
 		ParachainInfo: parachain_info::{Pallet, Storage, Config},
-		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config, Event<T>},
+		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
