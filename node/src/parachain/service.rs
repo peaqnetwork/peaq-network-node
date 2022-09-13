@@ -119,7 +119,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 /// be able to perform chain operations.
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &Configuration,
-	build_import_queue: BIQ,
+	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
@@ -228,7 +228,7 @@ where
 	let frontier_block_import =
 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
-	let import_queue = build_import_queue(
+	let import_queue = fn_build_import_queue(
 		client.clone(),
 		frontier_block_import.clone(),
 		config,
@@ -294,8 +294,8 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
-	build_import_queue: BIQ,
-	build_consensus: BIC,
+	fn_build_import_queue: BIQ,
+	fn_build_consensus: BIC,
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<FullClient<RuntimeApi, Executor>>,
@@ -365,7 +365,7 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 	let params = new_partial::<RuntimeApi, Executor, BIQ>(
-		&parachain_config, build_import_queue, target_gas_price)?;
+		&parachain_config, fn_build_import_queue, target_gas_price)?;
 	let (
 		_block_import,
 		filter_pool,
@@ -574,7 +574,7 @@ where
 	let relay_chain_slot_duration = Duration::from_secs(6);
 
 	if is_authority {
-		let parachain_consensus = build_consensus(
+		let parachain_consensus = fn_build_consensus(
 			client.clone(),
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
