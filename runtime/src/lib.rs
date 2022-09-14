@@ -16,10 +16,7 @@ use pallet_grandpa::{
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{
-	crypto::KeyTypeId,
-	OpaqueMetadata, H160, H256, U256,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -27,7 +24,7 @@ use sp_runtime::{
 		PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{
-		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
+		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
 	ApplyExtrinsicResult, MultiSignature,
 };
@@ -45,8 +42,7 @@ pub use frame_support::{
 	traits::{OnUnbalanced, Currency, Imbalance},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, IdentityFee, Weight,
-		GetDispatchInfo
+		ConstantMultiplier, GetDispatchInfo, IdentityFee, Weight,
 	},
 	ConsensusEngineId, StorageValue,
 };
@@ -67,6 +63,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
+pub use peaq_pallet_rbac;
 pub use peaq_pallet_transaction;
 
 //For ink!
@@ -170,10 +167,7 @@ const fn deposit(items: u32, bytes: u32) -> Balance {
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 /// We assume that ~10% of the block weight is consumed by `on_initialize` handlers.
@@ -401,7 +395,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]));
+			return Some(H160::from_slice(&authority_id.encode()[4..24]))
 		}
 		None
 	}
@@ -512,6 +506,7 @@ construct_runtime!(
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
+		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
 
 		// // EVM
@@ -574,11 +569,13 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn validate_self_contained(&self, signed_info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(
+		&self,
+		signed_info: &Self::SignedInfo,
+	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(ref call) => {
-				Some(validate_self_contained_inner(&self, &call, signed_info))
-			}
+			Call::Ethereum(ref call) =>
+				Some(validate_self_contained_inner(&self, &call, signed_info)),
 			_ => None,
 		}
 	}
@@ -598,9 +595,9 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
+				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
+			),
 			_ => None,
 		}
 	}
@@ -609,7 +606,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 fn validate_self_contained_inner(
 	call: &Call,
 	eth_call: &pallet_ethereum::Call<Runtime>,
-	signed_info: &<Call as fp_self_contained::SelfContainedCall>::SignedInfo
+	signed_info: &<Call as fp_self_contained::SelfContainedCall>::SignedInfo,
 ) -> TransactionValidity {
 	if let pallet_ethereum::Call::transact { ref transaction } = eth_call {
 		// Previously, ethereum transactions were contained in an unsigned
@@ -622,11 +619,8 @@ fn validate_self_contained_inner(
 			pallet_ethereum::Transaction::EIP2930(t) => t.input.len(),
 			pallet_ethereum::Transaction::EIP1559(t) => t.input.len(),
 		};
-		let extra_validation = SignedExtra::validate_unsigned(
-			call,
-			&call.get_dispatch_info(),
-			input_len,
-		)?;
+		let extra_validation =
+			SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 		// Then, do the controls defined by the ethereum pallet.
 		// use fp_self_contained::SelfContainedCall as _;
 		let self_contained_validation = eth_call
@@ -636,7 +630,7 @@ fn validate_self_contained_inner(
 		Ok(extra_validation.combine_with(self_contained_validation))
 	} else {
 		Err(TransactionValidityError::Unknown(
-			sp_runtime::transaction_validity::UnknownTransaction::CannotLookup
+			sp_runtime::transaction_validity::UnknownTransaction::CannotLookup,
 		))
 	}
 }
@@ -717,7 +711,7 @@ impl_runtime_apis! {
 
 	impl peaq_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
-		    #[allow(unused_variables)]
+			#[allow(unused_variables)]
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			#[allow(unused_variables)]
 			traced_transaction: &EthereumTransaction,
@@ -1135,6 +1129,11 @@ impl_runtime_apis! {
 impl peaq_pallet_transaction::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+}
+
+impl peaq_pallet_rbac::Config for Runtime {
+	type Event = Event;
+	type EntityId = [u8; 32];
 }
 
 parameter_types! {
