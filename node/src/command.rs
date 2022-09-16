@@ -83,9 +83,18 @@ impl SubstrateCli for Cli {
 		Ok(match id {
 			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
-			path => Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
-				std::path::PathBuf::from(path),
-			)?),
+			path => {
+				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
+					std::path::PathBuf::from(path),
+				)?;
+				if chain_spec.is_dev() {
+					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
+						std::path::PathBuf::from(path),
+					)?)
+				} else {
+					Box::new(chain_spec)
+				}
+			},
 		})
 	}
 
