@@ -1,3 +1,4 @@
+use peaq_dev_runtime::{TOKEN_DECIMALS, DOLLARS};
 use peaq_dev_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
@@ -45,7 +46,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PEAQ".into());
-	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
 	Ok(ChainSpec::from_genesis(
 		"peaq-dev",
@@ -109,7 +110,7 @@ fn configure_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-	parachain_id: ParaId,
+    parachain_id: ParaId,
 ) -> GenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
@@ -152,6 +153,8 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
+			block_issue_reward: 1 * DOLLARS,
+			hard_cap: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {

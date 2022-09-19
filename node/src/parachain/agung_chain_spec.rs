@@ -1,3 +1,4 @@
+use peaq_agung_runtime::{TOKEN_DECIMALS, MILLICENTS, DOLLARS};
 use peaq_agung_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
@@ -28,7 +29,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "AGNG".into());
-	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
 	Ok(ChainSpec::from_genesis(
 		"agung-network",
@@ -204,6 +205,8 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
+			block_issue_reward: 79_09_867 * MILLICENTS,
+			hard_cap: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {
