@@ -1,4 +1,6 @@
-# Substrate Node Template 123
+# Substrate Node Template
+
+#This comment is to  just check git comments. It will be deleted later on
 
 [![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://docs.substrate.io/playground/) [![Matrix](https://img.shields.io/matrix/substrate-technical:matrix.org)](https://matrix.to/#/#substrate-technical:matrix.org)
 
