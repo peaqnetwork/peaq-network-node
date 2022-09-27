@@ -72,6 +72,9 @@ pub use peaq_pallet_transaction;
 //For ink!
 use pallet_contracts::weights::WeightInfo;
 
+//Utility Pallet
+use pallet_utility;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -392,6 +395,15 @@ impl peaq_pallet_did::Config for Runtime {
 	type Time = pallet_timestamp::Pallet<Runtime>;
 }
 
+//Config utility pallet
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
+}
+
+
 // Pallet EVM
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
@@ -513,6 +525,10 @@ construct_runtime!(
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
+
+		Utility: pallet_utility::{Pallet, Call, Event},
+
+		
 
 		// // EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},

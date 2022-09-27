@@ -202,8 +202,12 @@ git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
 branch = 'dev'
 # version = '0.0.1'
 
-
 [dependencies.pallet-multisig]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.19'
+
+[dependencies.pallet-utility]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
@@ -349,6 +353,7 @@ std = [
     'pallet-contracts-rpc-runtime-api/std',
     'peaq-pallet-did/std',
     'peaq-pallet-transaction/std',
+    'pallet-utility/std',
 
 	# ETH support
 	'sp-io/std',
