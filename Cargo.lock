@@ -6852,6 +6852,7 @@ dependencies = [
  "pallet-balances",
  "pallet-base-fee",
  "pallet-block-reward",
+ "pallet-collective",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
@@ -6871,6 +6872,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-xcm",
  "parachain-info",
  "parachain-staking",
  "parity-scale-codec",
@@ -6900,6 +6902,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "xcm-builder",
 ]
 
 [[package]]
@@ -6941,6 +6944,7 @@ dependencies = [
  "pallet-balances",
  "pallet-base-fee",
  "pallet-block-reward",
+ "pallet-collective",
  "pallet-contracts",
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
@@ -6960,6 +6964,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-xcm",
  "parachain-info",
  "parachain-staking",
  "parity-scale-codec",
@@ -6989,6 +6994,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "xcm-builder",
 ]
 
 [[package]]
