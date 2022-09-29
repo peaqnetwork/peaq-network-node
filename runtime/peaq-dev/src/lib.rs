@@ -1279,7 +1279,8 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
-			// [TODO] Add parachain staking, transaction did
+			// [TODO] Add parachain staking, did
+			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1318,7 +1319,8 @@ impl_runtime_apis! {
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
 			// add_benchmark!(params, batches, peaq_pallet_transaction, TransactionModule);
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
-			// [TODO] Add parachain staking, transaction, did
+			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
+			// [TODO] Add parachain staking, did
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -1329,6 +1331,7 @@ impl_runtime_apis! {
 impl peaq_pallet_transaction::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+    type WeightInfo = peaq_pallet_transaction::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {

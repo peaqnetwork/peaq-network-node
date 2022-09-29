@@ -196,8 +196,10 @@ branch = 'dev'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'dev'
+# [TODO] Need to change
+path = '../../../peaq-pallet-transaction'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
+# branch = 'dev'
 # version = '0.0.1'
 
 
@@ -414,10 +416,13 @@ runtime-benchmarks = [
 	'pallet-contracts/runtime-benchmarks',
 	'parachain-staking/runtime-benchmarks',
 	'pallet-block-reward/runtime-benchmarks',
+
 	'pallet-ethereum/runtime-benchmarks',
 	'pallet-collective/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
+
+	'peaq-pallet-transaction/runtime-benchmarks',
 ]
 
 std = [

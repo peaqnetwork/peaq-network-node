@@ -7130,7 +7130,6 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#1b62bb6bd34818757886363fd956b74da2614684"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7141,6 +7140,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
