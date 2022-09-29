@@ -1280,6 +1280,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
+			// [TODO] Add parachain staking
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1318,6 +1319,7 @@ impl_runtime_apis! {
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
 			// add_benchmark!(params, batches, peaq_pallet_transaction, TransactionModule);
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
+			// [TODO] Add parachain staking
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
