@@ -429,9 +429,8 @@ impl pallet_sudo::Config for Runtime {
 /// Config the did in pallets/did
 impl peaq_pallet_did::Config for Runtime {
 	type Event = Event;
-	type Public = sp_runtime::MultiSigner;
-	type Signature = Signature;
 	type Time = pallet_timestamp::Pallet<Runtime>;
+    type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
 }
 
 // Pallet EVM
@@ -1282,6 +1281,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
 			// [TODO] Add parachain staking
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
+			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1315,12 +1315,12 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, peaq_pallet_did, Timestamp);
 			// add_benchmark!(params, batches, pallet_multisig, MultiSig);
 			// add_benchmark!(params, batches, pallet_template, TemplateModule);
 			// add_benchmark!(params, batches, peaq_pallet_transaction, TransactionModule);
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
+			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
 			// [TODO] Add parachain staking
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

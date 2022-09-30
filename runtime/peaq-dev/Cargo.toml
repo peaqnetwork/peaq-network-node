@@ -190,8 +190,10 @@ branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.peaq-pallet-did]
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
+# [TODO] Need to change
+path = '../../../peaq-pallet-did'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+# branch = 'dev'
 # version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
@@ -423,6 +425,7 @@ runtime-benchmarks = [
 	'xcm-builder/runtime-benchmarks',
 
 	'peaq-pallet-transaction/runtime-benchmarks',
+	'peaq-pallet-did/runtime-benchmarks',
 ]
 
 std = [
