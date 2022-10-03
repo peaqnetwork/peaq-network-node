@@ -7135,6 +7135,7 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "parity-scale-codec",
+ "regex",
  "scale-info",
  "sp-core",
  "sp-io",
