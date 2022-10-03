@@ -1278,6 +1278,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			list_benchmark!(list, extra, pallet_multisig, MultiSig);
 			list_benchmark!(list, extra, parachain_staking, ParachainStaking);
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
@@ -1315,7 +1316,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			// add_benchmark!(params, batches, pallet_multisig, MultiSig);
+			add_benchmark!(params, batches, pallet_multisig, MultiSig);
 			add_benchmark!(params, batches, parachain_staking, ParachainStaking);
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);

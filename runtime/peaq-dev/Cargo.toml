@@ -414,6 +414,7 @@ runtime-benchmarks = [
 	'hex-literal',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
+	'pallet-multisig/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
 	'pallet-contracts/runtime-benchmarks',
 	'parachain-staking/runtime-benchmarks',
