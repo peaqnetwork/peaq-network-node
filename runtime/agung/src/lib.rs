@@ -57,6 +57,7 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
+	EnsureRoot,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -81,6 +82,11 @@ use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
+
+// For XCM
+pub mod xcm_config;
+use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
+use xcm_executor::XcmExecutor;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -536,6 +542,7 @@ impl pallet_randomness_collective_flip::Config for Runtime {}
 
 // Parachain
 parameter_types! {
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
 
@@ -543,16 +550,33 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
-	type OutboundXcmpMessageSource = ();
-	type DmpMessageHandler = ();
+	type OutboundXcmpMessageSource = XcmpQueue;
+	type DmpMessageHandler = DmpQueue;
 	type ReservedDmpWeight = ReservedDmpWeight;
-	type XcmpMessageHandler = ();
-	type ReservedXcmpWeight = ();
+	type XcmpMessageHandler = XcmpQueue;
+	type ReservedXcmpWeight = ReservedXcmpWeight;
 }
 
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
+
+impl cumulus_pallet_xcmp_queue::Config for Runtime {
+	type Event = Event;
+	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type ChannelInfo = ParachainSystem;
+	type VersionWrapper = ();
+	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+	type ControllerOrigin = EnsureRoot<AccountId>;
+	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
+	type WeightInfo = ();
+}
+
+impl cumulus_pallet_dmp_queue::Config for Runtime {
+	type Event = Event;
+	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+}
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
@@ -696,7 +720,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
     }
 }
 
-
+// [TODO] Add pallet index = 0, = 1, ...
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -733,6 +757,12 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
 		ParachainInfo: parachain_info::{Pallet, Storage, Config},
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>},
+
+		// XCM helpers.
+		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>},
+		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config},
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin},
+		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -1279,6 +1309,8 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			list_benchmark!(list, extra, pallet_multisig, MultiSig);
+			list_benchmark!(list, extra, cumulus_pallet_xcmp_queue, XcmpQueue);
+
 			list_benchmark!(list, extra, parachain_staking, ParachainStaking);
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
@@ -1317,6 +1349,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			add_benchmark!(params, batches, pallet_multisig, MultiSig);
+			add_benchmark!(params, batches, cumulus_pallet_xcmp_queue, XcmpQueue);
+
 			add_benchmark!(params, batches, parachain_staking, ParachainStaking);
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);

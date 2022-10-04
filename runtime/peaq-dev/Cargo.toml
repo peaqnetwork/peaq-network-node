@@ -403,8 +403,6 @@ default-features = false
 branch = "peaq-polkadot-v0.9.19"
 
 
-
-
 # Benchmark
 [dependencies.pallet-collective]
 git = "https://github.com/peaqnetwork/substrate"
