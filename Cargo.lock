@@ -4502,6 +4502,7 @@ name = "pallet-multisig"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -4995,7 +4996,6 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#eda23b89701a039a6c736027b449184578abbf4e"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5046,7 +5046,6 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#1b62bb6bd34818757886363fd956b74da2614684"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5057,6 +5056,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

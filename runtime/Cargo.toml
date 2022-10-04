@@ -192,14 +192,18 @@ branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.peaq-pallet-did]
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
+# [TODO] Need to change
+path = '../../peaq-pallet-did'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+# branch = 'dev'
 # version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'dev'
+# [TODO] Need to change
+path = '../../peaq-pallet-transaction'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
+# branch = 'dev'
 # version = '0.0.1'
 
 [dependencies.peaq-pallet-rbac]
@@ -326,10 +330,16 @@ runtime-benchmarks = [
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'pallet-contracts/runtime-benchmarks',
+    'pallet-multisig/runtime-benchmarks',
+
+    'pallet-ethereum/runtime-benchmarks',
+    'peaq-pallet-transaction/runtime-benchmarks',
+    'peaq-pallet-did/runtime-benchmarks',
 ]
+
 std = [
     'codec/std',
-	"serde",
+   "serde",
 
     'scale-info/std',
     'frame-executive/std',
@@ -364,31 +374,31 @@ std = [
     'peaq-pallet-rbac/std',
     'peaq-pallet-storage/std',
 
-	# ETH support
-	'sp-io/std',
-	'fp-evm/std',
-	'fp-self-contained/std',
-	'pallet-base-fee/std',
-	'pallet-dynamic-fee/std',
-	'pallet-ethereum/std',
-	'pallet-evm/std',
-	'pallet-evm-precompile-simple/std',
-	'pallet-evm-precompile-modexp/std',
-	'pallet-evm-precompile-sha3fips/std',
-	'sp-std/std',
-	'fp-rpc/std',
+   # ETH support
+   'sp-io/std',
+   'fp-evm/std',
+   'fp-self-contained/std',
+   'pallet-base-fee/std',
+   'pallet-dynamic-fee/std',
+   'pallet-ethereum/std',
+   'pallet-evm/std',
+   'pallet-evm-precompile-simple/std',
+   'pallet-evm-precompile-modexp/std',
+   'pallet-evm-precompile-sha3fips/std',
+   'sp-std/std',
+   'fp-rpc/std',
 
-	# Tracing
-	'evm-tracing-events/std',
-	'peaq-evm-tracer/std',
-	'peaq-rpc-primitives-debug/std',
-	'peaq-rpc-primitives-txpool/std',
+   # Tracing
+   'evm-tracing-events/std',
+   'peaq-evm-tracer/std',
+   'peaq-rpc-primitives-debug/std',
+   'peaq-rpc-primitives-txpool/std',
 ]
 
 # Must be enabled for tracing runtimes only
 evm-tracing = [
-	'evm-tracing-events',
-	'peaq-evm-tracer',
-	'rlp',
-	'sha3'
+   'evm-tracing-events',
+   'peaq-evm-tracer',
+   'rlp',
+   'sha3'
 ]
