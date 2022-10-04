@@ -20,6 +20,9 @@ use std::str::FromStr;
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
+/// The default XCM version to set in genesis config.
+const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
+
 fn session_keys(aura: AuraId) -> peaq_agung_runtime::opaque::SessionKeys {
     peaq_agung_runtime::opaque::SessionKeys { aura }
 }
@@ -232,5 +235,8 @@ fn configure_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
+		polkadot_xcm: peaq_agung_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
 	}
 }

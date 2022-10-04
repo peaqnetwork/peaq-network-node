@@ -7172,6 +7172,7 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tokio",
  "url 2.2.2",
+ "xcm",
 ]
 
 [[package]]

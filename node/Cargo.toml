@@ -356,6 +356,13 @@ path = '../pallets/block-reward'
 default-features = false
 
 
+# XCM
+[dependencies.xcm]
+git = "https://github.com/peaqnetwork/polkadot"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+
 [features]
 default = [
 	"aura",
