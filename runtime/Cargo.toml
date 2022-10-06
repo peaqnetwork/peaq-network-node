@@ -208,6 +208,12 @@ git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
 branch = 'dev'
 version = '0.0.1'
 
+[dependencies.peaq-pallet-storage]
+git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+default-features = false
+branch = 'dev'
+version = '0.1.0'
+
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -356,6 +362,7 @@ std = [
     'peaq-pallet-did/std',
     'peaq-pallet-transaction/std',
     'peaq-pallet-rbac/std',
+    'peaq-pallet-storage/std',
 
 	# ETH support
 	'sp-io/std',
