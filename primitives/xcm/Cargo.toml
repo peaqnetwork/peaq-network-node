@@ -1,0 +1,41 @@
+[package]
+name = "peaq-primitives-xcm"
+version = "3.0.0-polkadot-v0.9.19"
+authors = ["peaq network <https://github.com/peaqnetwork>"]
+homepage = 'https://peaq.network/'
+edition = "2021"
+
+[dependencies]
+bstringify = "0.1.2"
+serde = { version = "1.0.124", optional = true }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+num_enum = { version = "0.5.1", default-features = false }
+sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
+sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
+sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
+evm = { version = "0.35.0", default-features = false, features = ["with-codec"] }
+scale-info = { version = "2.1", features = ["derive"] }
+# chainbridge = { git = "https://github.com/OAK-Foundation/chainbridge-substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
+
+# [dependencies]
+sha3 = { version = "0.9.1", default-features = false }
+serde_json = { version = "1.0", default-features = false }
+# primitives-proc-macro = { version = "1.1.0", path = "./proc-macro" }
+frame-support = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19" }
+
+[features]
+default = ["std"]
+std = [
+	"serde",
+	"codec/std",
+	"num_enum/std",
+	"sp-runtime/std",
+	"sp-core/std",
+	"sp-std/std",
+	"evm/std",
+	"evm/with-serde",
+# 	"chainbridge/std",
+]
+# runtime-benchmarks = [
+# 	"chainbridge/runtime-benchmarks",
+# ]
