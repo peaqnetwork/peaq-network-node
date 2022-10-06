@@ -212,6 +212,7 @@ version = '0.0.1'
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 default-features = false
 branch = 'dev'
+version = '0.1.0'
 
 
 [dependencies.pallet-multisig]
