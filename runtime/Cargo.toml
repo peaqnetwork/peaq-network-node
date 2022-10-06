@@ -211,7 +211,7 @@ version = '0.0.1'
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 default-features = false
-branch = 'feature/1203021191112352_initial-peaq-storage-pallet'
+branch = 'dev'
 
 
 [dependencies.pallet-multisig]
