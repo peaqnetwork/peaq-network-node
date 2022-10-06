@@ -4969,6 +4969,7 @@ dependencies = [
  "peaq-evm-tracer",
  "peaq-pallet-did",
  "peaq-pallet-rbac",
+ "peaq-pallet-storage",
  "peaq-pallet-transaction",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
@@ -5012,6 +5013,9 @@ dependencies = [
 name = "peaq-pallet-rbac"
 version = "0.0.1"
 source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#d71333d3e0ffdf951eb21bfab6e660012fd7a03d"
+name = "peaq-pallet-storage"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feature/1203021191112352_initial-peaq-storage-pallet#d5489f9f7088532fe4e1b0923925ec1c30131636"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

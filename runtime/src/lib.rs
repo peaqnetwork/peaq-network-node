@@ -65,6 +65,7 @@ use peaq_rpc_primitives_txpool::TxPoolResponse;
 pub use peaq_pallet_did;
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_transaction;
+pub use peaq_pallet_storage;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -386,6 +387,11 @@ impl peaq_pallet_did::Config for Runtime {
 	type Time = pallet_timestamp::Pallet<Runtime>;
 }
 
+// Config the storage in pallets/storage
+impl peaq_pallet_storage::Config for Runtime {
+	type Event = Event;
+}
+
 // Pallet EVM
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
@@ -505,6 +511,7 @@ construct_runtime!(
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
+		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>},
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>},
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
