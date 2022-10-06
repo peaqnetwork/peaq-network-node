@@ -22,16 +22,16 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable,
 		// NumberFor,
 		OpaqueKeys,
-		PostDispatchInfoOf, Verify, ConvertInto,
+		PostDispatchInfoOf, ConvertInto,
 		AccountIdConversion,
 	},
 	transaction_validity::{
 		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
 	},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult,
 	Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*};
@@ -79,6 +79,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use peaq_rpc_primitives_txpool::TxPoolResponse;
+use peaq_primitives_xcm;
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
@@ -92,27 +93,27 @@ use xcm_executor::XcmExecutor;
 use pallet_contracts::weights::WeightInfo;
 
 /// An index to a block.
-pub type BlockNumber = u32;
+type BlockNumber = peaq_primitives_xcm::BlockNumber;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
+pub type Signature = peaq_primitives_xcm::Signature;
 
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type AccountId = peaq_primitives_xcm::AccountId;
 
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
-pub type AccountIndex = u32;
+// type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
 /// Balance of an account.
-pub type Balance = u128;
+pub type Balance = peaq_primitives_xcm::Balance;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+type Index = peaq_primitives_xcm::Nonce;
 
 /// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
+type Hash = peaq_primitives_xcm::Hash;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -121,8 +122,7 @@ pub type Hash = sp_core::H256;
 pub mod opaque {
 	use super::*;
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	pub type Block = peaq_primitives_xcm::NativeBlock;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -260,7 +260,7 @@ impl frame_system::Config for Runtime {
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
 	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	type Header = peaq_primitives_xcm::Header;
 	/// The ubiquitous event type.
 	type Event = Event;
 	/// The ubiquitous origin type.
@@ -769,9 +769,9 @@ construct_runtime!(
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+type Address = peaq_primitives_xcm::Address;
 /// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+type Header = peaq_primitives_xcm::Header;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.

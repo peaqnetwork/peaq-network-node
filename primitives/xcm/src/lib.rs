@@ -30,7 +30,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature, RuntimeDebug,
 };
-use sp_std::{convert::Into, prelude::*};
+use sp_std::prelude::*;
 
 pub use currency::{CurrencyId, DexShare, TokenSymbol};
 
@@ -60,6 +60,11 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 /// them.
 pub type AccountIndex = u32;
 
+/// The address format for describing accounts.
+// [TODO] Need to check the AccountIndex, because it induce thhe buidl failurs
+// pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+
 /// Index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
@@ -70,31 +75,31 @@ pub type Hash = sp_core::H256;
 pub type Moment = u64;
 
 /// Counter for the number of eras that have passed.
-pub type EraIndex = u32;
+/// pub type EraIndex = u32;
 
 /// Balance of an account.
 pub type Balance = u128;
 
 /// Signed version of Balance
-pub type Amount = i128;
+/// pub type Amount = i128;
 
 /// Auction ID
-pub type AuctionId = u32;
+/// pub type AuctionId = u32;
 
 /// Share type
-pub type Share = u128;
+/// pub type Share = u128;
 
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
 /// Block type.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 
 /// Block ID.
-pub type BlockId = generic::BlockId<Block>;
+/// pub type BlockId = generic::BlockId<NativeBlock>;
 
 /// Opaque, encoded, unchecked extrinsic.
-pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

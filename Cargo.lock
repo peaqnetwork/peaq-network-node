@@ -890,6 +890,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bstringify"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd769563b4ea2953e2825c9e6b7470a5f55f67e0be00030bf3e390a2a6071f64"
+
+[[package]]
 name = "build-helper"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7033,6 +7039,7 @@ dependencies = [
  "peaq-evm-tracer",
  "peaq-pallet-did",
  "peaq-pallet-transaction",
+ "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
  "polkadot-parachain",
@@ -7125,6 +7132,7 @@ dependencies = [
  "peaq-agung-runtime",
  "peaq-dev-runtime",
  "peaq-primitives-ext",
+ "peaq-primitives-xcm",
  "peaq-rpc-debug",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
@@ -7218,6 +7226,24 @@ dependencies = [
  "parity-scale-codec",
  "sp-externalities",
  "sp-runtime-interface",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-primitives-xcm"
+version = "3.0.0-polkadot-v0.9.19"
+dependencies = [
+ "bstringify",
+ "evm",
+ "frame-support",
+ "num_enum",
+ "parity-scale-codec",
+ "primitives-proc-macro",
+ "serde",
+ "serde_json",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -8719,6 +8745,17 @@ dependencies = [
  "impl-serde",
  "scale-info",
  "uint",
+]
+
+[[package]]
+name = "primitives-proc-macro"
+version = "1.3.0"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro2",
+ "quote",
+ "sha3 0.9.1",
+ "syn",
 ]
 
 [[package]]

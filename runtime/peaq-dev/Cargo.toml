@@ -409,6 +409,12 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.19"
 default-features = false
 
+# Customized
+[dependencies.peaq-primitives-xcm]
+path = "../../primitives/xcm"
+default-features = false
+
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -515,6 +521,9 @@ std = [
     "xcm-executor/std",
 	"cumulus-pallet-xcm/std",
 	"cumulus-pallet-xcmp-queue/std",
+
+	# Customized
+	"peaq-primitives-xcm/std",
 ]
 
 # Must be enabled for tracing runtimes only

@@ -363,6 +363,12 @@ default-features = false
 branch = "peaq-polkadot-v0.9.19"
 
 
+# Customized
+[dependencies.peaq-primitives-xcm]
+path = "../primitives/xcm"
+default-features = false
+
+
 [features]
 default = [
 	"aura",
