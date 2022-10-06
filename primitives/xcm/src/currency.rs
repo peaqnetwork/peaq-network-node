@@ -129,8 +129,8 @@ macro_rules! create_currency_id {
 
 			let mut lp_tokens = vec![
 				Token {
-					symbol: "LP_ACA_AUSD".to_string(),
-					address: EvmAddress::try_from(CurrencyId::DexShare(DexShare::Token(ACA), DexShare::Token(AUSD))).unwrap(),
+					symbol: "LP_PEAQ_AUSD".to_string(),
+					address: EvmAddress::try_from(CurrencyId::DexShare(DexShare::Token(PEAQ), DexShare::Token(AUSD))).unwrap(),
 				},
 				Token {
 					symbol: "LP_DOT_AUSD".to_string(),
@@ -181,7 +181,7 @@ create_currency_id! {
 	#[repr(u8)]
 	pub enum TokenSymbol {
 		// 0 - 19: Acala & Polkadot native tokens
-		ACA("Acala", 12) = 0,
+		PEAQ("PEAQ", 18) = 0,
 		AUSD("Acala Dollar", 12) = 1,
 		DOT("Polkadot", 10) = 2,
 		LDOT("Liquid DOT", 10) = 3,

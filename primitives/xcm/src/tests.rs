@@ -26,12 +26,12 @@ use std::{
 
 #[test]
 fn trading_pair_works() {
-	let aca = CurrencyId::Token(TokenSymbol::ACA);
+	let aca = CurrencyId::Token(TokenSymbol::PEAQ);
 	let ausd = CurrencyId::Token(TokenSymbol::AUSD);
 	let erc20 = CurrencyId::Erc20(EvmAddress::from_str("0x0000000000000000000000000000000000000000").unwrap());
-	let aca_ausd_lp = CurrencyId::DexShare(DexShare::Token(TokenSymbol::ACA), DexShare::Token(TokenSymbol::AUSD));
+	let aca_ausd_lp = CurrencyId::DexShare(DexShare::Token(TokenSymbol::PEAQ), DexShare::Token(TokenSymbol::AUSD));
 	let erc20_aca_lp = CurrencyId::DexShare(
-		DexShare::Token(TokenSymbol::ACA),
+		DexShare::Token(TokenSymbol::PEAQ),
 		DexShare::Erc20(EvmAddress::from_str("0x0000000000000000000000000000000000000000").unwrap()),
 	);
 
@@ -66,14 +66,14 @@ fn trading_pair_works() {
 #[test]
 fn currency_id_try_from_vec_u8_works() {
 	assert_ok!(
-		"ACA".as_bytes().to_vec().try_into(),
-		CurrencyId::Token(TokenSymbol::ACA)
+		"PEAQ".as_bytes().to_vec().try_into(),
+		CurrencyId::Token(TokenSymbol::PEAQ)
 	);
 }
 
 #[test]
 fn currency_id_into_u32_works() {
-	let currency_id = DexShare::Token(TokenSymbol::ACA);
+	let currency_id = DexShare::Token(TokenSymbol::PEAQ);
 	assert_eq!(Into::<u32>::into(currency_id), 0x00);
 
 	let currency_id = DexShare::Token(TokenSymbol::AUSD);
@@ -95,13 +95,13 @@ fn currency_id_into_u32_works() {
 #[test]
 fn currency_id_try_into_evm_address_works() {
 	assert_eq!(
-		EvmAddress::try_from(CurrencyId::Token(TokenSymbol::ACA,)),
+		EvmAddress::try_from(CurrencyId::Token(TokenSymbol::PEAQ,)),
 		Ok(EvmAddress::from_str("0x0000000000000000000000000000000001000000").unwrap())
 	);
 
 	assert_eq!(
 		EvmAddress::try_from(CurrencyId::DexShare(
-			DexShare::Token(TokenSymbol::ACA),
+			DexShare::Token(TokenSymbol::PEAQ),
 			DexShare::Token(TokenSymbol::AUSD),
 		)),
 		Ok(EvmAddress::from_str("0x0000000000000000000000010000000000000001").unwrap())
