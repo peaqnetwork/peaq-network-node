@@ -81,8 +81,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use peaq_primitives_xcm;
 pub use peaq_primitives_xcm::{
-	Amount, CurrencyId, currency,
-	// TokenSymbol
+	Amount, CurrencyId, currency, TokenSymbol
 };
 
 pub use peaq_pallet_did;
@@ -94,6 +93,7 @@ use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 use xcm_executor::XcmExecutor;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
+pub mod constants;
 /*
  * pub use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
  * pub use cumulus_primitives_core::ParaId;
@@ -779,6 +779,10 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
+impl orml_unknown_tokens::Config for Runtime {
+	type Event = Event;
+}
+
 // [TODO] Add pallet index = 0, = 1, ...
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -825,6 +829,8 @@ construct_runtime!(
 
 		Currencies: orml_currencies::{Pallet, Call, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 202,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
 	}
 );
 

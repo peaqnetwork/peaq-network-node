@@ -422,10 +422,10 @@ path = "../../../open-runtime-module-library/xtokens"
 # git = "https://github.com/open-web3-stack/open-runtime-module-library"
 default-features = false
 
-# [dependencies.orml-unknown-tokens]
-# path = "../../../open-runtime-module-library/unknown-tokens"
-# # git = "https://github.com/open-web3-stack/open-runtime-module-library"
-# default-features = false
+[dependencies.orml-unknown-tokens]
+path = "../../../open-runtime-module-library/unknown-tokens"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
 
 [dependencies.orml-xcm-support]
 path = "../../../open-runtime-module-library/xcm-support"
