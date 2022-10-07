@@ -19,25 +19,6 @@
 //! A set of constant values used in dev runtime.
 
 /// Time and blocks.
-pub mod time {
-	// use primitives::{Balance, BlockNumber, Moment};
-	// use runtime_common::{dollar, millicent, KAR};
-
-	// pub const SECS_PER_BLOCK: Moment = 12;
-	// pub const MILLISECS_PER_BLOCK: Moment = SECS_PER_BLOCK * 1000;
-
-	// // These time units are defined in number of blocks.
-	// pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
-	// pub const HOURS: BlockNumber = MINUTES * 60;
-	// pub const DAYS: BlockNumber = HOURS * 24;
-
-	// pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-
-	// pub fn deposit(items: u32, bytes: u32) -> Balance {
-	// 	items as Balance * 2 * dollar(KAR) + (bytes as Balance) * 30 * millicent(KAR)
-	// }
-}
-
 /// Fee-related
 pub mod fee {
 	use frame_support::weights::{
@@ -45,13 +26,9 @@ pub mod fee {
 	};
 	use peaq_primitives_xcm::{Balance, CurrencyId};
 	use peaq_primitives_xcm::currency::TokenInfo;
-	use peaq_primitives_xcm::currency::KAR;
+	use peaq_primitives_xcm::currency::PEAQ;
 	// use runtime_common::{cent, KAR};
 	// use smallvec::smallvec;
-	use sp_runtime::Perbill;
-
-	/// The block saturation level. Fees will be updates based on this value.
-	pub const TARGET_BLOCK_FULLNESS: Perbill = Perbill::from_percent(25);
 
 	// TODO: make those const fn
 	pub fn dollar(currency_id: CurrencyId) -> Balance {
@@ -63,7 +40,7 @@ pub mod fee {
 	}
 
 	fn base_tx_in_kar() -> Balance {
-		cent(KAR) / 10
+		cent(PEAQ) / 10
 	}
 
 	/// Handles converting a weight scalar to a fee value, based on the scale

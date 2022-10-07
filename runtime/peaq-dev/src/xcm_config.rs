@@ -381,7 +381,7 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 		use TokenSymbol::*;
 		match id {
 			Token(DOT) => Some(MultiLocation::parent()),
-			Token(PEAQ) | Token(AUSD) | Token(LDOT) | Token(RENBTC) => Some(native_currency_location(id)),
+			Token(PEAQ) | Token(AUSD) => Some(native_currency_location(id)),
 			_ => None,
 		}
 	}
@@ -405,7 +405,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		 *             if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
 		 *                 // check if `currency_id` is cross-chain asset
 		 *                 match currency_id {
-		 *                     Token(PEAQ) | Token(AUSD) | Token(LDOT) | Token(RENBTC) => Some(currency_id),
+		 *                     Token(PEAQ) | Token(AUSD) => Some(currency_id),
 		 *                     _ => None,
 		 *                 }
 		 *             } else {
@@ -426,7 +426,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
 					// check if `currency_id` is cross-chain asset
 					match currency_id {
-						Token(PEAQ) | Token(AUSD) | Token(LDOT) | Token(RENBTC) => Some(currency_id),
+						Token(PEAQ) | Token(AUSD) => Some(currency_id),
 						_ => None,
 					}
 				} else {
