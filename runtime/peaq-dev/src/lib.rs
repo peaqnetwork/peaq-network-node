@@ -80,6 +80,10 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use peaq_primitives_xcm;
+pub use peaq_primitives_xcm::{
+	Amount, CurrencyId, currency,
+	// TokenSymbol
+};
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
@@ -88,6 +92,13 @@ pub use peaq_pallet_transaction;
 pub mod xcm_config;
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 use xcm_executor::XcmExecutor;
+use orml_currencies::BasicCurrencyAdapter;
+use orml_traits::parameter_type_with_key;
+/*
+ * pub use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
+ * pub use cumulus_primitives_core::ParaId;
+ * use orml_traits::MultiCurrency;
+ */
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -720,6 +731,54 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
     }
 }
 
+parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+}
+
+impl orml_currencies::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type WeightInfo = ();
+}
+
+pub fn get_all_module_accounts() -> Vec<AccountId> {
+	vec![
+		PotId::get().into_account(),
+	]
+}
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		get_all_module_accounts().contains(a)
+	}
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		0
+	};
+}
+
+parameter_types! {
+	pub TestAccount: AccountId = PotId::get().into_account();
+}
+
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo =  ();
+	type ExistentialDeposits = ExistentialDeposits;
+	// [TODO]
+	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
+}
+
 // [TODO] Add pallet index = 0, = 1, ...
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -763,6 +822,9 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config},
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin},
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>},
+
+		Currencies: orml_currencies::{Pallet, Call, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 	}
 );
 

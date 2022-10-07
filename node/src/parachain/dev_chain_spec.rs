@@ -3,7 +3,7 @@ use peaq_dev_runtime::{
 	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
 	staking, Balance, ParachainStakingConfig,
-	BlockRewardConfig,
+	BlockRewardConfig, TokensConfig, currency,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -185,6 +185,16 @@ fn configure_genesis(
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
+		tokens: TokensConfig {
+			balances: endowed_accounts
+			.iter()
+			.flat_map(|x| {
+				vec![
+					(x.clone(), currency::DOT, 10u128.pow(16)),
+				]
+			})
+			.collect(),
 		},
 	}
 }

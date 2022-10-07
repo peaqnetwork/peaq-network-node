@@ -81,7 +81,7 @@ pub type Moment = u64;
 pub type Balance = u128;
 
 /// Signed version of Balance
-/// pub type Amount = i128;
+pub type Amount = i128;
 
 /// Auction ID
 /// pub type AuctionId = u32;
