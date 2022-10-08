@@ -31,7 +31,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-pub use currency::{CurrencyId, DexShare, TokenSymbol};
+pub use currency::{CurrencyId, TokenSymbol};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -126,12 +126,6 @@ impl TradingPair {
 	pub fn second(&self) -> CurrencyId {
 		self.1
 	}
-
-	// [TODO] We didn't use it
-	pub fn dex_share_currency_id(&self) -> CurrencyId {
-		CurrencyId::join_dex_share_currency_id(self.first(), self.second())
-			.expect("shouldn't be invalid! guaranteed by construction")
-	}
 }
 
 impl Decode for TradingPair {
@@ -142,4 +136,3 @@ impl Decode for TradingPair {
 }
 
 pub const MIRRORED_TOKENS_ADDRESS_START: u64 = 0x1000000;
-pub const H160_PREFIX_DEXSHARE: [u8; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];

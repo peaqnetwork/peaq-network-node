@@ -7349,7 +7349,6 @@ dependencies = [
  "frame-support",
  "num_enum",
  "parity-scale-codec",
- "primitives-proc-macro",
  "scale-info",
  "serde",
  "serde_json",
@@ -8857,17 +8856,6 @@ dependencies = [
  "impl-serde",
  "scale-info",
  "uint",
-]
-
-[[package]]
-name = "primitives-proc-macro"
-version = "1.3.0"
-dependencies = [
- "proc-macro-crate 1.1.3",
- "proc-macro2",
- "quote",
- "sha3 0.9.1",
- "syn",
 ]
 
 [[package]]
