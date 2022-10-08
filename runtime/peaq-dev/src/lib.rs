@@ -57,7 +57,6 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -89,16 +88,9 @@ pub use peaq_pallet_transaction;
 
 // For XCM
 pub mod xcm_config;
-use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
-use xcm_executor::XcmExecutor;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
-/*
- * pub use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
- * pub use cumulus_primitives_core::ParaId;
- * use orml_traits::MultiCurrency;
- */
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
@@ -572,23 +564,6 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
-	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
-	type WeightInfo = ();
-}
-
-impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-}
-
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 }
@@ -773,7 +748,6 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type WeightInfo =  ();
 	type ExistentialDeposits = ExistentialDeposits;
-	// [TODO]
 	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;

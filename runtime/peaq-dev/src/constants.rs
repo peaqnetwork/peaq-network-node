@@ -39,7 +39,7 @@ pub mod fee {
 		dollar(currency_id) / 100
 	}
 
-	fn base_tx_in_kar() -> Balance {
+	fn base_tx_in_peaq() -> Balance {
 		cent(PEAQ) / 10
 	}
 
@@ -70,10 +70,13 @@ pub mod fee {
 	// 	}
 	// }
 
-	pub fn ksm_per_second() -> u128 {
+	pub fn peaq_per_second() -> u128 {
 		let base_weight = Balance::from(ExtrinsicBaseWeight::get());
 		let base_tx_per_second = (WEIGHT_PER_SECOND as u128) / base_weight;
-		let kar_per_second = base_tx_per_second * base_tx_in_kar();
-		kar_per_second / 100
+		base_tx_per_second * base_tx_in_peaq()
+	}
+
+	pub fn dot_per_second() -> u128 {
+		peaq_per_second() / 100
 	}
 }
