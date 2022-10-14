@@ -27,14 +27,14 @@ use std::{
 #[test]
 fn trading_pair_works() {
 	let peaq = CurrencyId::Token(TokenSymbol::PEAQ);
-	let ausd = CurrencyId::Token(TokenSymbol::AUSD);
+	let aca = CurrencyId::Token(TokenSymbol::ACA);
 	assert_eq!(
-		TradingPair::from_currency_ids(ausd, peaq).unwrap(),
-		TradingPair(peaq, ausd)
+		TradingPair::from_currency_ids(aca, peaq).unwrap(),
+		TradingPair(peaq, aca)
 	);
 	assert_eq!(
-		TradingPair::from_currency_ids(peaq, ausd).unwrap(),
-		TradingPair(peaq, ausd)
+		TradingPair::from_currency_ids(peaq, aca).unwrap(),
+		TradingPair(peaq, aca)
 	);
 	assert_eq!(TradingPair::from_currency_ids(peaq, peaq), None);
 }

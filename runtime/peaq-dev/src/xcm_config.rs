@@ -39,20 +39,20 @@ use xcm::latest::MultiAsset;
 use frame_support::WeakBoundedVec;
 use frame_support::pallet_prelude::ConstU32;
 
-pub const ROC: Balance = 1_000_000_000_000;
+// pub const ROC: Balance = 1_000_000_000_000;
 
 parameter_types! {
 	pub const RocLocation: MultiLocation = MultiLocation::parent();
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-    pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
-    // The parent (Relay-chain) origin converts to the parent `AccountId`.
+	// The parent (Relay-chain) origin converts to the parent `AccountId`.
 	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
@@ -107,27 +107,27 @@ parameter_types! {
 	);
 
 	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
-	/*
-	 * pub AusdPerSecond: (AssetId, u128) = (
-	 *     local_currency_location(AUSD).into(),
-	 *     // aUSD:DOT = 40:1
-	 *     dot_per_second() * 40
-	 * );
-	 */
+	pub AcaPerSecond: (AssetId, u128) = (
+		native_currency_location(3000 as u32,
+		peaq_primitives_xcm::CurrencyId::Token(TokenSymbol::ACA).encode()).into(),
+		// aUSD:DOT = 40:1
+		dot_per_second() * 1
+	);
 	pub BaseRate: u128 = peaq_per_second();
 }
 
 pub type Trader = (
 	FixedRateOfFungible<PeaqPerSecond, ToTreasury>,
 	FixedRateOfFungible<DotPerSecond, ToTreasury>,
+	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
 );
 
 /*
  * match_types! {
- *     pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
- *         MultiLocation { parents: 1, interior: Here } |
- *         MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
- *     };
+ *	 pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
+ *		 MultiLocation { parents: 1, interior: Here } |
+ *		 MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
+ *	 };
  * }
  *
  */
@@ -293,8 +293,11 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 		match id {
 			Token(DOT) => Some(MultiLocation::parent()),
 			Token(PEAQ) => {
-                Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode()))
-            },
+				Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode()))
+			},
+			Token(ACA) => {
+				Some(native_currency_location(3000 as u32, id.encode()))
+			},
 			_ => None,
 		}
 	}
@@ -313,7 +316,6 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			} if parents == 1 => {
 				match (para_id, &key[..]) {
 					(id, key) if ParaId::from(id) == ParachainInfo::parachain_id().into() => {
-						// Acala
 						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 							// check `currency_id` is cross-chain asset
 							match currency_id {
@@ -324,7 +326,20 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 							// invalid general key
 							None
 						}
-					}
+					},
+					(id, key) if ParaId::from(id) == ParaId::from(3000) => {
+						// Acala
+						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
+							// check `currency_id` is cross-chain asset
+							match currency_id {
+								Token(ACA) => Some(currency_id),
+								_ => None,
+							}
+						} else {
+							// invalid general key
+							None
+						}
+					},
 					_ => None,
 				}
 			}

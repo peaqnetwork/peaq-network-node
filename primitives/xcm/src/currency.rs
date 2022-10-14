@@ -150,8 +150,8 @@ create_currency_id! {
 	#[repr(u8)]
 	pub enum TokenSymbol {
 		// 0 - 19: Acala & Polkadot native tokens
-		PEAQ("PEAQ", 18) = 0,
-		AUSD("Acala Dollar", 12) = 1,
+		ACA("Acala", 12) = 0,
+		PEAQ("PEAQ", 18) = 1,
 		DOT("Polkadot", 10) = 2,
 	}
 }
