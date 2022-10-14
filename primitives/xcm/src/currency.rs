@@ -149,10 +149,20 @@ create_currency_id! {
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	#[repr(u8)]
 	pub enum TokenSymbol {
-		// 0 - 19: Acala & Polkadot native tokens
-		ACA("Acala", 12) = 0,
-		PEAQ("PEAQ", 18) = 1,
-		DOT("Polkadot", 10) = 2,
+		PEAQ("PEAQ", 18) = 0,
+
+
+		DOT("Polkadot", 10) = 64,
+
+
+		ACA("Acala", 12) = 128,
+	}
+}
+
+pub mod parachain {
+	pub mod acala {
+        pub const ID: u32 = 3000;
+        pub const ACA_KEY: &[u8] = &[0, 0];
 	}
 }
 

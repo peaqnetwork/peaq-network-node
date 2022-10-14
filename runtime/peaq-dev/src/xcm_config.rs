@@ -38,6 +38,7 @@ use xcm_executor::XcmExecutor;
 use xcm::latest::MultiAsset;
 use frame_support::WeakBoundedVec;
 use frame_support::pallet_prelude::ConstU32;
+use peaq_primitives_xcm::currency::parachain;
 
 // pub const ROC: Balance = 1_000_000_000_000;
 
@@ -108,10 +109,9 @@ parameter_types! {
 
 	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
 	pub AcaPerSecond: (AssetId, u128) = (
-		native_currency_location(3000 as u32,
-		peaq_primitives_xcm::CurrencyId::Token(TokenSymbol::ACA).encode()).into(),
-		// aUSD:DOT = 40:1
-		dot_per_second() * 1
+		native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()).into(),
+		// TODO: Need to check the fee: ACA:DOT = 5:1
+		dot_per_second() * 5
 	);
 	pub BaseRate: u128 = peaq_per_second();
 }
@@ -122,21 +122,9 @@ pub type Trader = (
 	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
 );
 
-/*
- * match_types! {
- *	 pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
- *		 MultiLocation { parents: 1, interior: Here } |
- *		 MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
- *	 };
- * }
- *
- */
 pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
-	// [TODO]
-	// AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-	// ^^^ Parent & its unit plurality gets free execution
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
 	// Subscriptions for version tracking are OK.
@@ -290,13 +278,14 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
+
 		match id {
 			Token(DOT) => Some(MultiLocation::parent()),
 			Token(PEAQ) => {
 				Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode()))
 			},
 			Token(ACA) => {
-				Some(native_currency_location(3000 as u32, id.encode()))
+				Some(native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()))
 			},
 			_ => None,
 		}
@@ -309,55 +298,44 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		if location == MultiLocation::parent() {
 			return Some(Token(DOT));
 		}
-		match location {
-			MultiLocation {
-				parents,
-				interior: X2(Parachain(para_id), GeneralKey(key)),
-			} if parents == 1 => {
-				match (para_id, &key[..]) {
-					(id, key) if ParaId::from(id) == ParachainInfo::parachain_id().into() => {
-						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-							// check `currency_id` is cross-chain asset
-							match currency_id {
-								Token(PEAQ) => Some(currency_id),
-								_ => None,
-							}
-						} else {
-							// invalid general key
-							None
+		match location.clone() {
+			MultiLocation { parents, interior } if parents == 1 => match interior {
+				X2(Parachain(id), GeneralKey(key)) if ParaId::from(id) == ParachainInfo::parachain_id().into() => {
+					// decode the general key
+					if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
+						match currency_id {
+							Token(PEAQ) => Some(currency_id),
+							_ => None,
 						}
-					},
-					(id, key) if ParaId::from(id) == ParaId::from(3000) => {
-						// Acala
-						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-							// check `currency_id` is cross-chain asset
-							match currency_id {
-								Token(ACA) => Some(currency_id),
-								_ => None,
-							}
-						} else {
-							// invalid general key
-							None
+					} else {
+						None
+					}
+				},
+				X2(Parachain(id), GeneralKey(key)) if id == parachain::acala::ID => {
+					if key == parachain::acala::ACA_KEY.to_vec() {
+						Some(Token(ACA))
+					} else {
+						None
+					}
+				},
+				_ => None,
+			},
+			MultiLocation { parents, interior } if parents == 0 => match interior {
+				X1(GeneralKey(key)) => {
+					// decode the general key
+					if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
+						match currency_id {
+							Token(PEAQ) => Some(currency_id),
+							_ => None,
 						}
-					},
-					_ => None,
-				}
-			}
-			// adapt for re-anchor canonical location: https://github.com/paritytech/polkadot/pull/4470
-			MultiLocation {
-				parents: 0,
-				interior: X1(GeneralKey(key)),
-			} => {
-				let key = &key[..];
-				let currency_id = CurrencyId::decode(&mut &*key).ok()?;
-				match currency_id {
-					Token(PEAQ) => Some(currency_id),
-					_ => None,
-				}
-			}
+					} else {
+						None
+					}
+				},
+				_ => None,
+			},
 			_ => None,
 		}
-
 	}
 }
 impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {

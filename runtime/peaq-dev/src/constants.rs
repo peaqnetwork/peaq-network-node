@@ -27,10 +27,8 @@ pub mod fee {
 	use peaq_primitives_xcm::{Balance, CurrencyId};
 	use peaq_primitives_xcm::currency::TokenInfo;
 	use peaq_primitives_xcm::currency::PEAQ;
-	// use runtime_common::{cent, KAR};
-	// use smallvec::smallvec;
+	use peaq_primitives_xcm::currency::DOT;
 
-	// TODO: make those const fn
 	pub fn dollar(currency_id: CurrencyId) -> Balance {
 		10u128.saturating_pow(currency_id.decimals().expect("Not support Erc20 decimals").into())
 	}
@@ -77,6 +75,6 @@ pub mod fee {
 	}
 
 	pub fn dot_per_second() -> u128 {
-		peaq_per_second() / 100
+		peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT)
 	}
 }
