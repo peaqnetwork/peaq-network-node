@@ -402,12 +402,47 @@ git = "https://github.com/peaqnetwork/cumulus"
 default-features = false
 branch = "peaq-polkadot-v0.9.19"
 
+[dependencies.orml-currencies]
+path = "../../../open-runtime-module-library/currencies"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
+
+[dependencies.orml-tokens]
+path = "../../../open-runtime-module-library/tokens"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
+
+[dependencies.orml-traits]
+path = "../../../open-runtime-module-library/traits"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
+
+[dependencies.orml-xtokens]
+path = "../../../open-runtime-module-library/xtokens"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
+
+[dependencies.orml-unknown-tokens]
+path = "../../../open-runtime-module-library/unknown-tokens"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
+
+[dependencies.orml-xcm-support]
+path = "../../../open-runtime-module-library/xcm-support"
+# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+default-features = false
 
 # Benchmark
 [dependencies.pallet-collective]
 git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.19"
 default-features = false
+
+# Customized
+[dependencies.peaq-primitives-xcm]
+path = "../../primitives/xcm"
+default-features = false
+
 
 [features]
 default = ["std", "aura"]
@@ -515,6 +550,13 @@ std = [
     "xcm-executor/std",
 	"cumulus-pallet-xcm/std",
 	"cumulus-pallet-xcmp-queue/std",
+	"orml-currencies/std",
+	"orml-tokens/std",
+	"orml-traits/std",
+	"orml-xtokens/std",
+
+	# Customized
+	"peaq-primitives-xcm/std",
 ]
 
 # Must be enabled for tracing runtimes only

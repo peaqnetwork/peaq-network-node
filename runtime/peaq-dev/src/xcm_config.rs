@@ -40,8 +40,6 @@ use frame_support::WeakBoundedVec;
 use frame_support::pallet_prelude::ConstU32;
 use peaq_primitives_xcm::currency::parachain;
 
-// pub const ROC: Balance = 1_000_000_000_000;
-
 parameter_types! {
 	pub const RocLocation: MultiLocation = MultiLocation::parent();
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -82,10 +80,10 @@ pub type XcmOriginToCallOrigin = (
 	// foreign chains who want to have a local sovereign account on this chain which they control.
 	SovereignSignedViaLocation<LocationToAccountId, Origin>,
 	// Native converter for Relay-chain (Parent) location; will converts to a `Relay` origin when
-	// recognised.
+	// recognized.
 	RelayChainAsNative<RelayChainOrigin, Origin>,
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
-	// recognised.
+	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
 	// [TODO] Add...
 	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a

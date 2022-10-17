@@ -22,16 +22,16 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable,
 		// NumberFor,
 		OpaqueKeys,
-		PostDispatchInfoOf, Verify, ConvertInto,
+		PostDispatchInfoOf, ConvertInto,
 		AccountIdConversion,
 	},
 	transaction_validity::{
 		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
 	},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult,
 	Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*};
@@ -57,7 +57,6 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -79,40 +78,45 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use peaq_rpc_primitives_txpool::TxPoolResponse;
+use peaq_primitives_xcm;
+pub use peaq_primitives_xcm::{
+	Amount, CurrencyId, currency, TokenSymbol
+};
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
 
 // For XCM
 pub mod xcm_config;
-use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
-use xcm_executor::XcmExecutor;
+use orml_currencies::BasicCurrencyAdapter;
+use orml_traits::parameter_type_with_key;
+pub mod constants;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
 
 /// An index to a block.
-pub type BlockNumber = u32;
+type BlockNumber = peaq_primitives_xcm::BlockNumber;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
+pub type Signature = peaq_primitives_xcm::Signature;
 
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type AccountId = peaq_primitives_xcm::AccountId;
 
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
-pub type AccountIndex = u32;
+// type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
 /// Balance of an account.
-pub type Balance = u128;
+pub type Balance = peaq_primitives_xcm::Balance;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+type Index = peaq_primitives_xcm::Nonce;
 
 /// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
+type Hash = peaq_primitives_xcm::Hash;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -121,8 +125,7 @@ pub type Hash = sp_core::H256;
 pub mod opaque {
 	use super::*;
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	pub type Block = peaq_primitives_xcm::NativeBlock;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -260,7 +263,7 @@ impl frame_system::Config for Runtime {
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
 	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	type Header = peaq_primitives_xcm::Header;
 	/// The ubiquitous event type.
 	type Event = Event;
 	/// The ubiquitous origin type.
@@ -561,23 +564,6 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
-	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
-	type WeightInfo = ();
-}
-
-impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-}
-
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 }
@@ -720,6 +706,57 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
     }
 }
 
+parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+}
+
+impl orml_currencies::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type WeightInfo = ();
+}
+
+pub fn get_all_module_accounts() -> Vec<AccountId> {
+	vec![
+		PotId::get().into_account(),
+	]
+}
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		get_all_module_accounts().contains(a)
+	}
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		0
+	};
+}
+
+parameter_types! {
+	pub TestAccount: AccountId = PotId::get().into_account();
+}
+
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo =  ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
+}
+
+impl orml_unknown_tokens::Config for Runtime {
+	type Event = Event;
+}
+
 // [TODO] Add pallet index = 0, = 1, ...
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -763,15 +800,20 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config},
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin},
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>},
+
+		Currencies: orml_currencies::{Pallet, Call, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 202,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
 	}
 );
 
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+type Address = peaq_primitives_xcm::Address;
 /// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+type Header = peaq_primitives_xcm::Header;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
