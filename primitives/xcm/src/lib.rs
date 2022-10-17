@@ -60,9 +60,7 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 pub type AccountIndex = u32;
 
 /// The address format for describing accounts.
-// [TODO] Need to check the AccountIndex, because it induce thhe buidl failurs
-// pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 
 /// Index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
