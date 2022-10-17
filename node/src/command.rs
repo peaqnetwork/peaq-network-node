@@ -486,8 +486,6 @@ pub fn run() -> sc_cli::Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				// [TODO] Think about whether we should remove it.
-				// Because we can get the information from the chain spec
 				let id = ParaId::from(cli.run.parachain_id);
 
 				let parachain_account =
