@@ -168,7 +168,6 @@ impl xcm_executor::Config for XcmConfig {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
-	// [TODO]
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
@@ -234,8 +233,7 @@ parameter_type_with_key! {
 	pub ParachainMinFee: |location: MultiLocation| -> u128 {
 		#[allow(clippy::match_ref_pats)] // false positive
 		match (location.parents, location.first_interior()) {
-			// [TODO]... It seems we can control the  situation
-			_ => 1_000,
+			_ => u128::MAX
 		}
 	};
 }
