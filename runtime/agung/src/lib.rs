@@ -757,7 +757,6 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
-// [TODO] Add pallet index = 0, = 1, ...
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -765,46 +764,46 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Aura: pallet_aura::{Pallet, Config<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-
-		// Include the custom pallets
-		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
-		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
-		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 1,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
+		Aura: pallet_aura::{Pallet, Config<T>} = 3,
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 5,
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
+		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 
 		// EVM
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 12,
+		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// // Parachain
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config},
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 20,
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
+		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
 
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
-		ParachainInfo: parachain_info::{Pallet, Storage, Config},
-		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>},
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
+		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
+		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
 
 		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>},
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config},
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin},
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>},
+		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
+		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
+		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
-		Currencies: orml_currencies::{Pallet, Call, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 202,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
+		Currencies: orml_currencies::{Pallet, Call, Event<T>} = 34,
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+
+		// Include the custom pallets
+		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
+		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
+		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 	}
 );
 
