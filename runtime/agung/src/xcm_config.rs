@@ -29,7 +29,7 @@ use xcm_builder::{
 	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentIsPreset,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	ParentAsSuperuser, TakeRevenue, FixedRateOfFungible,
+	TakeRevenue, FixedRateOfFungible,
 	AllowKnownQueryResponses, AllowSubscriptionsFrom,
 };
 use orml_traits::{location::AbsoluteReserveProvider, MultiCurrency, parameter_type_with_key};
@@ -85,10 +85,6 @@ pub type XcmOriginToCallOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
-	// [TODO] Add...
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	ParentAsSuperuser<Origin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RococoNetwork, Origin>,
