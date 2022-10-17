@@ -110,8 +110,6 @@ macro_rules! create_currency_id {
 		#[test]
 		#[ignore]
 		fn generate_token_resources() {
-			use crate::TokenSymbol::*;
-
 			#[allow(non_snake_case)]
 			#[derive(Serialize, Deserialize)]
 			struct Token {
@@ -119,7 +117,7 @@ macro_rules! create_currency_id {
 				address: EvmAddress,
 			}
 
-			let mut tokens = vec![
+			let tokens = vec![
 				$(
 					Token {
 						symbol: stringify!($symbol).to_string(),
