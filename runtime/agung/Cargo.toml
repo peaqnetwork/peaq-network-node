@@ -190,19 +190,15 @@ branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.peaq-pallet-did]
 default-features = false
-# [TODO] Need to change
-path = '../../../peaq-pallet-did'
-# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-# branch = 'dev'
-# version = '0.0.1'
+git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+branch = 'dev'
+version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
-# [TODO] Need to change
-path = '../../../peaq-pallet-transaction'
-# git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-# branch = 'dev'
-# version = '0.0.1'
+git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
+branch = 'dev'
+version = '0.0.1'
 
 
 [dependencies.pallet-multisig]
