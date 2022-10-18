@@ -403,34 +403,34 @@ default-features = false
 branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.orml-currencies]
-path = "../../../open-runtime-module-library/currencies"
-# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.orml-tokens]
-path = "../../../open-runtime-module-library/tokens"
-# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.orml-traits]
-path = "../../../open-runtime-module-library/traits"
-# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.orml-xtokens]
-path = "../../../open-runtime-module-library/xtokens"
-# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.orml-unknown-tokens]
-path = "../../../open-runtime-module-library/unknown-tokens"
-# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.orml-xcm-support]
-path = "../../../open-runtime-module-library/xcm-support"
-# git = "https://github.com/open-web3-stack/open-runtime-module-library"
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 # Benchmark
 [dependencies.pallet-collective]

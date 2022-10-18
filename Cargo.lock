@@ -5491,6 +5491,7 @@ dependencies = [
 [[package]]
 name = "orml-currencies"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5507,6 +5508,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5521,6 +5523,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5538,6 +5541,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5551,6 +5555,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5564,6 +5569,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5577,6 +5583,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
