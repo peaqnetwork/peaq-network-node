@@ -205,8 +205,7 @@ branch = 'dev'
 [dependencies.peaq-pallet-rbac]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-rev = '9f87608774cf1418a0bee0d480d16cb8cd28ca54'
-version = '0.0.1'
+branch = 'dev'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
