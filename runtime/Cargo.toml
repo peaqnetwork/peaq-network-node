@@ -203,9 +203,11 @@ branch = 'dev'
 # version = '0.0.1'
 
 [dependencies.peaq-pallet-rbac]
+path = "../../peaq-pallet-rbac"
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-branch = 'dev'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
+# branch = 'dev'
+# version = '0.0.1'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
@@ -330,6 +332,7 @@ runtime-benchmarks = [
     'pallet-ethereum/runtime-benchmarks',
     'peaq-pallet-transaction/runtime-benchmarks',
     'peaq-pallet-did/runtime-benchmarks',
+    'peaq-pallet-rbac/runtime-benchmarks',
 ]
 
 std = [

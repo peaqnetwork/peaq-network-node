@@ -1092,6 +1092,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_multisig, MultiSig);
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
+			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1128,6 +1129,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_multisig, MultiSig);
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
+			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -1144,6 +1146,7 @@ impl peaq_pallet_transaction::Config for Runtime {
 impl peaq_pallet_rbac::Config for Runtime {
 	type Event = Event;
 	type EntityId = [u8; 32];
+	type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
