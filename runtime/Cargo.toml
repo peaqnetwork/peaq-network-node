@@ -325,10 +325,16 @@ runtime-benchmarks = [
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'pallet-contracts/runtime-benchmarks',
+    'pallet-multisig/runtime-benchmarks',
+
+    'pallet-ethereum/runtime-benchmarks',
+    'peaq-pallet-transaction/runtime-benchmarks',
+    'peaq-pallet-did/runtime-benchmarks',
 ]
+
 std = [
     'codec/std',
-	"serde",
+   "serde",
 
     'scale-info/std',
     'frame-executive/std',
@@ -363,31 +369,31 @@ std = [
     'peaq-pallet-rbac/std',
     'peaq-pallet-storage/std',
 
-	# ETH support
-	'sp-io/std',
-	'fp-evm/std',
-	'fp-self-contained/std',
-	'pallet-base-fee/std',
-	'pallet-dynamic-fee/std',
-	'pallet-ethereum/std',
-	'pallet-evm/std',
-	'pallet-evm-precompile-simple/std',
-	'pallet-evm-precompile-modexp/std',
-	'pallet-evm-precompile-sha3fips/std',
-	'sp-std/std',
-	'fp-rpc/std',
+   # ETH support
+   'sp-io/std',
+   'fp-evm/std',
+   'fp-self-contained/std',
+   'pallet-base-fee/std',
+   'pallet-dynamic-fee/std',
+   'pallet-ethereum/std',
+   'pallet-evm/std',
+   'pallet-evm-precompile-simple/std',
+   'pallet-evm-precompile-modexp/std',
+   'pallet-evm-precompile-sha3fips/std',
+   'sp-std/std',
+   'fp-rpc/std',
 
-	# Tracing
-	'evm-tracing-events/std',
-	'peaq-evm-tracer/std',
-	'peaq-rpc-primitives-debug/std',
-	'peaq-rpc-primitives-txpool/std',
+   # Tracing
+   'evm-tracing-events/std',
+   'peaq-evm-tracer/std',
+   'peaq-rpc-primitives-debug/std',
+   'peaq-rpc-primitives-txpool/std',
 ]
 
 # Must be enabled for tracing runtimes only
 evm-tracing = [
-	'evm-tracing-events',
-	'peaq-evm-tracer',
-	'rlp',
-	'sha3'
+   'evm-tracing-events',
+   'peaq-evm-tracer',
+   'rlp',
+   'sha3'
 ]
