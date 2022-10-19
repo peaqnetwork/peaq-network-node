@@ -200,6 +200,12 @@ git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
 branch = 'dev'
 version = '0.0.1'
 
+[dependencies.peaq-pallet-rbac]
+path = "../../../peaq-pallet-rbac"
+# git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+default-features = false
+# branch = 'dev'
+# version = '0.1.0'
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -469,6 +475,7 @@ runtime-benchmarks = [
 
 	'peaq-pallet-transaction/runtime-benchmarks',
 	'peaq-pallet-did/runtime-benchmarks',
+	'peaq-pallet-rbac/runtime-benchmarks',
 ]
 
 std = [
@@ -504,6 +511,7 @@ std = [
 	'pallet-contracts-rpc-runtime-api/std',
 	'peaq-pallet-did/std',
 	'peaq-pallet-transaction/std',
+	'peaq-pallet-rbac/std',
 
 	# ETH support
 	'sp-io/std',

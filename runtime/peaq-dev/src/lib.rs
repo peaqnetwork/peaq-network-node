@@ -85,6 +85,7 @@ pub use peaq_primitives_xcm::{
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
+pub use peaq_pallet_rbac;
 
 // For XCM
 pub mod xcm_config;
@@ -757,6 +758,12 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
+impl peaq_pallet_rbac::Config for Runtime {
+	type Event = Event;
+	type EntityId = [u8; 32];
+    type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -804,6 +811,7 @@ construct_runtime!(
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
+		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 	}
 );
 
@@ -1356,6 +1364,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
+			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1396,6 +1405,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
+			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
