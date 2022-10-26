@@ -15,9 +15,6 @@ sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
 evm = { version = "0.35.0", default-features = false, features = ["with-codec"] }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
-# chainbridge = { git = "https://github.com/OAK-Foundation/chainbridge-substrate", branch = "peaq-polkadot-v0.9.19", default-features = false }
-
-# [dependencies]
 sha3 = { version = "0.9.1", default-features = false }
 serde_json = { version = "1.0" }
 frame-support = { git = "https://github.com/peaqnetwork/substrate", branch ="peaq-polkadot-v0.9.19", default-features = false }
@@ -35,8 +32,4 @@ std = [
 	"evm/std",
 	"evm/with-serde",
 	"frame-support/std",
-# 	"chainbridge/std",
 ]
-# runtime-benchmarks = [
-# 	"chainbridge/runtime-benchmarks",
-# ]
