@@ -203,11 +203,10 @@ branch = 'dev'
 # version = '0.0.1'
 
 [dependencies.peaq-pallet-rbac]
-path = "../../peaq-pallet-rbac"
 default-features = false
-# git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-# branch = 'dev'
-# version = '0.0.1'
+git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
+branch = 'dev'
+version = '0.0.1'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
