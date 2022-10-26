@@ -19,6 +19,21 @@ benchmarks! {
     verify {
         assert_last_event::<T>(Event::<T>::DistributionConfigurationChanged(reward_config).into());
     }
+
+    set_block_issue_reward {
+        let block_reward = BalanceOf::<T>::from(100_000u32);
+    }: _(RawOrigin::Root, block_reward.into())
+    verify {
+        assert_last_event::<T>(Event::<T>::BlockIssueRewardChanged(block_reward).into());
+    }
+
+    set_hard_cap {
+        let hard_cap = BalanceOf::<T>::from(100_123u32);
+    }: _(RawOrigin::Root, hard_cap.into())
+    verify {
+        assert_last_event::<T>(Event::<T>::HardCapChanged(hard_cap).into());
+    }
+
 }
 
 #[cfg(test)]

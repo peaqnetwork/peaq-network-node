@@ -192,13 +192,13 @@ branch = 'peaq-polkadot-v0.9.19'
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
 branch = 'dev'
-# version = '0.0.1'
+version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
 branch = 'dev'
-# version = '0.0.1'
+version = '0.0.1'
 
 
 [dependencies.pallet-multisig]
@@ -381,6 +381,24 @@ default-features = false
 path = "../../pallets/block-reward"
 default-features = false
 
+
+# Benchmark
+[dependencies.pallet-collective]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+default-features = false
+
+[dependencies.pallet-xcm]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+default-features = false
+
+[dependencies.xcm-builder]
+git = "https://github.com/peaqnetwork/polkadot"
+branch = "peaq-polkadot-v0.9.19"
+default-features = false
+
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -392,11 +410,21 @@ runtime-benchmarks = [
 	'hex-literal',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
+	'pallet-multisig/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
 	'pallet-contracts/runtime-benchmarks',
 	'parachain-staking/runtime-benchmarks',
 	'pallet-block-reward/runtime-benchmarks',
+
+	'pallet-ethereum/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
+	'pallet-xcm/runtime-benchmarks',
+	'xcm-builder/runtime-benchmarks',
+
+	'peaq-pallet-transaction/runtime-benchmarks',
+	'peaq-pallet-did/runtime-benchmarks',
 ]
+
 std = [
 	'codec/std',
 	"serde",

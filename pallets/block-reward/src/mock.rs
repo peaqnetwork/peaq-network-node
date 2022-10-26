@@ -144,7 +144,7 @@ impl pallet_block_reward::Config for TestRuntime {
     type Event = Event;
     type Currency = Balances;
     type BeneficiaryPayout = BeneficiaryPayout;
-    type WeightInfo = ();
+    type WeightInfo = pallet_block_reward::weights::SubstrateWeight<TestRuntime>;
 }
 
 pub struct ExternalityBuilder;
