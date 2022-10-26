@@ -189,10 +189,18 @@ git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.peaq-pallet-did]
+path = "../../../peaq-pallet-did/pallet"
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
-version = '0.0.1'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+# branch = 'dev'
+# version = '0.0.1'
+
+[dependencies.peaq-pallet-did-runtime-api]
+path = "../../../peaq-pallet-did/rpc/runtime-api"
+default-features = false
+# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+# branch = 'dev'
+# version = '0.0.1'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
@@ -509,6 +517,7 @@ std = [
 	'pallet-contracts-primitives/std',
 	'pallet-contracts-rpc-runtime-api/std',
 	'peaq-pallet-did/std',
+	'peaq-pallet-did-runtime-api/std',
 	'peaq-pallet-transaction/std',
 	'peaq-pallet-rbac/std',
 

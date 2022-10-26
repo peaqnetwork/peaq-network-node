@@ -7058,7 +7058,7 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did",
+ "peaq-pallet-did 0.0.1 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev)",
  "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
@@ -7163,7 +7163,8 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did",
+ "peaq-pallet-did 0.0.1",
+ "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
@@ -7313,6 +7314,24 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-did"
+version = "0.0.1"
 source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#644055659805e1141cc7e670add1c5edb88b4ebe"
 dependencies = [
  "frame-benchmarking",
@@ -7324,6 +7343,16 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-did-runtime-api"
+version = "0.0.1"
+dependencies = [
+ "parity-scale-codec",
+ "peaq-pallet-did 0.0.1",
+ "sp-api",
  "sp-std",
 ]
 
