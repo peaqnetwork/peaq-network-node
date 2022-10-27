@@ -7344,6 +7344,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
+ "serde",
  "sp-api",
  "sp-blockchain",
  "sp-core",
