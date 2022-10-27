@@ -188,6 +188,7 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
 
+# [TODO]
 [dependencies.peaq-pallet-did]
 path = "../../../peaq-pallet-did/pallet"
 default-features = false
@@ -195,6 +196,7 @@ default-features = false
 # branch = 'dev'
 # version = '0.0.1'
 
+# [TODO]
 [dependencies.peaq-pallet-did-runtime-api]
 path = "../../../peaq-pallet-did/rpc/runtime-api"
 default-features = false
