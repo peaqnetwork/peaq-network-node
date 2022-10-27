@@ -7058,7 +7058,8 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did 0.0.1 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev)",
+ "peaq-pallet-did",
+ "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
@@ -7163,7 +7164,7 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did 0.0.1",
+ "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-transaction",
@@ -7227,6 +7228,8 @@ dependencies = [
  "cumulus-client-consensus-relay-chain",
  "cumulus-client-network",
  "cumulus-client-service",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-inprocess-interface",
@@ -7248,6 +7251,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
+ "orml-xtokens",
  "pallet-base-fee",
  "pallet-block-reward",
  "pallet-contracts",
@@ -7259,6 +7263,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-agung-runtime",
  "peaq-dev-runtime",
+ "peaq-pallet-did-rpc",
  "peaq-primitives-ext",
  "peaq-primitives-xcm",
  "peaq-rpc-debug",
@@ -7330,20 +7335,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-pallet-did"
+name = "peaq-pallet-did-rpc"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#644055659805e1141cc7e670add1c5edb88b4ebe"
 dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-timestamp",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
  "parity-scale-codec",
- "scale-info",
+ "peaq-pallet-did",
+ "peaq-pallet-did-runtime-api",
+ "sp-api",
+ "sp-blockchain",
  "sp-core",
- "sp-io",
+ "sp-rpc",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7351,7 +7356,7 @@ name = "peaq-pallet-did-runtime-api"
 version = "0.0.1"
 dependencies = [
  "parity-scale-codec",
- "peaq-pallet-did 0.0.1",
+ "peaq-pallet-did",
  "sp-api",
  "sp-std",
 ]

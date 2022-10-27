@@ -27,12 +27,12 @@ branch = 'peaq-polkadot-v0.9.19'
 [dependencies.peaq-dev-runtime]
 path = '../runtime/peaq-dev'
 version = '3.0.0-polkadot-v0.9.19'
-default-features = false
+# default-features = false
 
 [dependencies.peaq-agung-runtime]
 path = '../runtime/agung'
 version = '3.0.0-polkadot-v0.9.19'
-default-features = false
+# default-features = false
 
 [dependencies]
 structopt = "0.3.8"
@@ -289,6 +289,10 @@ branch = "peaq-polkadot-v0.9.19"
 git = "https://github.com/peaqnetwork/cumulus"
 branch = "peaq-polkadot-v0.9.19"
 
+[dependencies.cumulus-pallet-xcmp-queue]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
 [dependencies.cumulus-relay-chain-inprocess-interface]
 git = "https://github.com/peaqnetwork/cumulus"
 branch = "peaq-polkadot-v0.9.19"
@@ -353,20 +357,35 @@ branch = 'peaq-polkadot-v0.9.19'
 
 [dependencies.pallet-block-reward]
 path = '../pallets/block-reward'
-default-features = false
+# default-features = false
+
+[dependencies.orml-xtokens]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-pallet-parachain-system]
+git = "https://github.com/peaqnetwork/cumulus"
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.peaq-pallet-did-rpc]
+path = "../../peaq-pallet-did/rpc"
+# default-features = false
+# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+# branch = 'dev'
+# version = '0.0.1'
 
 
 # XCM
 [dependencies.xcm]
 git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
+# default-features = false
 branch = "peaq-polkadot-v0.9.19"
 
 
 # Customized
 [dependencies.peaq-primitives-xcm]
 path = "../primitives/xcm"
-default-features = false
+# default-features = false
 
 
 [features]
