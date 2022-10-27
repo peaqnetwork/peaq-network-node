@@ -1,5 +1,3 @@
-// This file is part of Acala.
-
 // Copyright (C) 2020-2021 Acala Foundation.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
