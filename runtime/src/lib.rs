@@ -27,9 +27,9 @@ use sp_runtime::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
 	ApplyExtrinsicResult, MultiSignature,
+	SaturatedConversion,
 };
 use sp_std::{marker::PhantomData, prelude::*};
-use sp_std::{convert::TryFrom, prelude::*};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -41,17 +41,20 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{FindAuthor, KeyOwnerProofSystem, Randomness},
 	traits::{Nothing, StorageInfo},
-	traits::{OnUnbalanced, Currency, Imbalance, ConstU32},
+	traits::{OnUnbalanced, Currency, Imbalance, ConstU32, Contains},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, GetDispatchInfo, IdentityFee, Weight,
+		ConstantMultiplier, GetDispatchInfo, IdentityFee, Weight, DispatchClass,
 	},
 	ConsensusEngineId, StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner};
+use pallet_evm::{
+	Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner,
+	GasWeightMapping,
+};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
@@ -415,8 +418,8 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND.ref_time() / GAS_PER_SECOND;
 
-pub struct GasWeightMapping;
-impl pallet_evm::GasWeightMapping for GasWeightMapping {
+pub struct PeaqGasWeightMapping;
+impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
     fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
         Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
     }
@@ -437,7 +440,7 @@ parameter_types! {
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = BaseFee;
 	type WeightPerGas = NoUseWeightPerGas;
-	type GasWeightMapping = GasWeightMapping;
+	type GasWeightMapping = PeaqGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -658,10 +661,77 @@ impl_runtime_apis! {
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
 		fn validate_transaction(
 			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
+			xt: <Block as BlockT>::Extrinsic,
 			block_hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, block_hash)
+			// Filtered calls should not enter the tx pool as they'll fail if inserted.
+			// If this call is not allowed, we return early.
+			if !<Runtime as frame_system::Config>::BaseCallFilter::contains(&xt.0.function) {
+				return InvalidTransaction::Call.into();
+			}
+
+			// This runtime uses Substrate's pallet transaction payment. This
+			// makes the chain feel like a standard Substrate chain when submitting
+			// frame transactions and using Substrate ecosystem tools. It has the downside that
+			// transaction are not prioritized by gas_price. The following code reprioritizes
+			// transactions to overcome this.
+			//
+			// A more elegant, ethereum-first solution is
+			// a pallet that replaces pallet transaction payment, and allows users
+			// to directly specify a gas price rather than computing an effective one.
+			// #HopefullySomeday
+
+			// First we pass the transactions to the standard FRAME executive. This calculates all the
+			// necessary tags, longevity and other properties that we will leave unchanged.
+			// This also assigns some priority that we don't care about and will overwrite next.
+			let mut intermediate_valid = Executive::validate_transaction(source, xt.clone(), block_hash)?;
+
+			let dispatch_info = xt.get_dispatch_info();
+
+			// If this is a pallet ethereum transaction, then its priority is already set
+			// according to gas price from pallet ethereum. If it is any other kind of transaction,
+			// we modify its priority.
+			Ok(match &xt.0.function {
+				Call::Ethereum(transact { .. }) => intermediate_valid,
+				_ if dispatch_info.class != DispatchClass::Normal => intermediate_valid,
+				_ => {
+					let tip = match xt.0.signature {
+						None => 0,
+						Some((_, _, ref signed_extra)) => {
+							// Yuck, this depends on the index of charge transaction in Signed Extra
+							let charge_transaction = &signed_extra.6;
+							charge_transaction.tip()
+						}
+					};
+
+					// Calculate the fee that will be taken by pallet transaction payment
+					let fee: u64 = TransactionPayment::compute_fee(
+						xt.encode().len() as u32,
+						&dispatch_info,
+						tip,
+					).saturated_into();
+
+					// Calculate how much gas this effectively uses according to the existing mapping
+					let effective_gas =
+						<Runtime as pallet_evm::Config>::GasWeightMapping::weight_to_gas(
+							dispatch_info.weight
+						);
+
+					// Here we calculate an ethereum-style effective gas price using the
+					// current fee of the transaction. Because the weight -> gas conversion is
+					// lossy, we have to handle the case where a very low weight maps to zero gas.
+					let effective_gas_price = if effective_gas > 0 {
+						fee / effective_gas
+					} else {
+						// If the effective gas was zero, we just act like it was 1.
+						fee
+					};
+
+					// Overwrite the original prioritization with this ethereum one
+					intermediate_valid.priority = effective_gas_price;
+					intermediate_valid
+				}
+			})
 		}
 	}
 
@@ -841,7 +911,6 @@ impl_runtime_apis! {
 			} else {
 				None
 			};
-
 			let is_transactional = false;
 			let validate = true;
 			<Runtime as pallet_evm::Config>::Runner::call(
@@ -878,9 +947,9 @@ impl_runtime_apis! {
 			} else {
 				None
 			};
-
 			let is_transactional = false;
 			let validate = true;
+			#[allow(clippy::or_fun_call)] // suggestion not helpful here
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
@@ -1055,6 +1124,7 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,

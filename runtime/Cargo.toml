@@ -316,6 +316,10 @@ default-features = false
 path = "../primitives/rpc/txpool"
 default-features = false
 
+[dependencies.precompile-utils]
+path = "../precompiles/utils"
+default-features = false
+
 [features]
 default = ["std", "aura"]
 aura = []

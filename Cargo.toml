@@ -2,6 +2,9 @@
 members = [
     'node',
     'runtime',
+    'precompiles/utils',
+    'precompiles/utils/macro',
+
 ]
 
 # make sure dev builds with backtrace do
