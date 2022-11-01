@@ -42,6 +42,7 @@ clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
 url = "2.2.2"
 serde = { version = "1.0", features = [ "derive" ] }
+jsonrpsee = { version = "0.15.1", default-features = false, features = [ "macros", "server" ] }
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
@@ -168,6 +169,10 @@ git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
 
 [dependencies.sc-network]
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.29'
+
+[dependencies.sc-network-common]
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
 

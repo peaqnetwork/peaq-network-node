@@ -320,8 +320,8 @@ pub fn run() -> sc_cli::Result<()> {
 					_ => {
 						return Err(format!("Cannot purge `{:?}` database", config.database).into())
 					}
-				cmd.run(frontier_database_config)?;
-				cmd.run(config.database)
+				};
+				cmd.run(frontier_database_config)
 			})
 		}
 		Some(Subcommand::Revert(cmd)) => {
@@ -418,7 +418,16 @@ pub fn run() -> sc_cli::Result<()> {
 							})
 						}
 					}
+					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+					BenchmarkCmd::Machine(cmd) => {
+						return runner.sync_run(|config| {
+							cmd.run(
+								&config,
+								frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
+							)
+						});
+					}
 				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
@@ -486,7 +495,7 @@ pub fn run() -> sc_cli::Result<()> {
 					eth_statuses_cache: cli.run.eth_statuses_cache,
 					fee_history_limit: cli.run.fee_history_limit,
 					max_past_logs: cli.run.max_past_logs,
-					relay_chain_rpc_url: cli.run.base.relay_chain_rpc_url,
+					tracing_raw_max_memory_usage: cli.run.tracing_raw_max_memory_usage,
 				};
 
 				let polkadot_cli = RelayChainCli::new(

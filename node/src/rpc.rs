@@ -27,7 +27,7 @@ use sp_blockchain::{
 use sp_runtime::traits::BlakeTwo256;
 
 //For ink! contracts
-use pallet_contracts_rpc::{Contracts, ContractsApi};
+use pallet_contracts_rpc::{Contracts, ContractsApiServer};
 
 use sp_runtime::traits::Block as BlockT;
 use sc_service::TaskManager;
@@ -145,11 +145,6 @@ where
 	BE::Blockchain: BlockchainBackend<Block>,
 {
 	use fc_rpc::{
-		EthBlockDataCacheTask, EthTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-		SchemaV2Override, SchemaV3Override, StorageOverride,
-	};
-
-	use fc_rpc::{
 		Eth, EthApiServer, EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, Net,
 		NetApiServer, Web3, Web3ApiServer,
 	};
@@ -182,9 +177,7 @@ where
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
 	// Contracts RPC API extension
-	io.extend_with(
-		ContractsApi::to_delegate(Contracts::new(client.clone()))
-	);
+	io.merge(Contracts::new(Arc::clone(&client)).into_rpc())?;
 
 	// TODO: are we supporting signing?
 	let signers = Vec::new();
@@ -209,11 +202,12 @@ where
 			Arc::clone(&network),
 			signers,
 			Arc::clone(&overrides),
-			Arc::clone(&frontier_backend),
+			Arc::clone(&backend),
 			is_authority,
 			Arc::clone(&block_data_cache),
 			fee_history_cache,
 			fee_history_limit,
+			1 as u64,
 		)
 		.into_rpc(),
 	)?;
@@ -222,7 +216,7 @@ where
 		io.merge(
 			EthFilter::new(
 				client.clone(),
-				frontier_backend.clone(),
+				backend.clone(),
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,

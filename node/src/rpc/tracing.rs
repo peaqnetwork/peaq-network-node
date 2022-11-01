@@ -62,12 +62,25 @@ where
 				Duration::from_secs(rpc_config.ethapi_trace_cache_duration),
 				Arc::clone(&permit_pool),
 				Arc::clone(&params.overrides),
-				rpc_config.tracing_raw_max_memory_usage,
 			);
 			(Some(trace_filter_task), Some(trace_filter_requester))
 		} else {
 			(None, None)
 		};
+
+	let (debug_task, debug_requester) = if rpc_config.ethapi.contains(&EthApiCmd::Debug) {
+		let (debug_task, debug_requester) = DebugHandler::task(
+			Arc::clone(&params.client),
+			Arc::clone(&params.substrate_backend),
+			Arc::clone(&params.frontier_backend),
+			Arc::clone(&permit_pool),
+			Arc::clone(&params.overrides),
+			rpc_config.tracing_raw_max_memory_usage,
+		);
+		(Some(debug_task), Some(debug_requester))
+	} else {
+		(None, None)
+	};
 
 	// `trace_filter` cache task. Essential.
 	// Proxies rpc requests to it's handler.
@@ -78,19 +91,6 @@ where
 			trace_filter_task,
 		);
 	}
-
-	let (debug_task, debug_requester) = if rpc_config.ethapi.contains(&EthApiCmd::Debug) {
-		let (debug_task, debug_requester) = DebugHandler::task(
-			Arc::clone(&params.client),
-			Arc::clone(&params.substrate_backend),
-			Arc::clone(&params.frontier_backend),
-			Arc::clone(&permit_pool),
-			Arc::clone(&params.overrides),
-		);
-		(Some(debug_task), Some(debug_requester))
-	} else {
-		(None, None)
-	};
 
 	// `debug` task if enabled. Essential.
 	// Proxies rpc requests to it's handler.

@@ -14,7 +14,7 @@ use sp_runtime::{
 };
 
 use hex_literal::hex;
-use sc_network::config::MultiaddrWithPeerId;
+use sc_network_common::config::MultiaddrWithPeerId;
 use std::str::FromStr;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
@@ -221,7 +221,7 @@ fn configure_genesis(
 			accounts: Precompiles::used_addresses()
 				.map(|addr| {
 					(
-						addr.into(),
+						addr,
 						GenesisAccount {
 							nonce: Default::default(),
 							balance: Default::default(),
