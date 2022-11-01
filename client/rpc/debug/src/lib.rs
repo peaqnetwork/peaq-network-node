@@ -303,7 +303,7 @@ where
 				Err(internal_err("'pending' blocks are not supported"))
 			}
 			RequestBlockId::Hash(eth_hash) => {
-				match frontier_backend_client::load_hash::<B>(frontier_backend.as_ref(), eth_hash) {
+				match frontier_backend_client::load_hash::<B, C>(client.as_ref(), frontier_backend.as_ref(), eth_hash) {
 					Ok(Some(id)) => Ok(id),
 					Ok(_) => Err(internal_err("Block hash not found".to_string())),
 					Err(e) => Err(e),
@@ -435,7 +435,7 @@ where
 		};
 
 		let reference_id =
-			match frontier_backend_client::load_hash::<B>(frontier_backend.as_ref(), hash) {
+			match frontier_backend_client::load_hash::<B, C>(client.as_ref(), frontier_backend.as_ref(), hash) {
 				Ok(Some(hash)) => hash,
 				Ok(_) => return Err(internal_err("Block hash not found".to_string())),
 				Err(e) => return Err(e),

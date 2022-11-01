@@ -20,7 +20,7 @@ use sc_consensus_manual_seal::{self as manual_seal};
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_finality_grandpa::SharedVoterState;
 use sc_keystore::LocalKeystore;
-use sc_network::warp_request_handler::WarpSyncProvider;
+use sc_network::config::WarpSyncProvider;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
@@ -32,7 +32,7 @@ use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
-
+use crate::rpc;
 use crate::cli_opt::RpcConfig;
 pub type HostFunctions = (
 	frame_benchmarking::benchmarking::HostFunctions,
@@ -116,8 +116,10 @@ pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::P
 	config_dir.join("frontier").join(path)
 }
 
-pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
+pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
+	client: Arc<C>, config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
+		client,
 		&fc_db::DatabaseSettings {
 			source: match config.database {
 				DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
@@ -135,12 +137,13 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 				_ => {
 					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
 				}
+			},
 		},
 	)?))
 }
 
 pub fn new_partial(
-	config: &Configuration,
+	config: &mut Configuration,
 	cli: &Cli,
 ) -> Result<
 	sc_service::PartialComponents<
@@ -167,7 +170,6 @@ pub fn new_partial(
 
 	// Use ethereum style for subscription ids
 	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
-
 
 	let telemetry = config
 		.telemetry_endpoints
@@ -213,7 +215,7 @@ pub fn new_partial(
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 
-	let frontier_backend = open_frontier_backend(config)?;
+	let frontier_backend = open_frontier_backend(client.clone(), config)?;
 
 	#[cfg(feature = "manual-seal")]
 	{
@@ -329,7 +331,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		select_chain,
 		transaction_pool,
 		other: (consensus_result, filter_pool, frontier_backend, mut telemetry, fee_history_cache),
-	} = new_partial(&config, &cli)?;
+	} = new_partial(&mut config, &cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {

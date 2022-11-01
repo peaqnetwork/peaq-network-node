@@ -22,7 +22,6 @@ use crate::{revert, StatefulPrecompile};
 use fp_evm::{Precompile, PrecompileHandle, PrecompileResult, PrecompileSet};
 use frame_support::pallet_prelude::Get;
 use impl_trait_for_tuples::impl_for_tuples;
-use pallet_evm::AddressMapping;
 use sp_core::H160;
 use sp_std::{
 	cell::RefCell, collections::btree_map::BTreeMap, marker::PhantomData, ops::RangeInclusive, vec,
@@ -538,11 +537,10 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P>
 	}
 
 	/// Return the list of addresses contained in this PrecompileSet.
-	pub fn used_addresses() -> impl Iterator<Item = R::AccountId> {
+	pub fn used_addresses() -> impl Iterator<Item = H160> {
 		Self::new()
 			.inner
 			.used_addresses()
 			.into_iter()
-			.map(|x| R::AddressMapping::into_account_id(x))
 	}
 }

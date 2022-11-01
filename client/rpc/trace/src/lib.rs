@@ -117,7 +117,7 @@ where
 			return Err(format!(
 				"count ({}) can't be greater than maximum ({})",
 				count, self.max_count
-+			));
+			));
 		}
 
 		// Build a list of all the Substrate block hashes that need to be traced.
@@ -814,7 +814,6 @@ where
 				}
 			},
 			_ => return Err(format!("No storage override at {:?}", substrate_block_id)),
-			}
 		};
 
 		let eth_block_hash = eth_block.header.hash();

@@ -3,7 +3,7 @@ use peaq_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig, GrandpaConfig,
 	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles,
 };
-use sc_network::config::MultiaddrWithPeerId;
+use sc_network_common::config::MultiaddrWithPeerId;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -223,7 +223,7 @@ fn configure_genesis(
 			accounts: Precompiles::used_addresses()
 				.map(|addr| {
 					(
-						addr.into(),
+						addr,
 						GenesisAccount {
 							nonce: Default::default(),
 							balance: Default::default(),
