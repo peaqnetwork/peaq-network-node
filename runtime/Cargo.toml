@@ -190,29 +190,33 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
 
+# [TODO]
 [dependencies.peaq-pallet-did]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'peaq-node-runtime'
-# version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
+# [TODO]
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'dev'
-# version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
+# [TODO]
 [dependencies.peaq-pallet-rbac]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-branch = 'dev'
-version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
+# [TODO]
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 default-features = false
-branch = 'dev'
-version = '0.1.0'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.1.1'
 
 
 [dependencies.pallet-multisig]

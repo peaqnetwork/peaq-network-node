@@ -6,6 +6,7 @@ use crate::cli::Sealing;
 use crate::cli_opt::EthApi as EthApiCmd;
 use async_trait::async_trait;
 use fc_consensus::FrontierBlockImport;
+use fc_db::DatabaseSource;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
@@ -103,7 +104,7 @@ impl sp_inherents::InherentDataProvider for MockTimestampInherentDataProvider {
 	}
 }
 
-pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
+pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
 	let config_dir = config
 		.base_path
 		.as_ref()
@@ -112,16 +113,28 @@ pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
 			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
 				.config_dir(config.chain_spec.id())
 		});
-	config_dir.join("frontier").join("db")
+	config_dir.join("frontier").join(path)
 }
 
 pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
 		&fc_db::DatabaseSettings {
-			source: fc_db::DatabaseSettingsSrc::RocksDb {
-				path: frontier_database_dir(&config),
-				cache_size: 0,
-			},
+			source: match config.database {
+				DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
+					path: frontier_database_dir(config, "db"),
+					cache_size: 0,
+				},
+				DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
+					path: frontier_database_dir(config, "paritydb"),
+				},
+				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
+					rocksdb_path: frontier_database_dir(config, "db"),
+					paritydb_path: frontier_database_dir(config, "paritydb"),
+					cache_size: 0,
+				},
+				_ => {
+					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
+				}
 		},
 	)?))
 }
@@ -151,6 +164,10 @@ pub fn new_partial(
 			"Remote Keystores are not supported."
 		)));
 	}
+
+	// Use ethereum style for subscription ids
+	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
+
 
 	let telemetry = config
 		.telemetry_endpoints
@@ -386,8 +403,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 	let enable_grandpa = !config.disable_grandpa;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
-	let subscription_task_executor =
-		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
 	let overrides = crate::rpc::overrides_handle(client.clone());
 	let fee_history_limit = rpc_config.fee_history_limit;
@@ -418,12 +433,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
-		rpc_config.eth_log_block_cache as u64,
-		rpc_config.eth_statuses_cache as u64,
+		rpc_config.eth_log_block_cache,
+		rpc_config.eth_statuses_cache,
 		prometheus_registry.clone(),
 	));
 
-	let rpc_extensions_builder = {
+	let rpc_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let network = network.clone();
@@ -435,7 +450,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		let max_past_logs = cli.run.max_past_logs;
 		let block_data_cache = block_data_cache.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
@@ -454,21 +469,20 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				overrides: overrides.clone(),
 			};
 
-			#[allow(unused_mut)]
-			let mut io = crate::rpc::create_full(
-				deps,
-				subscription_task_executor.clone(),
-			);
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-				crate::rpc::tracing::extend_with_tracing(
-					client.clone(),
-					tracing_requesters.clone(),
-					rpc_config.ethapi_trace_max_count,
-					&mut io,
-				);
+				rpc::create_full(
+					deps,
+					subscription_task_executor,
+					Some(crate::rpc::TracingConfig {
+						tracing_requesters: tracing_requesters.clone(),
+						trace_filter_max_count: rpc_config.ethapi_trace_max_count,
+					}),
+				)
+				.map_err(Into::into)
+			} else {
+				rpc::create_full(deps, subscription_task_executor, None).map_err(Into::into)
 			}
-			Ok(io)
-		})
+		}
 	};
 
 	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -477,7 +491,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
-		rpc_extensions_builder,
+		rpc_builder: Box::new(rpc_builder),
 		backend: backend.clone(),
 		system_rpc_tx,
 		config,
@@ -521,12 +535,6 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			fee_history_cache,
 			fee_history_limit,
 		),
-	);
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		Some("frontier"),
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
 	);
 
 	#[cfg(feature = "manual-seal")]
