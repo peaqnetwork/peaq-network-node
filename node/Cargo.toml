@@ -16,10 +16,6 @@ name = 'peaq-node'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
-# Limit the version because the build fails
-# [dependencies.syn]
-# version = "1.0"
-
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
