@@ -890,6 +890,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bstringify"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd769563b4ea2953e2825c9e6b7470a5f55f67e0be00030bf3e390a2a6071f64"
+
+[[package]]
 name = "build-helper"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1683,6 +1689,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "cumulus-pallet-dmp-queue"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
@@ -1721,6 +1745,42 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "cumulus-pallet-xcm"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "cumulus-pallet-xcmp-queue"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.19#f12b185bff963dacee45932b119a82d5eb8b1a79"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "rand_chacha 0.3.1",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -5429,6 +5489,118 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-currencies"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "orml-utilities",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-unknown-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-xcm-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-utilities"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "frame-support",
+ "orml-traits",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "orml-xtokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.19#2eba11236357a726e0e104900147cde49ae4db4a"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "orml-xcm-support",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
 name = "os_str_bytes"
 version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6832,7 +7004,10 @@ name = "peaq-agung-runtime"
 version = "3.0.0-polkadot-v0.9.19"
 dependencies = [
  "cumulus-pallet-aura-ext",
+ "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcm",
+ "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
@@ -6847,6 +7022,12 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "orml-currencies",
+ "orml-tokens",
+ "orml-traits",
+ "orml-unknown-tokens",
+ "orml-xcm-support",
+ "orml-xtokens",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -6879,6 +7060,7 @@ dependencies = [
  "peaq-evm-tracer",
  "peaq-pallet-did",
  "peaq-pallet-transaction",
+ "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
  "polkadot-parachain",
@@ -6902,7 +7084,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "xcm",
  "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -6924,7 +7108,10 @@ name = "peaq-dev-runtime"
 version = "3.0.0-polkadot-v0.9.19"
 dependencies = [
  "cumulus-pallet-aura-ext",
+ "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcm",
+ "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
@@ -6939,6 +7126,12 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "orml-currencies",
+ "orml-tokens",
+ "orml-traits",
+ "orml-unknown-tokens",
+ "orml-xcm-support",
+ "orml-xtokens",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -6971,6 +7164,7 @@ dependencies = [
  "peaq-evm-tracer",
  "peaq-pallet-did",
  "peaq-pallet-transaction",
+ "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
  "polkadot-parachain",
@@ -6994,7 +7188,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "xcm",
  "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -7061,6 +7257,7 @@ dependencies = [
  "peaq-agung-runtime",
  "peaq-dev-runtime",
  "peaq-primitives-ext",
+ "peaq-primitives-xcm",
  "peaq-rpc-debug",
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
@@ -7108,6 +7305,7 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tokio",
  "url 2.2.2",
+ "xcm",
 ]
 
 [[package]]
@@ -7153,6 +7351,24 @@ dependencies = [
  "parity-scale-codec",
  "sp-externalities",
  "sp-runtime-interface",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-primitives-xcm"
+version = "3.0.0-polkadot-v0.9.19"
+dependencies = [
+ "bstringify",
+ "evm",
+ "frame-support",
+ "num_enum",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-runtime",
  "sp-std",
 ]
 

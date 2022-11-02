@@ -22,16 +22,16 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable, IdentifyAccount,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, Dispatchable,
 		// NumberFor,
 		OpaqueKeys,
-		PostDispatchInfoOf, Verify, ConvertInto,
+		PostDispatchInfoOf, ConvertInto,
 		AccountIdConversion,
 	},
 	transaction_validity::{
 		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
 	},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult,
 	Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*};
@@ -78,35 +78,45 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use peaq_rpc_primitives_txpool::TxPoolResponse;
+use peaq_primitives_xcm;
+pub use peaq_primitives_xcm::{
+	Amount, CurrencyId, currency, TokenSymbol
+};
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_transaction;
+
+// For XCM
+pub mod xcm_config;
+use orml_currencies::BasicCurrencyAdapter;
+use orml_traits::parameter_type_with_key;
+pub mod constants;
 
 //For ink!
 use pallet_contracts::weights::WeightInfo;
 
 /// An index to a block.
-pub type BlockNumber = u32;
+type BlockNumber = peaq_primitives_xcm::BlockNumber;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
+pub type Signature = peaq_primitives_xcm::Signature;
 
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type AccountId = peaq_primitives_xcm::AccountId;
 
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
-pub type AccountIndex = u32;
+// type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
 /// Balance of an account.
-pub type Balance = u128;
+pub type Balance = peaq_primitives_xcm::Balance;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+type Index = peaq_primitives_xcm::Nonce;
 
 /// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
+type Hash = peaq_primitives_xcm::Hash;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -115,8 +125,7 @@ pub type Hash = sp_core::H256;
 pub mod opaque {
 	use super::*;
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	pub type Block = peaq_primitives_xcm::NativeBlock;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -244,7 +253,7 @@ impl frame_system::Config for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -254,7 +263,7 @@ impl frame_system::Config for Runtime {
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
 	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	type Header = peaq_primitives_xcm::Header;
 	/// The ubiquitous event type.
 	type Event = Event;
 	/// The ubiquitous origin type.
@@ -536,6 +545,7 @@ impl pallet_randomness_collective_flip::Config for Runtime {}
 
 // Parachain
 parameter_types! {
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
 
@@ -543,11 +553,11 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
-	type OutboundXcmpMessageSource = ();
-	type DmpMessageHandler = ();
+	type OutboundXcmpMessageSource = XcmpQueue;
+	type DmpMessageHandler = DmpQueue;
 	type ReservedDmpWeight = ReservedDmpWeight;
-	type XcmpMessageHandler = ();
-	type ReservedXcmpWeight = ();
+	type XcmpMessageHandler = XcmpQueue;
+	type ReservedXcmpWeight = ReservedXcmpWeight;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -696,6 +706,56 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
     }
 }
 
+parameter_types! {
+	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+}
+
+impl orml_currencies::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Tokens;
+	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+	type GetNativeCurrencyId = GetNativeCurrencyId;
+	type WeightInfo = ();
+}
+
+pub fn get_all_module_accounts() -> Vec<AccountId> {
+	vec![
+		PotId::get().into_account(),
+	]
+}
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+	fn contains(a: &AccountId) -> bool {
+		get_all_module_accounts().contains(a)
+	}
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		0
+	};
+}
+
+parameter_types! {
+	pub TestAccount: AccountId = PotId::get().into_account();
+}
+
+impl orml_tokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo =  ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = DustRemovalWhitelist;
+}
+
+impl orml_unknown_tokens::Config for Runtime {
+	type Event = Event;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -704,44 +764,55 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Aura: pallet_aura::{Pallet, Config<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
-
-		// Include the custom pallets
-		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>},
-		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
-		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 1,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
+		Aura: pallet_aura::{Pallet, Config<T>} = 3,
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 5,
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
+		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 
 		// EVM
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent},
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 12,
+		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// // Parachain
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config},
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>},
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 20,
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
+		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
 
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
-		ParachainInfo: parachain_info::{Pallet, Storage, Config},
-		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>},
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
+		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
+		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
+
+		// XCM helpers.
+		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
+		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
+		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
+
+		Currencies: orml_currencies::{Pallet, Call, Event<T>} = 34,
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
+		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+
+		// Include the custom pallets
+		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
+		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
+		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 	}
 );
 
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+type Address = peaq_primitives_xcm::Address;
 /// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+type Header = peaq_primitives_xcm::Header;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
@@ -1279,6 +1350,8 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			list_benchmark!(list, extra, pallet_multisig, MultiSig);
+			list_benchmark!(list, extra, cumulus_pallet_xcmp_queue, XcmpQueue);
+
 			list_benchmark!(list, extra, parachain_staking, ParachainStaking);
 			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
@@ -1317,6 +1390,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			add_benchmark!(params, batches, pallet_multisig, MultiSig);
+			add_benchmark!(params, batches, cumulus_pallet_xcmp_queue, XcmpQueue);
+
 			add_benchmark!(params, batches, parachain_staking, ParachainStaking);
 			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);

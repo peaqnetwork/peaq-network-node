@@ -1,25 +1,25 @@
 /// Please make sure the Agung and Dev network has the same settings
-use peaq_dev_runtime;
+use peaq_primitives_xcm;
 
 /// An index to a block.
-pub type BlockNumber = peaq_dev_runtime::BlockNumber;
+pub type BlockNumber = peaq_primitives_xcm::BlockNumber;
 
 /// Header type.
-pub type Header = peaq_dev_runtime::Header;
+pub type Header = peaq_primitives_xcm::Header;
 
 /// Block type.
-pub type Block = peaq_dev_runtime::opaque::Block;
+pub type Block = peaq_primitives_xcm::NativeBlock;
 
 /// A hash of some data used by the chain.
-pub type Hash = peaq_dev_runtime::Hash;
+pub type Hash = peaq_primitives_xcm::Hash;
 
 /// Balance of an account.
-pub type Balance = peaq_dev_runtime::Balance;
+pub type Balance = peaq_primitives_xcm::Balance;
 
 /// Index of a transaction in the chain.
-pub type Nonce = u32;
+pub type Nonce = peaq_primitives_xcm::Nonce;
 
 /// Some way of identifying an account on the chain.
-pub type AccountId = peaq_dev_runtime::AccountId;
+pub type AccountId = peaq_primitives_xcm::AccountId;
 
-pub type Index = peaq_dev_runtime::Index;
+pub type Index = peaq_primitives_xcm::Nonce;

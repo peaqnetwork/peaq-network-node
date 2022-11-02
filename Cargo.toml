@@ -3,6 +3,7 @@ members = [
     'node',
     'pallets/*',
     'runtime/*',
+	'primitives/xcm'
 ]
 
 # make sure dev builds with backtrace do

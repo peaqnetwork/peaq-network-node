@@ -346,22 +346,6 @@ git = "https://github.com/peaqnetwork/polkadot"
 default-features = false
 branch = "peaq-polkadot-v0.9.19"
 
-# [dependencies.xcm]
-# git = "https://github.com/peaqnetwork/polkadot"
-# default-features = false
-# branch = "peaq-polkadot-v0.9.19"
-#
-# [dependencies.xcm-builder]
-# git = "https://github.com/peaqnetwork/polkadot"
-# default-features = false
-# branch = "peaq-polkadot-v0.9.19"
-#
-# [dependencies.xcm-executor]
-# git = "https://github.com/peaqnetwork/polkadot"
-# default-features = false
-# branch = "peaq-polkadot-v0.9.19"
-#
-
 # Parachain continue
 [dependencies.pallet-session]
 git = "https://github.com/peaqnetwork/substrate"
@@ -382,20 +366,81 @@ path = "../../pallets/block-reward"
 default-features = false
 
 
-# Benchmark
-[dependencies.pallet-collective]
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+# XCM
+[dependencies.xcm]
+git = "https://github.com/peaqnetwork/polkadot"
 default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.xcm-builder]
+git = "https://github.com/peaqnetwork/polkadot"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.xcm-executor]
+git = "https://github.com/peaqnetwork/polkadot"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
 
 [dependencies.pallet-xcm]
 git = "https://github.com/peaqnetwork/polkadot"
 branch = "peaq-polkadot-v0.9.19"
 default-features = false
 
-[dependencies.xcm-builder]
-git = "https://github.com/peaqnetwork/polkadot"
+[dependencies.cumulus-pallet-xcm]
+git = "https://github.com/peaqnetwork/cumulus"
+default-features = false
 branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-pallet-xcmp-queue]
+git = "https://github.com/peaqnetwork/cumulus"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.cumulus-pallet-dmp-queue]
+git = "https://github.com/peaqnetwork/cumulus"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.orml-currencies]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.orml-tokens]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.orml-traits]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.orml-xtokens]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.orml-unknown-tokens]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+[dependencies.orml-xcm-support]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.19"
+
+# Benchmark
+[dependencies.pallet-collective]
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.19"
+default-features = false
+
+# Customized
+[dependencies.peaq-primitives-xcm]
+path = "../../primitives/xcm"
 default-features = false
 
 
@@ -420,6 +465,7 @@ runtime-benchmarks = [
 	'pallet-collective/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
+	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
 
 	'peaq-pallet-transaction/runtime-benchmarks',
 	'peaq-pallet-did/runtime-benchmarks',
@@ -490,15 +536,27 @@ std = [
     "polkadot-parachain/std",
     "polkadot-primitives/std",
     "polkadot-runtime-common/std",
-    # "xcm/std",
-    # "xcm-builder/std",
-    # "xcm-executor/std",
 
+	# Customized Parachain
     "pallet-session/std",
     "pallet-authorship/std",
 
     "parachain-staking/std",
     "pallet-block-reward/std",
+
+	# XCM
+    "xcm/std",
+    "xcm-builder/std",
+    "xcm-executor/std",
+	"cumulus-pallet-xcm/std",
+	"cumulus-pallet-xcmp-queue/std",
+	"orml-currencies/std",
+	"orml-tokens/std",
+	"orml-traits/std",
+	"orml-xtokens/std",
+
+	# Customized
+	"peaq-primitives-xcm/std",
 ]
 
 # Must be enabled for tracing runtimes only
