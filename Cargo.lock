@@ -7059,6 +7059,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
+ "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7163,6 +7164,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
+ "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7312,6 +7314,23 @@ dependencies = [
 name = "peaq-pallet-did"
 version = "0.0.1"
 source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#644055659805e1141cc7e670add1c5edb88b4ebe"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-rbac"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#9f8aa62d09868983ef5011d68058180f11cec44d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
