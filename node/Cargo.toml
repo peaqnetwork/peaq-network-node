@@ -32,7 +32,7 @@ futures = { version = "0.3.1", features = [ "compat" ] }
 log = "0.4.8"
 clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
-jsonrpsee = { version = "0.15.1", default-features = false, features = [ "macros", "server" ] }
+jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "moonbeam-v0.15.1", features = [ "macros", "server" ] }
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
