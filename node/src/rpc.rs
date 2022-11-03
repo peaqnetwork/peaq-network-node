@@ -248,10 +248,9 @@ where
 		)
 		.into_rpc(),
 	)?;
-	// Debug/Tracing doesn't setup here
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
- 	}
+	}
 
 	if let Some(tracing_config) = maybe_tracing_config {
 		if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {
