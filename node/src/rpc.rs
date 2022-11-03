@@ -209,7 +209,7 @@ where
 			Arc::clone(&block_data_cache),
 			fee_history_cache,
 			fee_history_limit,
-			1 as u64,
+			10,
 		)
 		.into_rpc(),
 	)?;
@@ -249,18 +249,17 @@ where
 		)
 		.into_rpc(),
 	)?;
-	// Debug/Tracing doesn't setup here
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
- 	}
+	}
 
- 	if let Some(command_sink) = command_sink {
+	if let Some(command_sink) = command_sink {
 		io.merge(
- 			// We provide the rpc handler with the sending end of the channel to allow the rpc
- 			// send EngineCommands to the background block authorship task.
+			// We provide the rpc handler with the sending end of the channel to allow the rpc
+			// send EngineCommands to the background block authorship task.
 			ManualSeal::new(command_sink).into_rpc(),
 		)?;
- 	};
+	};
 
 	if let Some(tracing_config) = maybe_tracing_config {
 		if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {
