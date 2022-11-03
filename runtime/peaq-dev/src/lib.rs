@@ -84,6 +84,8 @@ pub use peaq_primitives_xcm::{
 };
 
 pub use peaq_pallet_did;
+use peaq_pallet_did::structs::Attribute as DidAttribute;
+use peaq_pallet_did::did::Did;
 pub use peaq_pallet_transaction;
 pub use peaq_pallet_rbac;
 
@@ -351,9 +353,11 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
+type Moment = peaq_primitives_xcm::Moment;
+
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
+	type Moment = Moment;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 	type OnTimestampSet = BlockReward;
@@ -1275,6 +1279,13 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+	impl peaq_pallet_did_runtime_api::PeaqDIDApi<Block, AccountId, BlockNumber, Moment> for Runtime {
+		fn read(did_account: AccountId, name: Vec<u8>) -> Option<
+			DidAttribute<BlockNumber, Moment>> {
+			PeaqDid::read(&did_account, &name)
 		}
 	}
 

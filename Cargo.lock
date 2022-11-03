@@ -7059,6 +7059,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
+ "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
@@ -7164,6 +7165,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
+ "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
@@ -7226,6 +7228,8 @@ dependencies = [
  "cumulus-client-consensus-relay-chain",
  "cumulus-client-network",
  "cumulus-client-service",
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-inprocess-interface",
@@ -7247,6 +7251,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
+ "orml-xtokens",
  "pallet-base-fee",
  "pallet-block-reward",
  "pallet-contracts",
@@ -7258,6 +7263,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-agung-runtime",
  "peaq-dev-runtime",
+ "peaq-pallet-did-rpc",
  "peaq-primitives-ext",
  "peaq-primitives-xcm",
  "peaq-rpc-debug",
@@ -7313,7 +7319,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#644055659805e1141cc7e670add1c5edb88b4ebe"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#9ad83a32ad3c0a599f13710a6959b126c64f3573"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7323,7 +7329,38 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-rpc",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-did-rpc"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#9ad83a32ad3c0a599f13710a6959b126c64f3573"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "parity-scale-codec",
+ "peaq-pallet-did",
+ "peaq-pallet-did-runtime-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "peaq-pallet-did-runtime-api"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#9ad83a32ad3c0a599f13710a6959b126c64f3573"
+dependencies = [
+ "parity-scale-codec",
+ "peaq-pallet-did",
+ "sp-api",
  "sp-std",
 ]
 

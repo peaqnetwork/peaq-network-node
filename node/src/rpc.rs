@@ -127,6 +127,7 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	C::Api: peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
@@ -143,6 +144,7 @@ where
 		Web3ApiServer,
 	};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
+	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
 	let mut io = jsonrpc_core::IoHandler::default();
@@ -235,6 +237,10 @@ where
 			Arc::new(subscription_task_executor),
 		),
 		overrides,
+	)));
+
+	io.extend_with(PeaqDIDApi::to_delegate(PeaqDID::new(
+		client.clone()
 	)));
 
 	// Debug/Tracing doesn't setup here

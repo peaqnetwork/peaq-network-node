@@ -194,6 +194,12 @@ git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
 branch = 'dev'
 version = '0.0.1'
 
+[dependencies.peaq-pallet-did-runtime-api]
+default-features = false
+git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
+branch = 'dev'
+version = '0.0.1'
+
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
@@ -509,6 +515,7 @@ std = [
 	'pallet-contracts-primitives/std',
 	'pallet-contracts-rpc-runtime-api/std',
 	'peaq-pallet-did/std',
+	'peaq-pallet-did-runtime-api/std',
 	'peaq-pallet-transaction/std',
 	'peaq-pallet-rbac/std',
 
