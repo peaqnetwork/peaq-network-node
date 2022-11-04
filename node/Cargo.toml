@@ -257,112 +257,112 @@ features = [ "macros", "sync" ]
 ## Parachain
 [dependencies.sc-tracing]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-client-cli]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-client-network]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-client-service]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-client-consensus-aura]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-client-consensus-common]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-client-consensus-relay-chain]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-relay-chain-interface]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-pallet-xcmp-queue]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-relay-chain-inprocess-interface]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-relay-chain-rpc-interface]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-primitives-core]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-primitives-parachain-inherent]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.substrate-prometheus-endpoint]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 # polkadot dependencies
 [dependencies.polkadot-primitives]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.polkadot-parachain]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.polkadot-service]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.polkadot-cli]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 optional = true
 
 [dependencies.sp-session]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.sp-keystore]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.sp-transaction-pool]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.sp-offchain]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.sc-chain-spec]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.fp-dynamic-fee]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.19'
+branch = 'peaq-polkadot-v0.9.29'
 
 [dependencies.pallet-block-reward]
 path = '../pallets/block-reward'
 
 [dependencies.orml-xtokens]
 git = "https://github.com/peaqnetwork/open-runtime-module-library"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.cumulus-pallet-parachain-system]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.peaq-pallet-did-rpc]
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
@@ -373,7 +373,7 @@ version = '0.0.1'
 # XCM
 [dependencies.xcm]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.19"
+branch = "peaq-polkadot-v0.9.29"
 
 
 # Customized
