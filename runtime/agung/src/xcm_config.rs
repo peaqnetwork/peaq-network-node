@@ -5,7 +5,8 @@ use super::{
 	constants::fee:: { dot_per_second, peaq_per_second, },
 };
 use sp_runtime::{
-	traits::Convert,
+	traits::{Convert, ConstU32},
+	WeakBoundedVec,
 };
 use cumulus_primitives_core::ParaId;
 use sp_std::prelude::*;
@@ -14,7 +15,6 @@ use codec::{Decode, Encode};
 use frame_support::{
 	parameter_types,
 	traits::{Everything, Nothing},
-	weights::Weight,
 };
 use frame_system::{
 	EnsureRoot,
@@ -36,8 +36,6 @@ use orml_traits::{location::AbsoluteReserveProvider, MultiCurrency, parameter_ty
 use orml_xcm_support::{DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use xcm_executor::XcmExecutor;
 use xcm::latest::MultiAsset;
-use frame_support::WeakBoundedVec;
-use frame_support::pallet_prelude::ConstU32;
 use peaq_primitives_xcm::currency::parachain;
 
 parameter_types! {
@@ -94,7 +92,7 @@ pub type XcmOriginToCallOrigin = (
 
 parameter_types! {
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
-	pub const UnitWeightCost: Weight = 1_000_000_000;
+	pub const UnitWeightCost: u64 = 1_000_000_000;
 	pub const MaxInstructions: u32 = 100;
 	pub PeaqPerSecond: (AssetId, u128) = (
 		local_currency_location(peaq_primitives_xcm::CurrencyId::Token(TokenSymbol::PEAQ)).into(),
@@ -149,13 +147,14 @@ pub fn local_currency_location(key: CurrencyId) -> MultiLocation {
 		X1(GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
 			key.encode(),
 			None,
-		).to_vec())),
+		))),
 	)
 }
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type Call = Call;
+	type CallDispatcher = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
@@ -225,15 +224,15 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BaseXcmWeight: Weight = 100_000_000;
+	pub const BaseXcmWeight: u64 = 100_000_000;
 	pub const MaxAssetsForTransfer: usize = 2;
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> u128 {
+	pub ParachainMinFee: |location: MultiLocation| -> Option<u128> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		match (location.parents, location.first_interior()) {
-			_ => u128::MAX
+			_ => None,
 		}
 	};
 }
@@ -260,7 +259,7 @@ fn native_currency_location(para_id: u32, key: Vec<u8>) -> MultiLocation {
 		1,
 		X2(
 			Parachain(para_id),
-			GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(key, None).to_vec()),
+			GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(key, None)),
 		),
 	)
 }

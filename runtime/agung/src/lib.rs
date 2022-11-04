@@ -22,17 +22,17 @@ use sp_core::{
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
+		PostDispatchInfoOf,
 		// NumberFor,
 		OpaqueKeys,
-		PostDispatchInfoOf, ConvertInto,
+		ConvertInto,
 		AccountIdConversion,
 	},
 	transaction_validity::{
-		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction
+		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction,
 	},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult,
 	SaturatedConversion,
 	Perquintill,
 };
@@ -88,6 +88,8 @@ use peaq_primitives_xcm;
 pub use peaq_primitives_xcm::{
 	Amount, CurrencyId, currency, TokenSymbol
 };
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+
 
 pub use peaq_pallet_did;
 use peaq_pallet_did::structs::Attribute as DidAttribute;
@@ -204,7 +206,7 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2 as u64);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -344,7 +346,7 @@ impl pallet_contracts::Config for Runtime {
 	type DeletionQueueDepth = ConstU32<128>;
 	type DeletionWeightLimit = DeletionWeightLimit;
 	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
-	type ContractAccessWeight = pallet_contracts::DefaultContractAccessWeight<BlockWeights>;
+	type ContractAccessWeight = pallet_contracts::DefaultContractAccessWeight<RuntimeBlockWeights>;
 	type MaxStorageKeyLen = ConstU32<128>;
 	type MaxCodeLen = ConstU32<{ 128 * 1024 }>;
 	type RelaxedMaxCodeLen = ConstU32<{ 256 * 1024 }>;
@@ -405,7 +407,7 @@ impl WeightToFeePolynomial for WeightToFee {
 		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLICENTS:
 		// in our template, we map to 1/10 of that, or 1/10 MILLICENTS
 		let p = MILLICENTS / 10;
-		let q = 100 * Balance::from(ExtrinsicBaseWeight::get());
+		let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -472,7 +474,7 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 
 /// Approximate ratio of the amount of Weight per Gas.
 /// u64 works for approximations because Weight is a very small unit compared to gas.
-pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND.ref_time() / GAS_PER_SECOND;
+pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND.saturating_div(GAS_PER_SECOND).ref_time();
 
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
@@ -554,8 +556,8 @@ impl pallet_randomness_collective_flip::Config for Runtime {}
 
 // Parachain
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4 as u64);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4 as u64);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -567,6 +569,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -681,7 +684,7 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 pub struct ToStakingPot;
 impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
     fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-        let staking_pot = PotId::get().into_account();
+        let staking_pot = PotId::get().into_account_truncating();
         Balances::resolve_creating(&staking_pot, amount);
     }
 }
@@ -720,7 +723,6 @@ parameter_types! {
 }
 
 impl orml_currencies::Config for Runtime {
-	type Event = Event;
 	type MultiCurrency = Tokens;
 	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
 	type GetNativeCurrencyId = GetNativeCurrencyId;
@@ -729,7 +731,7 @@ impl orml_currencies::Config for Runtime {
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
-		PotId::get().into_account(),
+		PotId::get().into_account_truncating(),
 	]
 }
 
@@ -747,7 +749,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TestAccount: AccountId = PotId::get().into_account();
+	pub TestAccount: AccountId = PotId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {
@@ -760,6 +762,10 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -810,7 +816,7 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
-		Currencies: orml_currencies::{Pallet, Call, Event<T>} = 34,
+		Currencies: orml_currencies::{Pallet, Call} = 34,
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,

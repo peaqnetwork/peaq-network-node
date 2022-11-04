@@ -455,7 +455,6 @@ default-features = false
 path = "../../primitives/xcm"
 default-features = false
 
-
 [dependencies.precompile-utils]
 path = "../../precompiles/utils"
 default-features = false
@@ -576,6 +575,7 @@ std = [
 
 	# Customized
 	"peaq-primitives-xcm/std",
+	"precompile-utils/std",
 ]
 
 # Must be enabled for tracing runtimes only

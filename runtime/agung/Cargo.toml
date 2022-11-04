@@ -191,26 +191,26 @@ branch = 'peaq-polkadot-v0.9.29'
 [dependencies.peaq-pallet-did]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
-version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
 [dependencies.peaq-pallet-did-runtime-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
-version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'dev'
-version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
 [dependencies.peaq-pallet-rbac]
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
 default-features = false
-branch = 'dev'
-version = '0.0.1'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -454,6 +454,10 @@ default-features = false
 path = "../../primitives/xcm"
 default-features = false
 
+[dependencies.precompile-utils]
+path = "../../precompiles/utils"
+default-features = false
+
 
 [features]
 default = ["std", "aura"]
@@ -571,6 +575,7 @@ std = [
 
 	# Customized
 	"peaq-primitives-xcm/std",
+	"precompile-utils/std",
 ]
 
 # Must be enabled for tracing runtimes only
