@@ -2921,7 +2921,7 @@ dependencies = [
 [[package]]
 name = "jsonrpsee"
 version = "0.15.1"
-source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=moonbeam-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
+source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=peaq-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
 dependencies = [
  "jsonrpsee-core",
  "jsonrpsee-http-server",
@@ -2934,7 +2934,7 @@ dependencies = [
 [[package]]
 name = "jsonrpsee-core"
 version = "0.15.1"
-source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=moonbeam-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
+source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=peaq-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
 dependencies = [
  "anyhow",
  "arrayvec 0.7.2",
@@ -2962,7 +2962,7 @@ dependencies = [
 [[package]]
 name = "jsonrpsee-http-server"
 version = "0.15.1"
-source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=moonbeam-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
+source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=peaq-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -2979,7 +2979,7 @@ dependencies = [
 [[package]]
 name = "jsonrpsee-proc-macros"
 version = "0.15.1"
-source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=moonbeam-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
+source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=peaq-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -2990,7 +2990,7 @@ dependencies = [
 [[package]]
 name = "jsonrpsee-types"
 version = "0.15.1"
-source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=moonbeam-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
+source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=peaq-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
 dependencies = [
  "anyhow",
  "beef",
@@ -3003,7 +3003,7 @@ dependencies = [
 [[package]]
 name = "jsonrpsee-ws-server"
 version = "0.15.1"
-source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=moonbeam-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
+source = "git+https://github.com/peaqnetwork/jsonrpsee?branch=peaq-v0.15.1#7c2a0149c3a134c6d84d0fccc94efd455f314f80"
 dependencies = [
  "futures-channel",
  "futures-util",
