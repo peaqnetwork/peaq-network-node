@@ -42,7 +42,7 @@ clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
 url = "2.2.2"
 serde = { version = "1.0", features = [ "derive" ] }
-jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "moonbeam-v0.15.1", features = [ "macros", "server" ] }
+jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1", features = [ "macros", "server" ] }
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'

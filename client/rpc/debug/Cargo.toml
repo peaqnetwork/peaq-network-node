@@ -10,7 +10,7 @@ version = "0.1.0"
 [dependencies]
 futures = { version = "0.3", features = [ "compat" ] }
 hex-literal = "0.3.4"
-jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "moonbeam-v0.15.1", default-features = false, features = [ "macros", "server" ] }
+jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1", default-features = false, features = [ "macros", "server" ] }
 tokio = { version = "1.10", features = [ "sync", "time" ] }
 
 peaq-client-evm-tracing = { path = "../../evm-tracing" }
