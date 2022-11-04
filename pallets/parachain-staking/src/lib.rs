@@ -2726,7 +2726,7 @@ pub mod pallet {
 
 		/// Get a unique, inaccessible account id from the `PotId`.
 		pub fn account_id() -> T::AccountId {
-			T::PotId::get().try_into_account().unwrap()
+			T::PotId::get().into_account_truncating()
 		}
 	}
 

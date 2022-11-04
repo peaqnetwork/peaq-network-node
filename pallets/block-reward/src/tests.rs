@@ -251,7 +251,7 @@ pub fn harcap_reaches() {
             );
         }
 
-        
+
         BlockReward::on_timestamp_set(0);
         assert_eq!(
             <TestRuntime as Config>::Currency::total_issuance(),
@@ -346,15 +346,15 @@ impl FreeBalanceSnapshot {
     /// Future balance changes won't be reflected in this instance.
     fn new() -> Self {
         Self {
-            treasury: <TestRuntime as Config>::Currency::free_balance(&TREASURY_POT.into_account()),
+            treasury: <TestRuntime as Config>::Currency::free_balance(&TREASURY_POT.into_account_truncating()),
             collators: <TestRuntime as Config>::Currency::free_balance(
-                &COLLATOR_POT.into_account(),
+                &COLLATOR_POT.into_account_truncating(),
             ),
-            dapps: <TestRuntime as Config>::Currency::free_balance(&DAPPS_POT.into_account()),
-            lp_users: <TestRuntime as Config>::Currency::free_balance(&LP_POT.into_account()),
-            machines: <TestRuntime as Config>::Currency::free_balance(&MACHINE_POT.into_account()),
+            dapps: <TestRuntime as Config>::Currency::free_balance(&DAPPS_POT.into_account_truncating()),
+            lp_users: <TestRuntime as Config>::Currency::free_balance(&LP_POT.into_account_truncating()),
+            machines: <TestRuntime as Config>::Currency::free_balance(&MACHINE_POT.into_account_truncating()),
             machines_subsidization: <TestRuntime as
-				Config>::Currency::free_balance(&MACHINE_SUBSIDIZATION_POT.into_account()),
+				Config>::Currency::free_balance(&MACHINE_SUBSIDIZATION_POT.into_account_truncating()),
         }
     }
 

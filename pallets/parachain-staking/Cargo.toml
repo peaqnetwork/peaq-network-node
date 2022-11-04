@@ -51,6 +51,7 @@ std = [
   "sp-runtime/std",
   "sp-staking/std",
   "sp-std/std",
+  "sp-consensus-aura/std",
 ]
 try-runtime = [
   "frame-support/try-runtime",
