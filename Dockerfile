@@ -8,7 +8,7 @@ FROM ghcr.io/peaqnetwork/peaq-node-builder:agung-build as builder
 WORKDIR /opt/network/
 COPY . .
 RUN cargo build --release
-
+RUN ls -al target/release/peaq-node
 
 # This is the 2nd stage: a very small image where we copy the binary."
 FROM ubuntu:20.04
