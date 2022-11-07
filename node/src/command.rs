@@ -17,10 +17,10 @@ use frame_benchmarking_cli::BenchmarkCmd;
 // Parachain
 use codec::Encode;
 use sp_core::hexdisplay::HexDisplay;
-use cumulus_client_service::genesis::generate_genesis_block;
+use cumulus_client_cli::generate_genesis_block;
 use log::info;
 use cumulus_primitives_core::ParaId;
-use polkadot_parachain::primitives::AccountIdConversion;
+use sp_runtime::traits::{AccountIdConversion};
 use sc_cli::{
 	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, SharedParams,
@@ -192,27 +192,27 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			if runner.config().chain_spec.is_agung() {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						import_queue,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
 			} else {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						import_queue,
 						..
 					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
@@ -222,25 +222,25 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			if runner.config().chain_spec.is_agung() {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.database), task_manager))
 				})
 			} else {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						..
 					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.database), task_manager))
@@ -250,25 +250,25 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			if runner.config().chain_spec.is_agung() {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.chain_spec), task_manager))
 				})
 			} else {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						..
 					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.chain_spec), task_manager))
@@ -278,33 +278,34 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			if runner.config().chain_spec.is_agung() {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						import_queue,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
 			} else {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						import_queue,
 						..
 					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
 			}
 		}
+		// [TODO] Revert
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| {
@@ -327,27 +328,27 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			if runner.config().chain_spec.is_agung() {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						backend,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, backend, None), task_manager))
 				})
 			} else {
-				runner.async_run(|config| {
+				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						backend,
 						..
 					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&config,
+						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, backend, None), task_manager))
@@ -372,18 +373,18 @@ pub fn run() -> sc_cli::Result<()> {
 					}
 					BenchmarkCmd::Block(cmd) => {
 						if chain_spec.is_agung() {
-							return runner.sync_run(|config| {
+							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-									&config,
+									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
 
 								cmd.run(params.client)
 							})
 						} else {
-							return runner.sync_run(|config| {
+							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-									&config,
+									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
 
@@ -393,9 +394,9 @@ pub fn run() -> sc_cli::Result<()> {
 					}
 					BenchmarkCmd::Storage(cmd) => {
 						if chain_spec.is_agung() {
-							return runner.sync_run(|config| {
+							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
-									&config,
+									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
 
@@ -405,9 +406,9 @@ pub fn run() -> sc_cli::Result<()> {
 									cmd.run(config, params.client, db, storage)
 							})
 						} else {
-							return runner.sync_run(|config| {
+							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-									&config,
+									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
 
@@ -444,7 +445,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let spec = cli.load_spec(&params.chain.clone().unwrap_or_default())?;
 			let state_version = Cli::native_runtime_version(&spec).state_version();
 
-			let block: Block = generate_genesis_block(&spec, state_version)?;
+			let block: Block = generate_genesis_block(&*spec, state_version)?;
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
 				raw_header
@@ -495,6 +496,7 @@ pub fn run() -> sc_cli::Result<()> {
 					eth_statuses_cache: cli.run.eth_statuses_cache,
 					fee_history_limit: cli.run.fee_history_limit,
 					max_past_logs: cli.run.max_past_logs,
+					relay_chain_rpc_url: cli.run.base.relay_chain_rpc_url,
 					tracing_raw_max_memory_usage: cli.run.tracing_raw_max_memory_usage,
 				};
 
@@ -508,10 +510,10 @@ pub fn run() -> sc_cli::Result<()> {
 				let id = ParaId::from(cli.run.parachain_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account(&id);
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
 				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
+				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
@@ -592,7 +594,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	fn base_path(&self) -> Result<Option<BasePath>> {
 		Ok(self
 			.shared_params()
-			.base_path()
+			.base_path()?
 			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
@@ -645,12 +647,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.role(is_dev)
 	}
 
-	fn transaction_pool(&self) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool()
-	}
-
-	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
-		self.base.base.state_cache_child_ratio()
+	fn transaction_pool(&self, is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
+		self.base.base.transaction_pool(is_dev)
 	}
 
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {

@@ -23,7 +23,6 @@ use {
 	hex_literal::hex,
 	pallet_evm::Context,
 	sp_core::{H160, H256, U256},
-	sp_std::convert::TryInto,
 };
 
 fn u256_repeat_byte(byte: u8) -> U256 {

@@ -137,7 +137,7 @@ pub enum Subcommand {
 #[derive(Debug, clap::Parser)]
 pub struct ExportGenesisStateCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(value_parser)]
 	pub output: Option<PathBuf>,
 
 	/// Id of the parachain this state is for.
@@ -157,7 +157,7 @@ pub struct ExportGenesisStateCommand {
 #[derive(Debug, clap::Parser)]
 pub struct ExportGenesisWasmCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(value_parser)]
 	pub output: Option<PathBuf>,
 
 	/// Write output in binary. Default is to write in hex.

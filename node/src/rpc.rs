@@ -7,7 +7,6 @@ use fc_rpc::{
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use peaq_node_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Hash, Index};
 use jsonrpsee::RpcModule;
 use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
@@ -25,6 +24,7 @@ use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata
 };
 use sp_runtime::traits::BlakeTwo256;
+// use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
 
 //For ink! contracts
 use pallet_contracts_rpc::{Contracts, ContractsApiServer};
@@ -148,7 +148,7 @@ where
 		Eth, EthApiServer, EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, Net,
 		NetApiServer, Web3, Web3ApiServer,
 	};
-	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApi};
+	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
@@ -207,7 +207,7 @@ where
 			Arc::clone(&block_data_cache),
 			fee_history_cache,
 			fee_history_limit,
-			1 as u64,
+			10 as u64,
 		)
 		.into_rpc(),
 	)?;
@@ -236,10 +236,7 @@ where
 		.into_rpc(),
 	)?;
 
-	io.merge(PeaqDIDApi::to_delegate(PeaqDID::new(
-		client.clone()
-	)));
-
+	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(
@@ -255,14 +252,6 @@ where
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
  	}
-
- 	if let Some(command_sink) = command_sink {
-		io.merge(
- 			// We provide the rpc handler with the sending end of the channel to allow the rpc
- 			// send EngineCommands to the background block authorship task.
-			ManualSeal::new(command_sink).into_rpc(),
-		)?;
- 	};
 
 	if let Some(tracing_config) = maybe_tracing_config {
 		if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {

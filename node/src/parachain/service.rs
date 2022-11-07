@@ -10,16 +10,17 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
+use cumulus_relay_chain_rpc_interface::{RelayChainRpcInterface, create_client_and_start_worker};
 use fc_consensus::FrontierBlockImport;
+use fc_db::DatabaseSource;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use futures::StreamExt;
 use polkadot_service::CollatorPair;
 use sc_client_api::{BlockchainEvents, ExecutorProvider};
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
-use sc_network::NetworkService;
-use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
+use sc_network::{NetworkBlock, NetworkService};
+use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -91,7 +92,7 @@ type FullClient<RuntimeApi, Executor> =
 type FullBackend = TFullBackend<Block>;
 
 
-pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
+pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
 	let config_dir = config
 		.base_path
 		.as_ref()
@@ -100,15 +101,30 @@ pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
 			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
 				.config_dir(config.chain_spec.id())
 		});
-	config_dir.join("frontier").join("db")
+	config_dir.join("frontier").join(path)
 }
 
-pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
+pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
+	client: Arc<C>, config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
+		client,
 		&fc_db::DatabaseSettings {
-			source: fc_db::DatabaseSettingsSrc::RocksDb {
-				path: frontier_database_dir(&config),
-				cache_size: 0,
+			source: match config.database {
+				DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
+					path: frontier_database_dir(config, "db"),
+					cache_size: 0,
+				},
+				DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
+					path: frontier_database_dir(config, "paritydb"),
+				},
+				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
+					rocksdb_path: frontier_database_dir(config, "db"),
+					paritydb_path: frontier_database_dir(config, "paritydb"),
+					cache_size: 0,
+				},
+				_ => {
+					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
+				}
 			},
 		},
 	)?))
@@ -118,7 +134,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
-	config: &Configuration,
+	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
 ) -> Result<
@@ -178,6 +194,10 @@ where
 		sc_service::Error,
 	>,
 {
+
+	// Use ethereum style for subscription ids
+	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
+
 	let telemetry = config
 		.telemetry_endpoints
 		.clone()
@@ -224,7 +244,7 @@ where
 	let filter_pool: Option<FilterPool> = Some(Arc::new(std::sync::Mutex::new(BTreeMap::new())));
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
-	let frontier_backend = open_frontier_backend(config)?;
+	let frontier_backend = open_frontier_backend(client.clone(), config)?;
 	let frontier_block_import =
 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
@@ -269,15 +289,16 @@ async fn build_relay_chain_interface(
 	Option<CollatorPair>,
 )> {
 	match relay_chain_rpc_url {
-		Some(relay_chain_url) => Ok((
-			Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>,
-			None,
-		)),
+		Some(relay_chain_url) => {
+			let client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
+			Ok((Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>, None))
+		}
 		None => build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
+			None,
 		),
 	}
 }
@@ -360,13 +381,9 @@ where
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
-	if matches!(parachain_config.role, Role::Light) {
-		return Err("Light client not supported!".into());
-	}
-
-	let parachain_config = prepare_node_config(parachain_config);
+	let mut parachain_config = prepare_node_config(parachain_config);
 	let params = new_partial::<RuntimeApi, Executor, BIQ>(
-		&parachain_config, fn_build_import_queue, target_gas_price)?;
+		&mut parachain_config, fn_build_import_queue, target_gas_price)?;
 	let (
 		_block_import,
 		filter_pool,
@@ -412,8 +429,6 @@ where
 			warp_sync: None,
 		})?;
 
-	let subscription_task_executor =
-		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let fee_history_limit = rpc_config.fee_history_limit;
 
 	let overrides = crate::rpc::overrides_handle(client.clone());
@@ -450,12 +465,6 @@ where
 			),
 		);
 	}
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		Some("frontier"),
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
-	);
 
 	// Spawn Frontier FeeHistory cache maintenance task.
 	task_manager.spawn_essential_handle().spawn(
@@ -495,8 +504,8 @@ where
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
-		rpc_config.eth_log_block_cache as u64,
-		rpc_config.eth_statuses_cache as u64,
+		rpc_config.eth_log_block_cache,
+		rpc_config.eth_statuses_cache,
 		prometheus_registry.clone(),
 	));
 
@@ -504,7 +513,7 @@ where
 	// save param `relay_chain_rpc_url` to be able to use it later.
 	let relay_chain_rpc_url = rpc_config.relay_chain_rpc_url.clone();
 
-	let rpc_extensions_builder = {
+	let rpc_builder = {
 		let client = client.clone();
 		let network = network.clone();
 		let pool = transaction_pool.clone();
@@ -518,7 +527,7 @@ where
 		let fee_history_cache = fee_history_cache.clone();
 		let block_data_cache = block_data_cache.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
 				backend: frontier_backend.clone(),
 				client: client.clone(),
@@ -535,27 +544,26 @@ where
 				block_data_cache: block_data_cache.clone(),
 				overrides: overrides.clone(),
 			};
-			#[allow(unused_mut)]
-			let mut io = crate::rpc::create_full(deps, subscription_task_executor.clone());
-			// This node support WASM contracts
-			io.extend_with(pallet_contracts_rpc::ContractsApi::to_delegate(
-				pallet_contracts_rpc::Contracts::new(client.clone()),
-			));
+
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-				crate::rpc::tracing::extend_with_tracing(
-					client.clone(),
-					tracing_requesters.clone(),
-					rpc_config.ethapi_trace_max_count,
-					&mut io,
-				);
+				crate::rpc::create_full(
+					deps,
+					subscription_task_executor,
+					Some(crate::rpc::TracingConfig {
+						tracing_requesters: tracing_requesters.clone(),
+						trace_filter_max_count: rpc_config.ethapi_trace_max_count,
+					}),
+				)
+				.map_err(Into::into)
+			} else {
+				crate::rpc::create_full(deps, subscription_task_executor, None).map_err(Into::into)
 			}
-			Ok(io)
-		})
+		}
 	};
 
 	// Spawn basic services.
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		rpc_extensions_builder,
+		rpc_builder: Box::new(rpc_builder),
 		client: client.clone(),
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
