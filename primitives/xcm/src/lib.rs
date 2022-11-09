@@ -96,13 +96,15 @@ pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 /// Opaque, encoded, unchecked extrinsic.
 use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
+// [TODO] Maybe we can remove it?
 #[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct TradingPair(CurrencyId, CurrencyId);
 
 impl TradingPair {
 	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_token_currency_id() && currency_id_b.is_token_currency_id()
+		if currency_id_a.is_trading_pair_currency_id()
+			&& currency_id_b.is_trading_pair_currency_id()
 			&& currency_id_a != currency_id_b
 		{
 			if currency_id_a > currency_id_b {
@@ -130,5 +132,3 @@ impl Decode for TradingPair {
 		TradingPair::from_currency_ids(first, second).ok_or_else(|| codec::Error::from("invalid currency id"))
 	}
 }
-
-pub const MIRRORED_TOKENS_ADDRESS_START: u64 = 0x1000000;

@@ -16,7 +16,7 @@
 
 #![allow(clippy::from_over_into)]
 
-use crate::{evm::EvmAddress, *};
+use crate::evm::EvmAddress;
 use bstringify::bstringify;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -25,6 +25,7 @@ use sp_std::{
 	convert::{Into, TryFrom},
 	prelude::*,
 };
+use num_enum::{TryFromPrimitive, IntoPrimitive};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -137,14 +138,15 @@ create_currency_id! {
 	pub enum TokenSymbol {
 		PEAQ("PEAQ", 18) = 0,
 
-
 		DOT("Polkadot", 10) = 64,
+		ACA("Acala", 12) = 65,
 
-
-		ACA("Acala", 12) = 128,
+		KAR("Karura", 12) = 128,
+		KSM("Kusama", 12) = 130,
 	}
 }
 
+// [TODO] Maybe we can remove it
 pub mod parachain {
 	pub mod acala {
         pub const ID: u32 = 3000;
@@ -159,12 +161,16 @@ pub trait TokenInfo {
 	fn decimals(&self) -> Option<u8>;
 }
 
+pub type ForeignAssetId = u16;
+pub type Erc20Id = u32;
+
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
+	ForeignAsset(ForeignAssetId),
 }
 
 impl CurrencyId {
@@ -175,18 +181,51 @@ impl CurrencyId {
 	pub fn is_erc20_currency_id(&self) -> bool {
 		matches!(self, CurrencyId::Erc20(_))
 	}
-}
 
-/// Generate the EvmAddress from CurrencyId so that evm contracts can call the erc20 contract.
-impl TryFrom<CurrencyId> for EvmAddress {
-	type Error = ();
+	pub fn is_foreign_asset_currency_id(&self) -> bool {
+		matches!(self, CurrencyId::ForeignAsset(_))
+	}
 
-	fn try_from(val: CurrencyId) -> Result<Self, Self::Error> {
-		match val {
-			CurrencyId::Token(_) => Ok(EvmAddress::from_low_u64_be(
-				MIRRORED_TOKENS_ADDRESS_START | u64::from(val.currency_id().unwrap()),
-			)),
-			CurrencyId::Erc20(address) => Ok(address),
+	pub fn is_trading_pair_currency_id(&self) -> bool {
+		matches!(
+			self,
+			CurrencyId::Token(_)
+				| CurrencyId::Erc20(_)
+				| CurrencyId::ForeignAsset(_)
+		)
+	}
+
+	pub fn erc20_address(&self) -> Option<EvmAddress> {
+		match self {
+			CurrencyId::Erc20(address) => Some(*address),
+			// [TODO]
+			CurrencyId::Token(_) => EvmAddress::try_from(*self).ok(),
+			_ => None,
 		}
 	}
+}
+
+/// H160 CurrencyId Type enum
+#[derive(
+	Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TryFromPrimitive, IntoPrimitive, TypeInfo,
+)]
+#[repr(u8)]
+pub enum CurrencyIdType {
+	Token = 1, // 0 is prefix of precompile and predeploy
+	ForeignAsset,
+}
+
+#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub enum AssetIds {
+	Erc20(EvmAddress),
+	ForeignAssetId(ForeignAssetId),
+	NativeAssetId(CurrencyId),
+}
+
+#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+pub struct AssetMetadata<Balance> {
+	pub name: Vec<u8>,
+	pub symbol: Vec<u8>,
+	pub decimals: u8,
+	pub minimal_balance: Balance,
 }
