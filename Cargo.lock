@@ -4982,6 +4982,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "module-asset-registry"
+version = "2.10.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "module-support",
+ "orml-utilities",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "module-support"
+version = "2.10.1"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "orml-tokens",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
 name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

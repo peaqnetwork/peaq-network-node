@@ -20,16 +20,17 @@
 
 pub mod currency;
 pub mod evm;
+pub mod task;
 
 use codec::{Decode, Encode};
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, RuntimeDebug,
+	MultiSignature, RuntimeDebug, FixedU128,
 };
 use sp_std::prelude::*;
 
-pub use currency::{CurrencyId, TokenSymbol};
+pub use currency::{CurrencyId, DexShare, TokenSymbol};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -132,3 +133,6 @@ impl Decode for TradingPair {
 		TradingPair::from_currency_ids(first, second).ok_or_else(|| codec::Error::from("invalid currency id"))
 	}
 }
+
+pub type Multiplier = FixedU128;
+pub type ReserveIdentifier = [u8; 8];

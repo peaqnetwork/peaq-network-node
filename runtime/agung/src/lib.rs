@@ -86,7 +86,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use peaq_primitives_xcm;
 pub use peaq_primitives_xcm::{
-	Amount, CurrencyId, currency, TokenSymbol
+	Amount, CurrencyId, currency, TokenSymbol, ReserveIdentifier,
 };
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
@@ -374,7 +374,7 @@ parameter_types! {
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -765,7 +765,7 @@ impl orml_tokens::Config for Runtime {
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 }
 
 impl orml_unknown_tokens::Config for Runtime {

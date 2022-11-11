@@ -167,6 +167,14 @@ pub type Erc20Id = u32;
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub enum DexShare {
+	Erc20(EvmAddress),
+}
+
+
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
@@ -201,6 +209,31 @@ impl CurrencyId {
 			// [TODO]
 			CurrencyId::Token(_) => EvmAddress::try_from(*self).ok(),
 			_ => None,
+		}
+	}
+}
+
+impl From<DexShare> for u32 {
+	fn from(val: DexShare) -> u32 {
+		let mut bytes = [0u8; 4];
+		match val {
+			DexShare::Erc20(address) => {
+				// Use first 4 non-zero bytes as u32 to the mapping between u32 and evm address.
+				// Take the first 4 non-zero bytes, if it is less than 4, add 0 to the left.
+				let is_zero = |&&d: &&u8| -> bool { d == 0 };
+				let leading_zeros = address.as_bytes().iter().take_while(is_zero).count();
+				let index = if leading_zeros > 16 { 16 } else { leading_zeros };
+				bytes[..].copy_from_slice(&address[index..index + 4][..]);
+			}
+		}
+		u32::from_be_bytes(bytes)
+	}
+}
+
+impl Into<CurrencyId> for DexShare {
+	fn into(self) -> CurrencyId {
+		match self {
+			DexShare::Erc20(address) => CurrencyId::Erc20(address),
 		}
 	}
 }
