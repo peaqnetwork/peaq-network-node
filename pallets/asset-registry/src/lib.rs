@@ -80,8 +80,10 @@ pub mod module {
 		#[pallet::constant]
 		type StakingCurrencyId: Get<CurrencyId>;
 
-		/// Evm Bridge for getting info of contracts from the EVM.
-		type EVMBridge: EVMBridge<Self::AccountId, BalanceOf<Self>>;
+		/*
+		 * /// Evm Bridge for getting info of contracts from the EVM.
+		 * type EVMBridge: EVMBridge<Self::AccountId, BalanceOf<Self>>;
+		 */
 
 		/// Required origin for registering asset.
 		type RegisterOrigin: EnsureOrigin<Self::Origin>;
@@ -244,41 +246,45 @@ pub mod module {
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::register_erc20_asset())]
-		#[transactional]
-		pub fn register_erc20_asset(
-			origin: OriginFor<T>,
-			contract: EvmAddress,
-			minimal_balance: BalanceOf<T>,
-		) -> DispatchResult {
-			T::RegisterOrigin::ensure_origin(origin)?;
+/*
+ *         #[pallet::weight(T::WeightInfo::register_erc20_asset())]
+ *         #[transactional]
+ *         pub fn register_erc20_asset(
+ *             origin: OriginFor<T>,
+ *             contract: EvmAddress,
+ *             minimal_balance: BalanceOf<T>,
+ *         ) -> DispatchResult {
+ *             T::RegisterOrigin::ensure_origin(origin)?;
+ *
+ *             let metadata = Self::do_register_erc20_asset(contract, minimal_balance)?;
+ *
+ *             Self::deposit_event(Event::<T>::AssetRegistered {
+ *                 asset_id: AssetIds::Erc20(contract),
+ *                 metadata,
+ *             });
+ *             Ok(())
+ *         }
+ */
 
-			let metadata = Self::do_register_erc20_asset(contract, minimal_balance)?;
-
-			Self::deposit_event(Event::<T>::AssetRegistered {
-				asset_id: AssetIds::Erc20(contract),
-				metadata,
-			});
-			Ok(())
-		}
-
-		#[pallet::weight(T::WeightInfo::update_erc20_asset())]
-		#[transactional]
-		pub fn update_erc20_asset(
-			origin: OriginFor<T>,
-			contract: EvmAddress,
-			metadata: Box<AssetMetadata<BalanceOf<T>>>,
-		) -> DispatchResult {
-			T::RegisterOrigin::ensure_origin(origin)?;
-
-			Self::do_update_erc20_asset(contract, &metadata)?;
-
-			Self::deposit_event(Event::<T>::AssetUpdated {
-				asset_id: AssetIds::Erc20(contract),
-				metadata: *metadata,
-			});
-			Ok(())
-		}
+/*
+ *         #[pallet::weight(T::WeightInfo::update_erc20_asset())]
+ *         #[transactional]
+ *         pub fn update_erc20_asset(
+ *             origin: OriginFor<T>,
+ *             contract: EvmAddress,
+ *             metadata: Box<AssetMetadata<BalanceOf<T>>>,
+ *         ) -> DispatchResult {
+ *             T::RegisterOrigin::ensure_origin(origin)?;
+ *
+ *             Self::do_update_erc20_asset(contract, &metadata)?;
+ *
+ *             Self::deposit_event(Event::<T>::AssetUpdated {
+ *                 asset_id: AssetIds::Erc20(contract),
+ *                 metadata: *metadata,
+ *             });
+ *             Ok(())
+ *         }
+ */
 
 		#[pallet::weight(T::WeightInfo::register_native_asset())]
 		#[transactional]
@@ -385,52 +391,56 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	fn do_register_erc20_asset(
-		contract: EvmAddress,
-		minimal_balance: BalanceOf<T>,
-	) -> Result<AssetMetadata<BalanceOf<T>>, DispatchError> {
-		let invoke_context = InvokeContext {
-			contract,
-			sender: Default::default(),
-			origin: Default::default(),
-		};
+/*
+ *     fn do_register_erc20_asset(
+ *         contract: EvmAddress,
+ *         minimal_balance: BalanceOf<T>,
+ *     ) -> Result<AssetMetadata<BalanceOf<T>>, DispatchError> {
+ *         let invoke_context = InvokeContext {
+ *             contract,
+ *             sender: Default::default(),
+ *             origin: Default::default(),
+ *         };
+ *
+ *         let metadata = AssetMetadata {
+ *             name: T::EVMBridge::name(invoke_context)?,
+ *             symbol: T::EVMBridge::symbol(invoke_context)?,
+ *             decimals: T::EVMBridge::decimals(invoke_context)?,
+ *             minimal_balance,
+ *         };
+ *
+ *         // [TODO] ???
+ *         let erc20_id = Into::<Erc20Id>::into(DexShare::Erc20(contract));
+ *
+ *         AssetMetadatas::<T>::try_mutate(AssetIds::Erc20(contract), |maybe_asset_metadatas| -> DispatchResult {
+ *             ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
+ *
+ *             Erc20IdToAddress::<T>::try_mutate(erc20_id, |maybe_address| -> DispatchResult {
+ *                 ensure!(maybe_address.is_none(), Error::<T>::AssetIdExisted);
+ *                 *maybe_address = Some(contract);
+ *
+ *                 Ok(())
+ *             })?;
+ *
+ *             *maybe_asset_metadatas = Some(metadata.clone());
+ *             Ok(())
+ *         })?;
+ *
+ *         Ok(metadata)
+ *     }
+ */
 
-		let metadata = AssetMetadata {
-			name: T::EVMBridge::name(invoke_context)?,
-			symbol: T::EVMBridge::symbol(invoke_context)?,
-			decimals: T::EVMBridge::decimals(invoke_context)?,
-			minimal_balance,
-		};
-
-		// [TODO] ???
-		let erc20_id = Into::<Erc20Id>::into(DexShare::Erc20(contract));
-
-		AssetMetadatas::<T>::try_mutate(AssetIds::Erc20(contract), |maybe_asset_metadatas| -> DispatchResult {
-			ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
-
-			Erc20IdToAddress::<T>::try_mutate(erc20_id, |maybe_address| -> DispatchResult {
-				ensure!(maybe_address.is_none(), Error::<T>::AssetIdExisted);
-				*maybe_address = Some(contract);
-
-				Ok(())
-			})?;
-
-			*maybe_asset_metadatas = Some(metadata.clone());
-			Ok(())
-		})?;
-
-		Ok(metadata)
-	}
-
-	fn do_update_erc20_asset(contract: EvmAddress, metadata: &AssetMetadata<BalanceOf<T>>) -> DispatchResult {
-		AssetMetadatas::<T>::try_mutate(AssetIds::Erc20(contract), |maybe_asset_metadatas| -> DispatchResult {
-			ensure!(maybe_asset_metadatas.is_some(), Error::<T>::AssetIdNotExists);
-
-			*maybe_asset_metadatas = Some(metadata.clone());
-			Ok(())
-		})
-	}
-
+/*
+ *     fn do_update_erc20_asset(contract: EvmAddress, metadata: &AssetMetadata<BalanceOf<T>>) -> DispatchResult {
+ *         AssetMetadatas::<T>::try_mutate(AssetIds::Erc20(contract), |maybe_asset_metadatas| -> DispatchResult {
+ *             ensure!(maybe_asset_metadatas.is_some(), Error::<T>::AssetIdNotExists);
+ *
+ *             *maybe_asset_metadatas = Some(metadata.clone());
+ *             Ok(())
+ *         })
+ *     }
+ *
+ */
 	fn do_register_native_asset(asset: CurrencyId, metadata: &AssetMetadata<BalanceOf<T>>) -> DispatchResult {
 		AssetMetadatas::<T>::try_mutate(
 			AssetIds::NativeAssetId(asset),

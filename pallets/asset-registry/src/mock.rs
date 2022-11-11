@@ -92,36 +92,40 @@ ord_parameter_types! {
 	pub const StorageDepositPerByte: u128 = convert_decimals_to_evm(10);
 }
 
-impl module_evm::Config for Runtime {
-	type AddressMapping = MockAddressMapping;
-	type Currency = Balances;
-	type TransferAll = ();
-	type NewContractExtraBytes = ConstU32<1>;
-	type StorageDepositPerByte = StorageDepositPerByte;
-	type TxFeePerGas = ConstU128<10>;
-	type Event = Event;
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
-	type GasToWeight = ();
-	type ChargeTransactionPayment = module_support::mocks::MockReservedTransactionPayment<Balances>;
-	type NetworkContractOrigin = EnsureSignedBy<NetworkContractAccount, AccountId>;
-	type NetworkContractSource = NetworkContractSource;
+/*
+ * impl module_evm::Config for Runtime {
+ *     type AddressMapping = MockAddressMapping;
+ *     type Currency = Balances;
+ *     type TransferAll = ();
+ *     type NewContractExtraBytes = ConstU32<1>;
+ *     type StorageDepositPerByte = StorageDepositPerByte;
+ *     type TxFeePerGas = ConstU128<10>;
+ *     type Event = Event;
+ *     type PrecompilesType = ();
+ *     type PrecompilesValue = ();
+ *     type GasToWeight = ();
+ *     type ChargeTransactionPayment = module_support::mocks::MockReservedTransactionPayment<Balances>;
+ *     type NetworkContractOrigin = EnsureSignedBy<NetworkContractAccount, AccountId>;
+ *     type NetworkContractSource = NetworkContractSource;
+ *
+ *     type DeveloperDeposit = ConstU128<1000>;
+ *     type PublicationFee = ConstU128<200>;
+ *     type TreasuryAccount = TreasuryAccount;
+ *     type FreePublicationOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
+ *
+ *     type Runner = module_evm::runner::stack::Runner<Self>;
+ *     type FindAuthor = ();
+ *     type Task = ();
+ *     type IdleScheduler = ();
+ *     type WeightInfo = ();
+ * }
+ */
 
-	type DeveloperDeposit = ConstU128<1000>;
-	type PublicationFee = ConstU128<200>;
-	type TreasuryAccount = TreasuryAccount;
-	type FreePublicationOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
-
-	type Runner = module_evm::runner::stack::Runner<Self>;
-	type FindAuthor = ();
-	type Task = ();
-	type IdleScheduler = ();
-	type WeightInfo = ();
-}
-
-impl module_evm_bridge::Config for Runtime {
-	type EVM = EVM;
-}
+/*
+ * impl module_evm_bridge::Config for Runtime {
+ *     type EVM = EVM;
+ * }
+ */
 
 parameter_types! {
 	pub const KSMCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::KSM);
@@ -130,7 +134,7 @@ impl asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type StakingCurrencyId = KSMCurrencyId;
-	type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
+	// type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
 	type WeightInfo = ();
 }
@@ -147,8 +151,8 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		AssetRegistry: asset_registry::{Pallet, Call, Event<T>, Storage},
-		EVM: module_evm::{Pallet, Config<T>, Call, Storage, Event<T>},
-		EVMBridge: module_evm_bridge::{Pallet},
+		// EVM: module_evm::{Pallet, Config<T>, Call, Storage, Event<T>},
+		// EVMBridge: module_evm_bridge::{Pallet},
 	}
 );
 
@@ -164,9 +168,11 @@ pub fn erc20_address_not_exists() -> EvmAddress {
 	EvmAddress::from_str("0000000000000000000100000000000002000001").unwrap()
 }
 
-pub fn alice() -> AccountId {
-	<Runtime as module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr())
-}
+/*
+ * pub fn alice() -> AccountId {
+ *     <Runtime as module_evm::Config>::AddressMapping::get_account_id(&alice_evm_addr())
+ * }
+ */
 
 pub fn alice_evm_addr() -> EvmAddress {
 	EvmAddress::from_str("1000000000000000000000000000000000000001").unwrap()
@@ -174,77 +180,81 @@ pub fn alice_evm_addr() -> EvmAddress {
 
 pub const ALICE_BALANCE: u128 = 100_000_000_000_000_000_000_000u128;
 
-pub fn deploy_contracts() {
-	let json: serde_json::Value =
-		serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json")).unwrap();
-	let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
-	assert_ok!(EVM::create(Origin::signed(alice()), code, 0, 2_100_000, 10000, vec![]));
+/*
+ * pub fn deploy_contracts() {
+ *     let json: serde_json::Value =
+ *         serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json")).unwrap();
+ *     let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
+ *     assert_ok!(EVM::create(Origin::signed(alice()), code, 0, 2_100_000, 10000, vec![]));
+ *
+ *     System::assert_last_event(Event::EVM(module_evm::Event::Created {
+ *         from: alice_evm_addr(),
+ *         contract: erc20_address(),
+ *         logs: vec![module_evm::Log {
+ *             address: H160::from_str("0x5dddfce53ee040d9eb21afbc0ae1bb4dbb0ba643").unwrap(),
+ *             topics: vec![
+ *                 H256::from_str("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap(),
+ *                 H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+ *                 H256::from_str("0x0000000000000000000000001000000000000000000000000000000000000001").unwrap(),
+ *             ],
+ *             data: {
+ *                 let mut buf = [0u8; 32];
+ *                 U256::from(ALICE_BALANCE).to_big_endian(&mut buf);
+ *                 H256::from_slice(&buf).as_bytes().to_vec()
+ *             },
+ *         }],
+ *         used_gas: 1306611,
+ *         used_storage: 5462,
+ *     }));
+ *
+ *     assert_ok!(EVM::publish_free(
+ *         Origin::signed(CouncilAccount::get()),
+ *         erc20_address()
+ *     ));
+ * }
+ */
 
-	System::assert_last_event(Event::EVM(module_evm::Event::Created {
-		from: alice_evm_addr(),
-		contract: erc20_address(),
-		logs: vec![module_evm::Log {
-			address: H160::from_str("0x5dddfce53ee040d9eb21afbc0ae1bb4dbb0ba643").unwrap(),
-			topics: vec![
-				H256::from_str("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap(),
-				H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-				H256::from_str("0x0000000000000000000000001000000000000000000000000000000000000001").unwrap(),
-			],
-			data: {
-				let mut buf = [0u8; 32];
-				U256::from(ALICE_BALANCE).to_big_endian(&mut buf);
-				H256::from_slice(&buf).as_bytes().to_vec()
-			},
-		}],
-		used_gas: 1306611,
-		used_storage: 5462,
-	}));
-
-	assert_ok!(EVM::publish_free(
-		Origin::signed(CouncilAccount::get()),
-		erc20_address()
-	));
-}
-
-// Specify contract address
-pub fn deploy_contracts_same_prefix() {
-	let json: serde_json::Value =
-		serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json")).unwrap();
-	let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
-	assert_ok!(EVM::create_predeploy_contract(
-		Origin::signed(NetworkContractAccount::get()),
-		erc20_address_same_prefix(),
-		code,
-		0,
-		2_100_000,
-		10000,
-		vec![]
-	));
-
-	System::assert_has_event(Event::EVM(module_evm::Event::Created {
-		from: alice_evm_addr(),
-		contract: erc20_address_same_prefix(),
-		logs: vec![module_evm::Log {
-			address: erc20_address_same_prefix(),
-			topics: vec![
-				H256::from_str("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap(),
-				H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-				H256::from_str("0x0000000000000000000000001000000000000000000000000000000000000001").unwrap(),
-			],
-			data: {
-				let mut buf = [0u8; 32];
-				U256::from(ALICE_BALANCE).to_big_endian(&mut buf);
-				H256::from_slice(&buf).as_bytes().to_vec()
-			},
-		}],
-		used_gas: 1306611,
-		used_storage: 5462,
-	}));
-
-	System::assert_last_event(Event::EVM(module_evm::Event::ContractPublished {
-		contract: erc20_address_same_prefix(),
-	}));
-}
+/*
+ * // Specify contract address
+ * pub fn deploy_contracts_same_prefix() {
+ *     let json: serde_json::Value =
+ *         serde_json::from_str(include_str!("../../../ts-tests/build/Erc20DemoContract2.json")).unwrap();
+ *     let code = hex::decode(json.get("bytecode").unwrap().as_str().unwrap()).unwrap();
+ *     assert_ok!(EVM::create_predeploy_contract(
+ *         Origin::signed(NetworkContractAccount::get()),
+ *         erc20_address_same_prefix(),
+ *         code,
+ *         0,
+ *         2_100_000,
+ *         10000,
+ *         vec![]
+ *     ));
+ *
+ *     System::assert_has_event(Event::EVM(module_evm::Event::Created {
+ *         from: alice_evm_addr(),
+ *         contract: erc20_address_same_prefix(),
+ *         logs: vec![module_evm::Log {
+ *             address: erc20_address_same_prefix(),
+ *             topics: vec![
+ *                 H256::from_str("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap(),
+ *                 H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+ *                 H256::from_str("0x0000000000000000000000001000000000000000000000000000000000000001").unwrap(),
+ *             ],
+ *             data: {
+ *                 let mut buf = [0u8; 32];
+ *                 U256::from(ALICE_BALANCE).to_big_endian(&mut buf);
+ *                 H256::from_slice(&buf).as_bytes().to_vec()
+ *             },
+ *         }],
+ *         used_gas: 1306611,
+ *         used_storage: 5462,
+ *     }));
+ *
+ *     System::assert_last_event(Event::EVM(module_evm::Event::ContractPublished {
+ *         contract: erc20_address_same_prefix(),
+ *     }));
+ * }
+ */
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, Balance)>,
@@ -279,9 +289,11 @@ impl ExtBuilder {
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-		module_evm::GenesisConfig::<Runtime>::default()
-			.assimilate_storage(&mut t)
-			.unwrap();
+		/*
+		 * module_evm::GenesisConfig::<Runtime>::default()
+		 *     .assimilate_storage(&mut t)
+		 *     .unwrap();
+		 */
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
