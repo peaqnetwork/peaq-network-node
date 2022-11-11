@@ -56,7 +56,7 @@ use xcm::{
 
 mod mock;
 mod tests;
-mod weights;
+pub mod weights;
 
 pub use module::*;
 pub use weights::WeightInfo;
@@ -77,8 +77,8 @@ pub mod module {
 		type Currency: Currency<Self::AccountId>;
 
 		/// The Currency ID for the staking currency
-		#[pallet::constant]
-		type StakingCurrencyId: Get<CurrencyId>;
+		// #[pallet::constant]
+		// type StakingCurrencyId: Get<CurrencyId>;
 
 		/*
 		 * /// Evm Bridge for getting info of contracts from the EVM.

@@ -60,6 +60,7 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
+	EnsureRoot,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -730,6 +731,15 @@ impl orml_currencies::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl module_asset_registry::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	// type StakingCurrencyId = GetStakingCurrencyId;
+	// type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
+	type RegisterOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = module_asset_registry::weights::SubstrateWeight<Runtime>;
+}
+
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
 		PotId::get().into_account_truncating(),
@@ -821,6 +831,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+		AssetRegistry: module_asset_registry = 38,
 
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,

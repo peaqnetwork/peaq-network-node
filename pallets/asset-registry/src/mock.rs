@@ -133,7 +133,7 @@ parameter_types! {
 impl asset_registry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type StakingCurrencyId = KSMCurrencyId;
+	// type StakingCurrencyId = KSMCurrencyId;
 	// type EVMBridge = module_evm_bridge::EVMBridge<Runtime>;
 	type RegisterOrigin = EnsureSignedBy<CouncilAccount, AccountId>;
 	type WeightInfo = ();

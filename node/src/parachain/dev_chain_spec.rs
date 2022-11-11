@@ -159,6 +159,7 @@ fn configure_genesis(
 			block_issue_reward: 1 * DOLLARS,
 			hard_cap: 4_200_000_000 * DOLLARS,
 		},
+		asset_registry: Default::default(),
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.

@@ -57,8 +57,8 @@ pub trait WeightInfo {
 }
 
 /// Weights for module_asset_registry using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AssetRegistry NextForeignAssetId (r:1 w:1)
 	// Storage: AssetRegistry LocationToCurrencyIds (r:1 w:1)
 	// Storage: AssetRegistry ForeignAssetLocations (r:1 w:1)

@@ -458,6 +458,10 @@ default-features = false
 path = "../../precompiles/utils"
 default-features = false
 
+[dependencies.module-asset-registry]
+path = "../../pallets/asset-registry"
+default-features = false
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -553,6 +557,7 @@ std = [
     "polkadot-parachain/std",
     "polkadot-primitives/std",
     "polkadot-runtime-common/std",
+    "module-asset-registry/std",
 
 	# Customized Parachain
     "pallet-session/std",
