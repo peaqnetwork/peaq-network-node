@@ -20,7 +20,7 @@ LABEL description="Multistage Docker image for peaq Node" \
   image.documentation="https://github.com/peaqnetwork/peaq-network-node"
 
 # Copy the node binary.
-COPY --from=builder target/release/peaq-node /opt/network/
+COPY --from=builder /target/release/ /opt/network/
 #/usr/local/bin/peaq-node
 RUN useradd -m -u 1000 -U -s /bin/sh -d /node-dev node-dev && \
   mkdir -p /chain-data /node-dev/.local/share && \
