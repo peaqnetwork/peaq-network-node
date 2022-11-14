@@ -447,6 +447,14 @@ impl peaq_pallet_did::Config for Runtime {
     type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
 }
 
+/// Config the utility in pallets/utility
+impl pallet_utility::Config for Runtime {
+	type Call = Call;
+	type Event = Event;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
+}
+
 // Pallet EVM
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
@@ -783,6 +791,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
+		Utility:	pallet_utility::{Pallet,Call,Event}=8,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
