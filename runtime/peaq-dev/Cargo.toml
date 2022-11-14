@@ -19,6 +19,10 @@ branch = 'peaq-polkadot-v0.9.29'
 [dependencies.smallvec]
 version = '1.6.1'
 
+[dependencies.log]
+version = '0.4.17'
+default-features = false
+
 [dependencies.codec]
 default-features = false
 features = ['derive']
@@ -462,6 +466,10 @@ default-features = false
 path = "../../pallets/asset-registry"
 default-features = false
 
+[dependencies.module-support]
+path = "../../pallets/support"
+default-features = false
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -493,6 +501,7 @@ runtime-benchmarks = [
 std = [
 	'codec/std',
 	"serde",
+	'log/std',
 
 	'scale-info/std',
 	'frame-executive/std',
@@ -558,6 +567,7 @@ std = [
     "polkadot-primitives/std",
     "polkadot-runtime-common/std",
     "module-asset-registry/std",
+	"module-support/std",
 
 	# Customized Parachain
     "pallet-session/std",

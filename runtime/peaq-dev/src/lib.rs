@@ -104,6 +104,8 @@ pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
+use module_asset_registry::{AssetIdMaps};
+mod xcm_impls;
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;

@@ -1,8 +1,10 @@
 use super::{
 	AccountId, Call, Event, Origin, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
 	XcmpQueue, Balance, CurrencyId, TestAccount, TokenSymbol, Currencies,
+	AssetIdMaps,
 	UnknownTokens,
 	constants::fee:: { dot_per_second, peaq_per_second, },
+	xcm_impls::FixedRateOfAsset,
 };
 use sp_runtime::{
 	traits::{Convert, ConstU32},
@@ -37,6 +39,7 @@ use orml_xcm_support::{DepositToAlternative, IsNativeConcrete, MultiCurrencyAdap
 use xcm_executor::XcmExecutor;
 use xcm::latest::MultiAsset;
 use peaq_primitives_xcm::currency::parachain;
+use module_support::AssetIdMapping;
 
 parameter_types! {
 	pub const RocLocation: MultiLocation = MultiLocation::parent();
@@ -44,6 +47,10 @@ parameter_types! {
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
+
+use module_asset_registry::{
+	BuyWeightRateOfForeignAsset,
+};
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
@@ -100,18 +107,23 @@ parameter_types! {
 	);
 
 	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
-	pub AcaPerSecond: (AssetId, u128) = (
-		native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()).into(),
-		// TODO: Need to check the fee: ACA:DOT = 5:1
-		dot_per_second() * 5
-	);
+	/*
+	 * TODO
+	 * pub AcaPerSecond: (AssetId, u128) = (
+	 *     native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()).into(),
+	 *     // TODO: Need to check the fee: ACA:DOT = 5:1
+	 *     dot_per_second() * 5
+	 * );
+	 */
 	pub BaseRate: u128 = peaq_per_second();
 }
 
 pub type Trader = (
+	// FixedRateOfAsset<BaseRate, ToTreasury, BuyWeightRateOfTransactionFeePool<Runtime, CurrencyIdConvert>>,
 	FixedRateOfFungible<PeaqPerSecond, ToTreasury>,
+	FixedRateOfAsset<BaseRate, ToTreasury, BuyWeightRateOfForeignAsset<Runtime>>,
 	FixedRateOfFungible<DotPerSecond, ToTreasury>,
-	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
+	// FixedRateOfFungible<AcaPerSecond, ToTreasury>,
 );
 
 pub type Barrier = (
@@ -167,6 +179,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
+	// type AssetTrap = AcalaDropAssets<
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
@@ -267,29 +280,37 @@ fn native_currency_location(para_id: u32, key: Vec<u8>) -> MultiLocation {
 pub struct CurrencyIdConvert;
 impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		use CurrencyId::Token;
 		use TokenSymbol::*;
+		use CurrencyId::{ForeignAsset, Token};
 
 		match id {
 			Token(DOT) => Some(MultiLocation::parent()),
 			Token(PEAQ) => {
 				Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode()))
 			},
-			Token(ACA) => {
-				Some(native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()))
-			},
+			/*
+			 * TODO: Remove
+			 * Token(ACA) => {
+			 *     Some(native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()))
+			 * },
+			 */
+			ForeignAsset(foreign_asset_id) => AssetIdMaps::<Runtime>::get_multi_location(foreign_asset_id),
 			_ => None,
 		}
 	}
 }
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		use CurrencyId::Token;
 		use TokenSymbol::*;
+		use CurrencyId::Token;
 		if location == MultiLocation::parent() {
 			return Some(Token(DOT));
 		}
-		match location.clone() {
+		if let Some(currency_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
+			return Some(currency_id);
+		}
+		// [TODO] Check clone
+		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
 				X2(Parachain(id), GeneralKey(key)) if ParaId::from(id) == ParachainInfo::parachain_id().into() => {
 					// decode the general key
@@ -302,13 +323,16 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 						None
 					}
 				},
-				X2(Parachain(id), GeneralKey(key)) if id == parachain::acala::ID => {
-					if key == parachain::acala::ACA_KEY.to_vec() {
-						Some(Token(ACA))
-					} else {
-						None
-					}
-				},
+				/*
+				 * [TODO] Need to remove
+				 * X2(Parachain(id), GeneralKey(key)) if id == parachain::acala::ID => {
+				 *     if key == parachain::acala::ACA_KEY.to_vec() {
+				 *         Some(Token(ACA))
+				 *     } else {
+				 *         None
+				 *     }
+				 * },
+				 */
 				_ => None,
 			},
 			MultiLocation { parents, interior } if parents == 0 => match interior {
