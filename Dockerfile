@@ -1,8 +1,8 @@
 # This is an example build stage for the node template. Here we create the binary in a temporary image.
 
 # This is a base image to build substrate nodes
-#FROM docker.io/paritytech/ci-linux:production as builder
-FROM ghcr.io/peaqnetwork/peaq-node-builder:agung-build as builder
+FROM docker.io/paritytech/ci-linux:production as builder
+#FROM ghcr.io/peaqnetwork/peaq-node-builder:agung-build as builder
 
 #USER root
 WORKDIR /opt/network/
@@ -20,7 +20,7 @@ LABEL description="Multistage Docker image for peaq Node" \
   image.documentation="https://github.com/peaqnetwork/peaq-network-node"
 
 # Copy the node binary.
-COPY --from=builder /target/release/ /opt/network/
+COPY --from=builder /target/release/peaq-node /opt/network/
 #/usr/local/bin/peaq-node
 RUN useradd -m -u 1000 -U -s /bin/sh -d /node-dev node-dev && \
   mkdir -p /chain-data /node-dev/.local/share && \
