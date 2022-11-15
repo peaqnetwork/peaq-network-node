@@ -522,8 +522,8 @@ construct_runtime!(
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>},
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>},
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>},
-		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>},
-		Utility:	pallet_utility::{Pallet,Call,Event},
+		MultiSig: pallet_multisig::{Pallet, Call, Storage, Event<T>},
+		Utility: pallet_utility::{Pallet, Call, Event},
 
 		// // EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
