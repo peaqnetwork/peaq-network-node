@@ -4625,6 +4625,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-utility"
+version = "4.0.0-dev"
+source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.19#28a408aa4ad8c7a8f5127ad1eec0b51fcdaa3505"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4966,6 +4981,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-utility",
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
