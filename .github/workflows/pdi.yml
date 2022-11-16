@@ -16,9 +16,6 @@ on:
       - 'main'
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - 'test-dev'
 
 jobs:
   push_to_registry:
@@ -40,7 +37,7 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_REG }}
           tags: |
-            type=semver,pattern={{version}}
+            #type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
             type=ref,event=tag
