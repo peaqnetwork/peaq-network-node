@@ -49,4 +49,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_REG }}:v${{ steps.meta.outputs.value }}, ${{ secrets.DOCKER_REPO }}:latest
+          tags: ${{ secrets.DOCKER_REG }}:v${{ steps.meta.outputs.value }}, ${{ secrets.DOCKER_REG }}:latest
