@@ -40,17 +40,18 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_REG }}
           tags: |
+            type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-      - name: Build
-        uses: mr-smithers-excellent/docker-build-push@v5
+            type=ref,event=tag
+      - name: Build and push
+        uses: docker/build-push-action@v3
         with:
-         image: ${{ secrets.DOCKER_REG }}
-         registry: ${{ secrets.DOCKER_REG }}
-         username: ${{ secrets.DOCKER_USERNAME }}
-         password: ${{ secrets.DOCKER_TOKEN }}
+          context: .
+          push: true
+          #${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       #- name: Build and push Docker images
         #uses: docker/build-push-action@v3.2.0
         #with:
