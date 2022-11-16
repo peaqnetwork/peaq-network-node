@@ -12,13 +12,13 @@ name: Build and Publish
 on:
   push:
     branches:
-      - 'dev'
+      - 'test-dev'
       - 'main'
     tags:
       - 'v*'
   pull_request:
     branches:
-      - 'dev'
+      - 'test-dev'
 
 jobs:
   push_to_registry:
