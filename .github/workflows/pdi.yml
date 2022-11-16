@@ -50,7 +50,8 @@ jobs:
           context: .
           push: true
           #${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}, latest
+          #tags: ${{ steps.meta.outputs.tags }}, latest
+          tags: ${{ secrets.DOCKER_REG }}:v${{ steps.meta.outputs.value }}, ${{ secrets.DOCKER_REG }}:latest
           labels: ${{ steps.meta.outputs.labels }}
       #- name: Build and push Docker images
         #uses: docker/build-push-action@v3.2.0
