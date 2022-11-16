@@ -37,7 +37,6 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_REG }}
           tags: |
-            #type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
             type=ref,event=tag
