@@ -44,9 +44,16 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-      - name: Build and push Docker images
-        uses: docker/build-push-action@v3.2.0
+      - name: Build
+        uses: docker/bake-action@v2
         with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_REG }}:v${{ steps.meta.outputs.value }}, ${{ secrets.DOCKER_REG }}:latest
+          files: |
+            ./docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
+          targets: build
+      #- name: Build and push Docker images
+        #uses: docker/build-push-action@v3.2.0
+        #with:
+          #context: .
+          #push: true
+          #tags: ${{ secrets.DOCKER_REG }}:v${{ steps.meta.outputs.value }}, ${{ secrets.DOCKER_REG }}:latest
