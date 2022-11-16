@@ -19,9 +19,13 @@
 /// Time and blocks.
 /// Fee-related
 pub mod fee {
+	use smallvec::smallvec;
+
 	use frame_support::weights::{
 		constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		WeightToFeeCoefficients, WeightToFeeCoefficient, WeightToFeePolynomial,
 	};
+	use sp_runtime::Perbill;
 	use peaq_primitives_xcm::{Balance, CurrencyId};
 	use peaq_primitives_xcm::currency::TokenInfo;
 	use peaq_primitives_xcm::currency::PEAQ;
@@ -35,8 +39,12 @@ pub mod fee {
 		dollar(currency_id) / 100
 	}
 
+	pub fn milli_cent(currency_id: CurrencyId) -> Balance {
+		cent(currency_id) / 1_000
+	}
+
 	fn base_tx_in_peaq() -> Balance {
-		cent(PEAQ) / 10
+		milli_cent(PEAQ) / 10
 	}
 
 	/// Handles converting a weight scalar to a fee value, based on the scale
@@ -50,21 +58,21 @@ pub mod fee {
 	/// examples being:
 	///   - Setting it to `0` will essentially disable the weight fee.
 	///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
-	// pub struct WeightToFee;
-	// impl WeightToFeePolynomial for WeightToFee {
-	// 	type Balance = Balance;
-	// 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-	// 		// in Karura, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
-	// 		let p = base_tx_in_kar();
-	// 		let q = Balance::from(ExtrinsicBaseWeight::get());
-	// 		smallvec![WeightToFeeCoefficient {
-	// 			degree: 1,
-	// 			negative: false,
-	// 			coeff_frac: Perbill::from_rational(p % q, q),
-	// 			coeff_integer: p / q,
-	// 		}]
-	// 	}
-	// }
+	pub struct WeightToFee;
+	impl WeightToFeePolynomial for WeightToFee {
+		type Balance = Balance;
+		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+			// in Peaq, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 MICROCENT:
+			let p = base_tx_in_peaq();
+			let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+			smallvec![WeightToFeeCoefficient {
+				degree: 1,
+				negative: false,
+				coeff_frac: Perbill::from_rational(p % q, q),
+				coeff_integer: p / q,
+			}]
+		}
+	}
 
 	pub fn peaq_per_second() -> u128 {
 		let base_weight = Balance::from(ExtrinsicBaseWeight::get().ref_time());
@@ -75,4 +83,22 @@ pub mod fee {
 	pub fn dot_per_second() -> u128 {
 		peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT)
 	}
+
+	#[cfg(test)]
+	mod tests {
+	    use crate::{constants::fee::base_tx_in_peaq, Balance};
+	    use frame_support::weights::constants::ExtrinsicBaseWeight;
+
+	    #[test]
+	    fn check_weight() {
+	        let p = base_tx_in_peaq();
+	        let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
+
+	        assert_eq!(p, 1_000_000_000_000);
+	        assert_eq!(q, 86_298_000);
+	        assert_eq!(p / q, 11587)
+	    }
+	}
 }
+
+

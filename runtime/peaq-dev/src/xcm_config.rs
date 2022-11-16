@@ -107,14 +107,6 @@ parameter_types! {
 	);
 
 	pub DotPerSecond: (AssetId, u128) = (MultiLocation::parent().into(), dot_per_second());
-	/*
-	 * TODO
-	 * pub AcaPerSecond: (AssetId, u128) = (
-	 *     native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()).into(),
-	 *     // TODO: Need to check the fee: ACA:DOT = 5:1
-	 *     dot_per_second() * 5
-	 * );
-	 */
 	pub BaseRate: u128 = peaq_per_second();
 }
 
@@ -288,12 +280,6 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			Token(PEAQ) => {
 				Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode()))
 			},
-			/*
-			 * TODO: Remove
-			 * Token(ACA) => {
-			 *     Some(native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()))
-			 * },
-			 */
 			ForeignAsset(foreign_asset_id) => AssetIdMaps::<Runtime>::get_multi_location(foreign_asset_id),
 			_ => None,
 		}
@@ -309,7 +295,6 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		if let Some(currency_id) = AssetIdMaps::<Runtime>::get_currency_id(location.clone()) {
 			return Some(currency_id);
 		}
-		// [TODO] Check clone
 		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
 				X2(Parachain(id), GeneralKey(key)) if ParaId::from(id) == ParachainInfo::parachain_id().into() => {
@@ -323,16 +308,6 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 						None
 					}
 				},
-				/*
-				 * [TODO] Need to remove
-				 * X2(Parachain(id), GeneralKey(key)) if id == parachain::acala::ID => {
-				 *     if key == parachain::acala::ACA_KEY.to_vec() {
-				 *         Some(Token(ACA))
-				 *     } else {
-				 *         None
-				 *     }
-				 * },
-				 */
 				_ => None,
 			},
 			MultiLocation { parents, interior } if parents == 0 => match interior {
