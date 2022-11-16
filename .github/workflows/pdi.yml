@@ -45,12 +45,12 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
       - name: Build
-        uses: docker/bake-action@v2
+        uses: mr-smithers-excellent/docker-build-push@v5
         with:
-          files: |
-            ./docker-bake.hcl
-            ${{ steps.meta.outputs.bake-file }}
-          targets: build
+         image: ${{ secrets.DOCKER_REG }}
+         registry: ${{ secrets.DOCKER_REG }}
+         username: ${{ secrets.DOCKER_USERNAME }}
+         password: ${{ secrets.DOCKER_TOKEN }}
       #- name: Build and push Docker images
         #uses: docker/build-push-action@v3.2.0
         #with:
