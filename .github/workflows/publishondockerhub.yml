@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - 'parachain-dev'
-      - 'ci/1203257846291253_publish-parachain-to-dockerhub'
     tags:
       - 'v*'
 jobs:
