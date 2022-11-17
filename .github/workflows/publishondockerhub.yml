@@ -2,7 +2,7 @@ name: Build and Publish
 on:
   push:
     branches:
-      - 'parachain-dev'
+      - 'parachain_dev'
     tags:
       - 'v*'
 jobs:
