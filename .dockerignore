@@ -1,7 +1,3 @@
-client/*
-docks/*
-pallets/*
-primitives/*
 .devcontainer
 .github
 .vscode
