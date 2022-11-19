@@ -217,6 +217,10 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.19'
 
+[dependencies.pallet-utility]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.19'
 
 # ### Ethereum
 [dependencies.sp-io]
@@ -518,6 +522,7 @@ std = [
 	'peaq-pallet-did-runtime-api/std',
 	'peaq-pallet-transaction/std',
 	'peaq-pallet-rbac/std',	
+	'pallet-utility/std',
 
 	# ETH support
 	'sp-io/std',
