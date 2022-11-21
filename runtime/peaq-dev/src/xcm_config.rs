@@ -38,7 +38,6 @@ use orml_traits::{location::AbsoluteReserveProvider, MultiCurrency, parameter_ty
 use orml_xcm_support::{DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use xcm_executor::XcmExecutor;
 use xcm::latest::MultiAsset;
-use peaq_primitives_xcm::currency::parachain;
 use module_support::AssetIdMapping;
 
 parameter_types! {

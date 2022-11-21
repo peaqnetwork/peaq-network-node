@@ -18,22 +18,19 @@
 
 //! Common xcm implementation
 
-use codec::Encode;
 use frame_support::{
 	traits::Get,
 	weights::{constants::WEIGHT_PER_SECOND, Weight},
 };
 use module_support::BuyWeightRate;
-use orml_traits::GetByKey;
 use sp_runtime::{
-	traits::{ConstU32, Convert},
-	FixedPointNumber, FixedU128, WeakBoundedVec,
+	FixedPointNumber, FixedU128,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::TakeRevenue;
 use xcm_executor::{
-	traits::{DropAssets, WeightTrader},
+	traits::WeightTrader,
 	Assets,
 };
 

@@ -32,11 +32,11 @@ use frame_support::{
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use module_support::{AssetIdMapping, BuyWeightRate, EVMBridge, Erc20InfoMapping, InvokeContext, Ratio};
+use module_support::{AssetIdMapping, BuyWeightRate, Erc20InfoMapping, Ratio};
 use primitives::{
 	currency::{
 		AssetIds, AssetMetadata, CurrencyIdType,
-		DexShare,
+		// DexShare,
         Erc20Id, ForeignAssetId,
 		TokenInfo,
 	},
