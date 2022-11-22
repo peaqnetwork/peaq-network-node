@@ -5029,7 +5029,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#9f8aa62d09868983ef5011d68058180f11cec44d"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#35c1cadadd671166238dc89e1bb5dc3d6ce7d956"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
