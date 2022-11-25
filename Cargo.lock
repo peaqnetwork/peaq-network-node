@@ -5029,7 +5029,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#9f8aa62d09868983ef5011d68058180f11cec44d"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#35c1cadadd671166238dc89e1bb5dc3d6ce7d956"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5046,7 +5046,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#b833df8f18a5eaea0d2f5df5a7eddaa2e8df5e0b"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=features/1203099733411537_add-weights-after-benchmarking#056985eee25029e712055819a37431521e7da974"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8684,7 +8684,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

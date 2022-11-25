@@ -1102,6 +1102,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
 			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
+			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1139,6 +1140,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
 			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
+			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
