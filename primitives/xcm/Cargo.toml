@@ -19,6 +19,9 @@ sha3 = { version = "0.9.1", default-features = false }
 serde_json = { version = "1.0" }
 frame-support = { git = "https://github.com/peaqnetwork/substrate", branch ="peaq-polkadot-v0.9.29", default-features = false }
 
+# Zenlink
+zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.29", default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -32,4 +35,5 @@ std = [
 	"evm/std",
 	"evm/with-serde",
 	"frame-support/std",
+	"zenlink-protocol/std",
 ]

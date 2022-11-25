@@ -458,6 +458,28 @@ default-features = false
 path = "../../precompiles/utils"
 default-features = false
 
+
+# Zenlink
+[dependencies.zenlink-protocol]
+git = "https://github.com/peaqnetwork/Zenlink-DEX-Module"
+branch = "peaq-polkadot-v0.9.29"
+default-features = false
+
+[dependencies.zenlink-stable-amm]
+git = "https://github.com/peaqnetwork/Zenlink-DEX-Module"
+branch = "peaq-polkadot-v0.9.29"
+default-features = false
+
+[dependencies.zenlink-swap-router]
+git = "https://github.com/peaqnetwork/Zenlink-DEX-Module"
+branch = "peaq-polkadot-v0.9.29"
+default-features = false
+
+[dependencies.zenlink-vault]
+git = "https://github.com/peaqnetwork/Zenlink-DEX-Module"
+branch = "peaq-polkadot-v0.9.29"
+default-features = false
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -484,6 +506,11 @@ runtime-benchmarks = [
 	'peaq-pallet-transaction/runtime-benchmarks',
 	'peaq-pallet-did/runtime-benchmarks',
 	'peaq-pallet-rbac/runtime-benchmarks',
+
+	"zenlink-protocol/runtime-benchmarks",
+	"zenlink-stable-amm/runtime-benchmarks",
+	"zenlink-swap-router/runtime-benchmarks",
+	"zenlink-vault/runtime-benchmarks",
 ]
 
 std = [
@@ -575,6 +602,11 @@ std = [
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
+
+    # Zenlink
+	"zenlink-protocol/std",
+	"zenlink-stable-amm/std",
+	"zenlink-swap-router/std",
 ]
 
 # Must be enabled for tracing runtimes only

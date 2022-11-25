@@ -25,9 +25,12 @@ use sp_std::{
 	convert::{Into, TryFrom},
 	prelude::*,
 };
+use zenlink_protocol::*;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+
+pub const PARA_CHAIN_ID: u32 = 1000;
 
 macro_rules! create_currency_id {
     ($(#[$meta:meta])*
@@ -147,8 +150,8 @@ create_currency_id! {
 
 pub mod parachain {
 	pub mod acala {
-        pub const ID: u32 = 3000;
-        pub const ACA_KEY: &[u8] = &[0, 0];
+		pub const ID: u32 = 3000;
+		pub const ACA_KEY: &[u8] = &[0, 0];
 	}
 }
 
@@ -159,12 +162,29 @@ pub trait TokenInfo {
 	fn decimals(&self) -> Option<u8>;
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
+	LPToken(TokenSymbol, TokenSymbol),
+	StableLpToken(u32),
+	Vault(TokenSymbol),
+	Native(TokenSymbol),
+	Foregin(TokenSymbol),
 }
 
 impl CurrencyId {
@@ -187,6 +207,93 @@ impl TryFrom<CurrencyId> for EvmAddress {
 				MIRRORED_TOKENS_ADDRESS_START | u64::from(val.currency_id().unwrap()),
 			)),
 			CurrencyId::Erc20(address) => Ok(address),
+			_ => Err(()),
+		}
+	}
+}
+
+pub type ZenlinkAssetId = zenlink_protocol::AssetId;
+const LP_DISCRIMINANT: u64 = 6u64;
+const TOKEN_DISCRIMINANT: u64 = 2u64;
+
+impl TryFrom<CurrencyId> for ZenlinkAssetId {
+	type Error = ();
+
+	fn try_from(currency_id: CurrencyId) -> Result<Self, Self::Error> {
+		match currency_id {
+			CurrencyId::Native(symbol) => Ok(ZenlinkAssetId {
+				chain_id: PARA_CHAIN_ID,
+				asset_type: NATIVE,
+				asset_index: symbol as u64,
+			}),
+			CurrencyId::Token(symbol) => Ok(ZenlinkAssetId {
+				chain_id: PARA_CHAIN_ID,
+				asset_type: LOCAL,
+				asset_index: TOKEN_DISCRIMINANT << 8 + symbol as u64,
+			}),
+			CurrencyId::LPToken(symbol0, symbol1) => Ok(ZenlinkAssetId {
+				chain_id: PARA_CHAIN_ID,
+				asset_type: LOCAL,
+				asset_index: (LP_DISCRIMINANT << 8) +
+					((symbol0 as u64 & 0xffff) << 16) +
+					((symbol1 as u64 & 0xffff) << 32),
+			}),
+			_ => Err(()),
+		}
+	}
+}
+
+impl TryFrom<ZenlinkAssetId> for CurrencyId {
+	type Error = ();
+	fn try_from(asset_id: ZenlinkAssetId) -> Result<Self, Self::Error> {
+		if asset_id.is_native(PARA_CHAIN_ID) {
+			return Ok(CurrencyId::Native(TokenSymbol::try_from(asset_id.asset_index as u8)?))
+		}
+
+		let discriminant = (asset_id.asset_index & 0x0000_0000_0000_ff00) >> 8;
+		return if discriminant == LP_DISCRIMINANT {
+			let token0_id = ((asset_id.asset_index & 0x0000_0000_ffff_0000) >> 16) as u8;
+			let token1_id = ((asset_id.asset_index & 0x0000_ffff_0000_0000) >> 16) as u8;
+			Ok(CurrencyId::LPToken(
+				TokenSymbol::try_from(token0_id)?,
+				TokenSymbol::try_from(token1_id)?,
+			))
+		} else if discriminant == TOKEN_DISCRIMINANT {
+			let token_id = asset_id.asset_index as u8;
+			Ok(CurrencyId::Token(TokenSymbol::try_from(token_id)?))
+		} else {
+			Err(())
+		}
+	}
+}
+
+impl TryFrom<u64> for CurrencyId {
+	type Error = ();
+
+	fn try_from(id: u64) -> Result<Self, Self::Error> {
+		let c_discr = ((id & 0x0000_0000_0000_ff00) >> 8) as u8;
+
+		let t_discr = ((id & 0x0000_0000_0000_00ff) >> 00) as u8;
+
+		let token_symbol = TokenSymbol::try_from(t_discr)?;
+
+		match c_discr {
+			0 => Ok(Self::Native(token_symbol)),
+			1 => Ok(Self::Foregin(token_symbol)),
+			2 => Ok(Self::Token(token_symbol)),
+			3 => {
+				let token_symbol_num_1 = ((id & 0x0000_0000_00ff_0000) >> 16) as u8;
+				let token_symbol_num_2 = ((id & 0x0000_00ff_0000_0000) >> 32) as u8;
+				let token_symbol_1 = TokenSymbol::try_from(token_symbol_num_1)?;
+				let token_symbol_2 = TokenSymbol::try_from(token_symbol_num_2)?;
+
+				Ok(Self::LPToken(token_symbol_1, token_symbol_2))
+			},
+			4 => {
+				let pool_id = ((id & 0xffff_ffff_ffff_0000) >> 16) as u32;
+				Ok(Self::StableLpToken(pool_id))
+			},
+			_ => Err(()),
 		}
 	}
 }
