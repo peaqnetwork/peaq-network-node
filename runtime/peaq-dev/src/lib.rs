@@ -9,6 +9,8 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 #[cfg(feature = "std")]
 pub use fp_evm::GenesisAccount;
 
+mod impls;
+
 use smallvec::smallvec;
 
 use codec::Encode;
@@ -61,11 +63,11 @@ use frame_system::{
 
 pub use pallet_balances::Call as BalancesCall;
 use parachain_staking::RewardRateInfo;
+use impls::CustomCurrencyAdapter as CurrencyAdapter;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner};
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
