@@ -7236,6 +7236,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-agung-runtime",
  "peaq-dev-runtime",
+ "peaq-krest-runtime",
  "peaq-pallet-did-rpc",
  "peaq-primitives-ext",
  "peaq-primitives-xcm",

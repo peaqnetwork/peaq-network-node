@@ -1,7 +1,7 @@
 use crate::{
 	parachain,
 	cli::{Cli, Subcommand, RelayChainCli},
-	parachain::service::{self, frontier_database_dir, start_node, dev, agung},
+	parachain::service::{self, frontier_database_dir, start_node, dev, agung, krest},
 	cli_opt::{EthApi, RpcConfig},
 	primitives::Block,
 };
@@ -33,6 +33,7 @@ use std::{io::Write, net::SocketAddr};
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;
 	fn is_agung(&self) -> bool;
+	fn is_krest(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
@@ -42,6 +43,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_agung(&self) -> bool {
 		self.id().starts_with("agung")
 	}
+	fn is_krest(&self) -> bool {
+		self.id().starts_with("krest")
+	}
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
@@ -50,6 +54,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_agung(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_agung(self)
+	}
+	fn is_krest(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_krest(self)
 	}
 }
 
@@ -86,12 +93,17 @@ impl SubstrateCli for Cli {
 		Ok(match id {
 			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
 				if chain_spec.is_dev() {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
+						std::path::PathBuf::from(path),
+					)?)
+				} else if chain_spec.is_krest() {
+					Box::new(parachain::krest_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
 				} else {
@@ -104,6 +116,8 @@ impl SubstrateCli for Cli {
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_agung() {
 			&peaq_agung_runtime::VERSION
+		} else if chain_spec.is_krest() {
+			&peaq_krest_runtime::VERSION
 		} else {
 			&peaq_dev_runtime::VERSION
 		}
@@ -204,6 +218,19 @@ pub fn run() -> sc_cli::Result<()> {
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
+			} else if runner.config().chain_spec.is_krest() {
+				runner.async_run(|mut config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						import_queue,
+						..
+					} = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
+						&mut config,
+						parachain::build_import_queue,
+						cli.run.target_gas_price)?;
+					Ok((cmd.run(client, import_queue), task_manager))
+				})
 			} else {
 				runner.async_run(|mut config| {
 					let PartialComponents {
@@ -228,6 +255,18 @@ pub fn run() -> sc_cli::Result<()> {
 						task_manager,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&mut config,
+						parachain::build_import_queue,
+						cli.run.target_gas_price)?;
+					Ok((cmd.run(client, config.database), task_manager))
+				})
+			} else if runner.config().chain_spec.is_krest() {
+				runner.async_run(|mut config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						..
+					} = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
@@ -261,6 +300,18 @@ pub fn run() -> sc_cli::Result<()> {
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.chain_spec), task_manager))
 				})
+			} else if runner.config().chain_spec.is_krest() {
+				runner.async_run(|mut config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						..
+					} = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
+						&mut config,
+						parachain::build_import_queue,
+						cli.run.target_gas_price)?;
+					Ok((cmd.run(client, config.chain_spec), task_manager))
+				})
 			} else {
 				runner.async_run(|mut config| {
 					let PartialComponents {
@@ -285,6 +336,19 @@ pub fn run() -> sc_cli::Result<()> {
 						import_queue,
 						..
 					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+						&mut config,
+						parachain::build_import_queue,
+						cli.run.target_gas_price)?;
+					Ok((cmd.run(client, import_queue), task_manager))
+				})
+			} else if runner.config().chain_spec.is_krest() {
+				runner.async_run(|mut config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						import_queue,
+						..
+					} = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
@@ -340,6 +404,19 @@ pub fn run() -> sc_cli::Result<()> {
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, backend, None), task_manager))
 				})
+			} else if runner.config().chain_spec.is_krest() {
+				runner.async_run(|mut config| {
+					let PartialComponents {
+						client,
+						task_manager,
+						backend,
+						..
+					} = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
+						&mut config,
+						parachain::build_import_queue,
+						cli.run.target_gas_price)?;
+					Ok((cmd.run(client, backend, None), task_manager))
+				})
 			} else {
 				runner.async_run(|mut config| {
 					let PartialComponents {
@@ -365,6 +442,10 @@ pub fn run() -> sc_cli::Result<()> {
 							return runner.sync_run(|config| {
 								cmd.run::<Block, agung::Executor>(config)
 							})
+						} else if chain_spec.is_krest() {
+							return runner.sync_run(|config| {
+								cmd.run::<Block, krest::Executor>(config)
+							})
 						} else {
 							return runner.sync_run(|config| {
 								cmd.run::<Block, dev::Executor>(config)
@@ -375,6 +456,15 @@ pub fn run() -> sc_cli::Result<()> {
 						if chain_spec.is_agung() {
 							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+									&mut config,
+									parachain::build_import_queue,
+									cli.run.target_gas_price)?;
+
+								cmd.run(params.client)
+							})
+						} else if chain_spec.is_krest() {
+							return runner.sync_run(|mut config| {
+								let params = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
@@ -396,6 +486,18 @@ pub fn run() -> sc_cli::Result<()> {
 						if chain_spec.is_agung() {
 							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+									&mut config,
+									parachain::build_import_queue,
+									cli.run.target_gas_price)?;
+
+									let db = params.backend.expose_db();
+									let storage = params.backend.expose_storage();
+
+									cmd.run(config, params.client, db, storage)
+							})
+						} else if chain_spec.is_krest() {
+							return runner.sync_run(|mut config| {
+								let params = service::new_partial::<krest::RuntimeApi, krest::Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
@@ -539,6 +641,13 @@ pub fn run() -> sc_cli::Result<()> {
 				if config.chain_spec.is_agung() {
 					info!("Agung network start");
 					start_node::<agung::RuntimeApi, agung::Executor>(
+						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				} else if config.chain_spec.is_krest() {
+					info!("Krest network start");
+					start_node::<krest::RuntimeApi, krest::Executor>(
 						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
 						.await
 						.map(|r| r.0)

@@ -1,4 +1,4 @@
-/// Please make sure the Agung and Dev network has the same settings
+/// Please make sure the Agung, Krest and Dev network has the same settings
 use peaq_primitives_xcm;
 
 /// An index to a block.
