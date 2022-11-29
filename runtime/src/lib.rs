@@ -390,6 +390,7 @@ impl peaq_pallet_did::Config for Runtime {
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type Event = Event;
+	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;	
 }
 
 // Config the utility in pallets/utility
