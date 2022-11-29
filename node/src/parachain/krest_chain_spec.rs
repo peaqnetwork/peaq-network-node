@@ -45,31 +45,19 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 				vec![
 					(
 						AccountId::try_from(
-							&hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416") as &[u8]
+							&hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14") as &[u8]
 						).unwrap(),
 						None,
 						2 * staking::MinCollatorStake::get(),
 					), (
 						AccountId::try_from(
-							&hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e") as &[u8]
+							&hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37") as &[u8]
 						).unwrap(),
 						None,
 						2 * staking::MinCollatorStake::get(),
 					), (
 						AccountId::try_from(
-							&hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750") as &[u8]
-						).unwrap(),
-						None,
-						2 * staking::MinCollatorStake::get(),
-					), (
-						AccountId::try_from(
-							&hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a") as &[u8]
-						).unwrap(),
-						None,
-						2 * staking::MinCollatorStake::get(),
-					), (
-						AccountId::try_from(
-							&hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073") as &[u8]
+							&hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46") as &[u8]
 						).unwrap(),
 						None,
 						2 * staking::MinCollatorStake::get(),
@@ -79,67 +67,47 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 				vec![
 					(
 						AccountId::try_from(
-							&hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416") as &[u8]
+							&hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14") as &[u8]
 						).unwrap(),
 						AuraId::try_from(
-							&hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416") as &[u8]
+							&hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14") as &[u8]
 						).unwrap()
 					),
 					(
 						AccountId::try_from(
-							&hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e") as &[u8]
+							&hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37") as &[u8]
 						).unwrap(),
 						AuraId::try_from(
-							&hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e") as &[u8]
+							&hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37") as &[u8]
 						).unwrap()
 					),
 					(
 						AccountId::try_from(
-							&hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750") as &[u8]
+							&hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46") as &[u8]
 						).unwrap(),
 						AuraId::try_from(
-							&hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750") as &[u8]
-						).unwrap()
-					),
-					(
-						AccountId::try_from(
-							&hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a") as &[u8]
-						).unwrap(),
-						AuraId::try_from(
-							&hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a") as &[u8]
-						).unwrap()
-					),
-					(
-						AccountId::try_from(
-							&hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073") as &[u8]
-						).unwrap(),
-						AuraId::try_from(
-							&hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073") as &[u8]
+							&hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46") as &[u8]
 						).unwrap()
 					)
 				],
 				// Sudo account
-				hex!("f6f16b29e9ba748f41c1bf361d1925359b256edc99ba5c57541e07cc79465202").into(),
+				hex!("14b4e2c0d48fe0a523edfa9d6f03eb6d13d9cbe27af4c3e1e4f42f4652ce0522").into(),
 				// Pre-funded accounts
 				vec![
-					hex!("086732fee8cfbcdc9c9ac3931d85d0a997d88602bdaa7a137c9c4c43101fe416").into(),
-					hex!("be9889f446dbb0a2fba44932a2ae7f1d3d6b34a186d8901875ecfce8970b395e").into(),
-					hex!("f610c763f6c8c282a700a87f48e46b955630b56c284a2ffb2b83d1f8548bb750").into(),
-					hex!("bec3d9d0cb9991e3f87ac2b8c03184c060aafa964593af74feb70381d11dd97a").into(),
-					hex!("c4b6a019eef3471a0825fe69ed0205c056e7ce1d3560c93f083c5d6cf8305073").into(),
+					hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14").into(),
+					hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37").into(),
+					hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46").into(),
 					//Sudo
-					hex!("f6f16b29e9ba748f41c1bf361d1925359b256edc99ba5c57541e07cc79465202").into(),
+					hex!("14b4e2c0d48fe0a523edfa9d6f03eb6d13d9cbe27af4c3e1e4f42f4652ce0522").into(),
 				],
 				para_id.into(),
 			)
 		},
 		// Bootnodes
 		vec![
-			MultiaddrWithPeerId::from_str("/dns/bn1.krest.peaq.network/tcp/10333/p2p/12D3KooWMJps5U6mBp2JUJpewuSAz2wbEf59Rm98kgwDj5LZd5rW").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn2.krest.peaq.network/tcp/10333/p2p/12D3KooW9pipmGRbECY9gwD6ArJVvC9CP24XxdoCUSq8eY2dJ5Cd").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn3.krest.peaq.network/tcp/10333/p2p/12D3KooWPafWKojir1pCGmN5DwW6yQ33exdEMSUz5xX6t3EPAwqS").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn4.krest.peaq.network/tcp/10333/p2p/12D3KooWCumywbmYpGLBTDXxcbw7rzM9WNU1Hyqs6P6ftCsHBxmV").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn5.krest.peaq.network/tcp/10333/p2p/12D3KooWAo4D2rXY3kZM4zqSkxHNSS8Q1eonYX4F5x811Qd9y4gb").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn1.krest.peaq.network/tcp/10333/p2p/12D3KooWSiUfLFErmp281eGjXCKZeg1unCGndeq68VF53jbysWrJ").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn2.krest.peaq.network/tcp/10333/p2p/12D3KooWFSRsiL6c5VF2NZmp6vnCw8tWPnj1jArR3AWaAuCyN5pb").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/bn3.krest.peaq.network/tcp/10333/p2p/12D3KooW9r1ED5GNvAtNpgeraFgVAQRVikJWQmXEoXWmkmkGS6cD").unwrap(),
 		],
 		// Telemetry
 		None,
