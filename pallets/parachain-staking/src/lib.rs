@@ -2676,8 +2676,8 @@ pub mod pallet {
 		// }
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::one();
-			let mut writes = Weight::zero();
+			let mut reads = Weight::from_ref_time(1 as u64);
+			let mut writes = Weight::from_ref_time(0 as u64);
 			let mut delegator_sum = T::CurrencyBalance::from(0u128);
 			// should always include state except if the collator has been forcedly removed
 			// via `force_remove_candidate` in the current or previous round
@@ -2702,7 +2702,7 @@ pub mod pallet {
 							.compute_collator_reward::<T>(issue_number);
 					Self::do_reward(&pot, &author, collator_reward);
 				}
-				writes = writes.saturating_add(Weight::one());
+				writes = writes.saturating_add(Weight::from_ref_time(1 as u64));
 
 				// Reward delegators
 				for Stake { owner, amount } in state.delegators {
@@ -2712,21 +2712,21 @@ pub mod pallet {
 							reward_rate_config
 								.compute_delegator_reward::<T>(issue_number, staking_rate);
 						Self::do_reward(&pot, &owner, delegator_reward);
-						writes = writes.saturating_add(Weight::one());
+						writes = writes.saturating_add(Weight::from_ref_time(1 as u64));
 					}
 				}
-				reads = reads.saturating_add(4);
+				reads = reads.saturating_add(Weight::from_ref_time(4 as u64));
 			}
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads, writes),
+				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
 				DispatchClass::Mandatory,
 			);
 		}
 
 		/// Get a unique, inaccessible account id from the `PotId`.
 		pub fn account_id() -> T::AccountId {
-			T::PotId::get().into_account()
+			T::PotId::get().into_account_truncating()
 		}
 	}
 

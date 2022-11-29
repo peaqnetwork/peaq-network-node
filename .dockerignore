@@ -3,3 +3,6 @@
 .vscode
 scripts
 target
+.cargo
+
+!target/release/peaq-node

@@ -28,6 +28,11 @@ pub struct RunCmd {
 	#[clap(long, default_value = "10")]
 	pub ethapi_max_permits: u32,
 
+	/// Size in bytes of data a raw tracing request is allowed to use.
+	/// Bound the size of memory, stack and storage data.
+	#[clap(long, default_value = "20000000")]
+	pub tracing_raw_max_memory_usage: usize,
+
 	/// Maximum number of trace entries a single request of `trace_filter` is allowed to return.
 	/// A request asking for more or an unbounded one going over this limit will both return an
 	/// error.
@@ -132,7 +137,7 @@ pub enum Subcommand {
 #[derive(Debug, clap::Parser)]
 pub struct ExportGenesisStateCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(value_parser)]
 	pub output: Option<PathBuf>,
 
 	/// Id of the parachain this state is for.
@@ -152,7 +157,7 @@ pub struct ExportGenesisStateCommand {
 #[derive(Debug, clap::Parser)]
 pub struct ExportGenesisWasmCommand {
 	/// Output file name or stdout if unspecified.
-	#[clap(parse(from_os_str))]
+	#[clap(value_parser)]
 	pub output: Option<PathBuf>,
 
 	/// Write output in binary. Default is to write in hex.

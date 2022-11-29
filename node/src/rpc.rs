@@ -7,7 +7,7 @@ use fc_rpc::{
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use jsonrpc_pubsub::manager::SubscriptionManager;
+use jsonrpsee::RpcModule;
 use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
@@ -24,15 +24,15 @@ use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata
 };
 use sp_runtime::traits::BlakeTwo256;
+// use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
 
 //For ink! contracts
-use pallet_contracts_rpc::{Contracts, ContractsApi};
+use pallet_contracts_rpc::{Contracts, ContractsApiServer};
 
 use sp_runtime::traits::Block as BlockT;
 use sc_service::TaskManager;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
-use peaq_rpc_txpool::{TxPool, TxPoolServer};
 
 use crate::primitives::*;
 
@@ -79,6 +79,11 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 }
 
+pub struct TracingConfig {
+	pub tracing_requesters: crate::rpc::tracing::RpcRequesters,
+	pub trace_filter_max_count: u32,
+}
+
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
@@ -114,8 +119,9 @@ where
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
-	subscription_task_executor: SubscriptionTaskExecutor
-) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+	subscription_task_executor: SubscriptionTaskExecutor,
+	maybe_tracing_config: Option<TracingConfig>,
+) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
@@ -139,15 +145,17 @@ where
 	BE::Blockchain: BlockchainBackend<Block>,
 {
 	use fc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi,
-		EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer, Web3Api,
-		Web3ApiServer,
+		Eth, EthApiServer, EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, Net,
+		NetApiServer, Web3, Web3ApiServer,
 	};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApi};
-	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
+	use peaq_rpc_debug::{Debug, DebugServer};
+	use peaq_rpc_trace::{Trace, TraceServer};
+	use peaq_rpc_txpool::{TxPool, TxPoolServer};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use substrate_frame_rpc_system::{System, SystemApiServer};
 
-	let mut io = jsonrpc_core::IoHandler::default();
+	let mut io = RpcModule::new(());
 	let FullDeps {
 		client,
 		pool,
@@ -165,19 +173,11 @@ where
 		block_data_cache,
 	} = deps;
 
-	io.extend_with(SystemApi::to_delegate(FullSystem::new(
-		client.clone(),
-		pool.clone(),
-		deny_unsafe,
-	)));
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-		client.clone(),
-	)));
+	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
+	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
 	// Contracts RPC API extension
-	io.extend_with(
-		ContractsApi::to_delegate(Contracts::new(client.clone()))
-	);
+	io.merge(Contracts::new(Arc::clone(&client)).into_rpc())?;
 
 	// TODO: are we supporting signing?
 	let signers = Vec::new();
@@ -193,63 +193,81 @@ where
 	}
 	let convert_transaction: Option<Never> = None;
 
-	io.extend_with(EthApiServer::to_delegate(EthApi::new(
-		client.clone(),
-		pool.clone(),
-		graph.clone(),
-		convert_transaction,
-		network.clone(),
-		signers,
-		overrides.clone(),
-		backend.clone(),
-		is_authority,
-		block_data_cache.clone(),
-		fc_rpc::format::Geth,
-		fee_history_limit,
-		fee_history_cache,
-	)));
+	io.merge(
+		Eth::new(
+			Arc::clone(&client),
+			Arc::clone(&pool),
+			graph.clone(),
+			convert_transaction,
+			Arc::clone(&network),
+			signers,
+			Arc::clone(&overrides),
+			Arc::clone(&backend),
+			is_authority,
+			Arc::clone(&block_data_cache),
+			fee_history_cache,
+			fee_history_limit,
+			10 as u64,
+		)
+		.into_rpc(),
+	)?;
 
 	if let Some(filter_pool) = filter_pool {
-		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
-			client.clone(),
-			backend,
-			filter_pool.clone(),
-			500_usize, // max stored filters
-			max_past_logs,
-			block_data_cache.clone(),
-		)));
+		io.merge(
+			EthFilter::new(
+				client.clone(),
+				backend.clone(),
+				filter_pool,
+				500_usize, // max stored filters
+				max_past_logs,
+				block_data_cache.clone(),
+			)
+			.into_rpc(),
+		)?;
 	}
 
-	io.extend_with(NetApiServer::to_delegate(NetApi::new(
-		client.clone(),
-		network.clone(),
-		// Whether to format the `peer_count` response as Hex (default) or not.
-		true,
-	)));
-
-	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
-	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool,
-		client.clone(),
-		network,
-		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
-			HexEncodedIdProvider::default(),
-			Arc::new(subscription_task_executor),
-		),
-		overrides,
-	)));
-
-	io.extend_with(PeaqDIDApi::to_delegate(PeaqDID::new(
-		client.clone()
-	)));
-
-	// Debug/Tracing doesn't setup here
-	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
-		io.extend_with(TxPoolServer::to_delegate(TxPool::new(
+	io.merge(
+		Net::new(
 			Arc::clone(&client),
-			graph,
-		)));
+			network.clone(),
+			// Whether to format the `peer_count` response as Hex (default) or not.
+			true,
+		)
+		.into_rpc(),
+	)?;
+
+	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(
+		EthPubSub::new(
+			pool,
+			Arc::clone(&client),
+			network,
+			subscription_task_executor,
+			overrides,
+		)
+		.into_rpc(),
+	)?;
+	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
+		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
 	}
 
-	io
+	if let Some(tracing_config) = maybe_tracing_config {
+		if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {
+			io.merge(
+				Trace::new(
+					client,
+					trace_filter_requester,
+					tracing_config.trace_filter_max_count,
+				)
+				.into_rpc(),
+			)?;
+		}
+
+		if let Some(debug_requester) = tracing_config.tracing_requesters.debug {
+			io.merge(Debug::new(debug_requester).into_rpc())?;
+		}
+	}
+
+	Ok(io)
 }

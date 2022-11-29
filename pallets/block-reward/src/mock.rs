@@ -4,6 +4,7 @@ use frame_support::{
     construct_runtime, parameter_types, sp_io::TestExternalities, traits::Currency,
     PalletId,
 	traits::{GenesisBuild},
+	weights::Weight,
 };
 
 use sp_core::H256;
@@ -38,7 +39,7 @@ construct_runtime!(
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
     pub BlockWeights: frame_system::limits::BlockWeights =
-        frame_system::limits::BlockWeights::simple_max(1024);
+        frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
 }
 
 impl frame_system::Config for TestRuntime {
@@ -114,29 +115,29 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
     for BeneficiaryPayout
 {
     fn treasury(reward: NegativeImbalanceOf<TestRuntime>) {
-        Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+        Balances::resolve_creating(&TREASURY_POT.into_account_truncating(), reward);
     }
 
     fn collators(reward: NegativeImbalanceOf<TestRuntime>) {
-        Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
+        Balances::resolve_creating(&COLLATOR_POT.into_account_truncating(), reward);
     }
 
     fn dapps_staking(
         reward: NegativeImbalanceOf<TestRuntime>,
     ) {
-        Balances::resolve_creating(&DAPPS_POT.into_account(), reward);
+        Balances::resolve_creating(&DAPPS_POT.into_account_truncating(), reward);
     }
 
     fn lp_users(reward: NegativeImbalanceOf<TestRuntime>) {
-        Balances::resolve_creating(&LP_POT.into_account(), reward);
+        Balances::resolve_creating(&LP_POT.into_account_truncating(), reward);
     }
 
     fn machines(reward: NegativeImbalanceOf<TestRuntime>) {
-        Balances::resolve_creating(&MACHINE_POT.into_account(), reward);
+        Balances::resolve_creating(&MACHINE_POT.into_account_truncating(), reward);
     }
 
     fn machines_subsidization(reward: NegativeImbalanceOf<TestRuntime>) {
-        Balances::resolve_creating(&MACHINE_SUBSIDIZATION_POT.into_account(), reward);
+        Balances::resolve_creating(&MACHINE_SUBSIDIZATION_POT.into_account_truncating(), reward);
     }
 }
 
