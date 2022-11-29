@@ -211,7 +211,7 @@ version = '0.0.1'
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 default-features = false
-branch = 'features/1203099733411537_add-weights-after-benchmarking'
+branch = 'dev'
 
 [dependencies.pallet-multisig]
 default-features = false
