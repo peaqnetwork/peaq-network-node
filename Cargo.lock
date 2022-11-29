@@ -5046,12 +5046,11 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=features/1203099733411537_add-weights-after-benchmarking#056985eee25029e712055819a37431521e7da974"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#1457418f633e0ef637cdaff0a57541ef2295b8b8"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
