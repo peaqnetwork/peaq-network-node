@@ -800,8 +800,8 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
-		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,		
-		Utility: pallet_utility::{Pallet, Call, Event}=8,
+		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
+		Utility: pallet_utility::{Pallet, Call, Event} = 8,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
