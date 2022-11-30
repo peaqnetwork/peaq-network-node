@@ -31,7 +31,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "KRST".into());
+	properties.insert("tokenSymbol".into(), "KREST".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
 	Ok(ChainSpec::from_genesis(

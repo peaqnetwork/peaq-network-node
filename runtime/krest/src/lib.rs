@@ -501,7 +501,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 9999;
+	pub const ChainId: u64 = 424242;
 	// WeightPerGas didn't use
 	pub NoUseWeightPerGas: u64 = 20_000;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
