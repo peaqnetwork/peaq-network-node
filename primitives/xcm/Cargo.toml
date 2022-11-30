@@ -13,7 +13,7 @@ num_enum = { version = "0.5.1", default-features = false }
 sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false }
 sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false }
 sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false }
-evm = { version = "0.35.0", default-features = false, features = ["with-codec"] }
+evm = { git = "https://github.com/peaqnetwork/evm", branch = "peaq-polkadot-v0.9.29", default-features = false, features = [ "with-codec" ] }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
 sha3 = { version = "0.9.1", default-features = false }
 serde_json = { version = "1.0" }
