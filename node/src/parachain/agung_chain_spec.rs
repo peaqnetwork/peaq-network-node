@@ -152,7 +152,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Extensions
 		Extensions {
 			bad_blocks: Default::default(),
-			relay_chain: "rococo-local".into(),
+			relay_chain: "rococo".into(),
 			para_id: para_id,
 		},
 	))

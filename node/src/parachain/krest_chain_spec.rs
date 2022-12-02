@@ -36,8 +36,8 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		"krest-network",
-		"krest-testnet",
-		ChainType::Local,
+		"krest",
+		ChainType::Development,
 		move || {
 			configure_genesis(
 				wasm_binary,
@@ -120,7 +120,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Extensions
 		Extensions {
 			bad_blocks: Default::default(),
-			relay_chain: "kusama-local".into(),
+			relay_chain: "kusama".into(),
 			para_id: para_id,
 		},
 	))
