@@ -7103,6 +7103,7 @@ dependencies = [
  "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
+ "peaq-pallet-storage",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7313,6 +7314,22 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-storage"
+version = "0.1.1"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feature/1203099733411537_add-wight-after-benchmarking#aa2124f8d249144d710e3db567bcf74aa9df5dec"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
