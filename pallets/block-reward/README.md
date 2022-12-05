@@ -5,7 +5,7 @@ README
 
 ## Overview
 
-To call these extrinsic go to the Polkadot app and switch to agung network.
+To call these extrinsic go to the Polkadot app and switch to network (https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fwss-dev.agung.peaq.network#/explorer)
 
 Go to **Developer → Extrinsics**. And choose the `blockReward` pallet from the list.
 
