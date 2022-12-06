@@ -7325,7 +7325,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feature/1203099733411537_add-wight-after-benchmarking#aa2124f8d249144d710e3db567bcf74aa9df5dec"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.29#7defa8367f07074a0bac92f9d126546280fa3402"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

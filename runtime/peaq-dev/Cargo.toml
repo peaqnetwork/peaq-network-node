@@ -215,8 +215,7 @@ version = '0.0.2'
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 default-features = false
-#branch = 'peaq-polkadot-v0.9.29'
-branch = 'feature/1203099733411537_add-wight-after-benchmarking'
+branch = 'peaq-polkadot-v0.9.29'
 version = '0.1.1'
 
 
