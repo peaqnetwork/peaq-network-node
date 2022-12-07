@@ -390,6 +390,18 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
+
+
+
+// Config the utility in pallets/utility
+impl pallet_utility::Config for Runtime {
+	type Call = Call;
+	type Event = Event;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
+}
+
+
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
 ///
@@ -793,6 +805,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
+		Utility: pallet_utility::{Pallet, Call, Event}=8,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
