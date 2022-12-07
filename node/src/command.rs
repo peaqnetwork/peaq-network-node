@@ -1,7 +1,7 @@
 use crate::{
 	parachain,
 	cli::{Cli, Subcommand, RelayChainCli},
-	parachain::service::{self, frontier_database_dir, start_node, dev, agung},
+	parachain::service::{self, frontier_database_dir, start_node, dev, agung, krest},
 	cli_opt::{EthApi, RpcConfig},
 	primitives::Block,
 };
@@ -33,6 +33,7 @@ use std::{io::Write, net::SocketAddr};
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;
 	fn is_agung(&self) -> bool;
+	fn is_krest(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
@@ -42,7 +43,31 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_agung(&self) -> bool {
 		self.id().starts_with("agung")
 	}
+	fn is_krest(&self) -> bool {
+		self.id().starts_with("krest")
+	}
 }
+
+macro_rules! with_runtime_or_err {
+	($chain_spec:expr, { $( $code:tt )* }) => {
+		if $chain_spec.is_dev() {
+			#[allow(unused_imports)]
+			use dev::{RuntimeApi, Executor};
+			$( $code )*
+		} else if $chain_spec.is_agung() {
+			#[allow(unused_imports)]
+			use agung::{RuntimeApi, Executor};
+			$( $code )*
+		} else if $chain_spec.is_krest() {
+			#[allow(unused_imports)]
+			use krest::{RuntimeApi, Executor};
+			$( $code )*
+		} else {
+			return Err("Wrong chain_spec".into());
+		}
+	}
+}
+
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_dev(&self) -> bool {
@@ -50,6 +75,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_agung(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_agung(self)
+	}
+	fn is_krest(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_krest(self)
 	}
 }
 
@@ -86,17 +114,16 @@ impl SubstrateCli for Cli {
 		Ok(match id {
 			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
-				if chain_spec.is_dev() {
+				with_runtime_or_err!(chain_spec, {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
-				} else {
-					Box::new(chain_spec)
-				}
+				})
 			},
 		})
 	}
@@ -104,6 +131,8 @@ impl SubstrateCli for Cli {
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_agung() {
 			&peaq_agung_runtime::VERSION
+		} else if chain_spec.is_krest() {
+			&peaq_krest_runtime::VERSION
 		} else {
 			&peaq_dev_runtime::VERSION
 		}
@@ -191,119 +220,69 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			if runner.config().chain_spec.is_agung() {
+			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						import_queue,
 						..
-					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+					} = service::new_partial::<RuntimeApi, Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
-			} else {
-				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						import_queue,
-						..
-					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
-					Ok((cmd.run(client, import_queue), task_manager))
-				})
-			}
+			})
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			if runner.config().chain_spec.is_agung() {
+			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						..
-					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+					} = service::new_partial::<RuntimeApi, Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.database), task_manager))
 				})
-			} else {
-				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						..
-					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
-					Ok((cmd.run(client, config.database), task_manager))
-				})
-			}
+			})
 		}
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			if runner.config().chain_spec.is_agung() {
+			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						..
-					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+					} = service::new_partial::<RuntimeApi, Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, config.chain_spec), task_manager))
 				})
-			} else {
-				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						..
-					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
-					Ok((cmd.run(client, config.chain_spec), task_manager))
-				})
-			}
+			})
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			if runner.config().chain_spec.is_agung() {
+			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						import_queue,
 						..
-					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+					} = service::new_partial::<RuntimeApi, Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
-			} else {
-				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						import_queue,
-						..
-					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
-					Ok((cmd.run(client, import_queue), task_manager))
-				})
-			}
+			})
 		}
 		// [TODO] Revert
 		Some(Subcommand::PurgeChain(cmd)) => {
@@ -327,33 +306,20 @@ pub fn run() -> sc_cli::Result<()> {
 		}
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			if runner.config().chain_spec.is_agung() {
+			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents {
 						client,
 						task_manager,
 						backend,
 						..
-					} = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+					} = service::new_partial::<RuntimeApi, Executor, _>(
 						&mut config,
 						parachain::build_import_queue,
 						cli.run.target_gas_price)?;
 					Ok((cmd.run(client, backend, None), task_manager))
 				})
-			} else {
-				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						backend,
-						..
-					} = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
-					Ok((cmd.run(client, backend, None), task_manager))
-				})
-			}
+			})
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
@@ -361,41 +327,28 @@ pub fn run() -> sc_cli::Result<()> {
 				let chain_spec = &runner.config().chain_spec;
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
-						if chain_spec.is_agung() {
+						with_runtime_or_err!(chain_spec, {
 							return runner.sync_run(|config| {
-								cmd.run::<Block, agung::Executor>(config)
+								cmd.run::<Block, Executor>(config)
 							})
-						} else {
-							return runner.sync_run(|config| {
-								cmd.run::<Block, dev::Executor>(config)
-							})
-						}
+						})
 					}
 					BenchmarkCmd::Block(cmd) => {
-						if chain_spec.is_agung() {
+						with_runtime_or_err!(chain_spec, {
 							return runner.sync_run(|mut config| {
-								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+								let params = service::new_partial::<RuntimeApi, Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
 
 								cmd.run(params.client)
 							})
-						} else {
-							return runner.sync_run(|mut config| {
-								let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-									&mut config,
-									parachain::build_import_queue,
-									cli.run.target_gas_price)?;
-
-								cmd.run(params.client)
-							})
-						}
+						})
 					}
 					BenchmarkCmd::Storage(cmd) => {
-						if chain_spec.is_agung() {
+						with_runtime_or_err!(chain_spec, {
 							return runner.sync_run(|mut config| {
-								let params = service::new_partial::<agung::RuntimeApi, agung::Executor, _>(
+								let params = service::new_partial::<RuntimeApi, Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price)?;
@@ -405,19 +358,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 									cmd.run(config, params.client, db, storage)
 							})
-						} else {
-							return runner.sync_run(|mut config| {
-								let params = service::new_partial::<dev::RuntimeApi, dev::Executor, _>(
-									&mut config,
-									parachain::build_import_queue,
-									cli.run.target_gas_price)?;
-
-									let db = params.backend.expose_db();
-									let storage = params.backend.expose_storage();
-
-									cmd.run(config, params.client, db, storage)
-							})
-						}
+						})
 					}
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
@@ -536,21 +477,14 @@ pub fn run() -> sc_cli::Result<()> {
 					}
 				);
 
-				if config.chain_spec.is_agung() {
-					info!("Agung network start");
-					start_node::<agung::RuntimeApi, agung::Executor>(
+				with_runtime_or_err!(config.chain_spec, {
+					info!("{} network start", config.chain_spec.id());
+					start_node::<RuntimeApi, Executor>(
 						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
-				} else {
-					info!("Dev network start");
-					start_node::<dev::RuntimeApi, dev::Executor>(
-						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
-				}
+				})
 			})
 		}
 	}

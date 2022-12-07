@@ -12,10 +12,11 @@ pub mod service;
 /// Parachain specs.
 pub mod dev_chain_spec;
 pub mod agung_chain_spec;
+pub mod krest_chain_spec;
 
 pub use service::{
     build_import_queue, new_partial, start_node,
-	dev, agung,
+	dev, agung, krest,
 };
 
 /// Node `ChainSpec` extensions.

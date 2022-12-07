@@ -96,7 +96,6 @@ use peaq_pallet_did::structs::Attribute as DidAttribute;
 use peaq_pallet_did::did::Did;
 pub use peaq_pallet_transaction;
 pub use peaq_pallet_rbac;
-pub use peaq_pallet_storage;
 
 // For XCM
 pub mod xcm_config;
@@ -147,15 +146,15 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/origins#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("peaq-node-dev"),
-	impl_name: create_runtime_str!("peaq-node-dev"),
+	spec_name: create_runtime_str!("peaq-node-krest"),
+	impl_name: create_runtime_str!("peaq-node-krest"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 4,
+	spec_version: 1,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -243,6 +242,11 @@ pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
 	fn contains(call: &Call) -> bool {
 		match call {
+			Call::ParachainStaking(method) => match method {
+				parachain_staking::Call::join_candidates { .. } => false,
+				parachain_staking::Call::join_delegators { .. } => false,
+				_ => true,
+			},
 			// Other modules should works:
 			_ => true,
 		}
@@ -497,7 +501,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 9999;
+	pub const ChainId: u64 = 424242;
 	// WeightPerGas didn't use
 	pub NoUseWeightPerGas: u64 = 20_000;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
@@ -601,7 +605,7 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = 1 * MINUTES;
+	pub const SessionPeriod: BlockNumber = 1 * HOURS;
 	pub const SessionOffset: BlockNumber = 0;
 }
 
@@ -631,13 +635,13 @@ pub mod staking {
 	}
 
 	parameter_types! {
-			/// Minimum round length is 1 min
-			pub const MinBlocksPerRound: BlockNumber = 1 * MINUTES;
-			/// Default length of a round/session is 2 mins
-			pub const DefaultBlocksPerRound: BlockNumber = 2 * MINUTES;
-			/// Unstaked balance can be unlocked after 7 mins
-			pub const StakeDuration: BlockNumber = 7 * MINUTES;
-			/// Collator exit requests are delayed by 4 mins (2 rounds/sessions)
+			/// Minimum round length is 1 hour
+			pub const MinBlocksPerRound: BlockNumber = 1 * HOURS;
+			/// Default length of a round/session is 2 hours
+			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
+			/// Unstaked balance can be unlocked after 7 days
+			pub const StakeDuration: BlockNumber = 7 * DAYS;
+			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
 			pub const ExitQueueDelay: u32 = 2;
 			/// Minimum 16 collators selected per round, default at genesis and minimum forever after
 			pub const MinCollators: u32 = 4;
@@ -787,14 +791,6 @@ impl peaq_pallet_rbac::Config for Runtime {
     type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
-
-// Config the storage in pallets/storage
-impl peaq_pallet_storage::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;	
-}
-
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -844,7 +840,6 @@ construct_runtime!(
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
-		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
 	}
 );
 
@@ -1450,7 +1445,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
 			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
-			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1492,7 +1486,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
 			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
-			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

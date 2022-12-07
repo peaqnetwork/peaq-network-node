@@ -32,6 +32,10 @@ version = '3.0.0-polkadot-v0.9.29'
 path = '../runtime/agung'
 version = '3.0.0-polkadot-v0.9.29'
 
+[dependencies.peaq-krest-runtime]
+path = '../runtime/krest'
+version = '3.0.0-polkadot-v0.9.29'
+
 [dependencies]
 structopt = "0.3.8"
 async-trait = "0.1"
@@ -393,10 +397,12 @@ default = [
 	]
 aura = [
 	"peaq-dev-runtime/aura",
-	"peaq-agung-runtime/aura"
+	"peaq-agung-runtime/aura",
+	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
 	"peaq-agung-runtime/runtime-benchmarks",
+	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
