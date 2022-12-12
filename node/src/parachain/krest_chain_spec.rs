@@ -105,9 +105,9 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		},
 		// Bootnodes
 		vec![
-			MultiaddrWithPeerId::from_str("/dns/bn1.krest.peaq.network/tcp/10333/p2p/12D3KooWSiUfLFErmp281eGjXCKZeg1unCGndeq68VF53jbysWrJ").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn2.krest.peaq.network/tcp/10333/p2p/12D3KooWFSRsiL6c5VF2NZmp6vnCw8tWPnj1jArR3AWaAuCyN5pb").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/bn3.krest.peaq.network/tcp/10333/p2p/12D3KooW9r1ED5GNvAtNpgeraFgVAQRVikJWQmXEoXWmkmkGS6cD").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn1krest.peaq.network/tcp/30333/p2p/12D3KooWSiUfLFErmp281eGjXCKZeg1unCGndeq68VF53jbysWrJ").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn2krest.peaq.network/tcp/30333/p2p/12D3KooWFSRsiL6c5VF2NZmp6vnCw8tWPnj1jArR3AWaAuCyN5pb").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn3krest.peaq.network/tcp/30333/p2p/12D3KooW9r1ED5GNvAtNpgeraFgVAQRVikJWQmXEoXWmkmkGS6cD").unwrap(),
 		],
 		// Telemetry
 		None,
