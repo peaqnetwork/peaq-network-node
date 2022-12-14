@@ -5,6 +5,9 @@ on:
       - 'parachain_dev'
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - 'parachain_dev'
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
@@ -32,6 +35,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
