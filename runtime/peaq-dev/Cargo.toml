@@ -213,11 +213,18 @@ branch = 'peaq-polkadot-v0.9.29'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-storage]
-git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+# git = 'https://github.com/talhadaar/peaq-storage-pallet.git'
+# branch = 'peaqnetwork/feat/1203500610868804_rpc_storage_pallet'
 default-features = false
-branch = 'peaq-polkadot-v0.9.29'
 version = '0.1.1'
+path = '../../../peaq-storage-pallet/pallet'
 
+[dependencies.peaq-pallet-storage-runtime-api]
+# git = 'https://github.com/talhadaar/peaq-storage-pallet.git'
+# branch = 'peaqnetwork/feat/1203500610868804_rpc_storage_pallet'
+default-features = false
+version = '0.0.1'
+path = '../../../peaq-storage-pallet/rpc/runtime-api'
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -535,6 +542,7 @@ std = [
 	'peaq-pallet-rbac/std',
 	'peaq-pallet-storage/std',
 	'pallet-utility/std',
+	'peaq-pallet-storage-runtime-api/std',
 
 	# ETH support
 	'sp-io/std',

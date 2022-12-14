@@ -7046,7 +7046,8 @@ dependencies = [
  "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
- "peaq-pallet-storage",
+ "peaq-pallet-storage 0.1.1",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7160,7 +7161,7 @@ dependencies = [
  "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
- "peaq-pallet-storage",
+ "peaq-pallet-storage 0.1.1 (git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.29)",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7364,6 +7365,21 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-storage"
+version = "0.1.1"
 source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.29#7defa8367f07074a0bac92f9d126546280fa3402"
 dependencies = [
  "frame-benchmarking",
@@ -7374,6 +7390,16 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-storage-runtime-api"
+version = "0.0.1"
+dependencies = [
+ "parity-scale-codec",
+ "peaq-pallet-storage 0.1.1",
+ "sp-api",
  "sp-std",
 ]
 
