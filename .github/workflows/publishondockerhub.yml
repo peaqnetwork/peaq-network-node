@@ -4,7 +4,7 @@ on:
     branches:
       - 'parachain_dev'
   pull_request:
-    if: ${{ contains(github.head_ref, 'parachain_dev') }}
+    if: ${{ contains(github.base_ref, 'parachain_dev') }}
     tags:
       - 'v*'
 jobs:
