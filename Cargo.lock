@@ -5212,12 +5212,11 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.29#78d16f401a8c3ef78fd41aa8412b3a771d417fac"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.29#7defa8367f07074a0bac92f9d126546280fa3402"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
