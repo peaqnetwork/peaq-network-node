@@ -96,6 +96,8 @@ use peaq_pallet_did::structs::Attribute as DidAttribute;
 use peaq_pallet_did::did::Did;
 pub use peaq_pallet_transaction;
 pub use peaq_pallet_rbac;
+pub use peaq_pallet_storage;
+use peaq_pallet_storage::traits::Storage;
 
 // For XCM
 pub mod xcm_config;
@@ -1420,6 +1422,13 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
+		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
+			// PeaqStorage::read(&did_account, &item_type)
+			Some(Vec::new())
+		}
+	}
+	
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 

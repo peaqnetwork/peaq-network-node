@@ -139,6 +139,7 @@ where
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
+	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -148,11 +149,12 @@ where
 		Eth, EthApiServer, EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, Net,
 		NetApiServer, Web3, Web3ApiServer,
 	};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
+	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = RpcModule::new(());
@@ -236,6 +238,7 @@ where
 		.into_rpc(),
 	)?;
 
+	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(

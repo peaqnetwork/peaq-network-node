@@ -366,7 +366,8 @@ where
 		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>
 		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 		+ pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>,
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
@@ -782,7 +783,8 @@ where
 		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>,
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(

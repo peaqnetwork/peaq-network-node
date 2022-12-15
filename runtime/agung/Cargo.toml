@@ -465,6 +465,19 @@ default-features = false
 path = "../../precompiles/utils"
 default-features = false
 
+[dependencies.peaq-pallet-storage]
+# git = 'https://github.com/talhadaar/peaq-storage-pallet.git'
+# branch = 'peaqnetwork/feat/1203500610868804_rpc_storage_pallet'
+default-features = false
+version = '0.1.1'
+path = '../../../peaq-storage-pallet/pallet'
+
+[dependencies.peaq-pallet-storage-runtime-api]
+# git = 'https://github.com/talhadaar/peaq-storage-pallet.git'
+# branch = 'peaqnetwork/feat/1203500610868804_rpc_storage_pallet'
+default-features = false
+version = '0.0.1'
+path = '../../../peaq-storage-pallet/rpc/runtime-api'
 
 [features]
 default = ["std", "aura"]
@@ -584,6 +597,9 @@ std = [
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
+
+	"peaq-pallet-storage/std",
+	"peaq-pallet-storage-runtime-api/std"
 ]
 
 # Must be enabled for tracing runtimes only
