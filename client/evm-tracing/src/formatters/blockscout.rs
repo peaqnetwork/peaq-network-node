@@ -14,11 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::listeners::call_list::Listener;
-use crate::types::serialization::*;
-use crate::types::{
-	single::{Call, TransactionTrace},
-	CallResult, CallType, CreateResult,
+use crate::{
+	listeners::call_list::Listener,
+	types::{
+		serialization::*,
+		single::{Call, TransactionTrace},
+		CallResult, CallType, CreateResult,
+	},
 };
 use codec::{Decode, Encode};
 use ethereum_types::{H160, U256};
@@ -33,11 +35,8 @@ impl super::ResponseFormatter for Formatter {
 	fn format(listener: Listener) -> Option<TransactionTrace> {
 		if let Some(entry) = listener.entries.last() {
 			return Some(TransactionTrace::CallList(
-				entry
-					.into_iter()
-					.map(|(_, value)| Call::Blockscout(value.clone()))
-					.collect(),
-			));
+				entry.into_iter().map(|(_, value)| Call::Blockscout(value.clone())).collect(),
+			))
 		}
 		None
 	}

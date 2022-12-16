@@ -1,14 +1,13 @@
 use super::{
-	AccountId, Call, Event, Origin, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
-	XcmpQueue, Balance, CurrencyId, TestAccount, TokenSymbol, Currencies,
-	UnknownTokens,
-	constants::fee:: { dot_per_second, peaq_per_second, },
-};
-use sp_runtime::{
-	traits::{Convert, ConstU32},
-	WeakBoundedVec,
+	constants::fee::{dot_per_second, peaq_per_second},
+	AccountId, Balance, Call, Currencies, CurrencyId, Event, Origin, ParachainInfo,
+	ParachainSystem, PolkadotXcm, Runtime, TestAccount, TokenSymbol, UnknownTokens, XcmpQueue,
 };
 use cumulus_primitives_core::ParaId;
+use sp_runtime::{
+	traits::{ConstU32, Convert},
+	WeakBoundedVec,
+};
 use sp_std::prelude::*;
 
 use codec::{Decode, Encode};
@@ -16,27 +15,37 @@ use frame_support::{
 	parameter_types,
 	traits::{Everything, Nothing},
 };
-use frame_system::{
-	EnsureRoot,
-};
+use frame_system::EnsureRoot;
 
-use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
-use xcm::latest::prelude::*;
-use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom,
-	// AllowUnpaidExecutionFrom,
-	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	TakeRevenue, FixedRateOfFungible,
-	AllowKnownQueryResponses, AllowSubscriptionsFrom,
+use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
+use orml_xcm_support::{
+	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
 };
-use orml_traits::{location::AbsoluteReserveProvider, MultiCurrency, parameter_type_with_key};
-use orml_xcm_support::{DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
-use xcm_executor::XcmExecutor;
-use xcm::latest::MultiAsset;
+use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::currency::parachain;
+use polkadot_parachain::primitives::Sibling;
+use xcm::latest::{prelude::*, MultiAsset};
+use xcm_builder::{
+	AccountId32Aliases,
+	AllowKnownQueryResponses,
+	AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom,
+	// AllowUnpaidExecutionFrom,
+	EnsureXcmOrigin,
+	FixedRateOfFungible,
+	FixedWeightBounds,
+	LocationInverter,
+	ParentIsPreset,
+	RelayChainAsNative,
+	SiblingParachainAsNative,
+	SiblingParachainConvertsVia,
+	SignedAccountId32AsNative,
+	SignedToAccountId32,
+	SovereignSignedViaLocation,
+	TakeRevenue,
+	TakeWeightCredit,
+};
+use xcm_executor::XcmExecutor;
 
 parameter_types! {
 	pub const RocLocation: MultiLocation = MultiLocation::parent();
@@ -126,11 +135,7 @@ pub type Barrier = (
 pub struct ToTreasury;
 impl TakeRevenue for ToTreasury {
 	fn take_revenue(revenue: MultiAsset) {
-		if let MultiAsset {
-			id: Concrete(location),
-			fun: Fungible(amount),
-		} = revenue
-		{
+		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
 			if let Some(currency_id) = CurrencyIdConvert::convert(location) {
 				// Ensure TestAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
@@ -144,10 +149,7 @@ impl TakeRevenue for ToTreasury {
 pub fn local_currency_location(key: CurrencyId) -> MultiLocation {
 	MultiLocation::new(
 		0,
-		X1(GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(
-			key.encode(),
-			None,
-		))),
+		X1(GeneralKey(WeakBoundedVec::<u8, ConstU32<32>>::force_from(key.encode(), None))),
 	)
 }
 
@@ -272,12 +274,12 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 
 		match id {
 			Token(DOT) => Some(MultiLocation::parent()),
-			Token(PEAQ) => {
-				Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode()))
-			},
-			Token(ACA) => {
-				Some(native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()))
-			},
+			Token(PEAQ) =>
+				Some(native_currency_location(ParachainInfo::parachain_id().into(), id.encode())),
+			Token(ACA) => Some(native_currency_location(
+				parachain::acala::ID,
+				parachain::acala::ACA_KEY.to_vec(),
+			)),
 			_ => None,
 		}
 	}
@@ -287,11 +289,13 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
 		if location == MultiLocation::parent() {
-			return Some(Token(DOT));
+			return Some(Token(DOT))
 		}
 		match location.clone() {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
-				X2(Parachain(id), GeneralKey(key)) if ParaId::from(id) == ParachainInfo::parachain_id().into() => {
+				X2(Parachain(id), GeneralKey(key))
+					if ParaId::from(id) == ParachainInfo::parachain_id().into() =>
+				{
 					// decode the general key
 					if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
 						match currency_id {
@@ -331,10 +335,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 }
 impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
-		if let MultiAsset {
-			id: Concrete(location), ..
-		} = asset
-		{
+		if let MultiAsset { id: Concrete(location), .. } = asset {
 			Self::convert(location)
 		} else {
 			None
@@ -349,10 +350,6 @@ parameter_types! {
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 {
-			network: NetworkId::Any,
-			id: account.into(),
-		})
-		.into()
+		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
 	}
 }

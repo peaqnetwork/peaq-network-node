@@ -7,8 +7,8 @@ use fc_rpc::{
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use jsonrpsee::RpcModule;
 use fp_storage::EthereumStorageSchema;
+use jsonrpsee::RpcModule;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
@@ -21,7 +21,7 @@ use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
-	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata
+	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
 use sp_runtime::traits::BlakeTwo256;
 // use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
@@ -29,8 +29,8 @@ use sp_runtime::traits::BlakeTwo256;
 //For ink! contracts
 use pallet_contracts_rpc::{Contracts, ContractsApiServer};
 
-use sp_runtime::traits::Block as BlockT;
 use sc_service::TaskManager;
+use sp_runtime::traits::Block as BlockT;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
 
@@ -148,11 +148,11 @@ where
 		Eth, EthApiServer, EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, Net,
 		NetApiServer, Web3, Web3ApiServer,
 	};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = RpcModule::new(());
@@ -239,14 +239,8 @@ where
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
-		EthPubSub::new(
-			pool,
-			Arc::clone(&client),
-			network,
-			subscription_task_executor,
-			overrides,
-		)
-		.into_rpc(),
+		EthPubSub::new(pool, Arc::clone(&client), network, subscription_task_executor, overrides)
+			.into_rpc(),
 	)?;
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
@@ -255,12 +249,8 @@ where
 	if let Some(tracing_config) = maybe_tracing_config {
 		if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {
 			io.merge(
-				Trace::new(
-					client,
-					trace_filter_requester,
-					tracing_config.trace_filter_max_count,
-				)
-				.into_rpc(),
+				Trace::new(client, trace_filter_requester, tracing_config.trace_filter_max_count)
+					.into_rpc(),
 			)?;
 		}
 

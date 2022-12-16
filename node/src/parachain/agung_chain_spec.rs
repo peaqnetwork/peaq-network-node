@@ -1,17 +1,13 @@
-use peaq_agung_runtime::{TOKEN_DECIMALS, MILLICENTS, DOLLARS};
+use crate::parachain::Extensions;
+use cumulus_primitives_core::ParaId;
 use peaq_agung_runtime::{
-	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
-	staking, Balance, ParachainStakingConfig,
-	BlockRewardConfig,
+	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, EVMConfig, EthereumConfig,
+	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, Precompiles,
+	SudoConfig, SystemConfig, DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use cumulus_primitives_core::ParaId;
-use crate::parachain::Extensions;
-use sp_runtime::{
-	Perbill,
-};
+use sp_runtime::Perbill;
 
 use hex_literal::hex;
 use sc_network_common::config::MultiaddrWithPeerId;
@@ -24,7 +20,7 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 fn session_keys(aura: AuraId) -> peaq_agung_runtime::opaque::SessionKeys {
-    peaq_agung_runtime::opaque::SessionKeys { aura }
+	peaq_agung_runtime::opaque::SessionKeys { aura }
 }
 
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
@@ -165,7 +161,7 @@ fn configure_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-    parachain_id: ParaId,
+	parachain_id: ParaId,
 ) -> GenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
@@ -181,11 +177,7 @@ fn configure_genesis(
 		parachain_info: ParachainInfoConfig { parachain_id },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 78))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
 		session: peaq_agung_runtime::SessionConfig {
 			keys: initial_authorities

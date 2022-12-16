@@ -58,9 +58,7 @@ pub mod tracer {
 
 	impl EvmTracer {
 		pub fn new() -> Self {
-			Self {
-				step_event_filter: peaq_primitives_ext::peaq_ext::step_event_filter(),
-			}
+			Self { step_event_filter: peaq_primitives_ext::peaq_ext::step_event_filter() }
 		}
 
 		/// Setup event listeners and execute provided closure.

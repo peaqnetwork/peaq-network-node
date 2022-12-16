@@ -1,33 +1,28 @@
 use crate::{
-	parachain,
-	cli::{Cli, Subcommand, RelayChainCli},
-	parachain::service::{self, frontier_database_dir, start_node, dev, agung, krest},
+	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
+	parachain,
+	parachain::service::{self, agung, dev, frontier_database_dir, krest, start_node},
 	primitives::Block,
 };
 
-use sp_runtime::traits::Block as BlockT;
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli, Result};
-use sc_service::PartialComponents;
-use sc_service::{
-	DatabaseSource,
-};
 use frame_benchmarking_cli::BenchmarkCmd;
+use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
+use sc_service::{DatabaseSource, PartialComponents};
+use sp_runtime::traits::Block as BlockT;
 
 // Parachain
 use codec::Encode;
-use sp_core::hexdisplay::HexDisplay;
 use cumulus_client_cli::generate_genesis_block;
-use log::info;
 use cumulus_primitives_core::ParaId;
-use sp_runtime::traits::{AccountIdConversion};
+use log::info;
 use sc_cli::{
-	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
-	NetworkParams, SharedParams,
+	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
+	SharedParams,
 };
-use sc_service::{
-	config::{BasePath, PrometheusConfig},
-};
+use sc_service::config::{BasePath, PrometheusConfig};
+use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::traits::AccountIdConversion;
 use std::{io::Write, net::SocketAddr};
 
 trait IdentifyChain {
@@ -67,7 +62,6 @@ macro_rules! with_runtime_or_err {
 		}
 	}
 }
-
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_dev(&self) -> bool {
@@ -113,8 +107,10 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
 			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
-			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
-			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"agung" =>
+				Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"krest" =>
+				Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
@@ -140,19 +136,13 @@ impl SubstrateCli for Cli {
 }
 
 fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.ethapi.contains(&EthApi::Debug) || cli.run.ethapi.contains(&EthApi::Trace))
-		&& cli
-			.run
-			.base
-			.base
-			.import_params
-			.wasm_runtime_overrides
-			.is_none()
+	if (cli.run.ethapi.contains(&EthApi::Debug) || cli.run.ethapi.contains(&EthApi::Trace)) &&
+		cli.run.base.base.import_params.wasm_runtime_overrides.is_none()
 	{
 		return Err(
 			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
 				.into(),
-		);
+		)
 	}
 	Ok(())
 }
@@ -206,7 +196,6 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
-
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
@@ -217,73 +206,63 @@ pub fn run() -> sc_cli::Result<()> {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		}
+		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						import_queue,
-						..
-					} = service::new_partial::<RuntimeApi, Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
+					let PartialComponents { client, task_manager, import_queue, .. } =
+						service::new_partial::<RuntimeApi, Executor, _>(
+							&mut config,
+							parachain::build_import_queue,
+							cli.run.target_gas_price,
+						)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
 			})
-		}
+		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						..
-					} = service::new_partial::<RuntimeApi, Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
+					let PartialComponents { client, task_manager, .. } =
+						service::new_partial::<RuntimeApi, Executor, _>(
+							&mut config,
+							parachain::build_import_queue,
+							cli.run.target_gas_price,
+						)?;
 					Ok((cmd.run(client, config.database), task_manager))
 				})
 			})
-		}
+		},
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						..
-					} = service::new_partial::<RuntimeApi, Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
+					let PartialComponents { client, task_manager, .. } =
+						service::new_partial::<RuntimeApi, Executor, _>(
+							&mut config,
+							parachain::build_import_queue,
+							cli.run.target_gas_price,
+						)?;
 					Ok((cmd.run(client, config.chain_spec), task_manager))
 				})
 			})
-		}
+		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						import_queue,
-						..
-					} = service::new_partial::<RuntimeApi, Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
+					let PartialComponents { client, task_manager, import_queue, .. } =
+						service::new_partial::<RuntimeApi, Executor, _>(
+							&mut config,
+							parachain::build_import_queue,
+							cli.run.target_gas_price,
+						)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
 			})
-		}
+		},
 		// [TODO] Revert
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -297,69 +276,65 @@ pub fn run() -> sc_cli::Result<()> {
 					DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
 						path: frontier_database_dir(&config, "paritydb"),
 					},
-					_ => {
-						return Err(format!("Cannot purge `{:?}` database", config.database).into())
-					}
+					_ =>
+						return Err(format!("Cannot purge `{:?}` database", config.database).into()),
 				};
 				cmd.run(frontier_database_config)
 			})
-		}
+		},
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
-					let PartialComponents {
-						client,
-						task_manager,
-						backend,
-						..
-					} = service::new_partial::<RuntimeApi, Executor, _>(
-						&mut config,
-						parachain::build_import_queue,
-						cli.run.target_gas_price)?;
+					let PartialComponents { client, task_manager, backend, .. } =
+						service::new_partial::<RuntimeApi, Executor, _>(
+							&mut config,
+							parachain::build_import_queue,
+							cli.run.target_gas_price,
+						)?;
 					Ok((cmd.run(client, backend, None), task_manager))
 				})
 			})
-		}
-		Some(Subcommand::Benchmark(cmd)) => {
+		},
+		Some(Subcommand::Benchmark(cmd)) =>
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 				let chain_spec = &runner.config().chain_spec;
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							return runner.sync_run(|config| {
-								cmd.run::<Block, Executor>(config)
-							})
+							return runner.sync_run(|config| cmd.run::<Block, Executor>(config))
 						})
-					}
+					},
 					BenchmarkCmd::Block(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<RuntimeApi, Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
-									cli.run.target_gas_price)?;
+									cli.run.target_gas_price,
+								)?;
 
 								cmd.run(params.client)
 							})
 						})
-					}
+					},
 					BenchmarkCmd::Storage(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							return runner.sync_run(|mut config| {
 								let params = service::new_partial::<RuntimeApi, Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
-									cli.run.target_gas_price)?;
+									cli.run.target_gas_price,
+								)?;
 
-									let db = params.backend.expose_db();
-									let storage = params.backend.expose_storage();
+								let db = params.backend.expose_db();
+								let storage = params.backend.expose_storage();
 
-									cmd.run(config, params.client, db, storage)
+								cmd.run(config, params.client, db, storage)
 							})
 						})
-					}
+					},
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Machine(cmd) => {
@@ -368,16 +343,14 @@ pub fn run() -> sc_cli::Result<()> {
 								&config,
 								frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
 							)
-						});
-					}
+						})
+					},
 				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
 					 `--features runtime-benchmarks`."
-					.into()
-				)
-			}
-		}
+					.into())
+			},
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
@@ -401,7 +374,7 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 
 			Ok(())
-		}
+		},
 		Some(Subcommand::ExportGenesisWasm(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
@@ -422,12 +395,11 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 
 			Ok(())
-		}
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-
 				let rpc_config = RpcConfig {
 					ethapi: cli.run.ethapi.clone(),
 					ethapi_max_permits: cli.run.ethapi_max_permits,
@@ -468,25 +440,23 @@ pub fn run() -> sc_cli::Result<()> {
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
-				info!(
-					"Is collating: {}",
-					if config.role.is_authority() {
-						"yes"
-					} else {
-						"no"
-					}
-				);
+				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
 					start_node::<RuntimeApi, Executor>(
-						config, polkadot_config, id, rpc_config, cli.run.target_gas_price)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+						config,
+						polkadot_config,
+						id,
+						rpc_config,
+						cli.run.target_gas_price,
+					)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
 				})
 			})
-		}
+		},
 	}
 }
 
@@ -549,9 +519,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 		default_listen_port: u16,
 		chain_spec: &Box<dyn ChainSpec>,
 	) -> Result<Option<PrometheusConfig>> {
-		self.base
-			.base
-			.prometheus_config(default_listen_port, chain_spec)
+		self.base.base.prometheus_config(default_listen_port, chain_spec)
 	}
 
 	fn init<F>(
@@ -570,11 +538,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	fn chain_id(&self, is_dev: bool) -> Result<String> {
 		let chain_id = self.base.base.chain_id(is_dev)?;
 
-		Ok(if chain_id.is_empty() {
-			self.chain_id.clone().unwrap_or_default()
-		} else {
-			chain_id
-		})
+		Ok(if chain_id.is_empty() { self.chain_id.clone().unwrap_or_default() } else { chain_id })
 	}
 
 	fn role(&self, is_dev: bool) -> Result<sc_service::Role> {

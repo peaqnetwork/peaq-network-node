@@ -14,10 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use {
-	crate::{data::EvmDataReader, modifier::FunctionModifier, revert::MayRevert, EvmResult},
-	fp_evm::{Log, PrecompileHandle},
-};
+use crate::{data::EvmDataReader, modifier::FunctionModifier, revert::MayRevert, EvmResult};
+use fp_evm::{Log, PrecompileHandle};
 
 pub trait PrecompileHandleExt: PrecompileHandle {
 	/// Record cost of a log manually.

@@ -58,10 +58,7 @@ where
 	B: Default + Eq + Ord,
 {
 	fn from(owner: A) -> Self {
-		Stake {
-			owner,
-			amount: B::default(),
-		}
+		Stake { owner, amount: B::default() }
 	}
 }
 
@@ -183,24 +180,22 @@ where
 	}
 
 	pub fn inc_delegator(&mut self, delegator: A, more: B) {
-		if let Ok(i) = self.delegators.linear_search(&Stake::<A, B> {
-			owner: delegator,
-			amount: B::zero(),
-		}) {
-			self.delegators
-				.mutate(|vec| vec[i].amount = vec[i].amount.saturating_add(more));
+		if let Ok(i) = self
+			.delegators
+			.linear_search(&Stake::<A, B> { owner: delegator, amount: B::zero() })
+		{
+			self.delegators.mutate(|vec| vec[i].amount = vec[i].amount.saturating_add(more));
 			self.total = self.total.saturating_add(more);
 			self.delegators.sort_greatest_to_lowest()
 		}
 	}
 
 	pub fn dec_delegator(&mut self, delegator: A, less: B) {
-		if let Ok(i) = self.delegators.linear_search(&Stake::<A, B> {
-			owner: delegator,
-			amount: B::zero(),
-		}) {
-			self.delegators
-				.mutate(|vec| vec[i].amount = vec[i].amount.saturating_sub(less));
+		if let Ok(i) = self
+			.delegators
+			.linear_search(&Stake::<A, B> { owner: delegator, amount: B::zero() })
+		{
+			self.delegators.mutate(|vec| vec[i].amount = vec[i].amount.saturating_sub(less));
 			self.total = self.total.saturating_sub(less);
 			self.delegators.sort_greatest_to_lowest()
 		}
@@ -219,7 +214,8 @@ pub struct Delegator<AccountId: Eq + Ord, Balance: Eq + Ord, MaxCollatorsPerDele
 	pub total: Balance,
 }
 
-impl<AccountId, Balance, MaxCollatorsPerDelegator> Delegator<AccountId, Balance, MaxCollatorsPerDelegator>
+impl<AccountId, Balance, MaxCollatorsPerDelegator>
+	Delegator<AccountId, Balance, MaxCollatorsPerDelegator>
 where
 	AccountId: Eq + Ord + Clone + Debug,
 	Balance: Copy + Add<Output = Balance> + Saturating + PartialOrd + Eq + Ord + Debug + Zero,
@@ -227,13 +223,7 @@ where
 {
 	pub fn try_new(collator: AccountId, amount: Balance) -> Result<Self, ()> {
 		Ok(Delegator {
-			delegations: OrderedSet::from(
-				vec![Stake {
-					owner: collator,
-					amount,
-				}]
-				.try_into()?,
-			),
+			delegations: OrderedSet::from(vec![Stake { owner: collator, amount }].try_into()?),
 			total: amount,
 		})
 	}
@@ -287,7 +277,11 @@ where
 
 	/// Returns Some(Some(balance)) if successful, None if delegation was not
 	/// found and Some(None) if delegated stake would underflow.
-	pub fn dec_delegation(&mut self, collator: AccountId, less: Balance) -> Option<Option<Balance>> {
+	pub fn dec_delegation(
+		&mut self,
+		collator: AccountId,
+		less: Balance,
+	) -> Option<Option<Balance>> {
 		if let Ok(i) = self.delegations.linear_search(&Stake::<AccountId, Balance> {
 			owner: collator,
 			amount: Balance::zero(),

@@ -30,10 +30,7 @@ pub struct Stack {
 
 impl From<&evm::Stack> for Stack {
 	fn from(i: &evm::Stack) -> Self {
-		Self {
-			data: i.data().clone(),
-			limit: i.limit() as u64,
-		}
+		Self { data: i.data().clone(), limit: i.limit() as u64 }
 	}
 }
 
@@ -46,11 +43,7 @@ pub struct Memory {
 
 impl From<&evm::Memory> for Memory {
 	fn from(i: &evm::Memory) -> Self {
-		Self {
-			data: i.data().clone(),
-			effective_len: i.effective_len(),
-			limit: i.limit() as u64,
-		}
+		Self { data: i.data().clone(), effective_len: i.effective_len(), limit: i.limit() as u64 }
 	}
 }
 
@@ -99,34 +92,18 @@ impl RuntimeEvent {
 		filter: crate::StepEventFilter,
 	) -> Self {
 		match i {
-			evm_runtime::tracing::Event::Step {
-				context,
-				opcode,
-				position,
-				stack,
-				memory,
-			} => Self::Step {
-				context: context.clone().into(),
-				opcode: opcodes_string(opcode),
-				position: match position {
-					Ok(position) => Ok(*position as u64),
-					Err(e) => Err(e.clone()),
+			evm_runtime::tracing::Event::Step { context, opcode, position, stack, memory } =>
+				Self::Step {
+					context: context.clone().into(),
+					opcode: opcodes_string(opcode),
+					position: match position {
+						Ok(position) => Ok(*position as u64),
+						Err(e) => Err(e.clone()),
+					},
+					stack: if filter.enable_stack { Some(stack.into()) } else { None },
+					memory: if filter.enable_memory { Some(memory.into()) } else { None },
 				},
-				stack: if filter.enable_stack {
-					Some(stack.into())
-				} else {
-					None
-				},
-				memory: if filter.enable_memory {
-					Some(memory.into())
-				} else {
-					None
-				},
-			},
-			evm_runtime::tracing::Event::StepResult {
-				result,
-				return_value,
-			} => Self::StepResult {
+			evm_runtime::tracing::Event::StepResult { result, return_value } => Self::StepResult {
 				result: match result {
 					Ok(_) => Ok(()),
 					Err(capture) => match capture {
@@ -136,24 +113,10 @@ impl RuntimeEvent {
 				},
 				return_value: return_value.to_vec(),
 			},
-			evm_runtime::tracing::Event::SLoad {
-				address,
-				index,
-				value,
-			} => Self::SLoad {
-				address,
-				index,
-				value,
-			},
-			evm_runtime::tracing::Event::SStore {
-				address,
-				index,
-				value,
-			} => Self::SStore {
-				address,
-				index,
-				value,
-			},
+			evm_runtime::tracing::Event::SLoad { address, index, value } =>
+				Self::SLoad { address, index, value },
+			evm_runtime::tracing::Event::SStore { address, index, value } =>
+				Self::SStore { address, index, value },
 		}
 	}
 }
@@ -320,7 +283,7 @@ pub fn opcodes_string(opcode: Opcode) -> Vec<u8> {
 		Opcode(n) => {
 			tmp = alloc::format!("Unknown({})", n);
 			&tmp
-		}
+		},
 	};
 	out.as_bytes().to_vec()
 }

@@ -1,9 +1,9 @@
-use peaq_dev_runtime::{TOKEN_DECIMALS, DOLLARS};
+use crate::parachain::Extensions;
+use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
-	AccountId, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles, ParachainInfoConfig,
-	staking, Balance, ParachainStakingConfig,
-	BlockRewardConfig,
+	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, EVMConfig, EthereumConfig,
+	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, Precompiles,
+	Signature, SudoConfig, SystemConfig, DOLLARS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -12,8 +12,6 @@ use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	Perbill,
 };
-use cumulus_primitives_core::ParaId;
-use crate::parachain::Extensions;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -43,7 +41,6 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
 	(get_account_id_from_seed::<sr25519::Public>(s), get_from_seed::<AuraId>(s))
 }
 
-
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -59,17 +56,13 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 			configure_genesis(
 				wasm_binary,
 				// stakers
-				vec![
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						None,
-						2 * staking::MinCollatorStake::get(),
-					)
-				],
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					None,
+					2 * staking::MinCollatorStake::get(),
+				)],
 				// Initial PoA authorities
-				vec![
-					authority_keys_from_seed("Alice"),
-				],
+				vec![authority_keys_from_seed("Alice")],
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
@@ -94,11 +87,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Properties
 		Some(properties),
 		// Extensions
-		Extensions {
-			bad_blocks: Default::default(),
-			relay_chain: "rococo-local".into(),
-			para_id: para_id,
-		},
+		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
 	))
 }
 
@@ -113,7 +102,7 @@ fn configure_genesis(
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-    parachain_id: ParaId,
+	parachain_id: ParaId,
 ) -> GenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
@@ -129,11 +118,7 @@ fn configure_genesis(
 		parachain_info: ParachainInfoConfig { parachain_id },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 78))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
 		session: peaq_dev_runtime::SessionConfig {
 			keys: initial_authorities

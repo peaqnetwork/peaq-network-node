@@ -19,13 +19,11 @@
 /// Time and blocks.
 /// Fee-related
 pub mod fee {
-	use frame_support::weights::{
-		constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+	use frame_support::weights::constants::{ExtrinsicBaseWeight, WEIGHT_PER_SECOND};
+	use peaq_primitives_xcm::{
+		currency::{TokenInfo, DOT, PEAQ},
+		Balance, CurrencyId,
 	};
-	use peaq_primitives_xcm::{Balance, CurrencyId};
-	use peaq_primitives_xcm::currency::TokenInfo;
-	use peaq_primitives_xcm::currency::PEAQ;
-	use peaq_primitives_xcm::currency::DOT;
 
 	pub fn dollar(currency_id: CurrencyId) -> Balance {
 		10u128.saturating_pow(currency_id.decimals().expect("Not support Erc20 decimals").into())
