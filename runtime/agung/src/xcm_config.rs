@@ -231,11 +231,9 @@ parameter_types! {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Option<u128> {
+	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
 		#[allow(clippy::match_ref_pats)] // false positive
-		match (location.parents, location.first_interior()) {
-			_ => None,
-		}
+		None
 	};
 }
 
@@ -291,10 +289,10 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		if location == MultiLocation::parent() {
 			return Some(Token(DOT))
 		}
-		match location.clone() {
+		match location {
 			MultiLocation { parents, interior } if parents == 1 => match interior {
 				X2(Parachain(id), GeneralKey(key))
-					if ParaId::from(id) == ParachainInfo::parachain_id().into() =>
+					if ParaId::from(id) == ParachainInfo::parachain_id() =>
 				{
 					// decode the general key
 					if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {

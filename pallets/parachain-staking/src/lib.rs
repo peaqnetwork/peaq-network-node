@@ -2124,7 +2124,7 @@ pub mod pallet {
 
 			// Snapshot exposure for round for weighting reward distribution
 			for account in collators.iter() {
-				let state = CandidatePool::<T>::get(&account)
+				let state = CandidatePool::<T>::get(account)
 					.expect("all members of TopCandidates must be candidates q.e.d");
 				num_of_delegators =
 					num_of_delegators.max(state.delegators.len().saturated_into::<u32>());
@@ -2644,8 +2644,8 @@ pub mod pallet {
 		// }
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_ref_time(1 as u64);
-			let mut writes = Weight::from_ref_time(0 as u64);
+			let mut reads = Weight::from_ref_time(1_u64);
+			let mut writes = Weight::from_ref_time(0_u64);
 			let mut delegator_sum = T::CurrencyBalance::from(0u128);
 			// should always include state except if the collator has been forcedly removed
 			// via `force_remove_candidate` in the current or previous round
@@ -2669,7 +2669,7 @@ pub mod pallet {
 						reward_rate_config.compute_collator_reward::<T>(issue_number);
 					Self::do_reward(&pot, &author, collator_reward);
 				}
-				writes = writes.saturating_add(Weight::from_ref_time(1 as u64));
+				writes = writes.saturating_add(Weight::from_ref_time(1_u64));
 
 				// Reward delegators
 				for Stake { owner, amount } in state.delegators {
@@ -2678,10 +2678,10 @@ pub mod pallet {
 						let delegator_reward = reward_rate_config
 							.compute_delegator_reward::<T>(issue_number, staking_rate);
 						Self::do_reward(&pot, &owner, delegator_reward);
-						writes = writes.saturating_add(Weight::from_ref_time(1 as u64));
+						writes = writes.saturating_add(Weight::from_ref_time(1_u64));
 					}
 				}
-				reads = reads.saturating_add(Weight::from_ref_time(4 as u64));
+				reads = reads.saturating_add(Weight::from_ref_time(4_u64));
 			}
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(

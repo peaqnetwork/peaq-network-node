@@ -141,7 +141,7 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
-			block_issue_reward: 1 * DOLLARS,
+			block_issue_reward: DOLLARS,
 			hard_cap: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),
@@ -154,7 +154,7 @@ fn configure_genesis(
 			accounts: Precompiles::used_addresses()
 				.map(|addr| {
 					(
-						addr.into(),
+						addr,
 						GenesisAccount {
 							nonce: Default::default(),
 							balance: Default::default(),

@@ -181,7 +181,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	) -> Self {
 		let to = to.into();
 		let mut handle = MockHandle::new(
-			to.clone(),
+			to,
 			Context { address: to, caller: from.into(), apparent_value: U256::zero() },
 		);
 
@@ -232,7 +232,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 
 	pub fn expect_log(mut self, log: Log) -> Self {
 		self.expected_logs = Some({
-			let mut logs = self.expected_logs.unwrap_or_else(Vec::new);
+			let mut logs = self.expected_logs.unwrap_or_default();
 			logs.push(PrettyLog(log));
 			logs
 		});
@@ -414,10 +414,10 @@ macro_rules! assert_event_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					$crate::mock::events().iter().find(|x| *x == e).is_some(),
 					"Event {:?} was not found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			},
 		}
@@ -431,10 +431,10 @@ macro_rules! assert_event_not_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_none(),
+					$crate::mock::events().iter().find(|x| *x == e).is_none(),
 					"Event {:?} was found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			},
 		}

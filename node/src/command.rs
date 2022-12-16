@@ -177,7 +177,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name().to_string()].iter())
+		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter())
 			.load_spec(id)
 	}
 
@@ -199,7 +199,7 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
-	let _ = validate_trace_environment(&cli)?;
+	validate_trace_environment(&cli)?;
 
 	match &cli.subcommand {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -303,12 +303,12 @@ pub fn run() -> sc_cli::Result<()> {
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							return runner.sync_run(|config| cmd.run::<Block, Executor>(config))
+							runner.sync_run(|config| cmd.run::<Block, Executor>(config))
 						})
 					},
 					BenchmarkCmd::Block(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							return runner.sync_run(|mut config| {
+							runner.sync_run(|mut config| {
 								let params = service::new_partial::<RuntimeApi, Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
@@ -321,7 +321,7 @@ pub fn run() -> sc_cli::Result<()> {
 					},
 					BenchmarkCmd::Storage(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							return runner.sync_run(|mut config| {
+							runner.sync_run(|mut config| {
 								let params = service::new_partial::<RuntimeApi, Executor, _>(
 									&mut config,
 									parachain::build_import_queue,
@@ -338,7 +338,7 @@ pub fn run() -> sc_cli::Result<()> {
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Machine(cmd) => {
-						return runner.sync_run(|config| {
+						runner.sync_run(|config| {
 							cmd.run(
 								&config,
 								frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
@@ -415,7 +415,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name().to_string()]
+					[RelayChainCli::executable_name()]
 						.iter()
 						.chain(cli.relaychain_args.iter()),
 				);

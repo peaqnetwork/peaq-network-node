@@ -145,7 +145,7 @@ impl<'a> EvmDataReader<'a> {
 	/// Checks cursor overflows.
 	fn move_cursor(&mut self, len: usize) -> MayRevert<Range<usize>> {
 		let start = self.cursor;
-		let end = self.cursor.checked_add(len).ok_or_else(|| RevertReason::CursorOverflow)?;
+		let end = self.cursor.checked_add(len).ok_or(RevertReason::CursorOverflow)?;
 
 		self.cursor = end;
 

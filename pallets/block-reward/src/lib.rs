@@ -158,8 +158,8 @@ pub mod pallet {
 		fn build(&self) {
 			assert!(self.reward_config.is_consistent());
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
-			BlockIssueReward::<T>::put(self.block_issue_reward.clone());
-			HardCap::<T>::put(self.hard_cap.clone());
+			BlockIssueReward::<T>::put(self.block_issue_reward);
+			HardCap::<T>::put(self.hard_cap);
 		}
 	}
 
@@ -205,7 +205,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			BlockIssueReward::<T>::put(block_reward.clone());
+			BlockIssueReward::<T>::put(block_reward);
 
 			Self::deposit_event(Event::<T>::BlockIssueRewardChanged(block_reward));
 
@@ -224,7 +224,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			HardCap::<T>::put(limit.clone());
+			HardCap::<T>::put(limit);
 
 			Self::deposit_event(Event::<T>::HardCapChanged(limit));
 

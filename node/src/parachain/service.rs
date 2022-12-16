@@ -232,7 +232,7 @@ where
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
 		)?;
@@ -694,7 +694,7 @@ where
 		aura_verifier: BuildOnAccess::Uninitialized(Some(Box::new(aura_verifier))),
 	};
 
-	let registry = config.prometheus_registry().clone();
+	let registry = config.prometheus_registry();
 	let spawner = task_manager.spawn_essential_handle();
 
 	Ok(BasicQueue::new(
@@ -770,7 +770,7 @@ where
 
 					Ok((time, slot, dynamic_fee))
 				},
-				registry: config.prometheus_registry().clone(),
+				registry: config.prometheus_registry(),
 				can_author_with,
 				spawner: &task_manager.spawn_essential_handle(),
 				telemetry,
@@ -830,7 +830,7 @@ where
 						}
 					},
 					block_import: client.clone(),
-					para_client: client.clone(),
+					para_client: client,
 					backoff_authoring_blocks: Option::<()>::None,
 					sync_oracle,
 					keystore,

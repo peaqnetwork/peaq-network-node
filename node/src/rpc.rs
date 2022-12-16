@@ -112,7 +112,7 @@ where
 
 	Arc::new(OverrideHandle {
 		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
 	})
 }
 
@@ -207,7 +207,7 @@ where
 			Arc::clone(&block_data_cache),
 			fee_history_cache,
 			fee_history_limit,
-			10 as u64,
+			10_u64,
 		)
 		.into_rpc(),
 	)?;
@@ -216,11 +216,11 @@ where
 		io.merge(
 			EthFilter::new(
 				client.clone(),
-				backend.clone(),
+				backend,
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
-				block_data_cache.clone(),
+				block_data_cache,
 			)
 			.into_rpc(),
 		)?;

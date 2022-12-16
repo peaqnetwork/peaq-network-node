@@ -149,7 +149,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		Extensions {
 			bad_blocks: Default::default(),
 			relay_chain: "rococo".into(),
-			para_id: para_id,
+			para_id,
 		},
 	))
 }
@@ -200,7 +200,7 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
-			block_issue_reward: 79_09_867 * MILLICENTS,
+			block_issue_reward: 7_909_867 * MILLICENTS,
 			hard_cap: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),

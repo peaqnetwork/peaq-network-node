@@ -68,8 +68,8 @@ pub fn keccak256(input: TokenStream) -> TokenStream {
 /// ```ignore
 /// #[generate_function_selector]
 /// enum Action {
-/// 	Toto = "toto()",
-/// 	Tata = "tata()",
+///     Toto = "toto()",
+///     Tata = "tata()",
 /// }
 /// ```
 ///
@@ -78,8 +78,8 @@ pub fn keccak256(input: TokenStream) -> TokenStream {
 /// ```rust
 /// #[repr(u32)]
 /// enum Action {
-/// 	Toto = 119097542u32,
-/// 	Tata = 1414311903u32,
+///     Toto = 119097542u32,
+///     Tata = 1414311903u32,
 /// }
 /// ```
 #[proc_macro_attribute]

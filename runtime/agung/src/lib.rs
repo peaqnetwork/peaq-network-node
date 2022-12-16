@@ -80,7 +80,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-use peaq_primitives_xcm;
+
 pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, TokenSymbol};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
@@ -196,7 +196,7 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2 as u64);
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2_u64);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -230,11 +230,8 @@ parameter_types! {
 
 pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			// Other modules should works:
-			_ => true,
-		}
+	fn contains(_call: &Call) -> bool {
+		true
 	}
 }
 
@@ -554,8 +551,8 @@ impl pallet_randomness_collective_flip::Config for Runtime {}
 
 // Parachain
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4 as u64);
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4 as u64);
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -590,7 +587,7 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = 1 * HOURS;
+	pub const SessionPeriod: BlockNumber = HOURS;
 	pub const SessionOffset: BlockNumber = 0;
 }
 
@@ -618,7 +615,7 @@ pub mod staking {
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
-			pub const MinBlocksPerRound: BlockNumber = 1 * HOURS;
+			pub const MinBlocksPerRound: BlockNumber = HOURS;
 			/// Default length of a round/session is 2 hours
 			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
 			/// Unstaked balance can be unlocked after 7 days
@@ -632,17 +629,17 @@ pub mod staking {
 			/// We only allow one delegation per round.
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// Maximum 25 delegators per collator at launch, might be increased later
-			#[derive(Debug, PartialEq)]
+			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxDelegatorsPerCollator: u32 = 25;
 			/// Maximum 1 collator per delegator at launch, will be increased later
-			#[derive(Debug, PartialEq)]
+			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
 			/// Minimum stake required to be reserved to be a collator is 32_000
 			pub const MinCollatorStake: Balance = 32_000;
 			/// Minimum stake required to be reserved to be a delegator is 1000
 			pub const MinDelegatorStake: Balance = 20_000;
 			/// Maximum number of collator candidates
-			#[derive(Debug, PartialEq)]
+			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorCandidates: u32 = 16;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
@@ -1516,7 +1513,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			)
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
-		inherent_data.check_extrinsics(&block)
+		inherent_data.check_extrinsics(block)
 	}
 }
 

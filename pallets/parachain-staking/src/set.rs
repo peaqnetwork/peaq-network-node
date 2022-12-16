@@ -285,13 +285,13 @@ mod tests {
 	use super::*;
 
 	parameter_types! {
-		#[derive(PartialEq, RuntimeDebug)]
+		#[derive(PartialEq, Eq, RuntimeDebug)]
 		pub const Zero: u32 = 0;
-		#[derive(PartialEq, RuntimeDebug)]
+		#[derive(PartialEq, Eq, RuntimeDebug)]
 		pub const One: u32 = 1;
-		#[derive(PartialEq, RuntimeDebug)]
+		#[derive(PartialEq, Eq, RuntimeDebug)]
 		pub const Eight: u32 = 8;
-		#[derive(PartialEq, RuntimeDebug, Clone)]
+		#[derive(PartialEq, Eq, RuntimeDebug, Clone)]
 		pub const Five: u32 = 5;
 	}
 

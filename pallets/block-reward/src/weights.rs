@@ -46,16 +46,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: BlockReward RewardDistributionConfigStorage (r:0 w:1)
 	fn set_configuration() -> Weight {
 		Weight::from_ref_time(11_642_000)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: BlockReward BlockIssueReward (r:0 w:1)
 	fn set_block_issue_reward() -> Weight {
 		Weight::from_ref_time(10_850_000)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: BlockReward HardCap (r:0 w:1)
 	fn set_hard_cap() -> Weight {
 		Weight::from_ref_time(10_811_000)
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }
