@@ -7493,6 +7493,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#1490be17f4b7f170b60071eb4f4e5955423bd6ee"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7510,6 +7511,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.0.2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#1490be17f4b7f170b60071eb4f4e5955423bd6ee"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
