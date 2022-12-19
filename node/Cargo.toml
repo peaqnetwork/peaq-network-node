@@ -390,10 +390,10 @@ branch = "peaq-polkadot-v0.9.29"
 path = "../primitives/xcm"
 
 [dependencies.peaq-pallet-storage-rpc]
-# git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-# branch = 'dev'
-# version = '0.0.1'
-path = '../../peaq-storage-pallet/rpc'
+git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+branch = 'feat/1203500610868804_rpc-storage-pallet'
+default-features = false
+version = '0.0.1'
 
 [features]
 default = [

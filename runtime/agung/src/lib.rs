@@ -792,6 +792,12 @@ impl peaq_pallet_rbac::Config for Runtime {
     type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
+// Config the storage in pallets/storage
+impl peaq_pallet_storage::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;	
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -841,6 +847,7 @@ construct_runtime!(
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
+		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
 	}
 );
 
@@ -1424,8 +1431,7 @@ impl_runtime_apis! {
 
 	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
 		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
-			// PeaqStorage::read(&did_account, &item_type)
-			Some(Vec::new())
+			PeaqStorage::read(&did_account, &item_type)
 		}
 	}
 	
@@ -1453,6 +1459,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
 			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
+			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1494,6 +1501,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
 			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
+			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
