@@ -207,10 +207,18 @@ branch = 'peaq-polkadot-v0.9.29'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-rbac]
-git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
+path = '../../../peaq-pallet-rbac/pallet'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
 default-features = false
-branch = 'peaq-polkadot-v0.9.29'
-version = '0.0.2'
+# branch = 'peaq-polkadot-v0.9.29'
+# version = '0.0.2'
+
+[dependencies.peaq-pallet-rbac-runtime-api]
+path = '../../../peaq-pallet-rbac/rpc/runtime-api'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
+default-features = false
+# branch = 'peaq-polkadot-v0.9.29'
+# version = '0.0.2'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
@@ -533,6 +541,7 @@ std = [
 	'peaq-pallet-did-runtime-api/std',
 	'peaq-pallet-transaction/std',
 	'peaq-pallet-rbac/std',
+	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
 	'pallet-utility/std',
 

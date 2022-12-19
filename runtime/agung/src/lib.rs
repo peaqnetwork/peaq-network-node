@@ -96,6 +96,10 @@ use peaq_pallet_did::structs::Attribute as DidAttribute;
 use peaq_pallet_did::did::Did;
 pub use peaq_pallet_transaction;
 pub use peaq_pallet_rbac;
+use peaq_pallet_rbac::{
+	rbac::Role,
+	structs::{Entity as RbacEntity}
+};
 
 // For XCM
 pub mod xcm_config;
@@ -125,6 +129,9 @@ type Index = peaq_primitives_xcm::Nonce;
 
 /// A hash of some data used by the chain.
 type Hash = peaq_primitives_xcm::Hash;
+
+/// The ID of an entity (RBAC)
+type EntityId = [u8; 32];
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -786,7 +793,7 @@ impl orml_unknown_tokens::Config for Runtime {
 
 impl peaq_pallet_rbac::Config for Runtime {
 	type Event = Event;
-	type EntityId = [u8; 32];
+	type EntityId = EntityId;
     type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
@@ -1351,6 +1358,15 @@ impl_runtime_apis! {
 		fn read(did_account: AccountId, name: Vec<u8>) -> Option<
 			DidAttribute<BlockNumber, Moment>> {
 			PeaqDid::read(&did_account, &name)
+		}
+	}
+
+	impl peaq_pallet_rbac_runtime_api::PeaqRBACApi<Block, AccountId, EntityId> for Runtime {
+		fn fetch_role(
+			account: AccountId, 
+			entity: EntityId
+		) -> Option<RbacEntity<EntityId>> {
+			PeaqRbac::get_role(&account, entity)
 		}
 	}
 
