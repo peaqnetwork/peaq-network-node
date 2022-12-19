@@ -149,6 +149,7 @@ where
 		NetApiServer, Web3, Web3ApiServer,
 	};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
+	use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
@@ -237,6 +238,7 @@ where
 	)?;
 
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(

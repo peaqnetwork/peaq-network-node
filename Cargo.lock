@@ -126,9 +126,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.67"
+version = "1.0.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7724808837b77f4b4de9d283820f9d98bcf496d5692934b857a2399d31ff22e6"
+checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
 
 [[package]]
 name = "approx"
@@ -800,7 +800,7 @@ checksum = "4acbb09d9ee8e23699b9634375c72795d095bf268439da88562cf9b501f181fa"
 dependencies = [
  "camino",
  "cargo-platform",
- "semver 1.0.15",
+ "semver 1.0.16",
  "serde",
  "serde_json",
 ]
@@ -1885,9 +1885,9 @@ dependencies = [
 
 [[package]]
 name = "cxx"
-version = "1.0.84"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27874566aca772cb515af4c6e997b5fe2119820bca447689145e39bb734d19a0"
+checksum = "5add3fc1717409d029b20c5b6903fc0c0b02fa6741d820054f4a2efa5e5816fd"
 dependencies = [
  "cc",
  "cxxbridge-flags",
@@ -1897,9 +1897,9 @@ dependencies = [
 
 [[package]]
 name = "cxx-build"
-version = "1.0.84"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7bb951f2523a49533003656a72121306b225ec16a49a09dc6b0ba0d6f3ec3c0"
+checksum = "b4c87959ba14bc6fbc61df77c3fcfe180fc32b93538c4f1031dd802ccb5f2ff0"
 dependencies = [
  "cc",
  "codespan-reporting",
@@ -1912,15 +1912,15 @@ dependencies = [
 
 [[package]]
 name = "cxxbridge-flags"
-version = "1.0.84"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be778b6327031c1c7b61dd2e48124eee5361e6aa76b8de93692f011b08870ab4"
+checksum = "69a3e162fde4e594ed2b07d0f83c6c67b745e7f28ce58c6df5e6b6bef99dfb59"
 
 [[package]]
 name = "cxxbridge-macro"
-version = "1.0.84"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b8a2b87662fe5a0a0b38507756ab66aff32638876a0866e5a5fc82ceb07ee49"
+checksum = "3e7e2adeb6a0d4a282e581096b06e1791532b7d576dcde5ccd9382acf55db8e6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7388,6 +7388,7 @@ dependencies = [
  "peaq-dev-runtime",
  "peaq-krest-runtime",
  "peaq-pallet-did-rpc",
+ "peaq-pallet-rbac-rpc",
  "peaq-primitives-ext",
  "peaq-primitives-xcm",
  "peaq-rpc-debug",
@@ -7493,7 +7494,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#1490be17f4b7f170b60071eb4f4e5955423bd6ee"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#03ebf99cbecd00b6a85bbb6274e00d1c060775d0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7509,9 +7510,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "peaq-pallet-rbac-rpc"
+version = "0.0.2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#03ebf99cbecd00b6a85bbb6274e00d1c060775d0"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpsee",
+ "parity-scale-codec",
+ "peaq-pallet-rbac",
+ "peaq-pallet-rbac-runtime-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#1490be17f4b7f170b60071eb4f4e5955423bd6ee"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feature/1203258606988651_RPC_for_RBAC#03ebf99cbecd00b6a85bbb6274e00d1c060775d0"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -9167,9 +9188,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.48"
+version = "1.0.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9d89e5dba24725ae5678020bf8f1357a9aa7ff10736b551adbcd3f8d17d766f"
+checksum = "57a8eca9f9c4ffde41714334dee777596264c7825420f521abc92b5b5deb63a5"
 dependencies = [
  "unicode-ident",
 ]
@@ -9307,9 +9328,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.22"
+version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "556d0f47a940e895261e77dc200d5eadfc6ef644c179c6f5edfc105e3a2292c8"
+checksum = "8856d8364d252a14d474036ea1358d63c9e6965c8e5c1885c18f73d70bff9c7b"
 dependencies = [
  "proc-macro2",
 ]
@@ -9803,7 +9824,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
 dependencies = [
- "semver 1.0.15",
+ "semver 1.0.16",
 ]
 
 [[package]]
@@ -11088,9 +11109,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.15"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bfa246f936730408c0abee392cc1a50b118ece708c7f630516defd64480c7d8"
+checksum = "58bc9567378fc7690d6b2addae4e60ac2eeea07becb2c64b9f218b53865cba2a"
 dependencies = [
  "serde",
 ]
@@ -11123,9 +11144,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.90"
+version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8778cc0b528968fe72abec38b5db5a20a70d148116cd9325d2bc5f5180ca3faf"
+checksum = "877c235533714907a8c2464236f5c4b2a17262ef1bd71f38f35ea592c8da6883"
 dependencies = [
  "itoa",
  "ryu",
@@ -12362,9 +12383,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.106"
+version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09ee3a69cd2c7e06684677e5629b3878b253af05e4714964204279c6bc02cf0b"
+checksum = "1f4064b5b16e03ae50984a5a8ed5d4f8803e6bc1fd170a3cda91a1be4b18e3f5"
 dependencies = [
  "proc-macro2",
  "quote",
