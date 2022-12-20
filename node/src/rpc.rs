@@ -134,6 +134,7 @@ where
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>,
+	C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
