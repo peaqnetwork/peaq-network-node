@@ -115,6 +115,9 @@ pub mod pallet {
 	#[pallet::getter(fn block_issue_reward)]
 	pub(crate) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	// It might be good to specify explicitly that 'hard cap' means maximum total supply of the
+	// chain's currency. I'm not sure if this is obvious for everyone. This also applies to the
+	// related event and error variants, as well as `set_hard_cap` extrinsic.
 	#[pallet::storage]
 	#[pallet::getter(fn hard_cap)]
 	pub(crate) type HardCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
@@ -175,13 +178,15 @@ pub mod pallet {
         ///
         /// - `reward_distro_params` - reward distribution params
         ///
-        /// Emits `DistributionConfigurationChanged` with config embeded into event itself.
+        /// Emits `DistributionConfigurationChanged` with config embedded into event itself.
         ///
         #[pallet::weight(T::WeightInfo::set_configuration())]
         pub fn set_configuration(
             origin: OriginFor<T>,
             reward_distro_params: RewardDistributionConfig,
         ) -> DispatchResultWithPostInfo {
+            // It would be better to introduce a custom origin in the pallet's config rather than
+            // use root here. It doesn't cost much, but provides more flexibility.
             ensure_root(origin)?;
 
             ensure!(
@@ -201,13 +206,15 @@ pub mod pallet {
         ///
         /// - `block_reward` - block reward param
         ///
-        /// Emits `BlockIssueRewardChanged` with config embeded into event itself.
+        /// Emits `BlockIssueRewardChanged` with config embedded into event itself.
         ///
         #[pallet::weight(T::WeightInfo::set_block_issue_reward())]
         pub fn set_block_issue_reward(
             origin: OriginFor<T>,
             block_reward: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
+            // It would be better to introduce a custom origin in the pallet's config rather than
+            // use root here. It doesn't cost much, but provides more flexibility.
             ensure_root(origin)?;
 
             BlockIssueReward::<T>::put(block_reward.clone());
@@ -223,13 +230,15 @@ pub mod pallet {
         ///
         /// - `limit` - hardcap limit param
         ///
-        /// Emits `HardCapChanged` with config embeded into event itself.
+        /// Emits `HardCapChanged` with config embedded into event itself.
         ///
         #[pallet::weight(T::WeightInfo::set_hard_cap())]
         pub fn set_hard_cap(
             origin: OriginFor<T>,
             limit: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
+            // It would be better to introduce a custom origin in the pallet's config rather than
+            // use root here. It doesn't cost much, but provides more flexibility.
             ensure_root(origin)?;
 
             HardCap::<T>::put(limit.clone());
@@ -332,10 +341,6 @@ impl Default for RewardDistributionConfig {
 impl RewardDistributionConfig {
     /// `true` if sum of all percentages is `one whole`, `false` otherwise.
     pub fn is_consistent(&self) -> bool {
-        // TODO: perhaps this can be writen in a more cleaner way?
-        // experimental-only `try_reduce` could be used but it's not available
-        // https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.try_reduce
-
         let variables = vec![
             &self.treasury_percent,
             &self.dapps_percent,
@@ -345,17 +350,8 @@ impl RewardDistributionConfig {
             &self.machines_subsidization_percent,
         ];
 
-        let mut accumulator = Perbill::zero();
-        for config_param in variables {
-            let result = accumulator.checked_add(config_param);
-            if let Some(mid_result) = result {
-                accumulator = mid_result;
-            } else {
-                return false;
-            }
-        }
-
-        Perbill::one() == accumulator
+        let sum = variables.iter().try_fold(Perbill::zero(), |acc, &x| acc.checked_add(x));
+        Some(Perbill::one()) == sum
     }
 }
 

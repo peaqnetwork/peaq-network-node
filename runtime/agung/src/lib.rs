@@ -710,6 +710,7 @@ impl pallet_block_reward::Config for Runtime {
 }
 
 pub struct BeneficiaryPayout();
+// Why is this implementation mostly empty? Are only collators supposed to be rewarded?
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
     fn treasury(_reward: NegativeImbalance) {
     }

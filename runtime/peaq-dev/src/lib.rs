@@ -706,6 +706,7 @@ impl pallet_block_reward::Config for Runtime {
 }
 
 pub struct BeneficiaryPayout();
+// Why is this implementation mostly empty? Are only collators supposed to be rewarded?
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
     fn treasury(_reward: NegativeImbalance) {
     }
@@ -791,7 +792,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;	
+	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
 }
 
 
