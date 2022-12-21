@@ -177,8 +177,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter())
-			.load_spec(id)
+		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -337,14 +336,12 @@ pub fn run() -> sc_cli::Result<()> {
 					},
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-					BenchmarkCmd::Machine(cmd) => {
-						runner.sync_run(|config| {
-							cmd.run(
-								&config,
-								frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
-							)
-						})
-					},
+					BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
+						cmd.run(
+							&config,
+							frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
+						)
+					}),
 				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
@@ -415,9 +412,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name()]
-						.iter()
-						.chain(cli.relaychain_args.iter()),
+					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
 				);
 
 				let id = ParaId::from(cli.run.parachain_id);

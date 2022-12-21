@@ -57,9 +57,9 @@ pub mod tracer {
 	}
 
 	impl Default for EvmTracer {
-	    fn default() -> Self {
-	        Self::new()
-	    }
+		fn default() -> Self {
+			Self::new()
+		}
 	}
 
 	impl EvmTracer {

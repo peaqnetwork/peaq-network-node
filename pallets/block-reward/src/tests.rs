@@ -155,9 +155,7 @@ pub fn set_block_issue_reward_is_ok() {
 		let reward = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_block_issue_reward(Origin::root(), reward));
-		System::assert_last_event(mock::Event::BlockReward(Event::BlockIssueRewardChanged(
-			reward,
-		)));
+		System::assert_last_event(mock::Event::BlockReward(Event::BlockIssueRewardChanged(reward)));
 
 		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
 	})
