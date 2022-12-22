@@ -311,18 +311,18 @@ where
 ///
 /// ```rust,ignore
 /// impl EvmData for Currency {
-/// 	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
-/// 		read_struct!(reader, (address, amount));
-/// 		Ok(Currency { address, amount })
-/// 	}
+///     fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
+///         read_struct!(reader, (address, amount));
+///         Ok(Currency { address, amount })
+///     }
 ///
-/// 	fn write(writer: &mut EvmDataWriter, value: Self) {
-/// 		EvmData::write(writer, (value.address, value.amount));
-/// 	}
+///     fn write(writer: &mut EvmDataWriter, value: Self) {
+///         EvmData::write(writer, (value.address, value.amount));
+///     }
 ///
-/// 	fn has_static_size() -> bool {
-/// 		<(Address, U256)>::has_static_size()
-/// 	}
+///     fn has_static_size() -> bool {
+///         <(Address, U256)>::has_static_size()
+///     }
 /// }
 /// ```
 #[macro_export]
