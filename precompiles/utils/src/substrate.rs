@@ -87,7 +87,7 @@ where
 		let used_gas =
 			Runtime::GasWeightMapping::weight_to_gas(used_weight.unwrap_or(dispatch_info.weight));
 
-		handle.record_cost(used_gas).map_err(|e| TryDispatchError::Evm(e))?;
+		handle.record_cost(used_gas).map_err(TryDispatchError::Evm)?;
 
 		Ok(post_dispatch_info)
 	}

@@ -65,7 +65,7 @@ fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
-	let _ = validate_trace_environment(&cli)?;
+	validate_trace_environment(&cli)?;
 
 	match &cli.subcommand {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -138,16 +138,16 @@ pub fn run() -> sc_cli::Result<()> {
 				let runner = cli.create_runner(cmd)?;
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) =>
-						return runner
+						runner
 							.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config)),
 					BenchmarkCmd::Block(cmd) =>
-						return runner.sync_run(|mut config| {
+						runner.sync_run(|mut config| {
 							let params = service::new_partial(&mut config, &cli)?;
 
 							cmd.run(params.client)
 						}),
 					BenchmarkCmd::Storage(cmd) =>
-						return runner.sync_run(|mut config| {
+						runner.sync_run(|mut config| {
 							let params = service::new_partial(&mut config, &cli)?;
 
 							let db = params.backend.expose_db();
@@ -158,7 +158,7 @@ pub fn run() -> sc_cli::Result<()> {
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Machine(cmd) => {
-						return runner.sync_run(|config| {
+						runner.sync_run(|config| {
 							cmd.run(
 								&config,
 								frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),

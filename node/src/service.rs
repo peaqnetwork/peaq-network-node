@@ -159,7 +159,7 @@ pub fn new_partial(
 	ServiceError,
 > {
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other(format!("Remote Keystores are not supported.")))
+		return Err(ServiceError::Other("Remote Keystores are not supported.".to_string()))
 	}
 
 	// Use ethereum style for subscription ids
@@ -185,7 +185,7 @@ pub fn new_partial(
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
 		)?;
@@ -263,7 +263,7 @@ pub fn new_partial(
 		let import_queue =
 			sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _, _>(ImportQueueParams {
 				block_import: frontier_block_import.clone(),
-				justification_import: Some(Box::new(grandpa_block_import.clone())),
+				justification_import: Some(Box::new(grandpa_block_import)),
 				client: client.clone(),
 				create_inherent_data_providers: move |_, ()| async move {
 					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
@@ -329,7 +329,7 @@ pub fn new_full(
 		select_chain,
 		transaction_pool,
 		other: (consensus_result, filter_pool, frontier_backend, mut telemetry, fee_history_cache),
-	} = new_partial(&mut config, &cli)?;
+	} = new_partial(&mut config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
@@ -432,13 +432,13 @@ pub fn new_full(
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let network = network.clone();
-		let ethapi_cmd = ethapi_cmd.clone();
+		let ethapi_cmd = ethapi_cmd;
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let max_past_logs = cli.run.max_past_logs;
-		let block_data_cache = block_data_cache.clone();
+		let block_data_cache = block_data_cache;
 
 		move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
@@ -495,8 +495,8 @@ pub fn new_full(
 			client.import_notification_stream(),
 			Duration::new(6, 0),
 			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
+			backend,
+			frontier_backend,
 			3,
 			0,
 			SyncStrategy::Normal,
@@ -624,7 +624,7 @@ pub fn new_full(
 			let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _, _>(
 				StartAuraParams {
 					slot_duration,
-					client: client.clone(),
+					client,
 					select_chain,
 					block_import,
 					proposer_factory,
