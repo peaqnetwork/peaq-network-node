@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use {
-	crate::{EvmData, EvmDataWriter},
-	fp_evm::{
-		Context, ExitError, ExitReason, ExitSucceed, Log, PrecompileFailure, PrecompileHandle,
-		PrecompileOutput, PrecompileResult, PrecompileSet, Transfer,
-	},
-	sp_core::{H160, H256, U256},
-	sp_std::boxed::Box,
+use crate::{EvmData, EvmDataWriter};
+use fp_evm::{
+	Context, ExitError, ExitReason, ExitSucceed, Log, PrecompileFailure, PrecompileHandle,
+	PrecompileOutput, PrecompileResult, PrecompileSet, Transfer,
 };
+use sp_core::{H160, H256, U256};
+use sp_std::boxed::Box;
 
 pub struct Subcall {
 	pub address: H160,
@@ -86,23 +84,15 @@ impl PrecompileHandle for MockHandle {
 		context: &Context,
 	) -> (ExitReason, Vec<u8>) {
 		if self
-			.record_cost(crate::costs::call_cost(
-				context.apparent_value,
-				&evm::Config::london(),
-			))
+			.record_cost(crate::costs::call_cost(context.apparent_value, &evm::Config::london()))
 			.is_err()
 		{
-			return (ExitReason::Error(ExitError::OutOfGas), vec![]);
+			return (ExitReason::Error(ExitError::OutOfGas), vec![])
 		}
 
 		match &mut self.subcall_handle {
 			Some(handle) => {
-				let SubcallOutput {
-					reason,
-					output,
-					cost,
-					logs,
-				} = handle(Subcall {
+				let SubcallOutput { reason, output, cost, logs } = handle(Subcall {
 					address,
 					transfer,
 					input,
@@ -112,16 +102,15 @@ impl PrecompileHandle for MockHandle {
 				});
 
 				if self.record_cost(cost).is_err() {
-					return (ExitReason::Error(ExitError::OutOfGas), vec![]);
+					return (ExitReason::Error(ExitError::OutOfGas), vec![])
 				}
 
 				for log in logs {
-					self.log(log.address, log.topics, log.data)
-						.expect("cannot fail");
+					self.log(log.address, log.topics, log.data).expect("cannot fail");
 				}
 
 				(reason, output)
-			}
+			},
 			None => panic!("no subcall handle registered"),
 		}
 	}
@@ -141,11 +130,7 @@ impl PrecompileHandle for MockHandle {
 	}
 
 	fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) -> Result<(), ExitError> {
-		self.logs.push(PrettyLog(Log {
-			address,
-			topics,
-			data,
-		}));
+		self.logs.push(PrettyLog(Log { address, topics, data }));
 		Ok(())
 	}
 
@@ -197,11 +182,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 		let to = to.into();
 		let mut handle = MockHandle::new(
 			to.clone(),
-			Context {
-				address: to,
-				caller: from.into(),
-				apparent_value: U256::zero(),
-			},
+			Context { address: to, caller: from.into(), apparent_value: U256::zero() },
 		);
 
 		handle.input = data;
@@ -290,14 +271,14 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 		if encoded_len > 68 {
 			let message_len = encoded[36..68].iter().sum::<u8>();
 			if encoded_len >= 68 + message_len as usize {
-				return &encoded[68..68 + message_len as usize];
+				return &encoded[68..68 + message_len as usize]
 			}
 		}
 		b"decode_revert_message: error"
 	}
 
-	/// Execute the precompile set and expect some precompile to have been executed, regardless of the
-	/// result.
+	/// Execute the precompile set and expect some precompile to have been executed, regardless of
+	/// the result.
 	pub fn execute_some(mut self) {
 		let res = self.execute();
 		assert!(res.is_some());
@@ -322,16 +303,13 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 					"Revert message (bytes): {:?}",
 					sp_core::hexdisplay::HexDisplay::from(&decoded)
 				);
-				eprintln!(
-					"Revert message (string): {:?}",
-					core::str::from_utf8(decoded).ok()
-				);
+				eprintln!("Revert message (string): {:?}", core::str::from_utf8(decoded).ok());
 				panic!("Shouldn't have reverted");
-			}
+			},
 			Some(Ok(PrecompileOutput {
 				exit_status: ExitSucceed::Returned,
 				output: execution_output,
-			})) => {
+			})) =>
 				if execution_output != output {
 					eprintln!(
 						"Output (bytes): {:?}",
@@ -342,8 +320,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 						core::str::from_utf8(&execution_output).ok()
 					);
 					panic!("Output doesn't match");
-				}
-			}
+				},
 			other => panic!("Unexpected result: {:?}", other),
 		}
 
@@ -368,13 +345,10 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 						"Revert message (bytes): {:?}",
 						sp_core::hexdisplay::HexDisplay::from(&decoded)
 					);
-					eprintln!(
-						"Revert message (string): {:?}",
-						core::str::from_utf8(decoded).ok()
-					);
+					eprintln!("Revert message (string): {:?}", core::str::from_utf8(decoded).ok());
 					panic!("Revert reason doesn't match !");
 				}
-			}
+			},
 			other => panic!("Didn't revert, instead returned {:?}", other),
 		}
 
@@ -384,10 +358,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	/// Execute the precompile set and check it returns provided output.
 	pub fn execute_error(mut self, error: ExitError) {
 		let res = self.execute();
-		assert_eq!(
-			res,
-			Some(Err(PrecompileFailure::Error { exit_status: error }))
-		);
+		assert_eq!(res, Some(Err(PrecompileFailure::Error { exit_status: error })));
 		self.assert_optionals();
 	}
 }
@@ -448,7 +419,7 @@ macro_rules! assert_event_emitted {
 					e,
 					crate::mock::events()
 				);
-			}
+			},
 		}
 	};
 }
@@ -465,7 +436,7 @@ macro_rules! assert_event_not_emitted {
 					e,
 					crate::mock::events()
 				);
-			}
+			},
 		}
 	};
 }

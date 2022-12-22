@@ -54,10 +54,7 @@ pub fn keccak256(input: TokenStream) -> TokenStream {
 	let bytes = Bytes(hash.to_vec());
 	let eval_str = format!("{:?}", bytes);
 	let eval_ts: proc_macro2::TokenStream = eval_str.parse().unwrap_or_else(|_| {
-		panic!(
-			"Failed to parse the string \"{}\" to TokenStream.",
-			eval_str
-		);
+		panic!("Failed to parse the string \"{}\" to TokenStream.", eval_str);
 	});
 	quote!(#eval_ts).into()
 }
@@ -85,7 +82,6 @@ pub fn keccak256(input: TokenStream) -> TokenStream {
 /// 	Tata = 1414311903u32,
 /// }
 /// ```
-///
 #[proc_macro_attribute]
 pub fn generate_function_selector(attr: TokenStream, input: TokenStream) -> TokenStream {
 	generate_function_selector::main(attr, input)

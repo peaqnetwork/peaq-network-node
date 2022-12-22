@@ -1,8 +1,8 @@
 #[cfg(feature = "manual-seal")]
 use structopt::clap::arg_enum;
 
-use clap::Parser;
 use crate::cli_opt::EthApi;
+use clap::Parser;
 
 #[cfg(feature = "manual-seal")]
 arg_enum! {

@@ -63,11 +63,7 @@ pub enum TransactionTraceAction {
 		value: U256,
 	},
 	#[serde(rename_all = "camelCase")]
-	Suicide {
-		address: H160,
-		balance: U256,
-		refund_address: H160,
-	},
+	Suicide { address: H160, balance: U256, refund_address: H160 },
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]

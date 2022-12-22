@@ -1,7 +1,7 @@
 use hex_literal::hex;
 use peaq_node_runtime::{
-	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount, GenesisConfig, GrandpaConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY, Precompiles,
+	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisAccount,
+	GenesisConfig, GrandpaConfig, Precompiles, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_network_common::config::MultiaddrWithPeerId;
 use sc_service::{ChainType, Properties};
@@ -200,20 +200,13 @@ fn configure_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 78))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 		},
 		grandpa: GrandpaConfig {
-			authorities: initial_authorities
-				.iter()
-				.map(|x| (x.1.clone(), 1))
-				.collect(),
+			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
