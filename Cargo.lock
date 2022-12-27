@@ -7294,7 +7294,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.29#64f2ef1ea3cbae6acb351d869c6b588c5cb504ca"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#f0897816ccc57d8dfeda273b77d6a3b19059b8fe"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7312,7 +7312,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.29#64f2ef1ea3cbae6acb351d869c6b588c5cb504ca"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#f0897816ccc57d8dfeda273b77d6a3b19059b8fe"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -7332,7 +7332,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.29#64f2ef1ea3cbae6acb351d869c6b588c5cb504ca"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#f0897816ccc57d8dfeda273b77d6a3b19059b8fe"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -7343,7 +7343,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.29#ab4f672f1bdcabd6b98a689047e88497000cde83"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#13cbe0d5d360c263cade6f9a4d54c4e72d5db23b"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7407,7 +7407,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=peaq-polkadot-v0.9.29#7c5d3066aab16acb6456af49c26dc6eedfefd246"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#7bb3fad4d08b0c525a60ffc984182aa17eaa405f"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
