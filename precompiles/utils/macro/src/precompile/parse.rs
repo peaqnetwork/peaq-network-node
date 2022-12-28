@@ -270,9 +270,7 @@ impl Precompile {
 
 					pat.ident.clone()
 				},
-				_ => {
-					return Err(syn::Error::new(input.pat.span(), msg))
-				},
+				_ => return Err(syn::Error::new(input.pat.span(), msg)),
 			};
 			let ty = input.ty.as_ref().clone();
 
@@ -290,16 +288,21 @@ impl Precompile {
 		};
 
 		// We insert the collected data in self.
-        if self.variants_content.insert(
-            method_name.clone(),
-            Variant {
-                arguments,
-                solidity_arguments_type: solidity_arguments_type.unwrap_or_else(||String::from("()")),
-                modifier,
-                selectors,
-                fn_output: output_type.as_ref().clone(),
-            },
-        ).is_some() {
+		if self
+			.variants_content
+			.insert(
+				method_name.clone(),
+				Variant {
+					arguments,
+					solidity_arguments_type: solidity_arguments_type
+						.unwrap_or_else(|| String::from("()")),
+					modifier,
+					selectors,
+					fn_output: output_type.as_ref().clone(),
+				},
+			)
+			.is_some()
+		{
 			let msg = "Duplicate method name";
 			return Err(syn::Error::new(method_name.span(), msg))
 		}

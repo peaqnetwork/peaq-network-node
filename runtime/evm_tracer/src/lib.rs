@@ -56,11 +56,11 @@ pub mod tracer {
 		step_event_filter: StepEventFilter,
 	}
 
-    impl Default for EvmTracer {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
+	impl Default for EvmTracer {
+		fn default() -> Self {
+			Self::new()
+		}
+	}
 
 	impl EvmTracer {
 		pub fn new() -> Self {

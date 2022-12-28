@@ -137,34 +137,29 @@ pub fn run() -> sc_cli::Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 				match cmd {
-					BenchmarkCmd::Pallet(cmd) =>
-						runner
-							.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config)),
-					BenchmarkCmd::Block(cmd) =>
-						runner.sync_run(|mut config| {
-							let params = service::new_partial(&mut config, &cli)?;
+					BenchmarkCmd::Pallet(cmd) => runner
+						.sync_run(|config| cmd.run::<Block, service::ExecutorDispatch>(config)),
+					BenchmarkCmd::Block(cmd) => runner.sync_run(|mut config| {
+						let params = service::new_partial(&mut config, &cli)?;
 
-							cmd.run(params.client)
-						}),
-					BenchmarkCmd::Storage(cmd) =>
-						runner.sync_run(|mut config| {
-							let params = service::new_partial(&mut config, &cli)?;
+						cmd.run(params.client)
+					}),
+					BenchmarkCmd::Storage(cmd) => runner.sync_run(|mut config| {
+						let params = service::new_partial(&mut config, &cli)?;
 
-							let db = params.backend.expose_db();
-							let storage = params.backend.expose_storage();
+						let db = params.backend.expose_db();
+						let storage = params.backend.expose_storage();
 
-							cmd.run(config, params.client, db, storage)
-						}),
+						cmd.run(config, params.client, db, storage)
+					}),
 					BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
 					BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
-					BenchmarkCmd::Machine(cmd) => {
-						runner.sync_run(|config| {
-							cmd.run(
-								&config,
-								frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
-							)
-						})
-					},
+					BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| {
+						cmd.run(
+							&config,
+							frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
+						)
+					}),
 				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \

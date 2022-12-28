@@ -347,8 +347,7 @@ where
 			api.initialize_block(&parent_block_id, &header)
 				.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?;
 
-			api
-				.trace_block(&parent_block_id, exts, eth_tx_hashes)
+			api.trace_block(&parent_block_id, exts, eth_tx_hashes)
 				.map_err(|e| {
 					internal_err(format!(
 						"Blockchain error when replaying block {} : {:?}",
@@ -473,8 +472,7 @@ where
 						.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?;
 
 					if trace_api_version >= 4 {
-						api
-							.trace_transaction(&parent_block_id, exts, transaction)
+						api.trace_transaction(&parent_block_id, exts, transaction)
 							.map_err(|e| {
 								internal_err(format!(
 									"Runtime api access error (version {:?}): {:?}",
@@ -516,11 +514,13 @@ where
 						);
 						proxy.using(f)?;
 						Ok(Response::Single(
-							peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or_else(||
-								internal_err(
-									"replayed transaction generated too much data. \
+							peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or_else(
+								|| {
+									internal_err(
+										"replayed transaction generated too much data. \
 								try disabling memory or storage?",
-								),
+									)
+								},
 							)?,
 						))
 					},
