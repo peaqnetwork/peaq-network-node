@@ -138,6 +138,7 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 	)?))
 }
 
+#[allow(clippy::type_complexity)]
 pub fn new_partial(
 	config: &mut Configuration,
 	cli: &Cli,

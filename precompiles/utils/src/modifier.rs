@@ -32,7 +32,7 @@ pub enum FunctionModifier {
 	Payable,
 }
 
-#[must_use]
+#[must_use = "Check that a function call is compatible with the context it is called into"]
 /// Check that a function call is compatible with the context it is
 /// called into.
 pub fn check_function_modifier(

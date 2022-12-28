@@ -56,6 +56,12 @@ pub mod tracer {
 		step_event_filter: StepEventFilter,
 	}
 
+    impl Default for EvmTracer {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
 	impl EvmTracer {
 		pub fn new() -> Self {
 			Self { step_event_filter: peaq_primitives_ext::peaq_ext::step_event_filter() }
