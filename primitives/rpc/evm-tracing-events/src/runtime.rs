@@ -87,8 +87,8 @@ pub enum RuntimeEvent {
 
 #[cfg(feature = "evm-tracing")]
 impl RuntimeEvent {
-	pub fn from_evm_event<'a>(
-		i: evm_runtime::tracing::Event<'a>,
+	pub fn from_evm_event(
+		i: evm_runtime::tracing::Event,
 		filter: crate::StepEventFilter,
 	) -> Self {
 		match i {

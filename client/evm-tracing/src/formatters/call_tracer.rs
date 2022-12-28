@@ -156,12 +156,10 @@ impl super::ResponseFormatter for Formatter {
 						let b_len = b.len();
 						let sibling_greater_than = |a: &Vec<u32>, b: &Vec<u32>| -> bool {
 							for (i, a_value) in a.iter().enumerate() {
-								if a_value > &b[i] {
-									return true
-								} else if a_value < &b[i] {
-									return false
-								} else {
-									continue
+								match a_value.cmp(&b[i]) {
+									Ordering::Greater => return true,
+									Ordering::Less => return false,
+									Ordering::Equal => continue,
 								}
 							}
 							false
@@ -185,7 +183,7 @@ impl super::ResponseFormatter for Formatter {
 							(
 								Call::CallTracer(CallTracerCall { trace_address: Some(a), .. }),
 								Call::CallTracer(CallTracerCall { trace_address: Some(b), .. }),
-							) => &b[..] == &a[0..a.len() - 1],
+							) => b[..] == a[0..a.len() - 1],
 							_ => unreachable!(),
 						}) {
 						// Remove `trace_address` from result.

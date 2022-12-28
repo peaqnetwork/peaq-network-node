@@ -150,6 +150,8 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 		},
 	)?))
 }
+
+#[allow(clippy::type_complexity)]
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to

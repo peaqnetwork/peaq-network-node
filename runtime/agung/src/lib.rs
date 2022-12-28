@@ -478,7 +478,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
-		u64::try_from(weight.ref_time().wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
 	}
 }
 
@@ -1220,7 +1220,7 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 

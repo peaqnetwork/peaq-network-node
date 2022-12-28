@@ -232,11 +232,9 @@ pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
 	fn contains(call: &Call) -> bool {
 		match call {
-			Call::ParachainStaking(method) => match method {
-				parachain_staking::Call::join_candidates { .. } => false,
-				parachain_staking::Call::join_delegators { .. } => false,
-				_ => true,
-			},
+			Call::ParachainStaking(method) => !matches!(method,
+			parachain_staking::Call::join_candidates { .. } |
+			parachain_staking::Call::join_delegators { .. }),
 			// Other modules should works:
 			_ => true,
 		}
@@ -1228,7 +1226,7 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
