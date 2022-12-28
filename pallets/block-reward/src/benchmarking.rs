@@ -22,14 +22,14 @@ benchmarks! {
 
 	set_block_issue_reward {
 		let block_reward = BalanceOf::<T>::from(100_000u32);
-	}: _(RawOrigin::Root, block_reward.into())
+	}: _(RawOrigin::Root, block_reward)
 	verify {
 		assert_last_event::<T>(Event::<T>::BlockIssueRewardChanged(block_reward).into());
 	}
 
 	set_hard_cap {
 		let hard_cap = BalanceOf::<T>::from(100_123u32);
-	}: _(RawOrigin::Root, hard_cap.into())
+	}: _(RawOrigin::Root, hard_cap)
 	verify {
 		assert_last_event::<T>(Event::<T>::HardCapChanged(hard_cap).into());
 	}

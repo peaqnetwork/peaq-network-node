@@ -105,7 +105,7 @@ fn fill_unstaking<T: Config>(
 	assert_eq!(<Unstaking<T>>::get(who).len(), 0);
 	let unstaked_block = unstaked
 		.try_into()
-		.unwrap_or(<T as frame_system::Config>::BlockNumber::from(unstaked as u32));
+		.unwrap_or_else( |_| <T as frame_system::Config>::BlockNumber::from(unstaked as u32));
 	while System::<T>::block_number() < unstaked_block {
 		if let Some(delegator) = delegator {
 			assert_ok!(<Pallet<T>>::delegator_stake_less(
