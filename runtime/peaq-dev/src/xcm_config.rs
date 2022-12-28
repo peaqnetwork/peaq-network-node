@@ -290,30 +290,30 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			return Some(Token(DOT))
 		}
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(id), GeneralKey(key)) } => match id {
-				parachain::acala::ID => {
-					if key == parachain::acala::ACA_KEY.to_vec() {
-						Some(Token(ACA))
-					} else {
-						None
-					}
+			MultiLocation { parents: 1, interior: X2(Parachain(id), GeneralKey(key)) } =>
+				match id {
+					parachain::acala::ID =>
+						if key == parachain::acala::ACA_KEY.to_vec() {
+							Some(Token(ACA))
+						} else {
+							None
+						},
+					_ =>
+						if ParaId::from(id) == ParachainInfo::parachain_id() {
+							// decode the general key
+							if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
+								match currency_id {
+									Token(PEAQ) => Some(currency_id),
+									_ => None,
+								}
+							} else {
+								None
+							}
+						} else {
+							None
+						},
 				},
-				_ => if ParaId::from(id) == ParachainInfo::parachain_id() {
-					// decode the general key
-					if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
-						match currency_id {
-							Token(PEAQ) => Some(currency_id),
-							_ => None,
-						}
-					} else {
-						None
-					}
-				} else {
-					None
-				},
-
-			},
-			MultiLocation { parents: 0, interior: X1(GeneralKey(key))} => {
+			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
 				// decode the general key
 				if let Ok(currency_id) = CurrencyId::decode(&mut &key[..]) {
 					match currency_id {

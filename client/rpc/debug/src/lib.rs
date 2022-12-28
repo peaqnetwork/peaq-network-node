@@ -514,11 +514,13 @@ where
 						);
 						proxy.using(f)?;
 						Ok(Response::Single(
-							peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or_else(||
-								internal_err(
-									"replayed transaction generated too much data. \
+							peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or_else(
+								|| {
+									internal_err(
+										"replayed transaction generated too much data. \
 								try disabling memory or storage?",
-								),
+									)
+								},
 							)?,
 						))
 					},
