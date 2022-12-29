@@ -7289,12 +7289,13 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-did"
-version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#f0897816ccc57d8dfeda273b77d6a3b19059b8fe"
+version = "0.0.3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feat/1203570576981750_cargo_fmt_clippy#3e0d15c49923ef16b330062f9631bb32aca578c7"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "num-traits",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -7307,8 +7308,8 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-did-rpc"
-version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#f0897816ccc57d8dfeda273b77d6a3b19059b8fe"
+version = "0.0.3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feat/1203570576981750_cargo_fmt_clippy#3e0d15c49923ef16b330062f9631bb32aca578c7"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -7327,8 +7328,8 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-did-runtime-api"
-version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#f0897816ccc57d8dfeda273b77d6a3b19059b8fe"
+version = "0.0.3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feat/1203570576981750_cargo_fmt_clippy#3e0d15c49923ef16b330062f9631bb32aca578c7"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -7371,8 +7372,8 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-transaction"
-version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#7bb3fad4d08b0c525a60ffc984182aa17eaa405f"
+version = "0.0.3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=feat/1203570576981750_cargo_fmt_clippy#728e30782d083ff568ca30366eda0dbddab9a69d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

@@ -375,8 +375,8 @@ branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.peaq-pallet-did-rpc]
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
-version = '0.0.2'
+branch = 'feat/1203570576981750_cargo_fmt_clippy'
+version = '0.0.3'
 
 
 # XCM
