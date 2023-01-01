@@ -21,7 +21,7 @@ sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-pol
 pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29",  default-features = false, optional = true }
 pallet-balances = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 frame-benchmarking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false, optional = true}
-serde = { version = "1.0.136", optional = true }
+serde = { version = "1.0.136" }
 
 [features]
 default = ["std"]
@@ -30,7 +30,7 @@ std = [
 	"sp-core/std",
 	"scale-info/std",
 	"sp-std/std",
-	"serde/std",
+	# "serde/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-timestamp/std",
