@@ -15,12 +15,15 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::blockscout::BlockscoutCallInner as CallInner;
-use crate::listeners::call_list::Listener;
-use crate::types::{
-	block::{
-		TransactionTrace, TransactionTraceAction, TransactionTraceOutput, TransactionTraceResult,
+use crate::{
+	listeners::call_list::Listener,
+	types::{
+		block::{
+			TransactionTrace, TransactionTraceAction, TransactionTraceOutput,
+			TransactionTraceResult,
+		},
+		CallResult, CreateResult, CreateType,
 	},
-	CallResult, CreateResult, CreateType,
 };
 use ethereum_types::H256;
 
@@ -37,14 +40,9 @@ impl super::ResponseFormatter for Formatter {
 		let mut traces = Vec::new();
 		for (eth_tx_index, entry) in listener.entries.iter().enumerate() {
 			let mut tx_traces: Vec<_> = entry
-				.into_iter()
+				.iter()
 				.map(|(_, trace)| match trace.inner.clone() {
-					CallInner::Call {
-						input,
-						to,
-						res,
-						call_type,
-					} => TransactionTrace {
+					CallInner::Call { input, to, res, call_type } => TransactionTrace {
 						action: TransactionTraceAction::Call {
 							call_type,
 							from: trace.from,
@@ -58,12 +56,11 @@ impl super::ResponseFormatter for Formatter {
 						// Can't be known here, must be inserted upstream.
 						block_number: 0,
 						output: match res {
-							CallResult::Output(output) => {
+							CallResult::Output(output) =>
 								TransactionTraceOutput::Result(TransactionTraceResult::Call {
 									gas_used: trace.gas_used,
 									output,
-								})
-							}
+								}),
 							CallResult::Error(error) => TransactionTraceOutput::Error(error),
 						},
 						subtraces: trace.subtraces,
@@ -89,16 +86,14 @@ impl super::ResponseFormatter for Formatter {
 								CreateResult::Success {
 									created_contract_address_hash,
 									created_contract_code,
-								} => {
+								} =>
 									TransactionTraceOutput::Result(TransactionTraceResult::Create {
 										gas_used: trace.gas_used,
 										code: created_contract_code,
 										address: created_contract_address_hash,
-									})
-								}
-								CreateResult::Error { error } => {
-									TransactionTraceOutput::Error(error)
-								}
+									}),
+								CreateResult::Error { error } =>
+									TransactionTraceOutput::Error(error),
 							},
 							subtraces: trace.subtraces,
 							trace_address: trace.trace_address.clone(),
@@ -106,7 +101,7 @@ impl super::ResponseFormatter for Formatter {
 							transaction_hash: H256::default(),
 							transaction_position: eth_tx_index as u32,
 						}
-					}
+					},
 					CallInner::SelfDestruct { balance, to } => TransactionTrace {
 						action: TransactionTraceAction::Suicide {
 							address: trace.from,

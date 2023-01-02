@@ -20,14 +20,13 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable, IdentifyAccount, NumberFor,
-		PostDispatchInfoOf, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
+		IdentifyAccount, NumberFor, PostDispatchInfoOf, Verify,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, MultiSignature,
-	SaturatedConversion,
+	ApplyExtrinsicResult, MultiSignature, SaturatedConversion,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -39,12 +38,13 @@ use sp_version::RuntimeVersion;
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{FindAuthor, KeyOwnerProofSystem, Randomness},
-	traits::{Nothing, StorageInfo},
-	traits::{OnUnbalanced, Currency, Imbalance, ConstU32, Contains},
+	traits::{
+		ConstU32, Contains, Currency, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
+		OnUnbalanced, Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, GetDispatchInfo, IdentityFee, Weight, DispatchClass,
+		ConstantMultiplier, DispatchClass, GetDispatchInfo, IdentityFee, Weight,
 	},
 	ConsensusEngineId, StorageValue,
 };
@@ -52,8 +52,7 @@ pub use pallet_balances::Call as BalancesCall;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
-	Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner,
-	GasWeightMapping,
+	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
 };
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
@@ -69,8 +68,8 @@ use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
 pub use peaq_pallet_rbac;
-pub use peaq_pallet_transaction;
 pub use peaq_pallet_storage;
+pub use peaq_pallet_transaction;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -185,7 +184,7 @@ parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
-		::with_sensible_defaults(2 as u64 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
+		::with_sensible_defaults(2_u64 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
@@ -385,13 +384,12 @@ impl peaq_pallet_did::Config for Runtime {
 	type Event = Event;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
-
 }
 
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;	
+	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
 }
 
 // Config the utility in pallets/utility
@@ -429,13 +427,13 @@ pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND.saturating_div(GAS_PER_SECOND)
 
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
-    fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-        Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
-    }
+	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
+		Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
+	}
 
-    fn weight_to_gas(weight: Weight) -> u64 {
-        u64::try_from(weight.ref_time().wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
-    }
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
+	}
 }
 
 parameter_types! {
@@ -935,7 +933,7 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
@@ -1156,7 +1154,7 @@ impl_runtime_apis! {
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
-			return (list, storage_info)
+			(list, storage_info)
 		}
 
 		fn dispatch_benchmark(

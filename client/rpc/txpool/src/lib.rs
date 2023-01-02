@@ -27,12 +27,9 @@ use sha3::{Digest, Keccak256};
 use sp_api::{ApiExt, BlockId, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::Block as BlockT;
-use std::collections::HashMap;
-use std::{marker::PhantomData, sync::Arc};
+use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
-use peaq_rpc_primitives_txpool::{
-	Transaction as TransactionV2, TxPoolResponse, TxPoolRuntimeApi,
-};
+use peaq_rpc_primitives_txpool::{Transaction as TransactionV2, TxPoolResponse, TxPoolRuntimeApi};
 
 pub struct TxPool<B: BlockT, C, A: ChainApi> {
 	client: Arc<C>,
@@ -80,9 +77,7 @@ where
 		{
 			api_version
 		} else {
-			return Err(internal_err(
-				"failed to retrieve Runtime Api version".to_string(),
-			));
+			return Err(internal_err("failed to retrieve Runtime Api version".to_string()))
 		};
 		let ethereum_txns: TxPoolResponse = if api_version == 1 {
 			#[allow(deprecated)]
@@ -91,22 +86,13 @@ where
 					internal_err(format!("fetch runtime extrinsic filter failed: {:?}", err))
 				})?;
 			TxPoolResponse {
-				ready: res
-					.ready
-					.iter()
-					.map(|t| TransactionV2::Legacy(t.clone()))
-					.collect(),
-				future: res
-					.future
-					.iter()
-					.map(|t| TransactionV2::Legacy(t.clone()))
-					.collect(),
+				ready: res.ready.iter().map(|t| TransactionV2::Legacy(t.clone())).collect(),
+				future: res.future.iter().map(|t| TransactionV2::Legacy(t.clone())).collect(),
 			}
 		} else {
-			api.extrinsic_filter(&best_block, txs_ready, txs_future)
-				.map_err(|err| {
-					internal_err(format!("fetch runtime extrinsic filter failed: {:?}", err))
-				})?
+			api.extrinsic_filter(&best_block, txs_ready, txs_future).map_err(|err| {
+				internal_err(format!("fetch runtime extrinsic filter failed: {:?}", err))
+			})?
 		};
 		// Build the T response.
 		let mut pending = TransactionMap::<T>::new();
@@ -149,11 +135,7 @@ where
 
 impl<B: BlockT, C, A: ChainApi> TxPool<B, C, A> {
 	pub fn new(client: Arc<C>, graph: Arc<Pool<A>>) -> Self {
-		Self {
-			client,
-			graph,
-			_marker: PhantomData,
-		}
+		Self { client, graph, _marker: PhantomData }
 	}
 }
 
@@ -176,9 +158,6 @@ where
 
 	fn status(&self) -> RpcResult<TxPoolResult<U256>> {
 		let status = self.graph.validated_pool().status();
-		Ok(TxPoolResult {
-			pending: U256::from(status.ready),
-			queued: U256::from(status.future),
-		})
+		Ok(TxPoolResult { pending: U256::from(status.ready), queued: U256::from(status.future) })
 	}
 }

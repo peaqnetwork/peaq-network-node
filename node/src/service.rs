@@ -1,17 +1,20 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use crate::cli::Cli;
 #[cfg(feature = "manual-seal")]
 use crate::cli::Sealing;
-use crate::cli_opt::EthApi as EthApiCmd;
+use crate::{
+	cli::Cli,
+	cli_opt::{EthApi as EthApiCmd, RpcConfig},
+	rpc,
+};
 use async_trait::async_trait;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use peaq_node_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
 use futures::StreamExt;
+use peaq_node_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
 use sc_cli::SubstrateCli;
 use sc_client_api::{BlockBackend, BlockchainEvents, ExecutorProvider};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
@@ -32,12 +35,8 @@ use std::{
 	sync::{Arc, Mutex},
 	time::Duration,
 };
-use crate::rpc;
-use crate::cli_opt::RpcConfig;
-pub type HostFunctions = (
-	frame_benchmarking::benchmarking::HostFunctions,
-	peaq_primitives_ext::peaq_ext::HostFunctions,
-);
+pub type HostFunctions =
+	(frame_benchmarking::benchmarking::HostFunctions, peaq_primitives_ext::peaq_ext::HostFunctions);
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
@@ -69,10 +68,7 @@ pub type ConsensusResult = (
 );
 
 #[cfg(feature = "manual-seal")]
-pub type ConsensusResult = (
-	FrontierBlockImport<Block, Arc<FullClient>, FullClient>,
-	Sealing,
-);
+pub type ConsensusResult = (FrontierBlockImport<Block, Arc<FullClient>, FullClient>, Sealing);
 
 /// Provide a mock duration starting at 0 in millisecond for timestamp inherent.
 /// Each call will increment timestamp by slot_duration making Aura think time has passed.
@@ -117,7 +113,9 @@ pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::P
 }
 
 pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
-	client: Arc<C>, config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
+	client: Arc<C>,
+	config: &Configuration,
+) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
 		client,
 		&fc_db::DatabaseSettings {
@@ -126,22 +124,21 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 					path: frontier_database_dir(config, "db"),
 					cache_size: 0,
 				},
-				DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
-					path: frontier_database_dir(config, "paritydb"),
-				},
+				DatabaseSource::ParityDb { .. } =>
+					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") },
 				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
 					rocksdb_path: frontier_database_dir(config, "db"),
 					paritydb_path: frontier_database_dir(config, "paritydb"),
 					cache_size: 0,
 				},
-				_ => {
-					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
-				}
+				_ =>
+					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
 			},
 		},
 	)?))
 }
 
+#[allow(clippy::type_complexity)]
 pub fn new_partial(
 	config: &mut Configuration,
 	cli: &Cli,
@@ -163,9 +160,7 @@ pub fn new_partial(
 	ServiceError,
 > {
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other(format!(
-			"Remote Keystores are not supported."
-		)));
+		return Err(ServiceError::Other("Remote Keystores are not supported.".to_string()))
 	}
 
 	// Use ethereum style for subscription ids
@@ -191,7 +186,7 @@ pub fn new_partial(
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
 		)?;
@@ -269,7 +264,7 @@ pub fn new_partial(
 		let import_queue =
 			sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _, _>(ImportQueueParams {
 				block_import: frontier_block_import.clone(),
-				justification_import: Some(Box::new(grandpa_block_import.clone())),
+				justification_import: Some(Box::new(grandpa_block_import)),
 				client: client.clone(),
 				create_inherent_data_providers: move |_, ()| async move {
 					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
@@ -313,7 +308,7 @@ pub fn new_partial(
 	}
 }
 
-fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
+fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
 	// FIXME: here would the concrete keystore be built,
 	//        must return a concrete type (NOT `LocalKeystore`) that
 	//        implements `CryptoStore` and `SyncCryptoStore`
@@ -321,7 +316,11 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+	mut config: Configuration,
+	cli: &Cli,
+	rpc_config: RpcConfig,
+) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -331,28 +330,23 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		select_chain,
 		transaction_pool,
 		other: (consensus_result, filter_pool, frontier_backend, mut telemetry, fee_history_cache),
-	} = new_partial(&mut config, &cli)?;
+	} = new_partial(&mut config, cli)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match remote_keystore(url) {
 			Ok(k) => keystore_container.set_remote_keystore(k),
-			Err(e) => {
+			Err(e) =>
 				return Err(ServiceError::Other(format!(
 					"Error hooking up remote keystore for {}: {}",
 					url, e
-				)))
-			}
+				))),
 		};
 	}
 
-    let protocol_name = sc_finality_grandpa::protocol_standard_name(
-        &client
-            .block_hash(0)
-            .ok()
-            .flatten()
-            .expect("Genesis block exists; qed"),
-        &config.chain_spec,
-    );
+	let protocol_name = sc_finality_grandpa::protocol_standard_name(
+		&client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
+		&config.chain_spec,
+	);
 
 	let warp_sync: Option<Arc<dyn WarpSyncProvider<Block>>> = {
 		#[cfg(feature = "aura")]
@@ -361,13 +355,11 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				.network
 				.extra_sets
 				.push(sc_finality_grandpa::grandpa_peers_set_config(protocol_name.clone()));
-			Some(Arc::new(
-				sc_finality_grandpa::warp_proof::NetworkProvider::new(
-					backend.clone(),
-					consensus_result.1.shared_authority_set().clone(),
-					Vec::default(),
-				),
-			))
+			Some(Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+				backend.clone(),
+				consensus_result.1.shared_authority_set().clone(),
+				Vec::default(),
+			)))
 		}
 		#[cfg(feature = "manual-seal")]
 		{
@@ -383,7 +375,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync: warp_sync,
+			warp_sync,
 		})?;
 
 	// Channel for the rpc handler to communicate with the authorship task.
@@ -426,10 +418,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 				},
 			)
 		} else {
-			crate::rpc::tracing::RpcRequesters {
-				debug: None,
-				trace: None,
-			}
+			crate::rpc::tracing::RpcRequesters { debug: None, trace: None }
 		};
 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
@@ -444,13 +433,13 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let network = network.clone();
-		let ethapi_cmd = ethapi_cmd.clone();
+		let ethapi_cmd = ethapi_cmd;
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let max_past_logs = cli.run.max_past_logs;
-		let block_data_cache = block_data_cache.clone();
+		let block_data_cache = block_data_cache;
 
 		move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
@@ -507,8 +496,8 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			client.import_notification_stream(),
 			Duration::new(6, 0),
 			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
+			backend,
+			frontier_backend,
 			3,
 			0,
 			SyncStrategy::Normal,
@@ -577,10 +566,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 							},
 						});
 					// we spawn the future on a background thread managed by service.
-					task_manager
-						.spawn_essential_handle()
-						.spawn_blocking("manual-seal", Some("block-authoring"), authorship_future);
-				}
+					task_manager.spawn_essential_handle().spawn_blocking(
+						"manual-seal",
+						Some("block-authoring"),
+						authorship_future,
+					);
+				},
 				Sealing::Instant => {
 					let authorship_future =
 						manual_seal::run_instant_seal(manual_seal::InstantSealParams {
@@ -601,10 +592,12 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 							},
 						});
 					// we spawn the future on a background thread managed by service.
-					task_manager
-						.spawn_essential_handle()
-						.spawn_blocking("instant-seal", Some("block-authoring"), authorship_future);
-				}
+					task_manager.spawn_essential_handle().spawn_blocking(
+						"instant-seal",
+						Some("block-authoring"),
+						authorship_future,
+					);
+				},
 			};
 		}
 		log::info!("Manual Seal Ready");
@@ -632,7 +625,7 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 			let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _, _>(
 				StartAuraParams {
 					slot_duration,
-					client: client.clone(),
+					client,
 					select_chain,
 					block_import,
 					proposer_factory,
@@ -664,18 +657,17 @@ pub fn new_full(mut config: Configuration, cli: &Cli, rpc_config: RpcConfig) -> 
 
 			// the AURA authoring task is considered essential, i.e. if it
 			// fails we take down the service with it.
-			task_manager
-				.spawn_essential_handle()
-				.spawn_blocking("aura", Some("block-authoring"), aura);
+			task_manager.spawn_essential_handle().spawn_blocking(
+				"aura",
+				Some("block-authoring"),
+				aura,
+			);
 		}
 
 		// if the node isn't actively participating in consensus then it doesn't
 		// need a keystore, regardless of which protocol we use below.
-		let keystore = if role.is_authority() {
-			Some(keystore_container.sync_keystore())
-		} else {
-			None
-		};
+		let keystore =
+			if role.is_authority() { Some(keystore_container.sync_keystore()) } else { None };
 
 		let grandpa_config = sc_finality_grandpa::Config {
 			// FIXME #1578 make this available through chainspec

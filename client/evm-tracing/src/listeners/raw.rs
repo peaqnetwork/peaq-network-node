@@ -97,7 +97,7 @@ impl Listener {
 				// Next step will be the first context.
 				self.new_context = true;
 				self.final_gas = cost;
-			}
+			},
 			GasometerEvent::RecordCost { cost, snapshot } => {
 				if let Some(context) = self.context_stack.last_mut() {
 					// Register opcode cost. (ignore costs not between Step and StepResult)
@@ -108,10 +108,8 @@ impl Listener {
 
 					self.final_gas = snapshot.used_gas;
 				}
-			}
-			GasometerEvent::RecordDynamicCost {
-				gas_cost, snapshot, ..
-			} => {
+			},
+			GasometerEvent::RecordDynamicCost { gas_cost, snapshot, .. } => {
 				if let Some(context) = self.context_stack.last_mut() {
 					// Register opcode cost. (ignore costs not between Step and StepResult)
 					if let Some(step) = &mut context.current_step {
@@ -121,7 +119,7 @@ impl Listener {
 
 					self.final_gas = snapshot.used_gas;
 				}
-			}
+			},
 			// We ignore other kinds of message if any (new ones may be added in the future).
 			#[allow(unreachable_patterns)]
 			_ => (),
@@ -130,13 +128,7 @@ impl Listener {
 
 	pub fn runtime_event(&mut self, event: RuntimeEvent) {
 		match event {
-			RuntimeEvent::Step {
-				context,
-				opcode,
-				position,
-				stack,
-				memory,
-			} => {
+			RuntimeEvent::Step { context, opcode, position, stack, memory } => {
 				// Create a context if needed.
 				if self.new_context {
 					self.new_context = false;
@@ -169,10 +161,10 @@ impl Listener {
 								.and_then(|inner| inner.checked_sub(memory.data.len()));
 
 							if self.remaining_memory_usage.is_none() {
-								return;
+								return
 							}
 
-							Some(memory.data.clone())
+							Some(memory.data)
 						},
 						stack: if self.disable_stack {
 							None
@@ -184,33 +176,23 @@ impl Listener {
 								.and_then(|inner| inner.checked_sub(stack.data.len()));
 
 							if self.remaining_memory_usage.is_none() {
-								return;
+								return
 							}
 
-							Some(stack.data.clone())
+							Some(stack.data)
 						},
 					});
 				}
-			}
-			RuntimeEvent::StepResult {
-				result,
-				return_value,
-			} => {
+			},
+			RuntimeEvent::StepResult { result, return_value } => {
 				// StepResult is expected to be emited after a step (in a context).
 				// Only case StepResult will occur without a Step before is in a transfer
 				// transaction to a non-contract address. However it will not contain any
 				// steps and return an empty trace, so we can ignore this edge case.
 				if let Some(context) = self.context_stack.last_mut() {
 					if let Some(current_step) = context.current_step.take() {
-						let Step {
-							opcode,
-							depth,
-							gas,
-							gas_cost,
-							position,
-							memory,
-							stack,
-						} = current_step;
+						let Step { opcode, depth, gas, gas_cost, position, memory, stack } =
+							current_step;
 
 						let memory = memory.map(convert_memory);
 
@@ -223,7 +205,7 @@ impl Listener {
 								});
 
 							if self.remaining_memory_usage.is_none() {
-								return;
+								return
 							}
 
 							Some(context.storage_cache.clone())
@@ -261,7 +243,8 @@ impl Listener {
 										.global_storage_changes
 										.insert(context.address, context.storage_cache);
 
-									// Apply storage changes to parent, either updating its cache or map of changes.
+									// Apply storage changes to parent, either updating its cache or
+									// map of changes.
 									for (address, mut storage) in
 										context.global_storage_changes.into_iter()
 									{
@@ -287,29 +270,21 @@ impl Listener {
 								}
 							}
 						}
-					}
+					},
 					Err(Capture::Trap(opcode)) if ContextType::from(opcode.clone()).is_some() => {
 						self.new_context = true;
-					}
+					},
 					_ => (),
 				}
-			}
-			RuntimeEvent::SLoad {
-				address: _,
-				index,
-				value,
-			}
-			| RuntimeEvent::SStore {
-				address: _,
-				index,
-				value,
-			} => {
+			},
+			RuntimeEvent::SLoad { address: _, index, value } |
+			RuntimeEvent::SStore { address: _, index, value } => {
 				if let Some(context) = self.context_stack.last_mut() {
 					if !self.disable_storage {
 						context.storage_cache.insert(index, value);
 					}
 				}
-			}
+			},
 			// We ignore other kinds of message if any (new ones may be added in the future).
 			#[allow(unreachable_patterns)]
 			_ => (),
@@ -320,20 +295,17 @@ impl Listener {
 impl ListenerT for Listener {
 	fn event(&mut self, event: Event) {
 		if self.remaining_memory_usage.is_none() {
-			return;
+			return
 		}
 
 		match event {
 			Event::Gasometer(e) => self.gasometer_event(e),
 			Event::Runtime(e) => self.runtime_event(e),
-			_ => {}
+			_ => {},
 		};
 	}
 
 	fn step_event_filter(&self) -> StepEventFilter {
-		StepEventFilter {
-			enable_memory: !self.disable_memory,
-			enable_stack: !self.disable_stack,
-		}
+		StepEventFilter { enable_memory: !self.disable_memory, enable_stack: !self.disable_stack }
 	}
 }

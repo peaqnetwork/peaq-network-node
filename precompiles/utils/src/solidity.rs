@@ -91,16 +91,14 @@ pub fn get_selectors(filename: &str) -> Vec<SolidityFunction> {
 /// Attempts to lookup a custom struct and returns its primitive signature
 fn try_lookup_custom_type(word: &str, custom_types: &HashMap<String, SolidityStruct>) -> String {
 	match word.strip_suffix("[]") {
-		Some(word) => {
+		Some(word) =>
 			if let Some(t) = custom_types.get(word) {
-				return format!("{}[]", t.signature());
-			}
-		}
-		None => {
+				return format!("{}[]", t.signature())
+			},
+		None =>
 			if let Some(t) = custom_types.get(word) {
-				return t.signature();
-			}
-		}
+				return t.signature()
+			},
 	};
 
 	word.to_string()
@@ -147,88 +145,84 @@ fn get_selectors_from_reader<R: Read>(reader: R) -> Vec<SolidityFunction> {
 
 		// skip comments
 		if line.starts_with("//") {
-			continue;
+			continue
 		}
 
 		for word in line.split(&[';', ',', '(', ')', ' ']) {
 			// skip whitespace
 			if word.trim().is_empty() {
-				continue;
+				continue
 			}
 			match (stage, pair, word) {
 				// parse custom type enums
 				(Stage::Start, Pair::First, "enum") => {
 					stage = Stage::Enum;
 					pair.next();
-				}
+				},
 				(Stage::Enum, Pair::Second, _) => {
 					custom_types.insert(
 						word.to_string(),
-						SolidityStruct {
-							name: word.to_string(),
-							is_enum: true,
-							params: vec![],
-						},
+						SolidityStruct { name: word.to_string(), is_enum: true, params: vec![] },
 					);
 					stage = Stage::Start;
 					pair = Pair::First;
-				}
+				},
 
 				// parse custom type structs
 				(Stage::Start, Pair::First, "struct") => {
 					stage = Stage::Struct;
 					pair.next();
-				}
+				},
 				(Stage::Struct, Pair::Second, _) => {
 					solidity_struct.name = word.to_string();
 					stage = Stage::StructParams;
 					pair.next();
-				}
+				},
 				(Stage::StructParams, Pair::First, "{") => (),
 				(Stage::StructParams, Pair::First, "}") => {
 					custom_types.insert(solidity_struct.name.clone(), solidity_struct);
 					stage = Stage::Start;
 					solidity_struct = SolidityStruct::default();
-				}
+				},
 				(Stage::StructParams, Pair::First, _) => {
-					let param = try_lookup_custom_type(&word, &custom_types);
+					let param = try_lookup_custom_type(word, &custom_types);
 					solidity_struct.params.push(param);
 					pair.next();
-				}
+				},
 				(Stage::StructParams, Pair::Second, _) => {
 					pair.next();
-				}
+				},
 
 				// parse function
 				(Stage::Start, Pair::First, "function") => {
 					stage = Stage::FnName;
 					pair.next();
-				}
+				},
 				(Stage::FnName, Pair::Second, _) => {
 					solidity_fn.name = word.to_string();
 					stage = Stage::Args;
 					pair.next();
-				}
+				},
 				(Stage::Args, Pair::First, "external") => {
 					functions.push(solidity_fn);
 					stage = Stage::Start;
 					pair = Pair::First;
 					solidity_fn = SolidityFunction::default()
-				}
+				},
 				(Stage::Args, Pair::First, _) => {
 					let mut arg = word.to_string();
 					arg = try_lookup_custom_type(&arg, &custom_types);
 
 					solidity_fn.args.push(arg);
 					pair.next();
-				}
+				},
 				(Stage::Args, Pair::Second, "memory" | "calldata" | "storage") => (),
 				(Stage::Args, Pair::Second, _) => pair.next(),
 				_ => {
 					stage = Stage::Start;
 					pair = Pair::First;
 					solidity_fn = SolidityFunction::default()
-				}
+				},
 			}
 		}
 	}
@@ -245,24 +239,12 @@ mod tests {
 		let actual = get_selectors("tests/solidity_test.sol")
 			.into_iter()
 			.map(|sol_fn| {
-				(
-					sol_fn.compute_selector_hex(),
-					sol_fn.docs_selector.clone(),
-					sol_fn.signature(),
-				)
+				(sol_fn.compute_selector_hex(), sol_fn.docs_selector.clone(), sol_fn.signature())
 			})
 			.collect::<Vec<_>>();
 		let expected = vec![
-			(
-				String::from("f7af8d91"),
-				String::from(""),
-				String::from("fnNoArgs()"),
-			),
-			(
-				String::from("d43a9a43"),
-				String::from("c4921133"),
-				String::from("fnOneArg(address)"),
-			),
+			(String::from("f7af8d91"), String::from(""), String::from("fnNoArgs()")),
+			(String::from("d43a9a43"), String::from("c4921133"), String::from("fnOneArg(address)")),
 			(
 				String::from("40d6a43d"),
 				String::from("67ea837e"),

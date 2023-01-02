@@ -28,7 +28,7 @@ pub type MayRevert<T = ()> = Result<T, Revert>;
 /// Generic error to build abi-encoded revert output.
 /// See: https://docs.soliditylang.org/en/latest/control-structures.html?highlight=revert#revert
 #[precompile_utils_macro::generate_function_selector]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum RevertSelector {
 	Generic = "Error(string)",
 }
@@ -131,14 +131,14 @@ impl core::fmt::Display for RevertReason {
 			RevertReason::Custom(s) => write!(f, "{s}"),
 			RevertReason::ReadOutOfBounds { what } => {
 				write!(f, "Tried to read {what} out of bounds")
-			}
+			},
 			RevertReason::UnknownSelector => write!(f, "Unknown selector"),
 			RevertReason::ValueIsTooLarge { what } => write!(f, "Value is too large for {what}"),
 			RevertReason::PointerToOutofBound => write!(f, "Pointer points to out of bound"),
 			RevertReason::CursorOverflow => write!(f, "Reading cursor overflowed"),
 			RevertReason::ExpectedAtLeastNArguments(n) => {
 				write!(f, "Expected at least {n} arguments")
-			}
+			},
 		}
 	}
 }
@@ -158,10 +158,7 @@ impl Revert {
 	/// Create a new `Revert` with a `RevertReason` and
 	/// an empty backtrace.
 	pub fn new(reason: RevertReason) -> Self {
-		Self {
-			reason,
-			backtrace: Backtrace::new(),
-		}
+		Self { reason, backtrace: Backtrace::new() }
 	}
 
 	/// For all `RevertReason` variants that have a `what` field, change its value.
@@ -208,9 +205,9 @@ impl core::fmt::Debug for Revert {
 	}
 }
 
-impl Into<Vec<u8>> for Revert {
-	fn into(self) -> Vec<u8> {
-		self.to_string().into()
+impl From<Revert> for Vec<u8> {
+	fn from(s: Revert) -> Vec<u8> {
+		s.to_string().into()
 	}
 }
 
