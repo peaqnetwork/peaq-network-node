@@ -100,7 +100,7 @@ use peaq_pallet_did::did::Did;
 pub use peaq_pallet_transaction;
 pub use peaq_pallet_rbac;
 use peaq_pallet_rbac::{
-	rbac::{Role, Rbac, Permission, Group},
+	rbac::{Result as RbacResult, Role, Rbac, Permission, Group},
 	structs::{
 		Entity as RbacEntity,
 		Permission2Role as RbacPermission2Role,
@@ -1380,81 +1380,81 @@ impl_runtime_apis! {
 		fn fetch_role(
 			account: AccountId, 
 			entity: EntityId
-		) -> Option<RbacEntity<EntityId>> {
+		) -> RbacResult<RbacEntity<EntityId>> {
 			PeaqRbac::get_role(&account, entity)
 		}
 
 		fn fetch_roles(
 			owner: AccountId
-		) -> Vec<RbacEntity<EntityId>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_roles(&owner)
 		}
 
         fn fetch_user_roles(
 			owner: AccountId, 
 			user_id: EntityId
-		) -> Option<Vec<RbacRole2User<EntityId>>> {
+		) -> RbacResult<Vec<RbacRole2User<EntityId>>> {
 			PeaqRbac::get_user_roles(&owner, user_id)
 		}
 		
         fn fetch_permission(
 			owner: AccountId, 
 			permission_id: EntityId
-		) -> Option<RbacEntity<EntityId>> {
+		) -> RbacResult<RbacEntity<EntityId>> {
 			PeaqRbac::get_permission(&owner, permission_id)
 		}
 
         fn fetch_permissions(
 			owner: AccountId
-		) -> Vec<RbacEntity<EntityId>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_permissions(&owner)
 		}
 
         fn fetch_role_permissions(
 			owner: AccountId, 
 			role_id: EntityId
-		) -> Option<Vec<RbacPermission2Role<EntityId>>> {
+		) -> RbacResult<Vec<RbacPermission2Role<EntityId>>> {
 			PeaqRbac::get_role_permissions(&owner, role_id)
 		}
 		
         fn fetch_group(
 			owner: AccountId, 
 			group_id: EntityId
-		) -> Option<RbacEntity<EntityId>> {
+		) -> RbacResult<RbacEntity<EntityId>> {
 			PeaqRbac::get_group(&owner, group_id)
 		}
 
         fn fetch_groups(
 			owner: AccountId
-		) -> Vec<RbacEntity<EntityId>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_groups(&owner)
 		}
 
         fn fetch_group_roles(
 			owner: AccountId, 
 			group_id: EntityId
-		) -> Option<Vec<RbacRole2Group<EntityId>>> {
+		) -> RbacResult<Vec<RbacRole2Group<EntityId>>> {
 			PeaqRbac::get_group_roles(&owner, group_id)
 		}
         
         fn fetch_user_groups(
 			owner: AccountId, 
 			user_id: EntityId
-		) -> Option<Vec<RbacUser2Group<EntityId>>> {
+		) -> RbacResult<Vec<RbacUser2Group<EntityId>>> {
 			PeaqRbac::get_user_groups(&owner, user_id)
 		}
 
         fn fetch_user_permissions(
 			owner: AccountId, 
 			user_id: EntityId
-		) -> Option<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_user_permissions(&owner, user_id)
 		}
         
         fn fetch_group_permissions(
 			owner: AccountId, 
 			group_id: EntityId
-		) -> Option<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_group_permissions(&owner, group_id)
 		}
 	}
