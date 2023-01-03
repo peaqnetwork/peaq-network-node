@@ -23,7 +23,7 @@ use super::*;
 use crate::{self as stake};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{GenesisBuild, OnFinalize, OnInitialize, Currency},
+	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
@@ -134,12 +134,12 @@ parameter_types! {
 	pub const ExitQueueDelay: u32 = 2;
 	pub const DefaultBlocksPerRound: BlockNumber = BLOCKS_PER_ROUND;
 	pub const MinCollators: u32 = 2;
-	#[derive(Debug, PartialEq)]
+	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxDelegatorsPerCollator: u32 = 4;
-	#[derive(Debug, PartialEq)]
+	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxCollatorsPerDelegator: u32 = 4;
 	pub const MinCollatorStake: Balance = 10;
-	#[derive(Debug, PartialEq)]
+	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxCollatorCandidates: u32 = 10;
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
@@ -244,7 +244,10 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_delegators(mut self, delegators: Vec<(AccountId, AccountId, Balance)>) -> Self {
+	pub(crate) fn with_delegators(
+		mut self,
+		delegators: Vec<(AccountId, AccountId, Balance)>,
+	) -> Self {
 		self.delegators = delegators;
 		self
 	}
@@ -276,11 +279,9 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Test> {
-			balances: self.balances.clone(),
-		}
-		.assimilate_storage(&mut t)
-		.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Test> { balances: self.balances.clone() }
+			.assimilate_storage(&mut t)
+			.expect("Pallet balances storage can be assimilated");
 
 		let mut stakers: Vec<(AccountId, Option<AccountId>, Balance)> = Vec::new();
 		for collator in self.collators.clone() {
@@ -301,15 +302,7 @@ impl ExtBuilder {
 		let session_keys: Vec<_> = self
 			.collators
 			.iter()
-			.map(|(k, _)| {
-				(
-					*k,
-					*k,
-					MockSessionKeys {
-						aura: UintAuthorityId(*k).to_public_key(),
-					},
-				)
-			})
+			.map(|(k, _)| (*k, *k, MockSessionKeys { aura: UintAuthorityId(*k).to_public_key() }))
 			.collect();
 
 		// NOTE: this will initialize the aura authorities
@@ -341,12 +334,17 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			Balances::make_free_balance_be(&StakePallet::account_id(), 1000 + Balances::minimum_balance());
+			Balances::make_free_balance_be(
+				&StakePallet::account_id(),
+				1000 + Balances::minimum_balance(),
+			);
 			StakePallet::note_author(*author);
 		}
 		<AllPalletsReversedWithSystemFirst as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		<AllPalletsReversedWithSystemFirst as OnInitialize<u64>>::on_initialize(System::block_number());
+		<AllPalletsReversedWithSystemFirst as OnInitialize<u64>>::on_initialize(
+			System::block_number(),
+		);
 	}
 }
 
@@ -358,12 +356,6 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| {
-			if let Event::StakePallet(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
+		.filter_map(|e| if let Event::StakePallet(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }

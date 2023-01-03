@@ -239,10 +239,7 @@ impl<T: EvmData> EvmData for Vec<T> {
 	fn write(writer: &mut EvmDataWriter, value: Self) {
 		BoundedVec::<T, ConstU32Max>::write(
 			writer,
-			BoundedVec {
-				inner: value,
-				_phantom: PhantomData,
-			},
+			BoundedVec { inner: value, _phantom: PhantomData },
 		)
 	}
 
@@ -273,7 +270,7 @@ impl<T: EvmData, S: Get<u32>> EvmData for BoundedVec<T, S> {
 			.map_err(|_| RevertReason::value_is_too_large("length"))?;
 
 		if array_size > S::get() as usize {
-			return Err(RevertReason::value_is_too_large("length").into());
+			return Err(RevertReason::value_is_too_large("length").into())
 		}
 
 		let mut array = vec![];
@@ -290,10 +287,7 @@ impl<T: EvmData, S: Get<u32>> EvmData for BoundedVec<T, S> {
 			array.push(item_reader.read().in_array(i)?);
 		}
 
-		Ok(BoundedVec {
-			inner: array,
-			_phantom: PhantomData,
-		})
+		Ok(BoundedVec { inner: array, _phantom: PhantomData })
 	}
 
 	fn write(writer: &mut EvmDataWriter, value: Self) {
@@ -330,28 +324,19 @@ impl<T: EvmData, S: Get<u32>> EvmData for BoundedVec<T, S> {
 
 impl<T, S> From<Vec<T>> for BoundedVec<T, S> {
 	fn from(value: Vec<T>) -> Self {
-		BoundedVec {
-			inner: value,
-			_phantom: PhantomData,
-		}
+		BoundedVec { inner: value, _phantom: PhantomData }
 	}
 }
 
 impl<T: Clone, S> From<&[T]> for BoundedVec<T, S> {
 	fn from(value: &[T]) -> Self {
-		BoundedVec {
-			inner: value.to_vec(),
-			_phantom: PhantomData,
-		}
+		BoundedVec { inner: value.to_vec(), _phantom: PhantomData }
 	}
 }
 
 impl<T: Clone, S, const N: usize> From<[T; N]> for BoundedVec<T, S> {
 	fn from(value: [T; N]) -> Self {
-		BoundedVec {
-			inner: value.to_vec(),
-			_phantom: PhantomData,
-		}
+		BoundedVec { inner: value.to_vec(), _phantom: PhantomData }
 	}
 }
 

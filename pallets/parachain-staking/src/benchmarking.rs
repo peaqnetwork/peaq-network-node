@@ -44,14 +44,14 @@ fn setup_collator_candidates<T: Config>(
 	let collators: Vec<T::AccountId> = (current_collator_count..num_candidates)
 		.map(|i| account("collator", i.saturated_into::<u32>(), COLLATOR_ACCOUNT_SEED))
 		.collect();
-	let amount: T::CurrencyBalance = default_amount.unwrap_or_else(T::MinCollatorCandidateStake::get);
+	let amount: T::CurrencyBalance =
+		default_amount.unwrap_or_else(T::MinCollatorCandidateStake::get);
 
 	for acc in collators.iter() {
 		T::Currency::make_free_balance_be(acc, amount);
-		assert_ok!(<Pallet<T>>::join_candidates(
-			T::Origin::from(Some(acc.clone()).into()),
-			amount,
-		));
+		assert_ok!(
+			<Pallet<T>>::join_candidates(T::Origin::from(Some(acc.clone()).into()), amount,)
+		);
 		assert_eq!(<CandidatePool<T>>::get(acc).unwrap().stake, amount);
 	}
 
@@ -63,7 +63,11 @@ fn setup_collator_candidates<T: Config>(
 		.collect()
 }
 
-fn fill_delegators<T: Config>(num_delegators: u32, collator: T::AccountId, collator_seed: u32) -> Vec<T::AccountId> {
+fn fill_delegators<T: Config>(
+	num_delegators: u32,
+	collator: T::AccountId,
+	collator_seed: u32,
+) -> Vec<T::AccountId> {
 	let state = <CandidatePool<T>>::get(&collator).unwrap();
 	let current_delegators = state.delegators.len().saturated_into::<u32>();
 
@@ -90,13 +94,18 @@ fn fill_delegators<T: Config>(num_delegators: u32, collator: T::AccountId, colla
 }
 
 // fills unstake BTreeMap by unstaked many entries of 1
-fn fill_unstaking<T: Config>(collator: &T::AccountId, delegator: Option<&T::AccountId>, unstaked: u64)
-where
+fn fill_unstaking<T: Config>(
+	collator: &T::AccountId,
+	delegator: Option<&T::AccountId>,
+	unstaked: u64,
+) where
 	<T as frame_system::Config>::BlockNumber: TryFrom<u64>,
 {
 	let who = delegator.unwrap_or(collator);
 	assert_eq!(<Unstaking<T>>::get(who).len(), 0);
-	let unstaked_block = unstaked.try_into().unwrap_or(<T as frame_system::Config>::BlockNumber::from(unstaked as u32));
+	let unstaked_block = unstaked
+		.try_into()
+		.unwrap_or_else( |_| <T as frame_system::Config>::BlockNumber::from(unstaked as u32));
 	while System::<T>::block_number() < unstaked_block {
 		if let Some(delegator) = delegator {
 			assert_ok!(<Pallet<T>>::delegator_stake_less(

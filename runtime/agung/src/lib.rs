@@ -15,26 +15,25 @@ use codec::Encode;
 use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{
-	crypto::KeyTypeId,
-	OpaqueMetadata, H160, H256, U256,
-};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, DispatchInfoOf, Dispatchable,
-		PostDispatchInfoOf,
+		AccountIdConversion,
+		AccountIdLookup,
+		BlakeTwo256,
+		Block as BlockT,
+		ConvertInto,
+		DispatchInfoOf,
+		Dispatchable,
 		// NumberFor,
 		OpaqueKeys,
-		ConvertInto,
-		AccountIdConversion,
+		PostDispatchInfoOf,
 	},
 	transaction_validity::{
-		TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction,
+		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult,
-	SaturatedConversion,
-	Perquintill,
+	ApplyExtrinsicResult, Perquintill, SaturatedConversion,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -46,29 +45,26 @@ use sp_version::RuntimeVersion;
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{FindAuthor, KeyOwnerProofSystem, Randomness},
-	traits::{Nothing, StorageInfo},
-	traits::{OnUnbalanced, Currency, Imbalance, ConstU32, Contains},
+	traits::{
+		ConstU32, Contains, Currency, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
+		OnUnbalanced, Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, IdentityFee, Weight, DispatchClass,
-		GetDispatchInfo,
+		ConstantMultiplier, DispatchClass, GetDispatchInfo, IdentityFee, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
-	ConsensusEngineId, StorageValue, PalletId,
+	ConsensusEngineId, PalletId, StorageValue,
 };
 
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-};
+use frame_system::limits::{BlockLength, BlockWeights};
 
 pub use pallet_balances::Call as BalancesCall;
 use parachain_staking::RewardRateInfo;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
-	Account as EVMAccount, EnsureAddressTruncated, HashedAddressMapping, Runner,
-	GasWeightMapping,
+	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
 };
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
@@ -83,20 +79,16 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 // Polkadot imports
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
-use peaq_rpc_primitives_txpool::TxPoolResponse;
-use peaq_primitives_xcm;
-pub use peaq_primitives_xcm::{
-	Amount, CurrencyId, currency, TokenSymbol
-};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
+pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, TokenSymbol};
+use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
-use peaq_pallet_did::structs::Attribute as DidAttribute;
-use peaq_pallet_did::did::Did;
-pub use peaq_pallet_transaction;
+use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_storage;
+pub use peaq_pallet_transaction;
 
 // For XCM
 pub mod xcm_config;
@@ -180,7 +172,7 @@ pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
 // Contracts price units.
-pub const TOKEN_DECIMALS : u32 = 18;
+pub const TOKEN_DECIMALS: u32 = 18;
 pub const MILLICENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 3);
 pub const CENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2);
 pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
@@ -192,10 +184,7 @@ const fn deposit(items: u32, bytes: u32) -> Balance {
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 /// We assume that ~5% of the block weight is consumed by `on_initialize` handlers. This is
@@ -207,7 +196,7 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2 as u64);
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2_u64);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -241,11 +230,8 @@ parameter_types! {
 
 pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			// Other modules should works:
-			_ => true,
-		}
+	fn contains(_call: &Call) -> bool {
+		true
 	}
 }
 
@@ -391,9 +377,6 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-
-
-
 // Config the utility in pallets/utility
 impl pallet_utility::Config for Runtime {
 	type Call = Call;
@@ -401,7 +384,6 @@ impl pallet_utility::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = ();
 }
-
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
@@ -432,15 +414,15 @@ impl WeightToFeePolynomial for WeightToFee {
 
 pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-    fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
-        if let Some(mut fees) = fees_then_tips.next() {
-            if let Some(tips) = fees_then_tips.next() {
-                tips.merge_into(&mut fees);
-            }
-            // pay fees to collators
-            <ToStakingPot as OnUnbalanced<_>>::on_unbalanced(fees);
-        }
-    }
+	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+		if let Some(mut fees) = fees_then_tips.next() {
+			if let Some(tips) = fees_then_tips.next() {
+				tips.merge_into(&mut fees);
+			}
+			// pay fees to collators
+			<ToStakingPot as OnUnbalanced<_>>::on_unbalanced(fees);
+		}
+	}
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -461,7 +443,7 @@ impl pallet_sudo::Config for Runtime {
 impl peaq_pallet_did::Config for Runtime {
 	type Event = Event;
 	type Time = pallet_timestamp::Pallet<Runtime>;
-    type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
 }
 
 // Pallet EVM
@@ -473,7 +455,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]));
+			return Some(H160::from_slice(&authority_id.encode()[4..24]))
 		}
 		None
 	}
@@ -491,13 +473,13 @@ pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND.saturating_div(GAS_PER_SECOND)
 
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
-    fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-        Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
-    }
+	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
+		Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
+	}
 
-    fn weight_to_gas(weight: Weight) -> u64 {
-        u64::try_from(weight.ref_time().wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
-    }
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
+	}
 }
 
 parameter_types! {
@@ -569,8 +551,8 @@ impl pallet_randomness_collective_flip::Config for Runtime {}
 
 // Parachain
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4 as u64);
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4 as u64);
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -605,7 +587,7 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = 1 * HOURS;
+	pub const SessionPeriod: BlockNumber = HOURS;
 	pub const SessionOffset: BlockNumber = 0;
 }
 
@@ -628,15 +610,12 @@ pub mod staking {
 
 	/// Reward rate configuration which is used at genesis
 	pub fn reward_rate_config() -> RewardRateInfo {
-		RewardRateInfo::new(
-			Perquintill::from_percent(30),
-			Perquintill::from_percent(70),
-		)
+		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
 	}
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
-			pub const MinBlocksPerRound: BlockNumber = 1 * HOURS;
+			pub const MinBlocksPerRound: BlockNumber = HOURS;
 			/// Default length of a round/session is 2 hours
 			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
 			/// Unstaked balance can be unlocked after 7 days
@@ -650,17 +629,17 @@ pub mod staking {
 			/// We only allow one delegation per round.
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// Maximum 25 delegators per collator at launch, might be increased later
-			#[derive(Debug, PartialEq)]
+			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxDelegatorsPerCollator: u32 = 25;
 			/// Maximum 1 collator per delegator at launch, will be increased later
-			#[derive(Debug, PartialEq)]
+			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
 			/// Minimum stake required to be reserved to be a collator is 32_000
 			pub const MinCollatorStake: Balance = 32_000;
 			/// Minimum stake required to be reserved to be a delegator is 1000
 			pub const MinDelegatorStake: Balance = 20_000;
 			/// Maximum number of collator candidates
-			#[derive(Debug, PartialEq)]
+			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorCandidates: u32 = 16;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
@@ -696,39 +675,34 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct ToStakingPot;
 impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
-    fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-        let staking_pot = PotId::get().into_account_truncating();
-        Balances::resolve_creating(&staking_pot, amount);
-    }
+	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+		let staking_pot = PotId::get().into_account_truncating();
+		Balances::resolve_creating(&staking_pot, amount);
+	}
 }
 
 impl pallet_block_reward::Config for Runtime {
-    type Currency = Balances;
-    type BeneficiaryPayout = BeneficiaryPayout;
-    type Event = Event;
-    type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
+	type Currency = Balances;
+	type BeneficiaryPayout = BeneficiaryPayout;
+	type Event = Event;
+	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
 }
 
 pub struct BeneficiaryPayout();
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
-    fn treasury(_reward: NegativeImbalance) {
-    }
+	fn treasury(_reward: NegativeImbalance) {}
 
-    fn collators(reward: NegativeImbalance) {
-        ToStakingPot::on_unbalanced(reward);
-    }
+	fn collators(reward: NegativeImbalance) {
+		ToStakingPot::on_unbalanced(reward);
+	}
 
-    fn dapps_staking(_reward: NegativeImbalance) {
-    }
+	fn dapps_staking(_reward: NegativeImbalance) {}
 
-    fn lp_users(_reward: NegativeImbalance) {
-    }
+	fn lp_users(_reward: NegativeImbalance) {}
 
-    fn machines(_reward: NegativeImbalance) {
-    }
+	fn machines(_reward: NegativeImbalance) {}
 
-    fn machines_subsidization(_reward: NegativeImbalance) {
-    }
+	fn machines_subsidization(_reward: NegativeImbalance) {}
 }
 
 parameter_types! {
@@ -743,9 +717,7 @@ impl orml_currencies::Config for Runtime {
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![
-		PotId::get().into_account_truncating(),
-	]
+	vec![PotId::get().into_account_truncating()]
 }
 
 pub struct DustRemovalWhitelist;
@@ -770,7 +742,7 @@ impl orml_tokens::Config for Runtime {
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
-	type WeightInfo =  ();
+	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
 	type MaxLocks = MaxLocks;
@@ -788,13 +760,13 @@ impl orml_unknown_tokens::Config for Runtime {
 impl peaq_pallet_rbac::Config for Runtime {
 	type Event = Event;
 	type EntityId = [u8; 32];
-    type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type Event = Event;
-	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;	
+	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -931,9 +903,9 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
+			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
+				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
+			),
 			_ => None,
 		}
 	}
@@ -1248,7 +1220,7 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
@@ -1456,7 +1428,7 @@ impl_runtime_apis! {
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
-			return (list, storage_info)
+			(list, storage_info)
 		}
 
 		fn dispatch_benchmark(
@@ -1505,7 +1477,7 @@ impl_runtime_apis! {
 impl peaq_pallet_transaction::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-    type WeightInfo = peaq_pallet_transaction::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_transaction::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -1541,7 +1513,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 			)
 			.create_inherent_data()
 			.expect("Could not create the timestamp inherent data");
-		inherent_data.check_extrinsics(&block)
+		inherent_data.check_extrinsics(block)
 	}
 }
 

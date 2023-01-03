@@ -1,7 +1,6 @@
+use crate::{cli_opt::EthApi, parachain::Extensions};
 use clap::Parser;
-use crate::cli_opt::EthApi;
 use std::path::PathBuf;
-use crate::parachain::Extensions;
 
 #[allow(missing_docs)]
 #[derive(Debug, Parser)]
@@ -190,14 +189,7 @@ impl RelayChainCli {
 	) -> Self {
 		let extension = Extensions::try_get(&*para_config.chain_spec);
 		let chain_id = extension.map(|e| e.relay_chain.clone());
-		let base_path = para_config
-			.base_path
-			.as_ref()
-			.map(|x| x.path().join("polkadot"));
-		Self {
-			base_path,
-			chain_id,
-			base: polkadot_cli::RunCmd::parse_from(relay_chain_args),
-		}
+		let base_path = para_config.base_path.as_ref().map(|x| x.path().join("polkadot"));
+		Self { base_path, chain_id, base: polkadot_cli::RunCmd::parse_from(relay_chain_args) }
 	}
 }

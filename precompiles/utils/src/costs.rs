@@ -17,11 +17,9 @@
 //! Cost calculations.
 //! TODO: PR EVM to make those cost calculations public.
 
-use {
-	crate::EvmResult,
-	fp_evm::{ExitError, PrecompileFailure},
-	sp_core::U256,
-};
+use crate::EvmResult;
+use fp_evm::{ExitError, PrecompileFailure};
+use sp_core::U256;
 
 pub fn log_costs(topics: usize, data_len: usize) -> EvmResult<u64> {
 	// Cost calculation is copied from EVM code that is not publicly exposed by the crates.
@@ -33,25 +31,17 @@ pub fn log_costs(topics: usize, data_len: usize) -> EvmResult<u64> {
 
 	let topic_cost = G_LOGTOPIC
 		.checked_mul(topics as u64)
-		.ok_or(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		})?;
+		.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
 
 	let data_cost = G_LOGDATA
 		.checked_mul(data_len as u64)
-		.ok_or(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		})?;
+		.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
 
 	G_LOG
 		.checked_add(topic_cost)
-		.ok_or(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		})?
+		.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?
 		.checked_add(data_cost)
-		.ok_or(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		})
+		.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 }
 
 // Compute the cost of doing a subcall.
@@ -111,7 +101,7 @@ pub fn call_cost(value: U256, config: &evm::Config) -> u64 {
 	let is_call_or_staticcall = true;
 	let new_account = true;
 
-	address_access_cost(is_cold, config.gas_call, config)
-		+ xfer_cost(is_call_or_callcode, transfers_value)
-		+ new_cost(is_call_or_staticcall, new_account, transfers_value, config)
+	address_access_cost(is_cold, config.gas_call, config) +
+		xfer_cost(is_call_or_callcode, transfers_value) +
+		new_cost(is_call_or_staticcall, new_account, transfers_value, config)
 }
