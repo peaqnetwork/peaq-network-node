@@ -23,9 +23,9 @@ use tokio::sync::Semaphore;
 use crate::cli_opt::EthApi as EthApiCmd;
 use fp_rpc::EthereumRuntimeRPCApi;
 // use crate::client::RuntimeApiCollection;
-use sp_core::H256;
 use sc_client_api::BlockOf;
 use sp_api::HeaderT;
+use sp_core::H256;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -102,8 +102,5 @@ where
 		);
 	}
 
-	RpcRequesters {
-		debug: debug_requester,
-		trace: trace_filter_requester,
-	}
+	RpcRequesters { debug: debug_requester, trace: trace_filter_requester }
 }

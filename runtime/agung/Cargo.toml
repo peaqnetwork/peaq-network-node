@@ -185,32 +185,38 @@ branch = 'peaq-polkadot-v0.9.29'
 [dependencies.peaq-pallet-did]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'dev'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-did-runtime-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'dev'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'dev'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-rbac]
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
 default-features = false
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'dev'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-rbac-runtime-api]
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
 default-features = false
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'dev'
 version = '0.0.2'
+
+[dependencies.peaq-pallet-storage]
+git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+default-features = false
+branch = 'dev'
+version = '0.1.1'
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -492,6 +498,7 @@ runtime-benchmarks = [
 	'peaq-pallet-transaction/runtime-benchmarks',
 	'peaq-pallet-did/runtime-benchmarks',
 	'peaq-pallet-rbac/runtime-benchmarks',
+	'peaq-pallet-storage/runtime-benchmarks',
 ]
 
 std = [
@@ -529,6 +536,7 @@ std = [
 	'peaq-pallet-transaction/std',
 	'peaq-pallet-rbac/std',
 	'peaq-pallet-rbac-runtime-api/std',
+	'peaq-pallet-storage/std',
 
 	# ETH support
 	'sp-io/std',

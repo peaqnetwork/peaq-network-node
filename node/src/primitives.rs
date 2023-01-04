@@ -1,5 +1,4 @@
 /// Please make sure the Agung, Krest and Dev network has the same settings
-use peaq_primitives_xcm;
 
 /// An index to a block.
 pub type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -26,4 +25,5 @@ pub type Index = peaq_primitives_xcm::Nonce;
 
 pub type Moment = peaq_primitives_xcm::Moment;
 
+/// EntityId type for RBAC pallet (also defined in each runtime)
 pub type EntityId = [u8; 32];

@@ -48,50 +48,23 @@ impl From<Option<evm_gasometer::Snapshot>> for Snapshot {
 
 #[derive(Debug, Copy, Clone, Encode, Decode, PartialEq, Eq)]
 pub enum GasometerEvent {
-	RecordCost {
-		cost: u64,
-		snapshot: Snapshot,
-	},
-	RecordRefund {
-		refund: i64,
-		snapshot: Snapshot,
-	},
-	RecordStipend {
-		stipend: u64,
-		snapshot: Snapshot,
-	},
-	RecordDynamicCost {
-		gas_cost: u64,
-		memory_gas: u64,
-		gas_refund: i64,
-		snapshot: Snapshot,
-	},
-	RecordTransaction {
-		cost: u64,
-		snapshot: Snapshot,
-	},
+	RecordCost { cost: u64, snapshot: Snapshot },
+	RecordRefund { refund: i64, snapshot: Snapshot },
+	RecordStipend { stipend: u64, snapshot: Snapshot },
+	RecordDynamicCost { gas_cost: u64, memory_gas: u64, gas_refund: i64, snapshot: Snapshot },
+	RecordTransaction { cost: u64, snapshot: Snapshot },
 }
 
 #[cfg(feature = "evm-tracing")]
 impl From<evm_gasometer::tracing::Event> for GasometerEvent {
 	fn from(i: evm_gasometer::tracing::Event) -> Self {
 		match i {
-			evm_gasometer::tracing::Event::RecordCost { cost, snapshot } => Self::RecordCost {
-				cost,
-				snapshot: snapshot.into(),
-			},
-			evm_gasometer::tracing::Event::RecordRefund { refund, snapshot } => {
-				Self::RecordRefund {
-					refund,
-					snapshot: snapshot.into(),
-				}
-			}
-			evm_gasometer::tracing::Event::RecordStipend { stipend, snapshot } => {
-				Self::RecordStipend {
-					stipend,
-					snapshot: snapshot.into(),
-				}
-			}
+			evm_gasometer::tracing::Event::RecordCost { cost, snapshot } =>
+				Self::RecordCost { cost, snapshot: snapshot.into() },
+			evm_gasometer::tracing::Event::RecordRefund { refund, snapshot } =>
+				Self::RecordRefund { refund, snapshot: snapshot.into() },
+			evm_gasometer::tracing::Event::RecordStipend { stipend, snapshot } =>
+				Self::RecordStipend { stipend, snapshot: snapshot.into() },
 			evm_gasometer::tracing::Event::RecordDynamicCost {
 				gas_cost,
 				memory_gas,
@@ -103,12 +76,8 @@ impl From<evm_gasometer::tracing::Event> for GasometerEvent {
 				gas_refund,
 				snapshot: snapshot.into(),
 			},
-			evm_gasometer::tracing::Event::RecordTransaction { cost, snapshot } => {
-				Self::RecordTransaction {
-					cost,
-					snapshot: snapshot.into(),
-				}
-			}
+			evm_gasometer::tracing::Event::RecordTransaction { cost, snapshot } =>
+				Self::RecordTransaction { cost, snapshot: snapshot.into() },
 		}
 	}
 }

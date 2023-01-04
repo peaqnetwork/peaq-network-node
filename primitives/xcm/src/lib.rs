@@ -102,8 +102,9 @@ pub struct TradingPair(CurrencyId, CurrencyId);
 
 impl TradingPair {
 	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_token_currency_id() && currency_id_b.is_token_currency_id()
-			&& currency_id_a != currency_id_b
+		if currency_id_a.is_token_currency_id() &&
+			currency_id_b.is_token_currency_id() &&
+			currency_id_a != currency_id_b
 		{
 			if currency_id_a > currency_id_b {
 				Some(TradingPair(currency_id_b, currency_id_a))
@@ -127,7 +128,8 @@ impl TradingPair {
 impl Decode for TradingPair {
 	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
 		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
-		TradingPair::from_currency_ids(first, second).ok_or_else(|| codec::Error::from("invalid currency id"))
+		TradingPair::from_currency_ids(first, second)
+			.ok_or_else(|| codec::Error::from("invalid currency id"))
 	}
 }
 

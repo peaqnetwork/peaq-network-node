@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum EthApi {
 	Txpool,
 	Debug,
@@ -15,12 +15,7 @@ impl FromStr for EthApi {
 			"txpool" => Self::Txpool,
 			"debug" => Self::Debug,
 			"trace" => Self::Trace,
-			_ => {
-				return Err(format!(
-					"`{}` is not recognized as a supported Ethereum Api",
-					s
-				))
-			}
+			_ => return Err(format!("`{}` is not recognized as a supported Ethereum Api", s)),
 		})
 	}
 }

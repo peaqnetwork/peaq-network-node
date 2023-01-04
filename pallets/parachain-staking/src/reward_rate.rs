@@ -22,9 +22,7 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{Perquintill, RuntimeDebug};
 
-use sp_runtime::{
-    traits::{CheckedAdd},
-};
+use sp_runtime::traits::CheckedAdd;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -46,14 +44,8 @@ impl RewardRateInfo {
 	/// Create a new reward rate info for collators and delegators.
 	///
 	/// Example: RewardRateInfo::new(Perquintill_from_percent(10), ...)
-	pub fn new(
-		collator_rate: Perquintill,
-		delegator_rate: Perquintill,
-	) -> Self {
-		Self {
-			collator_rate,
-			delegator_rate,
-		}
+	pub fn new(collator_rate: Perquintill, delegator_rate: Perquintill) -> Self {
+		Self { collator_rate, delegator_rate }
 	}
 
 	/// Check whether the annual reward rate is approx. the per_block reward
@@ -66,10 +58,7 @@ impl RewardRateInfo {
 		}
 	}
 
-	pub fn compute_collator_reward<T: Config>(
-		&self,
-		issue_number: BalanceOf<T>,
-	) -> BalanceOf<T> {
+	pub fn compute_collator_reward<T: Config>(&self, issue_number: BalanceOf<T>) -> BalanceOf<T> {
 		self.collator_rate * issue_number
 	}
 
