@@ -379,11 +379,9 @@ branch = 'peaq-polkadot-v0.9.29'
 version = '0.0.2'
 
 [dependencies.peaq-pallet-rbac-rpc]
-path = '../../peaq-pallet-rbac/rpc'
-# git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-# branch = 'peaq-polkadot-v0.9.29'
-# branch = 'feature/1203258606988651_rpc-for-rbac'
-# version = '0.0.2'
+git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
+branch = 'peaq-polkadot-v0.9.29'
+version = '0.0.2'
 
 
 # XCM
