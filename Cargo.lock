@@ -6930,6 +6930,7 @@ dependencies = [
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7039,6 +7040,7 @@ dependencies = [
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7153,6 +7155,7 @@ dependencies = [
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7234,6 +7237,7 @@ dependencies = [
  "peaq-dev-runtime",
  "peaq-krest-runtime",
  "peaq-pallet-did-rpc",
+ "peaq-pallet-storage-rpc",
  "peaq-primitives-ext",
  "peaq-primitives-xcm",
  "peaq-rpc-debug",
@@ -7356,7 +7360,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#5726eef2486a1d0f6d464b13003aa5dd6a8bcf2b"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7366,6 +7370,37 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-storage-rpc"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpsee",
+ "parity-scale-codec",
+ "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "peaq-pallet-storage-runtime-api"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
+dependencies = [
+ "parity-scale-codec",
+ "peaq-pallet-storage",
+ "sp-api",
  "sp-std",
 ]
 
@@ -12743,7 +12778,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
