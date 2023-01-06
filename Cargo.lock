@@ -7360,7 +7360,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feat/1203500610868804_rpc-storage-pallet-expirement#e7048b59bd1b3b9a8d6eb9cc4e083e5eed78b079"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7376,7 +7376,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feat/1203500610868804_rpc-storage-pallet-expirement#e7048b59bd1b3b9a8d6eb9cc4e083e5eed78b079"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -7396,7 +7396,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feat/1203500610868804_rpc-storage-pallet-expirement#e7048b59bd1b3b9a8d6eb9cc4e083e5eed78b079"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
