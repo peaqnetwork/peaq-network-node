@@ -147,8 +147,8 @@ create_currency_id! {
 
 pub mod parachain {
 	pub mod acala {
-        pub const ID: u32 = 3000;
-        pub const ACA_KEY: &[u8] = &[0, 0];
+		pub const ID: u32 = 3000;
+		pub const ACA_KEY: &[u8] = &[0, 0];
 	}
 }
 
@@ -159,7 +159,19 @@ pub trait TokenInfo {
 	fn decimals(&self) -> Option<u8>;
 }
 
-#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum CurrencyId {

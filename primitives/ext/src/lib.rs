@@ -30,6 +30,7 @@ use sp_std::vec::Vec;
 
 use evm_tracing_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
 
+#[allow(clippy::unnecessary_mut_passed)]
 #[runtime_interface]
 pub trait PeaqExt {
 	fn raw_step(&mut self, _data: Vec<u8>) {}

@@ -138,10 +138,7 @@ where
 {
 	#[inline(always)]
 	fn new() -> Self {
-		Self {
-			current_recursion_level: RefCell::new(0),
-			_phantom: PhantomData,
-		}
+		Self { current_recursion_level: RefCell::new(0), _phantom: PhantomData }
 	}
 
 	#[inline(always)]
@@ -150,14 +147,12 @@ where
 
 		// Check if this is the address of the precompile.
 		if A::get() != code_address {
-			return None;
+			return None
 		}
 
 		// Check DELEGATECALL config.
 		if !D::allow_delegate_call() && code_address != handle.context().address {
-			return Some(Err(revert(
-				"Cannot be called with DELEGATECALL or CALLCODE",
-			)));
+			return Some(Err(revert("Cannot be called with DELEGATECALL or CALLCODE")))
 		}
 
 		// Check and increase recursion level if needed.
@@ -165,16 +160,14 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(Err(
-							revert("Precompile is called with too high nesting").into()
-						));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -185,10 +178,10 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -239,15 +232,12 @@ where
 
 		// Check if this is the address of the precompile.
 		if A::get() != code_address {
-			return None;
+			return None
 		}
 
 		// Check DELEGATECALL config.
 		if !D::allow_delegate_call() && code_address != handle.context().address {
-			return Some(Err(revert(
-				"Cannot be called with DELEGATECALL or CALLCODE",
-			)
-			.into()));
+			return Some(Err(revert("Cannot be called with DELEGATECALL or CALLCODE")))
 		}
 
 		// Check and increase recursion level if needed.
@@ -255,16 +245,14 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(Err(
-							revert("Precompile is called with too high nesting").into()
-						));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -275,7 +263,7 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -328,14 +316,12 @@ where
 		let code_address = handle.code_address();
 
 		if !self.is_precompile(code_address) {
-			return None;
+			return None
 		}
 
 		// Check DELEGATECALL config.
 		if !D::allow_delegate_call() && code_address != handle.context().address {
-			return Some(Err(revert(
-				"Cannot be called with DELEGATECALL or CALLCODE",
-			)));
+			return Some(Err(revert("Cannot be called with DELEGATECALL or CALLCODE")))
 		}
 
 		// Check and increase recursion level if needed.
@@ -345,11 +331,11 @@ where
 					let recursion_level = recursion_level_map.entry(code_address).or_insert(0);
 
 					if *recursion_level > max_recursion_level {
-						return Some(Err(revert("Precompile is called with too high nesting")));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -368,7 +354,7 @@ where
 					};
 
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -527,20 +513,20 @@ impl<R, P: PrecompileSetFragment> PrecompileSet for PrecompileSetBuilder<R, P> {
 	}
 }
 
+impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P> {
 	/// Create a new instance of the PrecompileSet.
 	pub fn new() -> Self {
-		Self {
-			inner: P::new(),
-			_phantom: PhantomData,
-		}
+		Self { inner: P::new(), _phantom: PhantomData }
 	}
 
 	/// Return the list of addresses contained in this PrecompileSet.
 	pub fn used_addresses() -> impl Iterator<Item = H160> {
-		Self::new()
-			.inner
-			.used_addresses()
-			.into_iter()
+		Self::new().inner.used_addresses().into_iter()
 	}
 }
