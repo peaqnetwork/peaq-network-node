@@ -391,7 +391,7 @@ path = "../primitives/xcm"
 
 [dependencies.peaq-pallet-storage-rpc]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
-branch = 'feat/1203500610868804_rpc-storage-pallet-expirement'
+branch = 'dev'
 default-features = false
 version = '0.0.1'
 
