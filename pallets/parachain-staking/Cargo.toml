@@ -47,7 +47,7 @@ std = [
   "pallet-session/std",
   "parity-scale-codec/std",
   "scale-info/std",
-  # "serde",
+  "serde",
   "sp-runtime/std",
   "sp-staking/std",
   "sp-std/std",
