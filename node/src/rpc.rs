@@ -134,6 +134,7 @@ where
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>,
+	C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
@@ -151,6 +152,7 @@ where
 	};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
+	use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
 	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
@@ -240,6 +242,7 @@ where
 
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(pool, Arc::clone(&client), network, subscription_task_executor, overrides)

@@ -30,7 +30,7 @@ std = [
 	"sp-core/std",
 	"scale-info/std",
 	"sp-std/std",
-	"serde/std",
+	"serde",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-timestamp/std",

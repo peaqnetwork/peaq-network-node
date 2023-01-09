@@ -24,3 +24,6 @@ pub type AccountId = peaq_primitives_xcm::AccountId;
 pub type Index = peaq_primitives_xcm::Nonce;
 
 pub type Moment = peaq_primitives_xcm::Moment;
+
+/// EntityId type for RBAC pallet (also defined in each runtime)
+pub type EntityId = [u8; 32];

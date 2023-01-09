@@ -25,12 +25,6 @@ features = ['derive']
 package = 'parity-scale-codec'
 version = '3.0.0'
 
-[dependencies.serde]
-default-features = false
-features = ['derive']
-optional = true
-version = '1.0.101'
-
 [dependencies.rlp]
 default-features = false
 optional = true
@@ -192,37 +186,36 @@ branch = 'peaq-polkadot-v0.9.29'
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
 branch = 'dev'
-version = '0.0.2'
 
 [dependencies.peaq-pallet-did-runtime-api]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
 branch = 'dev'
-version = '0.0.2'
 
 [dependencies.peaq-pallet-transaction]
 default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
 branch = 'dev'
-version = '0.0.2'
 
 [dependencies.peaq-pallet-rbac]
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
 default-features = false
 branch = 'dev'
-version = '0.0.2'
+
+[dependencies.peaq-pallet-rbac-runtime-api]
+git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
+default-features = false
+branch = 'dev'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 branch = 'dev'
 default-features = false
-version = '0.1.1'
 
 [dependencies.peaq-pallet-storage-runtime-api]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 branch = 'dev'
 default-features = false
-version = '0.0.1'
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -508,8 +501,6 @@ runtime-benchmarks = [
 
 std = [
 	'codec/std',
-	"serde",
-
 	'scale-info/std',
 	'frame-executive/std',
 	'frame-support/std',
@@ -542,6 +533,7 @@ std = [
 	'peaq-pallet-did-runtime-api/std',
 	'peaq-pallet-transaction/std',
 	'peaq-pallet-rbac/std',
+	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
 
 	# ETH support
