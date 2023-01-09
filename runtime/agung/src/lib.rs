@@ -101,6 +101,7 @@ use peaq_pallet_rbac::{
 	}
 };
 pub use peaq_pallet_storage;
+use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
 // For XCM
@@ -1499,6 +1500,12 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
+		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
+			PeaqStorage::read(&did_account, &item_type)
+		}
+	}
+	
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 

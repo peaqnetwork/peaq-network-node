@@ -209,8 +209,13 @@ branch = 'dev'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
-default-features = false
 branch = 'dev'
+default-features = false
+
+[dependencies.peaq-pallet-storage-runtime-api]
+git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+branch = 'dev'
+default-features = false
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -527,6 +532,7 @@ std = [
 	'peaq-pallet-rbac/std',
 	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
+	'peaq-pallet-storage-runtime-api/std',
 	'pallet-utility/std',
 
 	# ETH support

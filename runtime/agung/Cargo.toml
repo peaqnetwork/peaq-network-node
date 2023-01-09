@@ -209,8 +209,13 @@ branch = 'dev'
 
 [dependencies.peaq-pallet-storage]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
-default-features = false
 branch = 'dev'
+default-features = false
+
+[dependencies.peaq-pallet-storage-runtime-api]
+git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
+branch = 'dev'
+default-features = false
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -465,7 +470,6 @@ default-features = false
 path = "../../precompiles/utils"
 default-features = false
 
-
 [features]
 default = ["std", "aura"]
 aura = []
@@ -585,6 +589,9 @@ std = [
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
+
+	"peaq-pallet-storage/std",
+	"peaq-pallet-storage-runtime-api/std"
 ]
 
 # Must be enabled for tracing runtimes only

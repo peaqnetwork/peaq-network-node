@@ -7142,6 +7142,7 @@ dependencies = [
  "peaq-pallet-rbac",
  "peaq-pallet-rbac-runtime-api",
  "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7251,6 +7252,7 @@ dependencies = [
  "peaq-pallet-rbac",
  "peaq-pallet-rbac-runtime-api",
  "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7365,6 +7367,7 @@ dependencies = [
  "peaq-pallet-rbac",
  "peaq-pallet-rbac-runtime-api",
  "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
  "peaq-pallet-transaction",
  "peaq-primitives-xcm",
  "peaq-rpc-primitives-debug",
@@ -7446,6 +7449,7 @@ dependencies = [
  "peaq-krest-runtime",
  "peaq-pallet-did-rpc",
  "peaq-pallet-rbac-rpc",
+ "peaq-pallet-storage-rpc",
  "peaq-primitives-ext",
  "peaq-primitives-xcm",
  "peaq-rpc-debug",
@@ -7609,6 +7613,37 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "peaq-pallet-storage-rpc"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpsee",
+ "parity-scale-codec",
+ "peaq-pallet-storage",
+ "peaq-pallet-storage-runtime-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
+name = "peaq-pallet-storage-runtime-api"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e9032a86c085a166cc7f2cc79688ef6bbe007844"
+dependencies = [
+ "parity-scale-codec",
+ "peaq-pallet-storage",
+ "sp-api",
  "sp-std",
 ]
 
