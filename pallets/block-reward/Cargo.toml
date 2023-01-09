@@ -21,7 +21,7 @@ sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-pol
 pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29",  default-features = false, optional = true }
 pallet-balances = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 frame-benchmarking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false, optional = true}
-serde = { version = "1.0.136" }
+serde = { version = "1.0.136", optional = true }
 
 [features]
 default = ["std"]
