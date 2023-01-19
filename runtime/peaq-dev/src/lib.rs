@@ -863,7 +863,7 @@ construct_runtime!(
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		PeaqPalletMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>} = 105,
+		PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>} = 105,
 	}
 );
 
