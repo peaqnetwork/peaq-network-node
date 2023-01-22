@@ -1,9 +1,9 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_agung_runtime::{
-	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, Precompiles,
-	SudoConfig, SystemConfig, DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
+	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
+	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
+	Precompiles, SudoConfig, SystemConfig, DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -231,5 +231,7 @@ fn configure_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		tokens: Default::default(),
+		treasury: Default::default(),
+		council: CouncilConfig::default(),
 	}
 }
