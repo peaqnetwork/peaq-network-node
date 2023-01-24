@@ -589,7 +589,7 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const PotId: PalletId = PalletId(*b"PotStake");
+	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 }
 
 parameter_types! {
@@ -664,7 +664,7 @@ pub mod staking {
 }
 
 impl parachain_staking::Config for Runtime {
-	type PotId = PotId;
+	type PotId = PotStakeId;
 	type Event = Event;
 	type Currency = Balances;
 	type CurrencyBalance = Balance;
@@ -688,13 +688,13 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 pub struct ToStakingPot;
 impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		let staking_pot = PotId::get().into_account_truncating();
-		Balances::resolve_creating(&staking_pot, amount);
+		let pot = PotStakeId::get().into_account_truncating();
+		Balances::resolve_creating(&pot, amount);
 	}
 }
 
@@ -734,7 +734,9 @@ impl orml_currencies::Config for Runtime {
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![PotId::get().into_account_truncating()]
+	vec![
+		PotStakeId::get().into_account_truncating()
+	]
 }
 
 pub struct DustRemovalWhitelist;
@@ -751,7 +753,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TestAccount: AccountId = PotId::get().into_account_truncating();
+	pub TestAccount: AccountId = PotStakeId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {

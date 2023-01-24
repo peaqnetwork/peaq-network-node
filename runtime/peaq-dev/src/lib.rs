@@ -104,6 +104,9 @@ pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
+pub use peaq_pallet_mor;
+use peaq_pallet_mor::mor::MorBalance;
+
 // For XCM
 pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
@@ -589,7 +592,8 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const PotId: PalletId = PalletId(*b"PotStake");
+	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
+	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 }
 
 parameter_types! {
@@ -619,6 +623,7 @@ impl pallet_session::Config for Runtime {
 	type Keys = opaque::SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
+
 
 pub mod staking {
 	use super::*;
@@ -664,7 +669,7 @@ pub mod staking {
 }
 
 impl parachain_staking::Config for Runtime {
-	type PotId = PotId;
+	type PotId = PotStakeId;
 	type Event = Event;
 	type Currency = Balances;
 	type CurrencyBalance = Balance;
@@ -688,13 +693,29 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
+impl peaq_pallet_mor::Config for Runtime {
+    type Event = Event;
+    type Currency = Balances;
+    type PotId = PotMorId;
+    type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
+}
+
+
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 pub struct ToStakingPot;
 impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		let staking_pot = PotId::get().into_account_truncating();
-		Balances::resolve_creating(&staking_pot, amount);
+		let pot = PotStakeId::get().into_account_truncating();
+		Balances::resolve_creating(&pot, amount);
+	}
+}
+
+pub struct ToMachinePot;
+impl OnUnbalanced<NegativeImbalance> for ToMachinePot {
+	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+		let pot = PotMorId::get().into_account_truncating();
+		Balances::resolve_creating(&pot, amount);
 	}
 }
 
@@ -704,7 +725,6 @@ impl pallet_block_reward::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
 }
-
 pub struct BeneficiaryPayout();
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
 	fn treasury(_reward: NegativeImbalance) {}
@@ -717,10 +737,15 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn lp_users(_reward: NegativeImbalance) {}
 
-	fn machines(_reward: NegativeImbalance) {}
+	fn machines(reward: NegativeImbalance) {
+		let amount = reward.peek();
+		ToMachinePot::on_unbalanced(reward);
+		PeaqMor::log_block_rewards(amount);
+	}
 
 	fn machines_subsidization(_reward: NegativeImbalance) {}
 }
+
 
 parameter_types! {
 	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
@@ -734,7 +759,10 @@ impl orml_currencies::Config for Runtime {
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![PotId::get().into_account_truncating()]
+	vec![
+		PotStakeId::get().into_account_truncating(),
+		PotMorId::get().into_account_truncating()
+	]
 }
 
 pub struct DustRemovalWhitelist;
@@ -751,7 +779,7 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TestAccount: AccountId = PotId::get().into_account_truncating();
+	pub TestAccount: AccountId = PotStakeId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {
@@ -836,6 +864,7 @@ construct_runtime!(
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
+		PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>} = 105,
 	}
 );
 
@@ -1531,6 +1560,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
 			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
 			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
+			list_benchmark!(list, extra, peaq_pallet_mor, PeaqMor);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1573,6 +1603,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
 			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
 			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
+			add_benchmark!(params, batches, peaq_pallet_mor, PeaqMor);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
