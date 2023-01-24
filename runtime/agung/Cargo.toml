@@ -217,12 +217,6 @@ git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 branch = 'dev'
 default-features = false
 
-[dependencies.peaq-pallet-mor]
-git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
-branch = 'feature/1203706068707545_machine-reward-pallet'
-# path = "../../../peaq-pallet-mor"
-default-features = false
-
 [dependencies.pallet-multisig]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'

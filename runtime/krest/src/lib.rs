@@ -136,9 +136,6 @@ type Hash = peaq_primitives_xcm::Hash;
 /// The ID of an entity (RBAC)
 type EntityId = [u8; 32];
 
-/// The ID of a machine (MOR)
-pub type MachineId = [u8; 32]; // TODO to be discussed
-
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -601,7 +598,6 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
-	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 }
 
 parameter_types! {
@@ -701,29 +697,12 @@ impl parachain_staking::Config for Runtime {
 }
 
 
-impl peaq_pallet_mor::Config for Runtime {
-    type Event = Event;
-    type Currency = Balances;
-    type PotId = PotMorId;
-    type MachineId = MachineId;
-    type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
-}
-
-
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct ToStakingPot;
 impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
 		let pot = PotStakeId::get().into_account_truncating();
-		Balances::resolve_creating(&pot, amount);
-	}
-}
-
-pub struct ToMachinePot;
-impl OnUnbalanced<NegativeImbalance> for ToMachinePot {
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		let pot = PotMorId::get().into_account_truncating();
 		Balances::resolve_creating(&pot, amount);
 	}
 }
@@ -747,9 +726,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn lp_users(_reward: NegativeImbalance) {}
 
-	fn machines(reward: NegativeImbalance) {
-		ToMachinePot::on_unbalanced(reward);
-	}
+	fn machines(_reward: NegativeImbalance) {}
 
 	fn machines_subsidization(_reward: NegativeImbalance) {}
 }
@@ -767,8 +744,7 @@ impl orml_currencies::Config for Runtime {
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
-		PotStakeId::get().into_account_truncating(),
-		PotMorId::get().into_account_truncating(),
+		PotStakeId::get().into_account_truncating()
 	]
 }
 
@@ -871,7 +847,6 @@ construct_runtime!(
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>} = 105,
 	}
 );
 
@@ -1567,7 +1542,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
 			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
 			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
-			list_benchmark!(list, extra, peaq_pallet_mor, PeaqMor);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1610,7 +1584,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
 			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
 			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
-			add_benchmark!(params, batches, peaq_pallet_mor, PeaqMor);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

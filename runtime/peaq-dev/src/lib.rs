@@ -104,6 +104,9 @@ pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
+pub use peaq_pallet_mor;
+use peaq_pallet_mor::mor::MorBalance;
+
 // For XCM
 pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
@@ -135,9 +138,6 @@ type Hash = peaq_primitives_xcm::Hash;
 
 /// The ID of an entity (RBAC)
 type EntityId = [u8; 32];
-
-/// The ID of a machine (MOR)
-pub type MachineId = [u8; 32]; // TODO to be discussed
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -698,7 +698,6 @@ impl peaq_pallet_mor::Config for Runtime {
     type Event = Event;
     type Currency = Balances;
     type PotId = PotMorId;
-    type MachineId = MachineId;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 }
 
@@ -739,7 +738,9 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	fn lp_users(_reward: NegativeImbalance) {}
 
 	fn machines(reward: NegativeImbalance) {
+		let amount = reward.peek();
 		ToMachinePot::on_unbalanced(reward);
+		PeaqMor::log_block_rewards(amount);
 	}
 
 	fn machines_subsidization(_reward: NegativeImbalance) {}
