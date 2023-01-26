@@ -220,7 +220,6 @@ default-features = false
 [dependencies.peaq-pallet-mor]
 git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
 branch = 'dev'
-# path = "../../../peaq-pallet-mor"
 default-features = false
 
 [dependencies.pallet-multisig]
