@@ -536,6 +536,7 @@ std = [
 	'peaq-pallet-rbac/std',
 	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
+	'peaq-pallet-mor/std',
 	'pallet-utility/std',
 	'peaq-pallet-storage-runtime-api/std',
 

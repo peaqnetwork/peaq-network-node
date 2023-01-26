@@ -7574,12 +7574,14 @@ name = "peaq-pallet-mor"
 version = "0.0.1"
 source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#eb0ab5d203d972e18c07d0eb8f4dc302d98e0f10"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-timestamp",
  "parity-scale-codec",
  "peaq-pallet-did",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
