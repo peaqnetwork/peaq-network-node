@@ -220,7 +220,6 @@ default-features = false
 [dependencies.peaq-pallet-mor]
 git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
 branch = 'dev'
-# path = "../../../peaq-pallet-mor"
 default-features = false
 
 [dependencies.pallet-multisig]
@@ -537,6 +536,7 @@ std = [
 	'peaq-pallet-rbac/std',
 	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
+	'peaq-pallet-mor/std',
 	'pallet-utility/std',
 	'peaq-pallet-storage-runtime-api/std',
 
