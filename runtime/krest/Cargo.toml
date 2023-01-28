@@ -540,7 +540,8 @@ std = [
 	'peaq-pallet-storage-runtime-api/std',
 	'pallet-utility/std',
 	'pallet-treasury/std',
-
+	'pallet-collective/std', 
+	
 	# ETH support
 	'sp-io/std',
 	'fp-evm/std',

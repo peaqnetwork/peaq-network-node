@@ -545,6 +545,7 @@ std = [
 	'pallet-utility/std',
 	'peaq-pallet-storage-runtime-api/std',
 	'pallet-treasury/std',
+	'pallet-collective/std', 
 		
 
 	# ETH support

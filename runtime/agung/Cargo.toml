@@ -539,6 +539,7 @@ std = [
 	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
 	'pallet-treasury/std',
+	'pallet-collective/std', 
 
 	# ETH support
 	'sp-io/std',
