@@ -893,6 +893,8 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
+		Treasury: pallet_treasury  = 9,
+		Council: pallet_collective::<Instance1>=10,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
