@@ -29,14 +29,16 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf,
-		SaturatedConversion,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
+	ApplyExtrinsicResult, Perquintill, SaturatedConversion,
 };
-use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
+use sp_std::{
+	marker::PhantomData, prelude::*,
+	vec, vec::Vec
+};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -47,8 +49,8 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, Contains, Currency, EitherOfDiverse, FindAuthor, Imbalance, KeyOwnerProofSystem,
-		Nothing, OnUnbalanced, Randomness, StorageInfo,
+		ConstU32, Contains, Currency, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
+		OnUnbalanced, Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -58,10 +60,7 @@ pub use frame_support::{
 	ConsensusEngineId, PalletId, StorageValue,
 };
 
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess,
-};
+use frame_system::limits::{BlockLength, BlockWeights};
 
 pub use pallet_balances::Call as BalancesCall;
 use parachain_staking::RewardRateInfo;
@@ -74,6 +73,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{Perbill, Permill};
 
 mod precompiles;
 pub use precompiles::PeaqPrecompiles;
@@ -91,17 +91,21 @@ pub use peaq_pallet_did;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 pub use peaq_pallet_rbac;
 use peaq_pallet_rbac::{
-	rbac::{Group, Permission, Rbac, Result as RbacResult, Role},
+	rbac::{Result as RbacResult, Role, Rbac, Permission, Group},
 	structs::{
-		Entity as RbacEntity, Permission2Role as RbacPermission2Role, Role2Group as RbacRole2Group,
-		Role2User as RbacRole2User, User2Group as RbacUser2Group,
-	},
+		Entity as RbacEntity,
+		Permission2Role as RbacPermission2Role,
+		Role2Group as RbacRole2Group,
+		Role2User as RbacRole2User,
+		User2Group as RbacUser2Group,
+	}
 };
 pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
 pub use peaq_pallet_mor;
+pub use peaq_pallet_mor::types::MorConfig;
 use peaq_pallet_mor::mor::MorBalance;
 
 // For XCM
@@ -463,66 +467,6 @@ impl pallet_utility::Config for Runtime {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
-}
-
-type CouncilCollective = pallet_collective::Instance1;
-impl pallet_collective::Config<CouncilCollective> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
-}
-
-// Config the treasyry in pallets/treasury
-parameter_types! {
-	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = DOLLARS;
-	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
-	pub const TipCountdown: BlockNumber = DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = DOLLARS;
-	pub const DataDepositPerByte: Balance = CENTS;
-	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub const MaximumReasonLength: u32 = 300;
-	pub const MaxApprovals: u32 = 100;
-	pub const MaxBalance: Balance = Balance::max_value();
-}
-
-impl pallet_treasury::Config for Runtime {
-	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
-	type ApproveOrigin = EitherOfDiverse<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-	>;
-	type RejectOrigin = EitherOfDiverse<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
-	>;
-	//type RuntimeEvent = RuntimeEvent;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ();
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type BurnDestination = ();
-	type SpendFunds = ();
-	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
-	type MaxApprovals = MaxApprovals;
-	type SpendOrigin = EnsureRootWithSuccess<AccountId, MaxBalance>; //EnsureWithSuccess<EnsureRoot<AccountId>, AccountId, MaxBalance>;
-	type Event = Event;
-}
-
 // Pallet EVM
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
@@ -753,7 +697,7 @@ impl parachain_staking::Config for Runtime {
 
 impl peaq_pallet_mor::Config for Runtime {
     type Event = Event;
-    type Currency = Balances;
+	type Currency = Balances;
     type PotId = PotMorId;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 }
@@ -862,7 +806,7 @@ impl orml_unknown_tokens::Config for Runtime {
 impl peaq_pallet_rbac::Config for Runtime {
 	type Event = Event;
 	type EntityId = EntityId;
-	type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
+    type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
 // Config the storage in pallets/storage
@@ -887,10 +831,6 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
-		Treasury: pallet_treasury  = 9,
-		Council: pallet_collective::<Instance1>=10,
-
-
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
@@ -925,7 +865,7 @@ construct_runtime!(
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>} = 105,
+		PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
 	}
 );
 
@@ -1443,7 +1383,7 @@ impl_runtime_apis! {
 
 	impl peaq_pallet_rbac_runtime_api::PeaqRBACRuntimeApi<Block, AccountId, EntityId> for Runtime {
 		fn fetch_role(
-			account: AccountId,
+			account: AccountId, 
 			entity: EntityId
 		) -> RbacResult<RbacEntity<EntityId>> {
 			PeaqRbac::get_role(&account, entity)
@@ -1455,69 +1395,69 @@ impl_runtime_apis! {
 			PeaqRbac::get_roles(&owner)
 		}
 
-		fn fetch_user_roles(
-			owner: AccountId,
+        fn fetch_user_roles(
+			owner: AccountId, 
 			user_id: EntityId
 		) -> RbacResult<Vec<RbacRole2User<EntityId>>> {
 			PeaqRbac::get_user_roles(&owner, user_id)
 		}
-
-		fn fetch_permission(
-			owner: AccountId,
+		
+        fn fetch_permission(
+			owner: AccountId, 
 			permission_id: EntityId
 		) -> RbacResult<RbacEntity<EntityId>> {
 			PeaqRbac::get_permission(&owner, permission_id)
 		}
 
-		fn fetch_permissions(
+        fn fetch_permissions(
 			owner: AccountId
 		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_permissions(&owner)
 		}
 
-		fn fetch_role_permissions(
-			owner: AccountId,
+        fn fetch_role_permissions(
+			owner: AccountId, 
 			role_id: EntityId
 		) -> RbacResult<Vec<RbacPermission2Role<EntityId>>> {
 			PeaqRbac::get_role_permissions(&owner, role_id)
 		}
-
-		fn fetch_group(
-			owner: AccountId,
+		
+        fn fetch_group(
+			owner: AccountId, 
 			group_id: EntityId
 		) -> RbacResult<RbacEntity<EntityId>> {
 			PeaqRbac::get_group(&owner, group_id)
 		}
 
-		fn fetch_groups(
+        fn fetch_groups(
 			owner: AccountId
 		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_groups(&owner)
 		}
 
-		fn fetch_group_roles(
-			owner: AccountId,
+        fn fetch_group_roles(
+			owner: AccountId, 
 			group_id: EntityId
 		) -> RbacResult<Vec<RbacRole2Group<EntityId>>> {
 			PeaqRbac::get_group_roles(&owner, group_id)
 		}
-
-		fn fetch_user_groups(
-			owner: AccountId,
+        
+        fn fetch_user_groups(
+			owner: AccountId, 
 			user_id: EntityId
 		) -> RbacResult<Vec<RbacUser2Group<EntityId>>> {
 			PeaqRbac::get_user_groups(&owner, user_id)
 		}
 
-		fn fetch_user_permissions(
-			owner: AccountId,
+        fn fetch_user_permissions(
+			owner: AccountId, 
 			user_id: EntityId
 		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_user_permissions(&owner, user_id)
 		}
-
-		fn fetch_group_permissions(
-			owner: AccountId,
+        
+        fn fetch_group_permissions(
+			owner: AccountId, 
 			group_id: EntityId
 		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
 			PeaqRbac::get_group_permissions(&owner, group_id)
