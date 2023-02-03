@@ -218,9 +218,9 @@ branch = 'dev'
 default-features = false
 
 [dependencies.peaq-pallet-mor]
+default-features = false
 git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
 branch = 'dev'
-default-features = false
 
 [dependencies.pallet-multisig]
 default-features = false
