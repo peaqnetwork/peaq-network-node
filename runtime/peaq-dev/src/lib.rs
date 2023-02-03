@@ -33,7 +33,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, Perquintill, SaturatedConversion,
+	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill, SaturatedConversion,
 };
 use sp_std::{
 	marker::PhantomData, prelude::*,
@@ -49,8 +49,8 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, Contains, Currency, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
-		OnUnbalanced, Randomness, StorageInfo,
+		ConstU32, Contains, Currency, EitherOfDiverse, FindAuthor, Imbalance,
+		KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
