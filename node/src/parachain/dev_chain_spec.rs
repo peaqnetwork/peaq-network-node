@@ -1,9 +1,9 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
-	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, 
-	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig, 
-	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig, 
+	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
+	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
+	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig,
 	MILLICENTS, CENTS, DOLLARS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
