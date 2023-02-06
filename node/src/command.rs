@@ -2,7 +2,7 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
-	parachain::service::{self, agung, dev, frontier_database_dir, krest, start_node},
+	parachain::service::{self, agung, dev, frontier_database_dir, krest, peaq, start_node},
 	primitives::Block,
 };
 
@@ -29,6 +29,7 @@ trait IdentifyChain {
 	fn is_dev(&self) -> bool;
 	fn is_agung(&self) -> bool;
 	fn is_krest(&self) -> bool;
+	fn is_peaq(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
@@ -40,6 +41,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	}
 	fn is_krest(&self) -> bool {
 		self.id().starts_with("krest")
+	}
+	fn is_peaq(&self) -> bool {
+		self.id().starts_with("peaq")
 	}
 }
 
@@ -57,6 +61,10 @@ macro_rules! with_runtime_or_err {
 			#[allow(unused_imports)]
 			use krest::{RuntimeApi, Executor};
 			$( $code )*
+		} else if $chain_spec.is_peaq() {
+			#[allow(unused_imports)]
+			use peaq::{RuntimeApi, Executor};
+			$( $code )*
 		} else {
 			return Err("Wrong chain_spec".into());
 		}
@@ -72,6 +80,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_krest(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_krest(self)
+	}
+	fn is_peaq(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_peaq(self)
 	}
 }
 
@@ -111,6 +122,8 @@ impl SubstrateCli for Cli {
 				Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"krest" =>
 				Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"peaq" =>
+				Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
@@ -129,6 +142,8 @@ impl SubstrateCli for Cli {
 			&peaq_agung_runtime::VERSION
 		} else if chain_spec.is_krest() {
 			&peaq_krest_runtime::VERSION
+		} else if chain_spec.is_peaq() {
+			&peaq_runtime::VERSION
 		} else {
 			&peaq_dev_runtime::VERSION
 		}

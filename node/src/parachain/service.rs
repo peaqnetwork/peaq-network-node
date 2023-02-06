@@ -109,6 +109,30 @@ pub mod krest {
 	}
 }
 
+// [TODO] Put it into the macro!
+pub mod peaq {
+	pub use peaq_runtime::RuntimeApi;
+
+	pub type HostFunctions = (
+		frame_benchmarking::benchmarking::HostFunctions,
+		peaq_primitives_ext::peaq_ext::HostFunctions,
+	);
+	// Our native executor instance.
+	pub struct Executor;
+
+	impl sc_executor::NativeExecutionDispatch for Executor {
+		type ExtendHostFunctions = HostFunctions;
+
+		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+			peaq_runtime::api::dispatch(method, data)
+		}
+
+		fn native_version() -> sc_executor::NativeVersion {
+			peaq_runtime::native_version()
+		}
+	}
+}
+
 type FullClient<RuntimeApi, Executor> =
 	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
 type FullBackend = TFullBackend<Block>;
