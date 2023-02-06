@@ -102,6 +102,7 @@ use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
 pub use peaq_pallet_mor;
+pub use peaq_pallet_mor::types::MorConfig;
 use peaq_pallet_mor::mor::MorBalance;
 
 // For XCM
@@ -925,7 +926,7 @@ construct_runtime!(
 		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		PeaqMor: peaq_pallet_mor::{Pallet, Call, Storage, Event<T>} = 105,
+		PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
 	}
 );
 
