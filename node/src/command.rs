@@ -122,17 +122,30 @@ impl SubstrateCli for Cli {
 				Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"krest" =>
 				Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
-			"peaq" =>
-				Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
-				with_runtime_or_err!(chain_spec, {
+				if chain_spec.is_dev() {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
-				})
+				} else if chain_spec.is_agung() {
+					Box::new(parachain::agung_chain_spec::ChainSpec::from_json_file(
+						std::path::PathBuf::from(path),
+					)?)
+				} else if chain_spec.is_krest() {
+					Box::new(parachain::krest_chain_spec::ChainSpec::from_json_file(
+						std::path::PathBuf::from(path),
+					)?)
+				} else if chain_spec.is_peaq() {
+					Box::new(parachain::peaq_chain_spec::ChainSpec::from_json_file(
+						std::path::PathBuf::from(path),
+					)?)
+				} else {
+					return Err(format!("Wrong chain_spec, {}", path))
+				}
 			},
 		})
 	}
