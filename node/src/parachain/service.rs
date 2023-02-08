@@ -39,99 +39,37 @@ use sc_cli::SubstrateCli;
 
 use sp_core::U256;
 
-/// dev network runtime executor.
-pub mod dev {
-	pub use peaq_dev_runtime::RuntimeApi;
+macro_rules! declare_executor {
+	($mod_type:tt, $runtime_ns:tt) => {
+		pub mod $mod_type {
+			pub use $runtime_ns::RuntimeApi;
 
-	pub type HostFunctions = (
-		frame_benchmarking::benchmarking::HostFunctions,
-		peaq_primitives_ext::peaq_ext::HostFunctions,
-	);
-	// Our native executor instance.
-	pub struct Executor;
+			pub type HostFunctions = (
+				frame_benchmarking::benchmarking::HostFunctions,
+				peaq_primitives_ext::peaq_ext::HostFunctions,
+			);
+			// Our native executor instance.
+			pub struct Executor;
 
-	impl sc_executor::NativeExecutionDispatch for Executor {
-		type ExtendHostFunctions = HostFunctions;
+			impl sc_executor::NativeExecutionDispatch for Executor {
+				type ExtendHostFunctions = HostFunctions;
 
-		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-			peaq_dev_runtime::api::dispatch(method, data)
-		}
+				fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+					$runtime_ns::api::dispatch(method, data)
+				}
 
-		fn native_version() -> sc_executor::NativeVersion {
-			peaq_dev_runtime::native_version()
-		}
-	}
-}
-
-pub mod agung {
-	pub use peaq_agung_runtime::RuntimeApi;
-
-	pub type HostFunctions = (
-		frame_benchmarking::benchmarking::HostFunctions,
-		peaq_primitives_ext::peaq_ext::HostFunctions,
-	);
-	// Our native executor instance.
-	pub struct Executor;
-
-	impl sc_executor::NativeExecutionDispatch for Executor {
-		type ExtendHostFunctions = HostFunctions;
-
-		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-			peaq_agung_runtime::api::dispatch(method, data)
-		}
-
-		fn native_version() -> sc_executor::NativeVersion {
-			peaq_agung_runtime::native_version()
+				fn native_version() -> sc_executor::NativeVersion {
+					$runtime_ns::native_version()
+				}
+			}
 		}
 	}
 }
 
-pub mod krest {
-	pub use peaq_krest_runtime::RuntimeApi;
-
-	pub type HostFunctions = (
-		frame_benchmarking::benchmarking::HostFunctions,
-		peaq_primitives_ext::peaq_ext::HostFunctions,
-	);
-	// Our native executor instance.
-	pub struct Executor;
-
-	impl sc_executor::NativeExecutionDispatch for Executor {
-		type ExtendHostFunctions = HostFunctions;
-
-		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-			peaq_krest_runtime::api::dispatch(method, data)
-		}
-
-		fn native_version() -> sc_executor::NativeVersion {
-			peaq_krest_runtime::native_version()
-		}
-	}
-}
-
-// [TODO] Put it into the macro!
-pub mod peaq {
-	pub use peaq_runtime::RuntimeApi;
-
-	pub type HostFunctions = (
-		frame_benchmarking::benchmarking::HostFunctions,
-		peaq_primitives_ext::peaq_ext::HostFunctions,
-	);
-	// Our native executor instance.
-	pub struct Executor;
-
-	impl sc_executor::NativeExecutionDispatch for Executor {
-		type ExtendHostFunctions = HostFunctions;
-
-		fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-			peaq_runtime::api::dispatch(method, data)
-		}
-
-		fn native_version() -> sc_executor::NativeVersion {
-			peaq_runtime::native_version()
-		}
-	}
-}
+declare_executor!(dev, peaq_dev_runtime);
+declare_executor!(agung, peaq_agung_runtime);
+declare_executor!(krest, peaq_krest_runtime);
+declare_executor!(peaq, peaq_runtime);
 
 type FullClient<RuntimeApi, Executor> =
 	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
