@@ -49,7 +49,7 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor, 
+		ConstU32, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor,
 		Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
 		WithdrawReasons,
 	},
@@ -855,7 +855,7 @@ macro_rules! impl_to_pot_adapter {
 				let pot = $pot::get().into_account_truncating();
 				Balances::resolve_creating(&pot, amount);
 			}
-		}	
+		}
 	};
 }
 

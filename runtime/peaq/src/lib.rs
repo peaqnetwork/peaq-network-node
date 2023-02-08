@@ -753,7 +753,6 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct ToStakingPot;
@@ -800,9 +799,7 @@ impl orml_currencies::Config for Runtime {
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![
-		PotStakeId::get().into_account_truncating()
-	]
+	vec![PotStakeId::get().into_account_truncating()]
 }
 
 pub struct DustRemovalWhitelist;

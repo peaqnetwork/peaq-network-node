@@ -33,8 +33,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	Ok(ChainSpec::from_genesis(
 		"peaq-network",
 		"peaq",
-		// [TODO] Need to change
-		ChainType::Development,
+		ChainType::Live,
 		move || {
 			configure_genesis(
 				wasm_binary,
@@ -196,9 +195,7 @@ fn configure_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		polkadot_xcm: peaq_runtime::PolkadotXcmConfig {
-			safe_xcm_version: Some(SAFE_XCM_VERSION),
-		},
+		polkadot_xcm: peaq_runtime::PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),

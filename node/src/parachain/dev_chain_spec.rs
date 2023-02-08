@@ -3,8 +3,8 @@ use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
 	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
-	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig,
-	MILLICENTS, CENTS, DOLLARS, TOKEN_DECIMALS, WASM_BINARY,
+	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig, CENTS,
+	DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -178,7 +178,7 @@ fn configure_genesis(
 		peaq_mor: PeaqMorConfig {
 			mor_config: MorConfig {
 				registration_reward: 10 * CENTS,
-				machine_usage_fee_min: 1 * MILLICENTS,
+				machine_usage_fee_min: MILLICENTS,
 				machine_usage_fee_max: 3 * DOLLARS,
 				track_n_block_rewards: 200,
 			},
