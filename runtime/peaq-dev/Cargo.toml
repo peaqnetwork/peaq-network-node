@@ -219,8 +219,9 @@ default-features = false
 
 [dependencies.peaq-pallet-mor]
 default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
-branch = 'dev'
+# git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
+# branch = 'dev'
+path = '../../../peaq-pallet-mor'
 
 [dependencies.pallet-multisig]
 default-features = false
@@ -504,6 +505,7 @@ runtime-benchmarks = [
 	'peaq-pallet-did/runtime-benchmarks',
 	'peaq-pallet-rbac/runtime-benchmarks',
 	'peaq-pallet-storage/runtime-benchmarks',
+	'peaq-pallet-mor/runtime-benchmarks',
 ]
 
 std = [
