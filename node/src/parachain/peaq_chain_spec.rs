@@ -41,19 +41,19 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 				vec![
 					(
 						AccountId::try_from(
-							&hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14") as &[u8]
+							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
 						).unwrap(),
 						None,
 						2 * staking::MinCollatorStake::get(),
 					), (
 						AccountId::try_from(
-							&hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37") as &[u8]
+							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
 						).unwrap(),
 						None,
 						2 * staking::MinCollatorStake::get(),
 					), (
 						AccountId::try_from(
-							&hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46") as &[u8]
+							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
 						).unwrap(),
 						None,
 						2 * staking::MinCollatorStake::get(),
@@ -63,26 +63,26 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 				vec![
 					(
 						AccountId::try_from(
-							&hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14") as &[u8]
+							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
 						).unwrap(),
 						AuraId::try_from(
-							&hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14") as &[u8]
+							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
 						).unwrap()
 					),
 					(
 						AccountId::try_from(
-							&hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37") as &[u8]
+							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
 						).unwrap(),
 						AuraId::try_from(
-							&hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37") as &[u8]
+							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
 						).unwrap()
 					),
 					(
 						AccountId::try_from(
-							&hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46") as &[u8]
+							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
 						).unwrap(),
 						AuraId::try_from(
-							&hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46") as &[u8]
+							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
 						).unwrap()
 					)
 				],
@@ -90,9 +90,9 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 				hex!("baa6e3c1c492a2324f2ce9bd7f05418597d2e8319924c54e827e52cf51b0747a").into(),
 				// Pre-funded accounts
 				vec![
-					hex!("d0724eec97826a56d1d0aa61f667025d81e047aa6408d4b1a82569d86c643e14").into(),
-					hex!("b8a553fc8364134c2856e229fe67d2bbc10c7a3575935b809c4299df08c8bd37").into(),
-					hex!("44771aff6488cfc95016804e23fd6fd370d8cc1a975d4178ad2b78a8656b2f46").into(),
+					hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529").into(),
+					hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c").into(),
+					hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35").into(),
 					//Sudo
 					hex!("baa6e3c1c492a2324f2ce9bd7f05418597d2e8319924c54e827e52cf51b0747a").into(),
 				],
