@@ -7584,7 +7584,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#f189f7d37479c9a70685ce0f7a287eff45fa54ce"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#9ddfcc23d58a2952e21bb5dfad0b427d608f67f2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
