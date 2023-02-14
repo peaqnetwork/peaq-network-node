@@ -467,7 +467,6 @@ where
     type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
     /// Withdraw the predicted fee from the transaction origin.
-    ///
     /// Note: The `fee` already includes the `tip`.
     fn withdraw_fee(
         who: &T::AccountId,
@@ -487,9 +486,9 @@ where
             WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
         };
 
-		// let factor = Percent::from_percent(50);
-		// let reward_fee = network_fee * factor;
-        // let tx_fee = network_fee + reward_fee;
+		let factor = Percent::from_percent(50);
+		let reward_fee = network_fee * factor;
+        let tx_fee = network_fee.saturating_add(reward_fee);
 
         match C::withdraw(who, fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
             Ok(imbalance) => Ok(Some(imbalance)),
@@ -500,7 +499,6 @@ where
     /// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
     /// Since the predicted fee might have been too high, parts of the fee may
     /// be refunded.
-    ///
     /// Note: The `corrected_fee` already includes the `tip`.
     fn correct_and_deposit_fee(
         who: &T::AccountId,
