@@ -504,6 +504,7 @@ runtime-benchmarks = [
 	'peaq-pallet-did/runtime-benchmarks',
 	'peaq-pallet-rbac/runtime-benchmarks',
 	'peaq-pallet-storage/runtime-benchmarks',
+	'peaq-pallet-mor/runtime-benchmarks',
 ]
 
 std = [
