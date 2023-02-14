@@ -29,7 +29,9 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf,
+		Saturating,
 		SaturatedConversion,
+		Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -47,15 +49,16 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, Contains, Currency, EitherOfDiverse, FindAuthor, Imbalance, KeyOwnerProofSystem,
-		Nothing, OnUnbalanced, Randomness, StorageInfo,
+		ConstU32, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor, 
+		Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
+		WithdrawReasons,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, DispatchClass, GetDispatchInfo, IdentityFee, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
-	ConsensusEngineId, PalletId, StorageValue,
+	ConsensusEngineId, PalletId, StorageValue
 };
 
 use frame_system::{
@@ -71,7 +74,12 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
 };
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
+
+use pallet_transaction_payment::{
+	OnChargeTransaction,
+	Config as TransactionPaymentConfig,
+};
+
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
@@ -435,9 +443,98 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	}
 }
 
+
+type NegativeImbalanceOf<C, T> =
+	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
+pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
+
+impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
+where
+    T: TransactionPaymentConfig,
+    C: Currency<<T as frame_system::Config>::AccountId>,
+    // C::PositiveImbalance: Imbalance<
+    //     <C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+    //     Opposite = C::NegativeImbalance,
+    // >,
+    // C::NegativeImbalance: Imbalance<
+    //     <C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+    //     Opposite = C::PositiveImbalance,
+    // >,
+    OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+{
+    type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
+    type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+    /// Withdraw the predicted fee from the transaction origin.
+    ///
+    /// Note: The `fee` already includes the `tip`.
+    fn withdraw_fee(
+        who: &T::AccountId,
+        _call: &T::Call,
+        _info: &DispatchInfoOf<T::Call>,
+        fee: Self::Balance,
+        tip: Self::Balance,
+    ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		let network_fee = fee;
+        if network_fee.is_zero() {
+            return Ok(None)
+        }
+
+        let withdraw_reason = if tip.is_zero() {
+            WithdrawReasons::TRANSACTION_PAYMENT
+        } else {
+            WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+        };
+
+		// let factor = Percent::from_percent(50);
+		// let reward_fee = network_fee * factor;
+        // let tx_fee = network_fee + reward_fee;
+
+        match C::withdraw(who, fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+            Ok(imbalance) => Ok(Some(imbalance)),
+            Err(_) => Err(InvalidTransaction::Payment.into()),
+        }
+    }
+
+    /// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+    /// Since the predicted fee might have been too high, parts of the fee may
+    /// be refunded.
+    ///
+    /// Note: The `corrected_fee` already includes the `tip`.
+    fn correct_and_deposit_fee(
+        who: &T::AccountId,
+        _dispatch_info: &DispatchInfoOf<T::Call>,
+        _post_info: &PostDispatchInfoOf<T::Call>,
+        corrected_fee: Self::Balance,
+        tip: Self::Balance,
+        already_withdrawn: Self::LiquidityInfo,
+    ) -> Result<(), TransactionValidityError> {
+        if let Some(paid) = already_withdrawn {
+			// Calculate how much refund we should return
+			let refund_amount = paid.peek().saturating_sub(corrected_fee);
+			// refund to the the account that paid the fees. If this fails, the
+			// account might have dropped below the existential balance. In
+			// that case we don't refund anything.
+			let refund_imbalance = C::deposit_into_existing(who, refund_amount)
+				.unwrap_or_else(|_| C::PositiveImbalance::zero());
+			// merge the imbalance caused by paying the fees and refunding parts of it again.
+			let adjusted_paid = paid
+				.offset(refund_imbalance)
+				.same()
+				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+			// Call someone else to handle the imbalance (fee and tip separately)
+			let (tip, fee) = adjusted_paid.split(tip);
+			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+		}
+		Ok(())
+    }
+}
+
+
 impl pallet_transaction_payment::Config for Runtime {
 	type Event = Event;
-	type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, DealWithFees>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
