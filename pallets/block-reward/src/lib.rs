@@ -55,7 +55,9 @@ pub use pallet::*;
 
 use frame_support::{
 	pallet_prelude::*,
-	traits::{Currency, Imbalance, OnTimestampSet},
+	traits::{
+		Currency, Imbalance, OnTimestampSet, OnUnbalanced,
+	},
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 use sp_runtime::{traits::CheckedAdd, Perbill};
@@ -127,6 +129,12 @@ pub mod pallet {
 
 		/// Setup the hard cap
 		HardCapChanged(BalanceOf<T>),
+
+		/// Rewards have been distributed
+		BlockRewardsDistributed(BalanceOf<T>),
+
+		/// Rewards have been distributed
+		TransactionFeesDistributed(BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -239,7 +247,15 @@ pub mod pallet {
 			}
 
 			let inflation = T::Currency::issue(Self::block_issue_reward());
-			Self::distribute_rewards(inflation);
+			let value = inflation.peek();
+			Self::distribute_rewards(inflation, Event::<T>::BlockRewardsDistributed(value));
+		}
+	}
+
+	impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Pallet<T> {
+		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
+			let value = amount.peek();
+			Self::distribute_rewards(amount, Event::<T>::TransactionFeesDistributed(value));
 		}
 	}
 
@@ -248,19 +264,19 @@ pub mod pallet {
 		///
 		/// # Arguments
 		/// * `reward` - reward that will be split and distributed
-		fn distribute_rewards(block_reward: NegativeImbalanceOf<T>) {
+		fn distribute_rewards(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
 			let distro_params = Self::reward_config();
 
 			// Pre-calculate balance which will be deposited for each beneficiary
-			let dapps_balance = distro_params.dapps_percent * block_reward.peek();
-			let collator_balance = distro_params.collators_percent * block_reward.peek();
-			let lp_balance = distro_params.lp_percent * block_reward.peek();
-			let machines_balance = distro_params.machines_percent * block_reward.peek();
+			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
+			let collator_balance = distro_params.collators_percent * imbalance.peek();
+			let lp_balance = distro_params.lp_percent * imbalance.peek();
+			let machines_balance = distro_params.machines_percent * imbalance.peek();
 			let machines_subsidization_balance =
-				distro_params.machines_subsidization_percent * block_reward.peek();
+				distro_params.machines_subsidization_percent * imbalance.peek();
 
 			// Prepare imbalances
-			let (dapps_imbalance, remainder) = block_reward.split(dapps_balance);
+			let (dapps_imbalance, remainder) = imbalance.split(dapps_balance);
 			let (collator_imbalance, remainder) = remainder.split(collator_balance);
 			let (lp_imbalance, remainder) = remainder.split(lp_balance);
 			let (machines_imbalance, remainder) = remainder.split(machines_balance);
@@ -274,6 +290,8 @@ pub mod pallet {
 			T::BeneficiaryPayout::lp_users(lp_imbalance);
 			T::BeneficiaryPayout::machines(machines_imbalance);
 			T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
+
+			Self::deposit_event(dpt_event);
 		}
 	}
 }
