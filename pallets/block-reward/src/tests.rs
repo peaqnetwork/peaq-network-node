@@ -303,6 +303,19 @@ pub fn on_unbalanced() {
 	})
 }
 
+#[test]
+pub fn on_unbalanceds() {
+	let issue = |x| <TestRuntime as Config>::Currency::issue(x);
+	ExternalityBuilder::build().execute_with(|| {
+		let amount = 1_000_000_000_000 as Balance;
+		let mut imbalances: Vec<NegativeImbalanceOf<TestRuntime>> = Vec::new();
+		for _i in 0..4 {
+			imbalances.push(issue(amount));
+		}
+		BlockReward::on_unbalanceds(imbalances.into_iter());
+	})
+}
+
 /// Represents free balance snapshot at a specific point in time
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 struct FreeBalanceSnapshot {
