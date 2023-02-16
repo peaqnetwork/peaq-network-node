@@ -58,7 +58,7 @@ pub use frame_support::{
 		ConstantMultiplier, DispatchClass, GetDispatchInfo, IdentityFee, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
-	ConsensusEngineId, PalletId, StorageValue
+	ConsensusEngineId, PalletId, StorageValue,
 };
 
 use frame_system::{
@@ -443,7 +443,6 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 		<BlockReward as OnUnbalanced<_>>::on_unbalanced(amount);
 	}
 }
-
 
 type NegativeImbalanceOf<C, T> =
 	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
