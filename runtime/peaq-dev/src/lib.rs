@@ -432,16 +432,6 @@ impl WeightToFeePolynomial for WeightToFee {
 
 pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-	// fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
-	// 	if let Some(mut fees) = fees_then_tips.next() {
-	// 		if let Some(tips) = fees_then_tips.next() {
-	// 			tips.merge_into(&mut fees);
-	// 		}
-	// 		// Transfer fees to BlockReward-Pallet for further distribution
-	// 		<BlockReward as OnUnbalanced<_>>::on_unbalanced(fees);
-	// 	}
-	// }
-
 	// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
 	// implementations will just drop the imbalances!! Instead on_unbalanceds() will
 	// use these two following methods.
