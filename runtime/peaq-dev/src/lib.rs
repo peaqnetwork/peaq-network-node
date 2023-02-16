@@ -438,8 +438,7 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 				tips.merge_into(&mut fees);
 			}
 			// Transfer fees to BlockReward-Pallet for further distribution
-			// <ToStakingPot as OnUnbalanced<_>>::on_unbalanced(fees);
-			<BlockReward as OnUnbalanced<_>>::on_nonzero_unbalanced(fees);
+			<BlockReward as OnUnbalanced<_>>::on_unbalanced(fees);
 		}
 	}
 }
@@ -454,14 +453,6 @@ impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
 where
     T: TransactionPaymentConfig,
     C: Currency<<T as frame_system::Config>::AccountId>,
-    // C::PositiveImbalance: Imbalance<
-    //     <C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-    //     Opposite = C::NegativeImbalance,
-    // >,
-    // C::NegativeImbalance: Imbalance<
-    //     <C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-    //     Opposite = C::PositiveImbalance,
-    // >,
     OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
     type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
@@ -488,9 +479,7 @@ where
         };
 
 		// Apply Peaq Economy-of-Things Fee adjustment
-		// TODO: Check why this did not work!!
-		// let reward_fee = network_fee * Percent::from_percent(50);
-		let reward_fee = network_fee / Self::Balance::from(2u16);
+		let reward_fee = Perbill::from_percent(50) * network_fee;
         let tx_fee = network_fee.saturating_add(reward_fee);
 
         match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
@@ -514,7 +503,7 @@ where
         if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
 			let cor_network_fee = corrected_fee;
-			let cor_reward_fee = corrected_fee / Self::Balance::from(2u16); // TODO
+			let cor_reward_fee = Perbill::from_percent(50) * corrected_fee;
 			let cor_tx_fee = cor_reward_fee + cor_network_fee;
 
 			// Calculate how much refund we should return
@@ -865,22 +854,6 @@ impl peaq_pallet_mor::Config for Runtime {
 
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
-
-// /// Generic type definition to be able to distribute Imbalances to a given pot.
-// pub struct ImbalanceToPot(PalletId);
-
-// impl OnUnbalanced<NegativeImbalance> for ImbalanceToPot {
-// 	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-// 		let pot = self.0.get().into_account_truncating();
-// 		Balances::resolve_creating(&pot, amount);
-// 	}
-// }
-
-// parameter_types! {
-// 	pub ToStakingPot: ImbalanceToPot = PalletId(PotStakeId);
-// 	pub ToMachinePot: ImbalanceToPot = PalletId(PotMorId);
-// }
-
 
 pub struct ToStakingPot;
 impl OnUnbalanced<NegativeImbalance> for ToStakingPot {

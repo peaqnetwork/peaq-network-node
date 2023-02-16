@@ -248,23 +248,30 @@ pub mod pallet {
 
 			let inflation = T::Currency::issue(Self::block_issue_reward());
 			let value = inflation.peek();
-			Self::distribute_rewards(inflation, Event::<T>::BlockRewardsDistributed(value));
+			Self::distribute_imbalances(inflation, Event::<T>::BlockRewardsDistributed(value));
 		}
 	}
 
 	impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Pallet<T> {
+		// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
+		// implementations will just drop the imbalances!! Instead on_unbalanceds() will
+		// use these two following methods.
+		fn on_unbalanced(amount: NegativeImbalanceOf<T>) {
+			<Self as OnUnbalanced<NegativeImbalanceOf<T>>>::on_nonzero_unbalanced(amount);
+		}
+
 		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
 			let value = amount.peek();
-			Self::distribute_rewards(amount, Event::<T>::TransactionFeesDistributed(value));
+			Self::distribute_imbalances(amount, Event::<T>::TransactionFeesDistributed(value));
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Distribute reward between beneficiaries.
+		/// Distribute any kind of imbalances between beneficiaries.
 		///
 		/// # Arguments
-		/// * `reward` - reward that will be split and distributed
-		fn distribute_rewards(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
+		/// * `imbalance` - imbalance that will be split and distributed
+		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
 			let distro_params = Self::reward_config();
 
 			// Pre-calculate balance which will be deposited for each beneficiary
