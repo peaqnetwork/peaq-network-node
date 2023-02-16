@@ -432,14 +432,25 @@ impl WeightToFeePolynomial for WeightToFee {
 
 pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
-		if let Some(mut fees) = fees_then_tips.next() {
-			if let Some(tips) = fees_then_tips.next() {
-				tips.merge_into(&mut fees);
-			}
-			// Transfer fees to BlockReward-Pallet for further distribution
-			<BlockReward as OnUnbalanced<_>>::on_unbalanced(fees);
-		}
+	// fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+	// 	if let Some(mut fees) = fees_then_tips.next() {
+	// 		if let Some(tips) = fees_then_tips.next() {
+	// 			tips.merge_into(&mut fees);
+	// 		}
+	// 		// Transfer fees to BlockReward-Pallet for further distribution
+	// 		<BlockReward as OnUnbalanced<_>>::on_unbalanced(fees);
+	// 	}
+	// }
+
+	// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
+	// implementations will just drop the imbalances!! Instead on_unbalanceds() will
+	// use these two following methods.
+	fn on_unbalanced(amount: NegativeImbalance) {
+		Self::on_nonzero_unbalanced(amount);
+	}
+
+	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+		<BlockReward as OnUnbalanced<_>>::on_unbalanced(amount);
 	}
 }
 
@@ -520,6 +531,7 @@ where
 				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
 			// Call someone else to handle the imbalance (fee and tip separately)
 			let (tip, fee) = adjusted_paid.split(tip);
+
 			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
 		}
 		Ok(())
@@ -855,21 +867,26 @@ impl peaq_pallet_mor::Config for Runtime {
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
-pub struct ToStakingPot;
-impl OnUnbalanced<NegativeImbalance> for ToStakingPot {
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		let pot = PotStakeId::get().into_account_truncating();
-		Balances::resolve_creating(&pot, amount);
-	}
+/// Implements the adapters for depositing unbalanced tokens on pots
+/// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
+macro_rules! impl_to_pot_adapter {
+	($name:ident, $pot:ident, $negbal:ident) => {
+		pub struct $name;
+		impl OnUnbalanced<$negbal> for $name {
+			fn on_unbalanced(amount: $negbal) {
+				Self::on_nonzero_unbalanced(amount);
+			}
+
+			fn on_nonzero_unbalanced(amount: $negbal) {
+				let pot = $pot::get().into_account_truncating();
+				Balances::resolve_creating(&pot, amount);
+			}
+		}	
+	};
 }
 
-pub struct ToMachinePot;
-impl OnUnbalanced<NegativeImbalance> for ToMachinePot {
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		let pot = PotMorId::get().into_account_truncating();
-		Balances::resolve_creating(&pot, amount);
-	}
-}
+impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
+impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
 
 impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
