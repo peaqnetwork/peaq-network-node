@@ -24,28 +24,32 @@
 //!
 //! - `on_timestamp_set` - This pallet implements the `OnTimestampSet` trait to handle block
 //!   production. Note: We assume that it's impossible to set timestamp two times in a block.
+//! - `on_unbalanced` - This pallet implements the `OnUnbalanced` trait to handle the distribution
+//!   of tokens generally. Any kind of `Imbalance` can be passed to that method, to be
+//!   distributed the same way as block-rewards as `BeneficiaryPayout`. In case of a vector
+//!   of imbalances you can also use `on_unblananceds`.
 //!
 //! ## Usage
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
 //! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//! example: ```nocompile
-//! pub struct BeneficiaryPayout();
-//! impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//! 	example: 
+//! 	```ignore
+//! 	pub struct BeneficiaryPayout();
+//! 	impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//!     	fn treasury(reward: NegativeImbalanceOf<T>) {
+//!         	Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+//!     	}
 //!
-//!     fn treasury(reward: NegativeImbalanceOf<T>) {
-//!         Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
-//!     }
+//!     	fn collators(reward: NegativeImbalanceOf<T>) {
+//!         	Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
+//!     	}
 //!
-//!     fn collators(reward: NegativeImbalanceOf<T>) {
-//!         Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
-//!      }
-//!
-//!     fn dapps_staking(reward: NegativeImbalanceOf<T>) {
-//!         DappsStaking::rewards(reward);
-//!     }
-//! }
-//! ```
+//!     	fn dapps_staking(reward: NegativeImbalanceOf<T>) {
+//!         	DappsStaking::rewards(reward);
+//!     	}
+//! 	}
+//! 	```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
 //! 4. Set `HardCap` to hardcap in the genesis configuration.
 

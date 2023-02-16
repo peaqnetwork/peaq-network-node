@@ -1,5 +1,8 @@
 use super::{pallet::Error, Event, *};
-use frame_support::{assert_noop, assert_ok, traits::OnTimestampSet};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::{OnTimestampSet, Currency},
+};
 use mock::*;
 use sp_runtime::{
 	traits::{AccountIdConversion, BadOrigin, Zero},
@@ -287,6 +290,16 @@ pub fn reward_distribution_no_adjustable_part() {
 			let final_balance_state = FreeBalanceSnapshot::new();
 			init_balance_state.assert_distribution(&final_balance_state, &rewards);
 		}
+	})
+}
+
+
+#[test]
+pub fn on_unbalanced() {
+	ExternalityBuilder::build().execute_with(|| {
+		let amount = 1_000_000_000_000 as Balance;
+		let imbalance = <TestRuntime as Config>::Currency::issue(amount);
+		BlockReward::on_unbalanced(imbalance);
 	})
 }
 
