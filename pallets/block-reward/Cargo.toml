@@ -1,12 +1,12 @@
 [package]
 name = "pallet-block-reward"
-version = "2.0.0"
+version = "3.0.0"
 authors = ["Stake  Technologies <devops@stake.co.jp>"]
 edition = "2021"
 license = "Apache-2.0"
 homepage = "https://astar.network"
 repository = "https://github.com/AstarNetwork/Astar"
-description = "FRAME pallet for managing blcok reward issuance & distribution"
+description = "FRAME pallet for managing block reward issuance & distribution"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive"] }

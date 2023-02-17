@@ -18,7 +18,7 @@
 //!
 //! - `set_configuration` - used to change reward distribution configuration parameters
 //! - `set_block_issue_reward` - used to change block issue reward configuration parameter
-//! - `set_hard_cap` - used to change the hard cap parameter
+//! - `set_max_currency_supply` - used to change the maximum currency supply parameter
 //!
 //! ### Other
 //!
@@ -51,7 +51,7 @@
 //! 	}
 //! 	```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
-//! 4. Set `HardCap` to hardcap in the genesis configuration.
+//! 4. Set `MaxCurrencySupply` to limit maximum currency supply in the genesis configuration.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -71,6 +71,9 @@ pub mod benchmarking;
 mod mock;
 #[cfg(test)]
 mod tests;
+
+pub mod migrations;
+pub use migrations::StorageReleases;
 
 pub mod types;
 pub use types::*;
@@ -104,19 +107,26 @@ pub mod pallet {
 
 
 	#[pallet::storage]
+	#[pallet::getter(fn storage_version)]
+	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn reward_config)]
-	pub type RewardDistributionConfigStorage<T: Config> =
+	pub(super) type RewardDistributionConfigStorage<T: Config> =
 		StorageValue<_, RewardDistributionConfig, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn block_issue_reward)]
-	pub(crate) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub(super) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn hard_cap)]
-	pub(crate) type HardCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub(super) type HardCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn max_currency_supply)]
+	pub(super) type MaxCurrencySupply<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -127,7 +137,7 @@ pub mod pallet {
 		BlockIssueRewardChanged(BalanceOf<T>),
 
 		/// Setup the hard cap
-		HardCapChanged(BalanceOf<T>),
+		MaxCurrencySupplyChanged(BalanceOf<T>),
 
 		/// Rewards have been distributed
 		BlockRewardsDistributed(BalanceOf<T>),
@@ -148,7 +158,7 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub reward_config: RewardDistributionConfig,
 		pub block_issue_reward: BalanceOf<T>,
-		pub hard_cap: BalanceOf<T>,
+		pub max_currency_supply: BalanceOf<T>,
 	}
 
 	#[cfg(feature = "std")]
@@ -157,7 +167,7 @@ pub mod pallet {
 			Self {
 				reward_config: Default::default(),
 				block_issue_reward: Default::default(),
-				hard_cap: Default::default(),
+				max_currency_supply: Default::default(),
 			}
 		}
 	}
@@ -168,7 +178,15 @@ pub mod pallet {
 			assert!(self.reward_config.is_consistent());
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
 			BlockIssueReward::<T>::put(self.block_issue_reward);
-			HardCap::<T>::put(self.hard_cap);
+			MaxCurrencySupply::<T>::put(self.max_currency_supply);
+		}
+	}
+
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migrations::on_runtime_upgrade::<T>()
 		}
 	}
 
@@ -222,21 +240,21 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Sets the hard cap parameter which will be used from limit the block reward.
+		/// Sets the maximum currency supply parameter which will be used from limit the block reward.
 		///
-		/// - `limit` - hardcap limit param
+		/// - `limit` - maximum currency supply limit param
 		///
-		/// Emits `HardCapChanged` with config embeded into event itself.
-		#[pallet::weight(T::WeightInfo::set_hard_cap())]
-		pub fn set_hard_cap(
+		/// Emits `MaxCurrencySupplyChanged` with config embeded into event itself.
+		#[pallet::weight(T::WeightInfo::set_max_currency_supply())]
+		pub fn set_max_currency_supply(
 			origin: OriginFor<T>,
 			limit: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			HardCap::<T>::put(limit);
+			MaxCurrencySupply::<T>::put(limit);
 
-			Self::deposit_event(Event::<T>::HardCapChanged(limit));
+			Self::deposit_event(Event::<T>::MaxCurrencySupplyChanged(limit));
 
 			Ok(().into())
 		}
@@ -244,7 +262,7 @@ pub mod pallet {
 
 	impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
 		fn on_timestamp_set(_moment: Moment) {
-			if T::Currency::total_issuance() >= Self::hard_cap() {
+			if T::Currency::total_issuance() >= Self::max_currency_supply() {
 				return
 			}
 
