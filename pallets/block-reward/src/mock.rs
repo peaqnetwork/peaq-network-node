@@ -164,7 +164,7 @@ impl ExternalityBuilder {
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
 			block_issue_reward: BLOCK_REWARD,
-			hard_cap: HARD_CAP,
+			max_currency_supply: HARD_CAP,
 		}
 		.assimilate_storage(&mut storage)
 		.ok();

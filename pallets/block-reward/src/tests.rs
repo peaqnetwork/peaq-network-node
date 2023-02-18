@@ -165,21 +165,21 @@ pub fn set_block_issue_reward_is_ok() {
 }
 
 #[test]
-pub fn set_hardcap_is_failure() {
+pub fn set_maxcurrencysupply_is_failure() {
 	ExternalityBuilder::build().execute_with(|| {
-		assert_noop!(BlockReward::set_hard_cap(Origin::signed(1), Default::default()), BadOrigin);
+		assert_noop!(BlockReward::set_max_currency_supply(Origin::signed(1), Default::default()), BadOrigin);
 	})
 }
 
 #[test]
-pub fn set_hardcap_is_ok() {
+pub fn set_maxcurrencysupply_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		let limit = 3_123_456 as Balance;
 		// custom config so it differs from the default one
-		assert_ok!(BlockReward::set_hard_cap(Origin::root(), limit));
-		System::assert_last_event(mock::Event::BlockReward(Event::HardCapChanged(limit)));
+		assert_ok!(BlockReward::set_max_currency_supply(Origin::root(), limit));
+		System::assert_last_event(mock::Event::BlockReward(Event::MaxCurrencySupplyChanged(limit)));
 
-		assert_eq!(HardCap::<TestRuntime>::get(), limit);
+		assert_eq!(MaxCurrencySupply::<TestRuntime>::get(), limit);
 	})
 }
 
@@ -208,7 +208,7 @@ pub fn harcap_reaches() {
 		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
 		let block_limits = 3_u128;
 
-		assert_ok!(BlockReward::set_hard_cap(Origin::root(), BLOCK_REWARD * block_limits));
+		assert_ok!(BlockReward::set_max_currency_supply(Origin::root(), BLOCK_REWARD * block_limits));
 
 		for block in 0..block_limits {
 			assert_eq!(
