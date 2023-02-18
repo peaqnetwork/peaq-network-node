@@ -81,6 +81,18 @@ pub use types::*;
 pub mod weights;
 pub use weights::WeightInfo;
 
+
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: "runtime::block-reward",
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
+
 #[frame_support::pallet]
 pub mod pallet {
 
@@ -120,9 +132,6 @@ pub mod pallet {
 	pub(super) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
-	pub(super) type HardCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn max_currency_supply)]
 	pub(super) type MaxCurrencySupply<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
@@ -136,7 +145,7 @@ pub mod pallet {
 		/// Setup the block issue reward
 		BlockIssueRewardChanged(BalanceOf<T>),
 
-		/// Setup the hard cap
+		/// Setup the maximum currency supply (hard cap)
 		MaxCurrencySupplyChanged(BalanceOf<T>),
 
 		/// Rewards have been distributed

@@ -1,10 +1,8 @@
 //! Storage migrations for the block-reward pallet.
 
 use super::*;
-// use frame_election_provider_support::SortedListProvider;
 use frame_support::{
-    // ensure,
-    // traits::OnRuntimeUpgrade,
+    storage_alias,
     weights::Weight,
 };
 
@@ -26,32 +24,34 @@ impl Default for StorageReleases {
 
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
-    v3::BlockRewardHardCapRenamer::<T>::on_runtime_upgrade()
+    v3::MigrateToV3::<T>::on_runtime_upgrade()
 }
 
 
 mod v3 {
     use super::*;
 
-    /// Migration implementation that renames storage HardCap into MaxCurrencySupply
-    pub struct BlockRewardHardCapRenamer<T>(sp_std::marker::PhantomData<T>);
+    #[storage_alias]
+	type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
 
-    impl<T: Config> BlockRewardHardCapRenamer<T> {
+    /// Migration implementation that renames storage HardCap into MaxCurrencySupply
+    pub struct MigrateToV3<T>(sp_std::marker::PhantomData<T>);
+
+    impl<T: Config> MigrateToV3<T> {
         pub fn on_runtime_upgrade() -> Weight {
             if VersionStorage::<T>::get() != StorageReleases::V0_0_0 {
-                // log!(info, "Wrong upgrade method for current storage release!");
                 T::DbWeight::get().reads(1)
             } else {
-                // log!(info, "Migrating block_reward to Releases::V3_0_0");
+                log!(info, "Migrating block_reward to Releases::V3_0_0");
 
                 let storage = HardCap::<T>::get();
                 MaxCurrencySupply::<T>::put(storage);
                 HardCap::<T>::kill();
                 VersionStorage::<T>::put(StorageReleases::V3_0_0);
 
-                // log!(info, "Releases::V3_0_0 Migrating Done.");
+                log!(info, "Releases::V3_0_0 Migrating Done.");
 
-                T::BlockWeights::get().max_block
+                T::DbWeight::get().reads_writes(1, 2)
             }
         }
     }
