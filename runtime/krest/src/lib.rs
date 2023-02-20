@@ -405,6 +405,7 @@ impl pallet_balances::Config for Runtime {
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -483,7 +484,7 @@ where
         };
 
 		// Apply Peaq Economy-of-Things Fee adjustment
-		let reward_fee = Perbill::from_percent(50) * network_fee;
+		let reward_fee = EoTFeeFactor::get() * network_fee;
         let tx_fee = network_fee.saturating_add(reward_fee);
 
         match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
@@ -507,7 +508,7 @@ where
         if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
 			let cor_network_fee = corrected_fee;
-			let cor_reward_fee = Perbill::from_percent(50) * corrected_fee;
+			let cor_reward_fee = EoTFeeFactor::get() * corrected_fee;
 			let cor_tx_fee = cor_reward_fee + cor_network_fee;
 
 			// Calculate how much refund we should return
