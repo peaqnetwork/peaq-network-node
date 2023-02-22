@@ -169,7 +169,7 @@ fn configure_genesis(
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
 			block_issue_reward: 7_909_867 * MILLICENTS,
-			hard_cap: 4_200_000_000 * DOLLARS,
+			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {

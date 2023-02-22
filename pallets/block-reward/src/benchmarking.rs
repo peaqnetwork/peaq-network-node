@@ -27,11 +27,11 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::BlockIssueRewardChanged(block_reward).into());
 	}
 
-	set_hard_cap {
-		let hard_cap = BalanceOf::<T>::from(100_123u32);
-	}: _(RawOrigin::Root, hard_cap)
+	set_max_currency_supply {
+		let max_currency_supply = BalanceOf::<T>::from(100_123u32);
+	}: _(RawOrigin::Root, max_currency_supply)
 	verify {
-		assert_last_event::<T>(Event::<T>::HardCapChanged(hard_cap).into());
+		assert_last_event::<T>(Event::<T>::MaxCurrencySupplyChanged(max_currency_supply).into());
 	}
 
 }
