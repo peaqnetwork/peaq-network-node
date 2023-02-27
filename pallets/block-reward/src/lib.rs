@@ -18,36 +18,40 @@
 //!
 //! - `set_configuration` - used to change reward distribution configuration parameters
 //! - `set_block_issue_reward` - used to change block issue reward configuration parameter
-//! - `set_hard_cap` - used to change the hard cap parameter
+//! - `set_max_currency_supply` - used to change the maximum currency supply parameter
 //!
 //! ### Other
 //!
 //! - `on_timestamp_set` - This pallet implements the `OnTimestampSet` trait to handle block
 //!   production. Note: We assume that it's impossible to set timestamp two times in a block.
+//! - `on_unbalanced` - This pallet implements the `OnUnbalanced` trait to handle the distribution
+//!   of tokens generally. Any kind of `Imbalance` can be passed to that method, to be
+//!   distributed the same way as block-rewards as `BeneficiaryPayout`. In case of a vector
+//!   of imbalances you can also use `on_unblananceds`.
 //!
 //! ## Usage
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
 //! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//! example: ```nocompile
-//! pub struct BeneficiaryPayout();
-//! impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//! 	example: 
+//! 	```ignore
+//! 	pub struct BeneficiaryPayout();
+//! 	impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//!     	fn treasury(reward: NegativeImbalanceOf<T>) {
+//!         	Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+//!     	}
 //!
-//!     fn treasury(reward: NegativeImbalanceOf<T>) {
-//!         Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
-//!     }
+//!     	fn collators(reward: NegativeImbalanceOf<T>) {
+//!         	Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
+//!     	}
 //!
-//!     fn collators(reward: NegativeImbalanceOf<T>) {
-//!         Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
-//!      }
-//!
-//!     fn dapps_staking(reward: NegativeImbalanceOf<T>) {
-//!         DappsStaking::rewards(reward);
-//!     }
-//! }
-//! ```
+//!     	fn dapps_staking(reward: NegativeImbalanceOf<T>) {
+//!         	DappsStaking::rewards(reward);
+//!     	}
+//! 	}
+//! 	```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
-//! 4. Set `HardCap` to hardcap in the genesis configuration.
+//! 4. Set `MaxCurrencySupply` to limit maximum currency supply in the genesis configuration.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -55,11 +59,11 @@ pub use pallet::*;
 
 use frame_support::{
 	pallet_prelude::*,
-	traits::{Currency, Imbalance, OnTimestampSet},
+	traits::{
+		Currency, Imbalance, OnTimestampSet, OnUnbalanced,
+	},
 };
 use frame_system::{ensure_root, pallet_prelude::*};
-use sp_runtime::{traits::CheckedAdd, Perbill};
-use sp_std::vec;
 
 #[cfg(any(feature = "runtime-benchmarks"))]
 pub mod benchmarking;
@@ -68,25 +72,35 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod migrations;
+pub use migrations::StorageReleases;
+
+pub mod types;
+pub use types::*;
+
 pub mod weights;
 pub use weights::WeightInfo;
+
+
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: "runtime::block-reward",
+			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
 
 #[frame_support::pallet]
 pub mod pallet {
 
 	use super::*;
 
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(PhantomData<T>);
-
-	/// The balance type of this pallet.
-	pub(crate) type BalanceOf<T> =
-		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-	// Negative imbalance type of this pallet.
-	pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
-		<T as frame_system::Config>::AccountId,
-	>>::NegativeImbalance;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -103,19 +117,25 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+
+	#[pallet::storage]
+	#[pallet::getter(fn storage_version)]
+	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn reward_config)]
-	pub type RewardDistributionConfigStorage<T: Config> =
+	pub(super) type RewardDistributionConfigStorage<T: Config> =
 		StorageValue<_, RewardDistributionConfig, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn block_issue_reward)]
-	pub(crate) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub(super) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn hard_cap)]
-	pub(crate) type HardCap<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	#[pallet::getter(fn max_currency_supply)]
+	pub(super) type MaxCurrencySupply<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -125,9 +145,16 @@ pub mod pallet {
 		/// Setup the block issue reward
 		BlockIssueRewardChanged(BalanceOf<T>),
 
-		/// Setup the hard cap
-		HardCapChanged(BalanceOf<T>),
+		/// Setup the maximum currency supply (hard cap)
+		MaxCurrencySupplyChanged(BalanceOf<T>),
+
+		/// Rewards have been distributed
+		BlockRewardsDistributed(BalanceOf<T>),
+
+		/// Rewards have been distributed
+		TransactionFeesDistributed(BalanceOf<T>),
 	}
+
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -135,11 +162,12 @@ pub mod pallet {
 		InvalidDistributionConfiguration,
 	}
 
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub reward_config: RewardDistributionConfig,
 		pub block_issue_reward: BalanceOf<T>,
-		pub hard_cap: BalanceOf<T>,
+		pub max_currency_supply: BalanceOf<T>,
 	}
 
 	#[cfg(feature = "std")]
@@ -148,7 +176,7 @@ pub mod pallet {
 			Self {
 				reward_config: Default::default(),
 				block_issue_reward: Default::default(),
-				hard_cap: Default::default(),
+				max_currency_supply: Default::default(),
 			}
 		}
 	}
@@ -159,9 +187,18 @@ pub mod pallet {
 			assert!(self.reward_config.is_consistent());
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
 			BlockIssueReward::<T>::put(self.block_issue_reward);
-			HardCap::<T>::put(self.hard_cap);
+			MaxCurrencySupply::<T>::put(self.max_currency_supply);
 		}
 	}
+
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migrations::on_runtime_upgrade::<T>()
+		}
+	}
+
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -212,21 +249,21 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Sets the hard cap parameter which will be used from limit the block reward.
+		/// Sets the maximum currency supply parameter which will be used from limit the block reward.
 		///
-		/// - `limit` - hardcap limit param
+		/// - `limit` - maximum currency supply limit param
 		///
-		/// Emits `HardCapChanged` with config embeded into event itself.
-		#[pallet::weight(T::WeightInfo::set_hard_cap())]
-		pub fn set_hard_cap(
+		/// Emits `MaxCurrencySupplyChanged` with config embeded into event itself.
+		#[pallet::weight(T::WeightInfo::set_max_currency_supply())]
+		pub fn set_max_currency_supply(
 			origin: OriginFor<T>,
 			limit: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			HardCap::<T>::put(limit);
+			MaxCurrencySupply::<T>::put(limit);
 
-			Self::deposit_event(Event::<T>::HardCapChanged(limit));
+			Self::deposit_event(Event::<T>::MaxCurrencySupplyChanged(limit));
 
 			Ok(().into())
 		}
@@ -234,33 +271,48 @@ pub mod pallet {
 
 	impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
 		fn on_timestamp_set(_moment: Moment) {
-			if T::Currency::total_issuance() >= Self::hard_cap() {
+			if T::Currency::total_issuance() >= Self::max_currency_supply() {
 				return
 			}
 
 			let inflation = T::Currency::issue(Self::block_issue_reward());
-			Self::distribute_rewards(inflation);
+			let value = inflation.peek();
+			Self::distribute_imbalances(inflation, Event::<T>::BlockRewardsDistributed(value));
+		}
+	}
+
+	impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Pallet<T> {
+		// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
+		// implementations will just drop the imbalances!! Instead on_unbalanceds() will
+		// use these two following methods.
+		fn on_unbalanced(amount: NegativeImbalanceOf<T>) {
+			<Self as OnUnbalanced<NegativeImbalanceOf<T>>>::on_nonzero_unbalanced(amount);
+		}
+
+		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
+			let value = amount.peek();
+			Self::distribute_imbalances(amount, Event::<T>::TransactionFeesDistributed(value));
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Distribute reward between beneficiaries.
+		/// Distribute any kind of imbalances between beneficiaries.
 		///
 		/// # Arguments
-		/// * `reward` - reward that will be split and distributed
-		fn distribute_rewards(block_reward: NegativeImbalanceOf<T>) {
+		/// * `imbalance` - imbalance that will be split and distributed
+		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
 			let distro_params = Self::reward_config();
 
 			// Pre-calculate balance which will be deposited for each beneficiary
-			let dapps_balance = distro_params.dapps_percent * block_reward.peek();
-			let collator_balance = distro_params.collators_percent * block_reward.peek();
-			let lp_balance = distro_params.lp_percent * block_reward.peek();
-			let machines_balance = distro_params.machines_percent * block_reward.peek();
+			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
+			let collator_balance = distro_params.collators_percent * imbalance.peek();
+			let lp_balance = distro_params.lp_percent * imbalance.peek();
+			let machines_balance = distro_params.machines_percent * imbalance.peek();
 			let machines_subsidization_balance =
-				distro_params.machines_subsidization_percent * block_reward.peek();
+				distro_params.machines_subsidization_percent * imbalance.peek();
 
 			// Prepare imbalances
-			let (dapps_imbalance, remainder) = block_reward.split(dapps_balance);
+			let (dapps_imbalance, remainder) = imbalance.split(dapps_balance);
 			let (collator_imbalance, remainder) = remainder.split(collator_balance);
 			let (lp_imbalance, remainder) = remainder.split(lp_balance);
 			let (machines_imbalance, remainder) = remainder.split(machines_balance);
@@ -274,97 +326,8 @@ pub mod pallet {
 			T::BeneficiaryPayout::lp_users(lp_imbalance);
 			T::BeneficiaryPayout::machines(machines_imbalance);
 			T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
+
+			Self::deposit_event(dpt_event);
 		}
 	}
-}
-
-/// List of configuration parameters used to calculate reward distribution portions for all the
-/// beneficiaries.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct RewardDistributionConfig {
-	/// Base percentage of reward that goes to treasury
-	#[codec(compact)]
-	pub treasury_percent: Perbill,
-	/// Percentage of rewards that goes to dApps
-	#[codec(compact)]
-	pub dapps_percent: Perbill,
-	/// Percentage of reward that goes to collators
-	#[codec(compact)]
-	pub collators_percent: Perbill,
-	/// Percentage of reward that goes to lp users
-	#[codec(compact)]
-	pub lp_percent: Perbill,
-	/// Percentage of reward that goes to machines
-	#[codec(compact)]
-	pub machines_percent: Perbill,
-	/// Percentage of reward that goes to machines subsidization
-	#[codec(compact)]
-	pub machines_subsidization_percent: Perbill,
-}
-
-impl Default for RewardDistributionConfig {
-	/// `default` values based on configuration at the time of writing this code.
-	/// Should be overriden by desired params.
-	fn default() -> Self {
-		RewardDistributionConfig {
-			treasury_percent: Perbill::from_percent(15),
-			dapps_percent: Perbill::from_percent(45),
-			collators_percent: Perbill::from_percent(10),
-			lp_percent: Perbill::from_percent(20),
-			machines_percent: Perbill::from_percent(5),
-			machines_subsidization_percent: Perbill::from_percent(5),
-		}
-	}
-}
-
-impl RewardDistributionConfig {
-	/// `true` if sum of all percentages is `one whole`, `false` otherwise.
-	pub fn is_consistent(&self) -> bool {
-		// TODO: perhaps this can be writen in a more cleaner way?
-		// experimental-only `try_reduce` could be used but it's not available
-		// https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.try_reduce
-
-		let variables = vec![
-			&self.treasury_percent,
-			&self.dapps_percent,
-			&self.collators_percent,
-			&self.lp_percent,
-			&self.machines_percent,
-			&self.machines_subsidization_percent,
-		];
-
-		let mut accumulator = Perbill::zero();
-		for config_param in variables {
-			let result = accumulator.checked_add(config_param);
-			if let Some(mid_result) = result {
-				accumulator = mid_result;
-			} else {
-				return false
-			}
-		}
-
-		Perbill::one() == accumulator
-	}
-}
-
-/// Defines functions used to payout the beneficiaries of block rewards
-pub trait BeneficiaryPayout<Imbalance> {
-	/// Payout reward to the treasury
-	fn treasury(reward: Imbalance);
-
-	/// Payout reward to the collators
-	fn collators(reward: Imbalance);
-
-	/// Payout reward to dapps staking
-	fn dapps_staking(dapps: Imbalance);
-
-	/// Payout LP users
-	fn lp_users(reward: Imbalance);
-
-	/// Payout Machines
-	fn machines(reward: Imbalance);
-
-	/// Payout Machines
-	fn machines_subsidization(reward: Imbalance);
 }
