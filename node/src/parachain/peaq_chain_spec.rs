@@ -101,9 +101,9 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		},
 		// Bootnodes
 		vec![
-			MultiaddrWithPeerId::from_str("/dns/cn1.peaq.network/tcp/30333/p2p/12D3KooWSiUfLFErmp281eGjXCKZeg1unCGndeq68VF53jbysWrJ").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/cn2.peaq.network/tcp/30333/p2p/12D3KooWFSRsiL6c5VF2NZmp6vnCw8tWPnj1jArR3AWaAuCyN5pb").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/cn3.peaq.network/tcp/30333/p2p/12D3KooW9r1ED5GNvAtNpgeraFgVAQRVikJWQmXEoXWmkmkGS6cD").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn1.peaq.network/tcp/30333/p2p/12D3KooWQheXJh77TG5gbKRFFbry4R7gPbrnGUrKPy3PYebxk9Gp").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn2.peaq.network/tcp/30333/p2p/12D3KooWKQodemj3LcLTVKMfqtJQ3NsgaoeKh7VZRiGF6HS8pnVy").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn3.peaq.network/tcp/30333/p2p/12D3KooWMNEzHLaY7xkMA6B1u3YEEJFCzKGcmPcZf7egSR2hii7M").unwrap(),
 		],
 		// Telemetry
 		None,
@@ -169,7 +169,7 @@ fn configure_genesis(
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
 			block_issue_reward: 7_909_867 * MILLICENTS,
-			hard_cap: 4_200_000_000 * DOLLARS,
+			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),
 		sudo: SudoConfig {
@@ -195,7 +195,9 @@ fn configure_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		polkadot_xcm: peaq_runtime::PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
+		polkadot_xcm: peaq_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+		},
 		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
