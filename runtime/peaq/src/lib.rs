@@ -161,15 +161,15 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/origins#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("peaq-node-agung"),
-	impl_name: create_runtime_str!("peaq-node-agung"),
+	spec_name: create_runtime_str!("peaq-node"),
+	impl_name: create_runtime_str!("peaq-node"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 6,
+	spec_version: 1,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -252,8 +252,16 @@ parameter_types! {
 
 pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
-	fn contains(_call: &Call) -> bool {
-		true
+	fn contains(call: &Call) -> bool {
+		match call {
+			Call::ParachainStaking(method) => !matches!(
+				method,
+				parachain_staking::Call::join_candidates { .. } |
+					parachain_staking::Call::join_delegators { .. }
+			),
+			// Other modules should works:
+			_ => true,
+		}
 	}
 }
 
@@ -398,14 +406,6 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;
 	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
-}
-
-// Config the utility in pallets/utility
-impl pallet_utility::Config for Runtime {
-	type Call = Call;
-	type Event = Event;
-	type PalletsOrigin = OriginCaller;
-	type WeightInfo = ();
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -553,6 +553,14 @@ impl peaq_pallet_did::Config for Runtime {
 	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
 }
 
+/// Config the utility in pallets/utility
+impl pallet_utility::Config for Runtime {
+	type Call = Call;
+	type Event = Event;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
+}
+
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
@@ -579,7 +587,7 @@ parameter_types! {
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance =  DOLLARS;
+	pub const TipReportDepositBase: Balance = DOLLARS;
 	pub const DataDepositPerByte: Balance = CENTS;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub const MaximumReasonLength: u32 = 300;
@@ -650,7 +658,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 9999;
+	pub const ChainId: u64 = 42424242;
 	// WeightPerGas didn't use
 	pub NoUseWeightPerGas: u64 = 20_000;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
@@ -741,7 +749,6 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
-
 }
 
 parameter_types! {
@@ -841,6 +848,7 @@ impl parachain_staking::Config for Runtime {
 }
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
 macro_rules! impl_to_pot_adapter {
@@ -977,7 +985,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
-		Utility: pallet_utility::{Pallet, Call, Event}=8,
+		Utility: pallet_utility::{Pallet, Call, Event} = 8,
 		Treasury: pallet_treasury  = 9,
 		Council: pallet_collective::<Instance1>=10,
 

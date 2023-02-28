@@ -1,18 +1,17 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
-use peaq_dev_runtime::{
+use peaq_runtime::{
 	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
-	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
-	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig, CENTS,
-	DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
+	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
+	Precompiles, SudoConfig, SystemConfig, DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	Perbill,
-};
+use sp_runtime::Perbill;
+
+use hex_literal::hex;
+use sc_network_common::config::MultiaddrWithPeerId;
+use std::str::FromStr;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -20,26 +19,8 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
-/// Generate a crypto pair from seed.
-pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
-}
-
-type AccountPublic = <Signature as Verify>::Signer;
-
-/// Generate an account ID from seed.
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
-}
-
-/// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
-	(get_account_id_from_seed::<sr25519::Public>(s), get_from_seed::<AuraId>(s))
+fn session_keys(aura: AuraId) -> peaq_runtime::opaque::SessionKeys {
+	peaq_runtime::opaque::SessionKeys { aura }
 }
 
 pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
@@ -50,35 +31,80 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
 	Ok(ChainSpec::from_genesis(
-		"peaq-dev",
-		"dev-testnet",
-		ChainType::Development,
+		"peaq-network",
+		"peaq",
+		ChainType::Live,
 		move || {
 			configure_genesis(
 				wasm_binary,
 				// stakers
-				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					None,
-					2 * staking::MinCollatorStake::get(),
-				)],
+				vec![
+					(
+						AccountId::try_from(
+							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					), (
+						AccountId::try_from(
+							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					), (
+						AccountId::try_from(
+							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
+						).unwrap(),
+						None,
+						2 * staking::MinCollatorStake::get(),
+					)
+				],
 				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice")],
+				vec![
+					(
+						AccountId::try_from(
+							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
+						).unwrap(),
+						AuraId::try_from(
+							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
+						).unwrap()
+					),
+					(
+						AccountId::try_from(
+							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
+						).unwrap(),
+						AuraId::try_from(
+							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
+						).unwrap()
+					),
+					(
+						AccountId::try_from(
+							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
+						).unwrap(),
+						AuraId::try_from(
+							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
+						).unwrap()
+					)
+				],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				hex!("1abe30e893092c35149a5ec8c97eacec5de7ec2ec8b88952f2a349a23e3af24d").into(),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529").into(),
+					hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c").into(),
+					hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35").into(),
+					//Sudo
+					hex!("1abe30e893092c35149a5ec8c97eacec5de7ec2ec8b88952f2a349a23e3af24d").into(),
 				],
 				para_id.into(),
 			)
 		},
 		// Bootnodes
-		vec![],
+		vec![
+			MultiaddrWithPeerId::from_str("/dns/cn1.peaq.network/tcp/30333/p2p/12D3KooWQheXJh77TG5gbKRFFbry4R7gPbrnGUrKPy3PYebxk9Gp").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn2.peaq.network/tcp/30333/p2p/12D3KooWKQodemj3LcLTVKMfqtJQ3NsgaoeKh7VZRiGF6HS8pnVy").unwrap(),
+			MultiaddrWithPeerId::from_str("/dns/cn3.peaq.network/tcp/30333/p2p/12D3KooWMNEzHLaY7xkMA6B1u3YEEJFCzKGcmPcZf7egSR2hii7M").unwrap(),
+		],
 		// Telemetry
 		None,
 		// Protocol ID
@@ -88,12 +114,12 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Properties
 		Some(properties),
 		// Extensions
-		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
+		Extensions {
+			bad_blocks: Default::default(),
+			relay_chain: "polkadot".into(),
+			para_id,
+		},
 	))
-}
-
-fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
-	peaq_dev_runtime::opaque::SessionKeys { aura }
 }
 
 /// Configure initial storage state for FRAME modules.
@@ -118,10 +144,10 @@ fn configure_genesis(
 		},
 		parachain_info: ParachainInfoConfig { parachain_id },
 		balances: BalancesConfig {
-			// Configure endowed accounts with initial balance of 1 << 78.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
+			// Configure endowed accounts with initial balance of 1 << 62.
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 62)).collect(),
 		},
-		session: peaq_dev_runtime::SessionConfig {
+		session: peaq_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
@@ -142,7 +168,7 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
-			block_issue_reward: DOLLARS,
+			block_issue_reward: 7_909_867 * MILLICENTS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
 		aura: Default::default(),
@@ -169,19 +195,11 @@ fn configure_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
+		polkadot_xcm: peaq_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
-		peaq_mor: PeaqMorConfig {
-			mor_config: MorConfig {
-				registration_reward: 10 * CENTS,
-				machine_usage_fee_min: MILLICENTS,
-				machine_usage_fee_max: 3 * DOLLARS,
-				track_n_block_rewards: 200,
-			},
-		},
 	}
 }
