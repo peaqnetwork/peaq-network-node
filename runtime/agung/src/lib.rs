@@ -740,6 +740,8 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
+	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
+
 }
 
 parameter_types! {
@@ -838,7 +840,6 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
@@ -860,6 +861,14 @@ macro_rules! impl_to_pot_adapter {
 
 impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
 
+pub struct ToTreasuryPot;
+impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
+	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+		let pot = PotTreasuryId::get().into_account_truncating();
+		Balances::resolve_creating(&pot, amount);
+	}
+}
+
 impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
@@ -869,7 +878,9 @@ impl pallet_block_reward::Config for Runtime {
 
 pub struct BeneficiaryPayout();
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
-	fn treasury(_reward: NegativeImbalance) {}
+	fn treasury(reward: NegativeImbalance) {
+		ToTreasuryPot::on_unbalanced(reward);
+	}
 
 	fn collators(reward: NegativeImbalance) {
 		ToStakingPot::on_unbalanced(reward);
@@ -897,7 +908,8 @@ impl orml_currencies::Config for Runtime {
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
-		PotStakeId::get().into_account_truncating()
+		PotStakeId::get().into_account_truncating(),
+		PotTreasuryId::get().into_account_truncating(),
 	]
 }
 

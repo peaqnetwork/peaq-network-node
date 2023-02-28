@@ -109,9 +109,8 @@ pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
-pub use peaq_pallet_mor;
-pub use peaq_pallet_mor::types::MorConfig;
 use peaq_pallet_mor::mor::MorBalance;
+pub use peaq_pallet_mor::{self, types::MorConfig};
 
 // For XCM
 pub mod xcm_config;
@@ -746,6 +745,7 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
+	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
 }
 
 parameter_types! {
@@ -775,7 +775,6 @@ impl pallet_session::Config for Runtime {
 	type Keys = opaque::SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 }
-
 
 pub mod staking {
 	use super::*;
@@ -845,7 +844,6 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-
 impl peaq_pallet_mor::Config for Runtime {
     type Event = Event;
     type Currency = Balances;
@@ -853,7 +851,6 @@ impl peaq_pallet_mor::Config for Runtime {
     type ExistentialDeposit = ExistentialDeposit;
     type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 }
-
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
@@ -878,6 +875,14 @@ macro_rules! impl_to_pot_adapter {
 impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
 impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
 
+pub struct ToTreasuryPot;
+impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
+	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+		let pot = PotTreasuryId::get().into_account_truncating();
+		Balances::resolve_creating(&pot, amount);
+	}
+}
+
 impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
@@ -886,7 +891,9 @@ impl pallet_block_reward::Config for Runtime {
 }
 pub struct BeneficiaryPayout();
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
-	fn treasury(_reward: NegativeImbalance) {}
+	fn treasury(reward: NegativeImbalance) {
+		ToTreasuryPot::on_unbalanced(reward);
+	}
 
 	fn collators(reward: NegativeImbalance) {
 		ToStakingPot::on_unbalanced(reward);
@@ -905,7 +912,6 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	fn machines_subsidization(_reward: NegativeImbalance) {}
 }
 
-
 parameter_types! {
 	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
 }
@@ -920,7 +926,8 @@ impl orml_currencies::Config for Runtime {
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
 		PotStakeId::get().into_account_truncating(),
-		PotMorId::get().into_account_truncating()
+		PotMorId::get().into_account_truncating(),
+		PotTreasuryId::get().into_account_truncating(),
 	]
 }
 
