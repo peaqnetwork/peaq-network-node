@@ -87,14 +87,14 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 					)
 				],
 				// Sudo account
-				hex!("baa6e3c1c492a2324f2ce9bd7f05418597d2e8319924c54e827e52cf51b0747a").into(),
+				hex!("1abe30e893092c35149a5ec8c97eacec5de7ec2ec8b88952f2a349a23e3af24d").into(),
 				// Pre-funded accounts
 				vec![
 					hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529").into(),
 					hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c").into(),
 					hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35").into(),
 					//Sudo
-					hex!("baa6e3c1c492a2324f2ce9bd7f05418597d2e8319924c54e827e52cf51b0747a").into(),
+					hex!("1abe30e893092c35149a5ec8c97eacec5de7ec2ec8b88952f2a349a23e3af24d").into(),
 				],
 				para_id.into(),
 			)
