@@ -1,5 +1,5 @@
 // KILT Blockchain – https://botlabs.org
-// Copyright (C) 2019-2022 BOTLabs GmbH
+// Copyright (C) 2019-2023 BOTLabs GmbH
 
 // The KILT Blockchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,12 +20,10 @@
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{self as stake};
+use crate::{self as stake, types::NegativeImbalanceOf};
 use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
-	weights::Weight,
-	PalletId,
+	assert_ok, construct_runtime, parameter_types,
+	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize, OnUnbalanced},
 };
 use pallet_authorship::EventHandler;
 use sp_consensus_aura::sr25519::AuthorityId;
@@ -45,8 +43,10 @@ pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
 
 pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
+pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
+pub(crate) const TREASURY_ACC: AccountId = u64::MAX;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -57,16 +57,15 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
-		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		Aura: pallet_aura::{Pallet, Storage},
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
+		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = Weight::from_ref_time(1024);
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 	pub const SS58Prefix: u8 = 42;
@@ -75,16 +74,16 @@ parameter_types! {
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type DbWeight = ();
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -107,7 +106,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -128,26 +127,33 @@ impl pallet_authorship::Config for Test {
 }
 
 parameter_types! {
-	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const MinBlocksPerRound: BlockNumber = 3;
 	pub const StakeDuration: u32 = 2;
 	pub const ExitQueueDelay: u32 = 2;
 	pub const DefaultBlocksPerRound: BlockNumber = BLOCKS_PER_ROUND;
 	pub const MinCollators: u32 = 2;
-	#[derive(Debug, PartialEq, Eq)]
+	pub const MaxDelegationsPerRound: u32 = 2;
+	#[derive(Debug, Eq, PartialEq)]
 	pub const MaxDelegatorsPerCollator: u32 = 4;
-	#[derive(Debug, PartialEq, Eq)]
-	pub const MaxCollatorsPerDelegator: u32 = 4;
 	pub const MinCollatorStake: Balance = 10;
-	#[derive(Debug, PartialEq, Eq)]
+	#[derive(Debug, Eq, PartialEq)]
 	pub const MaxCollatorCandidates: u32 = 10;
 	pub const MinDelegatorStake: Balance = 5;
-	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
+	pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
+	pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
+}
+
+pub struct ToBeneficiary();
+impl OnUnbalanced<NegativeImbalanceOf<Test>> for ToBeneficiary {
+	fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<Test>) {
+		// Must resolve into existing but better to be safe.
+		<Test as Config>::Currency::resolve_creating(&TREASURY_ACC, amount);
+	}
 }
 
 impl Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
 	type MinBlocksPerRound = MinBlocksPerRound;
@@ -156,17 +162,18 @@ impl Config for Test {
 	type ExitQueueDelay = ExitQueueDelay;
 	type MinCollators = MinCollators;
 	type MinRequiredCollators = MinCollators;
-	type MaxDelegationsPerRound = MaxDelegatorsPerCollator;
+	type MaxDelegationsPerRound = MaxDelegationsPerRound;
 	type MaxDelegatorsPerCollator = MaxDelegatorsPerCollator;
-	type MaxCollatorsPerDelegator = MaxCollatorsPerDelegator;
 	type MinCollatorStake = MinCollatorStake;
 	type MinCollatorCandidateStake = MinCollatorStake;
 	type MaxTopCandidates = MaxCollatorCandidates;
 	type MinDelegatorStake = MinDelegatorStake;
-	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
-	type PotId = PotId;
+	type NetworkRewardRate = NetworkRewardRate;
+	type NetworkRewardStart = NetworkRewardStart;
+	type NetworkRewardBeneficiary = ToBeneficiary;
 	type WeightInfo = ();
+	const BLOCKS_PER_YEAR: Self::BlockNumber = 5 * 60 * 24 * 36525 / 100;
 }
 
 impl_opaque_keys! {
@@ -180,7 +187,7 @@ parameter_types! {
 }
 
 impl pallet_session::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = ConvertInto;
 	type ShouldEndSession = StakePallet;
@@ -209,8 +216,8 @@ pub(crate) struct ExtBuilder {
 	collators: Vec<(AccountId, Balance)>,
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
-	// reward_rate config
-	reward_rate_config: RewardRateInfo,
+	// inflation config
+	inflation_config: InflationInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -222,9 +229,12 @@ impl Default for ExtBuilder {
 			delegators: vec![],
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
-			reward_rate_config: RewardRateInfo::new(
-				Perquintill::from_percent(30),
-				Perquintill::from_percent(70),
+			inflation_config: InflationInfo::new(
+				<Test as Config>::BLOCKS_PER_YEAR,
+				Perquintill::from_percent(10),
+				Perquintill::from_percent(15),
+				Perquintill::from_percent(40),
+				Perquintill::from_percent(10),
 			),
 		}
 	}
@@ -244,24 +254,26 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_delegators(
-		mut self,
-		delegators: Vec<(AccountId, AccountId, Balance)>,
-	) -> Self {
+	pub(crate) fn with_delegators(mut self, delegators: Vec<(AccountId, AccountId, Balance)>) -> Self {
 		self.delegators = delegators;
 		self
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(
+	pub(crate) fn with_inflation(
 		mut self,
-		col_reward: u64,
-		del_reward: u64,
+		col_max: u64,
+		col_rewards: u64,
+		d_max: u64,
+		d_rewards: u64,
 		blocks_per_round: BlockNumber,
 	) -> Self {
-		self.reward_rate_config = RewardRateInfo::new(
-			Perquintill::from_percent(col_reward),
-			Perquintill::from_percent(del_reward),
+		self.inflation_config = InflationInfo::new(
+			<Test as Config>::BLOCKS_PER_YEAR,
+			Perquintill::from_percent(col_max),
+			Perquintill::from_percent(col_rewards),
+			Perquintill::from_percent(d_max),
+			Perquintill::from_percent(d_rewards),
 		);
 		self.blocks_per_round = blocks_per_round;
 
@@ -279,9 +291,11 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Test> { balances: self.balances.clone() }
-			.assimilate_storage(&mut t)
-			.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances.clone(),
+		}
+		.assimilate_storage(&mut t)
+		.expect("Pallet balances storage can be assimilated");
 
 		let mut stakers: Vec<(AccountId, Option<AccountId>, Balance)> = Vec::new();
 		for collator in self.collators.clone() {
@@ -292,7 +306,7 @@ impl ExtBuilder {
 		}
 		stake::GenesisConfig::<Test> {
 			stakers,
-			reward_rate_config: self.reward_rate_config.clone(),
+			inflation_config: self.inflation_config.clone(),
 			max_candidate_stake: 160_000_000 * DECIMALS,
 		}
 		.assimilate_storage(&mut t)
@@ -302,7 +316,15 @@ impl ExtBuilder {
 		let session_keys: Vec<_> = self
 			.collators
 			.iter()
-			.map(|(k, _)| (*k, *k, MockSessionKeys { aura: UintAuthorityId(*k).to_public_key() }))
+			.map(|(k, _)| {
+				(
+					*k,
+					*k,
+					MockSessionKeys {
+						aura: UintAuthorityId(*k).to_public_key(),
+					},
+				)
+			})
 			.collect();
 
 		// NOTE: this will initialize the aura authorities
@@ -315,7 +337,7 @@ impl ExtBuilder {
 
 		if self.blocks_per_round != BLOCKS_PER_ROUND {
 			ext.execute_with(|| {
-				StakePallet::set_blocks_per_round(Origin::root(), self.blocks_per_round)
+				StakePallet::set_blocks_per_round(RuntimeOrigin::root(), self.blocks_per_round)
 					.expect("Ran into issues when setting blocks_per_round");
 			});
 		}
@@ -331,31 +353,74 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 	left.max(right) - left.min(right) <= err
 }
 
+/// Incrementelly traverses from the current block to the provided one and
+/// potentially sets block authors.
+///
+/// If for a block `i` the corresponding index of the authors input is set, this
+/// account is regarded to be the block author and thus gets noted.
+///
+/// NOTE: At most, this updates the RewardCount of the block author but does not
+/// increment rewards or claim them. Please use `roll_to_claim_rewards` in that
+/// case.
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			Balances::make_free_balance_be(
-				&StakePallet::account_id(),
-				1000 + Balances::minimum_balance(),
-			);
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsReversedWithSystemFirst as OnFinalize<u64>>::on_finalize(System::block_number());
+		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		<AllPalletsReversedWithSystemFirst as OnInitialize<u64>>::on_initialize(
-			System::block_number(),
-		);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
 }
 
-pub(crate) fn last_event() -> Event {
-	System::events().pop().expect("Event expected").event
+#[allow(unused_must_use)]
+/// Incrementelly traverses from the current block to the provided one and
+/// potentially sets block authors.
+///
+/// If existent, rewards of the block author and their delegators are
+/// incremented and claimed.
+///
+/// If for a block `i` the corresponding index of the authors input is set, this
+/// account is regarded to be the block author and thus gets noted.
+pub(crate) fn roll_to_claim_rewards(n: BlockNumber, authors: Vec<Option<AccountId>>) {
+	while System::block_number() < n {
+		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
+			StakePallet::note_author(*author);
+			// author has to increment rewards before claiming
+			assert_ok!(StakePallet::increment_collator_rewards(RuntimeOrigin::signed(*author)));
+			// author claims rewards
+			assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(*author)));
+
+			// claim rewards for delegators
+			let col_state = StakePallet::candidate_pool(author).expect("Block author must be candidate");
+			for delegation in col_state.delegators {
+				// delegator has to increment rewards before claiming
+				StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(delegation.owner));
+				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
+				// delegators such that the claiming would throw
+				StakePallet::claim_rewards(RuntimeOrigin::signed(delegation.owner));
+			}
+		}
+		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+	}
+}
+
+pub(crate) fn last_event() -> pallet::Event<Test> {
+	events().pop().expect("Event expected")
 }
 
 pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| if let Event::StakePallet(inner) = e { Some(inner) } else { None })
+		.filter_map(|e| {
+			if let RuntimeEvent::StakePallet(inner) = e {
+				Some(inner)
+			} else {
+				None
+			}
+		})
 		.collect::<Vec<_>>()
 }
