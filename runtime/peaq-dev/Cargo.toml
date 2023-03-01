@@ -237,6 +237,11 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
 
+[dependencies.pallet-vesting]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.29'
+
 # ### Ethereum
 [dependencies.sp-io]
 default-features = false
@@ -504,7 +509,7 @@ runtime-benchmarks = [
 	'peaq-pallet-did/runtime-benchmarks',
 	'peaq-pallet-rbac/runtime-benchmarks',
 	'peaq-pallet-storage/runtime-benchmarks',
-	'peaq-pallet-mor/runtime-benchmarks',
+	'peaq-pallet-mor/runtime-benchmarks',	
 ]
 
 std = [
@@ -546,8 +551,9 @@ std = [
 	'pallet-utility/std',
 	'peaq-pallet-storage-runtime-api/std',
 	'pallet-treasury/std',
-	'pallet-collective/std', 
-		
+	'pallet-collective/std',
+	'pallet-vesting/std',
+ 
 
 	# ETH support
 	'sp-io/std',

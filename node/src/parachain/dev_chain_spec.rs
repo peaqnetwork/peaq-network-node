@@ -145,7 +145,9 @@ fn configure_genesis(
 			block_issue_reward: DOLLARS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
-		aura: Default::default(),
+
+		vesting:peaq_dev_runtime::VestingConfig { vesting: vec![] },
+        aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
