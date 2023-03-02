@@ -67,6 +67,9 @@ pub trait WeightInfo {
 	fn leave_delegators(n: u32, m: u32, ) -> Weight;
 	fn unlock_unstaked(u: u32, ) -> Weight;
 	fn set_max_candidate_stake() -> Weight;
+	fn increment_delegator_rewards() -> Weight;
+	fn increment_collator_rewards() -> Weight;
+	fn claim_rewards() -> Weight;
 }
 
 /// Weights for parachain_staking using the Substrate node and recommended hardware.
@@ -336,6 +339,35 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_ref_time(11_984_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
+	// Storage: ParachainStaking DelegatorState (r:1 w:0)
+	// Storage: ParachainStaking BlocksAuthored (r:1 w:0)
+	// Storage: ParachainStaking BlocksRewarded (r:1 w:1)
+	// Storage: ParachainStaking Rewards (r:1 w:1)
+	// Storage: ParachainStaking TotalCollatorStake (r:1 w:0)
+	// Storage: ParachainStaking InflationConfig (r:1 w:0)
+	fn increment_delegator_rewards() -> Weight {
+		Weight::from_ref_time(40_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
+	}
+	// Storage: ParachainStaking CandidatePool (r:1 w:0)
+	// Storage: ParachainStaking BlocksAuthored (r:1 w:0)
+	// Storage: ParachainStaking BlocksRewarded (r:1 w:1)
+	// Storage: ParachainStaking Rewards (r:1 w:1)
+	// Storage: ParachainStaking TotalCollatorStake (r:1 w:0)
+	// Storage: ParachainStaking InflationConfig (r:1 w:0)
+	fn increment_collator_rewards() -> Weight {
+		Weight::from_ref_time(35_612_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
+	}
+	// Storage: ParachainStaking Rewards (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn claim_rewards() -> Weight {
+		Weight::from_ref_time(54_273_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -603,5 +635,34 @@ impl WeightInfo for () {
 	fn set_max_candidate_stake() -> Weight {
 		Weight::from_ref_time(11_984_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: ParachainStaking DelegatorState (r:1 w:0)
+	// Storage: ParachainStaking BlocksAuthored (r:1 w:0)
+	// Storage: ParachainStaking BlocksRewarded (r:1 w:1)
+	// Storage: ParachainStaking Rewards (r:1 w:1)
+	// Storage: ParachainStaking TotalCollatorStake (r:1 w:0)
+	// Storage: ParachainStaking InflationConfig (r:1 w:0)
+	fn increment_delegator_rewards() -> Weight {
+		Weight::from_ref_time(40_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+	}
+	// Storage: ParachainStaking CandidatePool (r:1 w:0)
+	// Storage: ParachainStaking BlocksAuthored (r:1 w:0)
+	// Storage: ParachainStaking BlocksRewarded (r:1 w:1)
+	// Storage: ParachainStaking Rewards (r:1 w:1)
+	// Storage: ParachainStaking TotalCollatorStake (r:1 w:0)
+	// Storage: ParachainStaking InflationConfig (r:1 w:0)
+	fn increment_collator_rewards() -> Weight {
+		Weight::from_ref_time(35_612_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+	}
+	// Storage: ParachainStaking Rewards (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn claim_rewards() -> Weight {
+		Weight::from_ref_time(54_273_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 }
