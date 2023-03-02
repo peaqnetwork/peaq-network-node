@@ -13,9 +13,9 @@ sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-pol
 sp-io = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 
 [dependencies]
+codec = {package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive"]}
 hex-literal = "0.3.4"
 log = "0.4.16"
-parity-scale-codec = {version = "3.1.2", default-features = false, features = ["derive"]}
 scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
 serde = {version = "1.0.136", optional = true}
 
@@ -37,15 +37,19 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  "sp-staking/runtime-benchmarks",
 ]
 std = [
+  "codec/std",
+  "frame-benchmarking?/std",
   "frame-support/std",
   "frame-system/std",
   "log/std",
   "pallet-authorship/std",
   "pallet-balances/std",
   "pallet-session/std",
-  "parity-scale-codec/std",
   "scale-info/std",
   "serde",
   "sp-runtime/std",
