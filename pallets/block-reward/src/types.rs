@@ -1,21 +1,19 @@
 //! Type and trait definitions of the crate
 
-use frame_support::{
-    pallet_prelude::*,
-    traits::Currency,
-};
+use frame_support::{pallet_prelude::*, traits::Currency};
 use sp_runtime::{traits::CheckedAdd, Perbill};
 use sp_std::vec;
 
 use crate::pallet::Config as PalletConfig;
 
-
 /// The balance type of this pallet.
-pub(crate) type BalanceOf<T> = <<T as PalletConfig>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub(crate) type BalanceOf<T> =
+	<<T as PalletConfig>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 // Negative imbalance type of this pallet.
-pub(crate) type NegativeImbalanceOf<T> = <<T as PalletConfig>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-
+pub(crate) type NegativeImbalanceOf<T> = <<T as PalletConfig>::Currency as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait BeneficiaryPayout<Imbalance> {
@@ -37,7 +35,6 @@ pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout Machines
 	fn machines_subsidization(reward: Imbalance);
 }
-
 
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.

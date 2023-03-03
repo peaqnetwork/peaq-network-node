@@ -1,7 +1,7 @@
 use super::{pallet::Error, Event, *};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{OnTimestampSet, Currency},
+	traits::{Currency, OnTimestampSet},
 };
 use mock::*;
 use sp_runtime::{
@@ -167,7 +167,10 @@ pub fn set_block_issue_reward_is_ok() {
 #[test]
 pub fn set_maxcurrencysupply_is_failure() {
 	ExternalityBuilder::build().execute_with(|| {
-		assert_noop!(BlockReward::set_max_currency_supply(Origin::signed(1), Default::default()), BadOrigin);
+		assert_noop!(
+			BlockReward::set_max_currency_supply(Origin::signed(1), Default::default()),
+			BadOrigin
+		);
 	})
 }
 
@@ -208,7 +211,10 @@ pub fn harcap_reaches() {
 		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
 		let block_limits = 3_u128;
 
-		assert_ok!(BlockReward::set_max_currency_supply(Origin::root(), BLOCK_REWARD * block_limits));
+		assert_ok!(BlockReward::set_max_currency_supply(
+			Origin::root(),
+			BLOCK_REWARD * block_limits
+		));
 
 		for block in 0..block_limits {
 			assert_eq!(
@@ -292,7 +298,6 @@ pub fn reward_distribution_no_adjustable_part() {
 		}
 	})
 }
-
 
 #[test]
 pub fn on_unbalanced() {

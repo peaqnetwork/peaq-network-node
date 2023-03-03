@@ -3,8 +3,8 @@ use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
 	staking, AccountId, Balance, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
-	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig,
-	MILLICENTS, CENTS, DOLLARS, TOKEN_DECIMALS, WASM_BINARY,
+	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig, CENTS,
+	DOLLARS, MILLICENTS, TOKEN_DECIMALS, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -146,8 +146,8 @@ fn configure_genesis(
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
 
-		vesting:peaq_dev_runtime::VestingConfig { vesting: vec![] },
-        aura: Default::default(),
+		vesting: peaq_dev_runtime::VestingConfig { vesting: vec![] },
+		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
