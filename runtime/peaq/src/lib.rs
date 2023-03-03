@@ -29,8 +29,8 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf,
-		SaturatedConversion,
 		Saturating,
+		SaturatedConversion,
 		Zero,
 	},
 	transaction_validity::{
@@ -49,9 +49,9 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
-		ExistenceRequirement, FindAuthor,Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
-		Randomness, StorageInfo, WithdrawReasons,
+		ConstU32, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor,
+		Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
+		WithdrawReasons,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -75,7 +75,10 @@ use pallet_evm::{
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
-use pallet_transaction_payment::{Config as TransactionPaymentConfig, OnChargeTransaction};
+use pallet_transaction_payment::{
+	OnChargeTransaction,
+	Config as TransactionPaymentConfig,
+};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -158,15 +161,15 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/origins#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("peaq-node-agung"),
-	impl_name: create_runtime_str!("peaq-node-agung"),
+	spec_name: create_runtime_str!("peaq-node"),
+	impl_name: create_runtime_str!("peaq-node"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 6,
+	spec_version: 1,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -249,8 +252,16 @@ parameter_types! {
 
 pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
-	fn contains(_call: &Call) -> bool {
-		true
+	fn contains(call: &Call) -> bool {
+		match call {
+			Call::ParachainStaking(method) => !matches!(
+				method,
+				parachain_staking::Call::join_candidates { .. } |
+					parachain_staking::Call::join_delegators { .. }
+			),
+			// Other modules should works:
+			_ => true,
+		}
 	}
 }
 
@@ -397,14 +408,6 @@ parameter_types! {
 	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
-// Config the utility in pallets/utility
-impl pallet_utility::Config for Runtime {
-	type Call = Call;
-	type Event = Event;
-	type PalletsOrigin = OriginCaller;
-	type WeightInfo = ();
-}
-
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
 ///
@@ -453,56 +456,56 @@ pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
 impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
 where
-	T: TransactionPaymentConfig,
-	C: Currency<<T as frame_system::Config>::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+    T: TransactionPaymentConfig,
+    C: Currency<<T as frame_system::Config>::AccountId>,
+    OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+    type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
+    type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-	/// Withdraw the predicted fee from the transaction origin.
-	/// Note: The `fee` already includes the `tip`.
-	fn withdraw_fee(
-		who: &T::AccountId,
-		_call: &T::Call,
-		_info: &DispatchInfoOf<T::Call>,
-		fee: Self::Balance,
-		tip: Self::Balance,
-	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+    /// Withdraw the predicted fee from the transaction origin.
+    /// Note: The `fee` already includes the `tip`.
+    fn withdraw_fee(
+        who: &T::AccountId,
+        _call: &T::Call,
+        _info: &DispatchInfoOf<T::Call>,
+        fee: Self::Balance,
+        tip: Self::Balance,
+    ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		let network_fee = fee;
-		if network_fee.is_zero() {
-			return Ok(None)
-		}
+        if network_fee.is_zero() {
+            return Ok(None)
+        }
 
-		let withdraw_reason = if tip.is_zero() {
-			WithdrawReasons::TRANSACTION_PAYMENT
-		} else {
-			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-		};
+        let withdraw_reason = if tip.is_zero() {
+            WithdrawReasons::TRANSACTION_PAYMENT
+        } else {
+            WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+        };
 
 		// Apply Peaq Economy-of-Things Fee adjustment
 		let reward_fee = EoTFeeFactor::get() * network_fee;
-		let tx_fee = network_fee.saturating_add(reward_fee);
+        let tx_fee = network_fee.saturating_add(reward_fee);
 
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-			Ok(imbalance) => Ok(Some(imbalance)),
-			Err(_) => Err(InvalidTransaction::Payment.into()),
-		}
-	}
+        match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+            Ok(imbalance) => Ok(Some(imbalance)),
+            Err(_) => Err(InvalidTransaction::Payment.into()),
+        }
+    }
 
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
-	/// Note: The `corrected_fee` already includes the `tip`.
-	fn correct_and_deposit_fee(
-		who: &T::AccountId,
-		_dispatch_info: &DispatchInfoOf<T::Call>,
-		_post_info: &PostDispatchInfoOf<T::Call>,
-		corrected_fee: Self::Balance,
-		tip: Self::Balance,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), TransactionValidityError> {
-		if let Some(paid) = already_withdrawn {
+    /// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+    /// Since the predicted fee might have been too high, parts of the fee may
+    /// be refunded.
+    /// Note: The `corrected_fee` already includes the `tip`.
+    fn correct_and_deposit_fee(
+        who: &T::AccountId,
+        _dispatch_info: &DispatchInfoOf<T::Call>,
+        _post_info: &PostDispatchInfoOf<T::Call>,
+        corrected_fee: Self::Balance,
+        tip: Self::Balance,
+        already_withdrawn: Self::LiquidityInfo,
+    ) -> Result<(), TransactionValidityError> {
+        if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
 			let cor_network_fee = corrected_fee;
 			let cor_reward_fee = EoTFeeFactor::get() * corrected_fee;
@@ -526,7 +529,7 @@ where
 			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
 		}
 		Ok(())
-	}
+    }
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -548,6 +551,14 @@ impl peaq_pallet_did::Config for Runtime {
 	type Event = Event;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
+}
+
+/// Config the utility in pallets/utility
+impl pallet_utility::Config for Runtime {
+	type Call = Call;
+	type Event = Event;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -576,7 +587,7 @@ parameter_types! {
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance =  DOLLARS;
+	pub const TipReportDepositBase: Balance = DOLLARS;
 	pub const DataDepositPerByte: Balance = CENTS;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub const MaximumReasonLength: u32 = 300;
@@ -647,7 +658,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 9999;
+	pub const ChainId: u64 = 42424242;
 	// WeightPerGas didn't use
 	pub NoUseWeightPerGas: u64 = 20_000;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
@@ -738,7 +749,6 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
-
 }
 
 parameter_types! {
@@ -838,6 +848,7 @@ impl parachain_staking::Config for Runtime {
 }
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
 macro_rules! impl_to_pot_adapter {
@@ -974,7 +985,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
-		Utility: pallet_utility::{Pallet, Call, Event}=8,
+		Utility: pallet_utility::{Pallet, Call, Event} = 8,
 		Treasury: pallet_treasury  = 9,
 		Council: pallet_collective::<Instance1>=10,
 
@@ -1004,8 +1015,6 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
-
-		Vesting: pallet_vesting = 50,
 
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
@@ -1804,13 +1813,4 @@ cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 	CheckInherents = CheckInherents,
-}
-
-impl pallet_vesting::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
-	type MinVestedTransfer = ConstU128<0>;
-	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
-	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
