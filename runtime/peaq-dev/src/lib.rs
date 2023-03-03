@@ -7,7 +7,6 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 //use core::cmp::max_by;
-
 #[cfg(feature = "std")]
 pub use fp_evm::GenesisAccount;
 
@@ -62,13 +61,9 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
-
-
-
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
-	EnsureRootWithSuccess, 
+	EnsureRoot, EnsureRootWithSuccess, 
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -1848,9 +1843,6 @@ impl pallet_vesting::Config for Runtime {
     type BlockNumberToBalance = ConvertInto;
     type MinVestedTransfer = ConstU128<0>;
     type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
-	//type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-    // `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
-    // highest number of schedules that encodes less than 2^10.
-    const MAX_VESTING_SCHEDULES: u32 = 28;
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 

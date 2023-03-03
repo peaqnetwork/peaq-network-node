@@ -49,9 +49,9 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor, 
+		ConstU32, ConstU128, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor, 
 		Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
-		WithdrawReasons,
+		WithdrawReasons, EnsureOrigin,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -1008,6 +1008,8 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 
+		Vesting: pallet_vesting = 50,
+
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
@@ -1805,4 +1807,13 @@ cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 	CheckInherents = CheckInherents,
+}
+
+impl pallet_vesting::Config for Runtime {
+    type Event = Event;
+    type Currency = Balances;
+    type BlockNumberToBalance = ConvertInto;
+    type MinVestedTransfer = ConstU128<0>;
+    type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
