@@ -23,7 +23,11 @@ fn session_keys(aura: AuraId) -> peaq_krest_runtime::opaque::SessionKeys {
 	peaq_krest_runtime::opaque::SessionKeys { aura }
 }
 
-pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
+pub fn get_chain_spec() -> Result<ChainSpec, String>{
+	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/krest.json")[..])
+}
+
+pub fn get_chain_spec_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();

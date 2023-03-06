@@ -119,9 +119,13 @@ impl SubstrateCli for Cli {
 		Ok(match id {
 			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"agung" =>
-				Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
+				Box::new(parachain::agung_chain_spec::get_chain_spec()?),
+			"agung-testnet" =>
+				Box::new(parachain::agung_chain_spec::get_chain_spec_testnet(self.run.parachain_id)?),
 			"krest" =>
-				Box::new(parachain::krest_chain_spec::get_chain_spec(self.run.parachain_id)?),
+				Box::new(parachain::krest_chain_spec::get_chain_spec()?),
+			"krest-testnet" =>
+				Box::new(parachain::krest_chain_spec::get_chain_spec_testnet(self.run.parachain_id)?),
 			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
