@@ -29,8 +29,8 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf,
-		Saturating,
 		SaturatedConversion,
+		Saturating,
 		Zero,
 	},
 	transaction_validity::{
@@ -49,9 +49,9 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, Contains, Currency, EitherOfDiverse, ExistenceRequirement, FindAuthor,
-		Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
-		WithdrawReasons,
+		ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
+		ExistenceRequirement, FindAuthor,Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
+		Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -75,10 +75,7 @@ use pallet_evm::{
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
-use pallet_transaction_payment::{
-	OnChargeTransaction,
-	Config as TransactionPaymentConfig,
-};
+use pallet_transaction_payment::{Config as TransactionPaymentConfig, OnChargeTransaction};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -456,56 +453,56 @@ pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
 impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
 where
-    T: TransactionPaymentConfig,
-    C: Currency<<T as frame_system::Config>::AccountId>,
-    OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+	T: TransactionPaymentConfig,
+	C: Currency<<T as frame_system::Config>::AccountId>,
+	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-    type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-    type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
+	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-    /// Withdraw the predicted fee from the transaction origin.
-    /// Note: The `fee` already includes the `tip`.
-    fn withdraw_fee(
-        who: &T::AccountId,
-        _call: &T::Call,
-        _info: &DispatchInfoOf<T::Call>,
-        fee: Self::Balance,
-        tip: Self::Balance,
-    ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+	/// Withdraw the predicted fee from the transaction origin.
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		_call: &T::Call,
+		_info: &DispatchInfoOf<T::Call>,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		let network_fee = fee;
-        if network_fee.is_zero() {
-            return Ok(None)
-        }
+		if network_fee.is_zero() {
+			return Ok(None)
+		}
 
-        let withdraw_reason = if tip.is_zero() {
-            WithdrawReasons::TRANSACTION_PAYMENT
-        } else {
-            WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-        };
+		let withdraw_reason = if tip.is_zero() {
+			WithdrawReasons::TRANSACTION_PAYMENT
+		} else {
+			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+		};
 
 		// Apply Peaq Economy-of-Things Fee adjustment
 		let reward_fee = EoTFeeFactor::get() * network_fee;
-        let tx_fee = network_fee.saturating_add(reward_fee);
+		let tx_fee = network_fee.saturating_add(reward_fee);
 
-        match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-            Ok(imbalance) => Ok(Some(imbalance)),
-            Err(_) => Err(InvalidTransaction::Payment.into()),
-        }
-    }
+		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+			Ok(imbalance) => Ok(Some(imbalance)),
+			Err(_) => Err(InvalidTransaction::Payment.into()),
+		}
+	}
 
-    /// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-    /// Since the predicted fee might have been too high, parts of the fee may
-    /// be refunded.
-    /// Note: The `corrected_fee` already includes the `tip`.
-    fn correct_and_deposit_fee(
-        who: &T::AccountId,
-        _dispatch_info: &DispatchInfoOf<T::Call>,
-        _post_info: &PostDispatchInfoOf<T::Call>,
-        corrected_fee: Self::Balance,
-        tip: Self::Balance,
-        already_withdrawn: Self::LiquidityInfo,
-    ) -> Result<(), TransactionValidityError> {
-        if let Some(paid) = already_withdrawn {
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		_dispatch_info: &DispatchInfoOf<T::Call>,
+		_post_info: &PostDispatchInfoOf<T::Call>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
 			let cor_network_fee = corrected_fee;
 			let cor_reward_fee = EoTFeeFactor::get() * corrected_fee;
@@ -529,7 +526,7 @@ where
 			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
 		}
 		Ok(())
-    }
+	}
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -1015,6 +1012,8 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+
+		Vesting: pallet_vesting = 50,
 
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
@@ -1813,4 +1812,13 @@ cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 	CheckInherents = CheckInherents,
+}
+
+impl pallet_vesting::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = ConstU128<0>;
+	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
