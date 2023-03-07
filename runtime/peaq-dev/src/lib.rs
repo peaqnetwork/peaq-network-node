@@ -56,7 +56,8 @@ pub use frame_support::{
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, DispatchClass, GetDispatchInfo, IdentityFee, Weight,
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		WeightToFee as WeightToFeeT, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
@@ -447,11 +448,15 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 type NegativeImbalanceOf<C, T> =
 	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
+type CallOf<T> = <T as frame_system::Config>::Call;
+
 pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
 impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
 where
     T: TransactionPaymentConfig,
+	T::WeightToFee: WeightToFeeT,
+	<T as frame_system::Config>::Call: GetDispatchInfo,
     C: Currency<<T as frame_system::Config>::AccountId>,
     OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
@@ -462,12 +467,12 @@ where
     /// Note: The `fee` already includes the `tip`.
     fn withdraw_fee(
         who: &T::AccountId,
-        _call: &T::Call,
-        _info: &DispatchInfoOf<T::Call>,
+        call: &T::Call,
+        info: &DispatchInfoOf<T::Call>,
         fee: Self::Balance,
         tip: Self::Balance,
     ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		let network_fee = fee;
+		let network_fee = fee - tip;
         if network_fee.is_zero() {
             return Ok(None)
         }
@@ -479,7 +484,10 @@ where
         };
 
 		// Apply Peaq Economy-of-Things Fee adjustment
-		let reward_fee = EoTFeeFactor::get() * network_fee;
+		// let reward_fee = EoTFeeFactor::get() * network_fee;
+		let info = GetDispatchInfo::get_dispatch_info(call);
+		let w2f: Self::Balance = T::WeightToFee::weight_to_fee(&info.weight);
+		let reward_fee = EoTFeeFactor::get() * w2f;
         let tx_fee = network_fee.saturating_add(reward_fee);
 
         match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
