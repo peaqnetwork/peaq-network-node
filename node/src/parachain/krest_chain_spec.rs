@@ -234,7 +234,7 @@ fn configure_genesis(
 			block_issue_reward: 7_909_867 * MILLICENTS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
-		vesting: peaq_krest_runtime::VestingConfig { vesting: vec![] },
+		vesting: Default::default(),
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.

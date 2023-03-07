@@ -44,7 +44,7 @@ pub fn get_chain_spec_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	Ok(ChainSpec::from_genesis(
 		"agung-network",
 		"agung-testnet",
-		ChainType::Local,
+		ChainType::Development,
 		move || {
 			configure_genesis(
 				wasm_binary,
@@ -271,7 +271,7 @@ fn configure_genesis(
 			block_issue_reward: 7_909_867 * MILLICENTS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
-		vesting: peaq_agung_runtime::VestingConfig { vesting: vec![] },
+		vesting: Default::default(),
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
