@@ -117,18 +117,13 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec(self.run.parachain_id)?),
-			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec()?),
-			"agung-testnet" => Box::new(parachain::agung_chain_spec::get_chain_spec_testnet(
-				self.run.parachain_id,
-			)?),
+			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec()?),
+			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(self.run.parachain_id)?),
+			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"agung-local" => Box::new(parachain::agung_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
 			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec()?),
-			"krest-testnet" => Box::new(parachain::krest_chain_spec::get_chain_spec_testnet(
-				self.run.parachain_id,
-			)?),
 			"krest-local" => Box::new(parachain::krest_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),

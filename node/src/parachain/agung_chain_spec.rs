@@ -26,15 +26,7 @@ fn session_keys(aura: AuraId) -> peaq_agung_runtime::opaque::SessionKeys {
 	peaq_agung_runtime::opaque::SessionKeys { aura }
 }
 
-/*
-   TODO Current a placeholder rawChainSpec file is places in node/src/chain-specs file
-   reason being, we cannot build the node without it.
-*/
-pub fn get_chain_spec() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/agung.json")[..])
-}
-
-pub fn get_chain_spec_testnet(para_id: u32) -> Result<ChainSpec, String> {
+pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
