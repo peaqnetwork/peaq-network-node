@@ -467,8 +467,8 @@ where
     /// Note: The `fee` already includes the `tip`.
     fn withdraw_fee(
         who: &T::AccountId,
-        call: &T::Call,
-        info: &DispatchInfoOf<T::Call>,
+        call: &CallOf<T>,
+        _info: &DispatchInfoOf<CallOf<T>>,
         fee: Self::Balance,
         tip: Self::Balance,
     ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
@@ -486,7 +486,7 @@ where
 		// Apply Peaq Economy-of-Things Fee adjustment
 		// let reward_fee = EoTFeeFactor::get() * network_fee;
 		let info = GetDispatchInfo::get_dispatch_info(call);
-		let w2f: Self::Balance = T::WeightToFee::weight_to_fee(&info.weight);
+		let w2f = T::WeightToFee::weight_to_fee(&info.weight);
 		let reward_fee = EoTFeeFactor::get() * w2f;
         let tx_fee = network_fee.saturating_add(reward_fee);
 
