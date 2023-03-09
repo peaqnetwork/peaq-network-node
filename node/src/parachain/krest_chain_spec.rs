@@ -10,10 +10,8 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
 use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
-use hex_literal::hex;
-use sc_network_common::config::MultiaddrWithPeerId;
+
 use sp_core::sr25519;
-use std::str::FromStr;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
