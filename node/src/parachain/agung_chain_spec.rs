@@ -9,10 +9,7 @@ use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
-use hex_literal::hex;
-use sc_network_common::config::MultiaddrWithPeerId;
 use sp_core::sr25519;
-use std::str::FromStr;
 
 use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
 
