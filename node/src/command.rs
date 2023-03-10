@@ -121,8 +121,6 @@ impl SubstrateCli for Cli {
 			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
-			"agung" =>
-				Box::new(parachain::agung_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			"agung-local" => Box::new(parachain::agung_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
