@@ -25,31 +25,31 @@
 //! - `on_timestamp_set` - This pallet implements the `OnTimestampSet` trait to handle block
 //!   production. Note: We assume that it's impossible to set timestamp two times in a block.
 //! - `on_unbalanced` - This pallet implements the `OnUnbalanced` trait to handle the distribution
-//!   of tokens generally. Any kind of `Imbalance` can be passed to that method, to be
-//!   distributed the same way as block-rewards as `BeneficiaryPayout`. In case of a vector
-//!   of imbalances you can also use `on_unblananceds`.
+//!   of tokens generally. Any kind of `Imbalance` can be passed to that method, to be distributed
+//!   the same way as block-rewards as `BeneficiaryPayout`. In case of a vector of imbalances you
+//!   can also use `on_unblananceds`.
 //!
 //! ## Usage
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
 //! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//! 	example: 
-//! 	```ignore
-//! 	pub struct BeneficiaryPayout();
-//! 	impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
-//!     	fn treasury(reward: NegativeImbalanceOf<T>) {
-//!         	Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
-//!     	}
+//!     example:
+//!     ```ignore
+//!     pub struct BeneficiaryPayout();
+//!     impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//!         fn treasury(reward: NegativeImbalanceOf<T>) {
+//!             Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+//!         }
 //!
-//!     	fn collators(reward: NegativeImbalanceOf<T>) {
-//!         	Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
-//!     	}
+//!         fn collators(reward: NegativeImbalanceOf<T>) {
+//!             Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
+//!         }
 //!
-//!     	fn dapps_staking(reward: NegativeImbalanceOf<T>) {
-//!         	DappsStaking::rewards(reward);
-//!     	}
-//! 	}
-//! 	```
+//!         fn dapps_staking(reward: NegativeImbalanceOf<T>) {
+//!             DappsStaking::rewards(reward);
+//!         }
+//!     }
+//!     ```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
 //! 4. Set `MaxCurrencySupply` to limit maximum currency supply in the genesis configuration.
 
@@ -59,9 +59,7 @@ pub use pallet::*;
 
 use frame_support::{
 	pallet_prelude::*,
-	traits::{
-		Currency, Imbalance, OnTimestampSet, OnUnbalanced,
-	},
+	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 
@@ -81,7 +79,6 @@ pub use types::*;
 pub mod weights;
 pub use weights::WeightInfo;
 
-
 #[macro_export]
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
@@ -92,12 +89,10 @@ macro_rules! log {
 	};
 }
 
-
 #[frame_support::pallet]
 pub mod pallet {
 
 	use super::*;
-
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -117,7 +112,6 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-
 	#[pallet::storage]
 	#[pallet::getter(fn storage_version)]
 	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
@@ -135,7 +129,6 @@ pub mod pallet {
 	#[pallet::getter(fn max_currency_supply)]
 	pub(super) type MaxCurrencySupply<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
-	
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -155,13 +148,11 @@ pub mod pallet {
 		TransactionFeesDistributed(BalanceOf<T>),
 	}
 
-
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Sum of all rations must be one whole (100%)
 		InvalidDistributionConfiguration,
 	}
-
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -191,14 +182,12 @@ pub mod pallet {
 		}
 	}
 
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			migrations::on_runtime_upgrade::<T>()
 		}
 	}
-
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -249,7 +238,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Sets the maximum currency supply parameter which will be used from limit the block reward.
+		/// Sets the maximum currency supply parameter which will be used from limit the block
+		/// reward.
 		///
 		/// - `limit` - maximum currency supply limit param
 		///
