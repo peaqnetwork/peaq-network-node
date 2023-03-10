@@ -1,0 +1,36 @@
+[package]
+name = 'runtime-common'
+version = '0.0.1'
+description = 'A node of the peaq network.'
+authors = ['peaq network <https://github.com/peaqnetwork>']
+homepage = 'https://peaq.network/'
+edition = '2021'
+publish = false
+
+[dependencies.sp-runtime]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.29'
+
+[dependencies.sp-std]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.29'
+
+[dependencies.pallet-transaction-payment]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.29'
+
+# Customized
+[dependencies.peaq-primitives-xcm]
+path = "../../primitives/xcm"
+default-features = false
+
+[features]
+default = ["std"]
+std = [
+	'sp-runtime/std',
+	'pallet-transaction-payment/std',
+	"peaq-primitives-xcm/std",
+]

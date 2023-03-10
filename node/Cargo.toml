@@ -396,6 +396,9 @@ branch = "peaq-polkadot-v0.9.29"
 [dependencies.peaq-primitives-xcm]
 path = "../primitives/xcm"
 
+[dependencies.runtime-common]
+path = "../runtime/common"
+
 [dependencies.peaq-pallet-storage-rpc]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
 branch = 'dev'
