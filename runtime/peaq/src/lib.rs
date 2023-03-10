@@ -489,10 +489,6 @@ where
 			Err(_) => Err(InvalidTransaction::Payment.into()),
 		}
 	}
-
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
 	/// Note: The `corrected_fee` already includes the `tip`.
 	fn correct_and_deposit_fee(
 		who: &T::AccountId,
