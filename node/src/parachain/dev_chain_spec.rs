@@ -42,7 +42,11 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
 	(get_account_id_from_seed::<sr25519::Public>(s), get_from_seed::<AuraId>(s))
 }
 
-pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
+pub fn get_chain_spec() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/peaq-dev-raw.json")[..])
+}
+
+pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();

@@ -63,7 +63,7 @@ macro_rules! declare_executor {
 				}
 			}
 		}
-	}
+	};
 }
 
 declare_executor!(dev, peaq_dev_runtime);

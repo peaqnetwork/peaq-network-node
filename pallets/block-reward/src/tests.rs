@@ -310,7 +310,7 @@ pub fn on_unbalanced() {
 
 #[test]
 pub fn on_unbalanceds() {
-	let issue = |x| <TestRuntime as Config>::Currency::issue(x);
+	let issue = <TestRuntime as Config>::Currency::issue;
 	ExternalityBuilder::build().execute_with(|| {
 		let amount = 1_000_000_000_000 as Balance;
 		let mut imbalances: Vec<NegativeImbalanceOf<TestRuntime>> = Vec::new();
