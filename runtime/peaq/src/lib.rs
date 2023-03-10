@@ -29,8 +29,8 @@ use sp_runtime::{
 		// NumberFor,
 		OpaqueKeys,
 		PostDispatchInfoOf,
-		Saturating,
 		SaturatedConversion,
+		Saturating,
 		Zero,
 	},
 	transaction_validity::{
@@ -49,9 +49,9 @@ use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstU32, ConstU128, Contains, Currency, EitherOfDiverse, ExistenceRequirement, EnsureOrigin, FindAuthor,
-		Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced, Randomness, StorageInfo,
-		WithdrawReasons,
+		ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
+		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
+		Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -75,10 +75,7 @@ use pallet_evm::{
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
-use pallet_transaction_payment::{
-	OnChargeTransaction,
-	Config as TransactionPaymentConfig,
-};
+use pallet_transaction_payment::{Config as TransactionPaymentConfig, OnChargeTransaction};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -456,14 +453,14 @@ pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
 
 impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
 where
-    T: TransactionPaymentConfig,
-    C: Currency<<T as frame_system::Config>::AccountId>,
-    OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+	T: TransactionPaymentConfig,
+	C: Currency<<T as frame_system::Config>::AccountId>,
+	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
-    type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-    type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
+	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-    /// Withdraw the predicted fee from the transaction origin.
+	/// Withdraw the predicted fee from the transaction origin.
 	/// Note: The `fee` already includes the `tip`.
 	fn withdraw_fee(
 		who: &T::AccountId,

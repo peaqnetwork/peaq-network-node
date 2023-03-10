@@ -51,7 +51,7 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
-		ExistenceRequirement, FindAuthor,Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
+		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
 		Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
