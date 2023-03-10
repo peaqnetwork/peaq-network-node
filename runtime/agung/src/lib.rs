@@ -466,13 +466,13 @@ where
 		who: &T::AccountId,
 		_call: &T::Call,
 		_info: &DispatchInfoOf<T::Call>,
-		fee: Self::Balance,
+		total_fee: Self::Balance,
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		let network_fee = fee;
-		if network_fee.is_zero() {
+		if total_fee.is_zero() {
 			return Ok(None)
 		}
+		let inclusion_fee = total_fee - tip;
 
 		let withdraw_reason = if tip.is_zero() {
 			WithdrawReasons::TRANSACTION_PAYMENT
@@ -481,8 +481,8 @@ where
 		};
 
 		// Apply Peaq Economy-of-Things Fee adjustment
-		let reward_fee = EoTFeeFactor::get() * network_fee;
-		let tx_fee = network_fee.saturating_add(reward_fee);
+		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
+		let tx_fee = total_fee.saturating_add(eot_fee);
 
 		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
 			Ok(imbalance) => Ok(Some(imbalance)),
@@ -498,15 +498,15 @@ where
 		who: &T::AccountId,
 		_dispatch_info: &DispatchInfoOf<T::Call>,
 		_post_info: &PostDispatchInfoOf<T::Call>,
-		corrected_fee: Self::Balance,
+		cor_total_fee: Self::Balance,
 		tip: Self::Balance,
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Result<(), TransactionValidityError> {
 		if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
-			let cor_network_fee = corrected_fee;
-			let cor_reward_fee = EoTFeeFactor::get() * corrected_fee;
-			let cor_tx_fee = cor_reward_fee + cor_network_fee;
+			let cor_inclusion_fee = cor_total_fee - tip;
+			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
+			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
 
 			// Calculate how much refund we should return
 			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);

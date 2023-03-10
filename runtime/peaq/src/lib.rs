@@ -464,52 +464,52 @@ where
     type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
     /// Withdraw the predicted fee from the transaction origin.
-    /// Note: The `fee` already includes the `tip`.
-    fn withdraw_fee(
-        who: &T::AccountId,
-        _call: &T::Call,
-        _info: &DispatchInfoOf<T::Call>,
-        fee: Self::Balance,
-        tip: Self::Balance,
-    ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		let network_fee = fee;
-        if network_fee.is_zero() {
-            return Ok(None)
-        }
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		_call: &T::Call,
+		_info: &DispatchInfoOf<T::Call>,
+		total_fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		if total_fee.is_zero() {
+			return Ok(None)
+		}
+		let inclusion_fee = total_fee - tip;
 
-        let withdraw_reason = if tip.is_zero() {
-            WithdrawReasons::TRANSACTION_PAYMENT
-        } else {
-            WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-        };
+		let withdraw_reason = if tip.is_zero() {
+			WithdrawReasons::TRANSACTION_PAYMENT
+		} else {
+			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+		};
 
 		// Apply Peaq Economy-of-Things Fee adjustment
-		let reward_fee = EoTFeeFactor::get() * network_fee;
-        let tx_fee = network_fee.saturating_add(reward_fee);
+		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
+		let tx_fee = total_fee.saturating_add(eot_fee);
 
-        match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-            Ok(imbalance) => Ok(Some(imbalance)),
-            Err(_) => Err(InvalidTransaction::Payment.into()),
-        }
-    }
+		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+			Ok(imbalance) => Ok(Some(imbalance)),
+			Err(_) => Err(InvalidTransaction::Payment.into()),
+		}
+	}
 
-    /// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-    /// Since the predicted fee might have been too high, parts of the fee may
-    /// be refunded.
-    /// Note: The `corrected_fee` already includes the `tip`.
-    fn correct_and_deposit_fee(
-        who: &T::AccountId,
-        _dispatch_info: &DispatchInfoOf<T::Call>,
-        _post_info: &PostDispatchInfoOf<T::Call>,
-        corrected_fee: Self::Balance,
-        tip: Self::Balance,
-        already_withdrawn: Self::LiquidityInfo,
-    ) -> Result<(), TransactionValidityError> {
-        if let Some(paid) = already_withdrawn {
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		_dispatch_info: &DispatchInfoOf<T::Call>,
+		_post_info: &PostDispatchInfoOf<T::Call>,
+		cor_total_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
-			let cor_network_fee = corrected_fee;
-			let cor_reward_fee = EoTFeeFactor::get() * corrected_fee;
-			let cor_tx_fee = cor_reward_fee + cor_network_fee;
+			let cor_inclusion_fee = cor_total_fee - tip;
+			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
+			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
 
 			// Calculate how much refund we should return
 			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);
@@ -529,7 +529,7 @@ where
 			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
 		}
 		Ok(())
-    }
+	}
 }
 
 impl pallet_transaction_payment::Config for Runtime {
