@@ -33,23 +33,23 @@
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
 //! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//! 	example:
-//! 	```ignore
-//! 	pub struct BeneficiaryPayout();
-//! 	impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
-//!     	fn treasury(reward: NegativeImbalanceOf<T>) {
-//!         	Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
-//!     	}
+//!     example:
+//!     ```ignore
+//!     pub struct BeneficiaryPayout();
+//!     impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//!         fn treasury(reward: NegativeImbalanceOf<T>) {
+//!             Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+//!         }
 //!
-//!     	fn collators(reward: NegativeImbalanceOf<T>) {
-//!         	Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
-//!     	}
+//!         fn collators(reward: NegativeImbalanceOf<T>) {
+//!             Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
+//!         }
 //!
-//!     	fn dapps_staking(reward: NegativeImbalanceOf<T>) {
-//!         	DappsStaking::rewards(reward);
-//!     	}
-//! 	}
-//! 	```
+//!         fn dapps_staking(reward: NegativeImbalanceOf<T>) {
+//!             DappsStaking::rewards(reward);
+//!         }
+//!     }
+//!     ```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
 //! 4. Set `MaxCurrencySupply` to limit maximum currency supply in the genesis configuration.
 
