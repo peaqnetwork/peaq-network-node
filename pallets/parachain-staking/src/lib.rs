@@ -115,6 +115,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
+pub use crate::{default_weights::WeightInfo, pallet::*};
+
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod default_weights;
@@ -130,8 +132,6 @@ mod set;
 mod types;
 
 use frame_support::pallet;
-
-pub use crate::{default_weights::WeightInfo, pallet::*};
 
 #[pallet]
 pub mod pallet {
@@ -213,6 +213,7 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<<Self as pallet_balances::Config>::Balance>
 			+ From<<Self as pallet_balances::Config>::Balance>
+			+ From<Self::BlockNumber>
 			+ TypeInfo
 			+ MaxEncodedLen;
 
