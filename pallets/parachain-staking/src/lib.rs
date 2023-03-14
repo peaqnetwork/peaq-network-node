@@ -2221,9 +2221,11 @@ pub mod pallet {
 			} = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(total_collators, total_issuance);
 
-			InflationConfig::<T>::get()
-				.collator
-				.compute_reward::<T>(stake, staking_rate, multiplier)
+			// InflationConfig::<T>::get()
+			// 	.collator
+			//	.compute_reward::<T>(stake, staking_rate, multiplier)
+            // TODO
+            BalanceOf::<T>::zero()
 		}
 
 		/// Calculates the delegator staking rewards for `multiplier` many
@@ -2239,9 +2241,11 @@ pub mod pallet {
 			} = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(total_delegators, total_issuance);
 
-			InflationConfig::<T>::get()
-				.delegator
-				.compute_reward::<T>(stake, staking_rate, multiplier)
+			// InflationConfig::<T>::get()
+			//	.delegator
+			//	.compute_reward::<T>(stake, staking_rate, multiplier)
+            // TODO
+            BalanceOf::<T>::zero()
 		}
 
 		/// Increment the accumulated rewards of a collator.
