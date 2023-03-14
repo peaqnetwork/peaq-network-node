@@ -2216,17 +2216,18 @@ pub mod pallet {
 		/// configuration for collators.
 		pub(crate) fn calc_block_rewards_collator(stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
 			let total_issuance = T::Currency::total_issuance();
-			let TotalStake {
-				collators: total_collators,
-				..
-			} = TotalCollatorStake::<T>::get();
-			let staking_rate = Perquintill::from_rational(total_collators, total_issuance);
+			// let TotalStake {
+			// 	collators: total_collators,
+			// 	..
+			// } = TotalCollatorStake::<T>::get();
+			// let staking_rate = Perquintill::from_rational(total_collators, total_issuance);
 
 			// InflationConfig::<T>::get()
 			// 	.collator
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
-            // TODO
-            BalanceOf::<T>::zero()
+			// TODO: Discuss calculation
+			let reward_rate_config = RewardRateConfig::<T>::get();
+			reward_rate_config.compute_collator_reward::<T>(total_issuance) * multiplier
 		}
 
 		/// Calculates the delegator staking rewards for `multiplier` many
@@ -2236,17 +2237,18 @@ pub mod pallet {
 		/// configuration for delegators.
 		pub(crate) fn calc_block_rewards_delegator(stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
 			let total_issuance = T::Currency::total_issuance();
-			let TotalStake {
-				delegators: total_delegators,
-				..
-			} = TotalCollatorStake::<T>::get();
-			let staking_rate = Perquintill::from_rational(total_delegators, total_issuance);
+			// let TotalStake {
+			// 	delegators: total_delegators,
+			// 	..
+			// } = TotalCollatorStake::<T>::get();
+			// let staking_rate = Perquintill::from_rational(total_delegators, total_issuance);
 
 			// InflationConfig::<T>::get()
 			//	.delegator
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
-            // TODO
-            BalanceOf::<T>::zero()
+            // TODO: Discuss calculation
+			let reward_rate_config = RewardRateConfig::<T>::get();
+			reward_rate_config.compute_delegator_reward::<T>(total_issuance, staking_rate) * multiplier
 		}
 
 		/// Increment the accumulated rewards of a collator.
