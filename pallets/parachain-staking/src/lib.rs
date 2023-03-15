@@ -144,7 +144,7 @@ pub mod pallet {
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
 			Currency, EstimateNextSessionRotation, ExistenceRequirement, Get, Imbalance,
-			LockIdentifier, LockableCurrency, OnUnbalanced, ReservableCurrency,
+			LockIdentifier, LockableCurrency, ReservableCurrency,
 			StorageVersion, WithdrawReasons,
 		},
 		BoundedVec, PalletId,
@@ -2215,7 +2215,7 @@ pub mod pallet {
 		/// Depends on the current total issuance and staking reward
 		/// configuration for collators.
 		pub(crate) fn calc_block_rewards_collator(stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
-			let total_issuance = T::Currency::total_issuance();
+			// let total_issuance = T::Currency::total_issuance();
 			// let TotalStake {
 			// 	collators: total_collators,
 			// 	..
@@ -2225,9 +2225,11 @@ pub mod pallet {
 			// InflationConfig::<T>::get()
 			// 	.collator
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
-			// TODO: Discuss calculation
-			let reward_rate_config = RewardRateConfig::<T>::get();
-			reward_rate_config.compute_collator_reward::<T>(total_issuance) * multiplier
+
+			// TODO: Discuss calculation, that is not going to be working
+			// let reward_rate_config = RewardRateConfig::<T>::get();
+			// reward_rate_config.compute_collator_reward::<T>(total_issuance) * multiplier
+			BalanceOf::<T>::zero()
 		}
 
 		/// Calculates the delegator staking rewards for `multiplier` many
@@ -2236,7 +2238,7 @@ pub mod pallet {
 		/// Depends on the current total issuance and staking reward
 		/// configuration for delegators.
 		pub(crate) fn calc_block_rewards_delegator(stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
-			let total_issuance = T::Currency::total_issuance();
+			// let total_issuance = T::Currency::total_issuance();
 			// let TotalStake {
 			// 	delegators: total_delegators,
 			// 	..
@@ -2246,9 +2248,11 @@ pub mod pallet {
 			// InflationConfig::<T>::get()
 			//	.delegator
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
-            // TODO: Discuss calculation
-			let reward_rate_config = RewardRateConfig::<T>::get();
-			reward_rate_config.compute_delegator_reward::<T>(total_issuance, staking_rate) * multiplier
+
+            // TODO: Discuss calculation, that is not going to be working
+			// let reward_rate_config = RewardRateConfig::<T>::get();
+			// reward_rate_config.compute_delegator_reward::<T>(total_issuance, staking_rate) * multiplier
+			BalanceOf::<T>::zero()
 		}
 
 		/// Increment the accumulated rewards of a collator.
@@ -2290,53 +2294,53 @@ pub mod pallet {
 			});
 		}
 
-		/// TODO check this thouroughly and write documentation!
-		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_ref_time(1_u64);
-			let mut writes = Weight::from_ref_time(0_u64);
-			let mut delegator_sum = T::CurrencyBalance::from(0u128);
-			// should always include state except if the collator has been forcedly removed
-			// via `force_remove_candidate` in the current or previous round
-			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				for Stake { owner: _owner, amount } in &state.delegators[..] {
-					if *amount >= T::MinDelegatorStake::get() {
-						delegator_sum += *amount;
-					}
-				}
-				let pot = Self::account_id();
-				let issue_number = T::Currency::free_balance(&pot)
-					.checked_sub(&T::Currency::minimum_balance())
-					.unwrap_or_else(Zero::zero);
+		// /// TODO check this thouroughly and write documentation!
+		// fn peaq_reward_mechanism(author: T::AccountId) {
+		// 	let mut reads = Weight::from_ref_time(1_u64);
+		// 	let mut writes = Weight::from_ref_time(0_u64);
+		// 	let mut delegator_sum = T::CurrencyBalance::from(0u128);
+		// 	// should always include state except if the collator has been forcedly removed
+		// 	// via `force_remove_candidate` in the current or previous round
+		// 	if let Some(state) = CandidatePool::<T>::get(author.clone()) {
+		// 		for Stake { owner: _owner, amount } in &state.delegators[..] {
+		// 			if *amount >= T::MinDelegatorStake::get() {
+		// 				delegator_sum += *amount;
+		// 			}
+		// 		}
+		// 		let pot = Self::account_id();
+		// 		let issue_number = T::Currency::free_balance(&pot)
+		// 			.checked_sub(&T::Currency::minimum_balance())
+		// 			.unwrap_or_else(Zero::zero);
 
-				let reward_rate_config = RewardRateConfig::<T>::get();
+		// 		let reward_rate_config = RewardRateConfig::<T>::get();
 
-				if delegator_sum == T::CurrencyBalance::from(0u128) {
-					Self::do_reward(&pot, &author, issue_number);
-				} else {
-					let collator_reward =
-						reward_rate_config.compute_collator_reward::<T>(issue_number);
-					Self::do_reward(&pot, &author, collator_reward);
-				}
-				writes = writes.saturating_add(Weight::from_ref_time(1_u64));
+		// 		if delegator_sum == T::CurrencyBalance::from(0u128) {
+		// 			Self::do_reward(&pot, &author, issue_number);
+		// 		} else {
+		// 			let collator_reward =
+		// 				reward_rate_config.compute_collator_reward::<T>(issue_number);
+		// 			Self::do_reward(&pot, &author, collator_reward);
+		// 		}
+		// 		writes = writes.saturating_add(Weight::from_ref_time(1_u64));
 
-				// Reward delegators
-				for Stake { owner, amount } in state.delegators {
-					if amount >= T::MinDelegatorStake::get() {
-						let staking_rate = Perquintill::from_rational(amount, delegator_sum);
-						let delegator_reward = reward_rate_config
-							.compute_delegator_reward::<T>(issue_number, staking_rate);
-						Self::do_reward(&pot, &owner, delegator_reward);
-						writes = writes.saturating_add(Weight::from_ref_time(1_u64));
-					}
-				}
-				reads = reads.saturating_add(Weight::from_ref_time(4_u64));
-			}
+		// 		// Reward delegators
+		// 		for Stake { owner, amount } in state.delegators {
+		// 			if amount >= T::MinDelegatorStake::get() {
+		// 				let staking_rate = Perquintill::from_rational(amount, delegator_sum);
+		// 				let delegator_reward = reward_rate_config
+		// 					.compute_delegator_reward::<T>(issue_number, staking_rate);
+		// 				Self::do_reward(&pot, &owner, delegator_reward);
+		// 				writes = writes.saturating_add(Weight::from_ref_time(1_u64));
+		// 			}
+		// 		}
+		// 		reads = reads.saturating_add(Weight::from_ref_time(4_u64));
+		// 	}
 
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
-		}
+		// 	frame_system::Pallet::<T>::register_extra_weight_unchecked(
+		// 		T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
+		// 		DispatchClass::Mandatory,
+		// 	);
+		// }
 
 		/// Get a unique, inaccessible account id from the `PotId`.
 		pub fn account_id() -> T::AccountId {
@@ -2348,15 +2352,23 @@ pub mod pallet {
 	where
 		T: Config + pallet_authorship::Config + pallet_session::Config,
 	{
-		/// Compute coinbase rewards for block production and distribute it to
-		/// collator's (block producer) and its delegators according to their
-		/// stake and the current RewardRateInfo.
-		///
-		/// The rewards are split between collators and delegators with
-		/// different reward rates. Rewards are immediately available without any restrictions
-		/// after minting.
+		/// Increments the reward counter of the block author by the current
+		/// number of collators in the session.
 		fn note_author(author: T::AccountId) {
-			Self::peaq_reward_mechanism(author);
+			// should always include state except if the collator has been forcedly removed
+			// via `force_remove_candidate` in the current or previous round
+			if CandidatePool::<T>::get(&author).is_some() {
+				// necessary to compensate for a potentially fluctuating number of collators
+				let authors = pallet_session::Pallet::<T>::validators();
+				BlocksAuthored::<T>::mutate(&author, |count| {
+					*count = count.saturating_add(authors.len().saturated_into::<T::BlockNumber>());
+				});
+			}
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(2, 1),
+				DispatchClass::Mandatory,
+			);
 		}
 
 		fn note_uncle(_author: T::AccountId, _age: T::BlockNumber) {
