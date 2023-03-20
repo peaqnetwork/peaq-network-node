@@ -1828,11 +1828,6 @@ cumulus_pallet_parachain_system::register_validate_block! {
 	CheckInherents = CheckInherents,
 }
 
-parameter_types! {
-	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
-		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
-}
-
 impl pallet_vesting::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
