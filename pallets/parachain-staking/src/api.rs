@@ -17,15 +17,19 @@
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
 use crate::{
-	types::BalanceOf, reward_rate::RewardRateInfo,
-	BlocksAuthored, BlocksRewarded, CandidatePool, Config, DelegatorState, Pallet,
-	Rewards, RewardRateConfig, // InflationConfig, TotalCollatorStake
+	reward_rate::RewardRateInfo,
+	types::BalanceOf,
+	BlocksAuthored,
+	BlocksRewarded,
+	CandidatePool,
+	Config,
+	DelegatorState,
+	Pallet,
+	RewardRateConfig, // InflationConfig, TotalCollatorStake
+	Rewards,
 };
 // use frame_support::traits::Currency;
-use sp_runtime::{
-	traits::{Saturating, Zero},
-	// Perquintill,
-};
+use sp_runtime::traits::{Saturating, Zero};
 
 impl<T: Config> Pallet<T> {
 	/// Calculates the staking rewards for a given account address.
@@ -43,10 +47,12 @@ impl<T: Config> Pallet<T> {
 		if let Some(delegator_state) = DelegatorState::<T>::get(acc) {
 			// #blocks for unclaimed staking rewards equals
 			// #blocks_authored_by_collator - #blocks_claimed_by_delegator
-			let count_unclaimed = BlocksAuthored::<T>::get(&delegator_state.owner).saturating_sub(count_rewarded);
+			let count_unclaimed =
+				BlocksAuthored::<T>::get(&delegator_state.owner).saturating_sub(count_rewarded);
 			let stake = delegator_state.amount;
 			// rewards += stake * reward_count * delegator_reward_rate
-			rewards.saturating_add(Self::calc_block_rewards_delegator(stake, count_unclaimed.into()))
+			rewards
+				.saturating_add(Self::calc_block_rewards_delegator(stake, count_unclaimed.into()))
 		} else if Self::is_active_candidate(acc).is_some() {
 			// #blocks for unclaimed staking rewards equals
 			// #blocks_authored_by_collator - #blocks_claimed_by_collator
@@ -70,8 +76,9 @@ impl<T: Config> Pallet<T> {
 		// let total_issuance = T::Currency::total_issuance();
 		// let total_stake = TotalCollatorStake::<T>::get();
 		// let inflation_config = InflationConfig::<T>::get();
-		// let collator_staking_rate = Perquintill::from_rational(total_stake.collators, total_issuance);
-		// let delegator_staking_rate = Perquintill::from_rational(total_stake.delegators, total_issuance);
+		// let collator_staking_rate = Perquintill::from_rational(total_stake.collators,
+		// total_issuance); let delegator_staking_rate =
+		// Perquintill::from_rational(total_stake.delegators, total_issuance);
 		// let collator_reward_rate = Perquintill::from_rational(
 		// 	inflation_config.collator.max_rate.deconstruct(),
 		// 	collator_staking_rate.deconstruct(),

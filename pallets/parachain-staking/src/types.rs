@@ -16,8 +16,8 @@
 
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
-use frame_support::traits::{Currency, Get};
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::traits::{Currency, Get};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, CheckedSub, Saturating, Zero},
@@ -56,10 +56,7 @@ where
 	B: Default + Eq + Ord,
 {
 	fn from(owner: A) -> Self {
-		Stake { 
-			owner,
-			amount: B::default()
-		}
+		Stake { owner, amount: B::default() }
 	}
 }
 
@@ -178,24 +175,22 @@ where
 	}
 
 	pub fn inc_delegator(&mut self, delegator: A, more: B) {
-		if let Ok(i) = self.delegators.linear_search(&Stake::<A, B> {
-			owner: delegator,
-			amount: B::zero(),
-		}) {
-			self.delegators
-				.mutate(|vec| vec[i].amount = vec[i].amount.saturating_add(more));
+		if let Ok(i) = self
+			.delegators
+			.linear_search(&Stake::<A, B> { owner: delegator, amount: B::zero() })
+		{
+			self.delegators.mutate(|vec| vec[i].amount = vec[i].amount.saturating_add(more));
 			self.total = self.total.saturating_add(more);
 			self.delegators.sort_greatest_to_lowest()
 		}
 	}
 
 	pub fn dec_delegator(&mut self, delegator: A, less: B) {
-		if let Ok(i) = self.delegators.linear_search(&Stake::<A, B> {
-			owner: delegator,
-			amount: B::zero(),
-		}) {
-			self.delegators
-				.mutate(|vec| vec[i].amount = vec[i].amount.saturating_sub(less));
+		if let Ok(i) = self
+			.delegators
+			.linear_search(&Stake::<A, B> { owner: delegator, amount: B::zero() })
+		{
+			self.delegators.mutate(|vec| vec[i].amount = vec[i].amount.saturating_sub(less));
 			self.total = self.total.saturating_sub(less);
 			self.delegators.sort_greatest_to_lowest()
 		}
@@ -210,7 +205,16 @@ pub type Delegator<AccountId, Balance> = Stake<AccountId, Balance>;
 impl<AccountId, Balance> Delegator<AccountId, Balance>
 where
 	AccountId: Eq + Ord + Clone + Debug,
-	Balance: Copy + Add<Output = Balance> + Saturating + PartialOrd + Eq + Ord + Debug + Zero + Default + CheckedSub,
+	Balance: Copy
+		+ Add<Output = Balance>
+		+ Saturating
+		+ PartialOrd
+		+ Eq
+		+ Ord
+		+ Debug
+		+ Zero
+		+ Default
+		+ CheckedSub,
 {
 	pub fn try_clear(&mut self, collator: AccountId) -> Result<(), ()> {
 		if self.owner == collator {
@@ -234,7 +238,11 @@ where
 
 	/// Returns Ok(Some(delegated_amount)) if successful, `Err` if delegation
 	/// was not found and Ok(None) if delegated stake would underflow.
-	pub fn try_decrement(&mut self, collator: AccountId, less: Balance) -> Result<Option<Balance>, ()> {
+	pub fn try_decrement(
+		&mut self,
+		collator: AccountId,
+		less: Balance,
+	) -> Result<Option<Balance>, ()> {
 		if self.owner == collator {
 			Ok(self.amount.checked_sub(&less).map(|new| {
 				self.amount = new;
@@ -313,4 +321,5 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
 pub type StakeOf<T> = Stake<AccountIdOf<T>, BalanceOf<T>>;
-// pub type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::NegativeImbalance;
+// pub type NegativeImbalanceOf<T> = <<T as Config>::Currency as
+// Currency<AccountIdOf<T>>>::NegativeImbalance;
