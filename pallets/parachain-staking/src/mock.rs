@@ -23,7 +23,7 @@ use super::*;
 use crate::{self as stake};
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize, OnUnbalanced},
+	traits::{Currency, Imbalance, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
@@ -48,6 +48,7 @@ pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
 pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
+pub(crate) const ISSUE_NUMBER: Balance = 10_000 * MILLI_KILT;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -202,6 +203,7 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
@@ -213,6 +215,8 @@ pub(crate) struct ExtBuilder {
 	reward_rate_config: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
+	// issue number per block
+	issue_number: Balance,
 }
 
 impl Default for ExtBuilder {
@@ -222,6 +226,7 @@ impl Default for ExtBuilder {
 			delegators: vec![],
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
+			issue_number: ISSUE_NUMBER,
 			reward_rate_config: RewardRateInfo::new(
 				Perquintill::from_percent(30),
 				Perquintill::from_percent(70),
@@ -271,6 +276,11 @@ impl ExtBuilder {
 	#[must_use]
 	pub(crate) fn set_blocks_per_round(mut self, blocks_per_round: BlockNumber) -> Self {
 		self.blocks_per_round = blocks_per_round;
+		self
+	}
+
+	pub(crate) fn set_issue_number(mut self, issue_number: Balance) -> Self {
+		self.issue_number = issue_number;
 		self
 	}
 
@@ -342,6 +352,7 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 /// case.
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
+		simulate_issuance();
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			// Balances::make_free_balance_be(
 			// 	&StakePallet::account_id(),
@@ -366,6 +377,7 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 /// account is regarded to be the block author and thus gets noted.
 pub(crate) fn roll_to_claim_rewards(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
+		simulate_issuance();
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
 			// author has to increment rewards before claiming
@@ -400,4 +412,16 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 		.map(|r| r.event)
 		.filter_map(|e| if let Event::StakePallet(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
+}
+
+/// This method simulates block-wise issuance of tokens. At Peaq, the parachain-staking
+/// pallet does not mint tokens, it is done by the block-reward pallet. It is also
+/// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
+pub(crate) fn simulate_issuance() {
+	let issued = Balances::issue(DECIMALS);
+	let issued = Balances::deposit_creating(
+		&StakePallet::account_id(),
+		issued.peek()
+	);
+	StakePallet::update_average_reward(issued.peek());
 }
