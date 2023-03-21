@@ -143,7 +143,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, ExistenceRequirement, Get, Imbalance,
+			Currency, EstimateNextSessionRotation, Get, Imbalance,
 			LockIdentifier, LockableCurrency, ReservableCurrency,
 			StorageVersion, WithdrawReasons,
 		},
@@ -155,8 +155,8 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedSub, Convert, One, SaturatedConversion, Saturating,
-			StaticLookup, Zero,
+			AccountIdConversion, Convert, One, SaturatedConversion, Saturating,
+			StaticLookup, Zero, // CheckedSub
 		},
 		Permill, Perquintill,
 	};
@@ -612,6 +612,13 @@ pub mod pallet {
 	#[pallet::getter(fn rewards)]
 	pub(crate) type Rewards<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>, ValueQuery>;
 
+	/// The average total reward, given to this pallet. Because currently, there
+	/// is no dynamic issue of tokens, we need an average value as reference for
+	/// payouts.
+	#[pallet::storage]
+	#[pallet::getter(fn average_session_reward)]
+	pub(crate) type AverageSessionReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
 		Option<<T as frame_system::Config>::AccountId>,
@@ -621,6 +628,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn new_round_forced)]
 	pub(crate) type ForceNewRound<T: Config> = StorageValue<_, bool, ValueQuery>;
+
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -2175,12 +2183,12 @@ pub mod pallet {
 			Ok(unstaking_len)
 		}
 
-		/// Process the coinbase rewards for the production of a new block.
-		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
-			if let Ok(_success) = T::Currency::transfer(pot, who, reward, ExistenceRequirement::KeepAlive) {
-				Self::deposit_event(Event::Rewarded(who.clone(), reward));
-			}
-		}
+		// /// Process the coinbase rewards for the production of a new block.
+		// fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
+		// 	if let Ok(_success) = T::Currency::transfer(pot, who, reward, ExistenceRequirement::KeepAlive) {
+		// 		Self::deposit_event(Event::Rewarded(who.clone(), reward));
+		// 	}
+		// }
 
 		/// Checks whether a delegator can still delegate in this round, e.g.,
 		/// if they have not delegated MaxDelegationsPerRound many times
@@ -2212,9 +2220,11 @@ pub mod pallet {
 		/// Calculates the collator staking rewards for authoring `multiplier`
 		/// many blocks based on the given stake.
 		///
-		/// Depends on the current total issuance and staking reward
-		/// configuration for collators.
-		pub(crate) fn calc_block_rewards_collator(stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
+		/// Depends on the average total block reward and configurable reward
+		/// rate for collators.
+		// Depends on the current total issuance and staking reward
+		// configuration for collators.
+		pub(crate) fn calc_block_rewards_collator(_stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
 			// let total_issuance = T::Currency::total_issuance();
 			// let TotalStake {
 			// 	collators: total_collators,
@@ -2226,17 +2236,19 @@ pub mod pallet {
 			// 	.collator
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
-			// TODO: Discuss calculation, that is not going to be working
-			// let reward_rate_config = RewardRateConfig::<T>::get();
-			// reward_rate_config.compute_collator_reward::<T>(total_issuance) * multiplier
-			BalanceOf::<T>::zero()
+			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
+			let avg_block_reward = Perquintill::from_percent(90) * AverageSessionReward::<T>::get();
+			let reward_rate_config = RewardRateConfig::<T>::get();
+			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) * multiplier
 		}
 
 		/// Calculates the delegator staking rewards for `multiplier` many
 		/// blocks based on the given stake.
 		///
-		/// Depends on the current total issuance and staking reward
-		/// configuration for delegators.
+		/// Depends on the average total block reward and percentage of staking
+		/// among delegators of current block author.
+		// Depends on the current total issuance and staking reward
+		// configuration for delegators.
 		pub(crate) fn calc_block_rewards_delegator(stake: BalanceOf<T>, multiplier: BalanceOf<T>) -> BalanceOf<T> {
 			// let total_issuance = T::Currency::total_issuance();
 			// let TotalStake {
@@ -2249,10 +2261,12 @@ pub mod pallet {
 			//	.delegator
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
-            // TODO: Discuss calculation, that is not going to be working
-			// let reward_rate_config = RewardRateConfig::<T>::get();
-			// reward_rate_config.compute_delegator_reward::<T>(total_issuance, staking_rate) * multiplier
-			BalanceOf::<T>::zero()
+            // TODO: Workarround soluation, due to Peaq's fixed amount of minted token
+			let avg_block_reward = Perquintill::from_percent(90) * AverageSessionReward::<T>::get();
+			let reward_rate_config = RewardRateConfig::<T>::get();
+			let total_stake = TotalCollatorStake::<T>::get();
+			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
+			reward_rate_config.compute_delegator_reward::<T>(avg_block_reward, staking_rate) * multiplier
 		}
 
 		/// Increment the accumulated rewards of a collator.
@@ -2346,6 +2360,23 @@ pub mod pallet {
 		pub fn account_id() -> T::AccountId {
 			T::PotId::get().into_account_truncating()
 		}
+
+		/// Methods updates the AverageSessionReward storage by calculating the new
+		/// average total block reward. This value is used as a reference for the
+		/// payouts of collators and delegators, because at Peaq they still get rated
+		/// by a fixed, configurable percentage. See reward-rate. This is a
+		/// workarround as long we having a fixed amount of issued/minted tokens, to
+		/// affect inflation.
+		pub fn update_average_reward(new_reward: BalanceOf<T>) {
+			let mut avg_reward = AverageSessionReward::<T>::get();
+			avg_reward = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
+			AverageSessionReward::<T>::put(avg_reward);
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(1, 1),
+				DispatchClass::Mandatory,
+			);
+		}
 	}
 
 	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
@@ -2415,6 +2446,7 @@ pub mod pallet {
 		}
 	}
 
+	// TODO
 	impl<T: Config> ShouldEndSession<T::BlockNumber> for Pallet<T> {
 		fn should_end_session(now: T::BlockNumber) -> bool {
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
