@@ -181,21 +181,29 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 First, install [Docker](https://docs.docker.com/get-docker/) and
 [Docker Compose](https://docs.docker.com/compose/install/).
 
-Then run the following command to start a single node development chain.
+Then run the following command to start a peaq-network-node parachain collator node that will connect to the polkadot relay chain running in peaq development envoirnment.
 
 ```bash
-./scripts/docker_run.sh
+./scripts/docker_run.sh 
+./target/release/peaq-node \
+--alice \
+--collator \
+--force-authoring \
+--chain ./node/src/chain-specs/parachain.raw.1.config \
+--base-path /tmp/parachain/alice \
+--port 40333 \
+--ws-port 8844 \
+-- \
+--execution wasm \
+--chain ./node/src/chain-specs/relaychain.raw.2.config \
+--port 30343 \
+--ws-port 9977
 ```
 
-This command will firstly compile your code, and then start a local development network. You can
-also replace the default command
-(`cargo build --release && ./target/release/peaq-node --dev --ws-external`)
-by appending your own. A few useful ones are as follow.
+This command will firstly compile your code, and then start a peaq-network-node parachain collarot node runnig on your local machine and will connect to polkadot relay chain running in peaq development enviornament. You can
+also replace the default command by appending your own. A few useful ones are as follow.
 
 ```bash
-# Run Substrate node without re-compiling
-./scripts/docker_run.sh ./target/release/peaq-node --dev --ws-external
-
 # Purge the local dev chain
 ./scripts/docker_run.sh ./target/release/peaq-node purge-chain --dev
 
