@@ -2401,7 +2401,11 @@ pub mod pallet {
 		/// affect inflation.
 		pub fn update_average_reward(new_reward: BalanceOf<T>) {
 			let mut avg_reward = AverageSessionReward::<T>::get();
-			avg_reward = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
+			if avg_reward.is_zero() {
+				avg_reward = new_reward;
+			} else {
+				avg_reward = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
+			}
 			AverageSessionReward::<T>::put(avg_reward);
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
