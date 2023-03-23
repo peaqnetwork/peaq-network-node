@@ -411,12 +411,12 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	let issued = Balances::deposit_creating(&account_id(), issued.peek());
+	let issued = Balances::deposit_creating(&stake_account_id(), issued.peek());
 	StakePallet::update_average_reward(issued.peek());
 }
 
 
-fn account_id() -> AccountId {
+pub(crate) fn stake_account_id() -> AccountId {
     PotId::get().into_account_truncating()
 }
 

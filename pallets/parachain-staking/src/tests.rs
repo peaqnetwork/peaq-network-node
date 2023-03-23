@@ -32,7 +32,7 @@ use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversio
 use crate::{
 	mock::{
 		almost_equal, events, last_event, roll_to, roll_to_claim_rewards, calc_collator_rewards,
-        calc_delegator_rewards, AccountId, Balance,
+        calc_delegator_rewards, stake_account_id, AccountId, Balance,
 		Balances, BlockNumber, Event as MetaEvent, ExtBuilder, Origin, Session, StakePallet,
 		System, Test, BLOCKS_PER_ROUND, DECIMALS,
 	},
@@ -3261,13 +3261,13 @@ fn replace_lowest_delegator() {
 // 			assert_eq!(max_stake, StakePallet::max_candidate_stake());
 // 			let total_collator_stake = max_stake.saturating_mul(<Test as Config>::MinCollators::get().into());
 // 			assert_eq!(total_collator_stake, StakePallet::total_collator_stake().collators);
-// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
+// 			assert!(Balances::free_balance(&stake_account_id()).is_zero());
 // 			let total_issuance = <Test as Config>::Currency::total_issuance();
 
 // 			// total issuance should not increase when not noting authors because we haven't
 // 			// reached NetworkRewardStart yet
 // 			roll_to(10, vec![None], issue_number);
-// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
+// 			assert!(Balances::free_balance(&stake_account_id()).is_zero());
 // 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
 
 // 			// set current block to one block before NetworkRewardStart
@@ -3276,12 +3276,12 @@ fn replace_lowest_delegator() {
 
 // 			// network rewards should only appear 1 block after start
 // 			roll_to(network_reward_start, vec![None], issue_number);
-// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
+// 			assert!(Balances::free_balance(&stake_account_id()).is_zero());
 // 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
 
 // 			// should mint to treasury now
 // 			roll_to(network_reward_start + 1, vec![None], issue_number);
-// 			let network_reward = Balances::free_balance(&StakePallet::account_id());
+// 			let network_reward = Balances::free_balance(&stake_account_id());
 // 			assert!(!network_reward.is_zero());
 // 			assert_eq!(
 // 				total_issuance + network_reward,
@@ -3293,7 +3293,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint exactly the same amount
 // 			roll_to(network_reward_start + 2, vec![None], issue_number);
-// 			assert_eq!(2 * network_reward, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(2 * network_reward, Balances::free_balance(&stake_account_id()));
 // 			assert_eq!(
 // 				total_issuance + 2 * network_reward,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3301,7 +3301,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint exactly the same amount in each block
 // 			roll_to(network_reward_start + 100, vec![None], issue_number);
-// 			assert_eq!(100 * network_reward, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(100 * network_reward, Balances::free_balance(&stake_account_id()));
 // 			assert_eq!(
 // 				total_issuance + 100 * network_reward,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3311,7 +3311,7 @@ fn replace_lowest_delegator() {
 // 			// based on MaxCollatorCandidateStake and MaxSelectedCandidates
 // 			assert_ok!(StakePallet::init_leave_candidates(Origin::signed(1)));
 // 			roll_to(network_reward_start + 101, vec![None], issue_number);
-// 			assert_eq!(101 * network_reward, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(101 * network_reward, Balances::free_balance(&stake_account_id()));
 // 			assert_eq!(
 // 				total_issuance + 101 * network_reward,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3337,7 +3337,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint to treasury now
 // 			roll_to(network_reward_start + 1, vec![None]);
-// 			let reward_before = Balances::free_balance(&StakePallet::account_id());
+// 			let reward_before = Balances::free_balance(&stake_account_id());
 // 			assert!(!reward_before.is_zero());
 // 			assert_eq!(
 // 				total_issuance + reward_before,
@@ -3352,7 +3352,7 @@ fn replace_lowest_delegator() {
 // 				max_stake_doubled
 // 			));
 // 			roll_to(network_reward_start + 2, vec![None]);
-// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&stake_account_id()));
 // 			assert_eq!(
 // 				reward_before + reward_after + total_issuance,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3378,7 +3378,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint to treasury now
 // 			roll_to(network_reward_start + 1, vec![None]);
-// 			let reward_before = Balances::free_balance(&StakePallet::account_id());
+// 			let reward_before = Balances::free_balance(&stake_account_id());
 // 			assert!(!reward_before.is_zero());
 // 			assert_eq!(
 // 				total_issuance + reward_before,
@@ -3392,7 +3392,7 @@ fn replace_lowest_delegator() {
 // 				<Test as Config>::MinCollators::get() * 3
 // 			));
 // 			roll_to(network_reward_start + 2, vec![None]);
-// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&stake_account_id()));
 // 			assert_eq!(
 // 				reward_before + reward_after + total_issuance,
 // 				<Test as Config>::Currency::total_issuance()

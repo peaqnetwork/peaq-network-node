@@ -147,13 +147,12 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion,
 			Convert,
 			One,
 			SaturatedConversion,
 			Saturating,
 			StaticLookup,
-			Zero, // CheckedSub
+			Zero,
 		},
 		Permill, Perquintill,
 	};
@@ -2339,59 +2338,6 @@ pub mod pallet {
 			});
 		}
 
-		// /// TODO check this thouroughly and write documentation!
-		// fn peaq_reward_mechanism(author: T::AccountId) {
-		// 	let mut reads = Weight::from_ref_time(1_u64);
-		// 	let mut writes = Weight::from_ref_time(0_u64);
-		// 	let mut delegator_sum = T::CurrencyBalance::from(0u128);
-		// 	// should always include state except if the collator has been forcedly removed
-		// 	// via `force_remove_candidate` in the current or previous round
-		// 	if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-		// 		for Stake { owner: _owner, amount } in &state.delegators[..] {
-		// 			if *amount >= T::MinDelegatorStake::get() {
-		// 				delegator_sum += *amount;
-		// 			}
-		// 		}
-		// 		let pot = Self::account_id();
-		// 		let issue_number = T::Currency::free_balance(&pot)
-		// 			.checked_sub(&T::Currency::minimum_balance())
-		// 			.unwrap_or_else(Zero::zero);
-
-		// 		let reward_rate_config = RewardRateConfig::<T>::get();
-
-		// 		if delegator_sum == T::CurrencyBalance::from(0u128) {
-		// 			Self::do_reward(&pot, &author, issue_number);
-		// 		} else {
-		// 			let collator_reward =
-		// 				reward_rate_config.compute_collator_reward::<T>(issue_number);
-		// 			Self::do_reward(&pot, &author, collator_reward);
-		// 		}
-		// 		writes = writes.saturating_add(Weight::from_ref_time(1_u64));
-
-		// 		// Reward delegators
-		// 		for Stake { owner, amount } in state.delegators {
-		// 			if amount >= T::MinDelegatorStake::get() {
-		// 				let staking_rate = Perquintill::from_rational(amount, delegator_sum);
-		// 				let delegator_reward = reward_rate_config
-		// 					.compute_delegator_reward::<T>(issue_number, staking_rate);
-		// 				Self::do_reward(&pot, &owner, delegator_reward);
-		// 				writes = writes.saturating_add(Weight::from_ref_time(1_u64));
-		// 			}
-		// 		}
-		// 		reads = reads.saturating_add(Weight::from_ref_time(4_u64));
-		// 	}
-
-		// 	frame_system::Pallet::<T>::register_extra_weight_unchecked(
-		// 		T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-		// 		DispatchClass::Mandatory,
-		// 	);
-		// }
-
-		// /// Get a unique, inaccessible account id from the `PotId`.
-		// pub(crate) fn account_id() -> T::AccountId {
-		// 	T::PotId::get().into_account_truncating()
-		// }
-
 		/// Methods updates the AverageSessionReward storage by calculating the new
 		/// average total block reward. This value is used as a reference for the
 		/// payouts of collators and delegators, because at Peaq they still get rated
@@ -2483,7 +2429,6 @@ pub mod pallet {
 		}
 	}
 
-	// TODO
 	impl<T: Config> ShouldEndSession<T::BlockNumber> for Pallet<T> {
 		fn should_end_session(now: T::BlockNumber) -> bool {
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
