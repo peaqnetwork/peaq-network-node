@@ -833,11 +833,9 @@ impl parachain_staking::Config for Runtime {
 	type MinRequiredCollators = staking::MinRequiredCollators;
 	type MaxDelegationsPerRound = staking::MaxDelegationsPerRound;
 	type MaxDelegatorsPerCollator = staking::MaxDelegatorsPerCollator;
-	type MaxCollatorsPerDelegator = staking::MaxCollatorsPerDelegator;
 	type MinCollatorStake = staking::MinCollatorStake;
 	type MinCollatorCandidateStake = staking::MinCollatorStake;
 	type MaxTopCandidates = staking::MaxCollatorCandidates;
-	type MinDelegation = staking::MinDelegatorStake;
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
