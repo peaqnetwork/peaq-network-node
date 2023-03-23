@@ -2261,7 +2261,7 @@ pub mod pallet {
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
 			let avg_block_reward = Perquintill::from_percent(90) * AverageSessionReward::<T>::get();
 			let reward_rate_config = RewardRateConfig::<T>::get();
-			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) * multiplier
+			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) // * multiplier
 		}
 
 		/// Calculates the delegator staking rewards for `multiplier` many
@@ -2291,8 +2291,8 @@ pub mod pallet {
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			let total_stake = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
-			reward_rate_config.compute_delegator_reward::<T>(avg_block_reward, staking_rate) *
-				multiplier
+			reward_rate_config.compute_delegator_reward::<T>(avg_block_reward, staking_rate) // *
+				//multiplier
 		}
 
 		/// Increment the accumulated rewards of a collator.

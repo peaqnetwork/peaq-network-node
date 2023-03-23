@@ -48,7 +48,7 @@ pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
 pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
-// pub(crate) const ISSUE_NUMBER: Balance = 10_000 * MILLI_KILT;
+pub(crate) const ISSUE_FACTOR: Perquintill = Perquintill::from_percent(90);
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -413,4 +413,31 @@ fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
 	let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
 	StakePallet::update_average_reward(issued.peek());
+}
+
+/// Method calculates the reward rate for a collator in dependency of given paramters
+pub(crate) fn calc_collator_rewards(
+        avg_reward: &Balance,
+        reward_cfg: &RewardRateInfo
+    ) -> Balance
+{
+    // let tot_rate = ISSUE_FACTOR * reward_cfg.collator_rate;
+    // tot_rate * *avg_reward
+    let rewards = ISSUE_FACTOR * *avg_reward;
+    reward_cfg.collator_rate * rewards
+}
+
+
+/// Method calculates the reward rate for a collator in dependency of given paramters
+pub(crate) fn calc_delegator_rewards(
+        avg_reward: &Balance,
+        stake_rate: &Perquintill,
+        reward_cfg: &RewardRateInfo
+    ) -> Balance 
+{
+    // let del_rate = ISSUE_FACTOR * reward_cfg.delegator_rate;
+    // let tot_rate = del_rate * *stake_rate;
+    // tot_rate * *avg_reward
+    let rewards = ISSUE_FACTOR * *avg_reward;
+    reward_cfg.delegator_rate * *stake_rate * rewards
 }

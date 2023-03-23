@@ -31,7 +31,8 @@ use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversio
 
 use crate::{
 	mock::{
-		almost_equal, events, last_event, roll_to, roll_to_claim_rewards, AccountId, Balance,
+		almost_equal, events, last_event, roll_to, roll_to_claim_rewards, calc_collator_rewards,
+        calc_delegator_rewards, AccountId, Balance,
 		Balances, BlockNumber, Event as MetaEvent, ExtBuilder, Origin, Session, StakePallet,
 		System, Test, BLOCKS_PER_ROUND, DECIMALS,
 	},
@@ -1387,7 +1388,10 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			(4, 20_000_000 * DECIMALS),
 			(5, 20_000_000 * DECIMALS),
 		])
-		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_collators(vec![
+            (1, 8_000_000 * DECIMALS),
+            (2, 8_000_000 * DECIMALS)
+        ])
 		.with_delegators(vec![
 			(3, 1, 32_000_000 * DECIMALS),
 			(4, 1, 16_000_000 * DECIMALS),
@@ -1396,43 +1400,43 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 		.build()
 		.execute_with(|| {
 			let issue_number = Balance::from(1000u128);
-			let eff_issueing = Balance::from(900u128);
 
-			let reward_rate = StakePallet::reward_rate_config();
+			let reward_info = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
 			// compute rewards
-			let c_rewards: BalanceOf<Test> =
-				reward_rate.compute_collator_reward::<Test>(eff_issueing);
-			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
-			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
-			let st_rate_d2_1 = Perquintill::one();
-			let d_rewards1_1: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(eff_issueing, st_rate_d1_1);
-			let d_rewards1_2: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(eff_issueing, st_rate_d1_2);
-			let d_rewards2_1: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(eff_issueing, st_rate_d2_1);
+			// let c_rewards: BalanceOf<Test> =
+			// 	reward_rate.compute_collator_reward::<Test>(issue_number);
+            let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 64u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 64u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 64u128);
+            let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
+            let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
+            let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
 				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
-			let user_1 = Balances::usable_balance(&1);
-			let user_2 = Balances::usable_balance(&2);
-			let user_3 = Balances::usable_balance(&3);
-			let user_4 = Balances::usable_balance(&4);
-			let user_5 = Balances::usable_balance(&5);
+			let user_1 = (40_000_000 -  8_000_000) * DECIMALS;
+			let user_2 = (40_000_000 -  8_000_000) * DECIMALS;
+			let user_3 = (40_000_000 - 32_000_000) * DECIMALS;
+			let user_4 = (20_000_000 - 16_000_000) * DECIMALS;
+			let user_5 = (20_000_000 - 16_000_000) * DECIMALS;
 
-			// ???
-			// assert_eq!(Balances::usable_balance(&1), user_1);
-			// assert_eq!(Balances::usable_balance(&2), user_2);
-			// assert_eq!(Balances::usable_balance(&3), user_3);
-			// assert_eq!(Balances::usable_balance(&4), user_4);
-			// assert_eq!(Balances::usable_balance(&5), user_5);
+            // check free balances are correct
+            assert_eq!(Balances::usable_balance(&1), user_1);
+            assert_eq!(Balances::usable_balance(&2), user_2);
+            assert_eq!(Balances::usable_balance(&3), user_3);
+            assert_eq!(Balances::usable_balance(&4), user_4);
+            assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 1st block
 			roll_to_claim_rewards(2, authors.clone(), issue_number);
+            // TEMP!!!
+            // let totstake = StakePallet::total_collator_stake();
+            // assert_eq!("bla", format!("{:?}", totstake));
 			assert_eq!(Balances::usable_balance(&1), user_1 + c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
 			assert_eq!(Balances::usable_balance(&3), user_3 + d_rewards1_1);
@@ -1530,15 +1534,21 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			(4, 20_000_000 * DECIMALS),
 			(5, 20_000_000 * DECIMALS),
 		])
-		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_collators(vec![
+            (1, 8_000_000 * DECIMALS),
+            (2, 8_000_000 * DECIMALS)]
+        )
 		.with_delegators(vec![
 			(3, 1, 32_000_000 * DECIMALS),
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_reward_rate(30, 70, 10) // 5
+		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
+            let issue_number = Balance::from(100u128);
+            let d_stake_rate = Perquintill::from_rational(32u128, 64u128);
+
 			let reward_rate = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
@@ -1549,42 +1559,42 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			// set round robin authoring
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
-			roll_to_claim_rewards(end_block, authors, 1000);
 
+			roll_to_claim_rewards(end_block, authors, issue_number);
 			let rewards_1 = Balances::free_balance(&1).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_2 = Balances::free_balance(&2).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_3 = Balances::free_balance(&3).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_4 = Balances::free_balance(&4).saturating_sub(20_000_000 * DECIMALS);
 			let rewards_5 = Balances::free_balance(&5).saturating_sub(20_000_000 * DECIMALS);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(900);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(900, Perquintill::one());
-			let expected_collator_rewards = end_block as u128 * c_rewards;
-			let expected_delegator_rewards = end_block as u128 * d_rewards;
 
-			// collator rewards should be about the same
+            // calculate expected rewards after these years
+            let c_rewards = calc_collator_rewards(&issue_number, &reward_rate);
+            let d_rewards = calc_delegator_rewards(&issue_number, &d_stake_rate, &reward_rate);
+			let expected_collator_rewards = end_block as u128 * c_rewards / 2;
+			let expected_delegator_rewards = end_block as u128 * d_rewards / 2;
+
 			assert!(almost_equal(rewards_1, rewards_2, Perbill::from_perthousand(1)));
 			assert!(
 				almost_equal(
 					rewards_1,
-					c_rewards * end_block as u128 / 2,
+                    expected_collator_rewards,
 					Perbill::from_perthousand(1)
 				),
 				"left {:?}, right {:?}",
 				rewards_1,
-				c_rewards * end_block as u128 / 2,
+                expected_collator_rewards,
 			);
 
 			// delegator rewards should be about the same
 			assert!(
-				almost_equal(rewards_3 + rewards_4, rewards_5, Perbill::from_perthousand(1)),
+				almost_equal(rewards_3, rewards_4 + rewards_5, Perbill::from_perthousand(1)),
 				"left {:?}, right {:?}",
-				rewards_3 + rewards_4,
-				rewards_5
+				rewards_3,
+				rewards_4 + rewards_5
 			);
 			assert!(almost_equal(
-				rewards_5,
-				d_rewards * end_block as u128 / 2,
+				rewards_3,
+                expected_delegator_rewards,
 				Perbill::from_perthousand(1)
 			));
 
@@ -2700,9 +2710,9 @@ fn decrease_max_candidate_stake() {
 #[test]
 fn exceed_delegations_per_round() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
-		.with_collators(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100)])
-		.with_delegators(vec![(6, 1, 10)])
+		.with_balances(vec![(1, 100), (2, 100)])
+		.with_collators(vec![(1, 100)])
+		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
 			// leave and re-join to set counter to 2 (= MaxDelegationsPerRound)
@@ -3001,9 +3011,11 @@ fn prioritize_delegators() {
 			(5, 1000),
 			(6, 1000),
 			(7, 1000),
+			(8, 1000),
+			(9, 1000),
 		])
 		.with_collators(vec![(1, 100), (2, 100), (3, 100)])
-		.with_delegators(vec![(5, 1, 100), (4, 2, 100), (7, 2, 100), (6, 2, 100)])
+		.with_delegators(vec![(4, 2, 100), (7, 2, 100), (6, 2, 100)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![2, 1]);
@@ -3113,7 +3125,8 @@ fn authorities_per_round() {
 			// roll to last block of round 0
 			roll_to_claim_rewards(4, authors.clone(), issue_number);
 			// let reward_0 = inflation.collator.reward_rate.per_block * stake * 2;
-			let reward_0 = reward_rate.compute_collator_reward::<Test>(issue_number) * 2;
+			// let reward_0 = reward_rate.compute_collator_reward::<Test>(issue_number) * 2;
+            let reward_0 = calc_collator_rewards(&issue_number, &reward_rate);
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(Origin::root(), 10));
@@ -3123,22 +3136,25 @@ fn authorities_per_round() {
 			// round 1
 			roll_to_claim_rewards(9, authors.clone(), issue_number);
 			// let reward_1 = inflation.collator.reward_rate.per_block * stake * 2;
-			// assert_eq!(Balances::free_balance(1), stake + reward_0 + reward_1);
+            let reward_1 = calc_collator_rewards(&issue_number, &reward_rate);
+			assert_eq!(Balances::free_balance(1), stake + reward_0 + reward_1);
 
 			// roll to last block of round 2
 			// should multiply with 4 because there are only 4 candidates
 			roll_to_claim_rewards(14, authors.clone(), issue_number);
 			// let reward_2 = inflation.collator.reward_rate.per_block * stake * 4;
-			// assert_eq!(Balances::free_balance(1), stake + reward_0 + reward_1 + reward_2);
+            let reward_2 = calc_collator_rewards(&issue_number, &reward_rate);
+			assert_eq!(Balances::free_balance(1), stake + reward_0 + reward_1 + reward_2);
 
 			// roll to last block of round 3
 			// should multiply with 4 because there are only 4 candidates
 			roll_to_claim_rewards(19, authors, issue_number);
 			// let reward_3 = inflation.collator.reward_rate.per_block * stake * 4;
-			// assert_eq!(
-			// 	Balances::free_balance(1),
-			// 	stake + reward_0 + reward_1 + reward_2 + reward_3
-			// );
+            let reward_3 = calc_collator_rewards(&issue_number, &reward_rate);
+			assert_eq!(
+				Balances::free_balance(1),
+				stake + reward_0 + reward_1 + reward_2 + reward_3
+			);
 		});
 }
 
