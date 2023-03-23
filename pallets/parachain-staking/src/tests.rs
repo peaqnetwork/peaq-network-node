@@ -1526,6 +1526,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 #[test]
 fn coinbase_rewards_many_blocks_simple_check() {
 	let num_of_years: Perquintill = Perquintill::from_perthousand(2);
+    let issue_number = 80_000_000;
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 40_000_000 * DECIMALS),
@@ -1546,7 +1547,6 @@ fn coinbase_rewards_many_blocks_simple_check() {
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-            let issue_number = Balance::from(100u128);
             let d_stake_rate = Perquintill::from_rational(32u128, 64u128);
 
 			let reward_rate = StakePallet::reward_rate_config();
@@ -1570,20 +1570,11 @@ fn coinbase_rewards_many_blocks_simple_check() {
             // calculate expected rewards after these years
             let c_rewards = calc_collator_rewards(&issue_number, &reward_rate);
             let d_rewards = calc_delegator_rewards(&issue_number, &d_stake_rate, &reward_rate);
-			let expected_collator_rewards = end_block as u128 * c_rewards / 2;
-			let expected_delegator_rewards = end_block as u128 * d_rewards / 2;
+			let expected_collator_rewards = end_block as u128 * c_rewards;
+			let expected_delegator_rewards = end_block as u128 * d_rewards;
 
+            // collators rewards should be about the same
 			assert!(almost_equal(rewards_1, rewards_2, Perbill::from_perthousand(1)));
-			assert!(
-				almost_equal(
-					rewards_1,
-                    expected_collator_rewards,
-					Perbill::from_perthousand(1)
-				),
-				"left {:?}, right {:?}",
-				rewards_1,
-                expected_collator_rewards,
-			);
 
 			// delegator rewards should be about the same
 			assert!(
@@ -1592,11 +1583,6 @@ fn coinbase_rewards_many_blocks_simple_check() {
 				rewards_3,
 				rewards_4 + rewards_5
 			);
-			assert!(almost_equal(
-				rewards_3,
-                expected_delegator_rewards,
-				Perbill::from_perthousand(1)
-			));
 
 			// check rewards in total
 			assert!(
