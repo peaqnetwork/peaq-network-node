@@ -181,12 +181,13 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 First, install [Docker](https://docs.docker.com/get-docker/) and
 [Docker Compose](https://docs.docker.com/compose/install/).
 
-Create the following folder before running the following scripts:
+Create the following folder:
  ```bash
  mkdir ./.local
+ ```
 
-Run the following script to start a peaq-network-node parachain collator that will connect to the polkadot relay chain running in peaq development envoirnment:
-```bash
+Now Run the following script to start a peaq-network-node parachain collator that will connect to the polkadot relay chain running in peaq development envoirnment:
+ ```bash
 ./scripts/docker_run.sh 
 ./target/release/peaq-node \
 --alice \
@@ -201,14 +202,15 @@ Run the following script to start a peaq-network-node parachain collator that wi
 --chain ./node/src/chain-specs/relaychain.raw.2.config \
 --port 30343 \
 --ws-port 9977
-
+```
 This command will firstly compile your code, and then start a peaq-network-node parachain collarot node runnig on your local machine and will connect to polkadot relay chain running in peaq development enviornament. You can
 also replace the default command by appending your own. A few useful ones are as follow.
 
 ```bash
 # Purge the local dev chain
 ./scripts/docker_run.sh ./target/release/peaq-node purge-chain --dev
-
+```
+```bash
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
 ```
