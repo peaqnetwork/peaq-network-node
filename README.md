@@ -201,7 +201,6 @@ Run the following script to start a peaq-network-node parachain collator that wi
 --chain ./node/src/chain-specs/relaychain.raw.2.config \
 --port 30343 \
 --ws-port 9977
-```
 
 This command will firstly compile your code, and then start a peaq-network-node parachain collarot node runnig on your local machine and will connect to polkadot relay chain running in peaq development enviornament. You can
 also replace the default command by appending your own. A few useful ones are as follow.
