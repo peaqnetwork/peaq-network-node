@@ -3248,6 +3248,7 @@ fn replace_lowest_delegator() {
 // #[test]
 // fn network_reward_multiple_blocks() {
 // 	let max_stake: Balance = 160_000_000 * DECIMALS;
+// 	let issue_number: Balance = 1000 * DECIMALS;
 // 	let collators: Vec<(AccountId, Balance)> = (1u64..=<Test as Config>::MinCollators::get().saturating_add(1).into())
 // 		.map(|acc_id| (acc_id, max_stake))
 // 		.collect();
@@ -3265,7 +3266,7 @@ fn replace_lowest_delegator() {
 
 // 			// total issuance should not increase when not noting authors because we haven't
 // 			// reached NetworkRewardStart yet
-// 			roll_to(10, vec![None]);
+// 			roll_to(10, vec![None], issue_number);
 // 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
 // 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
 
@@ -3274,12 +3275,12 @@ fn replace_lowest_delegator() {
 // 			System::set_block_number(network_reward_start.saturating_sub(1));
 
 // 			// network rewards should only appear 1 block after start
-// 			roll_to(network_reward_start, vec![None]);
+// 			roll_to(network_reward_start, vec![None], issue_number);
 // 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
 // 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
 
 // 			// should mint to treasury now
-// 			roll_to(network_reward_start + 1, vec![None]);
+// 			roll_to(network_reward_start + 1, vec![None], issue_number);
 // 			let network_reward = Balances::free_balance(&StakePallet::account_id());
 // 			assert!(!network_reward.is_zero());
 // 			assert_eq!(
@@ -3291,7 +3292,7 @@ fn replace_lowest_delegator() {
 // 			assert_eq!(network_reward, <Test as Config>::NetworkRewardRate::get() * col_rewards);
 
 // 			// should mint exactly the same amount
-// 			roll_to(network_reward_start + 2, vec![None]);
+// 			roll_to(network_reward_start + 2, vec![None], issue_number);
 // 			assert_eq!(2 * network_reward, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				total_issuance + 2 * network_reward,
@@ -3299,7 +3300,7 @@ fn replace_lowest_delegator() {
 // 			);
 
 // 			// should mint exactly the same amount in each block
-// 			roll_to(network_reward_start + 100, vec![None]);
+// 			roll_to(network_reward_start + 100, vec![None], issue_number);
 // 			assert_eq!(100 * network_reward, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				total_issuance + 100 * network_reward,
@@ -3309,7 +3310,7 @@ fn replace_lowest_delegator() {
 // 			// should mint the same amount even if a collator exits because reward is only
 // 			// based on MaxCollatorCandidateStake and MaxSelectedCandidates
 // 			assert_ok!(StakePallet::init_leave_candidates(Origin::signed(1)));
-// 			roll_to(network_reward_start + 101, vec![None]);
+// 			roll_to(network_reward_start + 101, vec![None], issue_number);
 // 			assert_eq!(101 * network_reward, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				total_issuance + 101 * network_reward,

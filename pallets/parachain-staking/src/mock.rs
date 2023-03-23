@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys, AccountIdConversion},
 	Perbill, Perquintill,
 };
 use sp_std::fmt::Debug;
@@ -411,9 +411,15 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
+	let issued = Balances::deposit_creating(&account_id(), issued.peek());
 	StakePallet::update_average_reward(issued.peek());
 }
+
+
+fn account_id() -> AccountId {
+    PotId::get().into_account_truncating()
+}
+
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
 pub(crate) fn calc_collator_rewards(
