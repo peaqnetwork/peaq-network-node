@@ -354,7 +354,6 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	}
 }
 
-#[allow(unused_must_use)]
 /// Incrementelly traverses from the current block to the provided one and
 /// potentially sets block authors.
 ///
@@ -382,10 +381,10 @@ pub(crate) fn roll_to_claim_rewards(
 				StakePallet::candidate_pool(author).expect("Block author must be candidate");
 			for delegation in col_state.delegators {
 				// delegator has to increment rewards before claiming
-				StakePallet::increment_delegator_rewards(Origin::signed(delegation.owner));
+				let _ = StakePallet::increment_delegator_rewards(Origin::signed(delegation.owner));
 				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
 				// delegators such that the claiming would throw
-				StakePallet::claim_rewards(Origin::signed(delegation.owner));
+				let _ = StakePallet::claim_rewards(Origin::signed(delegation.owner));
 			}
 		}
 		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
@@ -406,6 +405,42 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 		.collect::<Vec<_>>()
 }
 
+/// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
+/// working fine.
+pub(crate) fn roll_to_then_claim_rewards(
+	n: BlockNumber,
+	authors: Vec<Option<AccountId>>,
+	issue_number: Balance,
+) {
+	while System::block_number() < n {
+		simulate_issuance(Balance::from(issue_number));
+		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
+			StakePallet::note_author(*author);
+		}
+		if System::block_number() == n - 1 {
+			claim_all_rewards();
+		}
+		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+	}
+}
+
+/// Method executes the claim-rewards of all collators and delegators for test purposes.
+fn claim_all_rewards() {
+	// let candidates = StakePallet::top_candidates();
+	// for i in 0..candidates.len() {
+	for c_stake in StakePallet::top_candidates().into_iter() {
+		StakePallet::increment_collator_rewards(Origin::signed(c_stake.owner)).unwrap();
+		StakePallet::claim_rewards(Origin::signed(c_stake.owner)).unwrap();
+		let candidate = StakePallet::candidate_pool(c_stake.owner).unwrap();
+		for d_stake in candidate.delegators.into_iter() {
+			let _ = StakePallet::increment_delegator_rewards(Origin::signed(d_stake.owner));
+			let _ = StakePallet::claim_rewards(Origin::signed(d_stake.owner));
+		}
+	}
+}
+
 /// This method simulates block-wise issuance of tokens. At Peaq, the parachain-staking
 /// pallet does not mint tokens, it is done by the block-reward pallet. It is also
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
@@ -415,11 +450,10 @@ fn simulate_issuance(issue_number: Balance) {
 	StakePallet::update_average_reward(issued.peek());
 }
 
-
+/// Getter method to convert the PotId into an AccountId
 pub(crate) fn stake_account_id() -> AccountId {
     PotId::get().into_account_truncating()
 }
-
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
 pub(crate) fn calc_collator_rewards(
@@ -432,7 +466,6 @@ pub(crate) fn calc_collator_rewards(
     let rewards = ISSUE_FACTOR * *avg_reward;
     reward_cfg.collator_rate * rewards
 }
-
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
 pub(crate) fn calc_delegator_rewards(

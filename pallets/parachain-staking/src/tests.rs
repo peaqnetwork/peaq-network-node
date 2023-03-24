@@ -31,8 +31,8 @@ use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversio
 
 use crate::{
 	mock::{
-		almost_equal, events, last_event, roll_to, roll_to_claim_rewards, calc_collator_rewards,
-        calc_delegator_rewards, stake_account_id, AccountId, Balance,
+		almost_equal, events, last_event, roll_to, roll_to_claim_rewards, roll_to_then_claim_rewards,
+		calc_collator_rewards, calc_delegator_rewards, stake_account_id, AccountId, Balance,
 		Balances, BlockNumber, Event as MetaEvent, ExtBuilder, Origin, Session, StakePallet,
 		System, Test, BLOCKS_PER_ROUND, DECIMALS,
 	},
@@ -3556,3 +3556,68 @@ fn update_total_stake_no_collator_changes() {
 			);
 		});
 }
+
+#[test]
+fn coinbase_rewards_some_blocks_multiple_claims() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 40_000_000 * DECIMALS),
+			(2, 40_000_000 * DECIMALS),
+			(3, 40_000_000 * DECIMALS),
+			(4, 20_000_000 * DECIMALS),
+			(5, 20_000_000 * DECIMALS),
+		])
+		.with_collators(vec![
+            (1, 8_000_000 * DECIMALS),
+            (2, 8_000_000 * DECIMALS)
+        ])
+		.with_delegators(vec![
+			(3, 1, 32_000_000 * DECIMALS),
+			(4, 1, 16_000_000 * DECIMALS),
+			(5, 2, 16_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let issue_number = Balance::from(1000u128);
+
+			let reward_info = StakePallet::reward_rate_config();
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
+
+			// compute rewards
+			// let c_rewards: BalanceOf<Test> =
+			// 	reward_rate.compute_collator_reward::<Test>(issue_number);
+            let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 64u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 64u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 64u128);
+            let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
+            let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
+            let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
+
+			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
+			let authors: Vec<Option<AccountId>> =
+				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64), Some(1u64), Some(2u64)];
+			let user_1 = (40_000_000 -  8_000_000) * DECIMALS;
+			let user_2 = (40_000_000 -  8_000_000) * DECIMALS;
+			let user_3 = (40_000_000 - 32_000_000) * DECIMALS;
+			let user_4 = (20_000_000 - 16_000_000) * DECIMALS;
+			let user_5 = (20_000_000 - 16_000_000) * DECIMALS;
+
+            // check free balances are correct
+            assert_eq!(Balances::usable_balance(&1), user_1);
+            assert_eq!(Balances::usable_balance(&2), user_2);
+            assert_eq!(Balances::usable_balance(&3), user_3);
+            assert_eq!(Balances::usable_balance(&4), user_4);
+            assert_eq!(Balances::usable_balance(&5), user_5);
+
+			// toll to block 8, everybody claim rewards, check it
+			roll_to_then_claim_rewards(8, authors, issue_number);
+			assert_eq!(Balances::usable_balance(&1), user_1 + 4 * c_rewards);
+			assert_eq!(Balances::usable_balance(&2), user_2 + 3 * c_rewards);
+			assert_eq!(Balances::usable_balance(&3), user_3 + 4 * d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + 4 * d_rewards1_2);
+			assert_eq!(Balances::usable_balance(&5), user_5 + 3 * d_rewards2_1);
+		});
+}
+// roll_to_then_claim_rewards
