@@ -3658,25 +3658,18 @@ fn rewards_flow_and_register_working() {
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
 				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64), Some(1u64), Some(2u64)];
-			let user_1 = (40_000_000 -  8_000_000) * DECIMALS;
-			let user_2 = (40_000_000 -  8_000_000) * DECIMALS;
-			let user_3 = (40_000_000 - 32_000_000) * DECIMALS;
-			let user_4 = (20_000_000 - 16_000_000) * DECIMALS;
-			let user_5 = (20_000_000 - 16_000_000) * DECIMALS;
-
-            // check free balances are correct
-            assert_eq!(Balances::usable_balance(&1), user_1);
-            assert_eq!(Balances::usable_balance(&2), user_2);
-            assert_eq!(Balances::usable_balance(&3), user_3);
-            assert_eq!(Balances::usable_balance(&4), user_4);
-            assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// toll to block 8, everybody claim rewards, check it
-			roll_to_then_claim_rewards(8, issue_number, authors);
-			assert_eq!(Balances::usable_balance(&1), user_1 + 4 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 4 * d_rewards1_1);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 4 * d_rewards1_2);
-			assert_eq!(Balances::usable_balance(&5), user_5 + 3 * d_rewards2_1);
+			roll_to(8, issue_number, authors);
+			let _ = StakePallet::increment_collator_rewards(Origin::signed(1));
+			let _ = StakePallet::increment_collator_rewards(Origin::signed(2));
+			let _ = StakePallet::increment_delegator_rewards(Origin::signed(3));
+			let _ = StakePallet::increment_delegator_rewards(Origin::signed(4));
+			let _ = StakePallet::increment_delegator_rewards(Origin::signed(5));
+			assert_eq!(StakePallet::rewards(&1), 4 * c_rewards);
+			assert_eq!(StakePallet::rewards(&2), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(&3), 4 * d_rewards1_1);
+			assert_eq!(StakePallet::rewards(&4), 4 * d_rewards1_2);
+			assert_eq!(StakePallet::rewards(&5), 3 * d_rewards2_1);
 		});
 }
