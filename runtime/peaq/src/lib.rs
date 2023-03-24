@@ -882,7 +882,9 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	}
 
 	fn collators(reward: NegativeImbalance) {
+		let amount = reward.peek();
 		ToStakingPot::on_unbalanced(reward);
+		ParachainStaking::update_average_reward(amount);
 	}
 
 	fn dapps_staking(_reward: NegativeImbalance) {}
