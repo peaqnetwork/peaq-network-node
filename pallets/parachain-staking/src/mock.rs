@@ -49,6 +49,7 @@ pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
 pub(crate) const ISSUE_FACTOR: Perquintill = Perquintill::from_percent(90);
+pub(crate) const DEFAULT_ISSUE: Balance = 1000 * DECIMALS;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -341,11 +342,14 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 /// NOTE: At most, this updates the RewardCount of the block author but does not
 /// increment rewards or claim them. Please use `roll_to_claim_rewards` in that
 /// case.
-pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
-	//, issue_number: Balance
+pub(crate) fn roll_to(
+	n: BlockNumber,
+	issue_number: Balance,
+	authors: Vec<Option<AccountId>>
+) {
 	while System::block_number() < n {
+		simulate_issuance(Balance::from(issue_number));
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			// simulate_issuance(Balance::from(1000u128));
 			StakePallet::note_author(*author);
 		}
 		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
@@ -362,10 +366,10 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 ///
 /// If for a block `i` the corresponding index of the authors input is set, this
 /// account is regarded to be the block author and thus gets noted.
-pub(crate) fn roll_to_claim_rewards(
+pub(crate) fn roll_to_claim_every_reward(
 	n: BlockNumber,
-	authors: Vec<Option<AccountId>>,
 	issue_number: Balance,
+	authors: Vec<Option<AccountId>>,
 ) {
 	while System::block_number() < n {
 		simulate_issuance(Balance::from(issue_number));
@@ -409,8 +413,8 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 /// working fine.
 pub(crate) fn roll_to_then_claim_rewards(
 	n: BlockNumber,
-	authors: Vec<Option<AccountId>>,
 	issue_number: Balance,
+	authors: Vec<Option<AccountId>>,
 ) {
 	while System::block_number() < n {
 		simulate_issuance(Balance::from(issue_number));
