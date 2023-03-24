@@ -146,14 +146,7 @@ pub mod pallet {
 	use pallet_session::ShouldEndSession;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{
-			Convert,
-			One,
-			SaturatedConversion,
-			Saturating,
-			StaticLookup,
-			Zero,
-		},
+		traits::{Convert, One, SaturatedConversion, Saturating, StaticLookup, Zero},
 		Permill, Perquintill,
 	};
 	use sp_staking::SessionIndex;
@@ -2290,7 +2283,8 @@ pub mod pallet {
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			let total_stake = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
-			reward_rate_config.compute_delegator_reward::<T>(avg_block_reward, staking_rate) * multiplier
+			reward_rate_config.compute_delegator_reward::<T>(avg_block_reward, staking_rate) *
+				multiplier
 		}
 
 		/// Increment the accumulated rewards of a collator.
@@ -2373,9 +2367,9 @@ pub mod pallet {
 				// necessary to compensate for a potentially fluctuating number of collators
 				// let authors = pallet_session::Pallet::<T>::validators();
 				BlocksAuthored::<T>::mutate(&author, |count| {
-					// *count = count.saturating_add(authors.len().saturated_into::<T::BlockNumber>());
-                    // TODO: Discuss this calculation!
-                    *count = count.saturating_add(1u128.saturated_into::<T::BlockNumber>());
+					// *count = count.saturating_add(authors.len().
+					// saturated_into::<T::BlockNumber>()); TODO: Discuss this calculation!
+					*count = count.saturating_add(1u128.saturated_into::<T::BlockNumber>());
 				});
 			}
 

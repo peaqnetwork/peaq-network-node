@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys, AccountIdConversion},
+	traits::{AccountIdConversion, BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill, Perquintill,
 };
 use sp_std::fmt::Debug;
@@ -342,11 +342,7 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 /// NOTE: At most, this updates the RewardCount of the block author but does not
 /// increment rewards or claim them. Please use `roll_to_claim_rewards` in that
 /// case.
-pub(crate) fn roll_to(
-	n: BlockNumber,
-	issue_number: Balance,
-	authors: Vec<Option<AccountId>>
-) {
+pub(crate) fn roll_to(n: BlockNumber, issue_number: Balance, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		simulate_issuance(Balance::from(issue_number));
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
@@ -456,31 +452,26 @@ fn simulate_issuance(issue_number: Balance) {
 
 /// Getter method to convert the PotId into an AccountId
 pub(crate) fn stake_account_id() -> AccountId {
-    PotId::get().into_account_truncating()
+	PotId::get().into_account_truncating()
 }
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
-pub(crate) fn calc_collator_rewards(
-        avg_reward: &Balance,
-        reward_cfg: &RewardRateInfo
-    ) -> Balance
-{
-    // let tot_rate = ISSUE_FACTOR * reward_cfg.collator_rate;
-    // tot_rate * *avg_reward
-    let rewards = ISSUE_FACTOR * *avg_reward;
-    reward_cfg.collator_rate * rewards
+pub(crate) fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> Balance {
+	// let tot_rate = ISSUE_FACTOR * reward_cfg.collator_rate;
+	// tot_rate * *avg_reward
+	let rewards = ISSUE_FACTOR * *avg_reward;
+	reward_cfg.collator_rate * rewards
 }
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
 pub(crate) fn calc_delegator_rewards(
-        avg_reward: &Balance,
-        stake_rate: &Perquintill,
-        reward_cfg: &RewardRateInfo
-    ) -> Balance 
-{
-    // let del_rate = ISSUE_FACTOR * reward_cfg.delegator_rate;
-    // let tot_rate = del_rate * *stake_rate;
-    // tot_rate * *avg_reward
-    let rewards = ISSUE_FACTOR * *avg_reward;
-    reward_cfg.delegator_rate * *stake_rate * rewards
+	avg_reward: &Balance,
+	stake_rate: &Perquintill,
+	reward_cfg: &RewardRateInfo,
+) -> Balance {
+	// let del_rate = ISSUE_FACTOR * reward_cfg.delegator_rate;
+	// let tot_rate = del_rate * *stake_rate;
+	// tot_rate * *avg_reward
+	let rewards = ISSUE_FACTOR * *avg_reward;
+	reward_cfg.delegator_rate * *stake_rate * rewards
 }
