@@ -181,24 +181,47 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 First, install [Docker](https://docs.docker.com/get-docker/) and
 [Docker Compose](https://docs.docker.com/compose/install/).
 
-Then run the following command to start a single node development chain.
+Please follow the steps given below to run peaq-network-node parachian on your local machine connected with polkadot
+relaychain running in the PEAQ development environment. It is assumed that you have already downloaded the source code
+for peaq-network-node from the git repository
 
+1. CD into the peaq-network-node directory:
 ```bash
-./scripts/docker_run.sh
+cd peaq-network-node
 ```
 
-This command will firstly compile your code, and then start a local development network. You can
-also replace the default command
-(`cargo build --release && ./target/release/peaq-node --dev --ws-external`)
-by appending your own. A few useful ones are as follow.
+2. Checkout the appropriate branch:
+```bash
+git checkout run_parachain_with_docker_commands
+```
+3. Create the following folder:
+```bash
+mkdir ./.local
+```
+
+Now run the following script to start a peaq-network-node parachain that will connect to the polkadot relay chain running in peaq development envoirnment:
+```bash
+./scripts/docker_run.sh
+./target/release/peaq-node \
+--chain ./node/src/chain-specs/parachain.raw.1.config \
+--base-path /tmp/parachain/alice \
+--port 40333 \
+--ws-port 8844 \
+-- \
+--execution wasm \
+--chain ./node/src/chain-specs/relaychain.raw.2.config \
+--port 30343 \
+--ws-port 9977
+```
+This command will first compile your code (if it is not already compiled), and then start a peaq-network-node parachain. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated. 
+
+You can also replace the default command by appending your own. A few useful ones are as follows:
 
 ```bash
-# Run Substrate node without re-compiling
-./scripts/docker_run.sh ./target/release/peaq-node --dev --ws-external
-
 # Purge the local dev chain
 ./scripts/docker_run.sh ./target/release/peaq-node purge-chain --dev
-
+```
+```bash
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
 ```
