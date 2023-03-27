@@ -192,28 +192,30 @@ cd peaq-network-node
 
 2. Checkout the appropriate branch:
 ```bash
-git checkout run_parachain_with_docker_commands
+git checkout run_peaq_dev_parachain_with_docker_commands
 ```
 3. Create the following folder:
-```bash
-mkdir ./.local
-```
+ ```bash
+ mkdir ./.local
+ ```
+
+ The folder .local is needed because that is where data such as session keys are stored for validators. Also we bind mount from the container folder /root/.local to the host machine project root folder ./.local.
 
 Now run the following script to start a peaq-network-node parachain that will connect to the polkadot relay chain running in peaq development envoirnment:
-```bash
-./scripts/docker_run.sh
+ ```bash
+./scripts/docker_run.sh 
 ./target/release/peaq-node \
---chain ./node/src/chain-specs/parachain.raw.1.config \
+--chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
 --base-path /tmp/parachain/alice \
 --port 40333 \
 --ws-port 8844 \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/relaychain.raw.2.config \
+--chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
 --port 30343 \
 --ws-port 9977
 ```
-This command will first compile your code (if it is not already compiled), and then start a peaq-network-node parachain. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated. 
+This command will first compile your code (if it is not already compiled), and then start a peaq-network-node parachain. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated.  
 
 You can also replace the default command by appending your own. A few useful ones are as follows:
 
