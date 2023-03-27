@@ -24,7 +24,6 @@ use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
 };
-use pallet_authorship::EventHandler;
 use pallet_balances::{BalanceLock, Error as BalancesError, Reasons};
 use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversion};
@@ -32,9 +31,9 @@ use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversio
 use crate::{
 	mock::{
 		almost_equal, calc_collator_rewards, calc_delegator_rewards, events, last_event, roll_to,
-		roll_to_claim_every_reward, roll_to_then_claim_rewards, stake_account_id, AccountId,
-		Balance, Balances, BlockNumber, Event as MetaEvent, ExtBuilder, Origin, Session,
-		StakePallet, System, Test, BLOCKS_PER_ROUND, DECIMALS, DEFAULT_ISSUE,
+		roll_to_claim_every_reward, roll_to_then_claim_rewards, AccountId, Balance, Balances,
+		BlockNumber, ExtBuilder, Origin, Session, StakePallet, System, Test, BLOCKS_PER_ROUND,
+		DECIMALS, DEFAULT_ISSUE,
 	},
 	set::OrderedSet,
 	types::{
@@ -319,6 +318,7 @@ fn join_collator_candidates() {
 		});
 }
 
+#[test]
 fn collator_exit_executes_after_delay() {
 	ExtBuilder::default()
 		.with_balances(vec![
@@ -800,6 +800,7 @@ fn execute_leave_candidates_with_delay() {
 		});
 }
 
+#[test]
 fn multiple_delegations() {
 	ExtBuilder::default()
 		.with_balances(vec![

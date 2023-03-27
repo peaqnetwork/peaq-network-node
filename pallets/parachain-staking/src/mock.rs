@@ -45,7 +45,6 @@ pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
 
 pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
-pub(crate) const MAX_COLLATOR_STAKE: Balance = 200_000 * 1000 * MILLI_KILT;
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
 pub(crate) const ISSUE_FACTOR: Perquintill = Perquintill::from_percent(90);
