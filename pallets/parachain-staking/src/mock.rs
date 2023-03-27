@@ -443,7 +443,7 @@ fn claim_all_rewards() {
 /// This method simulates block-wise issuance of tokens. At Peaq, the parachain-staking
 /// pallet does not mint tokens, it is done by the block-reward pallet. It is also
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
-fn simulate_issuance(issue_number: Balance) {
+pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
 	let issued = Balances::deposit_creating(&stake_account_id(), issued.peek());
 	StakePallet::update_average_reward(issued.peek());
