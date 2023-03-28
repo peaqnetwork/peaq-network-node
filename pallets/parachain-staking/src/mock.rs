@@ -346,7 +346,7 @@ pub(crate) fn roll_to(n: BlockNumber, issue_number: Balance, authors: &Vec<Optio
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
 		}
-        finish_block_start_next();
+		finish_block_start_next();
 	}
 }
 
@@ -383,7 +383,7 @@ pub(crate) fn roll_to_claim_every_reward(
 				let _ = StakePallet::claim_rewards(Origin::signed(delegation.owner));
 			}
 		}
-        finish_block_start_next();
+		finish_block_start_next();
 	}
 }
 
@@ -400,9 +400,9 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 }
 
 fn finish_block_start_next() {
-    <AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-    System::set_block_number(System::block_number() + 1);
-    <AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+	System::set_block_number(System::block_number() + 1);
+	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 }
 
 /// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
@@ -420,7 +420,7 @@ pub(crate) fn roll_to_then_claim_rewards(
 		if System::block_number() == n - 1 {
 			claim_all_rewards();
 		}
-        finish_block_start_next();
+		finish_block_start_next();
 	}
 }
 
@@ -446,18 +446,4 @@ pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
 	let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
 	StakePallet::update_average_reward(issued.peek());
-}
-
-/// Method calculates the reward rate for a collator in dependency of given paramters
-pub(crate) fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> Balance {
-	reward_cfg.collator_rate * *avg_reward
-}
-
-/// Method calculates the reward rate for a collator in dependency of given paramters
-pub(crate) fn calc_delegator_rewards(
-	avg_reward: &Balance,
-	stake_rate: &Perquintill,
-	reward_cfg: &RewardRateInfo,
-) -> Balance {
-	reward_cfg.delegator_rate * *stake_rate * *avg_reward
 }

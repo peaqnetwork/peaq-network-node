@@ -30,10 +30,9 @@ use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversio
 
 use crate::{
 	mock::{
-		almost_equal, calc_collator_rewards, calc_delegator_rewards, events, last_event, roll_to,
-		roll_to_claim_every_reward, roll_to_then_claim_rewards, AccountId, Balance, Balances,
-		BlockNumber, ExtBuilder, Origin, Session, StakePallet, System, Test, BLOCKS_PER_ROUND,
-		DECIMALS, DEFAULT_ISSUE,
+		almost_equal, events, last_event, roll_to, roll_to_claim_every_reward,
+		roll_to_then_claim_rewards, AccountId, Balance, Balances, BlockNumber, ExtBuilder, Origin,
+		Session, StakePallet, System, Test, BLOCKS_PER_ROUND, DECIMALS, DEFAULT_ISSUE,
 	},
 	set::OrderedSet,
 	types::{
@@ -42,6 +41,20 @@ use crate::{
 	},
 	CandidatePool, Config, Error, Event as StakeEvent, RewardRateInfo, STAKING_ID,
 };
+
+/// Method calculates the reward rate for a collator in dependency of given paramters
+fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> Balance {
+	reward_cfg.collator_rate * *avg_reward
+}
+
+/// Method calculates the reward rate for a collator in dependency of given paramters
+fn calc_delegator_rewards(
+	avg_reward: &Balance,
+	stake_rate: &Perquintill,
+	reward_cfg: &RewardRateInfo,
+) -> Balance {
+	reward_cfg.delegator_rate * *stake_rate * *avg_reward
+}
 
 #[test]
 fn should_select_collators_genesis_session() {
@@ -337,7 +350,7 @@ fn collator_exit_executes_after_delay() {
 		.with_delegators(vec![(3, 1, 100), (4, 1, 100), (5, 2, 100), (6, 2, 100)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(CandidatePool::<Test>::count(), 3);
 			assert_eq!(
@@ -409,7 +422,7 @@ fn collator_selection_chooses_top_candidates() {
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
 			assert_eq!(
@@ -480,7 +493,7 @@ fn exit_queue_with_events() {
 		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(CandidatePool::<Test>::count(), 6);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
@@ -580,7 +593,7 @@ fn execute_leave_candidates_with_delay() {
 		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(CandidatePool::<Test>::count(), 10);
 			assert_eq!(
@@ -1125,7 +1138,7 @@ fn collators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_noop!(
@@ -1214,7 +1227,7 @@ fn delegators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_noop!(
@@ -1306,7 +1319,7 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 			roll_to(5, DEFAULT_ISSUE, &authors);
@@ -1338,7 +1351,7 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
@@ -1370,7 +1383,7 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
@@ -2018,7 +2031,7 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_ok!(StakePallet::leave_delegators(Origin::signed(2)));
 			let mut unstaking: BoundedBTreeMap<
@@ -2077,7 +2090,7 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_ok!(StakePallet::leave_delegators(Origin::signed(2)));
 			let mut unstaking: BoundedBTreeMap<
@@ -2138,7 +2151,7 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_ok!(StakePallet::leave_delegators(Origin::signed(2)));
 			let mut unstaking: BoundedBTreeMap<
@@ -2170,7 +2183,7 @@ fn unlock_unstaked() {
 
 			// should reduce unlocking but not unlock anything
 			roll_to(3, DEFAULT_ISSUE, &authors);
-            assert_eq!(StakePallet::unstaking(2), unstaking);
+			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 			// should be able to unlock 90 of 100 from unstaking
 			assert_ok!(StakePallet::unlock_unstaked(Origin::signed(2), 2));
@@ -2201,7 +2214,7 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 200)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			// should be able to decrease more often than MaxUnstakeRequests because it's
 			// the same block and thus unstaking is increased at block 3 instead of having
@@ -2409,7 +2422,7 @@ fn candidate_leaves() {
 		.with_delegators(vec![(12, 1, 100), (13, 1, 10)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(
 				StakePallet::top_candidates().into_iter().map(|s| s.owner).collect::<Vec<u64>>(),
@@ -2759,7 +2772,7 @@ fn force_remove_candidate() {
 		.with_delegators(vec![(4, 1, 50), (5, 1, 50)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			assert_eq!(CandidatePool::<Test>::count(), 3);
 			assert_ok!(StakePallet::join_delegators(Origin::signed(6), 2, 50));
@@ -3158,7 +3171,7 @@ fn force_new_round() {
 		.with_collators(vec![(1, 100), (2, 100), (3, 100), (4, 100)])
 		.build()
 		.execute_with(|| {
-            let authors = vec![];
+			let authors = vec![];
 
 			let mut round = RoundInfo { current: 0, first: 0, length: 5 };
 			assert_eq!(StakePallet::round(), round);
@@ -3706,7 +3719,7 @@ fn test_varying_delegators() {
 			(5, 10_000_000 * DECIMALS),
 		])
 		.with_collators(vec![(1, 5_000_000 * DECIMALS)])
-        .with_delegators(vec![(2, 1, 5_000_000 * DECIMALS)])
+		.with_delegators(vec![(2, 1, 5_000_000 * DECIMALS)])
 		.build()
 		.execute_with(|| {
 			let total_issuance = <Test as Config>::Currency::total_issuance();
@@ -3718,7 +3731,8 @@ fn test_varying_delegators() {
 			for i in 2..4 {
 				roll_to(BlockNumber::from(i as u64), DEFAULT_ISSUE, &authors);
 
-				StakePallet::join_delegators(Origin::signed(i+1u64), 1, 5_000_000 * DECIMALS).unwrap();
+				StakePallet::join_delegators(Origin::signed(i + 1u64), 1, 5_000_000 * DECIMALS)
+					.unwrap();
 
 				StakePallet::increment_delegator_rewards(Origin::signed(2)).unwrap();
 				StakePallet::claim_rewards(Origin::signed(2)).unwrap();
@@ -3731,7 +3745,7 @@ fn test_varying_delegators() {
 				StakePallet::leave_delegators(Origin::signed(acc)).unwrap();
 				StakePallet::claim_rewards(Origin::signed(acc)).unwrap();
 
-			    StakePallet::increment_delegator_rewards(Origin::signed(2)).unwrap();
+				StakePallet::increment_delegator_rewards(Origin::signed(2)).unwrap();
 				StakePallet::claim_rewards(Origin::signed(2)).unwrap();
 			}
 			roll_to(8 as BlockNumber, DEFAULT_ISSUE, &authors);
@@ -3753,12 +3767,12 @@ fn test_only_leaving_delegators() {
 			(5, 10_000_000 * DECIMALS),
 		])
 		.with_collators(vec![(1, 5_000_000 * DECIMALS)])
-        .with_delegators(vec![
-            (2, 1, 5_000_000 * DECIMALS),
-            (3, 1, 5_000_000 * DECIMALS),
-            (4, 1, 5_000_000 * DECIMALS),
-            (5, 1, 5_000_000 * DECIMALS),
-        ])
+		.with_delegators(vec![
+			(2, 1, 5_000_000 * DECIMALS),
+			(3, 1, 5_000_000 * DECIMALS),
+			(4, 1, 5_000_000 * DECIMALS),
+			(5, 1, 5_000_000 * DECIMALS),
+		])
 		.build()
 		.execute_with(|| {
 			let total_issuance = <Test as Config>::Currency::total_issuance();
@@ -3770,7 +3784,7 @@ fn test_only_leaving_delegators() {
 			for i in 2..5 {
 				roll_to(i, DEFAULT_ISSUE, &col_acc);
 
-                let acc = i as u64;
+				let acc = i as u64;
 				StakePallet::leave_delegators(Origin::signed(acc)).unwrap();
 				StakePallet::claim_rewards(Origin::signed(acc)).unwrap();
 			}
@@ -3791,34 +3805,34 @@ fn test_all_leaving_at_once() {
 			(3, 10_000_000 * DECIMALS),
 			(4, 10_000_000 * DECIMALS),
 			(5, 10_000_000 * DECIMALS),
-            (6, 15_000_000 * DECIMALS),
-            (7, 15_000_000 * DECIMALS),
+			(6, 15_000_000 * DECIMALS),
+			(7, 15_000_000 * DECIMALS),
 		])
 		.with_collators(vec![
-            (1,  5_000_000 * DECIMALS),
-            (6, 10_000_000 * DECIMALS),
-            (7, 10_000_000 * DECIMALS),
-        ])
-        .with_delegators(vec![
-            (2, 1, 5_000_000 * DECIMALS),
-            (3, 1, 5_000_000 * DECIMALS),
-            (4, 1, 5_000_000 * DECIMALS),
-            (5, 1, 5_000_000 * DECIMALS),
-        ])
+			(1, 5_000_000 * DECIMALS),
+			(6, 10_000_000 * DECIMALS),
+			(7, 10_000_000 * DECIMALS),
+		])
+		.with_delegators(vec![
+			(2, 1, 5_000_000 * DECIMALS),
+			(3, 1, 5_000_000 * DECIMALS),
+			(4, 1, 5_000_000 * DECIMALS),
+			(5, 1, 5_000_000 * DECIMALS),
+		])
 		.build()
 		.execute_with(|| {
-            let authors = vec![None, Some(1u64), Some(6u64), Some(7u64)];
+			let authors = vec![None, Some(1u64), Some(6u64), Some(7u64)];
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 80_000_000 * DECIMALS);
 
-            // roll to second block, let group-1 leave completely
-            roll_to(2, DEFAULT_ISSUE, &authors);
-            StakePallet::leave_delegators(Origin::signed(2)).unwrap();
-            StakePallet::leave_delegators(Origin::signed(3)).unwrap();
-            StakePallet::leave_delegators(Origin::signed(4)).unwrap();
-            StakePallet::leave_delegators(Origin::signed(5)).unwrap();
-            StakePallet::init_leave_candidates(Origin::signed(1)).unwrap();
-            // roll to next blocks to finish all actions for sure
-            roll_to(4, DEFAULT_ISSUE, &authors);            
-        });
+			// roll to second block, let group-1 leave completely
+			roll_to(2, DEFAULT_ISSUE, &authors);
+			StakePallet::leave_delegators(Origin::signed(2)).unwrap();
+			StakePallet::leave_delegators(Origin::signed(3)).unwrap();
+			StakePallet::leave_delegators(Origin::signed(4)).unwrap();
+			StakePallet::leave_delegators(Origin::signed(5)).unwrap();
+			StakePallet::init_leave_candidates(Origin::signed(1)).unwrap();
+			// roll to next blocks to finish all actions for sure
+			roll_to(4, DEFAULT_ISSUE, &authors);
+		});
 }
