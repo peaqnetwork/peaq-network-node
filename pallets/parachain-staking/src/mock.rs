@@ -33,7 +33,7 @@ use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
-	traits::{AccountIdConversion, BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill, Perquintill,
 };
 use sp_std::fmt::Debug;
@@ -445,13 +445,8 @@ fn claim_all_rewards() {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	let issued = Balances::deposit_creating(&stake_account_id(), issued.peek());
+	let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
 	StakePallet::update_average_reward(issued.peek());
-}
-
-/// Getter method to convert the PotId into an AccountId
-pub(crate) fn stake_account_id() -> AccountId {
-	PotId::get().into_account_truncating()
 }
 
 /// Method calculates the reward rate for a collator in dependency of given paramters

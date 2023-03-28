@@ -32,8 +32,8 @@ use crate::{
 	mock::{
 		almost_equal, calc_collator_rewards, calc_delegator_rewards, events, last_event, roll_to,
 		roll_to_claim_every_reward, roll_to_then_claim_rewards, AccountId, Balance, Balances,
-        BlockNumber, ExtBuilder, Origin, Session, StakePallet, System, Test, BLOCKS_PER_ROUND,
-        DECIMALS, DEFAULT_ISSUE,
+		BlockNumber, ExtBuilder, Origin, Session, StakePallet, System, Test, BLOCKS_PER_ROUND,
+		DECIMALS, DEFAULT_ISSUE,
 	},
 	set::OrderedSet,
 	types::{
@@ -3241,13 +3241,13 @@ fn replace_lowest_delegator() {
 // 			let total_collator_stake = max_stake.saturating_mul(<Test as
 // Config>::MinCollators::get().into()); 			assert_eq!(total_collator_stake,
 // StakePallet::total_collator_stake().collators); 			assert!(Balances::free_balance(&
-// stake_account_id()).is_zero()); 			let total_issuance = <Test as
+// StakePallet::account_id()).is_zero()); 			let total_issuance = <Test as
 // Config>::Currency::total_issuance();
 
 // 			// total issuance should not increase when not noting authors because we haven't
 // 			// reached NetworkRewardStart yet
 // 			roll_to(10, vec![None], issue_number);
-// 			assert!(Balances::free_balance(&stake_account_id()).is_zero());
+// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
 // 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
 
 // 			// set current block to one block before NetworkRewardStart
@@ -3256,12 +3256,12 @@ fn replace_lowest_delegator() {
 
 // 			// network rewards should only appear 1 block after start
 // 			roll_to(network_reward_start, vec![None], issue_number);
-// 			assert!(Balances::free_balance(&stake_account_id()).is_zero());
+// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
 // 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
 
 // 			// should mint to treasury now
 // 			roll_to(network_reward_start + 1, vec![None], issue_number);
-// 			let network_reward = Balances::free_balance(&stake_account_id());
+// 			let network_reward = Balances::free_balance(&StakePallet::account_id());
 // 			assert!(!network_reward.is_zero());
 // 			assert_eq!(
 // 				total_issuance + network_reward,
@@ -3273,7 +3273,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint exactly the same amount
 // 			roll_to(network_reward_start + 2, vec![None], issue_number);
-// 			assert_eq!(2 * network_reward, Balances::free_balance(&stake_account_id()));
+// 			assert_eq!(2 * network_reward, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				total_issuance + 2 * network_reward,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3281,7 +3281,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint exactly the same amount in each block
 // 			roll_to(network_reward_start + 100, vec![None], issue_number);
-// 			assert_eq!(100 * network_reward, Balances::free_balance(&stake_account_id()));
+// 			assert_eq!(100 * network_reward, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				total_issuance + 100 * network_reward,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3291,7 +3291,7 @@ fn replace_lowest_delegator() {
 // 			// based on MaxCollatorCandidateStake and MaxSelectedCandidates
 // 			assert_ok!(StakePallet::init_leave_candidates(Origin::signed(1)));
 // 			roll_to(network_reward_start + 101, vec![None], issue_number);
-// 			assert_eq!(101 * network_reward, Balances::free_balance(&stake_account_id()));
+// 			assert_eq!(101 * network_reward, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				total_issuance + 101 * network_reward,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3317,7 +3317,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint to treasury now
 // 			roll_to(network_reward_start + 1, vec![None]);
-// 			let reward_before = Balances::free_balance(&stake_account_id());
+// 			let reward_before = Balances::free_balance(&StakePallet::account_id());
 // 			assert!(!reward_before.is_zero());
 // 			assert_eq!(
 // 				total_issuance + reward_before,
@@ -3332,7 +3332,7 @@ fn replace_lowest_delegator() {
 // 				max_stake_doubled
 // 			));
 // 			roll_to(network_reward_start + 2, vec![None]);
-// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&stake_account_id()));
+// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				reward_before + reward_after + total_issuance,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3358,7 +3358,7 @@ fn replace_lowest_delegator() {
 
 // 			// should mint to treasury now
 // 			roll_to(network_reward_start + 1, vec![None]);
-// 			let reward_before = Balances::free_balance(&stake_account_id());
+// 			let reward_before = Balances::free_balance(&StakePallet::account_id());
 // 			assert!(!reward_before.is_zero());
 // 			assert_eq!(
 // 				total_issuance + reward_before,
@@ -3372,7 +3372,7 @@ fn replace_lowest_delegator() {
 // 				<Test as Config>::MinCollators::get() * 3
 // 			));
 // 			roll_to(network_reward_start + 2, vec![None]);
-// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&stake_account_id()));
+// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&StakePallet::account_id()));
 // 			assert_eq!(
 // 				reward_before + reward_after + total_issuance,
 // 				<Test as Config>::Currency::total_issuance()
@@ -3660,68 +3660,52 @@ fn rewards_flow_and_register_working() {
 			assert_eq!(StakePallet::rewards(&3), 4 * d_rewards1_1);
 			assert_eq!(StakePallet::rewards(&4), 4 * d_rewards1_2);
 			assert_eq!(StakePallet::rewards(&5), 3 * d_rewards2_1);
+			roll_to(9, issue_number, vec![None]);
 		});
 }
 
 #[test]
 fn test_varying_delegators() {
-    // setup number of delegators
-    let n_deleg: usize = 2000;
-    let col_acc: u64 = (n_deleg + 1) as u64;
-    // generate balances of everybody, last accounts are collators
-    let balance = 8_000_000 * DECIMALS;
-    let mut balances = vec![(0u64, balance); n_deleg+1];
-    balances.iter_mut().enumerate().for_each(|(i, t)| t.0 = (i+1) as u64);
-    balances[n_deleg].1 = 20_000_000 * DECIMALS;
-    // generate collator staking
-    let collators = vec![(col_acc, 15_000_000 * DECIMALS)];
-    // generate delegator staking
-    let mut delegators = vec![(0u64, col_acc, 5_000_000 * DECIMALS); n_deleg];
-    delegators.iter_mut().enumerate().for_each(|(i, d)| d.0 = (i+1) as u64);
-
 	ExtBuilder::default()
 		.with_balances(vec![
-            (1, 10_000_000 * DECIMALS),
-            (2, 10_000_000 * DECIMALS),
-            (3, 10_000_000 * DECIMALS),
-            (4, 10_000_000 * DECIMALS),
-            (5, 10_000_000 * DECIMALS),
-        ])
-		.with_collators(vec![
-            (1, 5_000_000 * DECIMALS),
-        ])
-		// .with_delegators(vec![
-            // (2, 1, 5_000_000 * DECIMALS),
-            // (3, 1, 5_000_000 * DECIMALS),
-            // (4, 1, 5_000_000 * DECIMALS),
-            // (5, 1, 5_000_000 * DECIMALS),
-        // ])
+			(1, 10_000_000 * DECIMALS),
+			(2, 10_000_000 * DECIMALS),
+			(3, 10_000_000 * DECIMALS),
+			(4, 10_000_000 * DECIMALS),
+			(5, 10_000_000 * DECIMALS),
+		])
+		.with_collators(vec![(1, 5_000_000 * DECIMALS)])
 		.build()
 		.execute_with(|| {
-            let col_acc = vec![Some(1u64)];
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS);
 
-            // roll_to(1 as BlockNumber, DEFAULT_ISSUE, col_acc.clone());
-            // start a downramping delegator process (delegators are frequently leaving)
-            for i in 1..4 {
-                roll_to(BlockNumber::from(i as u64), DEFAULT_ISSUE, col_acc.clone());
-                
-                let _ = StakePallet::join_delegators(Origin::signed(i), 1, 5_000_000*DECIMALS);
-                // let _ = StakePallet::leave_delegators(Origin::signed(i as u64));
+			let col_acc = vec![Some(1u64)];
 
-                let _ = StakePallet::increment_delegator_rewards(Origin::signed(1));
-                let _ = StakePallet::claim_rewards(Origin::signed(1));
-            }
+			// start a upramping delegator process (delegators are frequently joining)
+			for i in 1..4 {
+				roll_to(BlockNumber::from(i as u64), DEFAULT_ISSUE, col_acc.clone());
 
-            for (i, b) in (5..7).enumerate() {
-                roll_to(BlockNumber::from(b as u64), DEFAULT_ISSUE, col_acc.clone());
-               
-                let acc = (i+2) as u64;
-                // let _ = StakePallet::join_delegators(Origin::signed(i+2), 1, 5_000_000*DECIMALS);
-                let _ = StakePallet::leave_delegators(Origin::signed(acc));
-                let _ = StakePallet::claim_rewards(Origin::signed(acc));
+				let _ = StakePallet::join_delegators(Origin::signed(i), 1, 5_000_000 * DECIMALS);
 
-                let _ = StakePallet::increment_delegator_rewards(Origin::signed(1));
-                let _ = StakePallet::claim_rewards(Origin::signed(1));
-            }
-        });
+				let _ = StakePallet::increment_delegator_rewards(Origin::signed(1));
+				let _ = StakePallet::claim_rewards(Origin::signed(1));
+			}
+			// start a downramping delegator process (delegators are frequently leaving)
+			for (i, b) in (5..7).enumerate() {
+				roll_to(BlockNumber::from(b as u64), DEFAULT_ISSUE, col_acc.clone());
+
+				let acc = (i + 2) as u64;
+				let _ = StakePallet::leave_delegators(Origin::signed(acc));
+				let _ = StakePallet::claim_rewards(Origin::signed(acc));
+
+				let _ = StakePallet::increment_delegator_rewards(Origin::signed(1));
+				let _ = StakePallet::claim_rewards(Origin::signed(1));
+			}
+			roll_to(8 as BlockNumber, DEFAULT_ISSUE, col_acc.clone());
+
+			// check total issuance
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 7 * DEFAULT_ISSUE);
+		});
 }

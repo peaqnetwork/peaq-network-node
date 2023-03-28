@@ -147,7 +147,9 @@ pub mod pallet {
 	use pallet_session::ShouldEndSession;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{Convert, One, SaturatedConversion, Saturating, StaticLookup, Zero},
+		traits::{
+			AccountIdConversion, Convert, One, SaturatedConversion, Saturating, StaticLookup, Zero,
+		},
 		Permill, Perquintill,
 	};
 	use sp_staking::SessionIndex;
@@ -620,7 +622,7 @@ pub mod pallet {
 	/// payouts.
 	#[pallet::storage]
 	#[pallet::getter(fn average_session_reward)]
-	pub(crate) type AverageSessionReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub(crate) type AverageBlockReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
@@ -2252,7 +2254,7 @@ pub mod pallet {
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
-			let avg_block_reward = Perquintill::from_percent(90) * AverageSessionReward::<T>::get();
+			let avg_block_reward = Perquintill::from_percent(90) * AverageBlockReward::<T>::get();
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) * multiplier
 		}
@@ -2280,7 +2282,7 @@ pub mod pallet {
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
-			let avg_block_reward = Perquintill::from_percent(90) * AverageSessionReward::<T>::get();
+			let avg_block_reward = Perquintill::from_percent(90) * AverageBlockReward::<T>::get();
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			let total_stake = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
@@ -2301,12 +2303,14 @@ pub mod pallet {
 				old
 			});
 			let unclaimed_blocks = count_authored.saturating_sub(count_rewarded);
+			// Note: At Peaq, we don't mint on top, we "take" it from the Pot
+			let (withdrawel, _) = T::Currency::slash(
+				&Self::account_id(),
+				Self::calc_block_rewards_collator(stake, unclaimed_blocks.into()),
+			);
 
 			Rewards::<T>::mutate(acc, |reward| {
-				*reward = reward.saturating_add(Self::calc_block_rewards_collator(
-					stake,
-					unclaimed_blocks.into(),
-				));
+				*reward = reward.saturating_add(withdrawel.peek());
 			});
 		}
 
@@ -2324,34 +2328,41 @@ pub mod pallet {
 				old
 			});
 			let unclaimed_blocks = count_authored.saturating_sub(count_rewarded);
+			// Note: At Peaq, we don't mint on top, we "take" it from the Pot
+			let (withdrawel, _) = T::Currency::slash(
+				&Self::account_id(),
+				Self::calc_block_rewards_delegator(stake, unclaimed_blocks.into()),
+			);
 
 			Rewards::<T>::mutate(acc, |reward| {
-				*reward = reward.saturating_add(Self::calc_block_rewards_delegator(
-					stake,
-					unclaimed_blocks.into(),
-				))
+				*reward = reward.saturating_add(withdrawel.peek());
 			});
 		}
 
-		/// Methods updates the AverageSessionReward storage by calculating the new
+		/// Methods updates the AverageBlockReward storage by calculating the new
 		/// average total block reward. This value is used as a reference for the
 		/// payouts of collators and delegators, because at Peaq they still get rated
 		/// by a fixed, configurable percentage. See reward-rate. This is a
 		/// workarround as long we having a fixed amount of issued/minted tokens, to
 		/// affect inflation.
 		pub fn update_average_reward(new_reward: BalanceOf<T>) {
-			let mut avg_reward = AverageSessionReward::<T>::get();
+			let mut avg_reward = AverageBlockReward::<T>::get();
 			if avg_reward.is_zero() {
 				avg_reward = new_reward;
 			} else {
 				avg_reward = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
 			}
-			AverageSessionReward::<T>::put(avg_reward);
+			AverageBlockReward::<T>::put(avg_reward);
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
 				T::DbWeight::get().reads_writes(1, 1),
 				DispatchClass::Mandatory,
 			);
+		}
+
+		/// Transforms the given PotId into an AccountId
+		pub(crate) fn account_id() -> T::AccountId {
+			T::PotId::get().into_account_truncating()
 		}
 	}
 
