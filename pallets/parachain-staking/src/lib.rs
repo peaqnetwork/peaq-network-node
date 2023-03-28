@@ -2254,7 +2254,7 @@ pub mod pallet {
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
-			let avg_block_reward = AverageBlockReward::<T>::get(); // Perquintill::from_percent(90) * 
+			let avg_block_reward = AverageBlockReward::<T>::get(); 
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) * multiplier
 		}
@@ -2282,7 +2282,7 @@ pub mod pallet {
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
-			let avg_block_reward = AverageBlockReward::<T>::get(); // Perquintill::from_percent(90) * 
+			let avg_block_reward = AverageBlockReward::<T>::get(); 
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			let total_stake = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
