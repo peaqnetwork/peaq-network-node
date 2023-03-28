@@ -47,7 +47,7 @@ pub(crate) type BlockNumber = u64;
 pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
-pub(crate) const ISSUE_FACTOR: Perquintill = Perquintill::from_percent(90);
+pub(crate) const ISSUE_FACTOR: Perquintill = Perquintill::from_percent(100);
 pub(crate) const DEFAULT_ISSUE: Balance = 1000 * DECIMALS;
 
 // Configure a mock runtime to test the pallet.
@@ -341,15 +341,16 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 /// NOTE: At most, this updates the RewardCount of the block author but does not
 /// increment rewards or claim them. Please use `roll_to_claim_rewards` in that
 /// case.
-pub(crate) fn roll_to(n: BlockNumber, issue_number: Balance, authors: Vec<Option<AccountId>>) {
+pub(crate) fn roll_to(n: BlockNumber, issue_number: Balance, authors: &Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		simulate_issuance(Balance::from(issue_number));
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+        finish_block_start_next();
+		// <AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+		// System::set_block_number(System::block_number() + 1);
+		// <AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
 }
 
@@ -364,7 +365,7 @@ pub(crate) fn roll_to(n: BlockNumber, issue_number: Balance, authors: Vec<Option
 pub(crate) fn roll_to_claim_every_reward(
 	n: BlockNumber,
 	issue_number: Balance,
-	authors: Vec<Option<AccountId>>,
+	authors: &Vec<Option<AccountId>>,
 ) {
 	while System::block_number() < n {
 		simulate_issuance(Balance::from(issue_number));
@@ -386,9 +387,10 @@ pub(crate) fn roll_to_claim_every_reward(
 				let _ = StakePallet::claim_rewards(Origin::signed(delegation.owner));
 			}
 		}
-		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+        finish_block_start_next();
+		// <AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+		// System::set_block_number(System::block_number() + 1);
+		// <AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
 }
 
@@ -404,12 +406,18 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 		.collect::<Vec<_>>()
 }
 
+fn finish_block_start_next() {
+    <AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+    System::set_block_number(System::block_number() + 1);
+    <AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+}
+
 /// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
 /// working fine.
 pub(crate) fn roll_to_then_claim_rewards(
 	n: BlockNumber,
 	issue_number: Balance,
-	authors: Vec<Option<AccountId>>,
+	authors: &Vec<Option<AccountId>>,
 ) {
 	while System::block_number() < n {
 		simulate_issuance(Balance::from(issue_number));
@@ -419,9 +427,10 @@ pub(crate) fn roll_to_then_claim_rewards(
 		if System::block_number() == n - 1 {
 			claim_all_rewards();
 		}
-		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+        finish_block_start_next();
+		// <AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+		// System::set_block_number(System::block_number() + 1);
+		// <AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
 }
 
