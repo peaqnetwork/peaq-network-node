@@ -168,7 +168,7 @@ pub mod pallet {
 	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(9);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
