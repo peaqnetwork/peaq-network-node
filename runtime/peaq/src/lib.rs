@@ -645,8 +645,7 @@ parameter_types! {
 	pub const ChainId: u64 = 42424242;
 	// WeightPerGas didn't use
 	pub NoUseWeightPerGas: u64 = 20_000;
-	pub BlockGasLimit: U256
-		= U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS);
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 }
 
