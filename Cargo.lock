@@ -7184,6 +7184,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "runtime-common",
  "scale-info",
  "sha3 0.8.2",
  "smallvec",
@@ -7297,6 +7298,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "runtime-common",
  "scale-info",
  "sha3 0.8.2",
  "smallvec",
@@ -7414,6 +7416,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "runtime-common",
  "scale-info",
  "sha3 0.8.2",
  "smallvec",
@@ -7499,6 +7502,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
+ "runtime-common",
  "sc-basic-authorship",
  "sc-chain-spec",
  "sc-cli",
@@ -7990,6 +7994,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "runtime-common",
  "scale-info",
  "sha3 0.8.2",
  "smallvec",
@@ -10036,6 +10041,16 @@ checksum = "034e22c514f5c0cb8a10ff341b9b048b5ceb21591f31c8f44c43b960f9b3524a"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "runtime-common"
+version = "0.0.1"
+dependencies = [
+ "pallet-transaction-payment",
+ "peaq-primitives-xcm",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
