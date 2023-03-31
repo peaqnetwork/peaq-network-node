@@ -181,27 +181,21 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 First, install [Docker](https://docs.docker.com/get-docker/) and
 [Docker Compose](https://docs.docker.com/compose/install/).
 
-Then run the following command to start a single node development chain.
+Please use following command to run peaq-network-node parachian in the docker container connected with polkadot relaychain running in the PEAQ development environment. 
 
-```bash
-./scripts/docker_run.sh
-```
+ ```bash
+ docker run kamranpeaq/peaq-node-parachain:2.0 --chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
+--base-path /tmp/parachain/alice \
+--port 40333 \
+--ws-port 8844 \
+-- \
+--execution wasm \
+--chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
+--port 30343 \
+--ws-port 9977
+ ```
 
-This command will firstly compile your code, and then start a local development network. You can
-also replace the default command
-(`cargo build --release && ./target/release/peaq-node --dev --ws-external`)
-by appending your own. A few useful ones are as follow.
-
-```bash
-# Run Substrate node without re-compiling
-./scripts/docker_run.sh ./target/release/peaq-node --dev --ws-external
-
-# Purge the local dev chain
-./scripts/docker_run.sh ./target/release/peaq-node purge-chain --dev
-
-# Check whether the code is compilable
-./scripts/docker_run.sh cargo check
-```
+Once you run this command, wait for a few second. Now the peaq parachian should be running in the docker container that is connected to relaychain running in PEAQ dev environament. 
 
 ### Parachain Launch
 
