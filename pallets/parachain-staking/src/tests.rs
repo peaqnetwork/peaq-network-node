@@ -39,7 +39,7 @@ use crate::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
 		StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event as StakeEvent, RewardRateInfo, STAKING_ID,
+	CandidatePool, Config, Error, Event as StakeEvent, RewardRateInfo, STAKING_ID, AverageBlockReward,
 };
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
@@ -3834,5 +3834,46 @@ fn test_all_leaving_at_once() {
 			StakePallet::init_leave_candidates(Origin::signed(1)).unwrap();
 			// roll to next blocks to finish all actions for sure
 			roll_to(4, DEFAULT_ISSUE, &authors);
+		});
+}
+
+#[test]
+fn reset_average_rewards_to() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 10_000_000 * DECIMALS),
+			(2, 10_000_000 * DECIMALS),
+			(3, 10_000_000 * DECIMALS),
+			(4, 10_000_000 * DECIMALS),
+			(5, 10_000_000 * DECIMALS),
+			(6, 10_000_000 * DECIMALS),
+		])
+		.with_collators(vec![
+			(1, 8_000_000 * DECIMALS),
+			(2, 8_000_000 * DECIMALS)
+			])
+		.with_delegators(vec![
+			(3, 1, 5_000_000 * DECIMALS),
+			(4, 1, 5_000_000 * DECIMALS),
+			(5, 2, 5_000_000 * DECIMALS),
+			(6, 2, 5_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let issue_number = 1000 * DECIMALS;
+			let authors: Vec<Option<AccountId>> =
+				(0u64..=4u64).map(|i| Some(i % 2 + 1)).collect();
+
+			// Roll 2 blocks forward and check that average block reward
+			roll_to(2, issue_number, &authors);
+			let average = AverageBlockReward::<Test>::get();
+			assert_eq!(average, issue_number);
+
+			// Now reset average reward by extrinsic call and check again
+			let issue_number = DECIMALS;
+			let _ = StakePallet::reset_average_reward_to(Origin::root(), issue_number);
+			roll_to(3, issue_number, &authors);
+			let average = AverageBlockReward::<Test>::get();
+			assert_eq!(average, issue_number);
 		});
 }

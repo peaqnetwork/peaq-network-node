@@ -465,6 +465,8 @@ pub mod pallet {
 		/// \[round number, first block in the current round, old value, new
 		/// value\]
 		BlocksPerRoundSet(SessionIndex, T::BlockNumber, T::BlockNumber, T::BlockNumber),
+		/// If sudo-user resets the average reward register.
+		AverageRewardReset(BalanceOf<T>),
 	}
 
 	#[pallet::hooks]
@@ -1666,6 +1668,19 @@ pub mod pallet {
 
 			// increment rewards and update number of rewarded blocks
 			Self::do_inc_delegator_reward(&delegator, delegation.amount, &collator);
+
+			Ok(())
+		}
+
+		/// Reset the AverageRewardRegister. This is not a general use case.
+		/// May be used in integration-tests, or when really necessary after
+		/// completely modyfying the block-issue-reward.
+		#[pallet::weight(<T as Config>::WeightInfo::increment_delegator_rewards())]
+		pub fn reset_average_reward_to(origin: OriginFor<T>, balance: BalanceOf<T>) -> DispatchResult {
+			ensure_root(origin)?;
+
+			AverageBlockReward::<T>::put(balance);
+			Self::deposit_event(Event::AverageRewardReset(balance));
 
 			Ok(())
 		}
