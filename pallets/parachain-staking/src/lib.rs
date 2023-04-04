@@ -623,7 +623,7 @@ pub mod pallet {
 	/// is no dynamic issue of tokens, we need an average value as reference for
 	/// payouts.
 	#[pallet::storage]
-	#[pallet::getter(fn average_session_reward)]
+	#[pallet::getter(fn average_block_reward)]
 	pub(crate) type AverageBlockReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	pub type GenesisStaker<T> = Vec<(
