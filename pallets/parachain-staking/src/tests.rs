@@ -3877,3 +3877,39 @@ fn reset_average_rewards_to() {
 			assert_eq!(average, issue_number);
 		});
 }
+
+
+#[test]
+fn track_average_block_reward() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 10_000_000 * DECIMALS),
+			(2, 10_000_000 * DECIMALS),
+			(3, 10_000_000 * DECIMALS),
+		])
+		.with_collators(vec![
+			(1, 8_000_000 * DECIMALS)
+			])
+		.with_delegators(vec![
+			(2, 1, 5_000_000 * DECIMALS),
+			(3, 1, 5_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			assert_eq!(StakePallet::average_block_reward(), 0u128);
+
+			let authors: Vec<Option<AccountId>> = vec![Some(1u64); 5];
+
+			roll_to(2, DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+
+			roll_to(3, 3*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 2*DECIMALS);
+
+			roll_to(4, 0u128, &authors);
+			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+
+			roll_to(5, 5*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
+		});
+}
