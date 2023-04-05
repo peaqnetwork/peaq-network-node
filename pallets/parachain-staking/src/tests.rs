@@ -3883,14 +3883,16 @@ fn average_block_reward_functionality() {
 
 			// Roll to next and check that function has restarted by taking
 			// the first newly given block-reward
-			roll_to(8, DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+			roll_to(8, 3*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 2*DECIMALS);
 
 			// Now reset average-block-reward to non-zero and validate function
 			roll_to(9, 3*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), 2*DECIMALS);
+			let result = StakePallet::reset_average_reward_to(Origin::root(), 10*DECIMALS);
+			assert!(result.is_ok());
+			assert_eq!(StakePallet::average_block_reward(), 10*DECIMALS);
 
-			roll_to(10, 4*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
+			roll_to(10, 2*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 6*DECIMALS);
 		});
 }
