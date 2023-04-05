@@ -70,6 +70,7 @@ pub trait WeightInfo {
 	fn increment_delegator_rewards() -> Weight;
 	fn increment_collator_rewards() -> Weight;
 	fn claim_rewards() -> Weight;
+	fn reset_average_reward_to() -> Weight;
 }
 
 /// Weights for parachain_staking using the Substrate node and recommended hardware.
@@ -368,6 +369,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
+
+	// Weight copied from set_reward_rate(), to be updated by benchmark
+	fn reset_average_reward_to() -> Weight {
+		Weight::from_ref_time(12_952_000 as u64)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -664,5 +671,10 @@ impl WeightInfo for () {
 		Weight::from_ref_time(54_273_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+	}
+	// Weight copied from set_reward_rate(), to be updated by benchmark
+	fn reset_average_reward_to() -> Weight {
+		Weight::from_ref_time(12_952_000 as u64)
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 }

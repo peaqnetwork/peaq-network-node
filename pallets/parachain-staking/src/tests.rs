@@ -39,7 +39,7 @@ use crate::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
 		StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event as StakeEvent, RewardRateInfo, STAKING_ID, AverageBlockReward,
+	CandidatePool, Config, Error, Event as StakeEvent, RewardRateInfo, STAKING_ID,
 };
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
@@ -3838,49 +3838,7 @@ fn test_all_leaving_at_once() {
 }
 
 #[test]
-fn reset_average_rewards_to() {
-	ExtBuilder::default()
-		.with_balances(vec![
-			(1, 10_000_000 * DECIMALS),
-			(2, 10_000_000 * DECIMALS),
-			(3, 10_000_000 * DECIMALS),
-			(4, 10_000_000 * DECIMALS),
-			(5, 10_000_000 * DECIMALS),
-			(6, 10_000_000 * DECIMALS),
-		])
-		.with_collators(vec![
-			(1, 8_000_000 * DECIMALS),
-			(2, 8_000_000 * DECIMALS)
-			])
-		.with_delegators(vec![
-			(3, 1, 5_000_000 * DECIMALS),
-			(4, 1, 5_000_000 * DECIMALS),
-			(5, 2, 5_000_000 * DECIMALS),
-			(6, 2, 5_000_000 * DECIMALS),
-		])
-		.build()
-		.execute_with(|| {
-			let issue_number = 1000 * DECIMALS;
-			let authors: Vec<Option<AccountId>> =
-				(0u64..=4u64).map(|i| Some(i % 2 + 1)).collect();
-
-			// Roll 2 blocks forward and check that average block reward
-			roll_to(2, issue_number, &authors);
-			let average = AverageBlockReward::<Test>::get();
-			assert_eq!(average, issue_number);
-
-			// Now reset average reward by extrinsic call and check again
-			let issue_number = DECIMALS;
-			let _ = StakePallet::reset_average_reward_to(Origin::root(), issue_number);
-			roll_to(3, issue_number, &authors);
-			let average = AverageBlockReward::<Test>::get();
-			assert_eq!(average, issue_number);
-		});
-}
-
-
-#[test]
-fn track_average_block_reward() {
+fn average_block_reward_functionality() {
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 10_000_000 * DECIMALS),
@@ -3898,8 +3856,9 @@ fn track_average_block_reward() {
 		.execute_with(|| {
 			assert_eq!(StakePallet::average_block_reward(), 0u128);
 
-			let authors: Vec<Option<AccountId>> = vec![Some(1u64); 5];
+			let authors: Vec<Option<AccountId>> = vec![Some(1u64); 11];
 
+			// Verify mathematical aspect of the function
 			roll_to(2, DECIMALS, &authors);
 			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
 
@@ -3910,6 +3869,28 @@ fn track_average_block_reward() {
 			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
 
 			roll_to(5, 5*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
+
+			// Now reset average-block-reward to zero (restart) and validate
+			roll_to(6, 3*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
+			let result = StakePallet::reset_average_reward_to(Origin::root(), 0u128);
+			assert!(result.is_ok());
+			assert_eq!(StakePallet::average_block_reward(), 0u128);
+
+			roll_to(7, DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+
+			// Roll to next and check that function has restarted by taking
+			// the first newly given block-reward
+			roll_to(8, DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+
+			// Now reset average-block-reward to non-zero and validate function
+			roll_to(9, 3*DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward(), 2*DECIMALS);
+
+			roll_to(10, 4*DECIMALS, &authors);
 			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
 		});
 }

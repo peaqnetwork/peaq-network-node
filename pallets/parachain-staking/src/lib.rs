@@ -378,6 +378,8 @@ pub mod pallet {
 		UnstakingIsEmpty,
 		/// Cannot claim rewards if empty.
 		RewardsNotFound,
+		/// Average-block-reward cannot be negative.
+		CannotSetNegativeAverage,
 	}
 
 	#[pallet::event]
@@ -1675,10 +1677,11 @@ pub mod pallet {
 		/// Reset the AverageRewardRegister. This is not a general use case.
 		/// May be used in integration-tests, or when really necessary after
 		/// completely modyfying the block-issue-reward.
-		#[pallet::weight(<T as Config>::WeightInfo::increment_delegator_rewards())]
+		#[pallet::weight(<T as Config>::WeightInfo::reset_average_reward_to())]
 		pub fn reset_average_reward_to(origin: OriginFor<T>, balance: BalanceOf<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
+			ensure!(balance >= BalanceOf::<T>::zero(), Error::<T>::CannotSetNegativeAverage);
 			AverageBlockReward::<T>::put(balance);
 			Self::deposit_event(Event::AverageRewardReset(balance));
 
