@@ -62,6 +62,7 @@ use frame_support::{
 	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
 };
 use frame_system::{ensure_root, pallet_prelude::*};
+use sp_runtime::traits::{Saturating, Zero};
 
 #[cfg(any(feature = "runtime-benchmarks"))]
 pub mod benchmarking;
@@ -129,6 +130,10 @@ pub mod pallet {
 	#[pallet::getter(fn max_currency_supply)]
 	pub(super) type MaxCurrencySupply<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn token_locker)]
+	pub(crate) type TokenLocker<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -145,7 +150,7 @@ pub mod pallet {
 		BlockRewardsDistributed(BalanceOf<T>),
 
 		/// Rewards have been distributed
-		TransactionFeesDistributed(BalanceOf<T>),
+		TransactionFeesReceived(BalanceOf<T>),
 	}
 
 	#[pallet::error]
@@ -190,7 +195,10 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance: Zero + Saturating
+	{
 		/// Sets the reward distribution configuration parameters which will be used from next block
 		/// reward distribution.
 		///
@@ -266,7 +274,12 @@ pub mod pallet {
 			}
 
 			let inflation = T::Currency::issue(Self::block_issue_reward());
-			let value = inflation.peek();
+			let locked = TokenLocker::<T>::mutate(|lock| {
+				let locked = *lock;
+				*lock = BalanceOf::<T>::zero();
+				locked
+			});
+			let value = locked.saturating_add(inflation.peek());
 			Self::distribute_imbalances(inflation, Event::<T>::BlockRewardsDistributed(value));
 		}
 	}
@@ -281,7 +294,8 @@ pub mod pallet {
 
 		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
 			let value = amount.peek();
-			Self::distribute_imbalances(amount, Event::<T>::TransactionFeesDistributed(value));
+			TokenLocker::<T>::mutate(|lock| *lock += value );
+			Self::distribute_imbalances(amount, Event::<T>::TransactionFeesReceived(value));
 		}
 	}
 
