@@ -137,8 +137,8 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier,
-			LockableCurrency, ReservableCurrency, StorageVersion, WithdrawReasons,
+			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier, LockableCurrency,
+			OnUnbalanced, ReservableCurrency, StorageVersion, WithdrawReasons,
 		},
 		BoundedVec, PalletId,
 	};
@@ -157,10 +157,7 @@ pub mod pallet {
 
 	use crate::{
 		set::OrderedSet,
-		types::{
-			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
-			RoundInfo, Stake, StakeOf, TotalStake,
-		},
+		types::*,
 	};
 	use sp_std::{convert::TryInto, fmt::Debug};
 
@@ -471,27 +468,6 @@ pub mod pallet {
 		AverageRewardReset(BalanceOf<T>),
 	}
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(now: T::BlockNumber) -> frame_support::weights::Weight {
-			let mut post_weight = <T as Config>::WeightInfo::on_initialize_no_action();
-			let mut round = <Round<T>>::get();
-
-			// check for round update
-			if round.should_update(now) {
-				// mutate round
-				round.update(now);
-
-				// start next round
-				Round::<T>::put(round);
-
-				Self::deposit_event(Event::NewRound(round.first, round.current));
-				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
-			}
-			post_weight
-		}
-	}
-
 	/// The maximum number of collator candidates selected at each round.
 	#[pallet::storage]
 	#[pallet::getter(fn max_selected_candidates)]
@@ -692,6 +668,27 @@ pub mod pallet {
 			let round: RoundInfo<T::BlockNumber> =
 				RoundInfo::new(0u32, 0u32.into(), T::DefaultBlocksPerRound::get());
 			Round::<T>::put(round);
+		}
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(now: T::BlockNumber) -> frame_support::weights::Weight {
+			let mut post_weight = <T as Config>::WeightInfo::on_initialize_no_action();
+			let mut round = <Round<T>>::get();
+
+			// check for round update
+			if round.should_update(now) {
+				// mutate round
+				round.update(now);
+
+				// start next round
+				Round::<T>::put(round);
+
+				Self::deposit_event(Event::NewRound(round.first, round.current));
+				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
+			}
+			post_weight
 		}
 	}
 
@@ -2363,7 +2360,7 @@ pub mod pallet {
 		/// by a fixed, configurable percentage. See reward-rate. This is a
 		/// workarround as long we having a fixed amount of issued/minted tokens, to
 		/// affect inflation.
-		pub fn update_average_reward(new_reward: BalanceOf<T>) {
+		fn update_average_reward(new_reward: BalanceOf<T>) {
 			let mut avg_reward = AverageBlockReward::<T>::get();
 			if avg_reward.is_zero() {
 				avg_reward = new_reward;
@@ -2507,6 +2504,19 @@ pub mod pallet {
 				// One read for the round info, blocknumber is read free
 				T::DbWeight::get().reads(1),
 			)
+		}
+	}
+
+	impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Pallet<T> {
+		fn on_unbalanced(imbalance: NegativeImbalanceOf<T>) {
+			Self::on_nonzero_unbalanced(imbalance);
+		}
+
+		fn on_nonzero_unbalanced(imbalance: NegativeImbalanceOf<T>) {
+			let pot = T::PotId::get().into_account_truncating();
+			let amount = imbalance.peek();
+			T::Currency::resolve_creating(&pot, imbalance);
+			Self::update_average_reward(amount);
 		}
 	}
 }

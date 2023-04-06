@@ -23,7 +23,7 @@ use super::*;
 use crate::{self as stake};
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnInitialize},
+	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
@@ -444,6 +444,6 @@ fn claim_all_rewards() {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
-	StakePallet::update_average_reward(issued.peek());
+	// let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
+	StakePallet::on_unbalanced(issued);
 }
