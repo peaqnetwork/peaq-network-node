@@ -866,7 +866,7 @@ macro_rules! impl_to_pot_adapter {
 	};
 }
 
-impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
+// impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
 impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
 
 pub struct ToTreasuryPot;
@@ -890,9 +890,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	}
 
 	fn collators(reward: NegativeImbalance) {
-		let amount = reward.peek();
-		ToStakingPot::on_unbalanced(reward);
-		ParachainStaking::update_average_reward(amount);
+		ParachainStaking::on_unbalanced(reward);
 	}
 
 	fn dapps_staking(_reward: NegativeImbalance) {}

@@ -840,26 +840,6 @@ impl parachain_staking::Config for Runtime {
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
-/// Implements the adapters for depositing unbalanced tokens on pots
-/// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
-macro_rules! impl_to_pot_adapter {
-	($name:ident, $pot:ident, $negbal:ident) => {
-		pub struct $name;
-		impl OnUnbalanced<$negbal> for $name {
-			fn on_unbalanced(amount: $negbal) {
-				Self::on_nonzero_unbalanced(amount);
-			}
-
-			fn on_nonzero_unbalanced(amount: $negbal) {
-				let pot = $pot::get().into_account_truncating();
-				Balances::resolve_creating(&pot, amount);
-			}
-		}
-	};
-}
-
-impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
-
 pub struct ToTreasuryPot;
 impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
@@ -882,9 +862,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	}
 
 	fn collators(reward: NegativeImbalance) {
-		let amount = reward.peek();
-		ToStakingPot::on_unbalanced(reward);
-		ParachainStaking::update_average_reward(amount);
+		ParachainStaking::on_unbalanced(reward);
 	}
 
 	fn dapps_staking(_reward: NegativeImbalance) {}
