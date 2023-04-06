@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'parachain_dev'
+      - 'run_peaq_dev_parachain_with_docker_commands'
     tags:
       - 'v*'
       - 'peaq-dev-v*'
