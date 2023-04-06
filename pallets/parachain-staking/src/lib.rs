@@ -604,6 +604,12 @@ pub mod pallet {
 	#[pallet::getter(fn average_block_reward)]
 	pub(crate) type AverageBlockReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
+	/// Necessary flag for the reset-functionality of the AverageBlockReward
+	/// register. When reseting the register, it is necessary to stop logging the
+	/// average reward for that block, in which the reset occurs.
+	#[pallet::storage]
+	pub(crate) type AvgBlRewReset<T: Config> = StorageValue<_, bool, ValueQuery>;
+
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
 		Option<<T as frame_system::Config>::AccountId>,
@@ -637,7 +643,7 @@ pub mod pallet {
 		fn build(&self) {
 			assert!(self.reward_rate_config.is_valid(), "Invalid reward_rate configuration");
 
-			<RewardRateConfig<T>>::put(self.reward_rate_config.clone());
+			RewardRateConfig::<T>::put(self.reward_rate_config.clone());
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
 
 			// Setup delegate & collators
@@ -647,7 +653,7 @@ pub mod pallet {
 					"Account does not have enough balance to stake."
 				);
 				if let Some(delegated_val) = opt_val {
-					assert_ok!(<Pallet<T>>::join_delegators(
+					assert_ok!(Pallet::<T>::join_delegators(
 						T::Origin::from(Some(actor.clone()).into()),
 						T::Lookup::unlookup(delegated_val.clone()),
 						balance,
@@ -668,6 +674,10 @@ pub mod pallet {
 			let round: RoundInfo<T::BlockNumber> =
 				RoundInfo::new(0u32, 0u32.into(), T::DefaultBlocksPerRound::get());
 			Round::<T>::put(round);
+
+			// Set initial values for AverageBlockReward-related storages
+			AverageBlockReward::<T>::put(BalanceOf::<T>::zero());
+			AvgBlRewReset::<T>::put(false);
 		}
 	}
 
@@ -1680,6 +1690,7 @@ pub mod pallet {
 
 			ensure!(balance >= BalanceOf::<T>::zero(), Error::<T>::CannotSetNegativeAverage);
 			AverageBlockReward::<T>::put(balance);
+			AvgBlRewReset::<T>::put(true);
 			Self::deposit_event(Event::AverageRewardReset(balance));
 
 			Ok(())
@@ -2361,16 +2372,23 @@ pub mod pallet {
 		/// workarround as long we having a fixed amount of issued/minted tokens, to
 		/// affect inflation.
 		fn update_average_reward(new_reward: BalanceOf<T>) {
-			let mut avg_reward = AverageBlockReward::<T>::get();
-			if avg_reward.is_zero() {
-				avg_reward = new_reward;
+			let mut reads = 1;
+
+			if AvgBlRewReset::<T>::get() {
+				AvgBlRewReset::<T>::put(false);
 			} else {
-				avg_reward = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
+				let mut avg_reward = AverageBlockReward::<T>::get();
+				if avg_reward.is_zero() {
+					avg_reward = new_reward;
+				} else {
+					avg_reward = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
+				}
+				AverageBlockReward::<T>::put(avg_reward);
+				reads += 1;
 			}
-			AverageBlockReward::<T>::put(avg_reward);
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(1, 1),
+				T::DbWeight::get().reads_writes(reads, 1),
 				DispatchClass::Mandatory,
 			);
 		}
