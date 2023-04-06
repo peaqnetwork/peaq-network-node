@@ -444,6 +444,5 @@ fn claim_all_rewards() {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	// let issued = Balances::deposit_creating(&StakePallet::account_id(), issued.peek());
 	StakePallet::on_unbalanced(issued);
 }
