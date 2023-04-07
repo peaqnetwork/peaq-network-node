@@ -248,11 +248,6 @@ pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
 	fn contains(call: &Call) -> bool {
 		match call {
-			Call::ParachainStaking(method) => !matches!(
-				method,
-				parachain_staking::Call::join_candidates { .. } |
-					parachain_staking::Call::join_delegators { .. }
-			),
 			// Other modules should works:
 			_ => true,
 		}
