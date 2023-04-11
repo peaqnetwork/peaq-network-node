@@ -126,9 +126,6 @@ pub type AccountId = peaq_primitives_xcm::AccountId;
 /// never know...
 // type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
-/// Balance of an account.
-pub type Balance = peaq_primitives_xcm::Balance;
-
 /// Index of a transaction in the chain.
 type Index = peaq_primitives_xcm::Nonce;
 
@@ -190,11 +187,11 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-// Contracts price units.
-pub const TOKEN_DECIMALS: u32 = 18;
-pub const MILLICENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 3);
-pub const CENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2);
-pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
+use runtime_common::{
+	MILLICENTS, CENTS, DOLLARS,
+	Balance,
+	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
+};
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
@@ -391,20 +388,6 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const TransactionByteFee: Balance = 1;
-	pub const OperationalFeeMultiplier: u8 = 5;
-	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
-}
-
-// Config the utility in pallets/utility
-impl pallet_utility::Config for Runtime {
-	type Call = Call;
-	type Event = Event;
-	type PalletsOrigin = OriginCaller;
-	type WeightInfo = ();
-}
-
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
 ///
@@ -550,6 +533,14 @@ impl peaq_pallet_did::Config for Runtime {
 	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
 }
 
+// Config the utility in pallets/utility
+impl pallet_utility::Config for Runtime {
+	type Call = Call;
+	type Event = Event;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
+}
+
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
@@ -576,7 +567,7 @@ parameter_types! {
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance =  DOLLARS;
+	pub const TipReportDepositBase: Balance = DOLLARS;
 	pub const DataDepositPerByte: Balance = CENTS;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 	pub const MaximumReasonLength: u32 = 300;
@@ -738,7 +729,6 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
-
 }
 
 parameter_types! {
@@ -836,7 +826,6 @@ impl parachain_staking::Config for Runtime {
 }
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
-
 
 pub struct ToTreasuryPot;
 impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {

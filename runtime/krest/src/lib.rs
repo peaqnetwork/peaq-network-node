@@ -126,9 +126,6 @@ pub type AccountId = peaq_primitives_xcm::AccountId;
 /// never know...
 // type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
-/// Balance of an account.
-pub type Balance = peaq_primitives_xcm::Balance;
-
 /// Index of a transaction in the chain.
 type Index = peaq_primitives_xcm::Nonce;
 
@@ -190,11 +187,11 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-// Contracts price units.
-pub const TOKEN_DECIMALS: u32 = 18;
-pub const MILLICENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 3);
-pub const CENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2);
-pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
+use runtime_common::{
+	MILLICENTS, CENTS, DOLLARS,
+	Balance,
+	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
+};
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
@@ -397,12 +394,6 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const TransactionByteFee: Balance = 1;
-	pub const OperationalFeeMultiplier: u8 = 5;
-	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
