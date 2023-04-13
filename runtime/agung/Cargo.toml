@@ -222,7 +222,6 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.29'
 
-
 [dependencies.pallet-utility]
 default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
@@ -478,6 +477,11 @@ default-features = false
 path = "../../precompiles/utils"
 default-features = false
 
+[dependencies.runtime-common]
+path = "../common"
+default-features = false
+
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -522,7 +526,6 @@ std = [
 	'pallet-transaction-payment-rpc-runtime-api/std',
 	'pallet-transaction-payment/std',
 	'pallet-multisig/std',
-	'pallet-utility/std',
 	'sp-api/std',
 	'sp-block-builder/std',
 	'sp-consensus-aura/std',
@@ -543,8 +546,10 @@ std = [
 	'peaq-pallet-rbac/std',
 	'peaq-pallet-rbac-runtime-api/std',
 	'peaq-pallet-storage/std',
+	'peaq-pallet-storage-runtime-api/std',
+	'pallet-utility/std',
 	'pallet-treasury/std',
-	'pallet-collective/std', 
+	'pallet-collective/std',
 	'pallet-vesting/std',
 
 	# ETH support
@@ -600,9 +605,7 @@ std = [
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
-
-	"peaq-pallet-storage/std",
-	"peaq-pallet-storage-runtime-api/std"
+	"runtime-common/std",
 ]
 
 # Must be enabled for tracing runtimes only

@@ -477,6 +477,10 @@ default-features = false
 path = "../../precompiles/utils"
 default-features = false
 
+[dependencies.runtime-common]
+path = "../common"
+default-features = false
+
 
 [features]
 default = ["std", "aura"]
@@ -545,9 +549,9 @@ std = [
 	'peaq-pallet-storage-runtime-api/std',
 	'pallet-utility/std',
 	'pallet-treasury/std',
-	'pallet-collective/std', 
+	'pallet-collective/std',
 	'pallet-vesting/std',
-	
+
 	# ETH support
 	'sp-io/std',
 	'fp-evm/std',
@@ -601,6 +605,7 @@ std = [
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
+	"runtime-common/std",
 ]
 
 # Must be enabled for tracing runtimes only
