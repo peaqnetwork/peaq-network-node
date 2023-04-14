@@ -364,7 +364,7 @@ pub(crate) fn roll_to_claim_every_reward(
 	authors: &Vec<Option<AccountId>>,
 ) {
 	while System::block_number() < n {
-		simulate_issuance(Balance::from(issue_number));
+		simulate_issuance(issue_number);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
 			// author has to increment rewards before claiming
@@ -377,10 +377,10 @@ pub(crate) fn roll_to_claim_every_reward(
 				StakePallet::candidate_pool(author).expect("Block author must be candidate");
 			for delegation in col_state.delegators {
 				// delegator has to increment rewards before claiming
-				let _ = StakePallet::increment_delegator_rewards(Origin::signed(delegation.owner));
+				assert_ok!(StakePallet::increment_delegator_rewards(Origin::signed(delegation.owner)));
 				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
 				// delegators such that the claiming would throw
-				let _ = StakePallet::claim_rewards(Origin::signed(delegation.owner));
+				assert_ok!(StakePallet::claim_rewards(Origin::signed(delegation.owner)));
 			}
 		}
 		finish_block_start_next();
@@ -413,7 +413,7 @@ pub(crate) fn roll_to_then_claim_rewards(
 	authors: &Vec<Option<AccountId>>,
 ) {
 	while System::block_number() < n {
-		simulate_issuance(Balance::from(issue_number));
+		simulate_issuance(issue_number);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
 		}

@@ -3854,50 +3854,48 @@ fn average_block_reward_functionality() {
 		])
 		.build()
 		.execute_with(|| {
-			assert_eq!(StakePallet::average_block_reward(), 0u128);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 0u128);
 
 			let authors: Vec<Option<AccountId>> = vec![Some(1u64); 12];
 
 			// Verify mathematical aspect of the function
 			roll_to(2, DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, DECIMALS);
 
 			roll_to(3, 3*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), 2*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 2*DECIMALS);
 
 			roll_to(4, 0u128, &authors);
-			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, DECIMALS);
 
 			roll_to(5, 5*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3*DECIMALS);
 
 			// Now reset average-block-reward to zero (restart) and validate
 			roll_to(6, 3*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), 3*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3*DECIMALS);
 			let result = StakePallet::reset_average_reward_to(Origin::root(), 0u128);
 			assert!(result.is_ok());
-			assert_eq!(StakePallet::average_block_reward(), 0u128);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3*DECIMALS);
 
 			roll_to(7, DECIMALS, &authors);
-			// assert_eq!(StakePallet::average_block_reward(), DECIMALS);
-			assert_eq!(StakePallet::average_block_reward(), 0u128);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 0u128);
 
 			// Roll to next and check that function has restarted by taking
 			// the first newly given block-reward
 			roll_to(8, DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, DECIMALS);
 
 			// Now reset average-block-reward to non-zero and validate function
 			roll_to(9, 3*DECIMALS, &authors);
 			let result = StakePallet::reset_average_reward_to(Origin::root(), 10*DECIMALS);
 			assert!(result.is_ok());
-			assert_eq!(StakePallet::average_block_reward(), 10*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 2*DECIMALS);
 
 			roll_to(10, 2*DECIMALS, &authors);
-			// assert_eq!(StakePallet::average_block_reward(), 6*DECIMALS);
-			assert_eq!(StakePallet::average_block_reward(), 10*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 10*DECIMALS);
 
 			roll_to(11, 2*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward(), 6*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 6*DECIMALS);
 		});
 }

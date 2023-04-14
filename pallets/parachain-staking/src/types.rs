@@ -317,6 +317,32 @@ pub struct DelegationCounter {
 	pub counter: u32,
 }
 
+/// The Average-Block-Reward.
+/// Control and tracking will be solved by this struct.
+#[derive(Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
+pub struct AvgBlockRewardCtrl<Balance> {
+	/// The main value, used to calculate rewards for collators and delegators.
+	pub avg_block_reward: Balance,
+	/// The accumulator, to build the avg_block_reward for the next round.
+	pub accumulator: Balance,
+	/// If reset is requested, this will be the new avg_block_reward value.
+	pub reset_value: Balance,
+	/// Flag for initialising a reset ov avg_block_reward.
+	pub do_reset: bool,
+}
+
+impl<Balance: Zero> Default for AvgBlockRewardCtrl<Balance> {
+	fn default() -> Self {
+		AvgBlockRewardCtrl::<Balance>{
+			avg_block_reward: Balance::zero(),
+			accumulator: Balance::zero(),
+			reset_value: Balance::zero(),
+			do_reset: false,
+		}
+	}
+}
+
+
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
