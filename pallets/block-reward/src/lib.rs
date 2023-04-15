@@ -274,13 +274,15 @@ pub mod pallet {
 			}
 
 			let inflation = T::Currency::issue(Self::block_issue_reward());
-			let locked = TokenLocker::<T>::mutate(|lock| {
+			let txfees = TokenLocker::<T>::mutate(|lock| {
 				let locked = *lock;
 				*lock = BalanceOf::<T>::zero();
-				locked
+				T::Currency::issue(locked)
 			});
-			let value = locked.saturating_add(inflation.peek());
-			Self::distribute_imbalances(inflation, Event::<T>::BlockRewardsDistributed(value));
+			let imbalances = inflation.merge(txfees);
+            let amount = imbalances.peek();
+			Self::distribute_imbalances(imbalances, Event::<T>::BlockRewardsDistributed(amount));
+            
 		}
 	}
 
@@ -295,7 +297,8 @@ pub mod pallet {
 		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
 			let value = amount.peek();
 			TokenLocker::<T>::mutate(|lock| *lock += value );
-			Self::distribute_imbalances(amount, Event::<T>::TransactionFeesReceived(value));
+            Self::deposit_event(Event::<T>::TransactionFeesReceived(value));
+			// Self::distribute_imbalances(amount, Event::<T>::TransactionFeesReceived(value));
 		}
 	}
 
@@ -306,8 +309,10 @@ pub mod pallet {
 		/// * `imbalance` - imbalance that will be split and distributed
 		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
 			let distro_params = Self::reward_config();
-
-			// Pre-calculate balance which will be deposited for each beneficiary
+            
+            log!(info, "distribute_imbalances({:?})", imbalance.peek());
+			
+                 // Pre-calculate balance which will be deposited for each beneficiary
 			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
 			let collator_balance = distro_params.collators_percent * imbalance.peek();
 			let lp_balance = distro_params.lp_percent * imbalance.peek();
