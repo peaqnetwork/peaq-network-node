@@ -23,7 +23,7 @@ use super::*;
 use crate::{self as stake};
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize, OnUnbalanced},
+	traits::{Currency, GenesisBuild, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
@@ -400,6 +400,7 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 }
 
 fn finish_block_start_next() {
+    <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());

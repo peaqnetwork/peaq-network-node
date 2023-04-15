@@ -310,7 +310,7 @@ fn join_collator_candidates() {
 			assert!(System::events().is_empty());
 
 			assert_ok!(StakePallet::set_max_selected_candidates(Origin::root(), 5));
-			assert_ok!(StakePallet::join_candidates(Origin::signed(7), 10u128,));
+			assert_ok!(StakePallet::join_candidates(Origin::signed(7), 10u128));
 			assert_eq!(last_event(), StakeEvent::JoinedCollatorCandidates(7, 10u128));
 
 			// MaxCollatorCandidateStake
@@ -326,7 +326,7 @@ fn join_collator_candidates() {
 
 			assert_eq!(
 				last_event(),
-				StakeEvent::JoinedCollatorCandidates(10, StakePallet::max_candidate_stake(),)
+				StakeEvent::JoinedCollatorCandidates(10, StakePallet::max_candidate_stake())
 			);
 		});
 }
@@ -2039,7 +2039,7 @@ fn unlock_unstaked() {
 				BalanceOf<Test>,
 				<Test as Config>::MaxUnstakeRequests,
 			> = BoundedBTreeMap::new();
-			assert_ok!(unstaking.try_insert(3, 100));
+			assert_ok!(unstaking.try_insert(2, 100));
 			let lock = BalanceLock { id: STAKING_ID, amount: 100, reasons: Reasons::All };
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
@@ -3752,7 +3752,7 @@ fn test_varying_delegators() {
 
 			// check total issuance
 			let total_issuance = <Test as Config>::Currency::total_issuance();
-			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 7 * DEFAULT_ISSUE);
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 8 * DEFAULT_ISSUE);
 		});
 }
 
@@ -3792,7 +3792,7 @@ fn test_only_leaving_delegators() {
 
 			// check total issuance
 			let total_issuance = <Test as Config>::Currency::total_issuance();
-			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 4 * DEFAULT_ISSUE);
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 5 * DEFAULT_ISSUE);
 		});
 }
 

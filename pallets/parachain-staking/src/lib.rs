@@ -150,6 +150,7 @@ pub mod pallet {
 			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier, LockableCurrency,
 			OnUnbalanced, ReservableCurrency, StorageVersion, WithdrawReasons,
 		},
+        weights::Weight,
 		BoundedVec, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
@@ -690,11 +691,8 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(now: T::BlockNumber) -> frame_support::weights::Weight {
+		fn on_initialize(now: T::BlockNumber) -> Weight {
 			let mut post_weight = <T as Config>::WeightInfo::on_initialize_no_action();
-
-			// update average block reward
-			Self::update_average_block_reward();
 
 			// check for round update
 			let mut round = <Round<T>>::get();
@@ -710,6 +708,11 @@ pub mod pallet {
 			}
 			post_weight
 		}
+
+        fn on_idle(_n: T::BlockNumber, _w: Weight) -> Weight {
+			// update average block reward
+			Self::update_average_block_reward()
+        }
 	}
 
 	#[pallet::call]
@@ -2383,7 +2386,7 @@ pub mod pallet {
 		/// by a fixed, configurable percentage. See reward-rate. This is a
 		/// workarround as long we having a fixed amount of issued/minted tokens, to
 		/// affect inflation.
-		fn update_average_block_reward() {
+		fn update_average_block_reward() -> Weight {
 			// let mut reads = 1;
 
 			// if AvgBlRewReset::<T>::get() {
@@ -2422,10 +2425,11 @@ pub mod pallet {
 
 			log!(info, "update_average_block_reward(), avg is now {:?}", newavg);
 
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(1, 1),
-				DispatchClass::Mandatory,
-			);
+			// frame_system::Pallet::<T>::register_extra_weight_unchecked(
+			// 	T::DbWeight::get().reads_writes(1, 1),
+			// 	DispatchClass::Mandatory,
+			// );
+            frame_support::weights::RuntimeDbWeight::default().reads_writes(1, 1)
 		}
 
 		fn register_incoming_block_reward(reward: BalanceOf<T>) {
