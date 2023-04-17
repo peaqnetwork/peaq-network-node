@@ -377,7 +377,9 @@ pub(crate) fn roll_to_claim_every_reward(
 				StakePallet::candidate_pool(author).expect("Block author must be candidate");
 			for delegation in col_state.delegators {
 				// delegator has to increment rewards before claiming
-				assert_ok!(StakePallet::increment_delegator_rewards(Origin::signed(delegation.owner)));
+				assert_ok!(StakePallet::increment_delegator_rewards(Origin::signed(
+					delegation.owner
+				)));
 				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
 				// delegators such that the claiming would throw
 				assert_ok!(StakePallet::claim_rewards(Origin::signed(delegation.owner)));
@@ -400,7 +402,7 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 }
 
 fn finish_block_start_next() {
-    // <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
+	// <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
@@ -446,5 +448,5 @@ fn claim_all_rewards() {
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
 	StakePallet::on_unbalanced(issued);
-    <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
+	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 }

@@ -147,10 +147,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier, LockableCurrency,
-			OnUnbalanced, ReservableCurrency, StorageVersion, WithdrawReasons,
+			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier,
+			LockableCurrency, OnUnbalanced, ReservableCurrency, StorageVersion, WithdrawReasons,
 		},
-        weights::Weight,
+		weights::Weight,
 		BoundedVec, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
@@ -166,10 +166,7 @@ pub mod pallet {
 	use sp_staking::SessionIndex;
 	use sp_std::prelude::*;
 
-	use crate::{
-		set::OrderedSet,
-		types::*,
-	};
+	use crate::{set::OrderedSet, types::*};
 	use sp_std::{convert::TryInto, fmt::Debug};
 
 	/// Kilt-specific lock for staking rewards.
@@ -616,8 +613,8 @@ pub mod pallet {
 	/// multiple incoming block-rewards).
 	#[pallet::storage]
 	#[pallet::getter(fn average_block_reward)]
-	pub(crate) type AverageBlockReward<T: Config> = StorageValue<_, AvgBlockRewardCtrl<BalanceOf<T>>, ValueQuery>;
-
+	pub(crate) type AverageBlockReward<T: Config> =
+		StorageValue<_, AvgBlockRewardCtrl<BalanceOf<T>>, ValueQuery>;
 
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
@@ -709,10 +706,10 @@ pub mod pallet {
 			post_weight
 		}
 
-        fn on_idle(_n: T::BlockNumber, _w: Weight) -> Weight {
+		fn on_idle(_n: T::BlockNumber, _w: Weight) -> Weight {
 			// update average block reward
 			Self::update_average_block_reward()
-        }
+		}
 	}
 
 	#[pallet::call]
@@ -1698,7 +1695,10 @@ pub mod pallet {
 		/// May be used in integration-tests, or when really necessary after
 		/// completely modyfying the block-issue-reward.
 		#[pallet::weight(<T as Config>::WeightInfo::reset_average_reward_to())]
-		pub fn reset_average_reward_to(origin: OriginFor<T>, balance: BalanceOf<T>) -> DispatchResult {
+		pub fn reset_average_reward_to(
+			origin: OriginFor<T>,
+			balance: BalanceOf<T>,
+		) -> DispatchResult {
 			ensure_root(origin)?;
 
 			ensure!(balance >= BalanceOf::<T>::zero(), Error::<T>::CannotSetNegativeAverage);
@@ -2387,58 +2387,55 @@ pub mod pallet {
 		/// workarround as long we having a fixed amount of issued/minted tokens, to
 		/// affect inflation.
 		fn update_average_block_reward() -> Weight {
-			// let mut reads = 1;
-
-			// if AvgBlRewReset::<T>::get() {
-			// 	AvgBlRewReset::<T>::put(false);
-			// } else {
-			// 	AverageBlockReward::<T>::mutate(|&avg_reward| {
-			// 		if avg_reward.is_zero() {
-			// 			avg_reward.0 = new_reward;
-			// 		} else {
-			// 			avg_reward.0 = Perquintill::from_percent(50) * avg_reward.saturating_add(new_reward);
-			// 		}
-			// 	});
-			// 	reads += 1;
-			// }
-
-			// log!(info, "update_avg_block_reward({:?}), sum is now {:?}", new_reward);
-
-			// frame_system::Pallet::<T>::register_extra_weight_unchecked(
-			// 	T::DbWeight::get().reads_writes(reads, 1),
-			// 	DispatchClass::Mandatory,
-			// );
-			let newavg = AverageBlockReward::<T>::mutate(|avg_ctrl| {
-				if avg_ctrl.do_reset { 
+			AverageBlockReward::<T>::mutate(|avg_ctrl| {
+				if avg_ctrl.do_reset {
+					// First check for a possible reset
 					avg_ctrl.avg_block_reward = avg_ctrl.reset_value;
 					avg_ctrl.do_reset = false;
+				} else if avg_ctrl.avg_block_reward.is_zero() {
+					// Then check for an empty average-block-reward-register
+					avg_ctrl.avg_block_reward = avg_ctrl.accumulator;
 				} else {
-					if avg_ctrl.avg_block_reward.is_zero() {
-						avg_ctrl.avg_block_reward = avg_ctrl.accumulator;
+					// Otherwise do the regular computation of ABR
+					// Note: Use this formula instead, if a fast adaption in any
+					//       direction is wanted (positive or negative).
+					// avg_ctrl.avg_block_reward = calc_next_avg(
+					//		1, &avg_ctrl.avg_block_reward, &avg_ctrl.accumulator);
+					// Note: This implementation is a little more conservative,
+					//       adapts faster to negative than to positive varying.
+					let c_avg = avg_ctrl.avg_block_reward;
+					let n_rew = avg_ctrl.accumulator;
+					avg_ctrl.avg_block_reward = if n_rew > c_avg {
+						// Increasing block-reward (positive)
+						let diff = n_rew.saturating_sub(c_avg);
+						let diff = Permill::from_rational(diff, n_rew);
+						if diff > Permill::from_percent(10) {
+							calc_next_avg(1, &c_avg, &n_rew)
+						} else {
+							calc_next_avg(3, &c_avg, &n_rew)
+						}
 					} else {
-						avg_ctrl.avg_block_reward = Perquintill::from_percent(50) * avg_ctrl.avg_block_reward.saturating_add(avg_ctrl.accumulator);
+						// Decreasing block-reward (negative)
+						let diff = c_avg.saturating_sub(n_rew);
+						let diff = Permill::from_rational(diff, c_avg);
+						if diff > Permill::from_percent(2) {
+							calc_next_avg(1, &c_avg, &n_rew)
+						} else {
+							calc_next_avg(2, &c_avg, &n_rew)
+						}
 					}
 				}
 				avg_ctrl.accumulator = BalanceOf::<T>::zero();
-				avg_ctrl.avg_block_reward
 			});
 
-			log!(info, "update_average_block_reward(), avg is now {:?}", newavg);
-
-			// frame_system::Pallet::<T>::register_extra_weight_unchecked(
-			// 	T::DbWeight::get().reads_writes(1, 1),
-			// 	DispatchClass::Mandatory,
-			// );
-            frame_support::weights::RuntimeDbWeight::default().reads_writes(1, 1)
+			frame_support::weights::RuntimeDbWeight::default().reads_writes(1, 1)
 		}
 
 		fn register_incoming_block_reward(reward: BalanceOf<T>) {
-			let newacc = AverageBlockReward::<T>::mutate(|avg_ctrl| {
+			AverageBlockReward::<T>::mutate(|avg_ctrl| {
 				avg_ctrl.accumulator += reward;
 				avg_ctrl.accumulator
 			});
-			
-			log!(info, "register_incoming_block_reward({:?}), sum is now {:?}", reward, newacc);
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
 				T::DbWeight::get().reads_writes(1, 1),

@@ -1648,19 +1648,9 @@ fn coinbase_rewards_many_blocks_simple_check() {
 #[test]
 fn should_not_reward_delegators_below_min_stake() {
 	ExtBuilder::default()
-		.with_balances(vec![
-            (1, 10 * DECIMALS),
-            (2, 10 * DECIMALS),
-            (3, 10 * DECIMALS),
-            (4, 5)
-        ])
-		.with_collators(vec![
-            (1, 10 * DECIMALS),
-            (2, 10 * DECIMALS),
-        ])
-		.with_delegators(vec![
-            (3, 2, 10 * DECIMALS)
-        ])
+		.with_balances(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS), (3, 10 * DECIMALS), (4, 5)])
+		.with_collators(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS)])
+		.with_delegators(vec![(3, 2, 10 * DECIMALS)])
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
@@ -1684,7 +1674,7 @@ fn should_not_reward_delegators_below_min_stake() {
 
 			// should only reward 1
 			// roll_to_claim_every_reward(4, DEFAULT_ISSUE, &authors);
-            roll_to_then_claim_rewards(4, DEFAULT_ISSUE, &authors);
+			roll_to_then_claim_rewards(4, DEFAULT_ISSUE, &authors);
 			assert!(Balances::usable_balance(&1) > Balance::zero());
 			assert_eq!(Balances::usable_balance(&4), 5);
 			assert_eq!(Balances::usable_balance(&2), Balance::zero());
@@ -3856,13 +3846,8 @@ fn average_block_reward_functionality() {
 			(2, 10_000_000 * DECIMALS),
 			(3, 10_000_000 * DECIMALS),
 		])
-		.with_collators(vec![
-			(1, 8_000_000 * DECIMALS)
-			])
-		.with_delegators(vec![
-			(2, 1, 5_000_000 * DECIMALS),
-			(3, 1, 5_000_000 * DECIMALS),
-		])
+		.with_collators(vec![(1, 8_000_000 * DECIMALS)])
+		.with_delegators(vec![(2, 1, 5_000_000 * DECIMALS), (3, 1, 5_000_000 * DECIMALS)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 0u128);
@@ -3873,21 +3858,21 @@ fn average_block_reward_functionality() {
 			roll_to(2, DECIMALS, &authors);
 			assert_eq!(StakePallet::average_block_reward().avg_block_reward, DECIMALS);
 
-			roll_to(3, 3*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 2*DECIMALS);
+			roll_to(3, 3 * DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 2 * DECIMALS);
 
 			roll_to(4, 0u128, &authors);
 			assert_eq!(StakePallet::average_block_reward().avg_block_reward, DECIMALS);
 
-			roll_to(5, 5*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3*DECIMALS);
+			roll_to(5, 5 * DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3 * DECIMALS);
 
 			// Now reset average-block-reward to zero (restart) and validate
-			roll_to(6, 3*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3*DECIMALS);
+			roll_to(6, 3 * DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3 * DECIMALS);
 			let result = StakePallet::reset_average_reward_to(Origin::root(), 0u128);
 			assert!(result.is_ok());
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 3 * DECIMALS);
 
 			roll_to(7, DECIMALS, &authors);
 			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 0u128);
@@ -3898,15 +3883,15 @@ fn average_block_reward_functionality() {
 			assert_eq!(StakePallet::average_block_reward().avg_block_reward, DECIMALS);
 
 			// Now reset average-block-reward to non-zero and validate function
-			roll_to(9, 3*DECIMALS, &authors);
-			let result = StakePallet::reset_average_reward_to(Origin::root(), 10*DECIMALS);
+			roll_to(9, 3 * DECIMALS, &authors);
+			let result = StakePallet::reset_average_reward_to(Origin::root(), 10 * DECIMALS);
 			assert!(result.is_ok());
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 2*DECIMALS);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 2 * DECIMALS);
 
-			roll_to(10, 2*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 10*DECIMALS);
+			roll_to(10, 2 * DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 10 * DECIMALS);
 
-			roll_to(11, 2*DECIMALS, &authors);
-			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 6*DECIMALS);
+			roll_to(11, 2 * DECIMALS, &authors);
+			assert_eq!(StakePallet::average_block_reward().avg_block_reward, 6 * DECIMALS);
 		});
 }
