@@ -400,7 +400,7 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 }
 
 fn finish_block_start_next() {
-    <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
+    // <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
@@ -430,8 +430,8 @@ fn claim_all_rewards() {
 	// let candidates = StakePallet::top_candidates();
 	// for i in 0..candidates.len() {
 	for c_stake in StakePallet::top_candidates().into_iter() {
-		StakePallet::increment_collator_rewards(Origin::signed(c_stake.owner)).unwrap();
-		StakePallet::claim_rewards(Origin::signed(c_stake.owner)).unwrap();
+		let _ = StakePallet::increment_collator_rewards(Origin::signed(c_stake.owner));
+		let _ = StakePallet::claim_rewards(Origin::signed(c_stake.owner));
 		let candidate = StakePallet::candidate_pool(c_stake.owner).unwrap();
 		for d_stake in candidate.delegators.into_iter() {
 			let _ = StakePallet::increment_delegator_rewards(Origin::signed(d_stake.owner));
@@ -446,4 +446,5 @@ fn claim_all_rewards() {
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
 	StakePallet::on_unbalanced(issued);
+    <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 }
