@@ -8,6 +8,8 @@ FROM docker.io/library/ubuntu:22.04
 
 # Copy the node binary from builder stage.
 COPY --from=builder /node/target/release/peaq-node /usr/local/bin
+COPY --from=builder /node/node/src/chain-specs/  /node/src/chain-specs
+
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq peaq && \
   mkdir -p /chain-data /peaq/.local/share && \
