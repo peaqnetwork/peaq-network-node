@@ -309,8 +309,6 @@ pub mod pallet {
 		/// * `imbalance` - imbalance that will be split and distributed
 		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
 			let distro_params = Self::reward_config();
-            
-            log!(info, "distribute_imbalances({:?})", imbalance.peek());
 			
                  // Pre-calculate balance which will be deposited for each beneficiary
 			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
