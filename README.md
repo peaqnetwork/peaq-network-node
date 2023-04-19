@@ -199,26 +199,29 @@ Once you run this command, wait for a few second. Now the peaq parachian should 
 
 ### Run on your local machine with Docker commands
 
-Please follow the steps given below to run peaq-network-node parachian on your local machine connected with polkadot relaychain running in the PEAQ development environment. It is assumed that you have already downloaded the source code
-for peaq-network-node from the git repository
+Please follow the steps given below to run peaq-network-node parachian on your local machine connected with polkadot relaychain running in the PEAQ development environment. 
 
-1. CD into the peaq-network-node directory:
+1. Download the source code from the git repository:
+```bash
+git clone --branch run_peaq_dev_parachain_with_docker_commands https://github.com/peaqnetwork/peaq-network-node.git
+```
+2. CD into the peaq-network-node directory:
 ```bash
 cd peaq-network-node
 ```
 
-2. Checkout the appropriate branch:
+3. Compile the source code:
 ```bash
-git checkout run_peaq_dev_parachain_with_docker_commands
+cargo build --release
 ```
-3. Create the following folder:
+4. Create the following folder:
 ```bash
 mkdir ./.local
 ```
 
 The folder .local is needed because that is where data such as session keys are stored for validators. Also we bind mount from the container folder /root/.local to the host machine project root folder ./.local.
 
-Now run the following script to start a peaq-network-node parachain that will connect to the polkadot relay chain running in peaq development environment:
+5. Now run the following script to start a peaq-network-node parachain:
 ```bash
 ./scripts/docker_run.sh
 ./target/release/peaq-node \
@@ -232,7 +235,7 @@ Now run the following script to start a peaq-network-node parachain that will co
 --port 30343 \
 --ws-port 9977
 ```
-This command will first compile your code (if it is not already compiled), and then start a peaq-network-node parachain. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated. 
+This command will start a peaq-network-node parachain that will connect to the relaychain running in peaq development environament. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated. 
 
 You can also replace the default command by appending your own. A few useful ones are as follows:
 
