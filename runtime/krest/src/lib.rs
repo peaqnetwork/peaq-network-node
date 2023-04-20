@@ -248,11 +248,6 @@ pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
 	fn contains(call: &Call) -> bool {
 		match call {
-			Call::ParachainStaking(method) => !matches!(
-				method,
-				parachain_staking::Call::join_candidates { .. } |
-					parachain_staking::Call::join_delegators { .. }
-			),
 			// Other modules should works:
 			_ => true,
 		}
@@ -572,7 +567,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = DOLLARS;
 	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
+	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = DOLLARS;
@@ -798,10 +793,10 @@ pub mod staking {
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
-			/// Minimum stake required to be reserved to be a collator is 32_000
-			pub const MinCollatorStake: Balance = 32_000;
-			/// Minimum stake required to be reserved to be a delegator is 1000
-			pub const MinDelegatorStake: Balance = 20_000;
+			/// Minimum stake required to be reserved to be a collator is 1000 KREST
+			pub const MinCollatorStake: Balance = 1_000 * DOLLARS;
+			/// Minimum stake required to be reserved to be a delegator is 100 KREST
+			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorCandidates: u32 = 16;
