@@ -55,14 +55,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use pallet::*;
+pub use crate::pallet::*;
 
-use frame_support::{
-	pallet_prelude::*,
-	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
-};
-use frame_system::{ensure_root, pallet_prelude::*};
-use sp_runtime::traits::{Saturating, Zero};
+pub mod averaging;
 
 #[cfg(any(feature = "runtime-benchmarks"))]
 pub mod benchmarking;
@@ -95,7 +90,22 @@ pub mod pallet {
 
 	use super::*;
 
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{
+			Currency, Imbalance, OnTimestampSet, OnUnbalanced, StorageVersion,
+		},
+	};
+	use frame_system::{ensure_root, pallet_prelude::*};
+	use sp_runtime::traits::{Saturating, Zero};
+
+
+	/// The current storage version.
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+
 	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
@@ -113,8 +123,9 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+
 	#[pallet::storage]
-	#[pallet::getter(fn storage_version)]
+	#[pallet::getter(fn storage_releases)]
 	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
 
 	#[pallet::storage]
@@ -133,6 +144,24 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn token_locker)]
 	pub(crate) type TokenLocker<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn daily_avg_reward)]
+	pub(crate) type DailyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u16>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn weekly_avg_reward)]
+	pub(crate) type WeeklyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u16>, ValueQuery>;
+
+	// TODO: Need to couple this to date-time-check
+	// #[pallet::storage]
+	// #[pallet::getter(fn monthly_avg_reward)]
+	// pub(crate) type MonthlyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u32>, ValueQuery>;
+
+	// #[pallet::storage]
+	// #[pallet::getter(fn annually_avg_reward)]
+	// pub(crate) type AnnuallyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u32>, ValueQuery>;
+
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
@@ -153,11 +182,13 @@ pub mod pallet {
 		TransactionFeesReceived(BalanceOf<T>),
 	}
 
+
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Sum of all rations must be one whole (100%)
 		InvalidDistributionConfiguration,
 	}
+
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -165,6 +196,7 @@ pub mod pallet {
 		pub block_issue_reward: BalanceOf<T>,
 		pub max_currency_supply: BalanceOf<T>,
 	}
+
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -184,6 +216,8 @@ pub mod pallet {
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
 			BlockIssueReward::<T>::put(self.block_issue_reward);
 			MaxCurrencySupply::<T>::put(self.max_currency_supply);
+			DailyBlockReward::<T>::put(DiscAvg::<T, u16>::new(7200));
+			WeeklyBlockReward::<T>::put(DiscAvg::<T, u16>::new(50400));
 		}
 	}
 

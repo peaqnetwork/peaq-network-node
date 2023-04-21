@@ -1,19 +1,27 @@
 //! Type and trait definitions of the crate
 
-use frame_support::{pallet_prelude::*, traits::Currency};
-use sp_runtime::{traits::CheckedAdd, Perbill};
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+use sp_core::RuntimeDebug;
+use frame_support::traits::{Currency, tokens::Balance as BalanceT};
+use sp_runtime::{traits::{CheckedAdd, Zero}, Perbill};
 use sp_std::vec;
 
-use crate::pallet::Config as PalletConfig;
+use crate::pallet::Config;
+use crate::averaging::ProvidesAverage;
+
 
 /// The balance type of this pallet.
 pub(crate) type BalanceOf<T> =
-	<<T as PalletConfig>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 // Negative imbalance type of this pallet.
-pub(crate) type NegativeImbalanceOf<T> = <<T as PalletConfig>::Currency as Currency<
-	<T as frame_system::Config>::AccountId,
->>::NegativeImbalance;
+pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
+	<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+
+// Short form for the DiscreteAverage<BalanceOf<T>, Count>
+pub(crate) type DiscAvg<T, C> = DiscreteAverage<BalanceOf<T>, C>;
+
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait BeneficiaryPayout<Imbalance> {
@@ -104,4 +112,74 @@ impl RewardDistributionConfig {
 
 		Perbill::one() == accumulator
 	}
+}
+
+
+/// This is a generic struct definition for keeping an average-value of anything.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct DiscreteAverage<Balance, Count> 
+where
+	Balance: Zero + BalanceT,
+	Count: Eq + std::ops::Add + From<u8>,
+{ // TODO: make u32 also generic
+    /// The average value.
+    pub avg: Balance,
+    /// Accumulator for building the next average value.
+    accu: Balance,
+    /// Number of blocks to averaged over.
+    n_period: Count,
+    /// Counter of blocks.
+    cnt: Count,
+}
+
+impl<Balance, Count> DiscreteAverage<Balance, Count> 
+where 
+	Balance: Zero + BalanceT,
+	Count: Eq + std::ops::Add + From<u8>
+{
+    /// New type pattern.
+    pub fn new(n_period: Count) -> DiscreteAverage<Balance, Count> {
+        DiscreteAverage { 
+            avg: Balance::zero(),
+            accu: Balance::zero(),
+            n_period,
+            cnt: Count::from(0u8)
+        }
+    }
+
+    /// Updates the average-value for a balance, shall be called each block.
+    pub fn update(&mut self, next: &Balance) {
+        self.cnt = self.cnt + Count::from(1u8);
+        if self.cnt == self.n_period {
+            self.avg = Perbill::from_rational(1, self.n_period) * self.accu;
+            self.accu = Balance::zero();
+            self.cnt = Count::from(0u8);
+        } else {
+            self.accu += *next;
+        }
+    }
+}
+
+impl<Balance, Count> Default for DiscreteAverage<Balance, Count> 
+where
+	Balance: Zero + BalanceT,
+	Count: Eq + std::ops::Add + From<u8>,
+{
+    /// Default with n_period=300, which is ~1 hour @ Peaq.
+    fn default() -> Self {
+        Self::new(300)
+    }
+}
+
+impl<Balance, Count> ProvidesAverage for DiscreteAverage<Balance, Count> 
+where
+	Balance: Zero + BalanceT,
+	Count: Eq + std::ops::Add + From<u8>,
+{
+    type Type = Balance;
+
+    fn get_average(&self) -> Self::Type {
+        self.avg
+    }
 }
