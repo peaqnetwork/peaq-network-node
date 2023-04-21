@@ -181,13 +181,15 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 First, install [Docker](https://docs.docker.com/get-docker/) and
 [Docker Compose](https://docs.docker.com/compose/install/).
 
-Please use following command to run peaq-network-node parachian in the docker container connected with polkadot relaychain running in the PEAQ development environment. 
+Please use following command to run peaq-network-node parachian in the docker container connected with polkadot relaychain running in the PEAQ development environment.
 
  ```bash
- docker run peaq/parachain:peaq-dev-v06042023 --chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
---base-path /tmp/parachain/alice \
+docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v06042023 \
+--chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
+--base-path chain-data \
 --port 40333 \
---ws-port 8844 \
+--ws-port 9944 \
+--ws-external --rpc-cors=all \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
@@ -195,11 +197,11 @@ Please use following command to run peaq-network-node parachian in the docker co
 --ws-port 9977
  ```
 
-Once you run this command, wait for a few second. Now the peaq parachian should be running in the docker container that is connected to relaychain running in PEAQ dev environament. 
+Once you run this command, wait for a few second. Now the peaq parachian should be running in the docker container that is connected to relaychain running in PEAQ dev environament.
 
 ### Run on your local machine with Docker commands
 
-Please follow the steps given below to run peaq-network-node parachian on your local machine connected with polkadot relaychain running in the PEAQ development environment. 
+Please follow the steps given below to run peaq-network-node parachian on your local machine connected with polkadot relaychain running in the PEAQ development environment.
 
 1. Download the source code from the git repository:
 ```bash
@@ -235,7 +237,7 @@ The folder .local is needed because that is where data such as session keys are 
 --port 30343 \
 --ws-port 9977
 ```
-This command will start a peaq-network-node parachain that will connect to the relaychain running in peaq development environament. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated. 
+This command will start a peaq-network-node parachain that will connect to the relaychain running in peaq development environament. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated.
 
 You can also replace the default command by appending your own. A few useful ones are as follows:
 
