@@ -70,7 +70,7 @@ mod v3 {
 				log!(info, "Migrating block_reward to Releases::V3 / storage_version(3)");
 
 				VersionStorage::<T>::put(StorageReleases::V3);
-				AveragingFunction::<T>::put(AverageSelector::default());
+				AverageSelectorConfig::<T>::put(AverageSelector::default());
 				DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
 				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
 

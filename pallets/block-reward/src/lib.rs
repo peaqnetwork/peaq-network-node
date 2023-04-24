@@ -98,7 +98,7 @@ pub mod pallet {
 			Currency, Imbalance, OnTimestampSet, OnUnbalanced, StorageVersion,
 		},
 	};
-	use frame_system::{ensure_root, pallet_prelude::*};
+	use frame_system::{ensure_root, pallet_prelude::{*, OriginFor}};
 	use sp_runtime::traits::{Saturating, Zero};
 
 
@@ -148,8 +148,8 @@ pub mod pallet {
 	pub(crate) type TokenLocker<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 	
 	#[pallet::storage]
-	#[pallet::getter(fn averaging_function)]
-	pub(crate) type AveragingFunction<T: Config> = StorageValue<_, AverageSelector, ValueQuery>;
+	#[pallet::getter(fn average_selector)]
+	pub(crate) type AverageSelectorConfig<T: Config> = StorageValue<_, AverageSelector, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn daily_avg_reward)]
@@ -186,6 +186,9 @@ pub mod pallet {
 
 		/// Rewards have been distributed
 		TransactionFeesReceived(BalanceOf<T>),
+
+		/// Setup the averaging-method for Average-Block-Reward
+		AverageSelectorChanged(AverageSelector),
 	}
 
 
@@ -201,7 +204,7 @@ pub mod pallet {
 		pub reward_config: RewardDistributionConfig,
 		pub block_issue_reward: BalanceOf<T>,
 		pub max_currency_supply: BalanceOf<T>,
-		pub averaging_function: AverageSelector,
+		pub average_selector: AverageSelector,
 	}
 
 
@@ -212,7 +215,7 @@ pub mod pallet {
 				reward_config: Default::default(),
 				block_issue_reward: Default::default(),
 				max_currency_supply: Default::default(),
-				averaging_function: Default::default(),
+				average_selector: Default::default(),
 			}
 		}
 	}
@@ -224,7 +227,7 @@ pub mod pallet {
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
 			BlockIssueReward::<T>::put(self.block_issue_reward);
 			MaxCurrencySupply::<T>::put(self.max_currency_supply);
-			AveragingFunction::<T>::put(self.averaging_function);
+			AverageSelectorConfig::<T>::put(self.average_selector);
 			DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
 			WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
 		}
@@ -308,6 +311,21 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		/// Sets the default averaging-function (AverageSelector).
+		#[pallet::weight(T::WeightInfo::set_average_selector())]
+		pub fn set_average_selector(
+			origin: OriginFor<T>,
+			avg_sel: AverageSelector,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			AverageSelectorConfig::<T>::put(avg_sel);
+
+			Self::deposit_event(Event::<T>::AverageSelectorChanged(avg_sel));
+
+			Ok(().into())
+		}
 	}
 
 	impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
@@ -348,7 +366,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Returns the average-block-reward calculated by this pallet.
 		pub fn get_average_block_reward(beneficiary: BeneficiarySelector) -> BalanceOf<T> {
-			let avg_sel = Self::averaging_function();
+			let avg_sel = Self::average_selector();
 			let avg = <Self as ProvidesAverages>::get_average_provider(avg_sel);
 			let avg = avg.get_average();
 			let cfg = Self::reward_config();
