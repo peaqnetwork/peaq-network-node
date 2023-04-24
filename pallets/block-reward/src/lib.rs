@@ -147,11 +147,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn daily_avg_reward)]
-	pub(crate) type DailyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u16>, ValueQuery>;
+	pub(crate) type DailyBlockReward<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn weekly_avg_reward)]
-	pub(crate) type WeeklyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u16>, ValueQuery>;
+	pub(crate) type WeeklyBlockReward<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
 
 	// TODO: Need to couple this to date-time-check
 	// #[pallet::storage]
@@ -216,8 +216,8 @@ pub mod pallet {
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
 			BlockIssueReward::<T>::put(self.block_issue_reward);
 			MaxCurrencySupply::<T>::put(self.max_currency_supply);
-			DailyBlockReward::<T>::put(DiscAvg::<T, u16>::new(7200));
-			WeeklyBlockReward::<T>::put(DiscAvg::<T, u16>::new(50400));
+			DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
+			WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
 		}
 	}
 
