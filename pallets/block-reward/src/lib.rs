@@ -90,7 +90,7 @@ pub mod pallet {
 
 	use super::*;
 
-	use averaging::{ProvidesAverage, ProvidesAverages};
+	use averaging::{*, ProvidesAverageFor, ProvidesAveragesFor};
 
 	use frame_support::{
 		pallet_prelude::*,
@@ -99,7 +99,7 @@ pub mod pallet {
 		},
 	};
 	use frame_system::{ensure_root, pallet_prelude::{*, OriginFor}};
-	use sp_runtime::traits::{Saturating, Zero};
+	use sp_runtime::{traits::{Saturating, Zero}, Perbill};
 
 
 	/// The current storage version.
@@ -364,23 +364,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Returns the average-block-reward calculated by this pallet.
-		pub fn get_average_block_reward(beneficiary: BeneficiarySelector) -> BalanceOf<T> {
-			let avg_sel = Self::average_selector();
-			let avg = <Self as ProvidesAverages>::get_average_provider(avg_sel);
-			let avg = avg.get_average();
-			let cfg = Self::reward_config();
-			let percent = match beneficiary {
-				BeneficiarySelector::Collators => cfg.collators_percent,
-				BeneficiarySelector::DAppsStaking => cfg.dapps_percent,
-				BeneficiarySelector::LpUsers => cfg.lp_percent,
-				BeneficiarySelector::Machines => cfg.machines_percent,
-				BeneficiarySelector::MachinesSubsidization => cfg.machines_subsidization_percent,
-				BeneficiarySelector::Treasury => cfg.treasury_percent,
-			};
-			percent * avg
-		}
-
 		/// Distribute any kind of imbalances between beneficiaries.
 		///
 		/// # Arguments
@@ -414,23 +397,52 @@ pub mod pallet {
 
 			Self::deposit_event(dpt_event);
 		}
+
+		/// Internal getter method for one single beneficiary percentage
+		fn get_beneficiary_percent(beneficiary: BeneficiarySelector) -> Perbill {
+			let cfg = Self::reward_config();
+			match beneficiary {
+				BeneficiarySelector::Collators => cfg.collators_percent,
+				BeneficiarySelector::DAppsStaking => cfg.dapps_percent,
+				BeneficiarySelector::LpUsers => cfg.lp_percent,
+				BeneficiarySelector::Machines => cfg.machines_percent,
+				BeneficiarySelector::MachinesSubsidization => cfg.machines_subsidization_percent,
+				BeneficiarySelector::Treasury => cfg.treasury_percent,
+			}
+		}
 	}
 
-	impl<T: Config> ProvidesAverages for Pallet<T> {
-		type Type = BalanceOf<T>;
-		type Selector = AverageSelector;
+	impl<T: Config> ProvidesAverage<BalanceOf<T>> for Pallet<T> {
+		fn get_average() -> BalanceOf<T> {
+			let avg_sel = Self::average_selector();
+			Self::get_average_by(avg_sel)
+		}
+	}
 
-    	fn get_average_provider(
-			sel: Self::Selector
-		) -> Box<dyn ProvidesAverage<Type = Self::Type>> {
+	impl<T: Config> ProvidesAverages<BalanceOf<T>, AverageSelector> for Pallet<T> {
+		fn get_average_by(sel: AverageSelector) -> BalanceOf<T> {
 			match sel {
 				AverageSelector::DiAvgDaily => {
-					Box::new(DailyBlockReward::<T>::get())
+					DailyBlockReward::<T>::get().avg
 				},
 				AverageSelector::DiAvgWeekly => {
-					Box::new(WeeklyBlockReward::<T>::get())
+					WeeklyBlockReward::<T>::get().avg
 				},
 			}
+		}
+	}
+
+	impl<T: Config> ProvidesAverageFor<BalanceOf<T>, BeneficiarySelector> for Pallet<T> {
+		fn get_average_for(rec: BeneficiarySelector) -> BalanceOf<T> {
+			let avg = Self::get_average();
+			Self::get_beneficiary_percent(rec) * avg
+		}
+	}
+
+	impl<T: Config> ProvidesAveragesFor<BalanceOf<T>, AverageSelector, BeneficiarySelector> for Pallet<T> {
+		fn get_average_for_by(avg_sel: AverageSelector, rec: BeneficiarySelector) -> BalanceOf<T> {
+			let avg = Self::get_average_by(avg_sel);
+			Self::get_beneficiary_percent(rec) * avg
 		}
 	}
 }

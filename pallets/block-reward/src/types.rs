@@ -8,7 +8,6 @@ use sp_runtime::{traits::{CheckedAdd, Zero}, Perbill};
 use sp_std::vec;
 
 use crate::pallet::Config;
-use crate::averaging::ProvidesAverage;
 
 
 /// The balance type of this pallet.
@@ -186,17 +185,6 @@ where
     /// Default with n_period=300, which is ~1 hour @ Peaq.
     fn default() -> Self {
         Self::new(300)
-    }
-}
-
-impl<Balance> ProvidesAverage for DiscreteAverage<Balance> 
-where
-	Balance: Zero + BalanceT,
-{
-    type Type = Balance;
-
-    fn get_average(&self) -> Self::Type {
-        self.avg
     }
 }
 
