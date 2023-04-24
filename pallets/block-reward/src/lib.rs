@@ -90,6 +90,8 @@ pub mod pallet {
 
 	use super::*;
 
+	use averaging::{ProvidesAverage, ProvidesAverages};
+
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -144,6 +146,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn token_locker)]
 	pub(crate) type TokenLocker<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	
+	#[pallet::storage]
+	#[pallet::getter(fn averaging_function)]
+	pub(crate) type AveragingFunction<T: Config> = StorageValue<_, AverageSelector, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn daily_avg_reward)]
@@ -195,6 +201,7 @@ pub mod pallet {
 		pub reward_config: RewardDistributionConfig,
 		pub block_issue_reward: BalanceOf<T>,
 		pub max_currency_supply: BalanceOf<T>,
+		pub averaging_function: AverageSelector,
 	}
 
 
@@ -205,6 +212,7 @@ pub mod pallet {
 				reward_config: Default::default(),
 				block_issue_reward: Default::default(),
 				max_currency_supply: Default::default(),
+				averaging_function: Default::default(),
 			}
 		}
 	}
@@ -216,6 +224,7 @@ pub mod pallet {
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
 			BlockIssueReward::<T>::put(self.block_issue_reward);
 			MaxCurrencySupply::<T>::put(self.max_currency_supply);
+			AveragingFunction::<T>::put(self.averaging_function);
 			DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
 			WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
 		}
@@ -337,6 +346,23 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Returns the average-block-reward calculated by this pallet.
+		pub fn get_average_block_reward(beneficiary: BeneficiarySelector) -> BalanceOf<T> {
+			let avg_sel = Self::averaging_function();
+			let avg = <Self as ProvidesAverages>::get_average_provider(avg_sel);
+			let avg = avg.get_average();
+			let cfg = Self::reward_config();
+			let percent = match beneficiary {
+				BeneficiarySelector::Collators => cfg.collators_percent,
+				BeneficiarySelector::DAppsStaking => cfg.dapps_percent,
+				BeneficiarySelector::LpUsers => cfg.lp_percent,
+				BeneficiarySelector::Machines => cfg.machines_percent,
+				BeneficiarySelector::MachinesSubsidization => cfg.machines_subsidization_percent,
+				BeneficiarySelector::Treasury => cfg.treasury_percent,
+			};
+			percent * avg
+		}
+
 		/// Distribute any kind of imbalances between beneficiaries.
 		///
 		/// # Arguments
@@ -369,6 +395,24 @@ pub mod pallet {
 			T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
 
 			Self::deposit_event(dpt_event);
+		}
+	}
+
+	impl<T: Config> ProvidesAverages for Pallet<T> {
+		type Type = BalanceOf<T>;
+		type Selector = AverageSelector;
+
+    	fn get_average_provider(
+			sel: Self::Selector
+		) -> Box<dyn ProvidesAverage<Type = Self::Type>> {
+			match sel {
+				AverageSelector::DiAvgDaily => {
+					Box::new(DailyBlockReward::<T>::get())
+				},
+				AverageSelector::DiAvgWeekly => {
+					Box::new(WeeklyBlockReward::<T>::get())
+				},
+			}
 		}
 	}
 }

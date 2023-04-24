@@ -23,6 +23,25 @@ pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 pub(crate) type DiscAvg<T> = DiscreteAverage<BalanceOf<T>>;
 
 
+/// Selector for possible beneficiaries.
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum BeneficiarySelector {
+	/// Selector for treasury pallet.
+	Treasury,
+	/// Selector for parachain-staking pallet.
+	Collators,
+	/// To be defined (currently).
+	DAppsStaking,
+	/// To be defined (currently).
+	LpUsers,
+	/// Selector for the MOR-pallet.
+	Machines,
+	/// To be defined (currently).
+	MachinesSubsidization,
+}
+
+
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout reward to the treasury
@@ -43,6 +62,7 @@ pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout Machines
 	fn machines_subsidization(reward: Imbalance);
 }
+
 
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
@@ -178,4 +198,19 @@ where
     fn get_average(&self) -> Self::Type {
         self.avg
     }
+}
+
+
+/// Enum as selector-type for requesting average-values.
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum AverageSelector {
+	/// Daily average with Discrete-Averaging
+	#[default]
+	DiAvgDaily,
+	/// Monthly average with Discrete-Averaging
+	DiAvgWeekly,
+	// DiAvgMonthly,
+	// DiAvgAnnually,
+	// DirectAvg,
 }

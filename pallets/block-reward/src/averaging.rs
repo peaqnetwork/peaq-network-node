@@ -15,7 +15,7 @@ pub trait ProvidesAverages {
     type Type;
     type Selector;
 
-    fn get_provide_average(&self, sel: &Self::Selector) -> Box<dyn ProvidesAverage<Type = Self::Type>>;
+    fn get_average_provider(sel: Self::Selector) -> Box<dyn ProvidesAverage<Type = Self::Type>>;
 }
 
 

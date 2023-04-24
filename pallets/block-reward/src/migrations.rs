@@ -10,7 +10,7 @@ use frame_support::{pallet_prelude::*, storage_alias, weights::Weight};
 use scale_info::TypeInfo;
 use sp_core::RuntimeDebug;
 
-use crate::{log, pallet::*, types::{BalanceOf, DiscAvg}};
+use crate::{log, pallet::*, types::{BalanceOf, DiscAvg, AverageSelector}};
 
 // Note: This implementation will become obsolete by version 4. We are switching to regular
 // 		 storage-version provided by substrate. Until version 3 we upgrade version-tracking
@@ -70,6 +70,7 @@ mod v3 {
 				log!(info, "Migrating block_reward to Releases::V3 / storage_version(3)");
 
 				VersionStorage::<T>::put(StorageReleases::V3);
+				AveragingFunction::<T>::put(AverageSelector::default());
 				DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
 				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
 
