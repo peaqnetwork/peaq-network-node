@@ -69,7 +69,7 @@ mod v2 {
 			if version == StorageReleases::V2_1_0 {
 				log!(info, "Migrating block_reward to Releases::V2_2_0 / storage_version(3)");
 
-				VersionStorage::<T>::put(StorageReleases::V3);
+				VersionStorage::<T>::put(StorageReleases::V2_2_0);
 				AverageSelectorConfig::<T>::put(AverageSelector::default());
 				DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
 				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
