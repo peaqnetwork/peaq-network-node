@@ -67,13 +67,9 @@ mod mock;
 mod tests;
 
 pub mod migrations;
-pub use migrations::StorageReleases;
-
 pub mod types;
-pub use types::*;
-
 pub mod weights;
-pub use weights::WeightInfo;
+
 
 #[macro_export]
 macro_rules! log {
@@ -85,12 +81,16 @@ macro_rules! log {
 	};
 }
 
+
 #[frame_support::pallet]
 pub mod pallet {
 
 	use super::*;
 
-	use averaging::{*, ProvidesAverageFor, ProvidesAveragesFor};
+	use averaging::*;
+	use migrations::StorageReleases;
+	use types::*;
+	use weights::WeightInfo;
 
 	use frame_support::{
 		pallet_prelude::*,
