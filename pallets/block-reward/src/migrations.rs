@@ -12,7 +12,7 @@ use sp_core::RuntimeDebug;
 
 use crate::{log, pallet::*, types::{BalanceOf, DiscAvg, AverageSelector}};
 
-// Note: This implementation will become obsolete by version 4. We are switching to regular
+// Note: This implementation could become obsolete by version 3. We may switch to regular
 // 		 storage-version provided by substrate. Until version 3 we upgrade version-tracking
 // 		 in parallel.
 // A value placed in storage that represents the current version of the block-reward storage.
@@ -25,27 +25,27 @@ pub enum StorageReleases {
 	#[default]
 	V2_0_0,
 	V2_1_0, // First changes compared to releases before, renaming HardCap to MaxCurrencySupply
-	V3,		// Last version defined by this enum, next will use substrate storage_version
+	V2_2_0,	// Last version defined by this enum, next will use substrate storage_version
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
-	v3::MigrateToV3x::<T>::on_runtime_upgrade()
+	v2::MigrateToV2x::<T>::on_runtime_upgrade()
 }
 
-mod v3 {
+mod v2 {
 	use super::*;
 
 	#[storage_alias]
 	type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
 
-	// Neccessary, when migrating to v4
+	// Neccessary, when migrating to v3
 	// #[storage_alias]
 	// type VersionStorage<T: Config> = StorageValue<Pallet<T>, StorageReleases, ValueQuery>;
 
 	/// Migration implementation that renames storage HardCap into MaxCurrencySupply
-	pub struct MigrateToV3x<T>(sp_std::marker::PhantomData<T>);
+	pub struct MigrateToV2x<T>(sp_std::marker::PhantomData<T>);
 
-	impl<T: Config> MigrateToV3x<T> {
+	impl<T: Config> MigrateToV2x<T> {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut version = Pallet::<T>::storage_releases();
 			let mut reads: u64 = 1;
@@ -67,21 +67,21 @@ mod v3 {
 			}
 
 			if version == StorageReleases::V2_1_0 {
-				log!(info, "Migrating block_reward to Releases::V3 / storage_version(3)");
+				log!(info, "Migrating block_reward to Releases::V2_2_0 / storage_version(3)");
 
 				VersionStorage::<T>::put(StorageReleases::V3);
 				AverageSelectorConfig::<T>::put(AverageSelector::default());
 				DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
 				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
 
-				log!(info, "Migrating to Releases::V3 / storage_version(3) - Done.");
+				log!(info, "Migrating to Releases::V2_2_0 / storage_version(3) - Done.");
 
 				version = Pallet::<T>::storage_releases();
 				reads += 1;
 				writes += 3;
 			}
 
-			if version != StorageReleases::V3 {
+			if version != StorageReleases::V2_2_0 {
 				log!(warn, "Storage version seems not to be correct, please check ({:?})", version);
 			}
 
