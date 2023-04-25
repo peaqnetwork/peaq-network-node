@@ -155,6 +155,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_balances::{BalanceLock, Locks};
+	use pallet_block_reward::averaging::ProvidesAverageFor;
 	use pallet_session::ShouldEndSession;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
@@ -214,6 +215,17 @@ pub mod pallet {
 			+ From<Self::BlockNumber>
 			+ TypeInfo
 			+ MaxEncodedLen;
+		
+		/// The provider for the average-block-reward.
+		// type AvgBlockRewardProvider: ProvidesAverageFor<Recipient: Self::AvgRecipientSelector>;
+		type AvgBlockRewardProvider: ProvidesAverageFor<Self::CurrencyBalance, Self::AvgRecipientSelector>;
+
+		/// The recipient-selector-datatype for ProvidesAverageFor.
+		type AvgRecipientSelector: Parameter;
+
+		/// Const which actually selects this pallet as recipient.
+		#[pallet::constant]
+		type AvgBlockRewardRecipient: Get<Self::AvgRecipientSelector>;
 
 		/// Minimum number of blocks validation rounds can last.
 		#[pallet::constant]
@@ -605,16 +617,16 @@ pub mod pallet {
 	pub(crate) type Rewards<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>, ValueQuery>;
 
-	/// The average total reward, given to this pallet. Because currently, there
-	/// is no dynamic issue of tokens, we need an average value as reference for
-	/// payouts. The storage is a tuple with (AverageBlockReward, Accumulator).
-	/// The first value is the value to be used in calculations. The second one
-	/// is about calculating the first value properly (solves the problem with
-	/// multiple incoming block-rewards).
-	#[pallet::storage]
-	#[pallet::getter(fn average_block_reward)]
-	pub(crate) type AverageBlockReward<T: Config> =
-		StorageValue<_, AvgBlockRewardCtrl<BalanceOf<T>>, ValueQuery>;
+	// /// The average total reward, given to this pallet. Because currently, there
+	// /// is no dynamic issue of tokens, we need an average value as reference for
+	// /// payouts. The storage is a tuple with (AverageBlockReward, Accumulator).
+	// /// The first value is the value to be used in calculations. The second one
+	// /// is about calculating the first value properly (solves the problem with
+	// /// multiple incoming block-rewards).
+	// #[pallet::storage]
+	// #[pallet::getter(fn average_block_reward)]
+	// pub(crate) type AverageBlockReward<T: Config> =
+	// 	StorageValue<_, AvgBlockRewardCtrl<BalanceOf<T>>, ValueQuery>;
 
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
@@ -682,7 +694,7 @@ pub mod pallet {
 			Round::<T>::put(round);
 
 			// Set initial values for AverageBlockReward-related storages
-			AverageBlockReward::<T>::put(AvgBlockRewardCtrl::default());
+			// AverageBlockReward::<T>::put(AvgBlockRewardCtrl::default());
 		}
 	}
 
@@ -706,10 +718,10 @@ pub mod pallet {
 			post_weight
 		}
 
-		fn on_idle(_n: T::BlockNumber, _w: Weight) -> Weight {
-			// update average block reward
-			Self::update_average_block_reward()
-		}
+		// fn on_idle(_n: T::BlockNumber, _w: Weight) -> Weight {
+		// 	// update average block reward
+		// 	Self::update_average_block_reward()
+		// }
 	}
 
 	#[pallet::call]
@@ -1691,25 +1703,25 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Reset the AverageRewardRegister. This is not a general use case.
-		/// May be used in integration-tests, or when really necessary after
-		/// completely modyfying the block-issue-reward.
-		#[pallet::weight(<T as Config>::WeightInfo::reset_average_reward_to())]
-		pub fn reset_average_reward_to(
-			origin: OriginFor<T>,
-			balance: BalanceOf<T>,
-		) -> DispatchResult {
-			ensure_root(origin)?;
+		// /// Reset the AverageRewardRegister. This is not a general use case.
+		// /// May be used in integration-tests, or when really necessary after
+		// /// completely modyfying the block-issue-reward.
+		// #[pallet::weight(<T as Config>::WeightInfo::reset_average_reward_to())]
+		// pub fn reset_average_reward_to(
+		// 	origin: OriginFor<T>,
+		// 	balance: BalanceOf<T>,
+		// ) -> DispatchResult {
+		// 	ensure_root(origin)?;
 
-			ensure!(balance >= BalanceOf::<T>::zero(), Error::<T>::CannotSetNegativeAverage);
-			AverageBlockReward::<T>::mutate(|avg_ctrl| {
-				avg_ctrl.reset_value = balance;
-				avg_ctrl.do_reset = true;
-			});
-			Self::deposit_event(Event::AverageRewardReset(balance));
+		// 	ensure!(balance >= BalanceOf::<T>::zero(), Error::<T>::CannotSetNegativeAverage);
+		// 	AverageBlockReward::<T>::mutate(|avg_ctrl| {
+		// 		avg_ctrl.reset_value = balance;
+		// 		avg_ctrl.do_reset = true;
+		// 	});
+		// 	Self::deposit_event(Event::AverageRewardReset(balance));
 
-			Ok(())
-		}
+		// 	Ok(())
+		// }
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -2295,7 +2307,10 @@ pub mod pallet {
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
-			let avg_block_reward = AverageBlockReward::<T>::get().avg_block_reward;
+			// let avg_block_reward = AverageBlockReward::<T>::get().avg_block_reward;
+			let avg_block_reward = T::AvgBlockRewardProvider::get_average_for(
+				T::AvgBlockRewardRecipient::get()
+			);
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) * multiplier
 		}
@@ -2323,7 +2338,10 @@ pub mod pallet {
 			//	.compute_reward::<T>(stake, staking_rate, multiplier)
 
 			// TODO: Workarround soluation, due to Peaq's fixed amount of minted token
-			let avg_block_reward = AverageBlockReward::<T>::get().avg_block_reward;
+			// let avg_block_reward = AverageBlockReward::<T>::get().avg_block_reward;
+			let avg_block_reward = T::AvgBlockRewardProvider::get_average_for(
+				T::AvgBlockRewardRecipient::get()
+			);
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			let total_stake = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
@@ -2380,68 +2398,68 @@ pub mod pallet {
 			});
 		}
 
-		/// Methods updates the AverageBlockReward storage by calculating the new
-		/// average total block reward. This value is used as a reference for the
-		/// payouts of collators and delegators, because at Peaq they still get rated
-		/// by a fixed, configurable percentage. See reward-rate. This is a
-		/// workarround as long we having a fixed amount of issued/minted tokens, to
-		/// affect inflation.
-		fn update_average_block_reward() -> Weight {
-			AverageBlockReward::<T>::mutate(|avg_ctrl| {
-				if avg_ctrl.do_reset {
-					// First check for a possible reset
-					avg_ctrl.avg_block_reward = avg_ctrl.reset_value;
-					avg_ctrl.do_reset = false;
-				} else if avg_ctrl.avg_block_reward.is_zero() {
-					// Then check for an empty average-block-reward-register
-					avg_ctrl.avg_block_reward = avg_ctrl.accumulator;
-				} else {
-					// Otherwise do the regular computation of ABR
-					// Note: Use this formula instead, if a fast adaption in any
-					//       direction is wanted (positive or negative).
-					// avg_ctrl.avg_block_reward = calc_next_avg(
-					//		1, &avg_ctrl.avg_block_reward, &avg_ctrl.accumulator);
-					// Note: This implementation is a little more conservative,
-					//       adapts faster to negative than to positive varying.
-					let c_avg = avg_ctrl.avg_block_reward;
-					let n_rew = avg_ctrl.accumulator;
-					avg_ctrl.avg_block_reward = if n_rew > c_avg {
-						// Increasing block-reward (positive)
-						let diff = n_rew.saturating_sub(c_avg);
-						let diff = Permill::from_rational(diff, n_rew);
-						if diff > Permill::from_percent(10) {
-							calc_next_avg(1, &c_avg, &n_rew)
-						} else {
-							calc_next_avg(3, &c_avg, &n_rew)
-						}
-					} else {
-						// Decreasing block-reward (negative)
-						let diff = c_avg.saturating_sub(n_rew);
-						let diff = Permill::from_rational(diff, c_avg);
-						if diff > Permill::from_percent(2) {
-							calc_next_avg(1, &c_avg, &n_rew)
-						} else {
-							calc_next_avg(2, &c_avg, &n_rew)
-						}
-					}
-				}
-				avg_ctrl.accumulator = BalanceOf::<T>::zero();
-			});
+		// /// Methods updates the AverageBlockReward storage by calculating the new
+		// /// average total block reward. This value is used as a reference for the
+		// /// payouts of collators and delegators, because at Peaq they still get rated
+		// /// by a fixed, configurable percentage. See reward-rate. This is a
+		// /// workarround as long we having a fixed amount of issued/minted tokens, to
+		// /// affect inflation.
+		// fn update_average_block_reward() -> Weight {
+		// 	AverageBlockReward::<T>::mutate(|avg_ctrl| {
+		// 		if avg_ctrl.do_reset {
+		// 			// First check for a possible reset
+		// 			avg_ctrl.avg_block_reward = avg_ctrl.reset_value;
+		// 			avg_ctrl.do_reset = false;
+		// 		} else if avg_ctrl.avg_block_reward.is_zero() {
+		// 			// Then check for an empty average-block-reward-register
+		// 			avg_ctrl.avg_block_reward = avg_ctrl.accumulator;
+		// 		} else {
+		// 			// Otherwise do the regular computation of ABR
+		// 			// Note: Use this formula instead, if a fast adaption in any
+		// 			//       direction is wanted (positive or negative).
+		// 			// avg_ctrl.avg_block_reward = calc_next_avg(
+		// 			//		1, &avg_ctrl.avg_block_reward, &avg_ctrl.accumulator);
+		// 			// Note: This implementation is a little more conservative,
+		// 			//       adapts faster to negative than to positive varying.
+		// 			let c_avg = avg_ctrl.avg_block_reward;
+		// 			let n_rew = avg_ctrl.accumulator;
+		// 			avg_ctrl.avg_block_reward = if n_rew > c_avg {
+		// 				// Increasing block-reward (positive)
+		// 				let diff = n_rew.saturating_sub(c_avg);
+		// 				let diff = Permill::from_rational(diff, n_rew);
+		// 				if diff > Permill::from_percent(10) {
+		// 					calc_next_avg(1, &c_avg, &n_rew)
+		// 				} else {
+		// 					calc_next_avg(3, &c_avg, &n_rew)
+		// 				}
+		// 			} else {
+		// 				// Decreasing block-reward (negative)
+		// 				let diff = c_avg.saturating_sub(n_rew);
+		// 				let diff = Permill::from_rational(diff, c_avg);
+		// 				if diff > Permill::from_percent(2) {
+		// 					calc_next_avg(1, &c_avg, &n_rew)
+		// 				} else {
+		// 					calc_next_avg(2, &c_avg, &n_rew)
+		// 				}
+		// 			}
+		// 		}
+		// 		avg_ctrl.accumulator = BalanceOf::<T>::zero();
+		// 	});
 
-			frame_support::weights::RuntimeDbWeight::default().reads_writes(1, 1)
-		}
+		// 	frame_support::weights::RuntimeDbWeight::default().reads_writes(1, 1)
+		// }
 
-		fn register_incoming_block_reward(reward: BalanceOf<T>) {
-			AverageBlockReward::<T>::mutate(|avg_ctrl| {
-				avg_ctrl.accumulator += reward;
-				avg_ctrl.accumulator
-			});
+		// fn register_incoming_block_reward(reward: BalanceOf<T>) {
+		// 	AverageBlockReward::<T>::mutate(|avg_ctrl| {
+		// 		avg_ctrl.accumulator += reward;
+		// 		avg_ctrl.accumulator
+		// 	});
 
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(1, 1),
-				DispatchClass::Mandatory,
-			);
-		}
+		// 	frame_system::Pallet::<T>::register_extra_weight_unchecked(
+		// 		T::DbWeight::get().reads_writes(1, 1),
+		// 		DispatchClass::Mandatory,
+		// 	);
+		// }
 
 		/// Transforms the given PotId into an AccountId
 		pub(crate) fn account_id() -> T::AccountId {
@@ -2582,9 +2600,9 @@ pub mod pallet {
 
 		fn on_nonzero_unbalanced(imbalance: NegativeImbalanceOf<T>) {
 			let pot = T::PotId::get().into_account_truncating();
-			let amount = imbalance.peek();
+			// let amount = imbalance.peek();
 			T::Currency::resolve_creating(&pot, imbalance);
-			Self::register_incoming_block_reward(amount);
+			// Self::register_incoming_block_reward(amount);
 		}
 	}
 }

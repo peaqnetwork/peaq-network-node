@@ -14,22 +14,20 @@ sp-io = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkad
 
 [dependencies]
 codec = {package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive"]}
-hex-literal = "0.3.4"
-log = { version = "0.4.17", default-features = false }
-scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
-serde = {version = "1.0.136", optional = true}
-
+frame-benchmarking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false, optional = true}
 frame-support = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 frame-system = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
+hex-literal = "0.3.4"
+log = { version = "0.4.17", default-features = false }
 pallet-authorship = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 pallet-balances = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
+pallet-block-reward = {path = "../block-reward", default-features = false}
 pallet-session = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
+scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
+serde = {version = "1.0.136", optional = true}
 sp-runtime = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 sp-staking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 sp-std = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
-
-# benchmarking
-frame-benchmarking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false, optional = true}
 
 [features]
 default = ["std"]
@@ -49,6 +47,7 @@ std = [
   "log/std",
   "pallet-authorship/std",
   "pallet-balances/std",
+  "pallet-block-reward/std",
   "pallet-session/std",
   "scale-info/std",
   "serde",

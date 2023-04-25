@@ -55,7 +55,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use crate::pallet::*;
 
 pub mod averaging;
 
@@ -69,6 +68,9 @@ mod tests;
 pub mod migrations;
 pub mod types;
 pub mod weights;
+
+pub use crate::pallet::*;
+pub use crate::types::BeneficiaryPayout;
 
 
 #[macro_export]
@@ -342,8 +344,11 @@ pub mod pallet {
 			});
 			let imbalances = inflation.merge(txfees);
             let amount = imbalances.peek();
-			Self::distribute_imbalances(imbalances, Event::<T>::BlockRewardsDistributed(amount));
-            
+
+			Self::update_average_block_reward(amount);
+			Self::distribute_imbalances(imbalances);
+
+			// TODO: Register exra weights!!!
 		}
 	}
 
@@ -368,8 +373,9 @@ pub mod pallet {
 		///
 		/// # Arguments
 		/// * `imbalance` - imbalance that will be split and distributed
-		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
+		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>) {
 			let distro_params = Self::reward_config();
+			let amount = imbalance.peek();
 			
                  // Pre-calculate balance which will be deposited for each beneficiary
 			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
@@ -395,7 +401,7 @@ pub mod pallet {
 			T::BeneficiaryPayout::machines(machines_imbalance);
 			T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
 
-			Self::deposit_event(dpt_event);
+			Self::deposit_event(Event::<T>::BlockRewardsDistributed(amount));
 		}
 
 		/// Internal getter method for one single beneficiary percentage
@@ -409,6 +415,11 @@ pub mod pallet {
 				BeneficiarySelector::MachinesSubsidization => cfg.machines_subsidization_percent,
 				BeneficiarySelector::Treasury => cfg.treasury_percent,
 			}
+		}
+
+		fn update_average_block_reward(reward: BalanceOf<T>) {
+			DailyBlockReward::<T>::mutate(|r| r.update(&reward));
+			WeeklyBlockReward::<T>::mutate(|r| r.update(&reward));
 		}
 	}
 
