@@ -106,6 +106,8 @@ pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
+use pallet_block_reward::types::BeneficiarySelector;
+
 use peaq_pallet_mor::mor::MorBalance;
 pub use peaq_pallet_mor::{self, types::MorConfig};
 
@@ -803,6 +805,8 @@ pub mod staking {
 			pub const MaxCollatorCandidates: u32 = 16;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
+			/// Recipient-selector for block-reward pallet (average-provider)
+			pub const AvgProviderParachainStaking: BeneficiarySelector = BeneficiarySelector::Collators;
 	}
 }
 
@@ -825,6 +829,9 @@ impl parachain_staking::Config for Runtime {
 	type MaxTopCandidates = staking::MaxCollatorCandidates;
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
+	type AvgBlockRewardProvider = BlockReward;
+	type AvgRecipientSelector = BeneficiarySelector;
+	type AvgBlockRewardRecipient = staking::AvgProviderParachainStaking;
 
 	type WeightInfo = ();
 }
