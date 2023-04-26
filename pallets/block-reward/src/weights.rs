@@ -38,7 +38,7 @@ pub trait WeightInfo {
     fn set_configuration() -> Weight;
 	fn set_block_issue_reward() -> Weight;
 	fn set_max_currency_supply() -> Weight;
-	fn set_average_selector() -> Weight;
+	fn set_averaging_function_selector() -> Weight;
 }
 
 /// Weight functions for `pallet_block_reward`.
@@ -60,7 +60,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: BlockReward HardCap (r:0 w:1)
-	fn set_average_selector() -> Weight {
+	fn set_averaging_function_selector() -> Weight {
 		Weight::from_ref_time(10_811_000)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}

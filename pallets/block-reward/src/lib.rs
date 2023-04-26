@@ -314,9 +314,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Sets the default averaging-function (AverageSelector).
-		#[pallet::weight(T::WeightInfo::set_average_selector())]
-		pub fn set_average_selector(
+		/// Sets the default averaging-function by AverageSelector.
+		#[pallet::weight(T::WeightInfo::set_averaging_function_selector())]
+		pub fn set_averaging_function_selector(
 			origin: OriginFor<T>,
 			avg_sel: AverageSelector,
 		) -> DispatchResultWithPostInfo {
@@ -457,3 +457,12 @@ pub mod pallet {
 		}
 	}
 }
+
+// pub(crate) fn calc_next_avg<B>(w: u32, current: &B, n_bl_r: &B) -> B
+// where
+// 	B: CurrencyBalance + Saturating + One + From<u32> + From<u64>,
+// {
+// 	let weight = B::from(w);
+// 	let sum = current.saturating_mul(weight).saturating_add(*n_bl_r);
+// 	Perquintill::from_rational(B::one(), weight.saturating_add(B::one())) * sum
+// }
