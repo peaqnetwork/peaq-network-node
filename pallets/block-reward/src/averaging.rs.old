@@ -1,0 +1,38 @@
+//! This module containes trait definitions and implementations to describe the averaging.
+
+
+/// An object which provides an average-value on a varying paramter.
+pub trait ProvidesAverage {
+    type Type;
+
+    /// The getter for the average-value
+    fn get_average() -> Self::Type;
+}
+
+/// Ability to provide multiple average-values on different varying paramters.
+pub trait ProvidesAverages {
+    type Type;
+    type Selector;
+
+    /// Getter method with selector between different average-values.
+    fn get_average_by(sel: Self::Selector) -> Self::Type;
+}
+
+/// Same as ProvidesAverage but with a recipient.
+pub trait ProvidesAverageFor {
+    type Type;
+    type Recipient;
+
+    /// The getter for the average-value with selector for recipient.
+    fn get_average_for(r: Self::Recipient) -> Self::Type;
+}
+
+/// Same as ProvidesAverages but with a recipient.
+pub trait ProvidesAveragesFor {
+    type Type;
+    type Selector;
+    type Recipient;
+
+    /// Getter method with selector between different average-values and selector for recipient.
+    fn get_average_for_by(sel: Self::Selector, rec: Self::Recipient) -> Self::Type;
+}

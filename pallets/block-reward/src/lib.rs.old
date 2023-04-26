@@ -55,6 +55,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub use crate::pallet::*;
 
 pub mod averaging;
 
@@ -65,12 +66,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub mod migrations;
+mod migrations;
 pub mod types;
 pub mod weights;
-
-pub use crate::pallet::*;
-pub use crate::types::{AverageSelector, BeneficiaryPayout, RewardDistributionConfig};
 
 
 #[macro_export]
@@ -344,11 +342,8 @@ pub mod pallet {
 			});
 			let imbalances = inflation.merge(txfees);
             let amount = imbalances.peek();
-
-			Self::update_average_block_reward(amount);
-			Self::distribute_imbalances(imbalances);
-
-			// TODO: Register exra weights!!!
+			Self::distribute_imbalances(imbalances, Event::<T>::BlockRewardsDistributed(amount));
+            
 		}
 	}
 
@@ -373,9 +368,8 @@ pub mod pallet {
 		///
 		/// # Arguments
 		/// * `imbalance` - imbalance that will be split and distributed
-		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>) {
+		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>, dpt_event: Event<T>) {
 			let distro_params = Self::reward_config();
-			let amount = imbalance.peek();
 			
                  // Pre-calculate balance which will be deposited for each beneficiary
 			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
@@ -401,7 +395,7 @@ pub mod pallet {
 			T::BeneficiaryPayout::machines(machines_imbalance);
 			T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
 
-			Self::deposit_event(Event::<T>::BlockRewardsDistributed(amount));
+			Self::deposit_event(dpt_event);
 		}
 
 		/// Internal getter method for one single beneficiary percentage
@@ -416,21 +410,21 @@ pub mod pallet {
 				BeneficiarySelector::Treasury => cfg.treasury_percent,
 			}
 		}
-
-		fn update_average_block_reward(reward: BalanceOf<T>) {
-			DailyBlockReward::<T>::mutate(|r| r.update(&reward));
-			WeeklyBlockReward::<T>::mutate(|r| r.update(&reward));
-		}
 	}
 
-	impl<T: Config> ProvidesAverage<BalanceOf<T>> for Pallet<T> {
+	impl<T: Config> ProvidesAverage for Pallet<T> {
+		type Type = BalanceOf<T>;
+
 		fn get_average() -> BalanceOf<T> {
 			let avg_sel = Self::average_selector();
 			Self::get_average_by(avg_sel)
 		}
 	}
 
-	impl<T: Config> ProvidesAverages<BalanceOf<T>, AverageSelector> for Pallet<T> {
+	impl<T: Config> ProvidesAverages for Pallet<T> {
+		type Type = BalanceOf<T>;
+		type Selector = AverageSelector;
+		
 		fn get_average_by(sel: AverageSelector) -> BalanceOf<T> {
 			match sel {
 				AverageSelector::DiAvgDaily => {
@@ -443,14 +437,21 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> ProvidesAverageFor<BalanceOf<T>, BeneficiarySelector> for Pallet<T> {
+	impl<T: Config> ProvidesAverageFor for Pallet<T> {
+		type Type = BalanceOf<T>;
+		type Recipient = BeneficiarySelector;
+		
 		fn get_average_for(rec: BeneficiarySelector) -> BalanceOf<T> {
 			let avg = Self::get_average();
 			Self::get_beneficiary_percent(rec) * avg
 		}
 	}
 
-	impl<T: Config> ProvidesAveragesFor<BalanceOf<T>, AverageSelector, BeneficiarySelector> for Pallet<T> {
+	impl<T: Config> ProvidesAveragesFor for Pallet<T> {
+		type Type = BalanceOf<T>;
+		type Selector = AverageSelector;
+		type Recipient = BeneficiarySelector;
+		
 		fn get_average_for_by(avg_sel: AverageSelector, rec: BeneficiarySelector) -> BalanceOf<T> {
 			let avg = Self::get_average_by(avg_sel);
 			Self::get_beneficiary_percent(rec) * avg
