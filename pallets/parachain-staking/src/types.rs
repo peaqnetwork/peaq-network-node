@@ -317,50 +317,6 @@ pub struct DelegationCounter {
 	pub counter: u32,
 }
 
-// /// The Average-Block-Reward.
-// /// Control and tracking will be solved by this struct.
-// #[derive(Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
-// pub struct AvgBlockRewardCtrl<Balance> {
-// 	/// The main value, used to calculate rewards for collators and delegators.
-// 	pub avg_block_reward: Balance,
-// 	/// The accumulator, to build the avg_block_reward for the next round.
-// 	pub accumulator: Balance,
-// 	/// If reset is requested, this will be the new avg_block_reward value.
-// 	pub reset_value: Balance,
-// 	/// Flag for initialising a reset ov avg_block_reward.
-// 	pub do_reset: bool,
-// }
-
-// impl<Balance: Zero> Default for AvgBlockRewardCtrl<Balance> {
-// 	fn default() -> Self {
-// 		AvgBlockRewardCtrl::<Balance> {
-// 			avg_block_reward: Balance::zero(),
-// 			accumulator: Balance::zero(),
-// 			reset_value: Balance::zero(),
-// 			do_reset: false,
-// 		}
-// 	}
-// }
-
-// /// Reward-Weight.
-// /// In order to calculate directly the Average-Block-Reward this struct sets up
-// /// the weight of the simplified formula: (m*current_avg + new_reward) / (m+1).
-// #[derive(Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
-// pub struct AvgBlRewardWeights {
-// 	/// TODO
-// 	pub m: u32,
-// 	// todo
-// }
-
-// pub(crate) fn calc_next_avg<B>(w: u32, current: &B, n_bl_r: &B) -> B
-// where
-// 	B: CurrencyBalance + Saturating + One + From<u32> + From<u64>,
-// {
-// 	let weight = B::from(w);
-// 	let sum = current.saturating_mul(weight).saturating_add(*n_bl_r);
-// 	Perquintill::from_rational(B::one(), weight.saturating_add(B::one())) * sum
-// }
-
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
