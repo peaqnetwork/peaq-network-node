@@ -1,4 +1,7 @@
-use crate::{self as pallet_block_reward, NegativeImbalanceOf};
+use crate::{
+	self as pallet_block_reward,
+	types::{AverageSelector, NegativeImbalanceOf},
+};
 
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -165,6 +168,7 @@ impl ExternalityBuilder {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
 			block_issue_reward: BLOCK_REWARD,
 			max_currency_supply: MAX_CURRENCY_SUPPLY,
+			average_selector: AverageSelector::DiAvg12Hours,
 		}
 		.assimilate_storage(&mut storage)
 		.ok();

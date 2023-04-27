@@ -1,9 +1,13 @@
-use super::{pallet::Error, Event, *};
+use crate::{
+	pallet::{Error, Event, *},
+	mock::*,
+	types::*,
+};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, OnTimestampSet},
+	traits::{Currency, OnUnbalanced, OnTimestampSet},
 };
-use mock::*;
+use sp_core::RuntimeDebug;
 use sp_runtime::{
 	traits::{AccountIdConversion, BadOrigin, Zero},
 	Perbill,
@@ -134,7 +138,7 @@ pub fn set_configuration_is_ok() {
 		assert!(reward_config.is_consistent());
 
 		assert_ok!(BlockReward::set_configuration(Origin::root(), reward_config.clone()));
-		System::assert_last_event(mock::Event::BlockReward(
+		System::assert_last_event(crate::mock::Event::BlockReward(
 			Event::DistributionConfigurationChanged(reward_config.clone()),
 		));
 
@@ -158,7 +162,9 @@ pub fn set_block_issue_reward_is_ok() {
 		let reward = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_block_issue_reward(Origin::root(), reward));
-		System::assert_last_event(mock::Event::BlockReward(Event::BlockIssueRewardChanged(reward)));
+		System::assert_last_event(crate::mock::Event::BlockReward(
+			Event::BlockIssueRewardChanged(reward)
+		));
 
 		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
 	})
@@ -180,7 +186,9 @@ pub fn set_maxcurrencysupply_is_ok() {
 		let limit = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_max_currency_supply(Origin::root(), limit));
-		System::assert_last_event(mock::Event::BlockReward(Event::MaxCurrencySupplyChanged(limit)));
+		System::assert_last_event(crate::mock::Event::BlockReward(
+			Event::MaxCurrencySupplyChanged(limit)
+		));
 
 		assert_eq!(MaxCurrencySupply::<TestRuntime>::get(), limit);
 	})

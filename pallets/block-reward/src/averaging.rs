@@ -39,7 +39,7 @@
 //! 
 //! 2. The pallet/object will provide multiple average-values with same return type, define some
 //!    selector-type, that is suitable for you and implement the `ProvidesAverages<T, S>`:
-//!    ```
+//!    ```ignore
 //!    pub enum AverageSelector {
 //!        AverageA,
 //!        AverageB,
@@ -52,7 +52,7 @@
 //!    To connect another pallet to this interface, without creating a coupling, you can add the
 //!    need for the trait within the pallet's config definition and a getter for the right selector-
 //!    type:
-//!    ```
+//!    ```ignore
 //!    type AvgBlockRewardProvider: ProvidesAverageFor<Self::CurrencyBalance, Self::AvgRecipientSelector>;
 //!    
 //!    type AvgRecipientSelector: Parameter;
