@@ -135,7 +135,7 @@ impl RewardDistributionConfig {
 
 
 /// This is a generic struct definition for keeping an average-value of anything.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(PartialEq, Eq, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct DiscreteAverage<Balance> 
 where
@@ -156,9 +156,10 @@ where
 	Balance: Zero + BalanceT,
 {
     /// New type pattern.
-    pub fn new(n_period: u32) -> DiscreteAverage<Balance> {
+    pub fn new(avg: Balance, n_period: u32) -> DiscreteAverage<Balance> {
+		assert!(avg > Balance::zero());
         DiscreteAverage { 
-            avg: Balance::zero(),
+            avg,
             accu: Balance::zero(),
             n_period,
             cnt: 0u32,
@@ -178,27 +179,26 @@ where
     }
 }
 
-impl<Balance> Default for DiscreteAverage<Balance> 
-where
-	Balance: Zero + BalanceT,
-{
-    /// Default with n_period=300, which is ~1 hour @ Peaq.
-    fn default() -> Self {
-        Self::new(300)
-    }
-}
+// impl<Balance> Default for DiscreteAverage<Balance> 
+// where
+// 	Balance: Zero + BalanceT,
+// {
+//     /// Default with n_period=300, which is ~1 hour @ Peaq.
+//     fn default() -> Self {
+//         Self::new(300)
+//     }
+// }
 
 
 /// Enum as selector-type for requesting average-values.
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum AverageSelector {
+	/// Discrete-Averaging applied on 12 hours
+	DiAvg12Hours,
 	/// Daily average with Discrete-Averaging
 	#[default]
 	DiAvgDaily,
 	/// Monthly average with Discrete-Averaging
 	DiAvgWeekly,
-	// DiAvgMonthly,
-	// DiAvgAnnually,
-	// DirectAvg,
 }

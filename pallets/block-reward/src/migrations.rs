@@ -69,16 +69,19 @@ mod v2 {
 			if version == StorageReleases::V2_1_0 {
 				log!(info, "Migrating block_reward to Releases::V2_2_0 / storage_version(3)");
 
+				let block_issue_reward = BlockIssueReward::<T>::get();
+
 				VersionStorage::<T>::put(StorageReleases::V2_2_0);
 				AverageSelectorConfig::<T>::put(AverageSelector::default());
-				DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
-				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
+				Hours12BlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 3600u32));
+				DailyBlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 7200u32));
+				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 50400u32));
 
 				log!(info, "Migrating to Releases::V2_2_0 / storage_version(3) - Done.");
 
 				version = Pallet::<T>::storage_releases();
-				reads += 1;
-				writes += 3;
+				reads += 2;
+				writes += 5;
 			}
 
 			if version != StorageReleases::V2_2_0 {

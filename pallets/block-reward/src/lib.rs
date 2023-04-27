@@ -117,7 +117,7 @@ pub mod pallet {
 		/// The currency trait.
 		type Currency: Currency<Self::AccountId>;
 
-		/// Used to payout rewards
+		/// Used to payout rewards.
 		type BeneficiaryPayout: BeneficiaryPayout<NegativeImbalanceOf<Self>>;
 
 		/// The overarching event type.
@@ -154,21 +154,16 @@ pub mod pallet {
 	pub(crate) type AverageSelectorConfig<T: Config> = StorageValue<_, AverageSelector, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn hours12_avg_reward)]
+	pub(crate) type Hours12BlockReward<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn daily_avg_reward)]
 	pub(crate) type DailyBlockReward<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn weekly_avg_reward)]
 	pub(crate) type WeeklyBlockReward<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
-
-	// TODO: Need to couple this to date-time-check
-	// #[pallet::storage]
-	// #[pallet::getter(fn monthly_avg_reward)]
-	// pub(crate) type MonthlyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u32>, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[pallet::getter(fn annually_avg_reward)]
-	// pub(crate) type AnnuallyBlockReward<T: Config> = StorageValue<_, DiscreteAverage<BalanceOf<T>, u32>, ValueQuery>;
 
 
 	#[pallet::event]
@@ -230,8 +225,9 @@ pub mod pallet {
 			BlockIssueReward::<T>::put(self.block_issue_reward);
 			MaxCurrencySupply::<T>::put(self.max_currency_supply);
 			AverageSelectorConfig::<T>::put(self.average_selector);
-			DailyBlockReward::<T>::put(DiscAvg::<T>::new(7200u32));
-			WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(50400u32));
+			Hours12BlockReward::<T>::put(DiscAvg::<T>::new(self.block_issue_reward, 3600u32));
+			DailyBlockReward::<T>::put(DiscAvg::<T>::new(self.block_issue_reward, 7200u32));
+			WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(self.block_issue_reward, 50400u32));
 		}
 	}
 
@@ -347,8 +343,6 @@ pub mod pallet {
 
 			Self::update_average_block_reward(amount);
 			Self::distribute_imbalances(imbalances);
-
-			// TODO: Register exra weights!!!
 		}
 	}
 
@@ -364,7 +358,6 @@ pub mod pallet {
 			let value = amount.peek();
 			TokenLocker::<T>::mutate(|lock| *lock += value );
             Self::deposit_event(Event::<T>::TransactionFeesReceived(value));
-			// Self::distribute_imbalances(amount, Event::<T>::TransactionFeesReceived(value));
 		}
 	}
 
@@ -417,9 +410,16 @@ pub mod pallet {
 			}
 		}
 
+		/// Updates the storages for average-block-rewards
 		fn update_average_block_reward(reward: BalanceOf<T>) {
+			Hours12BlockReward::<T>::mutate(|r| r.update(&reward));
 			DailyBlockReward::<T>::mutate(|r| r.update(&reward));
 			WeeklyBlockReward::<T>::mutate(|r| r.update(&reward));
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(3, 3),
+				DispatchClass::Mandatory,
+			);
 		}
 	}
 
@@ -433,6 +433,9 @@ pub mod pallet {
 	impl<T: Config> ProvidesAverages<BalanceOf<T>, AverageSelector> for Pallet<T> {
 		fn get_average_by(sel: AverageSelector) -> BalanceOf<T> {
 			match sel {
+				AverageSelector::DiAvg12Hours => {
+					Hours12BlockReward::<T>::get().avg
+				},
 				AverageSelector::DiAvgDaily => {
 					DailyBlockReward::<T>::get().avg
 				},
@@ -457,12 +460,3 @@ pub mod pallet {
 		}
 	}
 }
-
-// pub(crate) fn calc_next_avg<B>(w: u32, current: &B, n_bl_r: &B) -> B
-// where
-// 	B: CurrencyBalance + Saturating + One + From<u32> + From<u64>,
-// {
-// 	let weight = B::from(w);
-// 	let sum = current.saturating_mul(weight).saturating_add(*n_bl_r);
-// 	Perquintill::from_rational(B::one(), weight.saturating_add(B::one())) * sum
-// }
