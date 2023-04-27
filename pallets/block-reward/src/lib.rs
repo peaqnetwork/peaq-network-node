@@ -11,6 +11,12 @@
 //!
 //! Major on-chain factors which can influence reward distribution are total issuance and total
 //! value locked by dapps staking.
+//! 
+//! This pallet provides average-values on the block-rewards, which will be distributed
+//! to the benificiaries. For further descriptions have a look on the 'ProvidesAverage'-trait
+//! definitions. These average-block-rewards are useful, because the amount of tokens can
+//! vary from block to block, because possible additional funds can be transferred to this
+//! pallet by using the OnUnbalanced-trait.
 //!
 //! ## Interface
 //!
