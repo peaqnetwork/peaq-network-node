@@ -144,11 +144,11 @@ where
     /// The average value.
     pub avg: Balance,
     /// Accumulator for building the next average value.
-    accu: Balance,
+    pub(crate) accu: Balance,
     /// Number of blocks to averaged over.
-    n_period: u32,
+    pub(crate) n_period: u32,
     /// Counter of blocks.
-    cnt: u32,
+    pub(crate) cnt: u32,
 }
 
 impl<Balance> DiscreteAverage<Balance> 

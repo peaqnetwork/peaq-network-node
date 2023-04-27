@@ -5,7 +5,7 @@ use crate::{
 };
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, OnUnbalanced, OnTimestampSet},
+	traits::{Currency, Imbalance, OnUnbalanced, OnTimestampSet},
 };
 use sp_core::RuntimeDebug;
 use sp_runtime::{
@@ -214,7 +214,7 @@ pub fn inflation_and_total_issuance_as_expected() {
 }
 
 #[test]
-pub fn harcap_reaches() {
+pub fn max_currency_supply_reaches() {
 	ExternalityBuilder::build().execute_with(|| {
 		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
 		let block_limits = 3_u128;
@@ -328,6 +328,72 @@ pub fn on_unbalanceds() {
 		BlockReward::on_unbalanceds(imbalances.into_iter());
 	})
 }
+
+#[test]
+pub fn averaging_functionality_test() {
+	fn do_one_block_event_checked(txfees: &Vec<u128>) -> u128 {
+		txfees.iter().for_each(|&b| {
+			let imbalance = <TestRuntime as Config>::Currency::issue(b as Balance);
+			let amount = imbalance.peek();
+			BlockReward::on_unbalanced(imbalance);
+			System::assert_last_event(crate::mock::Event::BlockReward(
+				Event::TransactionFeesReceived(amount),
+			));
+		});
+		BlockReward::on_timestamp_set(0);
+		txfees.into_iter().sum::<u128>() + BLOCK_REWARD
+	}
+
+	fn do_one_block(txfees: &Vec<u128>) -> u128 {
+		txfees.iter().for_each(|&b| {
+			let imbalance = <TestRuntime as Config>::Currency::issue(b as Balance);
+			BlockReward::on_unbalanced(imbalance);
+		});
+		BlockReward::on_timestamp_set(0);
+		txfees.into_iter().sum::<u128>() + BLOCK_REWARD
+	}
+
+
+
+	ExternalityBuilder::build().execute_with(|| {
+		// Check initial average-block-rewards on all storages
+		assert_eq!(BlockReward::hours12_avg_reward().avg, BLOCK_REWARD);
+		assert_eq!(BlockReward::daily_avg_reward().avg, BLOCK_REWARD);
+		assert_eq!(BlockReward::weekly_avg_reward().avg, BLOCK_REWARD);
+
+		// Now add varying transaction-fees on top and check each
+		let mut exp_acc: u128 = 0;
+		exp_acc += do_one_block_event_checked(&vec![3_000_000]);
+		assert_eq!(BlockReward::hours12_avg_reward().accu, exp_acc);
+		assert_eq!(BlockReward::daily_avg_reward().accu, exp_acc);
+		assert_eq!(BlockReward::weekly_avg_reward().accu, exp_acc);
+		System::assert_last_event(crate::mock::Event::BlockReward(
+			Event::BlockRewardsDistributed(exp_acc),
+		));
+
+		// Do it twice during one block...
+		exp_acc += do_one_block_event_checked(&vec![750_000; 2]);
+		assert_eq!(BlockReward::hours12_avg_reward().accu, exp_acc);
+		assert_eq!(BlockReward::daily_avg_reward().accu, exp_acc);
+		assert_eq!(BlockReward::weekly_avg_reward().accu, exp_acc);
+		assert_eq!(BlockReward::hours12_avg_reward().cnt, 2);
+		assert_eq!(BlockReward::daily_avg_reward().cnt, 2);
+		assert_eq!(BlockReward::weekly_avg_reward().cnt, 2);
+		System::assert_last_event(crate::mock::Event::BlockReward(
+			Event::BlockRewardsDistributed(BLOCK_REWARD + 1_500_000),
+		));
+
+		let balance: Vec<u128> = vec![1_000];
+		for _i in 2..1700 {
+			exp_acc += do_one_block(&balance);
+		}
+		// assert_eq!(BlockReward::hours12_avg_reward().cnt, 1800);
+		assert_eq!(BlockReward::daily_avg_reward().cnt, 500);
+		assert_eq!(BlockReward::weekly_avg_reward().cnt, 3600);
+		assert_eq!(BlockReward::hours12_avg_reward().avg, exp_acc / 3600);
+	})
+}
+
 
 /// Represents free balance snapshot at a specific point in time
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]

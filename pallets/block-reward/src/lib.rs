@@ -345,9 +345,8 @@ pub mod pallet {
 				T::Currency::issue(locked)
 			});
 			let imbalances = inflation.merge(txfees);
-            let amount = imbalances.peek();
 
-			Self::update_average_block_reward(amount);
+			Self::update_average_block_reward(imbalances.peek());
 			Self::distribute_imbalances(imbalances);
 		}
 	}
