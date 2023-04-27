@@ -127,15 +127,6 @@ mod types;
 
 use frame_support::pallet;
 
-#[macro_export]
-macro_rules! log {
-	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
-		log::$level!(
-			target: "runtime::parachain-staking",
-			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
-		)
-	};
-}
 
 #[pallet]
 pub mod pallet {
@@ -217,7 +208,6 @@ pub mod pallet {
 			+ MaxEncodedLen;
 		
 		/// The provider for the average-block-reward.
-		// type AvgBlockRewardProvider: ProvidesAverageFor<Recipient: Self::AvgRecipientSelector>;
 		type AvgBlockRewardProvider: ProvidesAverageFor<Self::CurrencyBalance, Self::AvgRecipientSelector>;
 
 		/// The recipient-selector-datatype for ProvidesAverageFor.
@@ -473,9 +463,8 @@ pub mod pallet {
 		/// \[round number, first block in the current round, old value, new
 		/// value\]
 		BlocksPerRoundSet(SessionIndex, T::BlockNumber, T::BlockNumber, T::BlockNumber),
-		/// If sudo-user resets the average reward register.
-		AverageRewardReset(BalanceOf<T>),
 	}
+
 
 	/// The maximum number of collator candidates selected at each round.
 	#[pallet::storage]
@@ -606,26 +595,16 @@ pub mod pallet {
 	pub(crate) type Rewards<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, BalanceOf<T>, ValueQuery>;
 
-	// /// The average total reward, given to this pallet. Because currently, there
-	// /// is no dynamic issue of tokens, we need an average value as reference for
-	// /// payouts. The storage is a tuple with (AverageBlockReward, Accumulator).
-	// /// The first value is the value to be used in calculations. The second one
-	// /// is about calculating the first value properly (solves the problem with
-	// /// multiple incoming block-rewards).
-	// #[pallet::storage]
-	// #[pallet::getter(fn average_block_reward)]
-	// pub(crate) type AverageBlockReward<T: Config> =
-	// 	StorageValue<_, AvgBlockRewardCtrl<BalanceOf<T>>, ValueQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn new_round_forced)]
+	pub(crate) type ForceNewRound<T: Config> = StorageValue<_, bool, ValueQuery>;
+
 
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
 		Option<<T as frame_system::Config>::AccountId>,
 		BalanceOf<T>,
 	)>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn new_round_forced)]
-	pub(crate) type ForceNewRound<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
