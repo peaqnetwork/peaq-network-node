@@ -17,11 +17,11 @@
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::traits::{tokens::Balance as CurrencyBalance, Currency, Get};
+use frame_support::traits::{Currency, Get};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, CheckedSub, One, Saturating, Zero},
-	Perquintill, RuntimeDebug,
+	traits::{AtLeast32BitUnsigned, CheckedSub, Saturating, Zero},
+	RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::{
