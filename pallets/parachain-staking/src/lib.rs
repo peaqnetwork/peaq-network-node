@@ -145,6 +145,7 @@
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod default_weights;
+pub mod migrations;
 
 #[cfg(test)]
 pub(crate) mod mock;
@@ -202,7 +203,7 @@ pub mod pallet {
 	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
