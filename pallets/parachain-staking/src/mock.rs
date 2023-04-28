@@ -21,20 +21,23 @@
 
 use super::*;
 use crate::{self as stake};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
+	traits::{Currency, Imbalance, GenesisBuild, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
 use pallet_authorship::EventHandler;
+use pallet_block_reward::averaging::ProvidesAverageFor;
+use scale_info::TypeInfo;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill, Perquintill,
+	Perbill, Perquintill, RuntimeDebug,
 };
 use sp_std::fmt::Debug;
 
@@ -146,6 +149,7 @@ parameter_types! {
 	pub const MaxUnstakeRequests: u32 = 6;
 	// pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
 	// pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
+	pub const AvgProviderParachainStaking: BeneficiarySelector = BeneficiarySelector::Collators;
 }
 
 impl Config for Test {
@@ -166,6 +170,9 @@ impl Config for Test {
 	type MinDelegatorStake = MinDelegatorStake;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
+	type AvgBlockRewardProvider = ExtBuilder;
+	type AvgBlockRewardRecipient = AvgProviderParachainStaking;
+	type AvgRecipientSelector = BeneficiarySelector;
 	type WeightInfo = ();
 }
 
@@ -202,7 +209,7 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-pub(crate) struct ExtBuilder {
+pub struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
 	// [collator, amount]
@@ -213,6 +220,8 @@ pub(crate) struct ExtBuilder {
 	reward_rate_config: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
+	// average-block-reward
+	avg_reward: Balance,
 }
 
 impl Default for ExtBuilder {
@@ -226,7 +235,16 @@ impl Default for ExtBuilder {
 				Perquintill::from_percent(20),
 				Perquintill::from_percent(80),
 			),
+			avg_reward: DEFAULT_ISSUE,
 		}
+	}
+}
+
+static AVERAGER: Averager = Averager{ avg: DEFAULT_ISSUE };
+
+impl ProvidesAverageFor<Balance, BeneficiarySelector> for ExtBuilder {
+	fn get_average_for(_r: BeneficiarySelector) -> Balance {
+		AVERAGER.avg
 	}
 }
 
@@ -447,6 +465,23 @@ fn claim_all_rewards() {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
+	// AVERAGER.update(&issued.peek());
 	StakePallet::on_unbalanced(issued);
 	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
+}
+
+#[derive(Default, Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
+pub enum BeneficiarySelector {
+	#[default]
+	Collators,
+}
+
+pub(crate) struct Averager {
+	pub avg: Balance,
+}
+
+impl Averager {
+	fn update(&mut self, reward: &Balance) {
+		self.avg = (self.avg + reward) / 2;
+	}
 }
