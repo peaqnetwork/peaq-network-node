@@ -62,8 +62,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 
-pub mod averaging;
-
 #[cfg(any(feature = "runtime-benchmarks"))]
 pub mod benchmarking;
 #[cfg(test)]
@@ -95,7 +93,7 @@ pub mod pallet {
 
 	use super::*;
 
-	use averaging::*;
+	use peaq_frame_ext::averaging::*;
 	use migrations::StorageReleases;
 	use types::*;
 	use weights::WeightInfo;
