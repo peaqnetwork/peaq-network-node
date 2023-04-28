@@ -146,7 +146,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_balances::{BalanceLock, Locks};
-	use pallet_block_reward::averaging::ProvidesAverageFor;
+	use peaq_frame_ext::averaging::ProvidesAverageFor;
 	use pallet_session::ShouldEndSession;
 	use scale_info::TypeInfo;
 	use sp_runtime::{

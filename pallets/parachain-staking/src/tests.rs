@@ -29,11 +29,12 @@ use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversion};
 
 use crate::{
-	mock::{
-		almost_equal, events, last_event, roll_to, roll_to_claim_every_reward,
-		roll_to_then_claim_rewards, AccountId, Balance, Balances, BlockNumber, ExtBuilder, Origin,
-		Session, StakePallet, System, Test, BLOCKS_PER_ROUND, DECIMALS, DEFAULT_ISSUE,
-	},
+	// mock::{
+	// 	almost_equal, events, last_event, roll_to, roll_to_claim_every_reward,
+	// 	roll_to_then_claim_rewards, AccountId, Balance, Balances, BlockNumber, ExtBuilder, Origin,
+	// 	Session, StakePallet, System, Test, BLOCKS_PER_ROUND, DECIMALS, DEFAULT_ISSUE,
+	// },
+	mock::*,
 	set::OrderedSet,
 	types::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
@@ -1414,6 +1415,11 @@ fn round_transitions() {
 
 #[test]
 fn coinbase_rewards_few_blocks_detailed_check() {
+	let mut finance = ExtFinance::new(
+		Balance::from(1000u128),
+		vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)],
+	);
+
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 40_000_000 * DECIMALS),
@@ -1430,24 +1436,24 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 		])
 		.build()
 		.execute_with(|| {
-			let issue_number = Balance::from(1000u128);
+			// let issue_number = Balance::from(1000u128);
 
 			let reward_info = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
 			// compute rewards
-			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
+			let c_rewards = calc_collator_rewards(&finance.issue_number, &reward_info);
 			let st_rate_d1_1 = Perquintill::from_rational(32u128, 64u128);
 			let st_rate_d1_2 = Perquintill::from_rational(16u128, 64u128);
 			let st_rate_d2_1 = Perquintill::from_rational(16u128, 64u128);
-			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
-			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
-			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
+			let d_rewards1_1 = calc_delegator_rewards(&&finance.issue_number, &st_rate_d1_1, &reward_info);
+			let d_rewards1_2 = calc_delegator_rewards(&&finance.issue_number, &st_rate_d1_2, &reward_info);
+			let d_rewards2_1 = calc_delegator_rewards(&&finance.issue_number, &st_rate_d2_1, &reward_info);
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
-			let authors: Vec<Option<AccountId>> =
-				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
+			// let authors: Vec<Option<AccountId>> =
+			// 	vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
 			let user_1 = (40_000_000 - 8_000_000) * DECIMALS;
 			let user_2 = (40_000_000 - 8_000_000) * DECIMALS;
 			let user_3 = (40_000_000 - 32_000_000) * DECIMALS;
@@ -1462,7 +1468,8 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 1st block
-			roll_to_claim_every_reward(2, issue_number, &authors);
+			// roll_to_claim_every_reward(2, issue_number, &authors);
+			finance.roll_to_claim_every_reward(2, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
 			assert_eq!(Balances::usable_balance(&3), user_3 + d_rewards1_1);
@@ -1470,7 +1477,8 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 2nd block
-			roll_to_claim_every_reward(3, issue_number, &authors);
+			// roll_to_claim_every_reward(3, issue_number, &authors);
+			finance.roll_to_claim_every_reward(3, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 2 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
 			assert_eq!(Balances::usable_balance(&3), user_3 + 2 * d_rewards1_1);
@@ -1478,7 +1486,8 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 3rd block
-			roll_to_claim_every_reward(4, issue_number, &authors);
+			// roll_to_claim_every_reward(4, issue_number, &authors);
+			finance.roll_to_claim_every_reward(4, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
 			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_rewards1_1);
@@ -1486,7 +1495,8 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 2 is block author for 4th block
-			roll_to_claim_every_reward(5, issue_number, &authors);
+			// roll_to_claim_every_reward(5, issue_number, &authors);
+			finance.roll_to_claim_every_reward(5, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards);
 			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_rewards1_1);
@@ -1495,7 +1505,8 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_ok!(StakePallet::leave_delegators(Origin::signed(5)));
 
 			// 2 is block author for 5th block
-			roll_to_claim_every_reward(6, issue_number, &authors);
+			// roll_to_claim_every_reward(6, issue_number, &authors);
+			finance.roll_to_claim_every_reward(6, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2 + 2 * c_rewards);
 			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_rewards1_1);
