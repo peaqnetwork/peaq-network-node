@@ -21,22 +21,21 @@
 
 use super::*;
 use crate::{self as stake};
-use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
-	assert_ok, construct_runtime, parameter_types, pallet,
+	assert_ok, construct_runtime, parameter_types,
 	traits::{Currency, Imbalance, GenesisBuild, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
 use pallet_authorship::EventHandler;
-use scale_info::TypeInfo;
+use peaq_frame_ext::mockups::avg_currency as average;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill, Perquintill, RuntimeDebug,
+	Perbill, Perquintill,
 };
 use sp_std::fmt::Debug;
 
@@ -62,9 +61,9 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Aura: pallet_aura::{Pallet, Storage},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Average: avgpallet::{Pallet, Storage},
 		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
+		Average: average::{Pallet, Config<T>, Storage},
 	}
 );
 
@@ -150,7 +149,7 @@ parameter_types! {
 	pub const MaxUnstakeRequests: u32 = 6;
 	// pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
 	// pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
-	pub const AvgProviderParachainStaking: BeneficiarySelector = BeneficiarySelector::Collators;
+	pub const AvgProviderParachainStaking: average::AverageSelector = average::AverageSelector::Whatever;
 }
 
 impl Config for Test {
@@ -173,7 +172,7 @@ impl Config for Test {
 	type PotId = PotId;
 	type AvgBlockRewardProvider = Average;
 	type AvgBlockRewardRecipient = AvgProviderParachainStaking;
-	type AvgRecipientSelector = BeneficiarySelector;
+	type AvgRecipientSelector = average::AverageSelector;
 	type WeightInfo = ();
 }
 
@@ -210,7 +209,9 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl avgpallet::Config for Test {}
+impl average::Config for Test {
+	type Currency = Balances;
+}
 
 pub struct ExtBuilder {
 	// endowed accounts with balances
@@ -223,6 +224,8 @@ pub struct ExtBuilder {
 	reward_rate_config: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
+	// initial average block reward
+	avg_reward_init: Balance,
 }
 
 impl Default for ExtBuilder {
@@ -236,6 +239,7 @@ impl Default for ExtBuilder {
 				Perquintill::from_percent(20),
 				Perquintill::from_percent(80),
 			),
+			avg_reward_init: DEFAULT_ISSUE,
 		}
 	}
 }
@@ -321,6 +325,11 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Session Pallet's storage can be assimilated");
 
+		// Set initial average-block-reward
+		average::GenesisConfig::<Test> { avg_init: self.avg_reward_init }
+			.assimilate_storage(&mut t)
+			.expect("Average-pallet-mockup's storage can't be set");
+
 		let mut ext = sp_io::TestExternalities::new(t);
 
 		if self.blocks_per_round != BLOCKS_PER_ROUND {
@@ -342,67 +351,19 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 }
 
 
-pub(crate) struct ExtFinance {
-	/// How many tokens will be issued each block
-	pub issue_number: Balance,
-	/// Block-authors for every round
-	pub authors: Vec<Option<AccountId>>,
-	/// Average-block reward for ProvidesAverageFor
-	pub avg_reward: Balance,
-}
-
-impl ExtFinance {
-	pub(crate) fn new(issue_number: Balance, authors: Vec<Option<AccountId>>) -> ExtFinance {
-		ExtFinance { issue_number, authors, avg_reward: issue_number }
-	}
-
-	pub(crate) fn roll_to_claim_every_reward(&mut self, n: BlockNumber, issue_number: Option<Balance>) {
-		while System::block_number() < n {
-			self.simulate_issuance(issue_number);
-			if let Some(Some(author)) = self.authors.get((System::block_number()) as usize) {
-				StakePallet::note_author(*author);
-				// author has to increment rewards before claiming
-				assert_ok!(StakePallet::increment_collator_rewards(Origin::signed(*author)));
-				// author claims rewards
-				assert_ok!(StakePallet::claim_rewards(Origin::signed(*author)));
-	
-				// claim rewards for delegators
-				let col_state =
-					StakePallet::candidate_pool(author).expect("Block author must be candidate");
-				for delegation in col_state.delegators {
-					// delegator has to increment rewards before claiming
-					assert_ok!(StakePallet::increment_delegator_rewards(Origin::signed(
-						delegation.owner
-					)));
-					assert_ok!(StakePallet::claim_rewards(Origin::signed(delegation.owner)));
-				}
-			}
-			finish_block_start_next();
-		}
-	}
-
-	fn simulate_issuance(&self, issue_number: Option<Balance>) {
-		let issue_number = self.get_issue_number(issue_number);
-		let issued = Balances::issue(issue_number);
-		// AVERAGER.update(&issued.peek());
-		StakePallet::on_unbalanced(issued);
-		<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
-	}
-
-	fn get_issue_number(&self, issue_number: Option<Balance>) -> Balance {
-		if let Some(number) = issue_number {
-			number
-		} else {
-			self.issue_number
-		}
-	}
-}
-
-// impl ProvidesAverageFor<Balance, BeneficiarySelector> for ExtFinancer {
-// 	fn get_average_for(_r: BeneficiarySelector) -> Balance {
-// 		AVERAGER.avg
-// 	}
+// Todo: Several single methods below, could be replaced by such a helper definition, which
+// 		 would simplify the individual test-case setup. 
+// pub(crate) struct ExtHelper {
+// 	/// How many tokens will be issued each block
+// 	pub issue_number: Balance,
+// 	/// Block-authors for every round
+// 	pub authors: Vec<Option<AccountId>>,
 // }
+
+
+fn update_average(next: Balance) -> Balance {
+	next
+}
 
 /// Incrementelly traverses from the current block to the provided one and
 /// potentially sets block authors.
@@ -475,7 +436,6 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 }
 
 fn finish_block_start_next() {
-	// <AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
@@ -520,99 +480,7 @@ fn claim_all_rewards() {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	// AVERAGER.update(&issued.peek());
+	Average::update(issued.peek(), update_average);
 	StakePallet::on_unbalanced(issued);
 	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
-}
-
-#[derive(Default, Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
-pub enum BeneficiarySelector {
-	#[default]
-	Collators,
-}
-
-// pub(crate) struct Averager {
-// 	pub avg: Balance,
-// }
-
-// impl Averager {
-// 	fn update(&mut self, reward: &Balance) {
-// 		self.avg = (self.avg + reward) / 2;
-// 	}
-// }
-
-
-#[frame_support::pallet]
-pub mod avgpallet {
-
-    use codec::{Encode, Decode, MaxEncodedLen};
-	use frame_system::pallet_prelude::*;
-	use frame_support::{pallet_prelude::*, traits::Currency};
-    use peaq_frame_ext::averaging::ProvidesAverageFor;
-	use scale_info::TypeInfo;
-    use sp_runtime::Perbill;
-    // use sp_core::RuntimeDebug;
-
-    pub(crate) type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-
-	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
-	pub struct Pallet<T>(PhantomData<T>);
-
-
-	#[pallet::config]
-	pub trait Config: frame_system::Config 
-	{
-		// Overarching event type
-		type Currency: Currency<Self::AccountId>;
-	}
-
-
-	#[pallet::storage]
-	#[pallet::getter(fn get_average)]
-	pub(crate) type Average<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-
-
-	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config> {
-		pub average: BalanceOf<T>,
-	}
-
-    impl<T: Config> Default for GenesisConfig<T> {
-        fn default() -> GenesisConfig<T> {
-            GenesisConfig{ average: BalanceOf::<T>::default() }
-        }
-    }
-
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-		fn build(&self) {
-			Average::<T>::put(self.average);
-		}
-	}
-
-
-	impl<T: Config> Pallet<T> {
-		pub fn update(next_avg: BalanceOf<T>) {
-			Average::<T>::mutate(|avg| {
-				*avg = Perbill::from_percent(50) * (*avg + next_avg);
-			});
-		}
-	}
-
-	impl<T: Config> ProvidesAverageFor<BalanceOf<T>, AverageSelector> for Pallet<T> {
-		fn get_average_for(_r: AverageSelector) -> BalanceOf<T> {
-			Average::<T>::get()
-		}
-	}
-
-
-    /// Generic Average-Selector for an arbitrary mockup.
-    #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, Default, TypeInfo, MaxEncodedLen)] // RuntimeDebug
-    #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-    pub enum AverageSelector {
-        #[default]
-        Whatever,
-    }
 }

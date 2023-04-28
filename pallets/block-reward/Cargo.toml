@@ -16,7 +16,7 @@ frame-system = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq
 log = { version = "0.4.17", default-features = false }
 pallet-balances = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29", default-features = false}
 pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29",  default-features = false, optional = true }
-peaq-frame-ext = { path = "../../../peaq-frame-ext" }
+peaq-frame-ext = { path = "../../../peaq-frame-ext" } # TODO
 scale-info = {version = "2.1.1", default-features = false, features = ["derive"]}
 serde = { version = "1.0.136", optional = true }
 sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29",  default-features = false } #, optional = true
