@@ -151,10 +151,18 @@ impl pallet_block_reward::Config for TestRuntime {
 	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<TestRuntime>;
 }
 
-pub struct ExternalityBuilder;
+pub struct ExternalityBuilder();
 
 impl ExternalityBuilder {
 	pub fn build() -> TestExternalities {
+		ExternalityBuilder::build_internal(BLOCK_REWARD, MAX_CURRENCY_SUPPLY)
+	}
+
+	pub fn build_set_reward(issue_number: Balance, hard_cap: Balance) -> TestExternalities {
+		ExternalityBuilder::build_internal(issue_number, hard_cap)
+	}
+
+	fn build_internal(issue: Balance, hardcap: Balance) -> TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<TestRuntime>().unwrap();
 
@@ -166,8 +174,8 @@ impl ExternalityBuilder {
 		.ok();
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
-			block_issue_reward: BLOCK_REWARD,
-			max_currency_supply: MAX_CURRENCY_SUPPLY,
+			block_issue_reward: issue,
+			max_currency_supply: hardcap,
 			average_selector: AverageSelector::DiAvg12Hours,
 		}
 		.assimilate_storage(&mut storage)

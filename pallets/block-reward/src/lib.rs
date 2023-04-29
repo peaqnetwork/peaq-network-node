@@ -332,17 +332,17 @@ pub mod pallet {
 
 	impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
 		fn on_timestamp_set(_moment: Moment) {
-			if T::Currency::total_issuance() >= Self::max_currency_supply() {
-				return
-			}
-
-			let inflation = T::Currency::issue(Self::block_issue_reward());
 			let txfees = TokenLocker::<T>::mutate(|lock| {
 				let locked = *lock;
 				*lock = BalanceOf::<T>::zero();
 				T::Currency::issue(locked)
 			});
-			let imbalances = inflation.merge(txfees);
+			let imbalances = if T::Currency::total_issuance() >= Self::max_currency_supply() {
+				txfees
+			} else {
+				let inflation = T::Currency::issue(Self::block_issue_reward());
+				inflation.merge(txfees)
+			};
 
 			Self::update_average_block_reward(imbalances.peek());
 			Self::distribute_imbalances(imbalances);

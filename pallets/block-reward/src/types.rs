@@ -168,26 +168,15 @@ where
 
     /// Updates the average-value for a balance, shall be called each block.
     pub fn update(&mut self, next: &Balance) {
-        self.cnt += 1u32;
-        if self.cnt == self.n_period {
-            self.avg = Perbill::from_rational(1u32, self.n_period) * self.accu;
-            self.accu = *next;
+        self.accu += *next;
+		self.cnt += 1u32;
+		if self.cnt == self.n_period {
+			self.avg = Perbill::from_rational(1u32, self.n_period) * self.accu;
+			self.accu = Balance::zero();
             self.cnt = 0u32;
-        } else {
-            self.accu += *next;
         }
     }
 }
-
-// impl<Balance> Default for DiscreteAverage<Balance> 
-// where
-// 	Balance: Zero + BalanceT,
-// {
-//     /// Default with n_period=300, which is ~1 hour @ Peaq.
-//     fn default() -> Self {
-//         Self::new(300)
-//     }
-// }
 
 
 /// Enum as selector-type for requesting average-values.
