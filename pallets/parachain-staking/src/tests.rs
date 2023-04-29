@@ -40,7 +40,12 @@ use crate::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
 		StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event as StakeEvent, RewardRateInfo, STAKING_ID,
+	CandidatePool,
+	Config,
+	Error,
+	Event as StakeEvent,
+	RewardRateInfo,
+	STAKING_ID,
 };
 
 /// Method calculates the reward rate for a collator in dependency of given paramters

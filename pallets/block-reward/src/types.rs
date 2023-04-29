@@ -1,14 +1,16 @@
 //! Type and trait definitions of the crate
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::traits::{tokens::Balance as BalanceT, Currency};
 use scale_info::TypeInfo;
-use frame_support::traits::{Currency, tokens::Balance as BalanceT};
 use sp_core::RuntimeDebug;
-use sp_runtime::{traits::{CheckedAdd, Zero}, Perbill};
+use sp_runtime::{
+	traits::{CheckedAdd, Zero},
+	Perbill,
+};
 use sp_std::vec;
 
 use crate::pallet::Config;
-
 
 /// The balance type of this pallet.
 pub(crate) type BalanceOf<T> =
@@ -16,11 +18,11 @@ pub(crate) type BalanceOf<T> =
 
 // Negative imbalance type of this pallet.
 pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
-	<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
 
 // Short form for the DiscreteAverage<BalanceOf<T>, Count>
 pub(crate) type DiscAvg<T> = DiscreteAverage<BalanceOf<T>>;
-
 
 /// Selector for possible beneficiaries.
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -39,7 +41,6 @@ pub enum BeneficiarySelector {
 	/// To be defined (currently).
 	MachinesSubsidization,
 }
-
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait BeneficiaryPayout<Imbalance> {
@@ -61,7 +62,6 @@ pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout Machines
 	fn machines_subsidization(reward: Imbalance);
 }
-
 
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
@@ -133,54 +133,49 @@ impl RewardDistributionConfig {
 	}
 }
 
-
 /// This is a generic struct definition for keeping an average-value of anything.
 #[derive(PartialEq, Eq, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct DiscreteAverage<Balance> 
+pub struct DiscreteAverage<Balance>
 where
 	Balance: Zero + BalanceT,
 {
-    /// The average value.
-    pub avg: Balance,
-    /// Accumulator for building the next average value.
-    pub(crate) accu: Balance,
-    /// Number of blocks to averaged over.
-    pub(crate) n_period: u32,
-    /// Counter of blocks.
-    pub(crate) cnt: u32,
+	/// The average value.
+	pub avg: Balance,
+	/// Accumulator for building the next average value.
+	pub(crate) accu: Balance,
+	/// Number of blocks to averaged over.
+	pub(crate) n_period: u32,
+	/// Counter of blocks.
+	pub(crate) cnt: u32,
 }
 
-impl<Balance> DiscreteAverage<Balance> 
-where 
+impl<Balance> DiscreteAverage<Balance>
+where
 	Balance: Zero + BalanceT,
 {
-    /// New type pattern.
-    pub fn new(avg: Balance, n_period: u32) -> DiscreteAverage<Balance> {
+	/// New type pattern.
+	pub fn new(avg: Balance, n_period: u32) -> DiscreteAverage<Balance> {
 		assert!(avg > Balance::zero());
-        DiscreteAverage { 
-            avg,
-            accu: Balance::zero(),
-            n_period,
-            cnt: 0u32,
-        }
-    }
+		DiscreteAverage { avg, accu: Balance::zero(), n_period, cnt: 0u32 }
+	}
 
-    /// Updates the average-value for a balance, shall be called each block.
-    pub fn update(&mut self, next: &Balance) {
-        self.accu += *next;
+	/// Updates the average-value for a balance, shall be called each block.
+	pub fn update(&mut self, next: &Balance) {
+		self.accu += *next;
 		self.cnt += 1u32;
 		if self.cnt == self.n_period {
 			self.avg = Perbill::from_rational(1u32, self.n_period) * self.accu;
 			self.accu = Balance::zero();
-            self.cnt = 0u32;
-        }
-    }
+			self.cnt = 0u32;
+		}
+	}
 }
 
-
 /// Enum as selector-type for requesting average-values.
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	PartialEq, Eq, Copy, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum AverageSelector {
 	/// Discrete-Averaging applied on 12 hours

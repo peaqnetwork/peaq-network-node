@@ -1,11 +1,11 @@
 use crate::{
-	pallet::{Error, Event, *},
 	mock::*,
+	pallet::{Error, Event, *},
 	types::*,
 };
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, Imbalance, OnUnbalanced, OnTimestampSet},
+	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
 };
 use sp_core::RuntimeDebug;
 use sp_runtime::{
@@ -162,9 +162,9 @@ pub fn set_block_issue_reward_is_ok() {
 		let reward = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_block_issue_reward(Origin::root(), reward));
-		System::assert_last_event(crate::mock::Event::BlockReward(
-			Event::BlockIssueRewardChanged(reward)
-		));
+		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockIssueRewardChanged(
+			reward,
+		)));
 
 		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
 	})
@@ -187,7 +187,7 @@ pub fn set_maxcurrencysupply_is_ok() {
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_max_currency_supply(Origin::root(), limit));
 		System::assert_last_event(crate::mock::Event::BlockReward(
-			Event::MaxCurrencySupplyChanged(limit)
+			Event::MaxCurrencySupplyChanged(limit),
 		));
 
 		assert_eq!(MaxCurrencySupply::<TestRuntime>::get(), limit);
@@ -344,9 +344,9 @@ pub fn averaging_functionality_test() {
 		});
 		BlockReward::on_timestamp_set(0);
 		let amount = txfees.into_iter().sum::<u128>() + ISSUE_NUM;
-		System::assert_last_event(crate::mock::Event::BlockReward(
-			Event::BlockRewardsDistributed(amount),
-		));
+		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockRewardsDistributed(
+			amount,
+		)));
 		amount
 	}
 
@@ -376,7 +376,6 @@ pub fn averaging_functionality_test() {
 	let div_day = Perbill::from_rational(1u32, 7200u32);
 	let div_wee = Perbill::from_rational(1u32, 50400u32);
 
-
 	ExternalityBuilder::build_set_reward(ISSUE_NUM, u128::MAX).execute_with(|| {
 		// Check initial average-block-rewards on all storages
 		assert_eq!(BlockReward::hours12_avg_reward().avg, ISSUE_NUM);
@@ -386,86 +385,75 @@ pub fn averaging_functionality_test() {
 		// Now add varying transaction-fees on top and check each
 		let mut exp_acc: Balance = 0;
 		exp_acc += do_one_block_event_checked(&vec![246]);
-		check_avg_storage(BlockReward::hours12_avg_reward, 
-			ISSUE_NUM, exp_acc, 1, "hours12:1");
-		check_avg_storage(BlockReward::daily_avg_reward,
-			ISSUE_NUM, exp_acc, 1, "daily:1");
-		check_avg_storage(BlockReward::weekly_avg_reward,
-			ISSUE_NUM, exp_acc, 1, "weekly:1");
-		System::assert_last_event(crate::mock::Event::BlockReward(
-			Event::BlockRewardsDistributed(ISSUE_NUM + 246),
-		));
+		check_avg_storage(BlockReward::hours12_avg_reward, ISSUE_NUM, exp_acc, 1, "hours12:1");
+		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 1, "daily:1");
+		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 1, "weekly:1");
+		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockRewardsDistributed(
+			ISSUE_NUM + 246,
+		)));
 
 		// Do it twice during one block...
 		exp_acc += do_one_block_event_checked(&vec![62; 2]);
-		check_avg_storage(BlockReward::hours12_avg_reward, 
-			ISSUE_NUM, exp_acc, 2, "hours12:2");
-		check_avg_storage(BlockReward::daily_avg_reward,
-			ISSUE_NUM, exp_acc, 2, "daily:2");
-		check_avg_storage(BlockReward::weekly_avg_reward,
-			ISSUE_NUM, exp_acc, 2, "weekly:2");
-		System::assert_last_event(crate::mock::Event::BlockReward(
-			Event::BlockRewardsDistributed(ISSUE_NUM + 124),
-		));
+		check_avg_storage(BlockReward::hours12_avg_reward, ISSUE_NUM, exp_acc, 2, "hours12:2");
+		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 2, "daily:2");
+		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 2, "weekly:2");
+		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockRewardsDistributed(
+			ISSUE_NUM + 124,
+		)));
 
 		let txfees: Vec<Balance> = vec![1];
 		let balance = ISSUE_NUM + txfees[0];
 		for _i in 2..3600 {
 			exp_acc += do_one_block(&txfees);
 		}
-		check_avg_storage(BlockReward::hours12_avg_reward, div_h12 * exp_acc, 
-			0, 0, "hours12:3600");
-		check_avg_storage(BlockReward::daily_avg_reward,
-			ISSUE_NUM, exp_acc, 3600, "daily:3600");
-		check_avg_storage(BlockReward::weekly_avg_reward,
-			ISSUE_NUM, exp_acc, 3600, "weekly:3600");
+		check_avg_storage(BlockReward::hours12_avg_reward, div_h12 * exp_acc, 0, 0, "hours12:3600");
+		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 3600, "daily:3600");
+		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 3600, "weekly:3600");
 
-		
 		let exp_acc1 = exp_acc;
-		
+
 		for _i in 3600..7200 {
 			exp_acc += do_one_block(&txfees);
 		}
-		check_avg_storage(BlockReward::hours12_avg_reward, div_h12 * (exp_acc - exp_acc1), 
-			0, 0, "hours12:7200");
-		check_avg_storage(BlockReward::daily_avg_reward,
-			div_day * exp_acc, 0, 0, "daily:7200");
-		check_avg_storage(BlockReward::weekly_avg_reward,
-			ISSUE_NUM, exp_acc, 7200, "weekly:7200");
+		check_avg_storage(
+			BlockReward::hours12_avg_reward,
+			div_h12 * (exp_acc - exp_acc1),
+			0,
+			0,
+			"hours12:7200",
+		);
+		check_avg_storage(BlockReward::daily_avg_reward, div_day * exp_acc, 0, 0, "daily:7200");
+		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 7200, "weekly:7200");
 
 		for _i in 7200..7210 {
 			exp_acc += do_one_block(&txfees);
 		}
-		check_avg_storage(BlockReward::hours12_avg_reward, 101,
-			10*balance, 10, "hours12:7210");
-		check_avg_storage(BlockReward::daily_avg_reward, div_day * exp_acc,
-			10*balance, 10, "daily:7210");
-		check_avg_storage(BlockReward::weekly_avg_reward,
-			ISSUE_NUM, exp_acc, 7210, "weekly:7210");
-		
+		check_avg_storage(BlockReward::hours12_avg_reward, 101, 10 * balance, 10, "hours12:7210");
+		check_avg_storage(
+			BlockReward::daily_avg_reward,
+			div_day * exp_acc,
+			10 * balance,
+			10,
+			"daily:7210",
+		);
+		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 7210, "weekly:7210");
+
 		for _i in 7210..50400 {
 			exp_acc += do_one_block(&txfees);
 		}
-		check_avg_storage(BlockReward::hours12_avg_reward, balance,
-			0, 0, "hours12:50400");
-		check_avg_storage(BlockReward::daily_avg_reward, balance,
-			0, 0, "daily:50400");
-		check_avg_storage(BlockReward::weekly_avg_reward,
-			div_wee * exp_acc, 0, 0, "weekly:50400");
+		check_avg_storage(BlockReward::hours12_avg_reward, balance, 0, 0, "hours12:50400");
+		check_avg_storage(BlockReward::daily_avg_reward, balance, 0, 0, "daily:50400");
+		check_avg_storage(BlockReward::weekly_avg_reward, div_wee * exp_acc, 0, 0, "weekly:50400");
 
 		let txfees: Vec<u128> = vec![3];
 		let balance1 = balance;
 		let balance = ISSUE_NUM + txfees[0];
 		do_one_block_event_checked(&txfees);
-		check_avg_storage(BlockReward::hours12_avg_reward, balance1,
-			balance, 1, "hours12:50401");
-		check_avg_storage(BlockReward::daily_avg_reward, balance1,
-			balance, 1, "daily:50401");
-		check_avg_storage(BlockReward::weekly_avg_reward, balance1,
-			balance, 1, "weekly:50401");
+		check_avg_storage(BlockReward::hours12_avg_reward, balance1, balance, 1, "hours12:50401");
+		check_avg_storage(BlockReward::daily_avg_reward, balance1, balance, 1, "daily:50401");
+		check_avg_storage(BlockReward::weekly_avg_reward, balance1, balance, 1, "weekly:50401");
 	})
 }
-
 
 /// Represents free balance snapshot at a specific point in time
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]

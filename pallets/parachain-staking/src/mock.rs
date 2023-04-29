@@ -23,7 +23,7 @@ use super::*;
 use crate::{self as stake};
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
-	traits::{Currency, Imbalance, GenesisBuild, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
+	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
@@ -350,16 +350,14 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 	left.max(right) - left.min(right) <= err
 }
 
-
 // Todo: Several single methods below, could be replaced by such a helper definition, which
-// 		 would simplify the individual test-case setup. 
+// 		 would simplify the individual test-case setup.
 // pub(crate) struct ExtHelper {
 // 	/// How many tokens will be issued each block
 // 	pub issue_number: Balance,
 // 	/// Block-authors for every round
 // 	pub authors: Vec<Option<AccountId>>,
 // }
-
 
 fn update_average(next: Balance) -> Balance {
 	next

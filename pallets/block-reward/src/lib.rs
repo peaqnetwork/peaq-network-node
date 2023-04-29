@@ -11,7 +11,7 @@
 //!
 //! Major on-chain factors which can influence reward distribution are total issuance and total
 //! value locked by dapps staking.
-//! 
+//!
 //! This pallet provides average-values on the block-rewards, which will be distributed
 //! to the benificiaries. For further descriptions have a look on the 'ProvidesAverage'-trait
 //! definitions. These average-block-rewards are useful, because the amount of tokens can
@@ -61,7 +61,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-
 #[cfg(any(feature = "runtime-benchmarks"))]
 pub mod benchmarking;
 #[cfg(test)]
@@ -73,9 +72,10 @@ pub mod migrations;
 pub mod types;
 pub mod weights;
 
-pub use crate::pallet::*;
-pub use crate::types::{AverageSelector, BeneficiaryPayout, RewardDistributionConfig};
-
+pub use crate::{
+	pallet::*,
+	types::{AverageSelector, BeneficiaryPayout, RewardDistributionConfig},
+};
 
 #[macro_export]
 macro_rules! log {
@@ -87,26 +87,28 @@ macro_rules! log {
 	};
 }
 
-
 #[frame_support::pallet]
 pub mod pallet {
 
 	use super::*;
 
-	use peaq_frame_ext::averaging::*;
 	use migrations::StorageReleases;
+	use peaq_frame_ext::averaging::*;
 	use types::*;
 	use weights::WeightInfo;
 
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{
-			Currency, Imbalance, OnTimestampSet, OnUnbalanced, StorageVersion,
-		},
+		traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced, StorageVersion},
 	};
-	use frame_system::{ensure_root, pallet_prelude::{*, OriginFor}};
-	use sp_runtime::{traits::{Saturating, Zero}, Perbill};
-
+	use frame_system::{
+		ensure_root,
+		pallet_prelude::{OriginFor, *},
+	};
+	use sp_runtime::{
+		traits::{Saturating, Zero},
+		Perbill,
+	};
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
@@ -131,7 +133,6 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-
 	#[pallet::storage]
 	#[pallet::getter(fn storage_releases)]
 	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
@@ -152,7 +153,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn token_locker)]
 	pub(crate) type TokenLocker<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn average_selector)]
 	pub(crate) type AverageSelectorConfig<T: Config> = StorageValue<_, AverageSelector, ValueQuery>;
@@ -168,7 +169,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn weekly_avg_reward)]
 	pub(crate) type WeeklyBlockReward<T: Config> = StorageValue<_, DiscAvg<T>, ValueQuery>;
-
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
@@ -192,13 +192,11 @@ pub mod pallet {
 		AverageSelectorChanged(AverageSelector),
 	}
 
-
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Sum of all rations must be one whole (100%)
 		InvalidDistributionConfiguration,
 	}
-
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -207,7 +205,6 @@ pub mod pallet {
 		pub max_currency_supply: BalanceOf<T>,
 		pub average_selector: AverageSelector,
 	}
-
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -245,7 +242,8 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance: Zero + Saturating
+		<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance:
+			Zero + Saturating,
 	{
 		/// Sets the reward distribution configuration parameters which will be used from next block
 		/// reward distribution.
@@ -359,8 +357,8 @@ pub mod pallet {
 
 		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
 			let value = amount.peek();
-			TokenLocker::<T>::mutate(|lock| *lock += value );
-            Self::deposit_event(Event::<T>::TransactionFeesReceived(value));
+			TokenLocker::<T>::mutate(|lock| *lock += value);
+			Self::deposit_event(Event::<T>::TransactionFeesReceived(value));
 		}
 	}
 
@@ -372,8 +370,8 @@ pub mod pallet {
 		fn distribute_imbalances(imbalance: NegativeImbalanceOf<T>) {
 			let distro_params = Self::reward_config();
 			let amount = imbalance.peek();
-			
-                 // Pre-calculate balance which will be deposited for each beneficiary
+
+			// Pre-calculate balance which will be deposited for each beneficiary
 			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
 			let collator_balance = distro_params.collators_percent * imbalance.peek();
 			let lp_balance = distro_params.lp_percent * imbalance.peek();
@@ -436,15 +434,9 @@ pub mod pallet {
 	impl<T: Config> ProvidesAverages<BalanceOf<T>, AverageSelector> for Pallet<T> {
 		fn get_average_by(sel: AverageSelector) -> BalanceOf<T> {
 			match sel {
-				AverageSelector::DiAvg12Hours => {
-					Hours12BlockReward::<T>::get().avg
-				},
-				AverageSelector::DiAvgDaily => {
-					DailyBlockReward::<T>::get().avg
-				},
-				AverageSelector::DiAvgWeekly => {
-					WeeklyBlockReward::<T>::get().avg
-				},
+				AverageSelector::DiAvg12Hours => Hours12BlockReward::<T>::get().avg,
+				AverageSelector::DiAvgDaily => DailyBlockReward::<T>::get().avg,
+				AverageSelector::DiAvgWeekly => WeeklyBlockReward::<T>::get().avg,
 			}
 		}
 	}
@@ -456,7 +448,9 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> ProvidesAveragesFor<BalanceOf<T>, AverageSelector, BeneficiarySelector> for Pallet<T> {
+	impl<T: Config> ProvidesAveragesFor<BalanceOf<T>, AverageSelector, BeneficiarySelector>
+		for Pallet<T>
+	{
 		fn get_average_for_by(avg_sel: AverageSelector, rec: BeneficiarySelector) -> BalanceOf<T> {
 			let avg = Self::get_average_by(avg_sel);
 			Self::get_beneficiary_percent(rec) * avg

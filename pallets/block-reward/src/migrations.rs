@@ -1,16 +1,21 @@
 //! Storage migrations for the block-reward pallet.
-//! 
+//!
 //! History of storage modifications:
 //!   v2.0.0 - initial release
 //!   v2.1.0 - renamed HardCap to MaxCurrencySupply
-//!   v3 - added substrate storage_version, added AverageBlockReward storages (Daily, Weekly, Monthly, Anually)
+//!   v3 - added substrate storage_version, added AverageBlockReward storages (Daily, Weekly,
+//! Monthly, Anually)
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{pallet_prelude::*, storage_alias, weights::Weight};
 use scale_info::TypeInfo;
 use sp_core::RuntimeDebug;
 
-use crate::{log, pallet::*, types::{BalanceOf, DiscAvg, AverageSelector}};
+use crate::{
+	log,
+	pallet::*,
+	types::{AverageSelector, BalanceOf, DiscAvg},
+};
 
 // Note: This implementation could become obsolete by version 3. We may switch to regular
 // 		 storage-version provided by substrate. Until version 3 we upgrade version-tracking
@@ -25,7 +30,7 @@ pub enum StorageReleases {
 	#[default]
 	V2_0_0,
 	V2_1_0, // First changes compared to releases before, renaming HardCap to MaxCurrencySupply
-	V2_2_0,	// Last version defined by this enum, next will use substrate storage_version
+	V2_2_0, // Last version defined by this enum, next will use substrate storage_version
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {

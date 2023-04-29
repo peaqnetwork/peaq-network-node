@@ -127,7 +127,6 @@ mod types;
 
 use frame_support::pallet;
 
-
 #[pallet]
 pub mod pallet {
 	use super::*;
@@ -146,8 +145,8 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_balances::{BalanceLock, Locks};
-	use peaq_frame_ext::averaging::ProvidesAverageFor;
 	use pallet_session::ShouldEndSession;
+	use peaq_frame_ext::averaging::ProvidesAverageFor;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
@@ -206,9 +205,12 @@ pub mod pallet {
 			+ From<Self::BlockNumber>
 			+ TypeInfo
 			+ MaxEncodedLen;
-		
+
 		/// The provider for the average-block-reward.
-		type AvgBlockRewardProvider: ProvidesAverageFor<Self::CurrencyBalance, Self::AvgRecipientSelector>;
+		type AvgBlockRewardProvider: ProvidesAverageFor<
+			Self::CurrencyBalance,
+			Self::AvgRecipientSelector,
+		>;
 
 		/// The recipient-selector-datatype for ProvidesAverageFor.
 		type AvgRecipientSelector: Parameter;
@@ -465,7 +467,6 @@ pub mod pallet {
 		BlocksPerRoundSet(SessionIndex, T::BlockNumber, T::BlockNumber, T::BlockNumber),
 	}
 
-
 	/// The maximum number of collator candidates selected at each round.
 	#[pallet::storage]
 	#[pallet::getter(fn max_selected_candidates)]
@@ -598,7 +599,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn new_round_forced)]
 	pub(crate) type ForceNewRound<T: Config> = StorageValue<_, bool, ValueQuery>;
-
 
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
@@ -2249,9 +2249,8 @@ pub mod pallet {
 
 			// Note: Due to Peaq's varying block-rewards, we need an average value and we
 			// 	     do not mint tokens dynamically in dependency on demand
-			let avg_block_reward = T::AvgBlockRewardProvider::get_average_for(
-				T::AvgBlockRewardRecipient::get()
-			);
+			let avg_block_reward =
+				T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get());
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			reward_rate_config.compute_collator_reward::<T>(avg_block_reward) * multiplier
 		}
@@ -2281,9 +2280,8 @@ pub mod pallet {
 
 			// Note: Due to Peaq's varying block-rewards, we need an average value and we
 			// 	     do not mint tokens dynamically in dependency on demand
-			let avg_block_reward = T::AvgBlockRewardProvider::get_average_for(
-				T::AvgBlockRewardRecipient::get()
-			);
+			let avg_block_reward =
+				T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get());
 			let reward_rate_config = RewardRateConfig::<T>::get();
 			let total_stake = TotalCollatorStake::<T>::get();
 			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
