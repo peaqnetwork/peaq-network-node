@@ -766,8 +766,6 @@ impl pallet_session::Config for Runtime {
 pub mod staking {
 	use super::*;
 
-	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
-
 	/// Reward rate configuration which is used at genesis
 	pub fn reward_rate_config() -> RewardRateInfo {
 		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
@@ -804,6 +802,7 @@ pub mod staking {
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
+	pub const MAX_COLLATOR_STAKE: Balance = 10_000 * MinCollatorStake::get();
 }
 
 impl parachain_staking::Config for Runtime {
@@ -1044,6 +1043,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	parachain_staking::migrations::v7::MigrateToV8<Runtime>,
 >;
 
 impl fp_self_contained::SelfContainedCall for Call {
