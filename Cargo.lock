@@ -135,9 +135,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.70"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
 name = "approx"
@@ -251,7 +251,7 @@ dependencies = [
  "log",
  "parking",
  "polling",
- "rustix 0.37.17",
+ "rustix 0.37.18",
  "slab",
  "socket2",
  "waker-fn",
@@ -279,7 +279,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "event-listener",
  "futures-lite",
- "rustix 0.37.17",
+ "rustix 0.37.18",
  "signal-hook",
  "windows-sys 0.48.0",
 ]
@@ -3869,7 +3869,7 @@ checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
 dependencies = [
  "hermit-abi 0.3.1",
  "io-lifetimes 1.0.10",
- "rustix 0.37.17",
+ "rustix 0.37.18",
  "windows-sys 0.48.0",
 ]
 
@@ -5092,9 +5092,9 @@ checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
 
 [[package]]
 name = "matrixmultiply"
-version = "0.3.4"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "432b44fed6d9ed750739e7b719f0325555e6209d15e5ec3fd9e8a0a5509fdaf8"
+checksum = "fcce854c9e76cfd191182c280eb5460cb8efd2cb4e58a1fd56bc41102d7e5802"
 dependencies = [
  "autocfg",
  "rawpointer",
@@ -7369,6 +7369,7 @@ dependencies = [
 [[package]]
 name = "peaq-frame-ext"
 version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/peaq-frame-ext?branch=dev#c4155bf2f2e1d29ebb054cd2db6069fb673ebeab"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10172,9 +10173,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.17"
+version = "0.37.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc809f704c03a812ac71f22456c857be34185cac691a4316f27ab0f633bb9009"
+checksum = "8bbfc1d1c7c40c01715f47d71444744a81669ca84e8b63e25a55e169b1f86433"
 dependencies = [
  "bitflags",
  "errno 0.3.1",
@@ -12774,7 +12775,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "fastrand",
  "redox_syscall 0.3.5",
- "rustix 0.37.17",
+ "rustix 0.37.18",
  "windows-sys 0.45.0",
 ]
 
@@ -14162,9 +14163,9 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "winnow"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5617da7e1f97bf363947d767b91aaf3c2bbc19db7fda9c65af1278713d58e0a2"
+checksum = "69af645a61644c6dd379ade8b77cc87efb5393c988707bad12d3c8e00c50f669"
 dependencies = [
  "memchr",
 ]
