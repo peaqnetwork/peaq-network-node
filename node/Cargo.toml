@@ -251,7 +251,7 @@ path = '../client/rpc/trace'
 path = '../client/rpc/txpool'
 
 [dependencies.tokio]
-version = "1.13.0"
+version = "1.24.2"
 features = [ "macros", "sync" ]
 
 # peaq-rpc-debug = { path = "../../client/rpc/debug" }
