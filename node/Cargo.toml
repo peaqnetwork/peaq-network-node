@@ -1,6 +1,6 @@
 [package]
 name = 'peaq-node'
-version = '3.0.0-polkadot-v0.9.29'
+version = '3.0.0-polkadot-v0.9.38'
 description = 'A node of the peaq network.'
 authors = ['peaq network <https://github.com/peaqnetwork>']
 homepage = 'https://peaq.network/'
@@ -22,23 +22,23 @@ version = '3.1.2'
 
 [build-dependencies.substrate-build-script-utils]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.peaq-dev-runtime]
 path = '../runtime/peaq-dev'
-version = '3.0.0-polkadot-v0.9.29'
+version = '3.0.0-polkadot-v0.9.38'
 
 [dependencies.peaq-agung-runtime]
 path = '../runtime/agung'
-version = '3.0.0-polkadot-v0.9.29'
+version = '3.0.0-polkadot-v0.9.38'
 
 [dependencies.peaq-krest-runtime]
 path = '../runtime/krest'
-version = '3.0.0-polkadot-v0.9.29'
+version = '3.0.0-polkadot-v0.9.38'
 
 [dependencies.peaq-runtime]
 path = '../runtime/peaq'
-version = '3.0.0-polkadot-v0.9.29'
+version = '3.0.0-polkadot-v0.9.38'
 
 [dependencies]
 structopt = "0.3.8"
@@ -54,135 +54,128 @@ jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.frame-benchmarking-cli]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.pallet-transaction-payment-rpc]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-basic-authorship]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-cli]
-features = ['wasmtime']
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-client-api]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-consensus]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-consensus-aura]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-executor]
-features = ['wasmtime']
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-finality-grandpa]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-keystore]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-rpc]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-rpc-api]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-service]
-features = ['wasmtime']
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-telemetry]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-transaction-pool]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-transaction-pool-api]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-api]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-block-builder]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-blockchain]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-consensus]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-consensus-aura]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-core]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-finality-grandpa]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-runtime]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-timestamp]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.substrate-frame-rpc-system]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sp-inherents]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 
 [dependencies.pallet-contracts]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-contracts-rpc]
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-network]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.sc-network-common]
 git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.hex-literal]
 version = '0.3.3'
@@ -191,56 +184,56 @@ version = '0.3.3'
 # EVM
 [dependencies.fc-consensus]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.fc-db]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.fc-mapping-sync]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.fc-rpc]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
-features = [ "rpc_binary_search_estimate" ]
+branch = 'peaq-polkadot-v0.9.38'
+features = [ "rpc-binary-search-estimate" ]
 
 [dependencies.fc-rpc-core]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.fp-consensus]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.fp-storage]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.fp-rpc]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.pallet-base-fee]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.pallet-dynamic-fee]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.pallet-ethereum]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.pallet-evm]
 default-features = false
 git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 
 # Tracing
@@ -270,126 +263,126 @@ features = [ "macros", "sync" ]
 ## Parachain
 [dependencies.sc-tracing]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-client-cli]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-client-network]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-client-service]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-client-consensus-aura]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-client-consensus-common]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-client-consensus-relay-chain]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-relay-chain-interface]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-pallet-xcmp-queue]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-relay-chain-inprocess-interface]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-relay-chain-rpc-interface]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-primitives-core]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-primitives-parachain-inherent]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.substrate-prometheus-endpoint]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 # polkadot dependencies
 [dependencies.polkadot-primitives]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.polkadot-parachain]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.polkadot-service]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.polkadot-cli]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 optional = true
 
 [dependencies.sp-session]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.sp-keystore]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.sp-transaction-pool]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.sp-offchain]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.sc-chain-spec]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.fp-dynamic-fee]
 git = "https://github.com/peaqnetwork/frontier"
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.pallet-block-reward]
 path = '../pallets/block-reward'
 
 [dependencies.orml-xtokens]
 git = "https://github.com/peaqnetwork/open-runtime-module-library"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.cumulus-pallet-parachain-system]
 git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies.peaq-pallet-did-rpc]
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
+branch = 'peaq-polkadot-v0.9.38'
 
 [dependencies.peaq-pallet-rbac-rpc]
 git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-branch = 'dev'
+branch = 'peaq-polkadot-v0.9.38'
 
 
 # XCM
 [dependencies.xcm]
 git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.29"
+branch = "peaq-polkadot-v0.9.38"
 
 
 # Customized
@@ -401,7 +394,7 @@ path = "../runtime/common"
 
 [dependencies.peaq-pallet-storage-rpc]
 git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
-branch = 'dev'
+branch = 'peaq-polkadot-v0.9.38'
 default-features = false
 version = '0.0.1'
 

@@ -20,16 +20,16 @@ precompile-utils-macro = { path = "macro" }
 
 # Substrate
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-frame-support = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-frame-system = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-sp-core = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-sp-io = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-sp-std = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
+frame-support = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+frame-system = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+sp-core = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+sp-io = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+sp-std = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
 
 # Frontier
-evm = { git = "https://github.com/peaqnetwork/evm", branch = "peaq-polkadot-v0.9.29", default-features = false, features = [ "with-codec" ] }
-fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.29", default-features = false }
-pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.29", default-features = false }
+evm = { version = "0.37.0", default-features = false, features = [ "with-codec" ] }
+fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
+pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.1"

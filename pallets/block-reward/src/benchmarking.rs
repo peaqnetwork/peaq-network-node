@@ -2,7 +2,7 @@
 
 use super::*;
 
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::v1::{benchmarks, impl_benchmark_test_suite};
 use frame_system::{Pallet as System, RawOrigin};
 
 /// Assert that the last event equals the provided one.

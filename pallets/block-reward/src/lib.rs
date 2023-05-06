@@ -106,7 +106,7 @@ pub mod pallet {
 		type BeneficiaryPayout: BeneficiaryPayout<NegativeImbalanceOf<Self>>;
 
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -200,6 +200,7 @@ pub mod pallet {
 		/// - `reward_distro_params` - reward distribution params
 		///
 		/// Emits `DistributionConfigurationChanged` with config embeded into event itself.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::set_configuration())]
 		pub fn set_configuration(
 			origin: OriginFor<T>,
@@ -224,6 +225,7 @@ pub mod pallet {
 		/// - `block_reward` - block reward param
 		///
 		/// Emits `BlockIssueRewardChanged` with config embeded into event itself.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::set_block_issue_reward())]
 		pub fn set_block_issue_reward(
 			origin: OriginFor<T>,
@@ -244,6 +246,7 @@ pub mod pallet {
 		/// - `limit` - maximum currency supply limit param
 		///
 		/// Emits `MaxCurrencySupplyChanged` with config embeded into event itself.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::set_max_currency_supply())]
 		pub fn set_max_currency_supply(
 			origin: OriginFor<T>,
