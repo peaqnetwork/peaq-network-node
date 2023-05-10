@@ -216,7 +216,7 @@ pub mod pallet {
 		frame_system::Config + pallet_balances::Config + pallet_session::Config
 	{
 		/// Overarching event type
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		// FIXME: Remove Currency and CurrencyBalance types. Problem: Need to restrict
 		// pallet_balances::Config::Balance with From<u64> for usage with Perquintill
 		// multiplication
@@ -673,13 +673,13 @@ pub mod pallet {
 				);
 				if let Some(delegated_val) = opt_val {
 					assert_ok!(<Pallet<T>>::join_delegators(
-						T::Origin::from(Some(actor.clone()).into()),
+						T::RuntimeOrigin::from(Some(actor.clone()).into()),
 						T::Lookup::unlookup(delegated_val.clone()),
 						balance,
 					));
 				} else {
 					assert_ok!(<Pallet<T>>::join_candidates(
-						T::Origin::from(Some(actor.clone()).into()),
+						T::RuntimeOrigin::from(Some(actor.clone()).into()),
 						balance
 					));
 				}
@@ -710,6 +710,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account]
 		/// - Writes: ForceNewRound
 		/// # </weight>
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
 		pub fn force_new_round(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -735,6 +736,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account]
 		/// - Writes: RewardRateConfig
 		/// # </weight>
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
 		pub fn set_reward_rate(
 			origin: OriginFor<T>,
@@ -779,6 +781,7 @@ pub mod pallet {
 		/// - Reads: MaxSelectedCandidates, TopCandidates, N * CandidatePool
 		/// - Writes: MaxSelectedCandidates
 		/// # </weight>
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_max_selected_candidates(
 			*new,
 			T::MaxDelegatorsPerCollator::get()
@@ -856,6 +859,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account], Round
 		/// - Writes: Round
 		/// # </weight>
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_blocks_per_round())]
 		pub fn set_blocks_per_round(origin: OriginFor<T>, new: T::BlockNumber) -> DispatchResult {
 			ensure_root(origin)?;
@@ -888,6 +892,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account], MaxCollatorCandidateStake
 		/// - Writes: Round
 		/// # </weight>
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_max_candidate_stake())]
 		pub fn set_max_candidate_stake(origin: OriginFor<T>, new: BalanceOf<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -927,6 +932,7 @@ pub mod pallet {
 		/// - Kills: CandidatePool, DelegatorState for all delegators which only delegated to the
 		///   candidate
 		/// # </weight>
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::force_remove_candidate(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -997,6 +1003,7 @@ pub mod pallet {
 		///   TotalCollatorStake, TopCandidates, MaxSelectedCandidates, CandidatePool,
 		/// - Writes: Locks, TotalCollatorStake, CandidatePool, TopCandidates,
 		/// # </weight>
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1077,6 +1084,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account], TopCandidates, (N + 1) * CandidatePool, TotalCollatorStake
 		/// - Writes: CandidatePool, TopCandidates, TotalCollatorStake
 		/// # </weight>
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::init_leave_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxTopCandidates::get().saturating_mul(T::MaxDelegatorsPerCollator::get())
@@ -1144,6 +1152,7 @@ pub mod pallet {
 		/// - Writes: D * Unstaking, D * DelegatorState, Total
 		/// - Kills: CandidatePool, DelegatorState
 		/// # </weight>
+		#[pallet::call_index(8)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::execute_leave_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
@@ -1190,6 +1199,7 @@ pub mod pallet {
 		/// - Reads: [Origin Account], TotalCollatorStake, TopCandidates, CandidatePool
 		/// - Writes: TotalCollatorStake, CandidatePool, TopCandidates
 		/// # </weight>
+		#[pallet::call_index(9)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::cancel_leave_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
@@ -1248,6 +1258,7 @@ pub mod pallet {
 		///   TopCandidates, CandidatePool
 		/// - Writes: Locks, TotalCollatorStake, CandidatePool, TopCandidates
 		/// # </weight>
+		#[pallet::call_index(10)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::candidate_stake_more(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
@@ -1323,6 +1334,7 @@ pub mod pallet {
 		///   CandidatePool
 		/// - Writes: Unstaking, CandidatePool, TotalCollatorStake
 		/// # </weight>
+		#[pallet::call_index(11)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::candidate_stake_less(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1400,6 +1412,7 @@ pub mod pallet {
 		///   CandidatePool, LastDelegation, Round
 		/// - Writes: Locks, CandidatePool, DelegatorState, TotalCollatorStake, LastDelegation
 		/// # </weight>
+		#[pallet::call_index(12)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join_delegators(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1547,6 +1560,7 @@ pub mod pallet {
 		//
 		// NOTE: We can't benchmark this extrinsic until we have increased
 		// `MaxCollatorsPerDelegator` by at least 1, thus we use the closest weight we can get.
+		#[pallet::call_index(13)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::join_delegators(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1674,6 +1688,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, CandidatePool, TotalCollatorStake,
 		/// - Kills: DelegatorState
 		/// # </weight>
+		#[pallet::call_index(14)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave_delegators(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1719,6 +1734,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, Locks, DelegatorState, CandidatePool, TotalCollatorStake
 		/// - Kills: DelegatorState if the delegator has not delegated to another collator
 		/// # </weight>
+		#[pallet::call_index(15)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::revoke_delegation(
 			T::MaxCollatorsPerDelegator::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1757,6 +1773,7 @@ pub mod pallet {
 		///   CandidatePool, MaxSelectedCandidates
 		/// - Writes: Unstaking, Locks, DelegatorState, CandidatePool, TotalCollatorStake
 		/// # </weight>
+		#[pallet::call_index(16)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::delegator_stake_more(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
@@ -1843,6 +1860,7 @@ pub mod pallet {
 		///   CandidatePool, MaxSelectedCandidates
 		/// - Writes: Unstaking, DelegatorState, CandidatePool, TotalCollatorStake
 		/// # </weight>
+		#[pallet::call_index(17)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::delegator_stake_less(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
@@ -1916,6 +1934,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, Locks
 		/// - Kills: Unstaking & Locks if no balance is locked anymore
 		/// # </weight>
+		#[pallet::call_index(18)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::unlock_unstaked(
 			T::MaxUnstakeRequests::get().saturated_into::<u32>()
 		))]
@@ -2717,10 +2736,6 @@ pub mod pallet {
 		/// # </weight>
 		fn note_author(author: T::AccountId) {
 			Self::peaq_reward_mechanism(author);
-		}
-
-		fn note_uncle(_author: T::AccountId, _age: T::BlockNumber) {
-			// we too are not caring.
 		}
 	}
 
