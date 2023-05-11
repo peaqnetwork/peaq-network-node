@@ -45,11 +45,11 @@ structopt = "0.3.8"
 async-trait = "0.1"
 jsonrpc-pubsub = "18.0.0"
 futures = { version = "0.3.1", features = [ "compat" ] }
-log = "0.4.8"
+log = { workspace = true, default-features = true }
 clap = { version = "3.1", features = [ "derive" ] }
 jsonrpc-core = '18.0.0'
 url = "2.2.2"
-serde = { version = "1.0.136", features = [ "derive" ] }
+serde = { workspace = true, features = [ "derive" ] }
 jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1", features = [ "macros", "server" ] }
 
 [dependencies.frame-benchmarking]

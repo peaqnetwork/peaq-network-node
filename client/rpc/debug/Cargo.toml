@@ -9,7 +9,7 @@ version = "0.1.0"
 
 [dependencies]
 futures = { version = "0.3", features = [ "compat" ] }
-hex-literal = "0.3.4"
+hex-literal = { workspace = true }
 jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1", default-features = false, features = [ "macros", "server" ] }
 tokio = { version = "1.10", features = [ "sync", "time" ] }
 
@@ -24,13 +24,13 @@ sc-utils = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-po
 sp-api = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 sp-block-builder = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 sp-blockchain = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-io = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
+sp-core = { workspace = true, default-features = true }
+sp-io = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = true }
 
 # Frontier
-ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
-ethereum-types = "0.14.1"
+ethereum = { workspace = true, features = [ "with-codec" ] }
+ethereum-types = { workspace = true, default-features = true }
 fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", features = [ "rpc-binary-search-estimate" ] }
