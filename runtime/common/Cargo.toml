@@ -22,6 +22,11 @@ default-features = false
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.38'
 
+[dependencies.frame-support]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.38'
+
 # Customized
 [dependencies.peaq-primitives-xcm]
 path = "../../primitives/xcm"
@@ -33,4 +38,5 @@ std = [
 	'sp-runtime/std',
 	'pallet-transaction-payment/std',
 	"peaq-primitives-xcm/std",
+	'frame-support/std',
 ]

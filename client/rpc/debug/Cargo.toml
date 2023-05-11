@@ -29,8 +29,8 @@ sp-io = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polka
 sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 
 # Frontier
-ethereum = { version = "0.12.0", default-features = false, features = [ "with-codec" ] }
-ethereum-types = "0.13.1"
+ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
+ethereum-types = "0.14.1"
 fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", features = [ "rpc-binary-search-estimate" ] }

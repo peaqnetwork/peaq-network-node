@@ -2,9 +2,9 @@
 #![recursion_limit = "256"]
 
 
-use sp_runtime::{
-	parameter_types, Perbill,
-};
+use sp_runtime::Perbill;
+
+use frame_support::parameter_types;
 
 
 /// Balance of an account.

@@ -27,5 +27,5 @@ sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 
 # Frontier
-ethereum-types = "0.13.1"
+ethereum-types = "0.14.1"
 fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", features = [ "rpc-binary-search-estimate" ] }

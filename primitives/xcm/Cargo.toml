@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 bstringify = "0.1.2"
 serde = { version = "1.0.136" }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 num_enum = { version = "0.5.1", default-features = false }
 sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
