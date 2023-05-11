@@ -13,14 +13,14 @@ evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", default
 peaq-primitives-ext = { path = "../../primitives/ext", default-features = false }
 
 # Substrate
-codec = { workspace = true }
-sp-core = { workspace = true }
-sp-io = { workspace = true }
-sp-runtime = { workspace = true }
-sp-std = { workspace = true }
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
+sp-core = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+sp-io = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+sp-runtime = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+sp-std = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 
 # Frontier
-ethereum-types = { workspace = true }
+ethereum-types = { version = "0.14.1", default-features = false }
 evm = { version = "0.37.0", default-features = false, features = [ "with-codec" ] }
 evm-gasometer = { version = "0.37.0", default-features = false }
 evm-runtime = { version = "0.37.0", default-features = false }

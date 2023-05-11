@@ -8,14 +8,14 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
 
 [dependencies]
-ethereum = { workspace = true, features = [ "with-codec" ] }
+ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
 
 # Substrate
-codec = { workspace = true }
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 sp-api = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 sp-io = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
-sp-runtime = { workspace = true }
-sp-std = { workspace = true }
+sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
+sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 
 [features]
 default = [ "std" ]

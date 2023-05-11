@@ -28,34 +28,3 @@ lto = true
 # Peaq runtime requires unwinding.
 opt-level = 3
 panic = "unwind"
-
-[workspace.dependencies]
-hex-literal = "0.3.4"
-serde = "1.0.136"
-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
-parity-scale-codec = {version = "3.2.2", default-features = false, features = ["derive"]}
-log = { version = "0.4.17", default-features = false }
-
-frame-support = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-frame-system = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-frame-benchmarking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-
-ethereum = { version = "0.14.0", default-features = false }
-ethereum-types = { version = "0.14.1", default-features = false }
-
-sp-std = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-sp-core = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-sp-io = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-sp-runtime = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-sp-staking = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-
-sp-consensus-aura = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-scale-info = {version = "2.1.1", default-features = false, features = ["derive"] }
-
-
-pallet-aura = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
-pallet-authorship = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-pallet-balances = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-pallet-session = {git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false}
-pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
-
