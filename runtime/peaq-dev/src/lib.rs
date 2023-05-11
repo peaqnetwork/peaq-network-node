@@ -881,6 +881,7 @@ impl pallet_block_reward::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
 }
+
 pub struct BeneficiaryPayout();
 impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
 	fn treasury(reward: NegativeImbalance) {
@@ -1427,7 +1428,7 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config())
+				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 

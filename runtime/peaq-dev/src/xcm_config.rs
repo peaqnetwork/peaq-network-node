@@ -7,7 +7,6 @@ use super::{
 use cumulus_primitives_core::ParaId;
 use sp_runtime::{
 	traits::{ConstU32, Convert},
-	WeakBoundedVec,
 };
 use sp_std::prelude::*;
 use sp_core::bounded::BoundedVec;
