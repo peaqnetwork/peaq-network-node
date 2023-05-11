@@ -7942,6 +7942,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "sp-weights",
  "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
