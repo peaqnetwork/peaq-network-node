@@ -10,7 +10,7 @@ version = "0.1.0"
 [dependencies]
 futures = { version = "0.3", features = [ "compat" ] }
 hex-literal = "0.3.4"
-jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1", default-features = false, features = [ "macros", "server" ] }
+jsonrpsee = { version = "0.16.2", default-features = false, features = [ "macros", "server" ] }
 tokio = { version = "1.10", features = [ "sync", "time" ] }
 
 peaq-client-evm-tracing = { path = "../../evm-tracing" }
@@ -35,3 +35,4 @@ fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq
 fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", features = [ "rpc-binary-search-estimate" ] }
 fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
+fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }

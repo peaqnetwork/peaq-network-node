@@ -8,11 +8,6 @@ members = [
     'precompiles/utils/macro',
 ]
 
-[patch.crates-io]
-jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1" }
-jsonrpsee-core = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1" }
-jsonrpsee-types = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1" }
-
 # make sure dev builds with backtrace do
 # not slow us down
 [profile.dev.package.backtrace]
