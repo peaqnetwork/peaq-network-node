@@ -9,8 +9,8 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
@@ -21,6 +21,7 @@ use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{NetworkBlock, NetworkService};
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
+use sc_service::ImportQueue;
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -159,10 +160,14 @@ where
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
-		FrontierBlockImport<
+		ParachainBlockImport<
 			Block,
-			Arc<FullClient<RuntimeApi, Executor>>,
-			FullClient<RuntimeApi, Executor>,
+			FrontierBlockImport<
+				Block,
+				Arc<FullClient<RuntimeApi, Executor>>,
+				FullClient<RuntimeApi, Executor>,
+			>,
+			FullBackend,
 		>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -259,33 +264,36 @@ async fn build_relay_chain_interface(
 	parachain_config: &Configuration,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	task_manager: &mut TaskManager,
-	relay_chain_rpc_url: Option<url::Url>,
+    collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
-	match relay_chain_rpc_url {
-		Some(relay_chain_url) => {
-			let client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
-			Ok((Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>, None))
-		},
-		None => build_inprocess_relay_chain(
-			polkadot_config,
-			parachain_config,
-			telemetry_worker_handle,
-			task_manager,
-			None,
-		),
+	if !collator_options.relay_chain_rpc_urls.is_empty() {
+		build_minimal_relay_chain_node(
+				polkadot_config,
+				task_manager,
+				collator_options.relay_chain_rpc_urls,
+				)
+			.await
+	} else {
+		build_inprocess_relay_chain(
+				polkadot_config,
+				parachain_config,
+				telemetry_worker_handle,
+				task_manager,
+				None,
+				)
 	}
 }
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
-///
-/// NOTE: for runtimes that supports pallet_contracts_rpc
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
 async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	collator_options: CollatorOptions,
 	id: ParaId,
+	// [TODO]
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
 	fn_build_import_queue: BIQ,
@@ -309,17 +317,20 @@ where
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>
 		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
-		+ pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
-		FrontierBlockImport<
+		ParachainBlockImport<
 			Block,
-			Arc<FullClient<RuntimeApi, Executor>>,
-			FullClient<RuntimeApi, Executor>,
+			FrontierBlockImport<
+				Block,
+				Arc<FullClient<RuntimeApi, Executor>>,
+				FullClient<RuntimeApi, Executor>,
+			>,
+			FullBackend,
 		>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -365,7 +376,7 @@ where
 		&parachain_config,
 		telemetry_worker_handle,
 		&mut task_manager,
-		rpc_config.relay_chain_rpc_url.clone(),
+		collator_options.clone(),
 	)
 	.await
 	.map_err(|e| match e {
@@ -378,14 +389,14 @@ where
 	let is_authority = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
-	let (network, system_rpc_tx, start_network) =
+    let import_queue_service = params.import_queue.service();
+	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-			import_queue: import_queue.clone(),
+            import_queue: params.import_queue,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
@@ -528,6 +539,7 @@ where
 		backend: backend.clone(),
 		network: network.clone(),
 		system_rpc_tx,
+		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
 	})?;
 
@@ -562,7 +574,7 @@ where
 			relay_chain_interface,
 			spawner,
 			parachain_consensus,
-			import_queue,
+			import_queue: import_queue_service,
 			collator_key: collator_key.ok_or_else(|| {
 				sc_service::error::Error::Other("Collator Key is None".to_string())
 			})?,
@@ -578,8 +590,7 @@ where
 			para_id: id,
 			relay_chain_interface,
 			relay_chain_slot_duration,
-			import_queue,
-			collator_options: CollatorOptions { relay_chain_rpc_url },
+			import_queue: import_queue_service,
 		};
 
 		start_full_node(params)?;
@@ -593,10 +604,14 @@ where
 /// Build the import queue.
 pub fn build_import_queue<RuntimeApi, Executor>(
 	client: Arc<FullClient<RuntimeApi, Executor>>,
-	block_import: FrontierBlockImport<
+	block_import: ParachainBlockImport<
 		Block,
-		Arc<FullClient<RuntimeApi, Executor>>,
-		FullClient<RuntimeApi, Executor>,
+		FrontierBlockImport<
+			Block,
+			Arc<FullClient<RuntimeApi, Executor>>,
+			FullClient<RuntimeApi, Executor>,
+		>,
+		FullBackend,
 	>,
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
@@ -643,11 +658,8 @@ where
 				let dynamic_fee =
 					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-				Ok((time, slot, dynamic_fee))
+				Ok((slot, time, dynamic_fee))
 			},
-			can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(
-				client2.executor().clone(),
-			),
 			telemetry: telemetry_handle,
 		})) as Box<_>
 	};
@@ -676,6 +688,7 @@ where
 pub async fn start_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	collator_options: CollatorOptions,
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
@@ -698,7 +711,6 @@ where
 		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>
 		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
-		+ pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
@@ -706,17 +718,15 @@ where
 	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(
 		parachain_config,
 		polkadot_config,
+		collator_options,
 		id,
 		rpc_config,
 		target_gas_price,
 		|client, block_import, config, telemetry, task_manager, target_gas_price| {
 			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-			let can_author_with =
-				sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
 			cumulus_client_consensus_aura::import_queue::<
 				sp_consensus_aura::sr25519::AuthorityPair,
-				_,
 				_,
 				_,
 				_,
@@ -737,10 +747,9 @@ where
 					let dynamic_fee =
 						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-					Ok((time, slot, dynamic_fee))
+					Ok((slot, time, dynamic_fee))
 				},
 				registry: config.prometheus_registry(),
-				can_author_with,
 				spawner: &task_manager.spawn_essential_handle(),
 				telemetry,
 			})
@@ -795,7 +804,7 @@ where
 							let dynamic_fee =
 								fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-							Ok((time, slot, parachain_inherent, dynamic_fee))
+							Ok((slot, time, parachain_inherent, dynamic_fee))
 						}
 					},
 					block_import: client.clone(),

@@ -26,9 +26,6 @@ use sp_blockchain::{
 use sp_runtime::traits::BlakeTwo256;
 // use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
 
-//For ink! contracts
-use pallet_contracts_rpc::{Contracts, ContractsApiServer};
-
 use sc_service::TaskManager;
 use sp_runtime::traits::Block as BlockT;
 pub mod tracing;
@@ -139,7 +136,6 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
-	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
@@ -179,9 +175,6 @@ where
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
-
-	// Contracts RPC API extension
-	io.merge(Contracts::new(Arc::clone(&client)).into_rpc())?;
 
 	// TODO: are we supporting signing?
 	let signers = Vec::new();

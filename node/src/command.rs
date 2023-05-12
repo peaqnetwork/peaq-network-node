@@ -429,6 +429,7 @@ pub fn run() -> sc_cli::Result<()> {
 		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 				let rpc_config = RpcConfig {
@@ -476,6 +477,7 @@ pub fn run() -> sc_cli::Result<()> {
 					start_node::<RuntimeApi, Executor>(
 						config,
 						polkadot_config,
+						collator_options,
 						id,
 						rpc_config,
 						cli.run.target_gas_price,
