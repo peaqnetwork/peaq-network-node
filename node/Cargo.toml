@@ -42,14 +42,14 @@ version = '3.0.0-polkadot-v0.9.38'
 
 [dependencies]
 structopt = "0.3.8"
-async-trait = "0.1"
+async-trait = "0.1.59"
 jsonrpc-pubsub = "18.0.0"
-futures = { version = "0.3.1", features = [ "compat" ] }
+futures = { version = "0.3.21" }
 log = "0.4.17"
-clap = { version = "3.1", features = [ "derive" ] }
+clap = { version = "4.0.32", features = ["derive"] }
 jsonrpc-core = '18.0.0'
 url = "2.2.2"
-serde = { version = "1.0.136", features = [ "derive" ] }
+serde = { version = "1.0.151", features = ["derive"] }
 jsonrpsee = { version = "0.16.2", features = [ "macros", "server" ] }
 
 [dependencies.frame-benchmarking]
