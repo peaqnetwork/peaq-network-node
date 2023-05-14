@@ -765,7 +765,7 @@ impl pallet_session::Config for Runtime {
 pub mod staking {
 	use super::*;
 
-	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
+	pub const MAX_COLLATOR_STAKE: Balance = 10_000 * MinCollatorStake::get();
 
 	/// Reward rate configuration which is used at genesis
 	pub fn reward_rate_config() -> RewardRateInfo {
