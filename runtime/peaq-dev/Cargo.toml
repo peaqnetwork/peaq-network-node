@@ -462,6 +462,10 @@ git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
 branch = "peaq-polkadot-v0.9.38"
 
+[dependencies.zenlink-protocol]
+path = "../../../Zenlink-DEX-Module/zenlink-protocol"
+default-features = false
+
 # Benchmark
 [dependencies.pallet-collective]
 git = "https://github.com/peaqnetwork/substrate"
@@ -608,6 +612,7 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-xtokens/std",
+	"zenlink-protocol/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",
