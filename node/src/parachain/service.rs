@@ -405,7 +405,7 @@ where
 
 	let fee_history_limit = rpc_config.fee_history_limit;
 
-	let overrides = crate::rpc::overrides_handle(client.clone());
+	let overrides = fc_storage::overrides_handle(client.clone());
 
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.

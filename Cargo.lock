@@ -7827,6 +7827,7 @@ dependencies = [
  "fc-mapping-sync",
  "fc-rpc",
  "fc-rpc-core",
+ "fc-storage",
  "fp-consensus",
  "fp-dynamic-fee",
  "fp-rpc",

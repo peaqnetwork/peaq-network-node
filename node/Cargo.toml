@@ -51,6 +51,7 @@ jsonrpc-core = '18.0.0'
 url = "2.2.2"
 serde = { version = "1.0.151", features = ["derive"] }
 jsonrpsee = { version = "0.16.2", features = [ "macros", "server" ] }
+fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 
 [dependencies.frame-benchmarking]
 git = 'https://github.com/peaqnetwork/substrate'
@@ -197,7 +198,6 @@ branch = 'peaq-polkadot-v0.9.38'
 [dependencies.fc-rpc]
 git = "https://github.com/peaqnetwork/frontier"
 branch = 'peaq-polkadot-v0.9.38'
-features = [ "rpc-binary-search-estimate" ]
 
 [dependencies.fc-rpc-core]
 git = "https://github.com/peaqnetwork/frontier"
