@@ -6,6 +6,8 @@ use fc_rpc::{
 	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
+// [TODO]...
+use sp_api::CallApiAt;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 use jsonrpsee::RpcModule;
@@ -94,6 +96,7 @@ where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: BlockchainEvents<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: CallApiAt<Block>,
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
@@ -144,9 +147,6 @@ where
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
-	// TODO: are we supporting signing?
-	let signers = Vec::new();
-
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
 		fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
@@ -156,16 +156,16 @@ where
 			unreachable!()
 		}
 	}
-	let convert_transaction: Option<Never> = None;
+    let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	io.merge(
 		Eth::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
 			graph.clone(),
-			convert_transaction,
+			no_tx_converter,
 			Arc::clone(&network),
-			signers,
+            Default::default(),
 			Arc::clone(&overrides),
 			Arc::clone(&backend),
 			is_authority,
