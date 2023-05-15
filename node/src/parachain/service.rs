@@ -131,10 +131,14 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			FrontierBlockImport<
+			ParachainBlockImport<
 				Block,
-				Arc<FullClient<RuntimeApi, Executor>>,
-				FullClient<RuntimeApi, Executor>,
+				FrontierBlockImport<
+					Block,
+					Arc<FullClient<RuntimeApi, Executor>>,
+					FullClient<RuntimeApi, Executor>,
+				>,
+				FullBackend,
 			>,
 			Option<FilterPool>,
 			Option<Telemetry>,
@@ -229,9 +233,12 @@ where
 	let frontier_block_import =
 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
+    let parachain_block_import: ParachainBlockImport<_, _, _> =
+        ParachainBlockImport::new(frontier_block_import, backend.clone());
+
 	let import_queue = fn_build_import_queue(
 		client.clone(),
-		frontier_block_import.clone(),
+        parachain_block_import.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
@@ -247,7 +254,7 @@ where
 		transaction_pool,
 		select_chain: (),
 		other: (
-			frontier_block_import,
+			parachain_block_import,
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
@@ -342,6 +349,15 @@ where
 	>,
 	BIC: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
+		ParachainBlockImport<
+			Block,
+			FrontierBlockImport<
+				Block,
+				Arc<FullClient<RuntimeApi, Executor>>,
+				FullClient<RuntimeApi, Executor>,
+			>,
+			FullBackend,
+		>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -359,7 +375,7 @@ where
 		target_gas_price,
 	)?;
 	let (
-		_block_import,
+		parachain_block_import,
 		filter_pool,
 		mut telemetry,
 		telemetry_worker_handle,
@@ -553,6 +569,7 @@ where
 	if is_authority {
 		let parachain_consensus = fn_build_consensus(
 			client.clone(),
+			parachain_block_import,
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
 			&task_manager,
@@ -678,7 +695,7 @@ where
 
 	Ok(BasicQueue::new(
 		verifier,
-		Box::new(ParachainBlockImport::new(block_import)),
+		Box::new(block_import),
 		None,
 		&spawner,
 		registry,
@@ -756,6 +773,7 @@ where
 			.map_err(Into::into)
 		},
 		|client,
+		 block_import,
 		 prometheus_registry,
 		 telemetry,
 		 task_manager,
@@ -807,7 +825,7 @@ where
 							Ok((slot, time, parachain_inherent, dynamic_fee))
 						}
 					},
-					block_import: client.clone(),
+					block_import: block_import,
 					para_client: client,
 					backoff_authoring_blocks: Option::<()>::None,
 					sync_oracle,
