@@ -457,6 +457,11 @@ git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false
 branch = "peaq-polkadot-v0.9.38"
 
+[dependencies.orml-xcm]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.38"
+
 [dependencies.orml-xcm-support]
 git = "https://github.com/peaqnetwork/open-runtime-module-library"
 default-features = false

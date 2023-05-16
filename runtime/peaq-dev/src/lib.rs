@@ -174,7 +174,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 7,
+	spec_version: 8,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -966,6 +966,16 @@ impl orml_unknown_tokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+pub type MoreThanHalfCouncil = EitherOfDiverse<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
+>;
+
+impl orml_xcm::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type SovereignOrigin = MoreThanHalfCouncil;
+}
+
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EntityId = EntityId;
@@ -1001,6 +1011,12 @@ type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdapt
 pub struct LocalAssetAdaptor<Local>(PhantomData<Local>);
 
 impl<Local> LocalAssetAdaptor<Local> {
+	// ZenlinkAssetId{
+	// 	chain_id: u32,
+	// 	asset_type: u8,
+	// 	asset_index: u64,
+	// }
+
 	fn currency_into_asset(assed_id: ZenlinkAssetId) -> Result<CurrencyId, ()> {
 		Err(())
 	}
@@ -1160,7 +1176,8 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
-		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
+		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 38,
+		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 39,
 
 		Vesting: pallet_vesting = 50,
 
