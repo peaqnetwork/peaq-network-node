@@ -184,7 +184,7 @@ First, install [Docker](https://docs.docker.com/get-docker/) and
 Please use following command to run peaq-network-node parachian in the docker container connected with polkadot relaychain running in the PEAQ development environment.
 
  ```bash
-docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023
+docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
 --chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
 --base-path chain-data \
 --port 40333 \
