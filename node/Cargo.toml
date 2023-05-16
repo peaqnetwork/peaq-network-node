@@ -60,6 +60,7 @@ branch = 'peaq-polkadot-v0.9.38'
 [dependencies.frame-benchmarking-cli]
 git = 'https://github.com/peaqnetwork/substrate'
 branch = 'peaq-polkadot-v0.9.38'
+optional = true
 
 [dependencies.pallet-transaction-payment-rpc]
 git = 'https://github.com/peaqnetwork/substrate'
@@ -413,6 +414,7 @@ aura = [
 	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
+	"frame-benchmarking-cli",
 	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",

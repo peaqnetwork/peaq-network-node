@@ -494,7 +494,7 @@ where
 
 	// variable `rpc_config` will be moved in next code block, we need to
 	// save param `relay_chain_rpc_url` to be able to use it later.
-	let relay_chain_rpc_url = rpc_config.relay_chain_rpc_url.clone();
+	let relay_chain_rpc_urls = rpc_config.relay_chain_rpc_urls.clone();
 
 	let rpc_builder = {
 		let client = client.clone();
