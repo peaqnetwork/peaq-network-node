@@ -177,6 +177,7 @@ pub trait TokenInfo {
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
+	StableLpToken(PoolId),
 }
 
 impl CurrencyId {
@@ -186,6 +187,10 @@ impl CurrencyId {
 
 	pub fn is_erc20_currency_id(&self) -> bool {
 		matches!(self, CurrencyId::Erc20(_))
+	}
+
+	pub fn is_stable_lp_token_id(&self) -> bool {
+		matches!(self, CurrencyId::StableLpToken(_))
 	}
 }
 
@@ -199,6 +204,7 @@ impl TryFrom<CurrencyId> for EvmAddress {
 				MIRRORED_TOKENS_ADDRESS_START | u64::from(val.currency_id().unwrap()),
 			)),
 			CurrencyId::Erc20(address) => Ok(address),
+			CurrencyId::StableLpToken(_) => Err(()), // TODO check & discuss
 		}
 	}
 }

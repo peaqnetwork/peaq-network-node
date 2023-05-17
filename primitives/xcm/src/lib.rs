@@ -60,6 +60,9 @@ pub type AccountIndex = u32;
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 
+/// TODO: Discuss this!
+pub type AssetId = u128;
+
 /// Index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
@@ -68,6 +71,9 @@ pub type Hash = sp_core::H256;
 
 /// An instant or duration in time.
 pub type Moment = u64;
+
+/// TODO: Discuss this
+pub type PoolId = u32;
 
 /// Counter for the number of eras that have passed.
 /// pub type EraIndex = u32;
