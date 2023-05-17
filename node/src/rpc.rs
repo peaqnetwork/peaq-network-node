@@ -6,6 +6,8 @@ use fc_rpc::{
 	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
 	SchemaV2Override, SchemaV3Override, StorageOverride,
 };
+// [TODO]...
+use sp_api::CallApiAt;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 use jsonrpsee::RpcModule;
@@ -25,9 +27,6 @@ use sp_blockchain::{
 };
 use sp_runtime::traits::BlakeTwo256;
 // use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
-
-//For ink! contracts
-use pallet_contracts_rpc::{Contracts, ContractsApiServer};
 
 use sc_service::TaskManager;
 use sp_runtime::traits::Block as BlockT;
@@ -84,38 +83,6 @@ pub struct TracingConfig {
 	pub trace_filter_max_count: u32,
 }
 
-pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
-where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-{
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-
-	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
-	})
-}
-
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
@@ -129,6 +96,7 @@ where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: BlockchainEvents<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: CallApiAt<Block>,
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
@@ -139,7 +107,6 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
-	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
@@ -180,12 +147,6 @@ where
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
-	// Contracts RPC API extension
-	io.merge(Contracts::new(Arc::clone(&client)).into_rpc())?;
-
-	// TODO: are we supporting signing?
-	let signers = Vec::new();
-
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
 		fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
@@ -195,16 +156,16 @@ where
 			unreachable!()
 		}
 	}
-	let convert_transaction: Option<Never> = None;
+    let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	io.merge(
 		Eth::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
 			graph.clone(),
-			convert_transaction,
+			no_tx_converter,
 			Arc::clone(&network),
-			signers,
+            Default::default(),
 			Arc::clone(&overrides),
 			Arc::clone(&backend),
 			is_authority,

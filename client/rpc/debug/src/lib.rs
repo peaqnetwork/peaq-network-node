@@ -16,7 +16,7 @@
 #![feature(stmt_expr_attributes)]
 
 use futures::{SinkExt, StreamExt};
-use jsonrpsee::core::RpcResult;
+use jsonrpsee::core::{async_trait, RpcResult};
 pub use peaq_rpc_core_debug::{DebugServer, TraceParams};
 
 use tokio::{
@@ -65,7 +65,7 @@ impl Debug {
 	}
 }
 
-#[jsonrpsee::core::async_trait]
+#[async_trait]
 impl DebugServer for Debug {
 	/// Handler for `debug_traceTransaction` request. Communicates with the service-defined task
 	/// using channels.
@@ -144,7 +144,7 @@ where
 		raw_max_memory_usage: usize,
 	) -> (impl Future<Output = ()>, DebugRequester) {
 		let (tx, mut rx): (DebugRequester, _) =
-			sc_utils::mpsc::tracing_unbounded("debug-requester");
+			sc_utils::mpsc::tracing_unbounded("debug-requester", 100_000);
 
 		let fut = async move {
 			loop {
@@ -296,7 +296,7 @@ where
 					frontier_backend.as_ref(),
 					eth_hash,
 				) {
-					Ok(Some(id)) => Ok(id),
+					Ok(Some(hash)) => Ok(BlockId::Hash(hash)),
 					Ok(_) => Err(internal_err("Block hash not found".to_string())),
 					Err(e) => Err(e),
 				}
@@ -308,7 +308,10 @@ where
 		// Get Blockchain backend
 		let blockchain = backend.blockchain();
 		// Get the header I want to work with.
-		let header = match client.header(reference_id) {
+		let Ok(hash) = client.expect_block_hash_from_id(&reference_id) else {
+			return Err(internal_err("Block header not found"))
+		};
+		let header = match client.header(hash) {
 			Ok(Some(h)) => h,
 			_ => return Err(internal_err("Block header not found")),
 		};
@@ -316,16 +319,20 @@ where
 		// Get parent blockid.
 		let parent_block_id = BlockId::Hash(*header.parent_hash());
 
-		let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(
-			client.as_ref(),
-			reference_id,
-		);
+		let schema = fc_storage::onchain_storage_schema::<B, C, BE>(client.as_ref(), hash);
 
 		// Using storage overrides we align with `:ethereum_schema` which will result in proper
 		// SCALE decoding in case of migration.
 		let statuses = match overrides.schemas.get(&schema) {
-			Some(schema) => schema.current_transaction_statuses(&reference_id).unwrap_or_default(),
-			_ => return Err(internal_err(format!("No storage override at {:?}", reference_id))),
+			Some(schema) => schema
+				.current_transaction_statuses(hash)
+				.unwrap_or_default(),
+			_ => {
+				return Err(internal_err(format!(
+					"No storage override at {:?}",
+					reference_id
+				)))
+			}
 		};
 
 		// Known ethereum transaction hashes.
@@ -338,7 +345,7 @@ where
 
 		// Get block extrinsics.
 		let exts = blockchain
-			.body(reference_id)
+			.body(hash)
 			.map_err(|e| internal_err(format!("Fail to read blockchain db: {:?}", e)))?
 			.unwrap_or_default();
 
@@ -451,7 +458,7 @@ where
 			return Err(internal_err("Runtime api version call failed (trace)".to_string()))
 		};
 
-		let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(
+		let schema = fc_storage::onchain_storage_schema::<B, C, BE>(
 			client.as_ref(),
 			reference_id,
 		);
@@ -459,7 +466,7 @@ where
 		// Get the block that contains the requested transaction. Using storage overrides we align
 		// with `:ethereum_schema` which will result in proper SCALE decoding in case of migration.
 		let reference_block = match overrides.schemas.get(&schema) {
-			Some(schema) => schema.current_block(&reference_id),
+			Some(schema) => schema.current_block(reference_id),
 			_ => return Err(internal_err(format!("No storage override at {:?}", reference_id))),
 		};
 
