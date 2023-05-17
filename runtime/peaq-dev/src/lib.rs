@@ -115,7 +115,7 @@ pub use peaq_pallet_mor::{self, types::MorConfig};
 mod weights;
 pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
-use orml_traits::{parameter_type_with_key, MultiCurrency};
+use orml_traits::parameter_type_with_key;
 pub mod constants;
 
 
@@ -1036,6 +1036,9 @@ construct_runtime!(
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 38,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 39,
+		ZenlinkStableAmm: zenlink_stable_amm::{Pallet, Call, Storage, Event<T>}  = 40,
+		ZenlinkSwapRouter: zenlink_swap_router::{Pallet, Call, Storage, Event<T>}  = 41,
+		ZenlinkVault: zenlink_vault::{Pallet, Call, Storage, Event<T>}  = 42,
 
 		Vesting: pallet_vesting = 50,
 

@@ -471,6 +471,18 @@ branch = "peaq-polkadot-v0.9.38"
 path = "../../../Zenlink-DEX-Module/zenlink-protocol"
 default-features = false
 
+[dependencies.zenlink-stable-amm]
+path = "../../../Zenlink-DEX-Module/zenlink-stable-amm"
+default-features = false
+
+[dependencies.zenlink-swap-router]
+path = "../../../Zenlink-DEX-Module/zenlink-swap-router"
+default-features = false
+
+[dependencies.zenlink-vault]
+path = "../../../Zenlink-DEX-Module/zenlink-vault"
+default-features = false
+
 # Benchmark
 [dependencies.pallet-collective]
 git = "https://github.com/peaqnetwork/substrate"
