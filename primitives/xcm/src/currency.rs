@@ -159,6 +159,17 @@ pub trait TokenInfo {
 	fn decimals(&self) -> Option<u8>;
 }
 
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub enum DexShare {
+	Token(TokenSymbol),
+	Erc20(EvmAddress),
+	// LiquidCrowdloan(Lease),
+	// ForeignAsset(ForeignAssetId),
+	// StableAssetPoolToken(StableAssetPoolId),
+}
+
 #[derive(
 	Encode,
 	Decode,
@@ -177,7 +188,8 @@ pub trait TokenInfo {
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
-	StableLpToken(PoolId),
+	DexShare(DexShare, DexShare),
+	// StableLpToken(PoolId),
 }
 
 impl CurrencyId {
@@ -189,8 +201,8 @@ impl CurrencyId {
 		matches!(self, CurrencyId::Erc20(_))
 	}
 
-	pub fn is_stable_lp_token_id(&self) -> bool {
-		matches!(self, CurrencyId::StableLpToken(_))
+	pub fn is_dexshare_currency_id(&self) -> bool {
+		matches!(self, CurrencyId::DexShare(_, _))
 	}
 }
 
@@ -204,7 +216,7 @@ impl TryFrom<CurrencyId> for EvmAddress {
 				MIRRORED_TOKENS_ADDRESS_START | u64::from(val.currency_id().unwrap()),
 			)),
 			CurrencyId::Erc20(address) => Ok(address),
-			CurrencyId::StableLpToken(_) => Err(()), // TODO check & discuss
+			CurrencyId::DexShare(_, _) => Err(()), // TODO check & discuss
 		}
 	}
 }

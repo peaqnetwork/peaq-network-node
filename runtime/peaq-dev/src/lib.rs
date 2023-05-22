@@ -36,7 +36,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, DispatchError, DispatchResult, Perbill, Percent, Permill, Perquintill,
+	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 
@@ -1036,9 +1036,9 @@ construct_runtime!(
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 38,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 39,
-		ZenlinkStableAmm: zenlink_stable_amm::{Pallet, Call, Storage, Event<T>}  = 40,
-		ZenlinkSwapRouter: zenlink_swap_router::{Pallet, Call, Storage, Event<T>}  = 41,
-		ZenlinkVault: zenlink_vault::{Pallet, Call, Storage, Event<T>}  = 42,
+		// ZenlinkStableAmm: zenlink_stable_amm::{Pallet, Call, Storage, Event<T>}  = 40,
+		// ZenlinkSwapRouter: zenlink_swap_router::{Pallet, Call, Storage, Event<T>}  = 41,
+		// ZenlinkVault: zenlink_vault::{Pallet, Call, Storage, Event<T>}  = 42,
 
 		Vesting: pallet_vesting = 50,
 

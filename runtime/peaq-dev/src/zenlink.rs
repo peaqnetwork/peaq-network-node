@@ -1,20 +1,17 @@
 //! Submodule for Zenlink-DEX-Module integration
 
 use super::{
-	AccountId, Balance, Balances, Currencies, CurrencyId, ParachainInfo, Runtime, RuntimeEvent,
-	Timestamp, Tokens, ZenlinkProtocol, ZenlinkStableAmm,
+	Balances, Currencies, CurrencyId, ParachainInfo, Runtime, RuntimeEvent,
+	Tokens, TokenSymbol, ZenlinkProtocol,
 };
-use peaq_primitives_xcm::PoolId;
 use frame_support::{parameter_types, pallet_prelude::*, PalletId};
 use orml_traits::MultiCurrency;
 use sp_std::{vec, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler, MultiAssetsHandler, PairLpGenerate,
+	AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler, PairLpGenerate,
 	ZenlinkMultiAssets,
 };
-use zenlink_stable_amm::traits::{StablePoolLpCurrencyIdGenerate, ValidateCurrency};
-use zenlink_vault::VaultAssetGenerate;
 
 
 // Zenlink-DEX Parameter definitions
@@ -22,7 +19,8 @@ parameter_types! {
 	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
 
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
-	pub const StableAmmPalletId: PalletId = PalletId(*b"zenlkamm");
+	// pub const StableAmmPalletId: PalletId = PalletId(*b"zenlkamm");
+	// pub const StringLimit: u32 = 50;
 	pub const VaultPalletId: PalletId = PalletId(*b"zenlkvau");
 
 	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
@@ -49,38 +47,38 @@ impl zenlink_protocol::Config for Runtime {
     type WeightInfo = (); //zenlink_protocol::default_weights::SubstrateWeight<Runtime>;
 }
 
-impl zenlink_stable_amm::Config for Runtime {
-	type RuntimeEvent = super::RuntimeEvent;
-	type CurrencyId = CurrencyId;
-	type MultiCurrency = Tokens;
-	type PoolId = PoolId;
-	type TimeProvider = Timestamp;
-	type EnsurePoolAsset = StableAmmVerifyPoolAsset;
-	type LpGenerate = PoolLpGenerate;
-	type PoolCurrencySymbolLimit = StringLimit;
-	type PalletId = StableAmmPalletId;
-	type WeightInfo = ();
-}
+// impl zenlink_stable_amm::Config for Runtime {
+// 	type RuntimeEvent = super::RuntimeEvent;
+// 	type CurrencyId = CurrencyId;
+// 	type MultiCurrency = Tokens;
+// 	type PoolId = PoolId;
+// 	type TimeProvider = Timestamp;
+// 	type EnsurePoolAsset = StableAmmVerifyPoolAsset;
+// 	type LpGenerate = PoolLpGenerate;
+// 	type PoolCurrencySymbolLimit = StringLimit;
+// 	type PalletId = StableAmmPalletId;
+// 	type WeightInfo = ();
+// }
 
-impl zenlink_swap_router::Config for Runtime {
-	type RuntimeEvent = super::RuntimeEvent;
-	type StablePoolId = PoolId;
-	type Balance = Balance;
-	type StableCurrencyId = CurrencyId;
-	type NormalCurrencyId = AssetId;
-	type NormalAmm = ZenlinkProtocol;
-	type StableAMM = ZenlinkStableAmm;
-	type WeightInfo = ();
-}
+// impl zenlink_swap_router::Config for Runtime {
+// 	type RuntimeEvent = super::RuntimeEvent;
+// 	type StablePoolId = PoolId;
+// 	type Balance = Balance;
+// 	type StableCurrencyId = CurrencyId;
+// 	type NormalCurrencyId = AssetId;
+// 	type NormalAmm = ZenlinkProtocol;
+// 	type StableAMM = ZenlinkStableAmm;
+// 	type WeightInfo = ();
+// }
 
-impl zenlink_vault::Config for Runtime {
-	type RuntimeEvent = super::RuntimeEvent;
-	type AssetId = CurrencyId;
-	type MultiAsset = Tokens;
-	type VaultAssetGenerate = VaultAssetGenerator;
-	type PalletId = VaultPalletId;
-	type WeightInfo = ();
-}
+// impl zenlink_vault::Config for Runtime {
+// 	type RuntimeEvent = super::RuntimeEvent;
+// 	type AssetId = CurrencyId;
+// 	type MultiAsset = Tokens;
+// 	type VaultAssetGenerate = VaultAssetGenerator;
+// 	type PalletId = VaultPalletId;
+// 	type WeightInfo = ();
+// }
 
 
 /// TODO documentation
@@ -97,8 +95,14 @@ impl<Local> LocalAssetAdaptor<Local> {
 	// 	asset_index: u64,
 	// }
 
-	fn currency_into_asset(assed_id: ZenlinkAssetId) -> Result<CurrencyId, ()> {
-		Err(())
+	fn currency_into_asset(asset_id: ZenlinkAssetId) -> Result<CurrencyId, ()> {
+		if asset_id.chain_id != SelfParaId::get() {
+			Err(())
+		} else if asset_id.asset_type != zenlink_protocol::NATIVE {
+			Err(())
+		} else {
+			Ok(CurrencyId::Token(TokenSymbol::PEAQ))
+		}
 	}
 }
 
@@ -199,42 +203,42 @@ where
 }
 
 
-/// TODO documentation
-pub struct PoolLpGenerate;
+// /// TODO documentation
+// pub struct PoolLpGenerate;
 
-impl StablePoolLpCurrencyIdGenerate<CurrencyId, PoolId> for PoolLpGenerate {
-	fn generate_by_pool_id(pool_id: PoolId) -> CurrencyId {
-		CurrencyId::StableLpToken(pool_id)
-	}
-}
-
-
-/// TODO documentation
-pub struct StableAmmVerifyPoolAsset;
-
-impl ValidateCurrency<CurrencyId> for StableAmmVerifyPoolAsset {
-	fn validate_pooled_currency(_currencies: &[CurrencyId]) -> bool {
-		true
-	}
-
-	fn validate_pool_lp_currency(_currency_id: CurrencyId) -> bool {
-		if Tokens::total_issuance(_currency_id) > 0 {
-			return false
-		}
-		true
-	}
-}
+// impl StablePoolLpCurrencyIdGenerate<CurrencyId, PoolId> for PoolLpGenerate {
+// 	fn generate_by_pool_id(pool_id: PoolId) -> CurrencyId {
+// 		CurrencyId::StableLpToken(pool_id)
+// 	}
+// }
 
 
-/// TODO documentation
-pub struct VaultAssetGenerator;
+// /// TODO documentation
+// pub struct StableAmmVerifyPoolAsset;
 
-impl VaultAssetGenerate<CurrencyId> for VaultAssetGenerator {
-	fn generate(asset: CurrencyId) -> Option<CurrencyId> {
-		match asset {
-			CurrencyId::Token(token_symbol) => Some(CurrencyId::Vault(token_symbol)),
-			_ => None,
-		}
-	}
-}
+// impl ValidateCurrency<CurrencyId> for StableAmmVerifyPoolAsset {
+// 	fn validate_pooled_currency(_currencies: &[CurrencyId]) -> bool {
+// 		true
+// 	}
+
+// 	fn validate_pool_lp_currency(_currency_id: CurrencyId) -> bool {
+// 		if Tokens::total_issuance(_currency_id) > 0 {
+// 			return false
+// 		}
+// 		true
+// 	}
+// }
+
+
+// /// TODO documentation
+// pub struct VaultAssetGenerator;
+
+// impl VaultAssetGenerate<CurrencyId> for VaultAssetGenerator {
+// 	fn generate(asset: CurrencyId) -> Option<CurrencyId> {
+// 		match asset {
+// 			CurrencyId::Token(token_symbol) => Some(CurrencyId::Vault(token_symbol)),
+// 			_ => None,
+// 		}
+// 	}
+// }
 
