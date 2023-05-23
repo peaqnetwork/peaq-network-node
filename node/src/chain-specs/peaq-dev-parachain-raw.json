@@ -3,7 +3,7 @@
     "id": "dev-testnet-fork",
     "chainType": "Development",
     "bootNodes": [
-        "/dns/wsspc1-qa.agung.peaq.network/tcp/30333/p2p/12D3KooWPmr3uZzZH7sVHpYsr7GV2CGoxAHb17my8rYz9Wz9yGck"
+        "/dns/wsspc1-qa.agung.peaq.network/tcp/40333/p2p/12D3KooWPmr3uZzZH7sVHpYsr7GV2CGoxAHb17my8rYz9Wz9yGck"
     ],
     "telemetryEndpoints": null,
     "protocolId": null,
