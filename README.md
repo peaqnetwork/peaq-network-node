@@ -163,7 +163,7 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
+docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
 --chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
 --base-path chain-data \
 --port 30333 \
@@ -179,7 +179,7 @@ docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parach
 #### Krest env
 
  ```bash
-docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v31052023 \
+docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v31052023 \
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
 --port 30333 \
@@ -189,7 +189,7 @@ docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parach
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
 --port 30343 \
---sync wrap \
+--sync warp \
 --ws-port 9977
  ```
 
