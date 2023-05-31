@@ -163,7 +163,7 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
 ```bash
-docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
+docker run -v peaq-dev-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
 --chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
 --base-path chain-data \
 --port 30333 \
