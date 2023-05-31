@@ -182,13 +182,14 @@ docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parach
 docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v31052023 \
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
---port 40333 \
+--port 30333 \
 --ws-port 9944 \
 --ws-external --rpc-cors=all \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
 --port 30343 \
+--sync wrap \
 --ws-port 9977
  ```
 
