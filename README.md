@@ -165,7 +165,7 @@ Please use following command to run peaq-network-node parachian in the docker co
 docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
 --chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
 --base-path chain-data \
---port 40333 \
+--port 30333 \
 --ws-port 9944 \
 --ws-external --rpc-cors=all \
 -- \
@@ -173,8 +173,7 @@ docker run -v my.parchain.data:/chain-data -p 9944:9944 -p 9933:9933 peaq/parach
 --chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
 --port 30343 \
 --ws-port 9977
-
- ```
+```
 
 Once you run this command, wait for a few second. Now the peaq parachian should be running in the docker container that is connected to relaychain running in PEAQ dev environament.
 
