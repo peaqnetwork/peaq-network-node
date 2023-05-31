@@ -189,7 +189,7 @@ docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
 --port 30343 \
---sync wrap \
+--sync warp \
 --ws-port 9977
  ```
 
