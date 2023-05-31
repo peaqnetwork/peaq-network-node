@@ -4,9 +4,8 @@ on:
     branches:
       - 'parachain_dev'
     tags:
-      - 'v*'
-      - 'peaq-dev-local-v*'
-      - 'krest-local-v*'
+      - 'peaq-dev-local-v*' # For the peaq-dev's env in the parchain-launch usage
+      - 'krest-local-v*' # For the krest env in the parchain-launch usage
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
