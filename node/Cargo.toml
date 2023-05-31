@@ -375,7 +375,7 @@ branch = "peaq-polkadot-v0.9.29"
 
 [dependencies.peaq-pallet-did-rpc]
 git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'peaq-polkadot-v0.9.29'
+branch = 'dev'
 version = '0.0.2'
 
 
