@@ -188,7 +188,8 @@ pub enum DexShare {
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
-	DexShare(DexShare, DexShare),
+	TradingPair(TradingPair),
+	// DexShare(DexShare, DexShare),
 	// StableLpToken(PoolId),
 }
 

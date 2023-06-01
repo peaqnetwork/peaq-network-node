@@ -72,9 +72,6 @@ pub type Hash = sp_core::H256;
 /// An instant or duration in time.
 pub type Moment = u64;
 
-/// TODO: Discuss this
-pub type PoolId = u32;
-
 /// Counter for the number of eras that have passed.
 /// pub type EraIndex = u32;
 

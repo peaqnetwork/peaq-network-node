@@ -26,6 +26,7 @@ parameter_types! {
 	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
 		// Krest local and live, 0.01 BNC
 		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2241))), 10_000_000_000),
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
 		// TODO: More to be added
 
 		// Zenlink local 1 for test
