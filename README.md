@@ -259,7 +259,7 @@ The folder .local is needed because that is where data such as session keys are 
 --chain ./node/src/chain-specs/kusama.json \
 --port 30343 \
 --pruning=16 --unsafe-pruning \
---sync wrap \
+--sync warp \
 --ws-port 9977
 ```
 
