@@ -181,6 +181,7 @@ docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/paracha
  ```bash
 docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v31052023 \
 --chain ./node/src/chain-specs/krest-raw.json \
+--parachain-id 2241 \
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
@@ -250,6 +251,7 @@ The folder .local is needed because that is where data such as session keys are 
 # Krest env
 ./scripts/docker_run.sh \
 ./target/release/peaq-node \
+--parachain-id 2241 \
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
 --port 30333 \
