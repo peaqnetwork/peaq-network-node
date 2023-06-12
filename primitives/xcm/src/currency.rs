@@ -136,19 +136,26 @@ create_currency_id! {
 	#[repr(u8)]
 	pub enum TokenSymbol {
 		PEAQ("PEAQ", 18) = 0,
-
+		KRST("KREST", 18) = 1,
+		AGNG("AGUNG", 18) = 2,
 
 		DOT("Polkadot", 10) = 64,
-
+		KSM("Kusama", 10) = 65,
+		ROC("Rococo", 10) = 66,
 
 		ACA("Acala", 12) = 128,
+		BNC("Bifrost Native Token", 12) = 129,
 	}
 }
 
 pub mod parachain {
 	pub mod acala {
-		pub const ID: u32 = 3000;
+		pub const ID: u32 = 2000;
 		pub const ACA_KEY: &[u8] = &[0, 0];
+	}
+	pub mod bifrost {
+		pub const ID: u32 = 2030;
+		pub const BNC_KEY: &[u8] = &[0, 1];
 	}
 }
 
@@ -188,9 +195,8 @@ pub enum DexShare {
 pub enum CurrencyId {
 	Token(TokenSymbol),
 	Erc20(EvmAddress),
-	TradingPair(TradingPair),
+	// TradingPair(TradingPair),
 	// DexShare(DexShare, DexShare),
-	// StableLpToken(PoolId),
 }
 
 impl CurrencyId {
@@ -202,9 +208,9 @@ impl CurrencyId {
 		matches!(self, CurrencyId::Erc20(_))
 	}
 
-	pub fn is_dexshare_currency_id(&self) -> bool {
-		matches!(self, CurrencyId::DexShare(_, _))
-	}
+	// pub fn is_dexshare_currency_id(&self) -> bool {
+	// 	matches!(self, CurrencyId::DexShare(_, _))
+	// }
 }
 
 /// Generate the EvmAddress from CurrencyId so that evm contracts can call the erc20 contract.
@@ -217,7 +223,7 @@ impl TryFrom<CurrencyId> for EvmAddress {
 				MIRRORED_TOKENS_ADDRESS_START | u64::from(val.currency_id().unwrap()),
 			)),
 			CurrencyId::Erc20(address) => Ok(address),
-			CurrencyId::DexShare(_, _) => Err(()), // TODO check & discuss
+			// CurrencyId::DexShare(_, _) => Err(()), // TODO check & discuss
 		}
 	}
 }

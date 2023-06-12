@@ -169,8 +169,7 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToCallOrigin;
 	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
-	// Teleporting is disabled.
-	type IsTeleporter = ();
+	type IsTeleporter = Everything;
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
@@ -306,6 +305,10 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 				parachain::acala::ID,
 				parachain::acala::ACA_KEY.to_vec(),
 			),
+			Token(BNC) => native_currency_location(
+				parachain::bifrost::ID,
+				parachain::bifrost::BNC_KEY.to_vec(),
+			),
 			_ => None,
 		}
 	}
@@ -314,6 +317,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
+
 		if location == MultiLocation::parent() {
 			return Some(Token(DOT))
 		}
@@ -328,6 +332,17 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 							match currency_id {
 								Token(ACA) => Some(currency_id),
+								_ => None,
+							}
+						} else {
+							None
+						}
+					},
+					parachain::bifrost::ID => {
+						let key = &data[..data.len().min(length as usize)];
+						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
+							match currency_id {
+								Token(BNC) => Some(currency_id),
 								_ => None,
 							}
 						} else {
