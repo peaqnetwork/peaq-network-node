@@ -171,7 +171,7 @@ docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/paracha
 --ws-external --rpc-cors=all \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
+--chain ./node/src/chain-specs/rococo-local-raw.json \
 --port 30343 \
 --ws-port 9977
  ```
@@ -241,7 +241,7 @@ The folder .local is needed because that is where data such as session keys are 
 --ws-port 9944 \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
+--chain ./node/src/chain-specs/rococo-local-raw.json \
 --port 30343 \
 --ws-port 9977
 ```
