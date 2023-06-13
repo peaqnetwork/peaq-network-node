@@ -157,7 +157,7 @@ pub mod parachain {
 		pub const ACA_KEY: &[u8] = &[0, 0];
 	}
 	pub mod bifrost {
-		pub const ID: u32 = 2030;
+		pub const ID: u32 = 3000;
 		pub const BNC_KEY: &[u8] = &[0, 1];
 	}
 }

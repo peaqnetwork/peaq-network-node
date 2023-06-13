@@ -13,6 +13,7 @@ use sp_core::bounded::BoundedVec;
 
 use codec::{Decode, Encode};
 use frame_support::{
+	log,
 	parameter_types,
 	traits::{Everything, Nothing},
 	dispatch::Weight,
@@ -121,6 +122,12 @@ parameter_types! {
 		dot_per_second() * 5,
 		0
 	);
+	pub BncPerSecond: (AssetId, u128, u128) = (
+		native_currency_location(parachain::bifrost::ID, parachain::bifrost::BNC_KEY.to_vec()).unwrap().into(),
+		// TODO: Need to check the fee: ACA:DOT = 5:1
+		dot_per_second() * 5,
+		0
+	);
 	pub BaseRate: u128 = peaq_per_second();
 }
 
@@ -128,6 +135,7 @@ pub type Trader = (
 	FixedRateOfFungible<PeaqPerSecond, ToTreasury>,
 	FixedRateOfFungible<DotPerSecond, ToTreasury>,
 	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
+	FixedRateOfFungible<BncPerSecond, ToTreasury>,
 );
 
 pub type Barrier = (
@@ -331,24 +339,22 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				match id {
 					parachain::acala::ID => {
 						let key = &data[..data.len().min(length as usize)];
-						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-							match currency_id {
-								Token(ACA) => Some(currency_id),
-								_ => None,
-							}
-						} else {
-							None
+						match key {
+							parachain::acala::ACA_KEY => Some(Token(ACA)),
+							_ => None,
 						}
 					},
 					parachain::bifrost::ID => {
+						log::error!("data.len(): {:?}", data.len());
+						log::error!("length: {:?}", length);
 						let key = &data[..data.len().min(length as usize)];
-						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-							match currency_id {
-								Token(BNC) => Some(currency_id),
-								_ => None,
-							}
-						} else {
-							None
+						log::error!("bifrost key: {:?}", key);
+						match key {
+							parachain::bifrost::BNC_KEY => {
+								log::error!("bifrost key: {:?}", key);
+								Some(Token(BNC))
+							},
+							_ => None,
 						}
 					},
 					_ => {
