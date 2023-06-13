@@ -8138,6 +8138,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "zenlink-protocol",
 ]
 
 [[package]]
