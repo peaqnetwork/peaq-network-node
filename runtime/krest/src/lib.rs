@@ -573,7 +573,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = DOLLARS;
 	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
+	pub const Burn: Permill = Permill::from_percent(1);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = DOLLARS;
@@ -767,7 +767,7 @@ impl pallet_session::Config for Runtime {
 pub mod staking {
 	use super::*;
 
-	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
+	pub const MAX_COLLATOR_STAKE: Balance = 10_000 * MinCollatorStake::get();
 
 	/// Reward rate configuration which is used at genesis
 	pub fn reward_rate_config() -> RewardRateInfo {
@@ -796,9 +796,9 @@ pub mod staking {
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
 			/// Minimum stake required to be reserved to be a collator is 1000 KREST
-			pub const MinCollatorStake: Balance = 1_000 * DOLLARS;
+			pub const MinCollatorStake: Balance = 10_000 * DOLLARS;
 			/// Minimum stake required to be reserved to be a delegator is 100 KREST
-			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
+			pub const MinDelegatorStake: Balance = 250 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorCandidates: u32 = 16;

@@ -6,7 +6,7 @@ use peaq_krest_runtime::{
 	Precompiles, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{
-	DOLLARS, MILLICENTS, TOKEN_DECIMALS,
+	DOLLARS, NANOCENTS, TOKEN_DECIMALS,
 	Balance,
 };
 use sc_service::{ChainType, Properties};
@@ -134,8 +134,8 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				machines_subsidization_percent: Perbill::from_percent(10),
 			},
-			block_issue_reward: 7_909_867 * MILLICENTS,
-			max_currency_supply: 4_200_000_000 * DOLLARS,
+			block_issue_reward: 7_61_035_007_610 * NANOCENTS,
+			max_currency_supply: 4_000_000 * DOLLARS,
 		},
 		vesting: Default::default(),
 		aura: Default::default(),
