@@ -16,7 +16,7 @@ use fc_db::DatabaseSource;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use futures::StreamExt;
 use polkadot_service::CollatorPair;
-use sc_client_api::{BlockchainEvents, ExecutorProvider};
+use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{NetworkBlock, NetworkService};
@@ -492,10 +492,6 @@ where
 		prometheus_registry.clone(),
 	));
 
-	// variable `rpc_config` will be moved in next code block, we need to
-	// save param `relay_chain_rpc_url` to be able to use it later.
-	let relay_chain_rpc_urls = rpc_config.relay_chain_rpc_urls.clone();
-
 	let rpc_builder = {
 		let client = client.clone();
 		let network = network.clone();
@@ -503,7 +499,6 @@ where
 
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
-		let _backend = backend.clone();
 		let ethapi_cmd = ethapi_cmd.clone();
 		let max_past_logs = rpc_config.max_past_logs;
 		let overrides = overrides.clone();

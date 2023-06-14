@@ -1,15 +1,13 @@
 //! A collection of node-specific RPC methods.
 
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 
 use fc_rpc::{
-	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-	SchemaV2Override, SchemaV3Override, StorageOverride,
+	EthBlockDataCacheTask, OverrideHandle,
 };
 // [TODO]...
 use sp_api::CallApiAt;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use fp_storage::EthereumStorageSchema;
 use jsonrpsee::RpcModule;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
