@@ -300,7 +300,6 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
-	// [TODO]
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
 	fn_build_import_queue: BIQ,
