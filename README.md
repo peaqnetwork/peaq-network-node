@@ -163,16 +163,16 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v16052023 \
+docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v12062023 \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
+--chain ./node/src/chain-specs/peaq-dev-raw.json \
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
 --ws-external --rpc-cors=all \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
+--chain ./node/src/chain-specs/rococo-local-raw.json \
 --port 30343 \
 --ws-port 9977
  ```
@@ -238,13 +238,13 @@ The folder .local is needed because that is where data such as session keys are 
 ./scripts/docker_run.sh \
 ./target/release/peaq-node \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-parachain-raw.json \
+--chain ./node/src/chain-specs/peaq-dev-raw.json \
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-relaychain-raw.json \
+--chain ./node/src/chain-specs/rococo-local-raw.json \
 --port 30343 \
 --ws-port 9977
 ```
