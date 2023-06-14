@@ -5,7 +5,6 @@ use std::sync::Arc;
 use fc_rpc::{
 	EthBlockDataCacheTask, OverrideHandle,
 };
-// [TODO]...
 use sp_api::CallApiAt;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
