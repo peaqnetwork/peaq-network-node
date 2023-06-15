@@ -1,7 +1,7 @@
 use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
 	AccountId, Balance, Balances, RuntimeCall, Currencies, CurrencyId, RuntimeEvent, RuntimeOrigin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, TestAccount, TokenSymbol, UnknownTokens, XcmpQueue,
+	ParachainSystem, PolkadotXcm, Runtime, PeaqPotAccount, TokenSymbol, UnknownTokens, XcmpQueue,
 	AllPalletsWithSystem,
 };
 use cumulus_primitives_core::ParaId;
@@ -77,7 +77,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	LocationToAccountId,
 	CurrencyId,
 	CurrencyIdConvert,
-	DepositToAlternative<TestAccount, Currencies, CurrencyId, AccountId, Balance>,
+	DepositToAlternative<PeaqPotAccount, Currencies, CurrencyId, AccountId, Balance>,
 >;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
@@ -144,10 +144,10 @@ impl TakeRevenue for ToTreasury {
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
 			if let Some(currency_id) = CurrencyIdConvert::convert(location) {
-				// Ensure TestAccount have ed requirement for native asset, but don't need
+				// Ensure PeaqPotAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
 				// Ignore the result.
-				let _ = Currencies::deposit(currency_id, &TestAccount::get(), amount);
+				let _ = Currencies::deposit(currency_id, &PeaqPotAccount::get(), amount);
 			}
 		}
 	}

@@ -196,6 +196,7 @@ use runtime_common::{
 	MILLICENTS, CENTS, DOLLARS,
 	Balance,
 	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
+	CurrencyHooks,
 };
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
@@ -937,7 +938,8 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TestAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {
@@ -951,8 +953,7 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	// [TODO]
-	type CurrencyHooks = ();
+	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
 }
 
 impl orml_unknown_tokens::Config for Runtime {

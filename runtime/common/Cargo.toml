@@ -32,6 +32,22 @@ branch = 'peaq-polkadot-v0.9.38'
 path = "../../primitives/xcm"
 default-features = false
 
+[dependencies.orml-tokens]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.38"
+
+[dependencies.orml-traits]
+git = "https://github.com/peaqnetwork/open-runtime-module-library"
+default-features = false
+branch = "peaq-polkadot-v0.9.38"
+
+[dependencies.frame-system]
+default-features = false
+git = 'https://github.com/peaqnetwork/substrate'
+branch = 'peaq-polkadot-v0.9.38'
+
+
 [features]
 default = ["std"]
 std = [
@@ -39,4 +55,7 @@ std = [
 	'pallet-transaction-payment/std',
 	"peaq-primitives-xcm/std",
 	'frame-support/std',
+	"orml-tokens/std",
+	"orml-traits/std",
+	'frame-system/std',
 ]

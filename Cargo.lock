@@ -10558,6 +10558,9 @@ name = "runtime-common"
 version = "0.0.1"
 dependencies = [
  "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
  "pallet-transaction-payment",
  "peaq-primitives-xcm",
  "sp-runtime",
