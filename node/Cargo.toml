@@ -26,16 +26,16 @@ peaq-agung-runtime = { path = '../runtime/agung', version = '3.0.0-polkadot-v0.9
 peaq-krest-runtime = { path = '../runtime/krest', version = '3.0.0-polkadot-v0.9.38' }
 peaq-runtime = { path = '../runtime/peaq', version = '3.0.0-polkadot-v0.9.38' }
 
-structopt = { workspace = true }
-async-trait = { workspace = true }
-jsonrpc-pubsub = { workspace = true }
-futures = { workspace = true }
-log = { workspace = true }
-clap = { workspace = true, features = ["derive"] }
-jsonrpc-core = { workspace = true }
-url = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
+structopt = { workspace = true, default-features = true }
+async-trait = { workspace = true, default-features = true }
+jsonrpc-pubsub = { workspace = true, default-features = true }
+futures = { workspace = true, default-features = true }
+log = { workspace = true, default-features = true }
+clap = { workspace = true, default-features = true, features = ["derive"] }
+jsonrpc-core = { workspace = true, default-features = true }
+url = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true, features = ["derive"] }
+jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
 fc-storage = { workspace = true, default-features = true }
 
 
@@ -71,7 +71,7 @@ sp-inherents = { workspace = true, default-features = true }
 pallet-contracts = { workspace = true, default-features = true }
 sc-network = { workspace = true, default-features = true }
 sc-network-common = { workspace = true, default-features = true }
-hex-literal = { workspace = true }
+hex-literal = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
 fc-db = { workspace = true, default-features = true }
 fc-mapping-sync = { workspace = true, default-features = true }
@@ -90,7 +90,7 @@ peaq-rpc-primitives-debug = { path = '../primitives/rpc/debug' }
 peaq-rpc-primitives-txpool = { path = '../primitives/rpc/txpool' }
 peaq-rpc-trace = { path = '../client/rpc/trace' }
 peaq-rpc-txpool = { path = '../client/rpc/txpool' }
-tokio = { workspace = true, features = [ 'macros', 'sync' ] }
+tokio = { workspace = true, default-features = true, features = [ 'macros', 'sync' ] }
 sc-tracing = { workspace = true, default-features = true }
 cumulus-client-cli = { workspace = true, default-features = true }
 cumulus-client-network = { workspace = true, default-features = true }

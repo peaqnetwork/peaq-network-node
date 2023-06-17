@@ -8,18 +8,16 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.1.0"
 
 [dependencies]
-environmental = { version = "1.1.2", default-features = false }
-
-# Substrate
-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
-sp-runtime-interface = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
+environmental = { workspace = true, default-features = false }
+codec = { package = "parity-scale-codec", workspace = true }
+sp-runtime-interface = { workspace = true, default-features = false }
 
 # Ethereum
-ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
-ethereum-types = { version = "0.14.1", default-features = false }
-evm = { version = "0.37.0", default-features = false, features = [ "with-codec" ] }
-evm-gasometer = { version = "0.37.0", default-features = false }
-evm-runtime = { version = "0.37.0", default-features = false }
+ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
+ethereum-types = { workspace = true, default-features = false }
+evm = { workspace = true, default-features = false, features = [ "with-codec" ] }
+evm-gasometer = { workspace = true, default-features = false }
+evm-runtime = { workspace = true, default-features = false }
 
 [features]
 default = [ "std" ]
