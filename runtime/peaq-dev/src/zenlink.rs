@@ -55,7 +55,7 @@ type PoolId = u32;
 impl zenlink_stable_amm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type CurrencyId = CurrencyId;
-	type MultiCurrency = Tokens;
+	type MultiCurrency = Currencies;
 	type PoolId = PoolId;
 	type TimeProvider = Timestamp;
 	type EnsurePoolAsset = StableAmmVerifyPoolAsset;
@@ -73,17 +73,17 @@ impl zenlink_swap_router::Config for Runtime {
 	type NormalCurrencyId = ZenlinkAssetId;
 	type NormalAmm = ZenlinkProtocol;
 	type StableAMM = ZenlinkStableAmm;
-	type WeightInfo = ();
+	type WeightInfo = zenlink_swap_router::weights::SubstrateWeight<Runtime>;
 }
 
-impl zenlink_vault::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = CurrencyId;
-	type MultiAsset = Tokens;
-	type VaultAssetGenerate = VaultAssetGenerator;
-	type PalletId = VaultPalletId;
-	type WeightInfo = ();
-}
+// impl zenlink_vault::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type AssetId = CurrencyId;
+// 	type MultiAsset = Tokens;
+// 	type VaultAssetGenerate = VaultAssetGenerator;
+// 	type PalletId = VaultPalletId;
+// 	type WeightInfo = ();
+// }
 
 
 /// TODO documentation
@@ -93,51 +93,12 @@ pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetA
 /// TODO documentation
 pub struct LocalAssetAdaptor<Local>(PhantomData<Local>);
 
-/*
- * impl<Local> LocalAssetAdaptor<Local> {
- *     // ZenlinkAssetId{
- *     // 	chain_id: u32,
- *     // 	asset_type: u8,
- *     // 	asset_index: u64,
- *     // }
- *
- *     fn currency_into_asset(asset_id: ZenlinkAssetId) -> Result<CurrencyId, ()> {
- *         log::error!("asset_id.chain_id: {:?}", asset_id.chain_id);
- *         log::error!("asset_id.asset_type: {:?}", asset_id.asset_type);
- *         log::error!("asset_id.asset_index: {:?}", asset_id.asset_index);
- *         log::error!("SelfParaId: {:?}", SelfParaId::get());
- *         log::error!("zenlink_protocol::NATIVE: {:?}", zenlink_protocol::NATIVE);
- *         if asset_id.chain_id != SelfParaId::get() {
- *             return Err(());
- *         }
- *         match asset_id.asset_type {
- *             zenlink_protocol::NATIVE => {
- *                 if asset_id.asset_index == 0 {
- *                     Ok(CurrencyId::Token(TokenSymbol::PEAQ))
- *                 } else {
- *                     Err(())
- *                 }
- *             },
- *             zenlink_protocol::LOCAL => {
- *                 if asset_id.asset_index == 0 {
- *                     Ok(CurrencyId::Token(TokenSymbol::DOT))
- *                 } else {
- *                     Err(())
- *                 }
- *             },
- *             _ => Err(()),
- *         }
- *     }
- * }
- */
-
 impl<Local, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local>
 where
 	Local: MultiCurrency<AccountId, CurrencyId = CurrencyId>,
 {
 	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-		// if let Ok(currency_id) = LocalAssetAdaptor::<Local>::currency_into_asset(asset_id) {
 			return TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, &who))
 				.unwrap_or_default();
 		}
@@ -146,7 +107,6 @@ where
 
 	fn local_total_supply(asset_id: ZenlinkAssetId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-		// if let Ok(currency_id) = LocalAssetAdaptor::<Local>::currency_into_asset(asset_id) {
 			return TryInto::<AssetBalance>::try_into(Local::total_issuance(currency_id))
 				.unwrap_or_default();
 		}
@@ -154,10 +114,7 @@ where
 	}
 
 	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
-		log::error!("QQQQ asset_id: {:?}", asset_id);
 		let currency_id: Result<CurrencyId, ()> = asset_id.try_into();
-		// let currency_id: Result<CurrencyId, ()> =
-		//	LocalAssetAdaptor::<Local>::currency_into_asset(asset_id);
 		match currency_id {
 			Ok(_) => true,
 			Err(_) => false,
@@ -171,7 +128,6 @@ where
 		amount: AssetBalance,
 	) -> DispatchResult {
 		if let Ok(currency_id) = asset_id.try_into() {
-		// if let Ok(currency_id) = LocalAssetAdaptor::<Local>::currency_into_asset(asset_id) {
 			Local::transfer(
 				currency_id,
 				&origin,
@@ -191,7 +147,6 @@ where
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
 		if let Ok(currency_id) = asset_id.try_into() {
-		// if let Ok(currency_id) = LocalAssetAdaptor::<Local>::currency_into_asset(asset_id) {
 			Local::deposit(
 				currency_id,
 				&origin,
@@ -212,7 +167,6 @@ where
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
 		if let Ok(currency_id) = asset_id.try_into() {
-		// if let Ok(currency_id) = LocalAssetAdaptor::<Local>::currency_into_asset(asset_id) {
 			Local::withdraw(
 				currency_id,
 				&origin,

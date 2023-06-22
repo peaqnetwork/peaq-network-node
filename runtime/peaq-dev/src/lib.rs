@@ -1038,7 +1038,7 @@ construct_runtime!(
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 39,
 		ZenlinkStableAmm: zenlink_stable_amm::{Pallet, Call, Storage, Event<T>}  = 40,
 		ZenlinkSwapRouter: zenlink_swap_router::{Pallet, Call, Storage, Event<T>}  = 41,
-		ZenlinkVault: zenlink_vault::{Pallet, Call, Storage, Event<T>}  = 42,
+		// ZenlinkVault: zenlink_vault::{Pallet, Call, Storage, Event<T>}  = 42,
 
 		Vesting: pallet_vesting = 50,
 
