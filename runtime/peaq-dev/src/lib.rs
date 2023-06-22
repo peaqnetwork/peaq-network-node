@@ -90,7 +90,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, TokenSymbol};
+pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, LpPoolId, TokenSymbol};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;

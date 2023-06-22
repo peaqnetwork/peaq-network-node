@@ -61,13 +61,16 @@ pub type AccountIndex = u32;
 pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 
 /// TODO: Discuss this!
-pub type AssetId = u128;
+// pub type AssetId = u128;
 
 /// Index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
+
+/// A liquidity pool identified by Zenlink-DEX.
+pub type LpPoolId = u32;
 
 /// An instant or duration in time.
 pub type Moment = u64;

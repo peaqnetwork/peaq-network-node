@@ -1,10 +1,10 @@
 //! Submodule for Zenlink-DEX-Module integration
 
 use super::{
-	Balances, Currencies, CurrencyId, ParachainInfo, Runtime, RuntimeEvent,
-	Tokens, TokenSymbol, ZenlinkProtocol, Timestamp, ZenlinkStableAmm, Balance,
+	Balance, Balances, Currencies, CurrencyId, LpPoolId, ParachainInfo, Runtime, RuntimeEvent,
+	Tokens, Timestamp, ZenlinkProtocol, ZenlinkStableAmm,
 };
-use frame_support::{log, parameter_types, pallet_prelude::*, PalletId};
+use frame_support::{parameter_types, pallet_prelude::*, PalletId};
 use orml_traits::MultiCurrency;
 use sp_std::{vec, vec::Vec};
 use xcm::latest::prelude::*;
@@ -13,7 +13,6 @@ use zenlink_protocol::{
 	ZenlinkMultiAssets,
 };
 use zenlink_stable_amm::traits::{StablePoolLpCurrencyIdGenerate, ValidateCurrency};
-use zenlink_vault::VaultAssetGenerate;
 
 
 // Zenlink-DEX Parameter definitions
@@ -23,7 +22,6 @@ parameter_types! {
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
 	pub const StableAmmPalletId: PalletId = PalletId(*b"zenlkamm");
 	pub const StringLimit: u32 = 50;
-	pub const VaultPalletId: PalletId = PalletId(*b"zenlkvau");
 
 	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
 		// Krest local and live, 0.01 BNC
@@ -47,16 +45,14 @@ impl zenlink_protocol::Config for Runtime {
     type LpGenerate = PairLpGenerate<Self>;
     type TargetChains = ZenlinkRegistedParaChains;
     type SelfParaId = SelfParaId;
-    type WeightInfo = (); //zenlink_protocol::default_weights::SubstrateWeight<Runtime>;
+    type WeightInfo = ();
 }
-
-type PoolId = u32;
 
 impl zenlink_stable_amm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type CurrencyId = CurrencyId;
 	type MultiCurrency = Currencies;
-	type PoolId = PoolId;
+	type PoolId = LpPoolId;
 	type TimeProvider = Timestamp;
 	type EnsurePoolAsset = StableAmmVerifyPoolAsset;
 	type LpGenerate = PoolLpGenerate;
@@ -67,7 +63,7 @@ impl zenlink_stable_amm::Config for Runtime {
 
 impl zenlink_swap_router::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type StablePoolId = PoolId;
+	type StablePoolId = LpPoolId;
 	type Balance = Balance;
 	type StableCurrencyId = CurrencyId;
 	type NormalCurrencyId = ZenlinkAssetId;
@@ -76,21 +72,12 @@ impl zenlink_swap_router::Config for Runtime {
 	type WeightInfo = zenlink_swap_router::weights::SubstrateWeight<Runtime>;
 }
 
-// impl zenlink_vault::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type AssetId = CurrencyId;
-// 	type MultiAsset = Tokens;
-// 	type VaultAssetGenerate = VaultAssetGenerator;
-// 	type PalletId = VaultPalletId;
-// 	type WeightInfo = ();
-// }
 
-
-/// TODO documentation
+/// Short form for our individual configuration of Zenlink's MultiAssets.
 pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
 
 
-/// TODO documentation
+/// A local adaptor to convert between Zenlink-Assets and our local currency.
 pub struct LocalAssetAdaptor<Local>(PhantomData<Local>);
 
 impl<Local, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local>
@@ -183,11 +170,11 @@ where
 }
 
 
-// /// TODO documentation
+/// A very simple Liquidity-Pool generator to transform a LpPoolId into CurrencyId.
 pub struct PoolLpGenerate;
 
-impl StablePoolLpCurrencyIdGenerate<CurrencyId, PoolId> for PoolLpGenerate {
-	fn generate_by_pool_id(pool_id: PoolId) -> CurrencyId {
+impl StablePoolLpCurrencyIdGenerate<CurrencyId, LpPoolId> for PoolLpGenerate {
+	fn generate_by_pool_id(pool_id: LpPoolId) -> CurrencyId {
 		CurrencyId::StableLpToken(pool_id)
 	}
 }
@@ -208,17 +195,3 @@ impl ValidateCurrency<CurrencyId> for StableAmmVerifyPoolAsset {
 		true
 	}
 }
-
-
-// /// TODO documentation
-pub struct VaultAssetGenerator;
-
-impl VaultAssetGenerate<CurrencyId> for VaultAssetGenerator {
-	fn generate(asset: CurrencyId) -> Option<CurrencyId> {
-		match asset {
-			CurrencyId::Token(token_symbol) => Some(CurrencyId::Vault(token_symbol)),
-			_ => None,
-		}
-	}
-}
-
