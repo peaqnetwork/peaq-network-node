@@ -114,6 +114,8 @@ precompile-utils = { path = '../../precompiles/utils', default-features = false 
 runtime-common = { path = '../common', default-features = false }
 peaq-pallet-mor = { workspace = true, default-features = false }
 
+zenlink-protocol = { workspace = true, default-features = false }
+
 
 [features]
 default = ["std", "aura"]
