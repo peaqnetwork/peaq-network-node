@@ -6,10 +6,7 @@ use peaq_dev_runtime::{
 	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
-use runtime_common::{
-	CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS,
-	Balance,
-};
+use runtime_common::{Balance, CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};

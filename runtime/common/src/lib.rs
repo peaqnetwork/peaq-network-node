@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-
 use sp_std::marker::PhantomData;
 use sp_runtime::Perbill;
 
@@ -10,7 +9,6 @@ use frame_support::{
 	traits::Get,
 };
 use orml_traits::currency::MutationHooks;
-
 
 /// Balance of an account.
 pub type Balance = peaq_primitives_xcm::Balance;

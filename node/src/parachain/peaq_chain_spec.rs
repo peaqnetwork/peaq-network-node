@@ -5,10 +5,7 @@ use peaq_runtime::{
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
 	Precompiles, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use runtime_common::{
-	DOLLARS, MILLICENTS, TOKEN_DECIMALS,
-	Balance,
-};
+use runtime_common::{Balance, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
