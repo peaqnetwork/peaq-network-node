@@ -2,7 +2,7 @@
 
 use super::{
 	Balance, Balances, Currencies, CurrencyId, LpPoolId, ParachainInfo, Runtime, RuntimeEvent,
-	Tokens, Timestamp, ZenlinkProtocol, ZenlinkStableAmm,
+	Tokens, Timestamp, ZenlinkProtocol, // ZenlinkStableAmm,
 };
 use frame_support::{parameter_types, pallet_prelude::*, PalletId};
 use orml_traits::MultiCurrency;
@@ -12,7 +12,7 @@ use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler, PairLpGenerate,
 	ZenlinkMultiAssets,
 };
-use zenlink_stable_amm::traits::{StablePoolLpCurrencyIdGenerate, ValidateCurrency};
+// use zenlink_stable_amm::traits::{StablePoolLpCurrencyIdGenerate, ValidateCurrency};
 
 
 // Zenlink-DEX Parameter definitions
@@ -20,7 +20,7 @@ parameter_types! {
 	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
 
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
-	pub const StableAmmPalletId: PalletId = PalletId(*b"zenlkamm");
+	// pub const StableAmmPalletId: PalletId = PalletId(*b"zenlkamm");
 	pub const StringLimit: u32 = 50;
 
 	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
@@ -48,29 +48,29 @@ impl zenlink_protocol::Config for Runtime {
     type WeightInfo = ();
 }
 
-impl zenlink_stable_amm::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type CurrencyId = CurrencyId;
-	type MultiCurrency = Currencies;
-	type PoolId = LpPoolId;
-	type TimeProvider = Timestamp;
-	type EnsurePoolAsset = StableAmmVerifyPoolAsset;
-	type LpGenerate = PoolLpGenerate;
-	type PoolCurrencySymbolLimit = StringLimit;
-	type PalletId = StableAmmPalletId;
-	type WeightInfo = ();
-}
+// impl zenlink_stable_amm::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type CurrencyId = CurrencyId;
+// 	type MultiCurrency = Currencies;
+// 	type PoolId = LpPoolId;
+// 	type TimeProvider = Timestamp;
+// 	type EnsurePoolAsset = StableAmmVerifyPoolAsset;
+// 	type LpGenerate = PoolLpGenerate;
+// 	type PoolCurrencySymbolLimit = StringLimit;
+// 	type PalletId = StableAmmPalletId;
+// 	type WeightInfo = ();
+// }
 
-impl zenlink_swap_router::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type StablePoolId = LpPoolId;
-	type Balance = Balance;
-	type StableCurrencyId = CurrencyId;
-	type NormalCurrencyId = ZenlinkAssetId;
-	type NormalAmm = ZenlinkProtocol;
-	type StableAMM = ZenlinkStableAmm;
-	type WeightInfo = zenlink_swap_router::weights::SubstrateWeight<Runtime>;
-}
+// impl zenlink_swap_router::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type StablePoolId = LpPoolId;
+// 	type Balance = Balance;
+// 	type StableCurrencyId = CurrencyId;
+// 	type NormalCurrencyId = ZenlinkAssetId;
+// 	type NormalAmm = ZenlinkProtocol;
+// 	type StableAMM = ZenlinkStableAmm;
+// 	type WeightInfo = zenlink_swap_router::weights::SubstrateWeight<Runtime>;
+// }
 
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
@@ -170,28 +170,28 @@ where
 }
 
 
-/// A very simple Liquidity-Pool generator to transform a LpPoolId into CurrencyId.
-pub struct PoolLpGenerate;
+// /// A very simple Liquidity-Pool generator to transform a LpPoolId into CurrencyId.
+// pub struct PoolLpGenerate;
 
-impl StablePoolLpCurrencyIdGenerate<CurrencyId, LpPoolId> for PoolLpGenerate {
-	fn generate_by_pool_id(pool_id: LpPoolId) -> CurrencyId {
-		CurrencyId::StableLpToken(pool_id)
-	}
-}
+// impl StablePoolLpCurrencyIdGenerate<CurrencyId, LpPoolId> for PoolLpGenerate {
+// 	fn generate_by_pool_id(pool_id: LpPoolId) -> CurrencyId {
+// 		CurrencyId::StableLpToken(pool_id)
+// 	}
+// }
 
 
 // /// TODO documentation
-pub struct StableAmmVerifyPoolAsset;
+// pub struct StableAmmVerifyPoolAsset;
 
-impl ValidateCurrency<CurrencyId> for StableAmmVerifyPoolAsset {
-	fn validate_pooled_currency(_currencies: &[CurrencyId]) -> bool {
-		true
-	}
+// impl ValidateCurrency<CurrencyId> for StableAmmVerifyPoolAsset {
+// 	fn validate_pooled_currency(_currencies: &[CurrencyId]) -> bool {
+// 		true
+// 	}
 
-	fn validate_pool_lp_currency(_currency_id: CurrencyId) -> bool {
-		if Tokens::total_issuance(_currency_id) > 0 {
-			return false
-		}
-		true
-	}
-}
+// 	fn validate_pool_lp_currency(_currency_id: CurrencyId) -> bool {
+// 		if Tokens::total_issuance(_currency_id) > 0 {
+// 			return false
+// 		}
+// 		true
+// 	}
+// }

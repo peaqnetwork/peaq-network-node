@@ -110,7 +110,7 @@ parameter_types! {
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 
 	pub PeaqPerSecond: (AssetId, u128, u128) = (
-		local_currency_location(peaq_primitives_xcm::CurrencyId::Native(TokenSymbol::PEAQ)).unwrap().into(),
+		local_currency_location(peaq_primitives_xcm::CurrencyId::Token(TokenSymbol::PEAQ)).unwrap().into(),
 		peaq_per_second(),
 		0
 	);
@@ -303,21 +303,20 @@ pub struct CurrencyIdConvert;
 impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		use CurrencyId::Token;
-		use CurrencyId::Native;
 		use TokenSymbol::*;
 
 		match id {
-			Token(DOT) => Some(MultiLocation::parent()),
-			Native(PEAQ) =>
+			Token(DOT) | Token(KSM) | Token(ROC) => Some(MultiLocation::parent()),
+			Token(PEAQ) =>
 				native_currency_location(ParachainInfo::parachain_id().into(), id.encode()),
-			Token(ACA) => native_currency_location(
-				parachain::acala::ID,
-				parachain::acala::ACA_KEY.to_vec(),
-			),
-			Token(BNC) => native_currency_location(
-				parachain::bifrost::ID,
-				parachain::bifrost::BNC_KEY.to_vec(),
-			),
+			// Token(ACA) => native_currency_location(
+			// 	parachain::acala::ID,
+			// 	parachain::acala::ACA_KEY.to_vec(),
+			// ),
+			// Token(BNC) => native_currency_location(
+			// 	parachain::bifrost::ID,
+			// 	parachain::bifrost::BNC_KEY.to_vec(),
+			// ),
 			_ => None,
 		}
 	}
@@ -325,7 +324,6 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		use CurrencyId::Token;
-		use CurrencyId::Native;
 		use TokenSymbol::*;
 
 		if location == MultiLocation::parent() {
@@ -362,7 +360,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 						if ParaId::from(id) == ParachainInfo::parachain_id() {
 							if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 								match currency_id {
-									Native(PEAQ) => Some(currency_id),
+									Token(PEAQ) => Some(currency_id),
 									_ => None,
 								}
 							} else {
@@ -381,7 +379,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 				// decode the general key
 				if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 					match currency_id {
-						Native(PEAQ) => Some(currency_id),
+						Token(PEAQ) => Some(currency_id),
 						_ => None,
 					}
 				} else {
