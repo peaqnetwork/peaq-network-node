@@ -2,10 +2,7 @@
 
 use std::sync::Arc;
 
-use fc_rpc::{
-	EthBlockDataCacheTask, OverrideHandle,
-};
-use sp_api::CallApiAt;
+use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use sc_client_api::{
@@ -17,7 +14,7 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
 use sc_service::TransactionPool;
 use sc_transaction_pool::{ChainApi, Pool};
-use sp_api::ProvideRuntimeApi;
+use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
@@ -153,7 +150,7 @@ where
 			unreachable!()
 		}
 	}
-    let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
+	let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	io.merge(
 		Eth::new(
@@ -162,7 +159,7 @@ where
 			graph.clone(),
 			no_tx_converter,
 			Arc::clone(&network),
-            Default::default(),
+			Default::default(),
 			Arc::clone(&overrides),
 			Arc::clone(&backend),
 			is_authority,

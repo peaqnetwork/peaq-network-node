@@ -1,13 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-use sp_std::marker::PhantomData;
 use sp_runtime::Perbill;
+use sp_std::marker::PhantomData;
 
-use frame_support::{
-	parameter_types,
-	traits::Get,
-};
+use frame_support::{parameter_types, traits::Get};
 use orml_traits::currency::MutationHooks;
 
 /// Balance of an account.
@@ -27,7 +24,8 @@ parameter_types! {
 }
 
 pub struct CurrencyHooks<T, DustAccount>(PhantomData<T>, DustAccount);
-impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance> for CurrencyHooks<T, DustAccount>
+impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance>
+	for CurrencyHooks<T, DustAccount>
 where
 	T: orml_tokens::Config,
 	DustAccount: Get<<T as frame_system::Config>::AccountId>,

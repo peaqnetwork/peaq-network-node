@@ -158,7 +158,9 @@ pub fn set_block_issue_reward_is_ok() {
 		let reward = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_block_issue_reward(RuntimeOrigin::root(), reward));
-		System::assert_last_event(mock::RuntimeEvent::BlockReward(Event::BlockIssueRewardChanged(reward)));
+		System::assert_last_event(mock::RuntimeEvent::BlockReward(Event::BlockIssueRewardChanged(
+			reward,
+		)));
 
 		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
 	})
@@ -180,7 +182,9 @@ pub fn set_maxcurrencysupply_is_ok() {
 		let limit = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_max_currency_supply(RuntimeOrigin::root(), limit));
-		System::assert_last_event(mock::RuntimeEvent::BlockReward(Event::MaxCurrencySupplyChanged(limit)));
+		System::assert_last_event(mock::RuntimeEvent::BlockReward(
+			Event::MaxCurrencySupplyChanged(limit),
+		));
 
 		assert_eq!(MaxCurrencySupply::<TestRuntime>::get(), limit);
 	})

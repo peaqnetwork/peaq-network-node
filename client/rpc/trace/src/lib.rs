@@ -166,18 +166,15 @@ where
 			let mut block_traces: Vec<_> = block_traces
 				.iter()
 				.filter(|trace| match trace.action {
-					block::TransactionTraceAction::Call { from, to, .. } => {
-						(from_address.is_empty() || from_address.contains(&from))
-							&& (to_address.is_empty() || to_address.contains(&to))
-					}
-					block::TransactionTraceAction::Create { from, .. } => {
-						(from_address.is_empty() || from_address.contains(&from))
-							&& to_address.is_empty()
-					}
-					block::TransactionTraceAction::Suicide { address, .. } => {
-						(from_address.is_empty() || from_address.contains(&address))
-							&& to_address.is_empty()
-					}
+					block::TransactionTraceAction::Call { from, to, .. } =>
+						(from_address.is_empty() || from_address.contains(&from)) &&
+							(to_address.is_empty() || to_address.contains(&to)),
+					block::TransactionTraceAction::Create { from, .. } =>
+						(from_address.is_empty() || from_address.contains(&from)) &&
+							to_address.is_empty(),
+					block::TransactionTraceAction::Suicide { address, .. } =>
+						(from_address.is_empty() || from_address.contains(&address)) &&
+							to_address.is_empty(),
 				})
 				.cloned()
 				.collect();

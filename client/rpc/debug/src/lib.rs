@@ -324,15 +324,8 @@ where
 		// Using storage overrides we align with `:ethereum_schema` which will result in proper
 		// SCALE decoding in case of migration.
 		let statuses = match overrides.schemas.get(&schema) {
-			Some(schema) => schema
-				.current_transaction_statuses(hash)
-				.unwrap_or_default(),
-			_ => {
-				return Err(internal_err(format!(
-					"No storage override at {:?}",
-					reference_id
-				)))
-			}
+			Some(schema) => schema.current_transaction_statuses(hash).unwrap_or_default(),
+			_ => return Err(internal_err(format!("No storage override at {:?}", reference_id))),
 		};
 
 		// Known ethereum transaction hashes.
@@ -458,10 +451,7 @@ where
 			return Err(internal_err("Runtime api version call failed (trace)".to_string()))
 		};
 
-		let schema = fc_storage::onchain_storage_schema::<B, C, BE>(
-			client.as_ref(),
-			reference_id,
-		);
+		let schema = fc_storage::onchain_storage_schema::<B, C, BE>(client.as_ref(), reference_id);
 
 		// Get the block that contains the requested transaction. Using storage overrides we align
 		// with `:ethereum_schema` which will result in proper SCALE decoding in case of migration.
