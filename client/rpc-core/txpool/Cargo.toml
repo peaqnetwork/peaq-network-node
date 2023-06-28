@@ -8,10 +8,11 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
 
 [dependencies]
-ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
-ethereum-types = "0.14.1"
-jsonrpsee = { version = "0.16.2", default-features = false, features = [ "macros", "server" ] }
-serde = { version = "1.0.136", features = [ "derive" ] }
-serde_json = "1.0"
+ethereum-types = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true, features = ["derive"] }
+serde_json = { workspace = true, default-features = true }
 
-fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
+ethereum = { workspace = true, default-features = true, features = [ "with-codec" ] }
+jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
+
+fc-rpc-core = { workspace = true, default-features = true }

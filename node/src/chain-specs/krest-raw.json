@@ -1,7 +1,7 @@
 {
   "name": "krest-network",
   "id": "krest",
-  "chainType": "Development",
+  "chainType": "Live",
   "bootNodes": [
     "/dns/cn1krest.peaq.network/tcp/30333/p2p/12D3KooWSiUfLFErmp281eGjXCKZeg1unCGndeq68VF53jbysWrJ",
     "/dns/cn2krest.peaq.network/tcp/30333/p2p/12D3KooWFSRsiL6c5VF2NZmp6vnCw8tWPnj1jArR3AWaAuCyN5pb",

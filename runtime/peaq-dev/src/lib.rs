@@ -202,6 +202,7 @@ use runtime_common::{
 	MILLICENTS, CENTS, DOLLARS,
 	Balance,
 	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
+	CurrencyHooks,
 };
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
@@ -358,7 +359,6 @@ impl pallet_contracts::Config for Runtime {
 	type DepositPerByte = DepositPerByte;
 	type WeightPrice = pallet_transaction_payment::Pallet<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
-	/// [TODO] Need to check
 	type ChainExtension = ();
 	type Schedule = Schedule;
 	type CallStack = [pallet_contracts::Frame<Self>; 5];
@@ -944,7 +944,8 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub TestAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {
@@ -958,8 +959,7 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	// [TODO]
-	type CurrencyHooks = ();
+	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
 }
 
 impl orml_unknown_tokens::Config for Runtime {

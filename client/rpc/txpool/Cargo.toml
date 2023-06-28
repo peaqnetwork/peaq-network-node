@@ -8,24 +8,24 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
 
 [dependencies]
-jsonrpsee = { version = "0.16", default-features = false, features = [ "macros", "server" ] }
-rlp = "0.5"
-serde = { version = "1.0.136", features = [ "derive" ] }
-sha3 = "0.9"
+jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
+rlp = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true, features = [ "derive" ] }
+sha3 = { workspace = true, default-features = true }
 
 peaq-rpc-core-txpool = { path = "../../rpc-core/txpool" }
 peaq-rpc-primitives-txpool = { path = "../../../primitives/rpc/txpool" }
 
 # Substrate
-frame-system = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sc-transaction-pool = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sc-transaction-pool-api = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-api = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-blockchain = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-io = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
-sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
+frame-system = { workspace = true, default-features = true }
+sc-transaction-pool = { workspace = true, default-features = true }
+sc-transaction-pool-api = { workspace = true, default-features = true }
+sp-api = { workspace = true, default-features = true }
+sp-blockchain = { workspace = true, default-features = true }
+sp-io = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = true }
+sp-std = { workspace = true, default-features = true }
 
 # Frontier
-ethereum-types = "0.14.1"
-fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", features = [ "rpc-binary-search-estimate" ] }
+ethereum-types = { workspace = true, default-features = true }
+fc-rpc = { workspace = true, default-features = true }

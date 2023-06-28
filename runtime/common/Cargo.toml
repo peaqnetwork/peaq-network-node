@@ -7,30 +7,17 @@ homepage = 'https://peaq.network/'
 edition = '2021'
 publish = false
 
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.38'
 
-[dependencies.sp-std]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.38'
+[dependencies]
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+pallet-transaction-payment = { workspace = true, default-features = false }
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
 
-[dependencies.pallet-transaction-payment]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.38'
-
-[dependencies.frame-support]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.38'
-
-# Customized
-[dependencies.peaq-primitives-xcm]
-path = "../../primitives/xcm"
-default-features = false
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
+orml-tokens = { workspace = true, default-features = false }
+orml-traits = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -39,4 +26,7 @@ std = [
 	'pallet-transaction-payment/std',
 	"peaq-primitives-xcm/std",
 	'frame-support/std',
+	"orml-tokens/std",
+	"orml-traits/std",
+	'frame-system/std',
 ]
