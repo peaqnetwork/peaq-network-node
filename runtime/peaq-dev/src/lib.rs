@@ -971,10 +971,10 @@ pub type MoreThanHalfCouncil = EitherOfDiverse<
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
 
-impl orml_xcm::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type SovereignOrigin = MoreThanHalfCouncil;
-}
+// impl orml_xcm::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type SovereignOrigin = MoreThanHalfCouncil;
+// }
 
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -1034,7 +1034,7 @@ construct_runtime!(
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
-		OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 38,
+		// OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 38,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 39,
 		// ZenlinkStableAmm: zenlink_stable_amm::{Pallet, Call, Storage, Event<T>}  = 40,
 		// ZenlinkSwapRouter: zenlink_swap_router::{Pallet, Call, Storage, Event<T>}  = 41,

@@ -327,7 +327,15 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		use TokenSymbol::*;
 
 		if location == MultiLocation::parent() {
-			return Some(Token(DOT))
+			// Generic solution, if moving to common-runtime
+			// match super::VERSION.spec_name {
+			// 	"peaq-node-dev" => Some(Token(ROC)),
+			// 	"peaq-node-agung" => Some(Token(ROC)),
+			// 	"peaq-node-krest" => Some(Token(KSM)),
+			// 	"peaq-node" => Some(Token(DOT)),
+			// 	_ => None,
+			// }
+			return Some(Token(ROC))
 		}
 		match location {
 			MultiLocation {
