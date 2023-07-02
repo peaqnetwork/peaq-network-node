@@ -21,11 +21,12 @@
 // primitives and utils imports
 
 // [TODO]
-use peaq_primitives_xcm::{currency::CurrencyId, evm::Erc20InfoMappingT, Balance};
+use peaq_primitives_xcm::{currency::CurrencyId, Balance};
 use precompile_utils::prelude::*;
 use sp_core::{H160, H256, U256};
 use sp_std::{convert::TryInto, marker::PhantomData};
 use frame_support::traits::Time as MomentTime;
+use sp_std::vec::Vec;
 
 use fp_evm::PrecompileHandle;
 

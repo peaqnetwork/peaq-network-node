@@ -6,31 +6,31 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-log = "0.4"
-num_enum = { version = "0.5.3", default-features = false }
-paste = "1.0.6"
-slices = "0.2.0"
+log = { workspace = true, default-features = false }
+num_enum = { workspace = true, default-features = false }
+paste = { workspace = true, default-features = false }
+slices = { workspace = true, default-features = false }
 
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
 peaq-primitives-xcm = {path = "../../primitives/xcm", default-features = false}
 
 # Substrate
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "max-encoded-len" ] }
-frame-support = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-frame-system = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-pallet-balances = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-sp-core = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-sp-io = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-sp-std = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-orml-traits = { git = "https://github.com/peaqnetwork/open-runtime-module-library", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+codec = { package = "parity-scale-codec", workspace = true, default-features = false, features = [ "max-encoded-len" ]}
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+orml-currencies = { workspace = true, default-features = false }
+orml-traits = { workspace = true, default-features = false }
 
 # Frontier
-fp-evm = { git = "https://github.com/peaqnetwork/frontier", default-features = false , branch = "peaq-polkadot-v0.9.38" }
-pallet-evm = { git = "https://github.com/peaqnetwork/frontier", default-features = false, features = [ "forbid-evm-reentrancy" ] , branch = "peaq-polkadot-v0.9.38" }
-peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", default-features = false, branch = "peaq-polkadot-v0.9.38"}
-pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+fp-evm = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
+peaq-pallet-did = { workspace = true, default-features = false }
+pallet-timestamp = { workspace = true, default-features = false }
 
 
 [features]

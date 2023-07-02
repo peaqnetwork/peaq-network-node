@@ -6,6 +6,7 @@ members = [
     "primitives/xcm",
     "precompiles/utils",
     "precompiles/utils/macro",
+	"precompiles/peaq-did",
 ]
 
 # make sure dev builds with backtrace do
@@ -26,6 +27,7 @@ panic = "unwind"
 
 [workspace.dependencies]
 bstringify = "0.1.2"
+slices = "0.2.0"
 serde = { version = "1.0.151" }
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
