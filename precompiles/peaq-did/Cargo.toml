@@ -1,0 +1,54 @@
+[package]
+name = "pallet-evm-precompile-peaq-did"
+authors = [ "PureStake" ]
+description = "A Precompile Module for Frontier EVM that implements the PEAQ DID standard."
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+log = "0.4"
+num_enum = { version = "0.5.3", default-features = false }
+paste = "1.0.6"
+slices = "0.2.0"
+
+# Peaq
+precompile-utils = { path = "../utils", default-features = false }
+peaq-primitives-xcm = {path = "../../primitives/xcm", default-features = false}
+
+# Substrate
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "max-encoded-len" ] }
+frame-support = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+frame-system = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+pallet-balances = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+sp-core = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+sp-io = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+sp-std = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+orml-traits = { git = "https://github.com/peaqnetwork/open-runtime-module-library", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+
+# Frontier
+fp-evm = { git = "https://github.com/peaqnetwork/frontier", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+pallet-evm = { git = "https://github.com/peaqnetwork/frontier", default-features = false, features = [ "forbid-evm-reentrancy" ] , branch = "peaq-polkadot-v0.9.38" }
+peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", default-features = false, branch = "peaq-polkadot-v0.9.38"}
+pallet-timestamp = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.38" }
+
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-balances/std",
+	"pallet-evm/std",
+	"precompile-utils/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-std/std",
+    "orml-currencies/std",
+	"orml-traits/std",
+	"peaq-primitives-xcm/std",
+	"peaq-pallet-did/std",
+	"pallet-timestamp/std",
+]
