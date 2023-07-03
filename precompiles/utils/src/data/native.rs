@@ -72,6 +72,10 @@ impl EvmData for Tuple {
 		for_tuples!( #( subtypes.push(Tuple::solidity_type()); )* );
 		alloc::format!("({})", subtypes.join(","))
 	}
+
+	fn is_explicit_tuple() -> bool {
+		true
+	}
 }
 
 impl EvmData for H256 {

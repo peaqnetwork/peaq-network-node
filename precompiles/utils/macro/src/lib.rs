@@ -27,6 +27,7 @@ use syn::{
 
 mod generate_function_selector;
 mod precompile;
+mod derive_evm_data;
 
 struct Bytes(Vec<u8>);
 
@@ -90,4 +91,9 @@ pub fn generate_function_selector(attr: TokenStream, input: TokenStream) -> Toke
 #[proc_macro_attribute]
 pub fn precompile(attr: TokenStream, input: TokenStream) -> TokenStream {
 	precompile::main(attr, input)
+}
+
+#[proc_macro_derive(EvmData)]
+pub fn derive_evm_data(input: TokenStream) -> TokenStream {
+    derive_evm_data::main(input)
 }

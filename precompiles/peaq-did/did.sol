@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.3;
 
-/// @dev The DID contract's address.
-address constant DID_ADDRESS = 0x0000000000000000000000000000000000000800;
+address constant PRECOMPILE_ADDR = address(0x0000000000000000000000000000000000000800);
 
-/// @dev The DID contract's instance.
-DID constant DID_CONTRACT = DID(DID_ADDRESS);
+DID constant DID_CONTRACT = DID(PRECOMPILE_ADDR);
 
-/// @title DID interface
-/// @dev see https://github.com/ethereum/EIPs/issues/20
-/// @dev copied from https://github.com/OpenZeppelin/openzeppelin-contracts
-/// @custom:address 0x0000000000000000000000000000000000000802
 interface DID {
-    /// @dev Transfer tokens from one address to another
-    /// @custom:selector 23b872dd
-    /// @param from address The address which you want to send tokens from
-    /// @param to address The address which you want to transfer to
-    /// @param value uint256 the amount of tokens to be transferred
-    /// @return true if the transfer was succesful, revert otherwise.
+
+    struct Attribute {
+        bytes name;
+        bytes value;
+        uint32 validity;
+        uint256 created;
+    }
+
     function read(
         bytes32 did_account,
         bytes memory name
+    ) external view returns (Attribute memory);
+
+    function create(
+        bytes32 did_account,
+        bytes memory name,
+        bytes memory value,
+        uint32 validity_for
     ) external returns (bool);
 }
-
