@@ -278,12 +278,12 @@ fn is_address_eoa_or_precompile<R: pallet_evm::Config>(address: H160) -> bool {
 
 	// 0 => either EOA or precompile without dummy code
 	if code_len == 0 {
-		return true;
+		return true
 	}
 
 	// dummy code is 5 bytes long, so any other len means it is a contract.
 	if code_len != 5 {
-		return false;
+		return false
 	}
 
 	// check code matches dummy code
@@ -302,7 +302,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Check DELEGATECALL config.
 	let accept_delegate_call = C::accept_delegate_call().unwrap_or(false);
 	if !accept_delegate_call && code_address != handle.context().address {
-		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"));
+		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"))
 	}
 
 	// Extract which selector is called.
@@ -318,7 +318,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	if !callable_by_smart_contract {
 		handle.record_cost(RuntimeHelper::<R>::db_read_gas_cost())?;
 		if !is_address_eoa_or_precompile::<R>(caller) {
-			return Err(revert("Function not callable by smart contracts"));
+			return Err(revert("Function not callable by smart contracts"))
 		}
 	}
 
@@ -326,7 +326,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
 	if !callable_by_precompile {
 		if <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller) {
-			return Err(revert("Function not callable by precompiles"));
+			return Err(revert("Function not callable by precompiles"))
 		}
 	}
 
@@ -360,11 +360,10 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 			return (
 				evm::ExitReason::Revert(evm::ExitRevert::Reverted),
 				crate::encoded_revert("subcalls disabled for this precompile"),
-			);
+			)
 		}
 
-		self.handle
-			.call(address, transfer, input, target_gas, is_static, context)
+		self.handle.call(address, transfer, input, target_gas, is_static, context)
 	}
 
 	fn record_cost(&mut self, cost: u64) -> Result<(), evm::ExitError> {
@@ -448,10 +447,7 @@ where
 {
 	#[inline(always)]
 	fn new() -> Self {
-		Self {
-			current_recursion_level: RefCell::new(0),
-			_phantom: PhantomData,
-		}
+		Self { current_recursion_level: RefCell::new(0), _phantom: PhantomData }
 	}
 
 	#[inline(always)]
@@ -463,12 +459,12 @@ where
 
 		// Check if this is the address of the precompile.
 		if A::get() != code_address {
-			return None;
+			return None
 		}
 
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err));
+			return Some(Err(err))
 		}
 
 		// Check and increase recursion level if needed.
@@ -477,13 +473,13 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(Err(
-							revert("Precompile is called with too high nesting").into()
-						));
+						return Some(
+							Err(revert("Precompile is called with too high nesting").into()),
+						)
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
@@ -492,10 +488,7 @@ where
 
 		// Subcall protection.
 		let allow_subcalls = C::allow_subcalls().unwrap_or(false);
-		let mut handle = RestrictiveHandle {
-			handle,
-			allow_subcalls,
-		};
+		let mut handle = RestrictiveHandle { handle, allow_subcalls };
 
 		let res = P::execute(&mut handle);
 
@@ -504,7 +497,7 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
@@ -572,12 +565,12 @@ where
 		let code_address = handle.code_address();
 
 		if !self.is_precompile(code_address) {
-			return None;
+			return None
 		}
 
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err));
+			return Some(Err(err))
 		}
 
 		// Check and increase recursion level if needed.
@@ -588,11 +581,11 @@ where
 					let recursion_level = recursion_level_map.entry(code_address).or_insert(0);
 
 					if *recursion_level > max_recursion_level {
-						return Some(Err(revert("Precompile is called with too high nesting")));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -601,10 +594,7 @@ where
 
 		// Subcall protection.
 		let allow_subcalls = C::allow_subcalls().unwrap_or(false);
-		let mut handle = RestrictiveHandle {
-			handle,
-			allow_subcalls,
-		};
+		let mut handle = RestrictiveHandle { handle, allow_subcalls };
 
 		let res = self.precompile_set.execute(&mut handle);
 
@@ -618,7 +608,7 @@ where
 					};
 
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -830,10 +820,7 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P> {
 	/// Create a new instance of the PrecompileSet.
 	pub fn new() -> Self {
-		Self {
-			inner: P::new(),
-			_phantom: PhantomData,
-		}
+		Self { inner: P::new(), _phantom: PhantomData }
 	}
 
 	/// Return the list of addresses contained in this PrecompileSet.

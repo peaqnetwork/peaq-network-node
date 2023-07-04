@@ -29,9 +29,17 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<AddressU64<8>, Bn128Pairing, EthereumPrecompilesChecks>,
 				PrecompileAt<AddressU64<9>, Blake2F, EthereumPrecompilesChecks>,
 				// Non-Moonbeam specific nor Ethereum precompiles :
-				PrecompileAt<AddressU64<1024>, Sha3FIPS256, (CallableByContract, CallableByPrecompile)>,
+				PrecompileAt<
+					AddressU64<1024>,
+					Sha3FIPS256,
+					(CallableByContract, CallableByPrecompile),
+				>,
 				// PrecompileAt<AddressU64<1025>, Dispatch<R>>,
-				PrecompileAt<AddressU64<1026>, ECRecoverPublicKey, (CallableByContract, CallableByPrecompile)>,
+				PrecompileAt<
+					AddressU64<1026>,
+					ECRecoverPublicKey,
+					(CallableByContract, CallableByPrecompile),
+				>,
 			),
 		>,
 	),

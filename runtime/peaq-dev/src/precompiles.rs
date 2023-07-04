@@ -1,9 +1,9 @@
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_modexp::Modexp;
+use pallet_evm_precompile_peaq_did::PeaqDIDPrecompile;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
-use pallet_evm_precompile_peaq_did::PeaqDIDPrecompile;
 use precompile_utils::precompile_set::*;
 
 type EthereumPrecompilesChecks = (AcceptDelegateCall, CallableByContract, CallableByPrecompile);
@@ -30,11 +30,22 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<AddressU64<8>, Bn128Pairing, EthereumPrecompilesChecks>,
 				PrecompileAt<AddressU64<9>, Blake2F, EthereumPrecompilesChecks>,
 				// Non-Moonbeam specific nor Ethereum precompiles :
-				PrecompileAt<AddressU64<1024>, Sha3FIPS256, (CallableByContract, CallableByPrecompile)>,
+				PrecompileAt<
+					AddressU64<1024>,
+					Sha3FIPS256,
+					(CallableByContract, CallableByPrecompile),
+				>,
 				// PrecompileAt<AddressU64<1025>, Dispatch<R>>,
-				PrecompileAt<AddressU64<1026>, ECRecoverPublicKey, (CallableByContract, CallableByPrecompile)>,
-
-				PrecompileAt<AddressU64<2048>, PeaqDIDPrecompile<R>, (AcceptDelegateCall, CallableByContract)>,
+				PrecompileAt<
+					AddressU64<1026>,
+					ECRecoverPublicKey,
+					(CallableByContract, CallableByPrecompile),
+				>,
+				PrecompileAt<
+					AddressU64<2048>,
+					PeaqDIDPrecompile<R>,
+					(AcceptDelegateCall, CallableByContract),
+				>,
 			),
 		>,
 	),
