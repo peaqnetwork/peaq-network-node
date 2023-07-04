@@ -63,7 +63,10 @@ impl Precompile {
 				)*
 
 				#[doc(hidden)]
-				__phantom(PhantomData<( #( #type_parameters ),* )>, ::core::convert::Infallible),
+				__phantom(
+					::core::marker::PhantomData<( #( #type_parameters ),* )>,
+					::core::convert::Infallible
+				),
 			}
 		)
 	}
@@ -72,7 +75,10 @@ impl Precompile {
 	pub fn expand_variants_parse_fn(&self) -> impl ToTokens {
 		let span = Span::call_site();
 
-		let fn_parse = self.variants_content.keys().map(Self::variant_ident_to_parse_fn);
+		let fn_parse = self
+			.variants_content
+			.keys()
+			.map(Self::variant_ident_to_parse_fn);
 
 		let modifier_check = self.variants_content.values().map(|variant| {
 			let modifier = match variant.modifier {
@@ -90,9 +96,12 @@ impl Precompile {
 			)
 		});
 
-		let variant_parsing = self.variants_content.iter().map(|(variant_ident, variant)| {
-			Self::expand_variant_parsing_from_handle(variant_ident, variant)
-		});
+		let variant_parsing = self
+			.variants_content
+			.iter()
+			.map(|(variant_ident, variant)| {
+				Self::expand_variant_parsing_from_handle(variant_ident, variant)
+			});
 
 		quote!(
 			#(
@@ -156,8 +165,11 @@ impl Precompile {
 			.keys()
 			.map(|name| format_ident!("{}_selectors", name))
 			.collect();
-		let variants_selectors: Vec<_> =
-			self.variants_content.values().map(|variant| &variant.selectors).collect();
+		let variants_selectors: Vec<_> = self
+			.variants_content
+			.values()
+			.map(|variant| &variant.selectors)
+			.collect();
 
 		let variants_list: Vec<Vec<_>> = self
 			.variants_content
@@ -165,8 +177,11 @@ impl Precompile {
 			.map(|variant| variant.arguments.iter().map(|arg| &arg.ident).collect())
 			.collect();
 
-		let variants_encode: Vec<_> =
-			self.variants_content.values().map(Self::expand_variant_encoding).collect();
+		let variants_encode: Vec<_> = self
+			.variants_content
+			.values()
+			.map(Self::expand_variant_encoding)
+			.collect();
 
 		let parse_call_data_fn = self.expand_enum_parse_call_data();
 		let execute_fn = self.expand_enum_execute_fn();
@@ -243,26 +258,32 @@ impl Precompile {
 			.as_ref()
 			.map(|ty| quote!( discriminant: #ty,));
 
-		let variants_call = self.variants_content.iter().map(|(variant_ident, variant)| {
-			let arguments = variant.arguments.iter().map(|arg| &arg.ident);
+		let variants_call = self
+			.variants_content
+			.iter()
+			.map(|(variant_ident, variant)| {
+				let arguments = variant.arguments.iter().map(|arg| &arg.ident);
 
-			let output_span = variant.fn_output.span();
-			let opt_discriminant_arg =
-				self.precompile_set_discriminant_fn.as_ref().map(|_| quote!(discriminant,));
+				let output_span = variant.fn_output.span();
+				let opt_discriminant_arg = self
+					.precompile_set_discriminant_fn
+					.as_ref()
+					.map(|_| quote!(discriminant,));
 
-			let write_output =
-				quote_spanned!(output_span=> EvmDataWriter::new().write(output?).build());
-
-			quote!(
-				use ::precompile_utils::EvmDataWriter;
-				let output = <#impl_type>::#variant_ident(
-					#opt_discriminant_arg
-					handle,
-					#(#arguments),*
+				let write_output = quote_spanned!(output_span=>
+					::precompile_utils::data::encode_as_function_return_value(output?)
 				);
-				#write_output
-			)
-		});
+
+				quote!(
+					use ::precompile_utils::EvmDataWriter;
+					let output = <#impl_type>::#variant_ident(
+						#opt_discriminant_arg
+						handle,
+						#(#arguments),*
+					);
+					#write_output
+				)
+			});
 
 		quote!(
 			pub fn execute(
@@ -306,7 +327,7 @@ impl Precompile {
 					.build()
 				)
 				.to_token_stream()
-			},
+			}
 			None => quote!(Default::default()).to_token_stream(),
 		}
 	}
@@ -315,13 +336,16 @@ impl Precompile {
 	/// input, dispatch the decoding to one of the variants parsing function.
 	fn expand_enum_parse_call_data(&self) -> impl ToTokens {
 		let selectors = self.selector_to_variant.keys();
-		let parse_fn = self.selector_to_variant.values().map(Self::variant_ident_to_parse_fn);
+		let parse_fn = self
+			.selector_to_variant
+			.values()
+			.map(Self::variant_ident_to_parse_fn);
 
 		let match_fallback = match &self.fallback_to_variant {
 			Some(variant) => {
 				let parse_fn = Self::variant_ident_to_parse_fn(variant);
 				quote!(_ => Self::#parse_fn(handle),).to_token_stream()
-			},
+			}
 			None => quote!(
 				Some(_) => Err(RevertReason::UnknownSelector.into()),
 				None => Err(RevertReason::read_out_of_bounds("selector").into()),

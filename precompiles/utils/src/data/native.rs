@@ -39,8 +39,7 @@ impl EvmData for Tuple {
 	}
 
 	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
-		if !Self::has_static_size() {
-			let reader = &mut reader.read_pointer()?;
+		if Self::has_static_size() {
 			let mut index = 0;
 			Ok(for_tuples!( ( #( {
 				let elem = reader.read::<Tuple>().in_tuple(index)?;
@@ -48,6 +47,7 @@ impl EvmData for Tuple {
 				elem
 			} ),* ) ))
 		} else {
+			let reader = &mut reader.read_pointer()?;
 			let mut index = 0;
 			Ok(for_tuples!( ( #( {
 				let elem = reader.read::<Tuple>().in_tuple(index)?;
@@ -58,12 +58,12 @@ impl EvmData for Tuple {
 	}
 
 	fn write(writer: &mut EvmDataWriter, value: Self) {
-		if !Self::has_static_size() {
+		if Self::has_static_size() {
+			for_tuples!( #( Tuple::write(writer, value.Tuple); )* );
+		} else {
 			let mut inner_writer = EvmDataWriter::new();
 			for_tuples!( #( Tuple::write(&mut inner_writer, value.Tuple); )* );
 			writer.write_pointer(inner_writer.build());
-		} else {
-			for_tuples!( #( Tuple::write(writer, value.Tuple); )* );
 		}
 	}
 
@@ -118,6 +118,17 @@ impl From<H160> for Address {
 impl From<Address> for H160 {
 	fn from(a: Address) -> H160 {
 		a.0
+	}
+}
+
+impl Address {
+	pub fn as_u64(&self) -> Option<u64> {
+		let _u64 = self.0.to_low_u64_be();
+		if self.0 == H160::from_low_u64_be(_u64) {
+			Some(_u64)
+		} else {
+			None
+		}
 	}
 }
 
@@ -243,7 +254,10 @@ impl<T: EvmData> EvmData for Vec<T> {
 	fn write(writer: &mut EvmDataWriter, value: Self) {
 		BoundedVec::<T, ConstU32Max>::write(
 			writer,
-			BoundedVec { inner: value, _phantom: PhantomData },
+			BoundedVec {
+				inner: value,
+				_phantom: PhantomData,
+			},
 		)
 	}
 
@@ -274,7 +288,7 @@ impl<T: EvmData, S: Get<u32>> EvmData for BoundedVec<T, S> {
 			.map_err(|_| RevertReason::value_is_too_large("length"))?;
 
 		if array_size > S::get() as usize {
-			return Err(RevertReason::value_is_too_large("length").into())
+			return Err(RevertReason::value_is_too_large("length").into());
 		}
 
 		let mut array = vec![];
@@ -291,7 +305,10 @@ impl<T: EvmData, S: Get<u32>> EvmData for BoundedVec<T, S> {
 			array.push(item_reader.read().in_array(i)?);
 		}
 
-		Ok(BoundedVec { inner: array, _phantom: PhantomData })
+		Ok(BoundedVec {
+			inner: array,
+			_phantom: PhantomData,
+		})
 	}
 
 	fn write(writer: &mut EvmDataWriter, value: Self) {
@@ -328,19 +345,28 @@ impl<T: EvmData, S: Get<u32>> EvmData for BoundedVec<T, S> {
 
 impl<T, S> From<Vec<T>> for BoundedVec<T, S> {
 	fn from(value: Vec<T>) -> Self {
-		BoundedVec { inner: value, _phantom: PhantomData }
+		BoundedVec {
+			inner: value,
+			_phantom: PhantomData,
+		}
 	}
 }
 
 impl<T: Clone, S> From<&[T]> for BoundedVec<T, S> {
 	fn from(value: &[T]) -> Self {
-		BoundedVec { inner: value.to_vec(), _phantom: PhantomData }
+		BoundedVec {
+			inner: value.to_vec(),
+			_phantom: PhantomData,
+		}
 	}
 }
 
 impl<T: Clone, S, const N: usize> From<[T; N]> for BoundedVec<T, S> {
 	fn from(value: [T; N]) -> Self {
-		BoundedVec { inner: value.to_vec(), _phantom: PhantomData }
+		BoundedVec {
+			inner: value.to_vec(),
+			_phantom: PhantomData,
+		}
 	}
 }
 

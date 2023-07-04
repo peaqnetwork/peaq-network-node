@@ -16,19 +16,22 @@
 
 pub mod bytes;
 pub mod native;
+pub mod xcm;
 
 pub use affix::paste;
 pub use alloc::string::String;
 pub use bytes::*;
 pub use native::*;
 
-use crate::revert::{InjectBacktrace, MayRevert, RevertReason};
-use alloc::borrow::ToOwned;
-use core::{any::type_name, marker::PhantomData, ops::Range};
-use frame_support::traits::{ConstU32, Get};
-use impl_trait_for_tuples::impl_for_tuples;
-use sp_core::{H160, H256, U256};
-use sp_std::{convert::TryInto, vec, vec::Vec};
+use {
+	crate::revert::{InjectBacktrace, MayRevert, RevertReason},
+	alloc::borrow::ToOwned,
+	core::{any::type_name, marker::PhantomData, ops::Range},
+	frame_support::traits::{ConstU32, Get},
+	impl_trait_for_tuples::impl_for_tuples,
+	sp_core::{H160, H256, U256},
+	sp_std::{convert::TryInto, vec, vec::Vec},
+};
 
 // derive macro
 pub use precompile_utils_macro::EvmData;
@@ -64,7 +67,7 @@ impl<'a> EvmDataReader<'a> {
 		T: num_enum::TryFromPrimitive<Primitive = u32>,
 	{
 		if input.len() < 4 {
-			return Err(RevertReason::read_out_of_bounds("selector").into())
+			return Err(RevertReason::read_out_of_bounds("selector").into());
 		}
 
 		let mut buffer = [0u8; 4];
@@ -81,17 +84,28 @@ impl<'a> EvmDataReader<'a> {
 		Ok(selector)
 	}
 
+	/// Read selector as u32
+	pub fn read_u32_selector(input: &'a [u8]) -> MayRevert<u32> {
+		if input.len() < 4 {
+			return Err(RevertReason::read_out_of_bounds("selector").into());
+		}
+
+		let mut buffer = [0u8; 4];
+		buffer.copy_from_slice(&input[0..4]);
+
+		Ok(u32::from_be_bytes(buffer))
+	}
+
 	/// Create a new input parser from a selector-initial input.
 	pub fn new_skip_selector(input: &'a [u8]) -> MayRevert<Self> {
 		if input.len() < 4 {
-			return Err(RevertReason::read_out_of_bounds("selector").into())
+			return Err(RevertReason::read_out_of_bounds("selector").into());
 		}
 
 		Ok(Self::new(&input[4..]))
 	}
 
-	/// Check the input has at least the correct amount of arguments before the end (32 bytes
-	/// values).
+	/// Check the input has at least the correct amount of arguments before the end (32 bytes values).
 	pub fn expect_arguments(&self, args: usize) -> MayRevert<()> {
 		if self.input.len() >= self.cursor + args * 32 {
 			Ok(())
@@ -128,10 +142,13 @@ impl<'a> EvmDataReader<'a> {
 			.map_err(|_| RevertReason::value_is_too_large("pointer"))?;
 
 		if offset >= self.input.len() {
-			return Err(RevertReason::PointerToOutofBound.into())
+			return Err(RevertReason::PointerToOutofBound.into());
 		}
 
-		Ok(Self { input: &self.input[offset..], cursor: 0 })
+		Ok(Self {
+			input: &self.input[offset..],
+			cursor: 0,
+		})
 	}
 
 	/// Read remaining bytes
@@ -151,7 +168,10 @@ impl<'a> EvmDataReader<'a> {
 	/// Checks cursor overflows.
 	fn move_cursor(&mut self, len: usize) -> MayRevert<Range<usize>> {
 		let start = self.cursor;
-		let end = self.cursor.checked_add(len).ok_or(RevertReason::CursorOverflow)?;
+		let end = self
+			.cursor
+			.checked_add(len)
+			.ok_or_else(|| RevertReason::CursorOverflow)?;
 
 		self.cursor = end;
 
@@ -178,22 +198,30 @@ struct OffsetDatum {
 	offset_position: usize,
 	// Data pointed by the offset that must be inserted at the end of container data.
 	data: Vec<u8>,
-	// Inside of arrays, the offset is not from the start of array data (length), but from the
-	// start of the item. This shift allow to correct this.
+	// Inside of arrays, the offset is not from the start of array data (length), but from the start
+	// of the item. This shift allow to correct this.
 	offset_shift: usize,
 }
 
 impl EvmDataWriter {
 	/// Creates a new empty output builder (without selector).
 	pub fn new() -> Self {
-		Self { data: vec![], offset_data: vec![], selector: None }
+		Self {
+			data: vec![],
+			offset_data: vec![],
+			selector: None,
+		}
 	}
 
 	/// Creates a new empty output builder with provided selector.
 	/// Selector will only be appended before the data when calling
 	/// `build` to not mess with the offsets.
 	pub fn new_with_selector(selector: impl Into<u32>) -> Self {
-		Self { data: vec![], offset_data: vec![], selector: Some(selector.into()) }
+		Self {
+			data: vec![],
+			offset_data: vec![],
+			selector: Some(selector.into()),
+		}
 	}
 
 	/// Return the built data.
@@ -254,7 +282,11 @@ impl EvmDataWriter {
 		let offset_position = self.data.len();
 		H256::write(self, H256::repeat_byte(0xff));
 
-		self.offset_data.push(OffsetDatum { offset_position, data, offset_shift: 0 });
+		self.offset_data.push(OffsetDatum {
+			offset_position,
+			data,
+			offset_shift: 0,
+		});
 	}
 }
 
@@ -267,6 +299,7 @@ impl Default for EvmDataWriter {
 /// Adapter to parse data as a first type then convert it to another one.
 /// Useful for old precompiles in which Solidity arguments where set larger than
 /// the needed Rust type.
+#[derive(Clone, Copy, Debug)]
 pub struct SolidityConvert<P, C> {
 	inner: C,
 	_phantom: PhantomData<P>,
@@ -274,7 +307,10 @@ pub struct SolidityConvert<P, C> {
 
 impl<P, C> From<C> for SolidityConvert<P, C> {
 	fn from(value: C) -> Self {
-		Self { inner: value, _phantom: PhantomData }
+		Self {
+			inner: value,
+			_phantom: PhantomData,
+		}
 	}
 }
 
@@ -294,7 +330,10 @@ where
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large(C::solidity_type()))?;
 
-		Ok(Self { inner: c, _phantom: PhantomData })
+		Ok(Self {
+			inner: c,
+			_phantom: PhantomData,
+		})
 	}
 
 	fn write(writer: &mut EvmDataWriter, value: Self) {
@@ -319,65 +358,4 @@ pub fn encode_as_function_return_value<T: EvmData>(value: T) -> Vec<u8> {
 	} else {
 		output
 	}
-}
-
-/// Helper to write `EvmData` impl for Solidity structs.
-/// Identifiers used should match Solidity ones.
-/// Types are infered from context, which should always be
-/// possible when parsing input to build a Rust struct.
-///
-/// ```rust,ignore
-/// impl EvmData for Currency {
-///     fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
-///         read_struct!(reader, (address, amount));
-///         Ok(Currency { address, amount })
-///     }
-///
-///     fn write(writer: &mut EvmDataWriter, value: Self) {
-///         EvmData::write(writer, (value.address, value.amount));
-///     }
-///
-///     fn has_static_size() -> bool {
-///         <(Address, U256)>::has_static_size()
-///     }
-/// }
-/// ```
-#[macro_export]
-macro_rules! read_struct {
-	($reader:ident, {$($field:ident: $type:ty),+}) => {
-		use $crate::revert::BacktraceExt as _;
-		let ($($field),*): ($($type),*) = $reader
-			.read()
-			.map_in_tuple_to_field(&[$(stringify!($field)),*])?;
-	};
-}
-
-/// Helper to read arguments of a Solidity function.
-/// Arguments are read in the provided order using the provided types.
-/// Those types should match the ones in the Solidity file,
-/// and identifiers used should match Solidity ones.
-///
-/// Identifiers written in Rust in snake_case are converted to
-/// camelCase to match Solidity conventions.
-///
-/// ```rust,ignore
-/// // Reading Solidity function `f(address ownner, uint256 accountIndex)`.
-/// read_args!(handle, {owner: Address, account_index: U256});
-/// let owner: H160 = owner.into();
-/// ```
-#[macro_export]
-macro_rules! read_args {
-	(@count) => (0usize);
-	(@count $x:ident $($xs:ident)* ) => (1usize + read_args!(@count $($xs)*));
-	($handle:ident, {$($field:ident: $type:ty),*}) => {
-		$crate::data::paste! {
-			let mut input = $handle.read_after_selector()?;
-			input.expect_arguments(read_args!(@count $($field)*))?;
-			$(
-				let $field: $type = input.read().in_field(
-					stringify!([<$field:camel>])
-				)?;
-			)*
-		}
-	};
 }

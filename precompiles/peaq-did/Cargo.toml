@@ -6,6 +6,7 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
+hex = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
 num_enum = { workspace = true, default-features = false }
 paste = { workspace = true, default-features = false }

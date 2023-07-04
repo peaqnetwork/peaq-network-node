@@ -22,12 +22,14 @@ use proc_macro2::Literal;
 use quote::{quote, quote_spanned};
 use sha3::{Digest, Keccak256};
 use syn::{
-	parse_macro_input, spanned::Spanned, Attribute, Expr, ExprLit, Ident, ItemEnum, Lit, LitStr,
+	parse_macro_input, spanned::Spanned, Attribute, Expr, ExprLit, Ident, ItemEnum, ItemType, Lit,
+	LitStr,
 };
 
+mod derive_evm_data;
 mod generate_function_selector;
 mod precompile;
-mod derive_evm_data;
+mod precompile_name_from_address;
 
 struct Bytes(Vec<u8>);
 
@@ -50,12 +52,15 @@ impl ::std::fmt::Debug for Bytes {
 pub fn keccak256(input: TokenStream) -> TokenStream {
 	let lit_str = parse_macro_input!(input as LitStr);
 
-	let hash = Keccak256::digest(lit_str.value().as_ref());
+	let hash = Keccak256::digest(lit_str.value().as_bytes());
 
 	let bytes = Bytes(hash.to_vec());
 	let eval_str = format!("{:?}", bytes);
 	let eval_ts: proc_macro2::TokenStream = eval_str.parse().unwrap_or_else(|_| {
-		panic!("Failed to parse the string \"{}\" to TokenStream.", eval_str);
+		panic!(
+			"Failed to parse the string \"{}\" to TokenStream.",
+			eval_str
+		);
 	});
 	quote!(#eval_ts).into()
 }
@@ -69,8 +74,8 @@ pub fn keccak256(input: TokenStream) -> TokenStream {
 /// ```ignore
 /// #[generate_function_selector]
 /// enum Action {
-///     Toto = "toto()",
-///     Tata = "tata()",
+/// 	Toto = "toto()",
+/// 	Tata = "tata()",
 /// }
 /// ```
 ///
@@ -79,10 +84,11 @@ pub fn keccak256(input: TokenStream) -> TokenStream {
 /// ```rust
 /// #[repr(u32)]
 /// enum Action {
-///     Toto = 119097542u32,
-///     Tata = 1414311903u32,
+/// 	Toto = 119097542u32,
+/// 	Tata = 1414311903u32,
 /// }
 /// ```
+///
 #[proc_macro_attribute]
 pub fn generate_function_selector(attr: TokenStream, input: TokenStream) -> TokenStream {
 	generate_function_selector::main(attr, input)
@@ -93,7 +99,12 @@ pub fn precompile(attr: TokenStream, input: TokenStream) -> TokenStream {
 	precompile::main(attr, input)
 }
 
+#[proc_macro_attribute]
+pub fn precompile_name_from_address(attr: TokenStream, input: TokenStream) -> TokenStream {
+	precompile_name_from_address::main(attr, input)
+}
+
 #[proc_macro_derive(EvmData)]
 pub fn derive_evm_data(input: TokenStream) -> TokenStream {
-    derive_evm_data::main(input)
+	derive_evm_data::main(input)
 }

@@ -18,15 +18,17 @@
 //! - Substrate call dispatch.
 //! - Substrate DB read and write costs
 
-use crate::revert;
-use core::marker::PhantomData;
-use fp_evm::{ExitError, PrecompileFailure, PrecompileHandle};
-use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	pallet_prelude::DispatchError,
-	traits::Get,
+use {
+	crate::{handle::using_precompile_handle, revert},
+	core::marker::PhantomData,
+	fp_evm::{ExitError, PrecompileFailure, PrecompileHandle},
+	frame_support::{
+		dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+		pallet_prelude::DispatchError,
+		traits::Get,
+	},
+	pallet_evm::GasWeightMapping,
 };
-use pallet_evm::GasWeightMapping;
 
 pub enum TryDispatchError {
 	Evm(ExitError),
@@ -37,8 +39,9 @@ impl From<TryDispatchError> for PrecompileFailure {
 	fn from(f: TryDispatchError) -> PrecompileFailure {
 		match f {
 			TryDispatchError::Evm(e) => PrecompileFailure::Error { exit_status: e },
-			TryDispatchError::Substrate(e) =>
-				revert(alloc::format!("Dispatched call failed with error: {e:?}")),
+			TryDispatchError::Substrate(e) => {
+				revert(alloc::format!("Dispatched call failed with error: {e:?}"))
+			}
 		}
 	}
 }
@@ -71,7 +74,7 @@ where
 		let remaining_gas = handle.remaining_gas();
 		let required_gas = Runtime::GasWeightMapping::weight_to_gas(dispatch_info.weight);
 		if required_gas > remaining_gas {
-			return Err(TryDispatchError::Evm(ExitError::OutOfGas))
+			return Err(TryDispatchError::Evm(ExitError::OutOfGas));
 		}
 
 		// Dispatch call.
@@ -79,15 +82,17 @@ where
 		// However while Substrate handle checking weight while not making the sender pay for it,
 		// the EVM doesn't. It seems this safer to always record the costs to avoid unmetered
 		// computations.
-		let post_dispatch_info =
-			call.dispatch(origin).map_err(|e| TryDispatchError::Substrate(e.error))?;
+		let post_dispatch_info = using_precompile_handle(handle, || call.dispatch(origin))
+			.map_err(|e| TryDispatchError::Substrate(e.error))?;
 
 		let used_weight = post_dispatch_info.actual_weight;
 
 		let used_gas =
 			Runtime::GasWeightMapping::weight_to_gas(used_weight.unwrap_or(dispatch_info.weight));
 
-		handle.record_cost(used_gas).map_err(TryDispatchError::Evm)?;
+		handle
+			.record_cost(used_gas)
+			.map_err(|e| TryDispatchError::Evm(e))?;
 
 		Ok(post_dispatch_info)
 	}

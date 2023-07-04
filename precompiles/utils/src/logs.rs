@@ -14,21 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::EvmResult;
-use pallet_evm::{Log, PrecompileHandle};
-use sp_core::{H160, H256};
-use sp_std::{vec, vec::Vec};
+use {
+	crate::EvmResult,
+	pallet_evm::{Log, PrecompileHandle},
+	sp_core::{H160, H256},
+	sp_std::{vec, vec::Vec},
+};
 
 /// Create a 0-topic log.
 #[must_use]
 pub fn log0(address: impl Into<H160>, data: impl Into<Vec<u8>>) -> Log {
-	Log { address: address.into(), topics: vec![], data: data.into() }
+	Log {
+		address: address.into(),
+		topics: vec![],
+		data: data.into(),
+	}
 }
 
 /// Create a 1-topic log.
 #[must_use]
 pub fn log1(address: impl Into<H160>, topic0: impl Into<H256>, data: impl Into<Vec<u8>>) -> Log {
-	Log { address: address.into(), topics: vec![topic0.into()], data: data.into() }
+	Log {
+		address: address.into(),
+		topics: vec![topic0.into()],
+		data: data.into(),
+	}
 }
 
 /// Create a 2-topics log.
@@ -39,7 +49,11 @@ pub fn log2(
 	topic1: impl Into<H256>,
 	data: impl Into<Vec<u8>>,
 ) -> Log {
-	Log { address: address.into(), topics: vec![topic0.into(), topic1.into()], data: data.into() }
+	Log {
+		address: address.into(),
+		topics: vec![topic0.into(), topic1.into()],
+		data: data.into(),
+	}
 }
 
 /// Create a 3-topics log.

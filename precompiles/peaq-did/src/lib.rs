@@ -31,8 +31,8 @@ use frame_support::{
     dispatch::Dispatchable,
     dispatch::{GetDispatchInfo, PostDispatchInfo},
 };
-use codec::Encode;
 use sp_std::vec::Vec;
+use hex;
 
 use fp_evm::PrecompileHandle;
 
@@ -83,39 +83,30 @@ where
 	#[precompile::view]
 	fn read(handle: &mut impl PrecompileHandle, did_account: H256, name:
 	BoundedBytes<GetProposalLimit>) -> EvmResult<EVMAttribute> {
-        log::error!("show me the info, caller {:?}, did_account {:?}", handle.context().caller, did_account);
-		log::error!("show me the name {:?}", name);
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let did_account = AccountOf::<Runtime>::from(did_account.to_fixed_bytes());
-		let qq : Vec<u8> = name.into();
-		let out = peaq_pallet_did::Pallet::<Runtime>::read(&did_account, &qq);
-		match out {
+		match peaq_pallet_did::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
 			Some(v) => {
-				log::error!("show me the out QQ {:?}", v.name);
-				let ee = EVMAttribute {
-					name: v.name.encode().into(),
-					value: v.value.encode().into(),
+				Ok(EVMAttribute {
+					// [TODO] need to change
+					name: ["0x", &hex::encode(v.name)].concat().into(),
+					value: ["0x", &hex::encode(v.value)].concat().into(),
 					validity: v.validity.into(),
 					created: v.created.into(),
-				};
-				log::error!("show me the out {:?}, name: {}", ee, ee.name);
-				Ok(ee)
+				})
 			},
 			None => {
-				log::error!("show me the out QQ");
-				Err(Revert::new(RevertReason::custom("???")).into())
+				Err(Revert::new(RevertReason::custom("Cannot find the item")).into())
 			}
 		}
 	}
 
 	#[precompile::public("create(bytes32,bytes,bytes,uint32)")]
 	fn create(handle: &mut impl PrecompileHandle, did_account: H256, name: BoundedBytes<GetProposalLimit>, value: BoundedBytes<GetProposalLimit>, valid_for: u32) -> EvmResult<bool> {
-        log::error!("aaaa");
 		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
 
 		let caller: AccountOf::<Runtime> =
 				Runtime::AddressMapping::into_account_id(handle.context().caller);
-        log::error!("aaaa caller {:?}, did_account {:?}", caller, did_account);
 
 		let did_account = AccountOf::<Runtime>::from(did_account.to_fixed_bytes());
 		let valid_for: Option<BlockNumberOf<Runtime>> = match valid_for {
@@ -123,17 +114,13 @@ where
 			_ => Some(valid_for.into())
 		};
 
-		let name : Vec<u8> = name.into();
-		let value : Vec<u8> = value.into();
-        log::error!("cccc, {:?}, {:?}, {:?}, {:?}", caller, did_account, name, value);
-
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
             peaq_pallet_did::Call::<Runtime>::add_attribute {
                 did_account,
-				name,
-				value,
+				name: Vec::<u8>::from(name),
+				value: Vec::<u8>::from(value),
 				valid_for,
             },
         )?;

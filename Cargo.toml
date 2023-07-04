@@ -26,10 +26,12 @@ opt-level = 3
 panic = "unwind"
 
 [workspace.dependencies]
+derive_more = "0.99"
 bstringify = "0.1.2"
 slices = "0.2.0"
 serde = { version = "1.0.151" }
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
+parity-scale-codec = { version = "3.2.2", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
 sp-core = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 sp-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
@@ -80,6 +82,7 @@ pallet-utility = { git = "https://github.com/peaqnetwork/substrate", branch = "p
 pallet-treasury = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-vesting = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 sp-io = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
+# fp-evm = { path = "../frontier/primitives/evm", default-features = false }
 fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
 fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
 fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
