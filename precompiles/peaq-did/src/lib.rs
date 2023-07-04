@@ -26,10 +26,9 @@ use frame_support::{
 	traits::{ConstU32, Time as MomentTime},
 };
 use hex;
-use peaq_primitives_xcm::{currency::CurrencyId, Balance};
 use precompile_utils::prelude::*;
-use sp_core::{Decode, H160, H256, U256};
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_core::{Decode, H256, U256};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 use fp_evm::PrecompileHandle;
 
@@ -38,9 +37,7 @@ use pallet_evm::AddressMapping;
 use precompile_utils::data::String;
 
 // orml imports
-use peaq_pallet_did::did::{Did as PeaqDidT, DidError};
-// [TODO] Need to change the pallet did
-use peaq_primitives_xcm::AccountId;
+use peaq_pallet_did::did::Did as PeaqDidT;
 
 pub type AccountOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 pub type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;

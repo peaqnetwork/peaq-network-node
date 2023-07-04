@@ -22,7 +22,6 @@ use crate::{data::String, revert, substrate::RuntimeHelper};
 use fp_evm::{Precompile, PrecompileHandle, PrecompileResult, PrecompileSet};
 use frame_support::pallet_prelude::Get;
 use impl_trait_for_tuples::impl_for_tuples;
-use pallet_evm::AddressMapping;
 use sp_core::{H160, H256};
 use sp_std::{
 	cell::RefCell, collections::btree_map::BTreeMap, marker::PhantomData, ops::RangeInclusive, vec,
