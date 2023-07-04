@@ -24,4 +24,16 @@ interface DID {
         bytes memory value,
         uint32 validity_for
     ) external returns (bool);
+
+    function update(
+        bytes32 did_account,
+        bytes memory name,
+        bytes memory value,
+        uint32 validity_for
+    ) external returns (bool);
+
+    function remove(
+        bytes32 did_account,
+        bytes memory name
+    ) external returns (bool);
 }

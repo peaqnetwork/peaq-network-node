@@ -126,4 +126,51 @@ where
         )?;
 		Ok(true)
 	}
+
+	#[precompile::public("update(bytes32,bytes,bytes,uint32)")]
+	fn update(handle: &mut impl PrecompileHandle, did_account: H256, name: BoundedBytes<GetProposalLimit>, value: BoundedBytes<GetProposalLimit>, valid_for: u32) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
+
+		let caller: AccountOf::<Runtime> =
+				Runtime::AddressMapping::into_account_id(handle.context().caller);
+
+		let did_account = AccountOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let valid_for: Option<BlockNumberOf<Runtime>> = match valid_for {
+			0 => None,
+			_ => Some(valid_for.into())
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller).into(),
+            peaq_pallet_did::Call::<Runtime>::update_attribute {
+                did_account,
+				name: Vec::<u8>::from(name),
+				value: Vec::<u8>::from(value),
+				valid_for,
+            },
+        )?;
+		Ok(true)
+	}
+
+	#[precompile::public("remove(bytes32,bytes)")]
+	fn remove(handle: &mut impl PrecompileHandle, did_account: H256, name: BoundedBytes<GetProposalLimit>) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
+
+		let caller: AccountOf::<Runtime> =
+				Runtime::AddressMapping::into_account_id(handle.context().caller);
+
+		let did_account = AccountOf::<Runtime>::from(did_account.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller).into(),
+            peaq_pallet_did::Call::<Runtime>::remove_attribute {
+                did_account,
+				name: Vec::<u8>::from(name),
+            },
+        )?;
+		Ok(true)
+	}
+
 }
