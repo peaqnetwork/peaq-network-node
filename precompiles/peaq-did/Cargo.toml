@@ -1,6 +1,6 @@
 [package]
 name = "pallet-evm-precompile-peaq-did"
-authors = [ "PureStake" ]
+authors = [ "Peaq" ]
 description = "A Precompile Module for Frontier EVM that implements the PEAQ DID standard."
 edition = "2021"
 version = "0.1.0"
@@ -14,18 +14,14 @@ slices = { workspace = true, default-features = false }
 
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
-peaq-primitives-xcm = {path = "../../primitives/xcm", default-features = false}
 
 # Substrate
 codec = { package = "parity-scale-codec", workspace = true, default-features = false, features = [ "max-encoded-len" ]}
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
-pallet-balances = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
-orml-currencies = { workspace = true, default-features = false }
-orml-traits = { workspace = true, default-features = false }
 
 # Frontier
 fp-evm = { workspace = true, default-features = false }
@@ -41,15 +37,11 @@ std = [
 	"fp-evm/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-balances/std",
 	"pallet-evm/std",
 	"precompile-utils/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
-    "orml-currencies/std",
-	"orml-traits/std",
-	"peaq-primitives-xcm/std",
 	"peaq-pallet-did/std",
 	"pallet-timestamp/std",
 ]

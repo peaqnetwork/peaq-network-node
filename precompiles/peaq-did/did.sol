@@ -13,19 +13,19 @@ interface DID {
         uint256 created;
     }
 
-    function read(
+    function read_attribute(
         bytes32 did_account,
         bytes memory name
     ) external view returns (Attribute memory);
 
-    function create(
+    function add_attribute(
         bytes32 did_account,
         bytes memory name,
         bytes memory value,
         uint32 validity_for
     ) external returns (bool);
 
-    function update(
+    function update_attribute(
         bytes32 did_account,
         bytes memory name,
         bytes memory value,

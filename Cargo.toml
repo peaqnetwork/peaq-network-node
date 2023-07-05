@@ -82,7 +82,6 @@ pallet-utility = { git = "https://github.com/peaqnetwork/substrate", branch = "p
 pallet-treasury = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-vesting = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 sp-io = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
-# fp-evm = { path = "../frontier/primitives/evm", default-features = false }
 fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
 fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
 fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38", default-features = false }
