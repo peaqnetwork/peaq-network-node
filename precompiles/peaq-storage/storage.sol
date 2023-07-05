@@ -13,12 +13,12 @@ interface Storage {
 
     function add_item(
         bytes memory item_type,
-        bytes memory item,
+        bytes memory item
     ) external returns (bool);
 
     function update_item(
         bytes memory item_type,
-        bytes memory item,
+        bytes memory item
     ) external returns (bool);
 
     event ItemAdded(

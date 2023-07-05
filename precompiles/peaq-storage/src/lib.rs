@@ -39,8 +39,7 @@ where
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	Runtime::RuntimeCall: From<peaq_pallet_storage::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
-	H256: From<<Runtime as frame_system::Config>::AccountId>,
-	AccountIdOf<Runtime>: From<[u8; 32]>,
+	AccountIdOf<Runtime>: From<[u8; 32]> + AsRef<[u8]>,
 {
 	#[precompile::public("get_item(bytes32,bytes)")]
 	#[precompile::view]
@@ -84,7 +83,7 @@ where
 			SELECTOR_LOG_ITEM_ADDED,
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(caller.into())
+				.write::<H256>(H256::from_slice(caller.as_ref()))
 				.write::<BoundedBytes<GetBytesLimit>>(item_type)
 				.write::<BoundedBytes<GetBytesLimit>>(item)
 				.build(),
@@ -119,7 +118,7 @@ where
 			SELECTOR_LOG_ITEM_UPDATED,
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(caller.into())
+				.write::<H256>(H256::from_slice(caller.as_ref()))
 				.write::<BoundedBytes<GetBytesLimit>>(item_type)
 				.write::<BoundedBytes<GetBytesLimit>>(item)
 				.build(),
