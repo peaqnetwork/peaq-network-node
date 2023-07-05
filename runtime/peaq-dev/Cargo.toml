@@ -112,6 +112,7 @@ pallet-block-reward = { path = "../../pallets/block-reward", default-features = 
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
 pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-features = false }
+pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 peaq-pallet-mor = { workspace = true, default-features = false }
 
@@ -243,6 +244,7 @@ std = [
 	"precompile-utils/std",
 	"runtime-common/std",
 	"pallet-evm-precompile-peaq-did/std",
+	"pallet-evm-precompile-peaq-storage/std",
 ]
 
 # Must be enabled for tracing runtimes only

@@ -23,10 +23,10 @@ type MomentOf<Runtime> = <Runtime as pallet_timestamp::Config>::Moment;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
 pub(crate) const SELECTOR_LOG_ADD_ATTRIBUTE: [u8; 32] =
-	keccak256!("AddAttribute(byte32,bytes32,bytes,bytes,uint32)");
+	keccak256!("AddAttribute(address,bytes32,bytes,bytes,uint32)");
 
 pub(crate) const SELECTOR_LOG_UPDATE_ATTRIBUTE: [u8; 32] =
-	keccak256!("UpdateAttribute(byte32,bytes32,bytes,bytes,uint32)");
+	keccak256!("UpdateAttribute(address,bytes32,bytes,bytes,uint32)");
 
 pub(crate) const SELECTOR_LOG_REMOVE_ATTRIBUTE: [u8; 32] =
 	keccak256!("RemoveAttribte(bytes32,bytes)");

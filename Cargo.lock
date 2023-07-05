@@ -6651,6 +6651,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-peaq-storage"
+version = "0.1.0"
+dependencies = [
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "num_enum",
+ "pallet-evm",
+ "parity-scale-codec",
+ "paste",
+ "peaq-pallet-storage",
+ "precompile-utils",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.38#e9481a3995da9b8ec0da391d549d4a34c6068f15"
@@ -7672,6 +7693,7 @@ dependencies = [
  "pallet-evm-precompile-dispatch",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-peaq-did",
+ "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
  "pallet-multisig",
