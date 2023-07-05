@@ -7,7 +7,6 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use hex;
 use precompile_utils::{prelude::*, data::String};
 use sp_core::{Decode, H256, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -23,6 +22,14 @@ type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
 type MomentOf<Runtime> = <Runtime as pallet_timestamp::Config>::Moment;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
+pub(crate) const SELECTOR_LOG_ADD_ATTRIBUTE: [u8; 32] =
+	keccak256!("AddAttribute(byte32,bytes32,bytes,bytes,uint32)");
+
+pub(crate) const SELECTOR_LOG_UPDATE_ATTRIBUTE: [u8; 32] =
+	keccak256!("UpdateAttribute(byte32,bytes32,bytes,bytes,uint32)");
+
+pub(crate) const SELECTOR_LOG_REMOVE_ATTRIBUTE: [u8; 32] =
+	keccak256!("RemoveAttribte(bytes32,bytes)");
 
 pub struct PeaqDIDPrecompile<Runtime>(PhantomData<Runtime>);
 
@@ -64,8 +71,8 @@ where
 			Some(v) => {
 				Ok(EVMAttribute {
 					// [TODO] need to change
-					name: ["0x", &hex::encode(v.name)].concat().into(),
-					value: ["0x", &hex::encode(v.value)].concat().into(),
+					name: v.name.into(),
+					value: v.value.into(),
 					validity: v.validity.into(),
 					created: v.created.into(),
 				})
@@ -87,22 +94,36 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
-		let valid_for: Option<BlockNumberOf<Runtime>> = match valid_for {
+		let did_account_addr = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let valid_for_opt: Option<BlockNumberOf<Runtime>> = match valid_for {
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
-			Some(caller).into(),
+			Some(caller.clone()).into(),
 			peaq_pallet_did::Call::<Runtime>::add_attribute {
-				did_account,
-				name: Vec::<u8>::from(name),
-				value: Vec::<u8>::from(value),
-				valid_for,
+				did_account: did_account_addr,
+				name: Vec::<u8>::from(name.clone()),
+				value: Vec::<u8>::from(value.clone()),
+				valid_for: valid_for_opt,
 			},
 		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ADD_ATTRIBUTE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(did_account)
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.write::<BoundedBytes<GetBytesLimit>>(value)
+				.write::<u32>(valid_for.into())
+				.build(),
+		);
+		event.record(handle)?;
+
 		Ok(true)
 	}
 
@@ -119,22 +140,36 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
-		let valid_for: Option<BlockNumberOf<Runtime>> = match valid_for {
+		let did_account_addr = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let valid_for_opt: Option<BlockNumberOf<Runtime>> = match valid_for {
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
-			Some(caller).into(),
+			Some(caller.clone()).into(),
 			peaq_pallet_did::Call::<Runtime>::update_attribute {
-				did_account,
-				name: Vec::<u8>::from(name),
-				value: Vec::<u8>::from(value),
-				valid_for,
+				did_account: did_account_addr,
+				name: Vec::<u8>::from(name.clone()),
+				value: Vec::<u8>::from(value.clone()),
+				valid_for: valid_for_opt,
 			},
 		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UPDATE_ATTRIBUTE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(did_account)
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.write::<BoundedBytes<GetBytesLimit>>(value)
+				.write::<u32>(valid_for.into())
+				.build(),
+		);
+		event.record(handle)?;
+
 		Ok(true)
 	}
 
@@ -149,16 +184,25 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
-
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::remove_attribute {
-				did_account,
-				name: Vec::<u8>::from(name),
+				did_account: AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes()),
+				name: Vec::<u8>::from(name.clone()),
 			},
 		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_REMOVE_ATTRIBUTE,
+			EvmDataWriter::new()
+				.write::<H256>(did_account.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
 		Ok(true)
 	}
 }
