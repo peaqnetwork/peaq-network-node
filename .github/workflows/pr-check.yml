@@ -35,7 +35,7 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
           rustup component add rustfmt --toolchain nightly
-          cargo install cargo-expand --locked
+          cargo install cargo-expand --locked --version 1.0.34
 
       - name: Check fmt
         run: |
