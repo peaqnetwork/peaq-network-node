@@ -7,9 +7,8 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use hex;
-use precompile_utils::{prelude::*, data::String};
-use sp_core::{Decode, H256, U256};
+use precompile_utils::prelude::*;
+use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use fp_evm::PrecompileHandle;

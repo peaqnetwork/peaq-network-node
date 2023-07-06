@@ -70,7 +70,6 @@ where
 		match peaq_pallet_did::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
 			Some(v) => {
 				Ok(EVMAttribute {
-					// [TODO] need to change
 					name: v.name.into(),
 					value: v.value.into(),
 					validity: v.validity.into(),
