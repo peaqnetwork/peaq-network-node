@@ -7,7 +7,7 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use precompile_utils::{prelude::*, data::String};
+use precompile_utils::{data::String, prelude::*};
 use sp_core::{Decode, H256, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -68,14 +68,12 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
 		match peaq_pallet_did::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
-			Some(v) => {
-				Ok(EVMAttribute {
-					name: v.name.into(),
-					value: v.value.into(),
-					validity: v.validity.into(),
-					created: v.created.into(),
-				})
-			},
+			Some(v) => Ok(EVMAttribute {
+				name: v.name.into(),
+				value: v.value.into(),
+				validity: v.validity.into(),
+				created: v.created.into(),
+			}),
 			None => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 		}
 	}

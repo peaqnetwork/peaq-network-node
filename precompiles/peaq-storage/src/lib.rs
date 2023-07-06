@@ -31,9 +31,7 @@ pub struct PeaqStoragePrecompile<Runtime>(PhantomData<Runtime>);
 #[precompile_utils::precompile]
 impl<Runtime> PeaqStoragePrecompile<Runtime>
 where
-	Runtime: pallet_evm::Config
-		+ peaq_pallet_storage::Config
-		+ frame_system::pallet::Config,
+	Runtime: pallet_evm::Config + peaq_pallet_storage::Config + frame_system::pallet::Config,
 	peaq_pallet_storage::Pallet<Runtime>: PeaqStorageT<AccountIdOf<Runtime>>,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	Runtime::RuntimeCall: From<peaq_pallet_storage::Call<Runtime>>,
@@ -50,9 +48,7 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
 		match peaq_pallet_storage::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
-			Some(v) => {
-				Ok(v.into())
-			},
+			Some(v) => Ok(v.into()),
 			None => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 		}
 	}
