@@ -102,7 +102,7 @@ pub fn set_configuration_fails() {
 	ExternalityBuilder::build().execute_with(|| {
 		// 1
 		assert_noop!(
-			BlockReward::set_configuration(Origin::signed(1), Default::default()),
+			BlockReward::set_configuration(RuntimeOrigin::signed(1), Default::default()),
 			BadOrigin
 		);
 
@@ -113,7 +113,7 @@ pub fn set_configuration_fails() {
 		};
 		assert!(!reward_config.is_consistent());
 		assert_noop!(
-			BlockReward::set_configuration(Origin::root(), reward_config),
+			BlockReward::set_configuration(RuntimeOrigin::root(), reward_config),
 			Error::<TestRuntime>::InvalidDistributionConfiguration,
 		);
 	})
@@ -133,8 +133,8 @@ pub fn set_configuration_is_ok() {
 		};
 		assert!(reward_config.is_consistent());
 
-		assert_ok!(BlockReward::set_configuration(Origin::root(), reward_config.clone()));
-		System::assert_last_event(mock::Event::BlockReward(
+		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
+		System::assert_last_event(mock::RuntimeEvent::BlockReward(
 			Event::DistributionConfigurationChanged(reward_config.clone()),
 		));
 
@@ -146,7 +146,7 @@ pub fn set_configuration_is_ok() {
 pub fn set_block_issue_reward_is_failure() {
 	ExternalityBuilder::build().execute_with(|| {
 		assert_noop!(
-			BlockReward::set_block_issue_reward(Origin::signed(1), Default::default()),
+			BlockReward::set_block_issue_reward(RuntimeOrigin::signed(1), Default::default()),
 			BadOrigin
 		);
 	})
@@ -157,8 +157,10 @@ pub fn set_block_issue_reward_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		let reward = 3_123_456 as Balance;
 		// custom config so it differs from the default one
-		assert_ok!(BlockReward::set_block_issue_reward(Origin::root(), reward));
-		System::assert_last_event(mock::Event::BlockReward(Event::BlockIssueRewardChanged(reward)));
+		assert_ok!(BlockReward::set_block_issue_reward(RuntimeOrigin::root(), reward));
+		System::assert_last_event(mock::RuntimeEvent::BlockReward(Event::BlockIssueRewardChanged(
+			reward,
+		)));
 
 		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
 	})
@@ -168,7 +170,7 @@ pub fn set_block_issue_reward_is_ok() {
 pub fn set_maxcurrencysupply_is_failure() {
 	ExternalityBuilder::build().execute_with(|| {
 		assert_noop!(
-			BlockReward::set_max_currency_supply(Origin::signed(1), Default::default()),
+			BlockReward::set_max_currency_supply(RuntimeOrigin::signed(1), Default::default()),
 			BadOrigin
 		);
 	})
@@ -179,8 +181,10 @@ pub fn set_maxcurrencysupply_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		let limit = 3_123_456 as Balance;
 		// custom config so it differs from the default one
-		assert_ok!(BlockReward::set_max_currency_supply(Origin::root(), limit));
-		System::assert_last_event(mock::Event::BlockReward(Event::MaxCurrencySupplyChanged(limit)));
+		assert_ok!(BlockReward::set_max_currency_supply(RuntimeOrigin::root(), limit));
+		System::assert_last_event(mock::RuntimeEvent::BlockReward(
+			Event::MaxCurrencySupplyChanged(limit),
+		));
 
 		assert_eq!(MaxCurrencySupply::<TestRuntime>::get(), limit);
 	})
@@ -212,7 +216,7 @@ pub fn harcap_reaches() {
 		let block_limits = 3_u128;
 
 		assert_ok!(BlockReward::set_max_currency_supply(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			BLOCK_REWARD * block_limits
 		));
 
@@ -253,7 +257,7 @@ pub fn reward_distribution_as_expected() {
 			machines_subsidization_percent: Perbill::from_percent(5),
 		};
 		assert!(reward_config.is_consistent());
-		assert_ok!(BlockReward::set_configuration(Origin::root(), reward_config.clone()));
+		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
 
 		// Issue rewards a couple of times and verify distribution is as expected
 		for _block in 1..=100 {
@@ -280,7 +284,7 @@ pub fn reward_distribution_no_adjustable_part() {
 			machines_subsidization_percent: Perbill::from_percent(5),
 		};
 		assert!(reward_config.is_consistent());
-		assert_ok!(BlockReward::set_configuration(Origin::root(), reward_config.clone()));
+		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
 
 		// no adjustable part so we don't expect rewards to change with TVL percentage
 		let const_rewards = Rewards::calculate(&reward_config);

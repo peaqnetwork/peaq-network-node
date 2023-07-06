@@ -6,6 +6,7 @@ use crate::{
 	primitives::Block,
 };
 
+#[cfg(feature = "frame-benchmarking-cli")]
 use frame_benchmarking_cli::BenchmarkCmd;
 use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
 use sc_service::{DatabaseSource, PartialComponents};
@@ -329,6 +330,7 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			})
 		},
+		#[cfg(feature = "frame-benchmarking-cli")]
 		Some(Subcommand::Benchmark(cmd)) =>
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
@@ -429,6 +431,7 @@ pub fn run() -> sc_cli::Result<()> {
 		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 				let rpc_config = RpcConfig {
@@ -440,7 +443,7 @@ pub fn run() -> sc_cli::Result<()> {
 					eth_statuses_cache: cli.run.eth_statuses_cache,
 					fee_history_limit: cli.run.fee_history_limit,
 					max_past_logs: cli.run.max_past_logs,
-					relay_chain_rpc_url: cli.run.base.relay_chain_rpc_url,
+					relay_chain_rpc_urls: cli.run.base.relay_chain_rpc_urls,
 					tracing_raw_max_memory_usage: cli.run.tracing_raw_max_memory_usage,
 				};
 
@@ -476,6 +479,7 @@ pub fn run() -> sc_cli::Result<()> {
 					start_node::<RuntimeApi, Executor>(
 						config,
 						polkadot_config,
+						collator_options,
 						id,
 						rpc_config,
 						cli.run.target_gas_price,

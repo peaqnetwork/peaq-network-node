@@ -16,8 +16,8 @@
 
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, DefaultNoBound, RuntimeDebug};
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, SaturatedConversion};
 use sp_std::{
@@ -51,7 +51,7 @@ impl<T: Ord + Clone, S: Get<u32>> OrderedSet<T, S> {
 		let mut v = bv.into_inner();
 		v.sort_by(|a, b| b.cmp(a));
 		v.dedup();
-		Self::from_sorted_set(v.try_into().expect("No values were added"))
+		Self::from_sorted_set(v.try_into().map_err(|_| ()).expect("No values were added"))
 	}
 
 	/// Create a set from a `BoundedVec`.
@@ -147,7 +147,7 @@ impl<T: Ord + Clone, S: Get<u32>> OrderedSet<T, S> {
 			},
 			Err(i) => {
 				// Delegator
-				self.0.try_insert(i, value)?;
+				self.0.try_insert(i, value).map_err(|_| ())?;
 				Ok(None)
 			},
 		}

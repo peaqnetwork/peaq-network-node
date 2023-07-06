@@ -19,7 +19,7 @@
 
 //! Benchmarking
 use crate::{types::RoundInfo, *};
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::v1::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	assert_ok,
 	traits::{Currency, Get, OnInitialize},
