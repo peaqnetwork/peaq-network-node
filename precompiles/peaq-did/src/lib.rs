@@ -99,11 +99,11 @@ where
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
-			Some(caller.clone()).into(),
+			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::add_attribute {
 				did_account: did_account_addr,
-				name: Vec::<u8>::from(name.clone()),
-				value: Vec::<u8>::from(value.clone()),
+				name: name.as_bytes().to_vec(),
+				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
 		)?;
@@ -145,11 +145,11 @@ where
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
-			Some(caller.clone()).into(),
+			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::update_attribute {
 				did_account: did_account_addr,
-				name: Vec::<u8>::from(name.clone()),
-				value: Vec::<u8>::from(value.clone()),
+				name: name.as_bytes().to_vec(),
+				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
 		)?;
@@ -186,7 +186,7 @@ where
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::remove_attribute {
 				did_account: AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes()),
-				name: Vec::<u8>::from(name.clone()),
+				name: name.as_bytes().to_vec(),
 			},
 		)?;
 

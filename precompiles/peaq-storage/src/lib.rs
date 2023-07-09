@@ -68,8 +68,8 @@ where
 			handle,
 			Some(caller.clone()).into(),
 			peaq_pallet_storage::Call::<Runtime>::add_item {
-				item_type: Vec::<u8>::from(item_type.clone()),
-				item: Vec::<u8>::from(item.clone()),
+				item_type: item_type.as_bytes().to_vec(),
+				item: item.as_bytes().to_vec(),
 			},
 		)?;
 
@@ -103,8 +103,8 @@ where
 			handle,
 			Some(caller.clone()).into(),
 			peaq_pallet_storage::Call::<Runtime>::update_item {
-				item_type: Vec::<u8>::from(item_type.clone()),
-				item: Vec::<u8>::from(item.clone()),
+				item_type: item_type.as_bytes().to_vec(),
+				item: item.as_bytes().to_vec(),
 			},
 		)?;
 
