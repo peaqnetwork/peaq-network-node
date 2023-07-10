@@ -6,8 +6,8 @@ on:
       - sonarqube-parachain-dev
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    name: Sonarqube-scan
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with:
