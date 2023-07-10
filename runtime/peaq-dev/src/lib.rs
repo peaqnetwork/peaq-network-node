@@ -90,7 +90,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, LpPoolId, TokenSymbol};
+pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, LpPoolId, TokenSymbol};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -117,11 +117,13 @@ pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
-
+use xcm::latest::prelude::*;
 
 // For Zenlink-DEX-Module
-pub mod zenlink;
-pub use zenlink_protocol;
+use zenlink_protocol::{
+	AssetId as ZenlinkAssetId, PairLpGenerate, ZenlinkMultiAssets,
+};
+
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -200,9 +202,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 use runtime_common::{
 	MILLICENTS, CENTS, DOLLARS,
-	Balance,
-	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
-	CurrencyHooks,
+	CurrencyHooks, EoTFeeFactor, LocalAssetAdaptor, TransactionByteFee, OperationalFeeMultiplier,
 };
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
@@ -989,6 +989,39 @@ impl peaq_pallet_storage::Config for Runtime {
 }
 
 
+// Zenlink-DEX Parameter definitions
+parameter_types! {
+	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
+
+	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
+
+	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
+		// Krest local and live, 0.01 BNC
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
+
+		// Zenlink local 1 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
+		// Zenlink local 2 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
+	];
+}
+
+/// Short form for our individual configuration of Zenlink's MultiAssets.
+pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
+
+impl zenlink_protocol::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+    type MultiAssetsHandler = MultiAssets;
+    type PalletId = ZenlinkDexPalletId;
+    type AssetId = ZenlinkAssetId;
+    type LpGenerate = PairLpGenerate<Self>;
+    type TargetChains = ZenlinkRegistedParaChains;
+    type SelfParaId = SelfParaId;
+    type WeightInfo = ();
+}
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1036,8 +1069,6 @@ construct_runtime!(
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		// OrmlXcm: orml_xcm::{Pallet, Call, Event<T>} = 38,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 39,
-		// ZenlinkStableAmm: zenlink_stable_amm::{Pallet, Call, Storage, Event<T>}  = 40,
-		// ZenlinkSwapRouter: zenlink_swap_router::{Pallet, Call, Storage, Event<T>}  = 41,
 
 		Vesting: pallet_vesting = 50,
 
