@@ -5,9 +5,9 @@ use peaq_krest_runtime::{
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
 	Precompiles, SudoConfig, SystemConfig, WASM_BINARY,
 };
+use peaq_primitives_xcm::Balance;
 use runtime_common::{
 	DOLLARS, NANOCENTS, TOKEN_DECIMALS,
-	Balance,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
