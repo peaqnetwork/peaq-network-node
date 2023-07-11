@@ -115,6 +115,7 @@ runtime-common = { path = '../common', default-features = false }
 peaq-pallet-mor = { workspace = true, default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
+zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
 
 [features]
@@ -239,6 +240,7 @@ std = [
 	"orml-traits/std",
 	"orml-xtokens/std",
 	"zenlink-protocol/std",
+	"zenlink-protocol-runtime-api/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",

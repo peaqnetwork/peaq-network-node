@@ -29,6 +29,7 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use substrate_prometheus_endpoint::Registry;
+// use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use super::shell_upgrade::*;
 use crate::primitives::*;
@@ -325,6 +326,7 @@ where
 		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
+		// + zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
@@ -724,6 +726,7 @@ where
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
+		// + zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(

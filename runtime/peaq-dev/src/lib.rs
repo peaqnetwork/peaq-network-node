@@ -121,7 +121,8 @@ use xcm::latest::prelude::*;
 
 // For Zenlink-DEX-Module
 use zenlink_protocol::{
-	AssetId as ZenlinkAssetId, PairLpGenerate, ZenlinkMultiAssets,
+	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
+	ZenlinkMultiAssets,
 };
 
 
@@ -1708,6 +1709,47 @@ impl_runtime_apis! {
 	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
 		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
 			PeaqStorage::read(&did_account, &item_type)
+		}
+	}
+
+	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
+		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
+			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
+		}
+
+		fn get_pair_by_asset_id(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId
+		) -> Option<PairInfo<AccountId, AssetBalance, ZenlinkAssetId>> {
+			ZenlinkProtocol::get_pair_by_asset_id(asset_0, asset_1)
+		}
+
+		fn get_amount_in_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::desired_in_amount(supply, path)
+		}
+
+		fn get_amount_out_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::supply_out_amount(supply, path)
+		}
+
+		fn get_estimate_lptoken(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount_0_desired: AssetBalance,
+			amount_1_desired: AssetBalance,
+			amount_0_min: AssetBalance,
+			amount_1_min: AssetBalance,
+		) -> AssetBalance {
+			ZenlinkProtocol::get_estimate_lptoken(asset_0, asset_1, amount_0_desired,
+				amount_1_desired, amount_0_min, amount_1_min)
+		}
+
+		fn calculate_remove_liquidity(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount: AssetBalance,
+		) -> Option<(AssetBalance, AssetBalance)> {
+			ZenlinkProtocol::calculate_remove_liquidity(asset_0, asset_1, amount)
 		}
 	}
 
