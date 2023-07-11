@@ -4,25 +4,21 @@ use super::{
 	ParachainSystem, PolkadotXcm, Runtime, PeaqPotAccount, TokenSymbol, UnknownTokens, XcmpQueue,
 	AllPalletsWithSystem,
 };
-use core::marker::PhantomData;
-use cumulus_primitives_core::ParaId;
 use sp_runtime::{
 	traits::{ConstU32, Convert},
 };
-use sp_std::prelude::*;
-use sp_core::bounded::BoundedVec;
-
-use codec::{Decode, Encode};
 use frame_support::{
 	parameter_types,
-	traits::{Everything, Get, Nothing},
+	traits::{Everything, Nothing},
 	dispatch::Weight,
 };
-use frame_system::{Config as SystemT, EnsureRoot};
-
+use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
+};
+use runtime_common::{
+	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
 };
 use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::currency::parachain;
@@ -147,6 +143,7 @@ pub type Barrier = (
 	AllowSubscriptionsFrom<Everything>,
 );
 
+
 pub struct ToTreasury;
 
 impl TakeRevenue for ToTreasury {
@@ -162,14 +159,9 @@ impl TakeRevenue for ToTreasury {
 	}
 }
 
-pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
-	Some(MultiLocation::new(
-		0,
-		X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?)),
-	))
-}
 
 pub struct XcmConfig;
+
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type CallDispatcher = RuntimeCall;
@@ -272,6 +264,10 @@ parameter_type_with_key! {
 	};
 }
 
+parameter_types! {
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
+}
+
 impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -288,150 +284,4 @@ impl orml_xtokens::Config for Runtime {
 	type ReserveProvider = AbsoluteReserveProvider;
 
 	type UniversalLocation = UniversalLocation;
-}
-
-fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocation> {
-	Some(MultiLocation::new(
-		1,
-		X2(
-			Parachain(para_id),
-			Junction::from(BoundedVec::try_from(key).ok()?)
-		),
-	))
-}
-
-pub struct CurrencyIdConvert<T: SystemT>(PhantomData<T>);
-
-impl<T> Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert<T>
-where
-	T: SystemT
-{
-	fn convert(id: CurrencyId) -> Option<MultiLocation> {
-		use CurrencyId::Token;
-		use TokenSymbol::*;
-
-		match id {
-			Token(DOT) | Token(KSM) | Token(ROC) =>
-				Some(MultiLocation::parent()),
-			Token(PEAQ) =>
-				native_currency_location(
-					ParachainInfo::parachain_id().into(),
-					id.encode()
-				),
-			Token(ACA) =>
-				native_currency_location(
-					parachain::acala::ID,
-					parachain::acala::ACA_KEY.to_vec(),
-				),
-			Token(BNC) =>
-				native_currency_location(
-					parachain::bifrost::ID,
-					parachain::bifrost::BNC_KEY.to_vec(),
-				),
-			_ => None,
-		}
-	}
-}
-
-impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T>
-where
-	T: SystemT,
-{
-	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		use CurrencyId::Token;
-		use TokenSymbol::*;
-		use sp_runtime::RuntimeString::Borrowed as RsBorrowed;
-
-		match location {
-			MultiLocation {
-				parents: 1,
-				interior: Here,
-			} => {
-				let version = <T as SystemT>::Version::get();
-				match version.spec_name {
-					RsBorrowed("peaq-node-dev") => Some(Token(DOT)),
-					RsBorrowed("peaq-node-agung") => Some(Token(ROC)),
-					RsBorrowed("peaq-node-krest") => Some(Token(KSM)),
-					RsBorrowed("peaq-node") => Some(Token(DOT)),
-					_ => None,
-				}
-				// return Some(Token(DOT))
-			},
-			MultiLocation {
-				parents: 1,
-				interior: X2(Parachain(id), GeneralKey{ data, length })
-			} => {
-				let key = &data[..data.len().min(length as usize)];
-				match id {
-					parachain::acala::ID => {
-						match key {
-							parachain::acala::ACA_KEY => Some(Token(ACA)),
-							_ => None,
-						}
-					},
-					parachain::bifrost::ID => {
-						match key {
-							parachain::bifrost::BNC_KEY => Some(Token(BNC)),
-							_ => None,
-						}
-					},
-					_ => {
-						if ParaId::from(id) == ParachainInfo::parachain_id() {
-							if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-								match currency_id {
-									Token(PEAQ) => Some(currency_id),
-									_ => None,
-								}
-							} else {
-								None
-							}
-						} else {
-							None
-						}
-					}
-				}
-			},
-			MultiLocation {
-				parents: 0,
-				interior: X1(GeneralKey { data, length })
-			} => {
-				let key = &data[..data.len().min(length as usize)];
-				// decode the general key
-				if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-					match currency_id {
-						Token(PEAQ) => Some(currency_id),
-						_ => None,
-					}
-				} else {
-					None
-				}
-			},
-			_ => None,
-		}
-	}
-}
-
-impl<T> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T>
-where
-	T: SystemT
-{
-	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
-		if let MultiAsset { id: Concrete(location), .. } = asset {
-			Self::convert(location)
-		} else {
-			None
-		}
-	}
-}
-
-parameter_types! {
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
-}
-
-pub struct AccountIdToMultiLocation;
-
-impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 { network: None, id: account.into() }).into()
-	}
 }

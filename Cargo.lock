@@ -10597,14 +10597,19 @@ dependencies = [
 name = "runtime-common"
 version = "0.0.1"
 dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
  "frame-support",
  "frame-system",
  "orml-tokens",
  "orml-traits",
  "pallet-transaction-payment",
+ "parity-scale-codec",
  "peaq-primitives-xcm",
+ "sp-core",
  "sp-runtime",
  "sp-std",
+ "xcm",
  "zenlink-protocol",
 ]
 
