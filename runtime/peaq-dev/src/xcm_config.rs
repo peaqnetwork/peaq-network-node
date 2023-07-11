@@ -13,7 +13,6 @@ use sp_core::bounded::BoundedVec;
 
 use codec::{Decode, Encode};
 use frame_support::{
-	log,
 	parameter_types,
 	traits::{Everything, Nothing},
 	dispatch::Weight,
@@ -300,27 +299,35 @@ fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocation>
 }
 
 pub struct CurrencyIdConvert;
+
 impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
 
 		match id {
-			Token(DOT) | Token(KSM) | Token(ROC) => Some(MultiLocation::parent()),
+			Token(DOT) | Token(KSM) | Token(ROC) =>
+				Some(MultiLocation::parent()),
 			Token(PEAQ) =>
-				native_currency_location(ParachainInfo::parachain_id().into(), id.encode()),
-			// Token(ACA) => native_currency_location(
-			// 	parachain::acala::ID,
-			// 	parachain::acala::ACA_KEY.to_vec(),
-			// ),
-			// Token(BNC) => native_currency_location(
-			// 	parachain::bifrost::ID,
-			// 	parachain::bifrost::BNC_KEY.to_vec(),
-			// ),
+				native_currency_location(
+					ParachainInfo::parachain_id().into(),
+					id.encode()
+				),
+			Token(ACA) =>
+				native_currency_location(
+					parachain::acala::ID,
+					parachain::acala::ACA_KEY.to_vec(),
+				),
+			Token(BNC) =>
+				native_currency_location(
+					parachain::bifrost::ID,
+					parachain::bifrost::BNC_KEY.to_vec(),
+				),
 			_ => None,
 		}
 	}
 }
+
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		use CurrencyId::Token;
@@ -344,30 +351,22 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			MultiLocation {
 				parents: 1,
 				interior: X2(Parachain(id), GeneralKey{ data, length })
-			} =>
+			} => {
+				let key = &data[..data.len().min(length as usize)];
 				match id {
 					parachain::acala::ID => {
-						let key = &data[..data.len().min(length as usize)];
 						match key {
 							parachain::acala::ACA_KEY => Some(Token(ACA)),
 							_ => None,
 						}
 					},
 					parachain::bifrost::ID => {
-						log::error!("data.len(): {:?}", data.len());
-						log::error!("length: {:?}", length);
-						let key = &data[..data.len().min(length as usize)];
-						log::error!("bifrost key: {:?}", key);
 						match key {
-							parachain::bifrost::BNC_KEY => {
-								log::error!("bifrost key: {:?}", key);
-								Some(Token(BNC))
-							},
+							parachain::bifrost::BNC_KEY => Some(Token(BNC)),
 							_ => None,
 						}
 					},
 					_ => {
-						let key = &data[..data.len().min(length as usize)];
 						if ParaId::from(id) == ParachainInfo::parachain_id() {
 							if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 								match currency_id {
@@ -381,7 +380,8 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 							None
 						}
 					}
-				},
+				}
+			},
 			MultiLocation {
 				parents: 0,
 				interior: X1(GeneralKey { data, length })
@@ -401,6 +401,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		}
 	}
 }
+
 impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		if let MultiAsset { id: Concrete(location), .. } = asset {
@@ -416,6 +417,7 @@ parameter_types! {
 }
 
 pub struct AccountIdToMultiLocation;
+
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		X1(AccountId32 { network: None, id: account.into() }).into()
