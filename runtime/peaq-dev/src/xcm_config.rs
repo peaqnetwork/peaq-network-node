@@ -4,6 +4,7 @@ use super::{
 	ParachainSystem, PolkadotXcm, Runtime, PeaqPotAccount, TokenSymbol, UnknownTokens, XcmpQueue,
 	AllPalletsWithSystem,
 };
+use core::marker::PhantomData;
 use cumulus_primitives_core::ParaId;
 use sp_runtime::{
 	traits::{ConstU32, Convert},
@@ -14,10 +15,10 @@ use sp_core::bounded::BoundedVec;
 use codec::{Decode, Encode};
 use frame_support::{
 	parameter_types,
-	traits::{Everything, Nothing},
+	traits::{Everything, Get, Nothing},
 	dispatch::Weight,
 };
-use frame_system::EnsureRoot;
+use frame_system::{Config as SystemT, EnsureRoot};
 
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
 use orml_xcm_support::{
@@ -72,11 +73,11 @@ pub type LocationToAccountId = (
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	Currencies,
 	UnknownTokens,
-	IsNativeConcrete<CurrencyId, CurrencyIdConvert>,
+	IsNativeConcrete<CurrencyId, CurrencyIdConvert<Runtime>>,
 	AccountId,
 	LocationToAccountId,
 	CurrencyId,
-	CurrencyIdConvert,
+	CurrencyIdConvert<Runtime>,
 	DepositToAlternative<PeaqPotAccount, Currencies, CurrencyId, AccountId, Balance>,
 >;
 
@@ -147,10 +148,11 @@ pub type Barrier = (
 );
 
 pub struct ToTreasury;
+
 impl TakeRevenue for ToTreasury {
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
-			if let Some(currency_id) = CurrencyIdConvert::convert(location) {
+			if let Some(currency_id) = CurrencyIdConvert::<Runtime>::convert(location) {
 				// Ensure PeaqPotAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
 				// Ignore the result.
@@ -274,7 +276,7 @@ impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
-	type CurrencyIdConvert = CurrencyIdConvert;
+	type CurrencyIdConvert = CurrencyIdConvert<Runtime>;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -298,9 +300,12 @@ fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocation>
 	))
 }
 
-pub struct CurrencyIdConvert;
+pub struct CurrencyIdConvert<T: SystemT>(PhantomData<T>);
 
-impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
+impl<T> Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert<T>
+where
+	T: SystemT
+{
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
@@ -328,25 +333,29 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 	}
 }
 
-impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
+impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T>
+where
+	T: SystemT,
+{
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
+		use sp_runtime::RuntimeString::Borrowed as RsBorrowed;
 
 		match location {
 			MultiLocation {
 				parents: 1,
 				interior: Here,
 			} => {
-				// Generic solution, if moving to common-runtime
-				// match super::VERSION.spec_name {
-				// 	"peaq-node-dev" => Some(Token(ROC)),
-				// 	"peaq-node-agung" => Some(Token(ROC)),
-				// 	"peaq-node-krest" => Some(Token(KSM)),
-				// 	"peaq-node" => Some(Token(DOT)),
-				// 	_ => None,
-				// }
-				return Some(Token(DOT))
+				let version = <T as SystemT>::Version::get();
+				match version.spec_name {
+					RsBorrowed("peaq-node-dev") => Some(Token(DOT)),
+					RsBorrowed("peaq-node-agung") => Some(Token(ROC)),
+					RsBorrowed("peaq-node-krest") => Some(Token(KSM)),
+					RsBorrowed("peaq-node") => Some(Token(DOT)),
+					_ => None,
+				}
+				// return Some(Token(DOT))
 			},
 			MultiLocation {
 				parents: 1,
@@ -402,7 +411,10 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	}
 }
 
-impl Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert {
+impl<T> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T>
+where
+	T: SystemT
+{
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		if let MultiAsset { id: Concrete(location), .. } = asset {
 			Self::convert(location)
