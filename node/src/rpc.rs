@@ -29,7 +29,7 @@ use sc_service::TaskManager;
 use sp_runtime::traits::Block as BlockT;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
-// use zenlink_protocol::AssetId as ZenlinkAssetId;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use crate::primitives::*;
 
@@ -106,7 +106,7 @@ where
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
-	// C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
+	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -124,7 +124,7 @@ where
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
-	// use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
+	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 
 	let mut io = RpcModule::new(());
 	let FullDeps {
@@ -204,7 +204,7 @@ where
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
-	// io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(pool, Arc::clone(&client), network, subscription_task_executor, overrides)

@@ -113,6 +113,14 @@ pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
+use xcm::latest::prelude::*;
+
+// For Zenlink-DEX-Module
+use zenlink_protocol::{
+	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
+	ZenlinkMultiAssets,
+};
+
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -191,7 +199,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 use runtime_common::{
 	MILLICENTS, CENTS, DOLLARS,
-	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
+	EoTFeeFactor, LocalAssetAdaptor, TransactionByteFee, OperationalFeeMultiplier,
 	CurrencyHooks,
 };
 
@@ -250,9 +258,13 @@ parameter_types! {
 }
 
 pub struct BaseFilter;
+
 impl Contains<RuntimeCall> for BaseFilter {
-	fn contains(_call: &RuntimeCall) -> bool {
-		true
+	fn contains(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::ZenlinkProtocol(_m) => false,
+			_ => true,
+		}
 	}
 }
 
@@ -953,6 +965,39 @@ impl peaq_pallet_storage::Config for Runtime {
 	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
 }
 
+// Zenlink-DEX Parameter definitions
+parameter_types! {
+	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
+
+	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
+
+	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
+		// Krest local and live, 0.01 BNC
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
+
+		// Zenlink local 1 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
+		// Zenlink local 2 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
+	];
+}
+
+/// Short form for our individual configuration of Zenlink's MultiAssets.
+pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
+
+impl zenlink_protocol::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+    type MultiAssetsHandler = MultiAssets;
+    type PalletId = ZenlinkDexPalletId;
+    type AssetId = ZenlinkAssetId;
+    type LpGenerate = PairLpGenerate<Self>;
+    type TargetChains = ZenlinkRegistedParaChains;
+    type SelfParaId = SelfParaId;
+    type WeightInfo = ();
+}
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -983,7 +1028,6 @@ construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
 		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
-
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
@@ -993,11 +1037,11 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-
 		Currencies: orml_currencies::{Pallet, Call} = 34,
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1636,6 +1680,47 @@ impl_runtime_apis! {
 	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
 		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
 			PeaqStorage::read(&did_account, &item_type)
+		}
+	}
+
+	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
+		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
+			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
+		}
+
+		fn get_pair_by_asset_id(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId
+		) -> Option<PairInfo<AccountId, AssetBalance, ZenlinkAssetId>> {
+			ZenlinkProtocol::get_pair_by_asset_id(asset_0, asset_1)
+		}
+
+		fn get_amount_in_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::desired_in_amount(supply, path)
+		}
+
+		fn get_amount_out_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::supply_out_amount(supply, path)
+		}
+
+		fn get_estimate_lptoken(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount_0_desired: AssetBalance,
+			amount_1_desired: AssetBalance,
+			amount_0_min: AssetBalance,
+			amount_1_min: AssetBalance,
+		) -> AssetBalance {
+			ZenlinkProtocol::get_estimate_lptoken(asset_0, asset_1, amount_0_desired,
+				amount_1_desired, amount_0_min, amount_1_min)
+		}
+
+		fn calculate_remove_liquidity(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount: AssetBalance,
+		) -> Option<(AssetBalance, AssetBalance)> {
+			ZenlinkProtocol::calculate_remove_liquidity(asset_0, asset_1, amount)
 		}
 	}
 
