@@ -1,17 +1,20 @@
 name: Build
+
 on:
   push:
     branches:
-      - dev # or the name of your main branch
+      - dev
       - sonarqube-parachain-dev
+
+
 jobs:
   build:
-    name: Sonarqube-scan
-    runs-on: ubuntu-20.04
+    name: Build
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
