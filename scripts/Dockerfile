@@ -1,4 +1,4 @@
-FROM docker.io/paritytech/ci-linux:production as builder
+FROM docker.io/paritytech/ci-linux:production AS builder
 
 WORKDIR /node
 COPY . .
