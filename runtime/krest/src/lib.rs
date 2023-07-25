@@ -797,12 +797,12 @@ pub mod staking {
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
 			/// Minimum stake required to be reserved to be a collator is 1000 KREST
-			pub const MinCollatorStake: Balance = 10_000 * DOLLARS;
+			pub const MinCollatorStake: Balance = 50_000 * DOLLARS;
 			/// Minimum stake required to be reserved to be a delegator is 100 KREST
-			pub const MinDelegatorStake: Balance = 250 * DOLLARS;
+			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 128;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
