@@ -891,7 +891,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn machines(_reward: NegativeImbalance) {}
 
-	fn machines_subsidization(_reward: NegativeImbalance) {}
+	fn parachain_lease_fund(_reward: NegativeImbalance) {}
 }
 
 parameter_types! {

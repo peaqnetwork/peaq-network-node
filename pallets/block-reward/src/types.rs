@@ -32,8 +32,49 @@ pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout Machines
 	fn machines(reward: Imbalance);
 
-	/// Payout Machines
-	fn machines_subsidization(reward: Imbalance);
+	/// Payout Parachain
+	fn parachain_lease_fund(reward: Imbalance);
+}
+
+/// After next next version, we can remove this RewardDistributionConfigV0
+/// List of configuration parameters used to calculate reward distribution portions for all the
+/// beneficiaries.
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct RewardDistributionConfigV0 {
+	/// Base percentage of reward that goes to treasury
+	#[codec(compact)]
+	pub treasury_percent: Perbill,
+	/// Percentage of rewards that goes to dApps
+	#[codec(compact)]
+	pub dapps_percent: Perbill,
+	/// Percentage of reward that goes to collators
+	#[codec(compact)]
+	pub collators_percent: Perbill,
+	/// Percentage of reward that goes to lp users
+	#[codec(compact)]
+	pub lp_percent: Perbill,
+	/// Percentage of reward that goes to machines
+	#[codec(compact)]
+	pub machines_percent: Perbill,
+	/// Percentage of reward that goes to machines subsidization
+	#[codec(compact)]
+	pub machines_subsidization_percent: Perbill,
+}
+
+impl Default for RewardDistributionConfigV0 {
+	/// `default` values based on configuration at the time of writing this code.
+	/// Should be overriden by desired params.
+	fn default() -> Self {
+		RewardDistributionConfigV0 {
+			treasury_percent: Perbill::from_percent(15),
+			dapps_percent: Perbill::from_percent(45),
+			collators_percent: Perbill::from_percent(10),
+			lp_percent: Perbill::from_percent(20),
+			machines_percent: Perbill::from_percent(5),
+			machines_subsidization_percent: Perbill::from_percent(5),
+		}
+	}
 }
 
 /// List of configuration parameters used to calculate reward distribution portions for all the
@@ -56,9 +97,9 @@ pub struct RewardDistributionConfig {
 	/// Percentage of reward that goes to machines
 	#[codec(compact)]
 	pub machines_percent: Perbill,
-	/// Percentage of reward that goes to machines subsidization
+	/// Percentage of reward that goes to parachain lease fund
 	#[codec(compact)]
-	pub machines_subsidization_percent: Perbill,
+	pub parachain_lease_fund_percent: Perbill,
 }
 
 impl Default for RewardDistributionConfig {
@@ -71,7 +112,7 @@ impl Default for RewardDistributionConfig {
 			collators_percent: Perbill::from_percent(10),
 			lp_percent: Perbill::from_percent(20),
 			machines_percent: Perbill::from_percent(5),
-			machines_subsidization_percent: Perbill::from_percent(5),
+			parachain_lease_fund_percent: Perbill::from_percent(5),
 		}
 	}
 }
@@ -89,7 +130,7 @@ impl RewardDistributionConfig {
 			&self.collators_percent,
 			&self.lp_percent,
 			&self.machines_percent,
-			&self.machines_subsidization_percent,
+			&self.parachain_lease_fund_percent,
 		];
 
 		let mut accumulator = Perbill::zero();

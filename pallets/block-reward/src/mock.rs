@@ -109,7 +109,7 @@ pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
 pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
 pub(crate) const LP_POT: PalletId = PalletId(*b"lpreward");
 pub(crate) const MACHINE_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const MACHINE_SUBSIDIZATION_POT: PalletId = PalletId(*b"subsidiz");
+pub(crate) const PARACHAIN_LEASE_FUND: PalletId = PalletId(*b"parlease");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -136,8 +136,8 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 		Balances::resolve_creating(&MACHINE_POT.into_account_truncating(), reward);
 	}
 
-	fn machines_subsidization(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&MACHINE_SUBSIDIZATION_POT.into_account_truncating(), reward);
+	fn parachain_lease_fund(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&PARACHAIN_LEASE_FUND.into_account_truncating(), reward);
 	}
 }
 
