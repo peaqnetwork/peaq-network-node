@@ -5149,9 +5149,9 @@ dependencies = [
 
 [[package]]
 name = "libz-sys"
-version = "1.1.10"
+version = "1.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24e6ab01971eb092ffe6a7d42f49f9ff42662f17604681e2843ad65077ba47dc"
+checksum = "121f7402cc6ab5821dad08d1b9d11618a9ea4da992343909fecf8e430e86364c"
 dependencies = [
  "cc",
  "pkg-config",
@@ -10606,6 +10606,7 @@ dependencies = [
  "frame-system",
  "orml-tokens",
  "orml-traits",
+ "pallet-block-reward",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "peaq-primitives-xcm",

@@ -30,8 +30,6 @@ use sp_runtime::{
 		OpaqueKeys,
 		PostDispatchInfoOf,
 		SaturatedConversion,
-		Saturating,
-		Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -76,8 +74,6 @@ use pallet_evm::{
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
-use pallet_transaction_payment::{Config as TransactionPaymentConfig, OnChargeTransaction};
-
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
@@ -119,6 +115,12 @@ use xcm::latest::prelude::*;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
 	ZenlinkMultiAssets,
+};
+
+use runtime_common::{
+	MILLICENTS, CENTS, DOLLARS,
+	CurrencyHooks, LocalAssetAdaptor, PeaqCurrencyAdapter, TransactionByteFee,
+	OperationalFeeMultiplier,
 };
 
 
@@ -196,12 +198,6 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
-
-use runtime_common::{
-	MILLICENTS, CENTS, DOLLARS,
-	EoTFeeFactor, LocalAssetAdaptor, TransactionByteFee, OperationalFeeMultiplier,
-	CurrencyHooks,
-};
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
@@ -433,106 +429,11 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-pub struct DealWithFees;
-impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-	// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
-	// implementations will just drop the imbalances!! Instead on_unbalanceds() will
-	// use these two following methods.
-	fn on_unbalanced(amount: NegativeImbalance) {
-		Self::on_nonzero_unbalanced(amount);
-	}
-
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		<BlockReward as OnUnbalanced<_>>::on_unbalanced(amount);
-	}
-}
-
-type NegativeImbalanceOf<C, T> =
-	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-
-pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
-
-impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
-where
-	T: TransactionPaymentConfig,
-	C: Currency<<T as frame_system::Config>::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-{
-	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-	/// Withdraw the predicted fee from the transaction origin.
-	/// Note: The `fee` already includes the `tip`.
-	fn withdraw_fee(
-		who: &T::AccountId,
-		_call: &T::RuntimeCall,
-		_info: &DispatchInfoOf<T::RuntimeCall>,
-		total_fee: Self::Balance,
-		tip: Self::Balance,
-	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		if total_fee.is_zero() {
-			return Ok(None)
-		}
-		let inclusion_fee = total_fee - tip;
-
-		let withdraw_reason = if tip.is_zero() {
-			WithdrawReasons::TRANSACTION_PAYMENT
-		} else {
-			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-		};
-
-		// Apply Peaq Economy-of-Things Fee adjustment
-		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
-		let tx_fee = total_fee.saturating_add(eot_fee);
-
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-			Ok(imbalance) => Ok(Some(imbalance)),
-			Err(_) => Err(InvalidTransaction::Payment.into()),
-		}
-	}
-
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
-	/// Note: The `corrected_fee` already includes the `tip`.
-	fn correct_and_deposit_fee(
-		who: &T::AccountId,
-		_dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-		_post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-		cor_total_fee: Self::Balance,
-		tip: Self::Balance,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), TransactionValidityError> {
-		if let Some(paid) = already_withdrawn {
-			// Apply same Peaq Economy-of-Things Fee adjustment as above
-			let cor_inclusion_fee = cor_total_fee - tip;
-			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
-			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
-
-			// Calculate how much refund we should return
-			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);
-			// refund to the the account that paid the fees. If this fails, the
-			// account might have dropped below the existential balance. In
-			// that case we don't refund anything.
-			let refund_imbalance = C::deposit_into_existing(who, refund_amount)
-				.unwrap_or_else(|_| C::PositiveImbalance::zero());
-			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let adjusted_paid = paid
-				.offset(refund_imbalance)
-				.same()
-				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
-			// Call someone else to handle the imbalance (fee and tip separately)
-			let (tip, fee) = adjusted_paid.split(tip);
-
-			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
-		}
-		Ok(())
-	}
-}
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -680,7 +581,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
@@ -842,7 +743,6 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.

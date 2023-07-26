@@ -3,30 +3,32 @@
 
 
 use codec::{Decode, Encode};
+use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	parameter_types,
-	pallet_prelude::{DispatchError, DispatchResult},
-	traits::Get,
+	pallet_prelude::*,
+	traits::{Currency, Get, ExistenceRequirement, Imbalance, OnUnbalanced, WithdrawReasons},
 };
-use frame_system::Config as SystemT;
+use frame_system::Config as SysConfig;
 use orml_traits::{
 	MultiCurrency,
 	currency::MutationHooks,
 };
-use cumulus_pallet_parachain_system::Config as ParachainSystemT;
+use pallet_transaction_payment::OnChargeTransaction;
 use sp_core::bounded::BoundedVec;
 use sp_std::{
 	marker::PhantomData, vec::Vec,
 };
 use sp_runtime::{
 	Perbill, RuntimeString,
-	traits::Convert,
+	traits::{Convert, DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
 };
+use xcm::latest::prelude::*;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler,
 };
-use xcm::latest::prelude::*;
+
 use peaq_primitives_xcm::{
 	AccountId, Balance, CurrencyId, TokenSymbol, currency::parachain,
 };
@@ -168,11 +170,11 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 
 
 /// A MultiLocation-CurrencyId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct CurrencyIdConvert<T>(PhantomData<T>) where T: SystemT + ParachainSystemT;
+pub struct CurrencyIdConvert<T>(PhantomData<T>) where T: SysConfig + ParaSysConfig;
 
 impl<T> Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert<T>
 where
-	T: SystemT + ParachainSystemT,
+	T: SysConfig + ParaSysConfig,
 {
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		use CurrencyId::Token;
@@ -184,7 +186,7 @@ where
 				Some(MultiLocation::parent()),
 			Token(PEAQ) =>
 				native_currency_location(
-					<T as ParachainSystemT>::SelfParaId::get().into(),
+					<T as ParaSysConfig>::SelfParaId::get().into(),
 					id.encode()
 				),
 			Token(ACA) =>
@@ -204,7 +206,7 @@ where
 
 impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T>
 where
-	T: SystemT + ParachainSystemT,
+	T: SysConfig + ParaSysConfig,
 {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		use CurrencyId::Token;
@@ -216,7 +218,7 @@ where
 				parents: 1,
 				interior: Here,
 			} => {
-				let version = <T as SystemT>::Version::get();
+				let version = <T as SysConfig>::Version::get();
 				match version.spec_name {
 					RsBorrowed("peaq-node-dev") => Some(Token(DOT)),
 					RsBorrowed("peaq-node-agung") => Some(Token(ROC)),
@@ -245,7 +247,7 @@ where
 						}
 					},
 					_ => {
-						if ParaId::from(id) == <T as ParachainSystemT>::SelfParaId::get() {
+						if ParaId::from(id) == <T as ParaSysConfig>::SelfParaId::get() {
 							if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 								match currency_id {
 									Token(PEAQ) => Some(currency_id),
@@ -282,7 +284,7 @@ where
 
 impl<T> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T>
 where
-	T: SystemT + ParachainSystemT,
+	T: SysConfig + ParaSysConfig,
 {
 	fn convert(asset: MultiAsset) -> Option<CurrencyId> {
 		if let MultiAsset { id: Concrete(location), .. } = asset {
@@ -309,3 +311,97 @@ pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
 		X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?)),
 	))
 }
+
+
+/// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
+pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
+
+impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
+where
+	T: SysConfig + orml_tokens::Config + pallet_transaction_payment::Config,
+	C: Currency<<T as frame_system::Config>::AccountId>,
+	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+{
+	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
+	// type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	type Balance = <C as Currency<T::AccountId>>::Balance;
+
+	/// Withdraw the predicted fee from the transaction origin.
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &T::AccountId,
+		_call: &T::RuntimeCall,
+		_info: &DispatchInfoOf<T::RuntimeCall>,
+		total_fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		if total_fee.is_zero() {
+			return Ok(None)
+		}
+		let inclusion_fee = total_fee - tip;
+
+		let withdraw_reason = if tip.is_zero() {
+			WithdrawReasons::TRANSACTION_PAYMENT
+		} else {
+			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
+		};
+
+		// Apply Peaq Economy-of-Things Fee adjustment
+		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
+		let tx_fee = total_fee.saturating_add(eot_fee);
+
+		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+			Ok(imbalance) => Ok(Some(imbalance)),
+			Err(_) => {
+				// TODO
+				// Check if foreign currencies are available on ORML-Tokens
+				// let dot_id = CurrencyId::Token(TokenSymbol::DOT);
+				// let dot_balance = Tokens::accounts(who, dot_id);
+				// <Tokens as orml_traits::MultiCurrency<T::AccountId>>::ensure_can_withdraw(dot_id, who, tx_fee);
+				// Check if Zenlink would swap them into our currency
+				// Otherwise return Ok(None)
+				Err(InvalidTransaction::Payment.into())
+			},
+		}
+	}
+
+	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
+	/// Since the predicted fee might have been too high, parts of the fee may
+	/// be refunded.
+	/// Note: The `corrected_fee` already includes the `tip`.
+	fn correct_and_deposit_fee(
+		who: &T::AccountId,
+		_dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+		_post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+		cor_total_fee: Self::Balance,
+		tip: Self::Balance,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<(), TransactionValidityError> {
+		if let Some(paid) = already_withdrawn {
+			// Apply same Peaq Economy-of-Things Fee adjustment as above
+			let cor_inclusion_fee = cor_total_fee - tip;
+			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
+			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
+
+			// Calculate how much refund we should return
+			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);
+			// refund to the the account that paid the fees. If this fails, the
+			// account might have dropped below the existential balance. In
+			// that case we don't refund anything.
+			let refund_imbalance = C::deposit_into_existing(who, refund_amount)
+				.unwrap_or_else(|_| C::PositiveImbalance::zero());
+			// merge the imbalance caused by paying the fees and refunding parts of it again.
+			let adjusted_paid = paid
+				.offset(refund_imbalance)
+				.same()
+				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
+			// Call someone else to handle the imbalance (fee and tip separately)
+			let (tip, fee) = adjusted_paid.split(tip);
+
+			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
+		}
+		Ok(())
+	}
+}
+
+pub type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
