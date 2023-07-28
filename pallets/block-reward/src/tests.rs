@@ -248,7 +248,7 @@ pub fn reward_distribution_as_expected() {
 		assert!(init_balance_snapshot.is_zero());
 
 		// Prepare a custom config (easily discernable percentages for visual verification)
-		let reward_config = RewardDistributionConfigV1 {
+		let reward_config = RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(10),
 			dapps_percent: Perbill::from_percent(40),
 			collators_percent: Perbill::from_percent(40),
@@ -275,7 +275,7 @@ pub fn reward_distribution_as_expected() {
 #[test]
 pub fn reward_distribution_no_adjustable_part() {
 	ExternalityBuilder::build().execute_with(|| {
-		let reward_config = RewardDistributionConfigV1 {
+		let reward_config = RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(10),
 			dapps_percent: Perbill::from_percent(75),
 			collators_percent: Perbill::from_percent(3),
@@ -405,9 +405,9 @@ struct Rewards {
 }
 
 impl Rewards {
-	/// Pre-calculates the reward distribution, using the provided `RewardDistributionConfigV1`.
+	/// Pre-calculates the reward distribution, using the provided `RewardDistributionConfig`.
 	/// Method assumes that total issuance will be increased by `BLOCK_REWARD`.
-	fn calculate(reward_config: &RewardDistributionConfigV1) -> Self {
+	fn calculate(reward_config: &RewardDistributionConfig) -> Self {
 		let treasury_reward = reward_config.treasury_percent * BLOCK_REWARD;
 		let dapps_reward = reward_config.dapps_percent * BLOCK_REWARD;
 		let collators_reward = reward_config.collators_percent * BLOCK_REWARD;
