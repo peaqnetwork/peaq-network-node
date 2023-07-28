@@ -2,7 +2,7 @@
 #![recursion_limit = "256"]
 
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, FullCodec};
 use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
 use frame_support::{
@@ -15,18 +15,25 @@ use orml_traits::{
 	MultiCurrency,
 	currency::MutationHooks,
 };
-use pallet_transaction_payment::OnChargeTransaction;
+use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
 use sp_core::bounded::BoundedVec;
 use sp_std::{
-	marker::PhantomData, vec::Vec,
+	marker::PhantomData, vec, vec::Vec,
 };
 use sp_runtime::{
 	Perbill, RuntimeString,
-	traits::{Convert, DispatchInfoOf, PostDispatchInfoOf, Saturating, Zero},
+	traits::{
+		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, Saturating, Zero
+	},
+};
+use sp_std::{
+	cmp::{Eq, PartialEq},
+	fmt::Debug,
 };
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler,
+	AssetBalance, AssetId as ZenlinkAssetId, AssetInfo, Config as ZenProtConfig, ExportZenlink,
+	LocalAssetHandler, MultiAssetsHandler,
 };
 
 use peaq_primitives_xcm::{
@@ -179,7 +186,6 @@ where
 	fn convert(id: CurrencyId) -> Option<MultiLocation> {
 		use CurrencyId::Token;
 		use TokenSymbol::*;
-		// use parachain_info::pallet::
 
 		match id {
 			Token(DOT) | Token(KSM) | Token(ROC) =>
@@ -314,16 +320,32 @@ pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
 
 
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
+pub struct PeaqCurrencyAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
 
-impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
+fn try_txfee_withdrawal<T, C>(
+	who: &T::AccountId,
+	tx_fee: BalanceOf<C, T>,
+	withdraw_reason: WithdrawReasons,
+) -> Result<Option<NegativeImbalanceOf<C, T>>, TransactionValidityError>
 where
-	T: SysConfig + orml_tokens::Config + pallet_transaction_payment::Config,
-	C: Currency<<T as frame_system::Config>::AccountId>,
+	T: SysConfig + TransPayConfig,
+	C: Currency<T::AccountId>,
+{
+	match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+		Ok(imbalance) => Ok(Some(imbalance)),
+		Err(_) => Err(InvalidTransaction::Payment.into()),
+	}
+}
+
+impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU, PCPC>
+where
+	T: SysConfig + TransPayConfig + ZenProtConfig,
+	C: Currency<T::AccountId>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+	PCPC: PeaqCurrencyPaymentConvert<AssetId = T::AssetId, AccountId = T::AccountId, Currency = C>,
+	AssetBalance: From<BalanceOf<C, T>>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	// type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 	type Balance = <C as Currency<T::AccountId>>::Balance;
 
 	/// Withdraw the predicted fee from the transaction origin.
@@ -350,18 +372,24 @@ where
 		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
 		let tx_fee = total_fee.saturating_add(eot_fee);
 
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-			Ok(imbalance) => Ok(Some(imbalance)),
-			Err(_) => {
-				// TODO
-				// Check if foreign currencies are available on ORML-Tokens
-				// let dot_id = CurrencyId::Token(TokenSymbol::DOT);
-				// let dot_balance = Tokens::accounts(who, dot_id);
-				// <Tokens as orml_traits::MultiCurrency<T::AccountId>>::ensure_can_withdraw(dot_id, who, tx_fee);
-				// Check if Zenlink would swap them into our currency
-				// Otherwise return Ok(None)
+		// match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+		// 	Ok(imbalance) => Ok(Some(imbalance)),
+		// 	Err(_) => {
+		// 		if let Ok(_) = PCPC::try_swap_currency(who, total_fee) {
+		// 			Ok(Some(imbalance))
+		// 		} else {
+		// 			Err(InvalidTransaction::Payment.into())
+		// 		}
+		// 	},
+		// }
+		if let Ok(Some(imbalance)) = try_txfee_withdrawal::<T, C>(who, tx_fee, withdraw_reason) {
+			Ok(Some(imbalance))
+		} else {
+			if let Ok(_) = PCPC::try_swap_currency(who, tx_fee) {
+				try_txfee_withdrawal::<T, C>(who, tx_fee, withdraw_reason)
+			} else {
 				Err(InvalidTransaction::Payment.into())
-			},
+			}
 		}
 	}
 
@@ -404,4 +432,81 @@ where
 	}
 }
 
-pub type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
+type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
+type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
+type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
+
+
+/// Individual trait to handle payments in non-local currencies. The intention is to keep it as
+/// generic as possible to enable the usage in PeaqCurrencyAdapter.
+pub trait PeaqCurrencyPaymentConvert // <T, C>
+where
+	AssetBalance: From<BalanceOfA<Self::Currency, Self::AccountId>>
+{
+	// New: AccountId as ascociate.
+	type AccountId: Parameter
+		+ Member
+		+ MaybeSerializeDeserialize
+		+ Debug
+		+ MaybeDisplay
+		+ Ord
+		+ MaxEncodedLen;
+
+	// New: AssetId as ascociate again.
+	type AssetId: FullCodec
+		+ Eq
+		+ PartialEq
+		+ Ord
+		+ PartialOrd
+		+ Copy
+		+ MaybeSerializeDeserialize
+		+ AssetInfo
+		+ Debug
+		+ scale_info::TypeInfo
+		+ MaxEncodedLen;
+
+	// New: Currency as ascociate.
+	type Currency: Currency<Self::AccountId>;
+
+	/// Local CurrencyId in type of Zenlink's AssetId.
+	type LocalCurrency: Get<Self::AssetId>;
+
+	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
+	type NativeAccepted: Get<Vec<Self::AssetId>>;
+
+	/// Zenlink-DEX-Protocol.
+	type DexOperator: ExportZenlink<Self::AccountId, Self::AssetId>;
+
+	/// Zenlink-DEX-MultiAssetsHandler.
+	type MultiAssetsHandler: MultiAssetsHandler<Self::AccountId, Self::AssetId>;
+
+
+	/// Default implementation how we try to pay in another currency at Peaq.
+	fn try_swap_currency(
+		who: &Self::AccountId,
+		total_fee: BalanceOfA<Self::Currency, Self::AccountId>
+	) -> Result<(), ()> {
+		let zen_id_local = Self::LocalCurrency::get();
+		// Check if foreign currencies are available on ORML-Tokens
+		for &cur_id in Self::NativeAccepted::get().iter() {
+			let zen_path = vec![cur_id, zen_id_local];
+		 	let amount = if let Ok(amount) = Self::DexOperator::get_amount_out_by_path(
+		 		AssetBalance::from(total_fee), &zen_path)
+			{
+				amount[1]
+			} else {
+				continue
+			};
+			let balance = Self::MultiAssetsHandler::balance_of(
+				cur_id, who);
+			if balance < amount {
+				continue
+			}
+			if let Ok(_) = Self::DexOperator::inner_swap_exact_assets_for_assets(
+				who, amount, balance, &zen_path, who) {
+				return Ok(())
+			}
+		}
+		Err(())
+	}
+}

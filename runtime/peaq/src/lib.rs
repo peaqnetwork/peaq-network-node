@@ -119,8 +119,8 @@ use zenlink_protocol::{
 
 use runtime_common::{
 	MILLICENTS, CENTS, DOLLARS,
-	CurrencyHooks, LocalAssetAdaptor, PeaqCurrencyAdapter, TransactionByteFee,
-	OperationalFeeMultiplier,
+	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
+	PeaqCurrencyPaymentConvert, TransactionByteFee,
 };
 
 
@@ -437,9 +437,30 @@ impl WeightToFeePolynomial for WeightToFee {
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
+parameter_types!{
+	pub PcpcLocalCurrency: ZenlinkAssetId =
+		ZenlinkAssetId::try_from(CurrencyId::Token(TokenSymbol::PEAQ)).unwrap();
+	pub PcpcNativeAccepted: Vec<ZenlinkAssetId> = vec![
+		ZenlinkAssetId::try_from(CurrencyId::Token(TokenSymbol::DOT)).unwrap(),
+		ZenlinkAssetId::try_from(CurrencyId::Token(TokenSymbol::BNC)).unwrap(),
+	];
+}
+
+pub struct PeaqCPC;
+
+impl PeaqCurrencyPaymentConvert for PeaqCPC {
+	type AccountId = AccountId;
+	type AssetId = ZenlinkAssetId;
+	type Currency = Balances;
+	type LocalCurrency = PcpcLocalCurrency;
+	type NativeAccepted = PcpcNativeAccepted;
+	type DexOperator = ZenlinkProtocol;
+	type MultiAssetsHandler = MultiAssets;
+}
+
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward>;
+	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
