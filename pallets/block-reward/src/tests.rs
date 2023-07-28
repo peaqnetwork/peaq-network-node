@@ -413,8 +413,7 @@ impl Rewards {
 		let collators_reward = reward_config.collators_percent * BLOCK_REWARD;
 		let lp_reward = reward_config.lp_percent * BLOCK_REWARD;
 		let machines_reward = reward_config.machines_percent * BLOCK_REWARD;
-		let parachain_lease_fund_reward =
-			reward_config.parachain_lease_fund_percent * BLOCK_REWARD;
+		let parachain_lease_fund_reward = reward_config.parachain_lease_fund_percent * BLOCK_REWARD;
 
 		Self {
 			treasury_reward,

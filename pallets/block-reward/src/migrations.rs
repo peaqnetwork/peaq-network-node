@@ -26,7 +26,8 @@ mod v2 {
 	#[storage_alias]
 	type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
 	#[storage_alias]
-	type RewardDistributionConfigStorageV0<T: Config> = StorageValue<Pallet<T>, RewardDistributionConfigV0, ValueQuery>;
+	type RewardDistributionConfigStorageV0<T: Config> =
+		StorageValue<Pallet<T>, RewardDistributionConfigV0, ValueQuery>;
 
 	/// Migration implementation that renames storage HardCap into MaxCurrencySupply
 	pub struct MigrateToV2x<T>(sp_std::marker::PhantomData<T>);
@@ -50,7 +51,8 @@ mod v2 {
 			if VersionStorage::<T>::get() == StorageReleases::V2_1_0 {
 				log!(info, "Migrating block_reward to Releases::V2_1_0");
 
-				let storage : RewardDistributionConfigV0 = RewardDistributionConfigStorageV0::<T>::get();
+				let storage: RewardDistributionConfigV0 =
+					RewardDistributionConfigStorageV0::<T>::get();
 				RewardDistributionConfigStorage::<T>::put(RewardDistributionConfig {
 					treasury_percent: storage.treasury_percent,
 					dapps_percent: storage.dapps_percent,
@@ -68,4 +70,3 @@ mod v2 {
 		}
 	}
 }
-
