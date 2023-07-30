@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - parachain_dev
       - sonarqube-parachain-dev
 
 
