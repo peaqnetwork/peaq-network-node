@@ -432,10 +432,8 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types!{
-	pub PcpcLocalCurrency: ZenlinkAssetId =
-		ZenlinkAssetId::try_from(CurrencyId::Token(TokenSymbol::KRST)).unwrap();
-	pub PcpcNativeAccepted: Vec<ZenlinkAssetId> = vec![
-		ZenlinkAssetId::try_from(CurrencyId::Token(TokenSymbol::KSM)).unwrap(),
+	pub PcpcNativeAccepted: Vec<CurrencyId> = vec![
+		CurrencyId::Token(TokenSymbol::KSM),
 	];
 }
 
@@ -443,12 +441,11 @@ pub struct PeaqCPC;
 
 impl PeaqCurrencyPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
-	type AssetId = ZenlinkAssetId;
 	type Currency = Balances;
-	type LocalCurrency = PcpcLocalCurrency;
-	type NativeAccepted = PcpcNativeAccepted;
+	type MultiCurrency = Currencies;
+	type LocalCurrencyId = GetNativeCurrencyId;
+	type NativeAcceptedIds = PcpcNativeAccepted;
 	type DexOperator = ZenlinkProtocol;
-	type MultiAssetsHandler = MultiAssets;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -819,7 +816,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = currency::KRST;
 }
 
 impl orml_currencies::Config for Runtime {
