@@ -152,6 +152,7 @@ pub(crate) mod mock;
 pub(crate) mod tests;
 
 mod reward_rate;
+mod reward_config_calc;
 mod set;
 mod types;
 
@@ -159,6 +160,7 @@ use frame_support::pallet;
 
 pub use crate::{default_weights::WeightInfo, pallet::*};
 use types::ReplacedDelegator;
+use reward_config_calc::CollatorDelegatorBlockRewardCalculator;
 
 #[pallet]
 pub mod pallet {
@@ -2832,6 +2834,62 @@ pub mod pallet {
 				// One read for the round info, blocknumber is read free
 				T::DbWeight::get().reads(1),
 			)
+		}
+	}
+
+	// [TODO] I'm thinking to extract a new pallet for that, otherwise, it's a little strange that we leave the reward here.
+	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
+		fn collator_reward_per_block(state: &Candidate<T::AccountId, BalanceOf<T>,
+		T::MaxDelegatorsPerCollator>, issue_number: BalanceOf<T>, pot: &T::AccountId, author: &T::AccountId) ->
+		(Weight, Weight) {
+			let reads = Weight::from_ref_time(1_u64);
+			let mut writes = Weight::from_ref_time(0_u64);
+			let mut delegator_sum = T::CurrencyBalance::from(0u128);
+			for Stake { owner: _owner, amount } in &state.delegators {
+				if *amount >= T::MinDelegatorStake::get() {
+					delegator_sum += *amount;
+				}
+			}
+			let reward_rate_config = <RewardRateConfig<T>>::get();
+
+			if delegator_sum == T::CurrencyBalance::from(0u128) {
+				Self::do_reward(pot, author, issue_number);
+			} else {
+				let collator_reward =
+					reward_rate_config.compute_collator_reward::<T>(issue_number);
+				Self::do_reward(pot, author, collator_reward);
+			}
+			writes = writes.saturating_add(Weight::from_ref_time(1_u64));
+			(reads, writes)
+		}
+
+		fn delegator_reward_per_block(state: &Candidate<T::AccountId, BalanceOf<T>,
+		T::MaxDelegatorsPerCollator>, issue_number: BalanceOf<T>, pot: &T::AccountId)
+		-> (Weight, Weight) {
+			let mut reads = Weight::from_ref_time(1_u64);
+			let mut writes = Weight::from_ref_time(0_u64);
+			let mut delegator_sum = T::CurrencyBalance::from(0u128);
+
+			for Stake { owner: _owner, amount } in &state.delegators {
+				if *amount >= T::MinDelegatorStake::get() {
+					delegator_sum += *amount;
+				}
+			}
+
+			let reward_rate_config = <RewardRateConfig<T>>::get();
+
+			// Reward delegators
+			for Stake { owner, amount } in &state.delegators {
+				if *amount >= T::MinDelegatorStake::get() {
+					let staking_rate = Perquintill::from_rational(*amount, delegator_sum);
+					let delegator_reward = reward_rate_config
+						.compute_delegator_reward::<T>(issue_number, staking_rate);
+					Self::do_reward(pot, &owner, delegator_reward);
+					writes = writes.saturating_add(Weight::from_ref_time(1_u64));
+				}
+			}
+			reads = reads.saturating_add(Weight::from_ref_time(4_u64));
+			(reads, writes)
 		}
 	}
 }
