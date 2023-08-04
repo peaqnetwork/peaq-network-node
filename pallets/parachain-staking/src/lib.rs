@@ -151,16 +151,16 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-mod reward_rate;
 mod reward_config_calc;
+mod reward_rate;
 mod set;
 mod types;
 
 use frame_support::pallet;
 
 pub use crate::{default_weights::WeightInfo, pallet::*};
-use types::ReplacedDelegator;
 use reward_config_calc::CollatorDelegatorBlockRewardCalculator;
+use types::ReplacedDelegator;
 
 #[pallet]
 pub mod pallet {
@@ -2837,11 +2837,15 @@ pub mod pallet {
 		}
 	}
 
-	// [TODO] I'm thinking to extract a new pallet for that, otherwise, it's a little strange that we leave the reward here.
+	// [TODO] I'm thinking to extract a new pallet for that, otherwise, it's a little strange that
+	// we leave the reward here.
 	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
-		fn collator_reward_per_block(state: &Candidate<T::AccountId, BalanceOf<T>,
-		T::MaxDelegatorsPerCollator>, issue_number: BalanceOf<T>, pot: &T::AccountId, author: &T::AccountId) ->
-		(Weight, Weight) {
+		fn collator_reward_per_block(
+			state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
+			issue_number: BalanceOf<T>,
+			pot: &T::AccountId,
+			author: &T::AccountId,
+		) -> (Weight, Weight) {
 			let reads = Weight::from_ref_time(1_u64);
 			let mut writes = Weight::from_ref_time(0_u64);
 			let mut delegator_sum = T::CurrencyBalance::from(0u128);
@@ -2855,17 +2859,18 @@ pub mod pallet {
 			if delegator_sum == T::CurrencyBalance::from(0u128) {
 				Self::do_reward(pot, author, issue_number);
 			} else {
-				let collator_reward =
-					reward_rate_config.compute_collator_reward::<T>(issue_number);
+				let collator_reward = reward_rate_config.compute_collator_reward::<T>(issue_number);
 				Self::do_reward(pot, author, collator_reward);
 			}
 			writes = writes.saturating_add(Weight::from_ref_time(1_u64));
 			(reads, writes)
 		}
 
-		fn delegator_reward_per_block(state: &Candidate<T::AccountId, BalanceOf<T>,
-		T::MaxDelegatorsPerCollator>, issue_number: BalanceOf<T>, pot: &T::AccountId)
-		-> (Weight, Weight) {
+		fn delegator_reward_per_block(
+			state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
+			issue_number: BalanceOf<T>,
+			pot: &T::AccountId,
+		) -> (Weight, Weight) {
 			let mut reads = Weight::from_ref_time(1_u64);
 			let mut writes = Weight::from_ref_time(0_u64);
 			let mut delegator_sum = T::CurrencyBalance::from(0u128);

@@ -24,6 +24,7 @@ use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
 };
+use frame_system::RawOrigin;
 use pallet_balances::{BalanceLock, Error as BalancesError, Reasons};
 use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversion};
@@ -34,6 +35,7 @@ use crate::{
 		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
 		BLOCKS_PER_ROUND, DECIMALS,
 	},
+	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 	set::OrderedSet,
 	types::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
@@ -3416,5 +3418,80 @@ fn update_total_stake_no_collator_changes() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 70, delegators: 110 }
 			);
+		});
+}
+
+#[test]
+fn collator_reward_per_block_only_collator() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let state = CandidatePool::<Test>::get(1);
+			assert!(state.is_some());
+			// Avoid keep live error
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+				0
+			));
+
+			StakePallet::collator_reward_per_block(
+				&state.unwrap(),
+				100,
+				&StakePallet::account_id(),
+				&1,
+			);
+
+			assert_eq!(Balances::usable_balance(&1), 600);
+		});
+}
+
+#[test]
+fn collator_reward_per_block_with_delegator() {
+	let col_rate = 30;
+	let del_rate = 70;
+	let reward_rate = RewardRateInfo::new(
+		Perquintill::from_percent(col_rate),
+		Perquintill::from_percent(del_rate),
+	);
+
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let state = CandidatePool::<Test>::get(1);
+			assert!(state.is_some());
+			// Avoid keep live error
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+				0
+			));
+			let state = state.unwrap();
+
+			StakePallet::collator_reward_per_block(&state, 100, &StakePallet::account_id(), &1);
+
+			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
+			assert_eq!(Balances::usable_balance(&1), 500 + c_rewards);
+
+			StakePallet::delegator_reward_per_block(&state, 100, &StakePallet::account_id());
+			let d_1_rewards: BalanceOf<Test> = reward_rate
+				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
+			let d_2_rewards: BalanceOf<Test> = reward_rate
+				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
+			assert_eq!(Balances::free_balance(&2), 1000 + d_1_rewards);
+			assert_eq!(Balances::free_balance(&3), 1000 + d_2_rewards);
 		});
 }
