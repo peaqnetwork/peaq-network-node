@@ -38,8 +38,8 @@ use crate::{
 	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 	set::OrderedSet,
 	types::{
-		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
-		StakeOf, TotalStake,
+		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
+		Stake, StakeOf, TotalStake,
 	},
 	CandidatePool, Config, Error, Event, RewardRateInfo, STAKING_ID,
 };
@@ -3431,8 +3431,7 @@ fn collator_reward_per_block_only_collator() {
 		.execute_with(|| {
 			assert!(System::events().is_empty());
 
-			let state = CandidatePool::<Test>::get(1);
-			assert!(state.is_some());
+			let state = CandidatePool::<Test>::get(1).unwrap();
 			// Avoid keep live error
 			assert_ok!(Balances::set_balance(
 				RawOrigin::Root.into(),
@@ -3441,14 +3440,8 @@ fn collator_reward_per_block_only_collator() {
 				0
 			));
 
-			StakePallet::collator_reward_per_block(
-				&state.unwrap(),
-				100,
-				&StakePallet::account_id(),
-				&1,
-			);
-
-			assert_eq!(Balances::usable_balance(&1), 600);
+			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100, &1);
+			assert_eq!(reward, Reward { owner: 1, amount: 100 });
 		});
 }
 
@@ -3470,8 +3463,7 @@ fn collator_reward_per_block_with_delegator() {
 		.execute_with(|| {
 			assert!(System::events().is_empty());
 
-			let state = CandidatePool::<Test>::get(1);
-			assert!(state.is_some());
+			let state = CandidatePool::<Test>::get(1).unwrap();
 			// Avoid keep live error
 			assert_ok!(Balances::set_balance(
 				RawOrigin::Root.into(),
@@ -3479,19 +3471,18 @@ fn collator_reward_per_block_with_delegator() {
 				1000,
 				0
 			));
-			let state = state.unwrap();
 
-			StakePallet::collator_reward_per_block(&state, 100, &StakePallet::account_id(), &1);
-
+			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100, &1);
 			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
-			assert_eq!(Balances::usable_balance(&1), 500 + c_rewards);
+			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
 
-			StakePallet::delegator_reward_per_block(&state, 100, &StakePallet::account_id());
+			let (_reards, _writes, reward_vec) =
+				StakePallet::delegator_reward_per_block(&state, 100);
 			let d_1_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
-			assert_eq!(Balances::free_balance(&2), 1000 + d_1_rewards);
-			assert_eq!(Balances::free_balance(&3), 1000 + d_2_rewards);
+			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
+			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
 		});
 }
