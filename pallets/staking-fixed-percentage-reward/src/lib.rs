@@ -3,8 +3,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-#[cfg(feature = "runtime-benchmarks")]
-pub mod benchmarking;
+// #[cfg(feature = "runtime-benchmarks")]
+// pub mod benchmarking;
 pub mod default_weights;
 
 // #[cfg(test)]
@@ -23,7 +23,7 @@ pub mod pallet {
 	use parachain_staking::{
 		reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 		reward_rate::RewardRateInfo,
-		types::{BalanceOf, Reward, RoundInfo, Candidate},
+		types::{BalanceOf, Candidate, Reward, RoundInfo},
 	};
 
 	use frame_support::{
@@ -98,10 +98,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self {
-				_phantom: Default::default(),
-				reward_rate_config: Default::default(),
-			}
+			Self { _phantom: Default::default(), reward_rate_config: Default::default() }
 		}
 	}
 

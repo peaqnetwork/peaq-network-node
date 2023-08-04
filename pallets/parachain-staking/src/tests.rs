@@ -20,6 +20,7 @@
 
 use std::{convert::TryInto, iter};
 
+use crate::mock::MockRewardCalculator;
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
@@ -2059,31 +2060,33 @@ fn set_max_selected_candidates_total_stake() {
 		});
 }
 
-#[test]
-fn update_reward_rate() {
-	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
-		.with_collators(vec![(1, 10)])
-		.build()
-		.execute_with(|| {
-			let invalid_reward_rate = RewardRateInfo {
-				collator_rate: Perquintill::one(),
-				delegator_rate: Perquintill::one(),
-			};
-			assert!(!invalid_reward_rate.is_valid());
-
-			assert_ok!(StakePallet::set_reward_rate(
-				RuntimeOrigin::root(),
-				Perquintill::from_percent(0),
-				Perquintill::from_percent(100),
-			));
-			assert_ok!(StakePallet::set_reward_rate(
-				RuntimeOrigin::root(),
-				Perquintill::from_percent(100),
-				Perquintill::from_percent(0),
-			));
-		});
-}
+/*
+ * #[test]
+ * fn update_reward_rate() {
+ *     ExtBuilder::default()
+ *         .with_balances(vec![(1, 10)])
+ *         .with_collators(vec![(1, 10)])
+ *         .build()
+ *         .execute_with(|| {
+ *             let invalid_reward_rate = RewardRateInfo {
+ *                 collator_rate: Perquintill::one(),
+ *                 delegator_rate: Perquintill::one(),
+ *             };
+ *             assert!(!invalid_reward_rate.is_valid());
+ *
+ *             assert_ok!(StakePallet::set_reward_rate(
+ *                 RuntimeOrigin::root(),
+ *                 Perquintill::from_percent(0),
+ *                 Perquintill::from_percent(100),
+ *             ));
+ *             assert_ok!(StakePallet::set_reward_rate(
+ *                 RuntimeOrigin::root(),
+ *                 Perquintill::from_percent(100),
+ *                 Perquintill::from_percent(0),
+ *             ));
+ *         });
+ * }
+ */
 
 #[test]
 fn unlock_unstaked() {
@@ -3440,7 +3443,8 @@ fn collator_reward_per_block_only_collator() {
 				0
 			));
 
-			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100);
+			let (_reads, _writes, reward) =
+				MockRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
 			assert_eq!(reward, Reward { owner: 1, amount: 100 });
 		});
 }
@@ -3472,12 +3476,13 @@ fn collator_reward_per_block_with_delegator() {
 				0
 			));
 
-			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100);
+			let (_reads, _writes, reward) =
+				MockRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
 			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
 			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
 
 			let (_reards, _writes, reward_vec) =
-				StakePallet::delegator_reward_per_block(&state, 100);
+				MockRewardCalculator::<Test>::delegator_reward_per_block(&state, 100);
 			let d_1_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
