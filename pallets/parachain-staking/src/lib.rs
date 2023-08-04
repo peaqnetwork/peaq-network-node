@@ -151,10 +151,10 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-mod reward_config_calc;
-mod reward_rate;
+pub mod reward_config_calc;
+pub mod reward_rate;
 mod set;
-mod types;
+pub mod types;
 
 use core::marker::PhantomData;
 use frame_support::pallet;
@@ -331,6 +331,8 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		type CollatorDelegatorBlockRewardCalculator: CollatorDelegatorBlockRewardCalculator<Self>;
 	}
 
 	#[pallet::error]

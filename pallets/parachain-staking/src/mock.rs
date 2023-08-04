@@ -165,6 +165,7 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
+	type CollatorDelegatorBlockRewardCalculator = StakePallet;
 }
 
 impl_opaque_keys! {
