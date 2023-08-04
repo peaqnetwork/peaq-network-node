@@ -198,7 +198,7 @@ pub mod pallet {
 			Reward, RoundInfo, Stake, StakeOf, TotalStake,
 		},
 	};
-	use sp_std::{convert::TryInto, fmt::Debug, iter::Sum};
+	use sp_std::{convert::TryInto, fmt::Debug};
 
 	/// Kilt-specific lock for staking rewards.
 	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
@@ -2665,44 +2665,28 @@ pub mod pallet {
 		// }
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_ref_time(1_u64);
+			let mut reads = Weight::from_ref_time(0_u64);
 			let mut writes = Weight::from_ref_time(0_u64);
-			let mut delegator_sum = T::CurrencyBalance::from(0u128);
-			// should always include state except if the collator has been forcedly removed
-			// via `force_remove_candidate` in the current or previous round
+
 			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
-				for Stake { owner: _owner, amount } in &state.delegators[..] {
-					if *amount >= T::MinDelegatorStake::get() {
-						delegator_sum += *amount;
-					}
-				}
 				let pot = Self::account_id();
 				let issue_number = T::Currency::free_balance(&pot)
 					.checked_sub(&T::Currency::minimum_balance())
 					.unwrap_or_else(Zero::zero);
 
-				let reward_rate_config = <RewardRateConfig<T>>::get();
+				let (now_read, now_write, now_reward) =
+					Self::collator_reward_per_block(&state, issue_number, &author);
+				reads = reads.saturating_add(now_read);
+				writes = writes.saturating_add(now_write);
+				Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
 
-				if delegator_sum == T::CurrencyBalance::from(0u128) {
-					Self::do_reward(&pot, &author, issue_number);
-				} else {
-					let collator_reward =
-						reward_rate_config.compute_collator_reward::<T>(issue_number);
-					Self::do_reward(&pot, &author, collator_reward);
-				}
-				writes = writes.saturating_add(Weight::from_ref_time(1_u64));
-
-				// Reward delegators
-				for Stake { owner, amount } in state.delegators {
-					if amount >= T::MinDelegatorStake::get() {
-						let staking_rate = Perquintill::from_rational(amount, delegator_sum);
-						let delegator_reward = reward_rate_config
-							.compute_delegator_reward::<T>(issue_number, staking_rate);
-						Self::do_reward(&pot, &owner, delegator_reward);
-						writes = writes.saturating_add(Weight::from_ref_time(1_u64));
-					}
-				}
-				reads = reads.saturating_add(Weight::from_ref_time(4_u64));
+				let (now_read, now_write, now_rewards) =
+					Self::delegator_reward_per_block(&state, issue_number);
+				now_rewards.into_iter().for_each(|x| {
+					Self::do_reward(&pot, &x.owner, x.amount);
+				});
+				reads = reads.saturating_add(now_read);
+				writes = writes.saturating_add(now_write);
 			}
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
@@ -2840,10 +2824,7 @@ pub mod pallet {
 	// [TODO] I'm thinking to extract a new pallet for that, otherwise, it's a little strange that
 	// we leave the reward here.
 	// Modifiy to return list
-	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T>
-	where
-		<T as pallet::Config>::CurrencyBalance: Sum,
-	{
+	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
 		fn collator_reward_per_block(
 			state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 			issue_number: BalanceOf<T>,
@@ -2853,8 +2834,7 @@ pub mod pallet {
 			let delegator_sum = (&state.delegators)
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
-				.map(|x| x.amount)
-				.sum::<T::CurrencyBalance>();
+				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
 			let reward_rate_config = <RewardRateConfig<T>>::get();
 
@@ -2886,8 +2866,7 @@ pub mod pallet {
 			let delegator_sum = (&state.delegators)
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
-				.map(|x| x.amount)
-				.sum::<T::CurrencyBalance>();
+				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
 			let reward_rate_config = <RewardRateConfig<T>>::get();
 
