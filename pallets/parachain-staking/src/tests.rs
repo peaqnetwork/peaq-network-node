@@ -20,7 +20,7 @@
 
 use std::{convert::TryInto, iter};
 
-use crate::mock::{MockRewardCalculator, RewardRateConfigTrait};
+use crate::reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait};
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
@@ -3433,7 +3433,7 @@ fn collator_reward_per_block_only_collator() {
 			));
 
 			let (_reads, _writes, reward) =
-				MockRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
+				DefaultRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
 			assert_eq!(reward, Reward { owner: 1, amount: 100 });
 		});
 }
@@ -3459,13 +3459,13 @@ fn collator_reward_per_block_with_delegator() {
 			));
 
 			let (_reads, _writes, reward) =
-				MockRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
+				DefaultRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
 			let c_rewards: BalanceOf<Test> = <Test as RewardRateConfigTrait>::reward_rate_config()
 				.compute_collator_reward::<Test>(100);
 			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
 
 			let (_reards, _writes, reward_vec) =
-				MockRewardCalculator::<Test>::delegator_reward_per_block(&state, 100);
+				DefaultRewardCalculator::<Test>::delegator_reward_per_block(&state, 100);
 			let d_1_rewards: BalanceOf<Test> =
 				<Test as RewardRateConfigTrait>::reward_rate_config()
 					.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
