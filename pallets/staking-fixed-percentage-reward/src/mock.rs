@@ -1,37 +1,19 @@
-// KILT Blockchain – https://botlabs.org
-// Copyright (C) 2019-2022 BOTLabs GmbH
-
-// The KILT Blockchain is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// The KILT Blockchain is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-// If you feel like getting in touch with us, you can do so at info@botlabs.org
-//! Test utilities
+// Copyright (C) 2019-2022 EOTLabs GmbH
 
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{
-	reward_rate::RewardRateInfo,
-    reward_config_calc::{RewardRateConfigTrait, DefaultRewardCalculator},
-	{self as stake},
-};
+use crate::{self as reward_calculator, default_weights::SubstrateWeight};
+use parachain_staking::{self as stake, reward_config_calc::DefaultRewardCalculator};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
+use parachain_staking::reward_config_calc::RewardRateConfigTrait;
 use pallet_authorship::EventHandler;
+use parachain_staking::reward_rate::RewardRateInfo;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
 use sp_runtime::{
@@ -65,6 +47,7 @@ construct_runtime!(
 		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		Aura: pallet_aura::{Pallet, Storage},
+		RewardCalculatorPallet: reward_calculator::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -126,7 +109,7 @@ impl pallet_aura::Config for Test {
 
 impl pallet_authorship::Config for Test {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type EventHandler = Pallet<Test>;
+	type EventHandler = StakePallet;
 }
 
 parameter_types! {
@@ -150,6 +133,11 @@ parameter_types! {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = SubstrateWeight<Test>;
+}
+
+impl parachain_staking::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
 	type MinBlocksPerRound = MinBlocksPerRound;
@@ -169,15 +157,12 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
-	type BlockRewardCalculator = DefaultRewardCalculator<Self>;
+	type BlockRewardCalculator = RewardCalculatorPallet;
 }
 
 impl RewardRateConfigTrait for Test {
 	fn reward_rate_config() -> RewardRateInfo {
-		RewardRateInfo {
-			collator_rate: Perquintill::from_percent(30),
-			delegator_rate: Perquintill::from_percent(70),
-		}
+		RewardCalculatorPallet::reward_rate_config_get()
 	}
 }
 
@@ -349,6 +334,7 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::StakePallet(inner) = e { Some(inner) } else { None })
+		.filter_map(|e| if let RuntimeEvent::RewardCalculatorPallet(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
+
