@@ -98,7 +98,6 @@
 //! ## Interface
 //!
 //! ### Dispatchable Functions
-//! - `set_reward_rate` - Change the reward rate configuration. Requires sudo.
 //! - `set_max_selected_candidates` - Change the number of collator candidates which can be selected
 //!   to be in the set of block authors. Requires sudo.
 //! - `set_blocks_per_round` - Change the number of blocks of a round. Shorter rounds enable more
@@ -166,7 +165,6 @@ use types::ReplacedDelegator;
 #[pallet]
 pub mod pallet {
 	use super::*;
-	pub use crate::reward_rate::RewardRateInfo;
 
 	use frame_support::{
 		assert_ok,
@@ -501,9 +499,6 @@ pub mod pallet {
 		/// A collator or a delegator has received a reward.
 		/// \[account, amount of reward\]
 		Rewarded(T::AccountId, BalanceOf<T>),
-		/// Reware rate configuration for future validation rounds has changed.
-		/// \[collator's reward rate,delegator's reward rate\]
-		RoundRewardRateSet(Perquintill, Perquintill),
 		/// The maximum number of collator candidates selected in future
 		/// validation rounds has changed. \[old value, new value\]
 		MaxSelectedCandidatesSet(u32, u32),
@@ -609,11 +604,6 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Reward rate configuration.
-	#[pallet::storage]
-	#[pallet::getter(fn reward_rate_config)]
-	pub(crate) type RewardRateConfig<T: Config> = StorageValue<_, RewardRateInfo, ValueQuery>;
-
 	/// The funds waiting to be unstaked.
 	///
 	/// It maps from accounts to all the funds addressed to them in the future
@@ -647,27 +637,19 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
-		pub reward_rate_config: RewardRateInfo,
 		pub max_candidate_stake: BalanceOf<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self {
-				stakers: Default::default(),
-				reward_rate_config: Default::default(),
-				max_candidate_stake: Default::default(),
-			}
+			Self { stakers: Default::default(), max_candidate_stake: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			assert!(self.reward_rate_config.is_valid(), "Invalid reward_rate configuration");
-
-			<RewardRateConfig<T>>::put(self.reward_rate_config.clone());
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
 
 			// Setup delegate & collators
@@ -716,7 +698,7 @@ pub mod pallet {
 		/// - Writes: ForceNewRound
 		/// # </weight>
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::force_new_round())]
 		pub fn force_new_round(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -725,39 +707,6 @@ pub mod pallet {
 			// current round
 			<ForceNewRound<T>>::put(true);
 
-			Ok(())
-		}
-
-		/// Set the reward_rate rate.
-		///
-		/// The estimated average block time is twelve seconds.
-		///
-		/// The dispatch origin must be Root.
-		///
-		/// Emits `RoundRewardRateSet`.
-		///
-		/// # <weight>
-		/// Weight: O(1)
-		/// - Reads: [Origin Account]
-		/// - Writes: RewardRateConfig
-		/// # </weight>
-		#[pallet::call_index(1)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_reward_rate())]
-		pub fn set_reward_rate(
-			origin: OriginFor<T>,
-			collator_rate: Perquintill,
-			delegator_rate: Perquintill,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-
-			let reward_rate = RewardRateInfo::new(collator_rate, delegator_rate);
-
-			ensure!(reward_rate.is_valid(), Error::<T>::InvalidSchedule);
-			Self::deposit_event(Event::RoundRewardRateSet(
-				reward_rate.collator_rate,
-				reward_rate.delegator_rate,
-			));
-			<RewardRateConfig<T>>::put(reward_rate);
 			Ok(())
 		}
 
@@ -2704,6 +2653,7 @@ pub mod pallet {
 		}
 	}
 
+	// [TODO] Upgrade: remove the reward config to other place
 	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
 	where
 		T: Config + pallet_authorship::Config + pallet_session::Config,
@@ -2716,11 +2666,12 @@ pub mod pallet {
 		/// different reward rates. Rewards are immediately available without any restrictions
 		/// after minting.
 		///
+		/// [TODO] Redefine the weight
 		/// # <weight>
 		/// Weight: O(D) where D is the number of delegators of this collator
 		/// block author bounded by `MaxDelegatorsPerCollator`.
-		/// - Reads: CandidatePool, TotalCollatorStake, Balance, RewardRateConfig,
-		///   MaxSelectedCandidates, Validators, DisabledValidators
+		/// - Reads: CandidatePool, TotalCollatorStake, Balance, MaxSelectedCandidates, Validators,
+		///   DisabledValidators
 		/// - Writes: (D + 1) * Balance
 		/// # </weight>
 		fn note_author(author: T::AccountId) {

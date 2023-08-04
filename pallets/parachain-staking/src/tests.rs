@@ -20,7 +20,7 @@
 
 use std::{convert::TryInto, iter};
 
-use crate::mock::MockRewardCalculator;
+use crate::mock::{MockRewardCalculator, RewardRateConfigTrait};
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
@@ -42,7 +42,7 @@ use crate::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
 		Stake, StakeOf, TotalStake,
 	},
-	CandidatePool, CoefficientRewardCalculator, Config, Error, Event, RewardRateInfo, STAKING_ID,
+	CandidatePool, CoefficientRewardCalculator, Config, Error, Event, STAKING_ID,
 };
 
 #[test]
@@ -482,7 +482,7 @@ fn exit_queue_with_events() {
 			(9, 33),
 		])
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
-		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
+		.with_reward_rate(BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert_eq!(CandidatePool::<Test>::count(), 6);
@@ -579,7 +579,7 @@ fn execute_leave_candidates_with_delay() {
 			(10, 100),
 		])
 		.with_delegators(vec![(11, 1, 110), (12, 1, 120), (13, 2, 130), (14, 2, 140)])
-		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
+		.with_reward_rate(BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert_eq!(CandidatePool::<Test>::count(), 10);
@@ -1365,25 +1365,27 @@ fn revoke_delegation_or_leave_delegators() {
 		});
 }
 
+// [TODO] Failure
 #[test]
 fn round_transitions() {
-	let col_rate = 40;
-	let del_rate = 60;
-	let reward_rate = RewardRateInfo::new(
-		Perquintill::from_percent(col_rate),
-		Perquintill::from_percent(del_rate),
-	);
-
+	/*
+	 *     let col_rate = 40;
+	 *     let del_rate = 60;
+	 *     let reward_rate = RewardRateInfo::new(
+	 *         Perquintill::from_percent(col_rate),
+	 *         Perquintill::from_percent(del_rate),
+	 *     );
+	 *
+	 */
 	// round_immediately_jumps_if_current_duration_exceeds_new_blocks_per_round
 	// change from 5 bpr to 3 in block 5 -> 8 should be new round
 	ExtBuilder::default()
 		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
 		.with_collators(vec![(1, 20)])
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
-		.with_reward_rate(col_rate, del_rate, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 			roll_to(5, vec![]);
 			let init = vec![Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
@@ -1393,9 +1395,6 @@ fn round_transitions() {
 				Error::<Test>::CannotSetBelowMin
 			);
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
-
-			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 
 			// last round startet at 5 but we are already at 9, so we expect 9 to be the new
 			// round
@@ -1410,10 +1409,9 @@ fn round_transitions() {
 		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
 		.with_collators(vec![(1, 20)])
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
-		.with_reward_rate(col_rate, del_rate, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
 			roll_to(6, vec![]);
@@ -1422,9 +1420,6 @@ fn round_transitions() {
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
-
-			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 
 			// there should not be a new event
 			roll_to(7, vec![]);
@@ -1440,28 +1435,17 @@ fn round_transitions() {
 		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
 		.with_collators(vec![(1, 20)])
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
-		.with_reward_rate(col_rate, del_rate, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 			roll_to(7, vec![]);
 			// chooses top MaxSelectedCandidates (5), in order
 			let init = vec![Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 
-			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
-
-			assert_eq!(
-				StakePallet::reward_rate_config(),
-				RewardRateInfo::new(
-					Perquintill::from_percent(col_rate),
-					Perquintill::from_percent(del_rate),
-				)
-			);
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
 			roll_to(8, vec![]);
 
@@ -1486,23 +1470,26 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_reward_rate(30, 70, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
 			// compute rewards
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
+			let c_rewards: BalanceOf<Test> = <Test as RewardRateConfigTrait>::reward_rate_config()
+				.compute_collator_reward::<Test>(1000);
 			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(1000, Perquintill::one());
 
 			let c_total_rewards = c_rewards + d_rewards;
-			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2. / 3.));
-			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1. / 3.));
+			let d_1_rewards: BalanceOf<Test> =
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2. / 3.));
+			let d_2_rewards: BalanceOf<Test> =
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1. / 3.));
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
@@ -1570,7 +1557,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		.with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 10_000_000 * DECIMALS)])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
@@ -1591,7 +1578,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS), (3, 1, 10_000_000 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(3), 1));
@@ -1623,10 +1610,9 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_reward_rate(30, 70, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
@@ -1643,9 +1629,11 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			let rewards_3 = Balances::free_balance(&3).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_4 = Balances::free_balance(&4).saturating_sub(20_000_000 * DECIMALS);
 			let rewards_5 = Balances::free_balance(&5).saturating_sub(20_000_000 * DECIMALS);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
+			let c_rewards: BalanceOf<Test> = <Test as RewardRateConfigTrait>::reward_rate_config()
+				.compute_collator_reward::<Test>(1000);
 			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(1000, Perquintill::one());
 			let expected_collator_rewards = end_block as u128 * c_rewards;
 			let expected_delegator_rewards = end_block as u128 * d_rewards;
 
@@ -1719,7 +1707,7 @@ fn should_not_reward_delegators_below_min_stake() {
 		.with_balances(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS), (3, 10 * DECIMALS), (4, 5)])
 		.with_collators(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS)])
 		.with_delegators(vec![(3, 2, 10 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		.with_reward_rate(5)
 		.build()
 		.execute_with(|| {
 			// impossible but lets assume it happened
@@ -3138,12 +3126,13 @@ fn authorities_per_round() {
 			// reward 1 once per round
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
-			let reward_rate = StakePallet::reward_rate_config();
 
 			// roll to last block of round 0
 			roll_to(4, authors.clone());
-			let reward_0 = reward_rate.compute_collator_reward::<Test>(1000) +
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+			let reward_0 = <Test as RewardRateConfigTrait>::reward_rate_config()
+				.compute_collator_reward::<Test>(1000) +
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(1000, Perquintill::one());
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));
@@ -3451,18 +3440,11 @@ fn collator_reward_per_block_only_collator() {
 
 #[test]
 fn collator_reward_per_block_with_delegator() {
-	let col_rate = 30;
-	let del_rate = 70;
-	let reward_rate = RewardRateInfo::new(
-		Perquintill::from_percent(col_rate),
-		Perquintill::from_percent(del_rate),
-	);
-
 	ExtBuilder::default()
 		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
 		.with_collators(vec![(1, 500)])
 		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
-		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
+		.with_reward_rate(BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
@@ -3478,15 +3460,18 @@ fn collator_reward_per_block_with_delegator() {
 
 			let (_reads, _writes, reward) =
 				MockRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
+			let c_rewards: BalanceOf<Test> = <Test as RewardRateConfigTrait>::reward_rate_config()
+				.compute_collator_reward::<Test>(100);
 			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
 
 			let (_reards, _writes, reward_vec) =
 				MockRewardCalculator::<Test>::delegator_reward_per_block(&state, 100);
-			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
-			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
+			let d_1_rewards: BalanceOf<Test> =
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
+			let d_2_rewards: BalanceOf<Test> =
+				<Test as RewardRateConfigTrait>::reward_rate_config()
+					.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
 			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
 			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
 		});

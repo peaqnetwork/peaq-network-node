@@ -21,6 +21,7 @@
 
 use super::*;
 use crate::{
+	reward_rate::RewardRateInfo,
 	types::{BalanceOf, Candidate, Reward},
 	{self as stake},
 };
@@ -147,12 +148,18 @@ parameter_types! {
 	pub const MaxUnstakeRequests: u32 = 6;
 }
 
-pub struct MockRewardCalculator<T: Config> {
+pub trait RewardRateConfigTrait {
+	fn reward_rate_config() -> RewardRateInfo;
+}
+
+pub struct MockRewardCalculator<T: Config + RewardRateConfigTrait> {
 	_phantom: PhantomData<T>,
 }
 
 // [TODO] It's the same as the fix presentage's implmentation
-impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for MockRewardCalculator<T> {
+impl<T: Config + RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator<T>
+	for MockRewardCalculator<T>
+{
 	fn collator_reward_per_block(
 		stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
@@ -163,8 +170,6 @@ impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for MockRewardCalculat
 			.filter(|x| x.amount >= min_delegator_stake)
 			.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
-		let reward_rate_config = <RewardRateConfig<T>>::get();
-
 		if delegator_sum == T::CurrencyBalance::from(0u128) {
 			(
 				Weight::from_ref_time(1_u64),
@@ -172,7 +177,8 @@ impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for MockRewardCalculat
 				Reward { owner: stake.id.clone(), amount: issue_number },
 			)
 		} else {
-			let collator_reward = reward_rate_config.compute_collator_reward::<T>(issue_number);
+			let collator_reward =
+				T::reward_rate_config().compute_collator_reward::<T>(issue_number);
 			(
 				Weight::from_ref_time(1_u64),
 				Weight::from_ref_time(1_u64),
@@ -192,15 +198,13 @@ impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for MockRewardCalculat
 			.filter(|x| x.amount >= min_delegator_stake)
 			.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
-		let reward_rate_config = <RewardRateConfig<T>>::get();
-
 		let inner = (&stake.delegators)
 			.into_iter()
 			.filter(|x| x.amount >= min_delegator_stake)
 			.map(|x| {
 				let staking_rate = Perquintill::from_rational(x.amount, delegator_sum);
-				let delegator_reward =
-					reward_rate_config.compute_delegator_reward::<T>(issue_number, staking_rate);
+				let delegator_reward = T::reward_rate_config()
+					.compute_delegator_reward::<T>(issue_number, staking_rate);
 				Reward { owner: x.owner.clone(), amount: delegator_reward }
 			})
 			.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
@@ -235,6 +239,15 @@ impl Config for Test {
 	type PotId = PotId;
 	type WeightInfo = ();
 	type BlockRewardCalculator = MockRewardCalculator<Self>;
+}
+
+impl RewardRateConfigTrait for Test {
+	fn reward_rate_config() -> RewardRateInfo {
+		RewardRateInfo {
+			collator_rate: Perquintill::from_percent(30),
+			delegator_rate: Perquintill::from_percent(70),
+		}
+	}
 }
 
 impl_opaque_keys! {
@@ -277,8 +290,6 @@ pub(crate) struct ExtBuilder {
 	collators: Vec<(AccountId, Balance)>,
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
-	// reward_rate config
-	reward_rate_config: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -290,10 +301,6 @@ impl Default for ExtBuilder {
 			delegators: vec![],
 			collators: vec![],
 			blocks_per_round: BLOCKS_PER_ROUND,
-			reward_rate_config: RewardRateInfo::new(
-				Perquintill::from_percent(30),
-				Perquintill::from_percent(70),
-			),
 		}
 	}
 }
@@ -321,16 +328,7 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(
-		mut self,
-		col_reward: u64,
-		del_reward: u64,
-		blocks_per_round: BlockNumber,
-	) -> Self {
-		self.reward_rate_config = RewardRateInfo::new(
-			Perquintill::from_percent(col_reward),
-			Perquintill::from_percent(del_reward),
-		);
+	pub(crate) fn with_reward_rate(mut self, blocks_per_round: BlockNumber) -> Self {
 		self.blocks_per_round = blocks_per_round;
 
 		self
@@ -358,13 +356,9 @@ impl ExtBuilder {
 		for delegator in self.delegators.clone() {
 			stakers.push((delegator.0, Some(delegator.1), delegator.2));
 		}
-		stake::GenesisConfig::<Test> {
-			stakers,
-			reward_rate_config: self.reward_rate_config.clone(),
-			max_candidate_stake: 160_000_000 * DECIMALS,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Parachain Staking's storage can be assimilated");
+		stake::GenesisConfig::<Test> { stakers, max_candidate_stake: 160_000_000 * DECIMALS }
+			.assimilate_storage(&mut t)
+			.expect("Parachain Staking's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self
