@@ -41,7 +41,7 @@ use crate::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
 		Stake, StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event, RewardRateInfo, STAKING_ID,
+	CandidatePool, CoefficientRewardCalculator, Config, Error, Event, RewardRateInfo, STAKING_ID,
 };
 
 #[test]
@@ -3440,7 +3440,7 @@ fn collator_reward_per_block_only_collator() {
 				0
 			));
 
-			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100, &1);
+			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100);
 			assert_eq!(reward, Reward { owner: 1, amount: 100 });
 		});
 }
@@ -3472,7 +3472,7 @@ fn collator_reward_per_block_with_delegator() {
 				0
 			));
 
-			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100, &1);
+			let (_reads, _writes, reward) = StakePallet::collator_reward_per_block(&state, 100);
 			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
 			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
 
@@ -3484,5 +3484,80 @@ fn collator_reward_per_block_with_delegator() {
 				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
 			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
 			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
+		});
+}
+
+#[test]
+fn coefficient_collator_reward_per_block_only_collator() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			// Avoid keep live error
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+				0
+			));
+			let (_reads, _writes, reward) =
+				CoefficientRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
+			assert_eq!(reward, Reward { owner: 1, amount: 100 });
+		});
+}
+
+#[test]
+fn coefficient_collator_reward_per_block_with_delegator() {
+	let coefficient = 8.;
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			// Avoid keep live error
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+				0
+			));
+
+			let (_reads, _writes, reward) =
+				CoefficientRewardCalculator::<Test>::collator_reward_per_block(&state, 100);
+			let total_denominator = 500. * coefficient + 600. + 400.;
+			assert_eq!(
+				reward,
+				Reward {
+					owner: 1,
+					amount: Perquintill::from_float(500. * coefficient / total_denominator) *
+						100. as u128
+				}
+			);
+			let (_reards, _writes, reward_vec) =
+				CoefficientRewardCalculator::<Test>::delegator_reward_per_block(&state, 100);
+			assert_eq!(reward_vec.len(), 2);
+			assert_eq!(
+				reward_vec[0],
+				Reward {
+					owner: 2,
+					amount: Perquintill::from_float(600. / total_denominator) * 100. as u128
+				}
+			);
+			assert_eq!(
+				reward_vec[1],
+				Reward {
+					owner: 3,
+					amount: Perquintill::from_float(400. / total_denominator) * 100. as u128
+				}
+			);
 		});
 }

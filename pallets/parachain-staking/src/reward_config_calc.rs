@@ -10,7 +10,6 @@ pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
 	fn collator_reward_per_block(
 		state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
-		author: &T::AccountId,
 	) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>);
 	fn delegator_reward_per_block(
 		state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
