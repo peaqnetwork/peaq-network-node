@@ -108,6 +108,7 @@ peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-fea
 frame-support = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+staking-fixed-percentage-reward = { path = "../../pallets/staking-fixed-percentage-reward", default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
@@ -222,6 +223,7 @@ std = [
 
     "parachain-staking/std",
     "pallet-block-reward/std",
+	"staking-fixed-percentage-reward/std",
 
 	# XCM
     "xcm/std",

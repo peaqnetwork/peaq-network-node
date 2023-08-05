@@ -3,7 +3,7 @@ use cumulus_primitives_core::ParaId;
 use peaq_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, SudoConfig, SystemConfig, WASM_BINARY,
+	Precompiles, StakingFixedRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -156,8 +156,11 @@ fn configure_genesis(
 		},
 		parachain_staking: ParachainStakingConfig {
 			stakers,
-			reward_rate_config: staking::reward_rate_config(),
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
+		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
+			_phantom: Default::default(),
+			reward_rate_config: staking::reward_rate_config(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100

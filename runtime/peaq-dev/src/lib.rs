@@ -71,7 +71,7 @@ use frame_system::{
 };
 
 pub use pallet_balances::Call as BalancesCall;
-use parachain_staking::RewardRateInfo;
+use parachain_staking::reward_rate::RewardRateInfo;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
@@ -835,6 +835,12 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = ();
+	type BlockRewardCalculator = StakingFixedRewardCalculator;
+}
+
+impl staking_fixed_percentage_reward::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = staking_fixed_percentage_reward::default_weights::SubstrateWeight<Runtime>;
 }
 
 impl peaq_pallet_mor::Config for Runtime {
@@ -1007,6 +1013,7 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
+		StakingFixedRewardCalculator: staking_fixed_percentage_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 27,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,

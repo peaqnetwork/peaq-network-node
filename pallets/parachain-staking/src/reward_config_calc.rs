@@ -6,6 +6,7 @@ use crate::{
 use core::marker::PhantomData;
 use frame_support::{pallet_prelude::Weight, traits::Get, BoundedVec};
 use sp_runtime::Perquintill;
+use sp_std::vec::Vec;
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
