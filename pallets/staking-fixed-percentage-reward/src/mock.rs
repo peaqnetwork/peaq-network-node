@@ -4,16 +4,18 @@
 
 use super::*;
 use crate::{self as reward_calculator, default_weights::SubstrateWeight};
-use parachain_staking::{self as stake, reward_config_calc::DefaultRewardCalculator};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
-use parachain_staking::reward_config_calc::RewardRateConfigTrait;
 use pallet_authorship::EventHandler;
-use parachain_staking::reward_rate::RewardRateInfo;
+use parachain_staking::{
+	self as stake,
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate::RewardRateInfo,
+};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
 use sp_runtime::{
@@ -158,12 +160,6 @@ impl parachain_staking::Config for Test {
 	type PotId = PotId;
 	type WeightInfo = ();
 	type BlockRewardCalculator = RewardCalculatorPallet;
-}
-
-impl RewardRateConfigTrait for Test {
-	fn reward_rate_config() -> RewardRateInfo {
-		RewardCalculatorPallet::reward_rate_config_get()
-	}
 }
 
 impl_opaque_keys! {
@@ -334,7 +330,12 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::RewardCalculatorPallet(inner) = e { Some(inner) } else { None })
+		.filter_map(|e| {
+			if let RuntimeEvent::RewardCalculatorPallet(inner) = e {
+				Some(inner)
+			} else {
+				None
+			}
+		})
 		.collect::<Vec<_>>()
 }
-

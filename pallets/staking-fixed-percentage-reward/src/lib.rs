@@ -36,9 +36,9 @@ pub mod pallet {
 		},
 		BoundedVec, PalletId,
 	};
-	use parachain_staking::reward_config_calc::DefaultRewardCalculator;
 	use frame_system::pallet_prelude::*;
 	use pallet_balances::{BalanceLock, Locks};
+	use parachain_staking::reward_config_calc::DefaultRewardCalculator;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
@@ -87,7 +87,7 @@ pub mod pallet {
 
 	/// Reward rate configuration.
 	#[pallet::storage]
-	#[pallet::getter(fn reward_rate_config_get)]
+	#[pallet::getter(fn reward_rate_config)]
 	pub(crate) type RewardRateConfig<T: Config> = StorageValue<_, RewardRateInfo, ValueQuery>;
 
 	#[pallet::genesis_config]
@@ -143,17 +143,17 @@ pub mod pallet {
 				reward_rate.collator_rate,
 				reward_rate.delegator_rate,
 			));
-			<RewardRateConfig<T>>::put(reward_rate);
+			Self::set_reward_rate_config(reward_rate);
 			Ok(())
 		}
 	}
 
-	impl<T: Config + RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
+	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
 		fn collator_reward_per_block(
 			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 			issue_number: BalanceOf<T>,
 		) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>) {
-			DefaultRewardCalculator::<T>::collator_reward_per_block(stake, issue_number)
+			DefaultRewardCalculator::<T, Self>::collator_reward_per_block(stake, issue_number)
 		}
 
 		fn delegator_reward_per_block(
@@ -164,15 +164,16 @@ pub mod pallet {
 			Weight,
 			BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>,
 		) {
-			DefaultRewardCalculator::<T>::delegator_reward_per_block(stake, issue_number)
+			DefaultRewardCalculator::<T, Self>::delegator_reward_per_block(stake, issue_number)
 		}
 	}
 
-	/*
-	 * impl<T: Config> RewardRateConfigTrait for Pallet<T> {
-	 *     fn reward_rate_config() -> RewardRateInfo {
-	 *         Self::reward_rate_config_get()
-	 *     }
-	 * }
-	 */
+	impl<T: Config> RewardRateConfigTrait for Pallet<T> {
+		fn get_reward_rate_config() -> RewardRateInfo {
+			Self::reward_rate_config()
+		}
+		fn set_reward_rate_config(reward_rate: RewardRateInfo) {
+			<RewardRateConfig<T>>::put(reward_rate);
+		}
+	}
 }

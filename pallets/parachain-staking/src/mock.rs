@@ -21,8 +21,8 @@
 
 use super::*;
 use crate::{
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
 	reward_rate::RewardRateInfo,
-    reward_config_calc::{RewardRateConfigTrait, DefaultRewardCalculator},
 	{self as stake},
 };
 use frame_support::{
@@ -40,7 +40,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill, Perquintill,
 };
-use sp_std::fmt::Debug;
+use sp_std::{cell::RefCell, fmt::Debug};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -169,15 +169,28 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
-	type BlockRewardCalculator = DefaultRewardCalculator<Self>;
+	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
 }
 
-impl RewardRateConfigTrait for Test {
-	fn reward_rate_config() -> RewardRateInfo {
-		RewardRateInfo {
-			collator_rate: Perquintill::from_percent(30),
-			delegator_rate: Perquintill::from_percent(70),
-		}
+// Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
+thread_local! {
+	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = RefCell::new(RewardRateInfo {
+		collator_rate: Perquintill::from_percent(30),
+		delegator_rate: Perquintill::from_percent(70),
+	});
+}
+
+pub struct MockRewardConfig {}
+
+impl RewardRateConfigTrait for MockRewardConfig {
+	fn get_reward_rate_config() -> RewardRateInfo {
+		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| reward_rate.borrow().clone())
+	}
+
+	fn set_reward_rate_config(info: RewardRateInfo) {
+		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| {
+			*reward_rate.borrow_mut() = info;
+		});
 	}
 }
 
@@ -259,7 +272,16 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(mut self, blocks_per_round: BlockNumber) -> Self {
+	pub(crate) fn with_reward_rate(
+		mut self,
+		col_reward: u64,
+		del_reward: u64,
+		blocks_per_round: BlockNumber,
+	) -> Self {
+		MockRewardConfig::set_reward_rate_config(RewardRateInfo::new(
+			Perquintill::from_percent(col_reward),
+			Perquintill::from_percent(del_reward),
+		));
 		self.blocks_per_round = blocks_per_round;
 
 		self
