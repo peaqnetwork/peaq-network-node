@@ -9,8 +9,8 @@ pub mod default_weights;
 
 #[cfg(test)]
 pub(crate) mod mock;
-// #[cfg(test)]
-// pub(crate) mod tests;
+#[cfg(test)]
+pub(crate) mod tests;
 
 // mod reward_config_calc;
 
@@ -23,33 +23,16 @@ pub mod pallet {
 	use parachain_staking::{
 		reward_config_calc::{CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait},
 		reward_rate::RewardRateInfo,
-		types::{BalanceOf, Candidate, Reward, RoundInfo},
+		types::{BalanceOf, Candidate, Reward},
 	};
 
-	use frame_support::{
-		assert_ok,
-		pallet_prelude::*,
-		storage::bounded_btree_map::BoundedBTreeMap,
-		traits::{
-			Currency, EstimateNextSessionRotation, ExistenceRequirement::KeepAlive, Get,
-			LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion, WithdrawReasons,
-		},
-		BoundedVec, PalletId,
-	};
+	use frame_support::{pallet_prelude::*, traits::StorageVersion, BoundedVec};
 	use frame_system::pallet_prelude::*;
-	use pallet_balances::{BalanceLock, Locks};
 	use parachain_staking::reward_config_calc::DefaultRewardCalculator;
-	use scale_info::TypeInfo;
-	use sp_runtime::{
-		traits::{
-			AccountIdConversion, CheckedSub, Convert, One, SaturatedConversion, Saturating,
-			StaticLookup, Zero,
-		},
-		Permill, Perquintill,
-	};
+	use sp_runtime::Perquintill;
 	use sp_std::prelude::*;
 
-	use sp_std::{convert::TryInto, fmt::Debug};
+	use sp_std::convert::TryInto;
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -92,7 +75,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T> {
-		_phantom: PhantomData<T>,
+		pub _phantom: PhantomData<T>,
 		pub reward_rate_config: RewardRateInfo,
 	}
 

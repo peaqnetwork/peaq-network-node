@@ -27,8 +27,7 @@ pub trait RewardRateConfigTrait {
 
 // Default implementation
 pub struct DefaultRewardCalculator<T: Config, R: RewardRateConfigTrait> {
-	_phantom_t: PhantomData<T>,
-	_phantom_r: PhantomData<R>,
+	_phantom: PhantomData<(T, R)>,
 }
 
 impl<T: Config, R: RewardRateConfigTrait> RewardRateConfigTrait for DefaultRewardCalculator<T, R> {

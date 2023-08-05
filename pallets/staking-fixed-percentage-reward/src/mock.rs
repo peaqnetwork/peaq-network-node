@@ -11,11 +11,7 @@ use frame_support::{
 	PalletId,
 };
 use pallet_authorship::EventHandler;
-use parachain_staking::{
-	self as stake,
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-};
+use parachain_staking::{self as stake, reward_rate::RewardRateInfo};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
 use sp_runtime::{
@@ -202,6 +198,8 @@ pub(crate) struct ExtBuilder {
 	collators: Vec<(AccountId, Balance)>,
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
+	// reward rate
+	reward_rate: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -212,6 +210,7 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			delegators: vec![],
 			collators: vec![],
+			reward_rate: RewardRateInfo::default(),
 			blocks_per_round: BLOCKS_PER_ROUND,
 		}
 	}
@@ -240,15 +239,18 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(mut self, blocks_per_round: BlockNumber) -> Self {
+	pub(crate) fn with_reward_rate(
+		mut self,
+		col_reward: u64,
+		del_reward: u64,
+		blocks_per_round: BlockNumber,
+	) -> Self {
+		self.reward_rate = RewardRateInfo::new(
+			Perquintill::from_percent(col_reward),
+			Perquintill::from_percent(del_reward),
+		);
 		self.blocks_per_round = blocks_per_round;
 
-		self
-	}
-
-	#[must_use]
-	pub(crate) fn set_blocks_per_round(mut self, blocks_per_round: BlockNumber) -> Self {
-		self.blocks_per_round = blocks_per_round;
 		self
 	}
 
@@ -271,6 +273,13 @@ impl ExtBuilder {
 		stake::GenesisConfig::<Test> { stakers, max_candidate_stake: 160_000_000 * DECIMALS }
 			.assimilate_storage(&mut t)
 			.expect("Parachain Staking's storage can be assimilated");
+
+		reward_calculator::GenesisConfig::<Test> {
+			_phantom: Default::default(),
+			reward_rate_config: self.reward_rate.clone(),
+		}
+		.assimilate_storage(&mut t)
+		.expect("Reward Calculator's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self
@@ -299,12 +308,6 @@ impl ExtBuilder {
 	}
 }
 
-/// Compare whether the difference of both sides is at most `precision * left`.
-pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) -> bool {
-	let err = precision * left;
-	left.max(right) - left.min(right) <= err
-}
-
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
@@ -314,28 +317,8 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 			);
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsReversedWithSystemFirst as OnFinalize<u64>>::on_finalize(System::block_number());
+		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		<AllPalletsReversedWithSystemFirst as OnInitialize<u64>>::on_initialize(
-			System::block_number(),
-		);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
-}
-
-pub(crate) fn last_event() -> RuntimeEvent {
-	System::events().pop().expect("Event expected").event
-}
-
-pub(crate) fn events() -> Vec<pallet::Event<Test>> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| {
-			if let RuntimeEvent::RewardCalculatorPallet(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
-		.collect::<Vec<_>>()
 }
