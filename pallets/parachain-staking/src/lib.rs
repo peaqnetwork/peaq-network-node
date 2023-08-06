@@ -185,7 +185,7 @@ pub mod pallet {
 			AccountIdConversion, CheckedSub, Convert, One, SaturatedConversion, Saturating,
 			StaticLookup, Zero,
 		},
-		Permill, Perquintill,
+		Permill,
 	};
 	use sp_staking::SessionIndex;
 	use sp_std::prelude::*;
@@ -194,7 +194,7 @@ pub mod pallet {
 		set::OrderedSet,
 		types::{
 			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
-			Reward, RoundInfo, Stake, StakeOf, TotalStake,
+			RoundInfo, Stake, StakeOf, TotalStake,
 		},
 	};
 	use sp_std::{convert::TryInto, fmt::Debug};
@@ -2771,68 +2771,6 @@ pub mod pallet {
 				Some(round.first + round.length),
 				// One read for the round info, blocknumber is read free
 				T::DbWeight::get().reads(1),
-			)
-		}
-	}
-
-	// TODO... Should we extract to different pallet???
-	const COEFFICIENT: u64 = 8;
-
-	#[derive(RuntimeDebug)]
-	pub struct CoefficientRewardCalculator<T: Config> {
-		_phantom: PhantomData<T>,
-	}
-
-	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for CoefficientRewardCalculator<T> {
-		fn collator_reward_per_block(
-			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
-			issue_number: BalanceOf<T>,
-		) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>) {
-			let min_delegator_stake = T::MinDelegatorStake::get();
-			let delegator_sum = (&stake.delegators)
-				.into_iter()
-				.filter(|x| x.amount >= min_delegator_stake)
-				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-
-			let percentage = Perquintill::from_rational(
-				T::CurrencyBalance::from(COEFFICIENT) * stake.stake,
-				delegator_sum + T::CurrencyBalance::from(COEFFICIENT) * stake.stake,
-			);
-			(
-				Weight::from_ref_time(1_u64),
-				Weight::from_ref_time(1_u64),
-				Reward { owner: stake.id.clone(), amount: percentage * issue_number },
-			)
-		}
-
-		fn delegator_reward_per_block(
-			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
-			issue_number: BalanceOf<T>,
-		) -> (
-			Weight,
-			Weight,
-			BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>,
-		) {
-			let min_delegator_stake = T::MinDelegatorStake::get();
-			let delegator_sum = (&stake.delegators)
-				.into_iter()
-				.filter(|x| x.amount >= min_delegator_stake)
-				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-			let denominator = delegator_sum + T::CurrencyBalance::from(COEFFICIENT) * stake.stake;
-
-			let inner = (&stake.delegators)
-				.into_iter()
-				.filter(|x| x.amount >= min_delegator_stake)
-				.map(|x| Reward {
-					owner: x.owner.clone(),
-					amount: Perquintill::from_rational(x.amount, denominator) * issue_number,
-				})
-				.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
-
-			(
-				Weight::from_ref_time(1_u64 + 4_u64),
-				Weight::from_ref_time(inner.len() as u64),
-				inner.try_into().expect("Did not extend vec q.e.d."),
 			)
 		}
 	}
