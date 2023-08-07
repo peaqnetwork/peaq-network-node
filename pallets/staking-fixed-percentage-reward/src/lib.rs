@@ -74,20 +74,19 @@ pub mod pallet {
 	pub(crate) type RewardRateConfig<T: Config> = StorageValue<_, RewardRateInfo, ValueQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T> {
-		pub _phantom: PhantomData<T>,
+	pub struct GenesisConfig {
 		pub reward_rate_config: RewardRateInfo,
 	}
 
 	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
+	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { _phantom: Default::default(), reward_rate_config: Default::default() }
+			Self { reward_rate_config: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			assert!(self.reward_rate_config.is_valid(), "Invalid reward_rate configuration");
 

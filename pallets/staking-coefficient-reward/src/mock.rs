@@ -270,8 +270,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Parachain Staking's storage can be assimilated");
 
-		reward_calculator::GenesisConfig::<Test> {
-			_phantom: Default::default(),
+		reward_calculator::GenesisConfig {
 			coeffective: self.coeffective,
 		}
 		.assimilate_storage(&mut t)

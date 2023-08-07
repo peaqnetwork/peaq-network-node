@@ -71,20 +71,19 @@ pub mod pallet {
 	pub(crate) type CoeffectiveConfig<T: Config> = StorageValue<_, u8, ValueQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T> {
-		pub _phantom: PhantomData<T>,
+	pub struct GenesisConfig {
 		pub coeffective: u8,
 	}
 
 	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
+	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { _phantom: Default::default(), coeffective: 8 as u8 }
+			Self { coeffective: 8 as u8 }
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			<CoeffectiveConfig<T>>::put(self.coeffective);
 		}

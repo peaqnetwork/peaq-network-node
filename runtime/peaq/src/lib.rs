@@ -1008,8 +1008,8 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
-		StakingFixedRewardCalculator: staking_fixed_percentage_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 27,
-		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 28,
+		StakingFixedRewardCalculator: staking_fixed_percentage_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
+		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 28,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,

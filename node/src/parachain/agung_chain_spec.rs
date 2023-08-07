@@ -118,16 +118,13 @@ fn configure_genesis(
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
 		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
-			_phantom: Default::default(),
 			reward_rate_config: staking::reward_rate_config(),
 		},
-		// TODO jaypan Want to remove the _phantom
 		// TODO jaypan check the coeffective version
 		// TODO jaypan rename the coeffective and coefficient
 		// TODO jaypan benchmark
 		// TODO jaypan git cherry pick to for the claim branch
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
-			_phantom: Default::default(),
 			coeffective: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
