@@ -775,6 +775,10 @@ pub mod staking {
 		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
 	}
 
+	pub fn coefficient() -> u8 {
+		8
+	}
+
 	parameter_types! {
 			/// Minimum round length is 1 hour
 			pub const MinBlocksPerRound: BlockNumber = HOURS;
@@ -831,12 +835,17 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = ();
-	type BlockRewardCalculator = StakingFixedRewardCalculator;
+	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 }
 
 impl staking_fixed_percentage_reward::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = staking_fixed_percentage_reward::default_weights::SubstrateWeight<Runtime>;
+}
+
+impl staking_coefficient_reward::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
 }
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
@@ -996,6 +1005,7 @@ construct_runtime!(
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
 		StakingFixedRewardCalculator: staking_fixed_percentage_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 27,
+		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 28,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,

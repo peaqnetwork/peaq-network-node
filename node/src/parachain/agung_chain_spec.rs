@@ -3,7 +3,8 @@ use cumulus_primitives_core::ParaId;
 use peaq_agung_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, StakingFixedRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	Precompiles, StakingCoefficientRewardCalculatorConfig, StakingFixedRewardCalculatorConfig,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -119,6 +120,15 @@ fn configure_genesis(
 		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
 			_phantom: Default::default(),
 			reward_rate_config: staking::reward_rate_config(),
+		},
+		// TODO jaypan Want to remove the _phantom
+		// TODO jaypan check the coeffective version
+		// TODO jaypan rename the coeffective and coefficient
+		// TODO jaypan benchmark
+		// TODO jaypan git cherry pick to for the claim branch
+		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
+			_phantom: Default::default(),
+			coeffective: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100

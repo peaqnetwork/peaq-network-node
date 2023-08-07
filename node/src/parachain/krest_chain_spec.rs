@@ -3,7 +3,8 @@ use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, StakingFixedRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	Precompiles, StakingCoefficientRewardCalculatorConfig, StakingFixedRewardCalculatorConfig,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, DOLLARS, NANOCENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -123,6 +124,10 @@ fn configure_genesis(
 		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
 			_phantom: Default::default(),
 			reward_rate_config: staking::reward_rate_config(),
+		},
+		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
+			_phantom: Default::default(),
+			coeffective: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100

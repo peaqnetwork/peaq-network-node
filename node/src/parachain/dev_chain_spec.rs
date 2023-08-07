@@ -4,7 +4,8 @@ use peaq_dev_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
 	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature,
-	StakingFixedRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	StakingCoefficientRewardCalculatorConfig, StakingFixedRewardCalculatorConfig, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -139,6 +140,10 @@ fn configure_genesis(
 		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
 			_phantom: Default::default(),
 			reward_rate_config: staking::reward_rate_config(),
+		},
+		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
+			_phantom: Default::default(),
+			coeffective: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
