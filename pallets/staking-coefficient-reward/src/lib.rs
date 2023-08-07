@@ -16,6 +16,7 @@ pub(crate) mod tests;
 
 pub use crate::{default_weights::WeightInfo, pallet::*};
 use frame_support::pallet;
+use sp_runtime::traits::{CheckedAdd, CheckedMul};
 
 #[pallet]
 pub mod pallet {
@@ -65,6 +66,10 @@ pub mod pallet {
 		CoeffectiveSet(u8),
 	}
 
+	/// Here, we setup this as u8 because the balance is u128, we might have overflow while
+	// calculating the reward because the fomula is
+	// (collator stake * coeffective) / ( collator stake * coeffective + delegator_sum)
+	// If the coeffective is FixedU128
 	/// Reward rate configuration.
 	#[pallet::storage]
 	#[pallet::getter(fn coeffective)]
@@ -126,14 +131,27 @@ pub mod pallet {
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
-			let percentage = Perquintill::from_rational(
-				T::CurrencyBalance::from(Self::coeffective()) * stake.stake,
-				delegator_sum + T::CurrencyBalance::from(Self::coeffective()) * stake.stake,
+			if let Some(coeffective_collator) =
+				T::CurrencyBalance::from(Self::coeffective()).checked_mul(&stake.stake)
+			{
+				if let Some(denominator) = delegator_sum.checked_add(&coeffective_collator) {
+					let percentage = Perquintill::from_rational(coeffective_collator, denominator);
+					return (
+						Weight::from_ref_time(1_u64),
+						Weight::from_ref_time(1_u64),
+						Reward { owner: stake.id.clone(), amount: percentage * issue_number },
+					)
+				}
+			}
+			log::error!(
+				"Overflow while calculating the reward {:?} {:?}",
+				Self::coeffective(),
+				stake.stake
 			);
 			(
 				Weight::from_ref_time(1_u64),
 				Weight::from_ref_time(1_u64),
-				Reward { owner: stake.id.clone(), amount: percentage * issue_number },
+				Reward { owner: stake.id.clone(), amount: issue_number },
 			)
 		}
 
@@ -150,22 +168,37 @@ pub mod pallet {
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-			let denominator =
-				delegator_sum + T::CurrencyBalance::from(Self::coeffective()) * stake.stake;
 
-			let inner = (&stake.delegators)
-				.into_iter()
-				.filter(|x| x.amount >= min_delegator_stake)
-				.map(|x| Reward {
-					owner: x.owner.clone(),
-					amount: Perquintill::from_rational(x.amount, denominator) * issue_number,
-				})
-				.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
+			if let Some(coeffective_collator) =
+				T::CurrencyBalance::from(Self::coeffective()).checked_mul(&stake.stake)
+			{
+				if let Some(denominator) = delegator_sum.checked_add(&coeffective_collator) {
+					let inner = (&stake.delegators)
+						.into_iter()
+						.filter(|x| x.amount >= min_delegator_stake)
+						.map(|x| Reward {
+							owner: x.owner.clone(),
+							amount: Perquintill::from_rational(x.amount, denominator) *
+								issue_number,
+						})
+						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 
+					return (
+						Weight::from_ref_time(1_u64 + 4_u64),
+						Weight::from_ref_time(inner.len() as u64),
+						inner.try_into().expect("Did not extend vec q.e.d."),
+					)
+				}
+			}
+			log::error!(
+				"Overflow while calculating the reward {:?} {:?}",
+				Self::coeffective(),
+				stake.stake
+			);
 			(
-				Weight::from_ref_time(1_u64 + 4_u64),
-				Weight::from_ref_time(inner.len() as u64),
-				inner.try_into().expect("Did not extend vec q.e.d."),
+				Weight::from_ref_time(1_u64),
+				Weight::from_ref_time(1_u64),
+				BoundedVec::<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>::default(),
 			)
 		}
 	}

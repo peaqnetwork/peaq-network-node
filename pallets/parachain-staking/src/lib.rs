@@ -160,6 +160,7 @@ use frame_support::pallet;
 
 pub use crate::{default_weights::WeightInfo, pallet::*};
 use reward_config_calc::CollatorDelegatorBlockRewardCalculator;
+use sp_runtime::traits::{CheckedAdd, CheckedMul};
 use types::ReplacedDelegator;
 
 #[pallet]
@@ -242,6 +243,8 @@ pub mod pallet {
 			+ Into<<Self as pallet_balances::Config>::Balance>
 			+ From<<Self as pallet_balances::Config>::Balance>
 			+ TypeInfo
+			+ CheckedMul
+			+ CheckedAdd
 			+ MaxEncodedLen;
 
 		/// Minimum number of blocks validation rounds can last.

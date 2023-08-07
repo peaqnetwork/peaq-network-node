@@ -270,11 +270,10 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Parachain Staking's storage can be assimilated");
 
-		reward_calculator::GenesisConfig {
-			coeffective: self.coeffective,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Reward Calculator's storage can be assimilated");
+		let reward_calculator_config =
+			reward_calculator::GenesisConfig { coeffective: self.coeffective };
+		GenesisBuild::<Test>::assimilate_storage(&reward_calculator_config, &mut t)
+			.expect("Reward Calculator's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self
