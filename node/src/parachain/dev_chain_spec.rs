@@ -141,7 +141,7 @@ fn configure_genesis(
 			reward_rate_config: staking::reward_rate_config(),
 		},
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
-			coeffective: staking::coefficient(),
+			coefficient: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100

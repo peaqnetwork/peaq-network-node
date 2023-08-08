@@ -63,7 +63,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Reware rate configuration for future validation rounds has changed.
-		CoeffectiveSet(u8),
+		CoefficientSet(u8),
 	}
 
 	/// Here, we setup this as u8 because the balance is u128, we might have overflow while
@@ -73,7 +73,7 @@ pub mod pallet {
 	/// Reward rate configuration.
 	#[pallet::storage]
 	#[pallet::getter(fn coefficient)]
-	pub(crate) type CoeffectiveConfig<T: Config> = StorageValue<_, u8, ValueQuery>;
+	pub(crate) type CoefficientConfig<T: Config> = StorageValue<_, u8, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
@@ -90,7 +90,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<CoeffectiveConfig<T>>::put(self.coefficient);
+			<CoefficientConfig<T>>::put(self.coefficient);
 		}
 	}
 
@@ -102,7 +102,7 @@ pub mod pallet {
 		///
 		/// The dispatch origin must be Root.
 		///
-		/// Emits `CoeffectiveSet`.
+		/// Emits `CoefficientSet`.
 		///
 		/// # <weight>
 		/// Weight: O(1)
@@ -114,8 +114,8 @@ pub mod pallet {
 		pub fn set_coefficient(origin: OriginFor<T>, coefficient: u8) -> DispatchResult {
 			ensure_root(origin)?;
 
-			Self::deposit_event(Event::CoeffectiveSet(coefficient));
-			<CoeffectiveConfig<T>>::put(coefficient);
+			Self::deposit_event(Event::CoefficientSet(coefficient));
+			<CoefficientConfig<T>>::put(coefficient);
 			Ok(())
 		}
 	}

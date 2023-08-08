@@ -183,9 +183,6 @@ peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.
 peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false, version = "0.0.1" }
 sp-finality-grandpa = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 
-
-
-
 structopt = "0.3.8"
 async-trait = "0.1.59"
 jsonrpc-pubsub = "18.0.0"

@@ -120,7 +120,6 @@ fn configure_genesis(
 		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
 			reward_rate_config: staking::reward_rate_config(),
 		},
-		// TODO jaypan benchmark
 		// TODO jaypan git cherry pick to for the claim branch
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
