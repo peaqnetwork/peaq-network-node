@@ -68,29 +68,29 @@ pub mod pallet {
 
 	/// Here, we setup this as u8 because the balance is u128, we might have overflow while
 	// calculating the reward because the fomula is
-	// (collator stake * coeffective) / ( collator stake * coeffective + delegator_sum)
-	// If the coeffective is FixedU128
+	// (collator stake * coefficient) / ( collator stake * coefficient + delegator_sum)
+	// If the coefficient is FixedU128
 	/// Reward rate configuration.
 	#[pallet::storage]
-	#[pallet::getter(fn coeffective)]
+	#[pallet::getter(fn coefficient)]
 	pub(crate) type CoeffectiveConfig<T: Config> = StorageValue<_, u8, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub coeffective: u8,
+		pub coefficient: u8,
 	}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { coeffective: 8 as u8 }
+			Self { coefficient: 8 as u8 }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<CoeffectiveConfig<T>>::put(self.coeffective);
+			<CoeffectiveConfig<T>>::put(self.coefficient);
 		}
 	}
 
@@ -110,12 +110,12 @@ pub mod pallet {
 		/// - Writes: RewardRateConfig
 		/// # </weight>
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_coeffective())]
-		pub fn set_coeffective(origin: OriginFor<T>, coeffective: u8) -> DispatchResult {
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_coefficient())]
+		pub fn set_coefficient(origin: OriginFor<T>, coefficient: u8) -> DispatchResult {
 			ensure_root(origin)?;
 
-			Self::deposit_event(Event::CoeffectiveSet(coeffective));
-			<CoeffectiveConfig<T>>::put(coeffective);
+			Self::deposit_event(Event::CoeffectiveSet(coefficient));
+			<CoeffectiveConfig<T>>::put(coefficient);
 			Ok(())
 		}
 	}
@@ -131,11 +131,11 @@ pub mod pallet {
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
-			if let Some(coeffective_collator) =
-				T::CurrencyBalance::from(Self::coeffective()).checked_mul(&stake.stake)
+			if let Some(coefficient_collator) =
+				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
 			{
-				if let Some(denominator) = delegator_sum.checked_add(&coeffective_collator) {
-					let percentage = Perquintill::from_rational(coeffective_collator, denominator);
+				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
+					let percentage = Perquintill::from_rational(coefficient_collator, denominator);
 					return (
 						Weight::from_ref_time(1_u64),
 						Weight::from_ref_time(1_u64),
@@ -145,7 +145,7 @@ pub mod pallet {
 			}
 			log::error!(
 				"Overflow while calculating the reward {:?} {:?}",
-				Self::coeffective(),
+				Self::coefficient(),
 				stake.stake
 			);
 			(
@@ -169,10 +169,10 @@ pub mod pallet {
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
-			if let Some(coeffective_collator) =
-				T::CurrencyBalance::from(Self::coeffective()).checked_mul(&stake.stake)
+			if let Some(coefficient_collator) =
+				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
 			{
-				if let Some(denominator) = delegator_sum.checked_add(&coeffective_collator) {
+				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
 					let inner = (&stake.delegators)
 						.into_iter()
 						.filter(|x| x.amount >= min_delegator_stake)
@@ -192,7 +192,7 @@ pub mod pallet {
 			}
 			log::error!(
 				"Overflow while calculating the reward {:?} {:?}",
-				Self::coeffective(),
+				Self::coefficient(),
 				stake.stake
 			);
 			(

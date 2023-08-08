@@ -120,11 +120,10 @@ fn configure_genesis(
 		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
 			reward_rate_config: staking::reward_rate_config(),
 		},
-		// TODO jaypan rename the coeffective and coefficient
 		// TODO jaypan benchmark
 		// TODO jaypan git cherry pick to for the claim branch
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
-			coeffective: staking::coefficient(),
+			coefficient: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100

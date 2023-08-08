@@ -30,14 +30,14 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for parachain_staking.
 pub trait WeightInfo {
-	fn set_coeffective() -> Weight;
+	fn set_coefficient() -> Weight;
 }
 
 /// Weights for parachain_staking using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: ParachainStaking RewardRateConfig (r:0 w:1)
-	fn set_coeffective() -> Weight {
+	fn set_coefficient() -> Weight {
 		Weight::from_ref_time(12_952_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}

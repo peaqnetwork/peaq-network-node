@@ -199,7 +199,7 @@ pub(crate) struct ExtBuilder {
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
 	// reward rate
-	coeffective: u8,
+	coefficient: u8,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -210,7 +210,7 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			delegators: vec![],
 			collators: vec![],
-			coeffective: 8,
+			coefficient: 8,
 			blocks_per_round: BLOCKS_PER_ROUND,
 		}
 	}
@@ -241,10 +241,10 @@ impl ExtBuilder {
 	#[must_use]
 	pub(crate) fn with_coeffctive(
 		mut self,
-		coeffective: u8,
+		coefficient: u8,
 		blocks_per_round: BlockNumber,
 	) -> Self {
-		self.coeffective = coeffective;
+		self.coefficient = coefficient;
 		self.blocks_per_round = blocks_per_round;
 
 		self
@@ -271,7 +271,7 @@ impl ExtBuilder {
 			.expect("Parachain Staking's storage can be assimilated");
 
 		let reward_calculator_config =
-			reward_calculator::GenesisConfig { coeffective: self.coeffective };
+			reward_calculator::GenesisConfig { coefficient: self.coefficient };
 		GenesisBuild::<Test>::assimilate_storage(&reward_calculator_config, &mut t)
 			.expect("Reward Calculator's storage can be assimilated");
 

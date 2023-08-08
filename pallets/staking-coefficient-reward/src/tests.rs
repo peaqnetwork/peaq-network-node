@@ -36,7 +36,7 @@ fn genesis() {
 		.with_delegators(vec![(3, 1, 100), (4, 1, 100), (5, 2, 100), (6, 2, 100)])
 		.with_coeffctive(8, BLOCKS_PER_ROUND)
 		.build()
-		.execute_with(|| assert_eq!(RewardCalculatorPallet::coeffective(), 8));
+		.execute_with(|| assert_eq!(RewardCalculatorPallet::coefficient(), 8));
 }
 
 #[test]
@@ -269,14 +269,14 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 }
 
 #[test]
-fn update_coeffective() {
+fn update_coefficient() {
 	ExtBuilder::default()
 		.with_balances(vec![(1, 10)])
 		.with_collators(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(RewardCalculatorPallet::set_coeffective(RuntimeOrigin::root(), 3));
-			assert_eq!(RewardCalculatorPallet::coeffective(), 3);
+			assert_ok!(RewardCalculatorPallet::set_coefficient(RuntimeOrigin::root(), 3));
+			assert_eq!(RewardCalculatorPallet::coefficient(), 3);
 		});
 }
 
