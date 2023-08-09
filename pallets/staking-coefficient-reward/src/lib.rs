@@ -34,7 +34,7 @@ pub mod pallet {
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
-	/// Pallet for parachain staking.
+	/// Pallet for staking coefficient reward calculation.
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -94,7 +94,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Set the reward_rate rate.
+		/// Set the coefficient for the reward calculation.
 		///
 		/// The estimated average block time is twelve seconds.
 		///
@@ -105,7 +105,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Weight: O(1)
 		/// - Reads: [Origin Account]
-		/// - Writes: RewardRateConfig
+		/// - Writes: u8
 		/// # </weight>
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_coefficient())]

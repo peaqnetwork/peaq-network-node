@@ -12,8 +12,6 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-// mod reward_config_calc;
-
 pub use crate::{default_weights::WeightInfo, pallet::*};
 use frame_support::pallet;
 
@@ -37,7 +35,7 @@ pub mod pallet {
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
-	/// Pallet for parachain staking.
+	/// Pallet for staking fixed percentage of reward.
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
