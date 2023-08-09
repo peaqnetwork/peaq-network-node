@@ -3,16 +3,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-// #[cfg(feature = "runtime-benchmarks")]
-// pub mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
 pub mod default_weights;
 
 #[cfg(test)]
 pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
-
-// mod reward_config_calc;
 
 pub use crate::{default_weights::WeightInfo, pallet::*};
 use frame_support::pallet;

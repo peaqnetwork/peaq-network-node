@@ -145,6 +145,7 @@ runtime-benchmarks = [
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
 	"staking-fixed-percentage-reward/runtime-benchmarks",
+	"staking-coefficient-reward/runtime-benchmarks",
 ]
 
 std = [

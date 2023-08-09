@@ -28,9 +28,9 @@ pub(crate) type Balance = u128;
 pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
 
-pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
+pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
-pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
+pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(

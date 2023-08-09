@@ -21,22 +21,16 @@
 use crate::*;
 use frame_benchmarking::v1::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
-use parachain_staking::reward_rate::RewardRateInfo;
-use sp_runtime::Perquintill;
 
 benchmarks! {
 	where_clause { where
 		<T as frame_system::Config>::BlockNumber: TryFrom<u64>,
 	}
 
-	set_reward_rate {
-		let reward_rate = RewardRateInfo::new(
-			Perquintill::from_percent(60),
-			Perquintill::from_percent(40),
-		);
-	}: _(RawOrigin::Root, reward_rate.collator_rate, reward_rate.delegator_rate)
+	set_coefficient {
+	}: _(RawOrigin::Root, 2)
 	verify {
-		assert_eq!(<RewardRateConfig<T>>::get(), reward_rate);
+		assert_eq!(<CoefficientConfig<T>>::get(), 2);
 	}
 
 }

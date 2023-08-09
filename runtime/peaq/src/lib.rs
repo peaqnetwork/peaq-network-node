@@ -1085,6 +1085,7 @@ mod benches {
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[parachain_staking, ParachainStaking]
 		[staking_fixed_percentage_reward, StakingFixedRewardCalculator]
+		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
 		[pallet_block_reward, BlockReward]
 		[peaq_pallet_transaction, Transaction]
 		[peaq_pallet_did, PeaqDid]
