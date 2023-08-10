@@ -433,7 +433,7 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types!{
-	pub PcpcNativeAccepted: Vec<CurrencyId> = vec![
+	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
 		CurrencyId::Token(TokenSymbol::ROC),
 	];
 }
@@ -444,9 +444,10 @@ impl PeaqCurrencyPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
 	type MultiCurrency = Currencies;
-	type LocalCurrencyId = GetNativeCurrencyId;
-	type NativeAcceptedIds = PcpcNativeAccepted;
 	type DexOperator = ZenlinkProtocol;
+	type ExistentialDeposit = ExistentialDeposit;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type LocalAcceptedIds = PcpcLocalAccepted;
 }
 
 impl pallet_transaction_payment::Config for Runtime {

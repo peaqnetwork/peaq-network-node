@@ -86,7 +86,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, LpPoolId, TokenSymbol};
+pub use peaq_primitives_xcm::*;
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -117,8 +117,7 @@ use xcm::latest::prelude::*;
 
 // For Zenlink-DEX-Module
 use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
-	ZenlinkMultiAssets,
+	AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets,
 };
 
 use runtime_common::{
@@ -433,7 +432,7 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types!{
-	pub PcpcNativeAccepted: Vec<CurrencyId> = vec![
+	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
 		CurrencyId::Token(TokenSymbol::DOT),
 		CurrencyId::Token(TokenSymbol::BNC),
 	];
@@ -445,9 +444,10 @@ impl PeaqCurrencyPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
 	type MultiCurrency = Currencies;
-	type LocalCurrencyId = GetNativeCurrencyId;
-	type NativeAcceptedIds = PcpcNativeAccepted;
 	type DexOperator = ZenlinkProtocol;
+	type ExistentialDeposit = ExistentialDeposit;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type LocalAcceptedIds = PcpcLocalAccepted;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -832,7 +832,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = PEAQ;
 }
 
 impl orml_currencies::Config for Runtime {
@@ -930,7 +930,7 @@ impl zenlink_protocol::Config for Runtime {
     type MultiAssetsHandler = MultiAssets;
     type PalletId = ZenlinkDexPalletId;
     type AssetId = ZenlinkAssetId;
-    type LpGenerate = PairLpGenerate<Self>;
+    type LpGenerate = PeaqZenlinkLpGenerate<Self>;
     type TargetChains = ZenlinkRegistedParaChains;
     type SelfParaId = SelfParaId;
     type WeightInfo = ();

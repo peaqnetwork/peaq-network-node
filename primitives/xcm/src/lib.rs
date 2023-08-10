@@ -18,24 +18,26 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::upper_case_acronyms)]
 
-pub mod currency;
-pub mod evm;
 
 use codec::{Decode, Encode};
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, RuntimeDebug,
+	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic, RuntimeDebug,
 };
 use sp_std::prelude::*;
 
-pub use currency::{CurrencyId, TokenSymbol};
 
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
-
+pub mod currency;
+pub mod evm;
 #[cfg(test)]
 mod tests;
+
+pub use currency::*;
+pub use crate::evm::EvmAddress;
+
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -60,17 +62,11 @@ pub type AccountIndex = u32;
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 
-/// TODO: Discuss this!
-// pub type AssetId = u128;
-
 /// Index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
-
-/// A liquidity pool identified by Zenlink-DEX.
-pub type LpPoolId = u32;
 
 /// An instant or duration in time.
 pub type Moment = u64;
@@ -100,43 +96,43 @@ pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 /// pub type BlockId = generic::BlockId<NativeBlock>;
 
 /// Opaque, encoded, unchecked extrinsic.
-use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
-#[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct TradingPair(CurrencyId, CurrencyId);
 
-impl TradingPair {
-	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_token_currency_id() &&
-			currency_id_b.is_token_currency_id() &&
-			currency_id_a != currency_id_b
-		{
-			if currency_id_a > currency_id_b {
-				Some(TradingPair(currency_id_b, currency_id_a))
-			} else {
-				Some(TradingPair(currency_id_a, currency_id_b))
-			}
-		} else {
-			None
-		}
-	}
+// #[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
+// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+// pub struct TradingPair(CurrencyId, CurrencyId);
 
-	pub fn first(&self) -> CurrencyId {
-		self.0
-	}
+// impl TradingPair {
+// 	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
+// 		if currency_id_a.is_token() &&
+// 			currency_id_b.is_token() &&
+// 			currency_id_a != currency_id_b
+// 		{
+// 			if currency_id_a > currency_id_b {
+// 				Some(TradingPair(currency_id_b, currency_id_a))
+// 			} else {
+// 				Some(TradingPair(currency_id_a, currency_id_b))
+// 			}
+// 		} else {
+// 			None
+// 		}
+// 	}
 
-	pub fn second(&self) -> CurrencyId {
-		self.1
-	}
-}
+// 	pub fn first(&self) -> CurrencyId {
+// 		self.0
+// 	}
 
-impl Decode for TradingPair {
-	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
-		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
-		TradingPair::from_currency_ids(first, second)
-			.ok_or_else(|| codec::Error::from("invalid currency id"))
-	}
-}
+// 	pub fn second(&self) -> CurrencyId {
+// 		self.1
+// 	}
+// }
+
+// impl Decode for TradingPair {
+// 	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
+// 		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
+// 		TradingPair::from_currency_ids(first, second)
+// 			.ok_or_else(|| codec::Error::from("invalid currency id"))
+// 	}
+// }
 
 pub const MIRRORED_TOKENS_ADDRESS_START: u64 = 0x1000000;

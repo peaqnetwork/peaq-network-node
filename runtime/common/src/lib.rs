@@ -37,7 +37,7 @@ use zenlink_protocol::{
 };
 
 use peaq_primitives_xcm::{
-	AccountId, Balance, CurrencyId, TokenSymbol, currency::parachain,
+	AccountId, Balance, CurrencyId, TokenSymbol, TokenInfo, currency::parachain,
 };
 
 
@@ -379,6 +379,7 @@ where
 
 		// Check if user can withdraw in any valid currency.
 		PCPC::ensure_can_withdraw(who, tx_fee)?;
+		log!(info, PeaqCurrencyAdapter, "will withdraw fee {:?}", tx_fee);
 
 		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
 			Ok(imbalance) => Ok(Some(imbalance)),
@@ -453,11 +454,14 @@ pub trait PeaqCurrencyPaymentConvert
 	/// Zenlink-DEX-Protocol.
 	type DexOperator: ExportZenlink<Self::AccountId, ZenlinkAssetId>;
 
+	/// Existential deposit.
+	type ExistentialDeposit: Get<BalanceOfA<Self::Currency, Self::AccountId>>;
+
 	/// Local CurrencyId in type of Zenlink's AssetId.
-	type LocalCurrencyId: Get<CurrencyId>;
+	type NativeCurrencyId: Get<CurrencyId>; // TODO rename in Native
 
 	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
-	type NativeAcceptedIds: Get<Vec<CurrencyId>>;
+	type LocalAcceptedIds: Get<Vec<CurrencyId>>; // TODO rename in Local
 
 
 	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
@@ -470,8 +474,9 @@ pub trait PeaqCurrencyPaymentConvert
 
 		// Note: Later we can implement a pallet with an event about this swap for payment.
 		if let Some((amount_in, amount_out, zen_path)) = option {
-			Self::DexOperator::inner_swap_exact_assets_for_assets(
-				who, amount_in, amount_out, &zen_path, who)
+			log!(info, PeaqCurrencyPaymentConvert, "will swap at rate {:?}/{:?}", amount_in, amount_out);
+			Self::DexOperator::inner_swap_assets_for_exact_assets(
+				who, amount_out, amount_in, &zen_path, who)
 				.map_err(|_| InvalidTransaction::Payment.into())
 		} else {
 			Ok(())
@@ -482,36 +487,39 @@ pub trait PeaqCurrencyPaymentConvert
 	fn check_currencies_n_priorities(
 		who: &Self::AccountId,
 		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>
-	) -> Result<Option<(AssetBalance, AssetBalance, Vec<ZenlinkAssetId>)>, TransactionValidityError> {
+	) -> Result<Option<(AssetBalance, AssetBalance, Vec<ZenlinkAssetId>)>, TransactionValidityError>
+	{
+		let native_id = Self::NativeCurrencyId::get();
 
-		let id_local = Self::LocalCurrencyId::get();
-		if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(id_local, who, tx_fee) {
+		if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee) {
 			log!(info, PeaqCurrencyPaymentConvert, "can withdraw in PEAQ, tx_fee: {:?}", tx_fee);
 			Ok(None)
 		} else {
-			let local_id = Self::LocalCurrencyId::get();
-			let zen_id_local = ZenlinkAssetId::try_from(local_id)
-				.map_err(|_| InvalidTransaction::Custom(map_err_currency2zasset(local_id)))?;
-			let ids_native = Self::NativeAcceptedIds::get();
-			for &native_id in ids_native.iter() {
-				log!(info, PeaqCurrencyPaymentConvert, "check if can withdraw in {:?}, tx_fee: {:?}", native_id, tx_fee);
-				let zen_id_native = ZenlinkAssetId::try_from(native_id)
-					.map_err(|_| InvalidTransaction::Custom(map_err_currency2zasset(native_id)))?;
-				let zen_path = vec![zen_id_native, zen_id_local];
+			// In theory not necessary, but as safety-buffer will add existential deposit.
+			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
+
+			// Prepare ZenlinkAssetId(s) from CurrencyId(s).
+			let native_zen_id = ZenlinkAssetId::try_from(native_id)
+				.map_err(|_| InvalidTransaction::Custom(map_err_currency2zasset(native_id)))?;
+			let local_ids = Self::LocalAcceptedIds::get();
+
+			// Iterate through all accepted local currencies and check availability.
+			for &local_id in local_ids.iter() {
+				let name = local_id.name().unwrap();
+				log!(info, PeaqCurrencyPaymentConvert, "check if can pay in {:?}", name);
+				let local_zen_id = ZenlinkAssetId::try_from(local_id)
+					.map_err(|_| InvalidTransaction::Custom(map_err_currency2zasset(local_id)))?;
+				let zen_path = vec![local_zen_id, native_zen_id];
 				let amount_out: AssetBalance = tx_fee.saturated_into();
-				log!(info, PeaqCurrencyPaymentConvert,
-					 "CurrencyId to ZenlinkAssetId => local_id: ({}, {}, {}), native_id: ({}, {}, {})",
-					 zen_id_local.chain_id, zen_id_local.asset_type, zen_id_local.asset_index,
-					 zen_id_native.chain_id, zen_id_native.asset_type, zen_id_native.asset_index);
 
 				if let Ok(amounts) = Self::DexOperator::get_amount_in_by_path(amount_out, &zen_path)
 				{
 					log!(info, PeaqCurrencyPaymentConvert, "DexOperator: amounts {:?}", amounts);
-					let amount_in = BalanceOfA::<Self::Currency, Self::AccountId>::saturated_from(amounts[0]);
-					if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(
-						native_id, who, amount_in)
+					let amount_in =
+						BalanceOfA::<Self::Currency, Self::AccountId>::saturated_from(amounts[0]);
+					if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in)
 					{
-						log!(info, PeaqCurrencyPaymentConvert, "can withdraw in {:?}", native_id);
+						log!(info, PeaqCurrencyPaymentConvert, "can withdraw {:?} in {:?}", amount_in, name);
 						return Ok(Some((amounts[0], amount_out, zen_path)))
 					}
 				}
@@ -524,7 +532,7 @@ pub trait PeaqCurrencyPaymentConvert
 
 fn map_err_currency2zasset(id: CurrencyId) -> u8 {
 	match id {
-		CurrencyId::Token(symbol) => symbol.into(),
+		CurrencyId::Token(symbol) => symbol as u8,
 		_ => 255,
 	}
 }

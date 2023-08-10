@@ -23,17 +23,31 @@ use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 use sp_std::{
 	convert::{Into, TryFrom},
+	marker::PhantomData,
 	prelude::*,
 };
-use frame_support::log;
-use zenlink_protocol::AssetId as ZenlinkAssetId;
-
-pub const PARA_CHAIN_ID: u32 = 2000;
-
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use zenlink_protocol::GenerateLpAssetId;
 
-macro_rules! create_currency_id {
+
+/// This is mystery!
+pub const PARA_CHAIN_ID: u32 = 2000;
+
+// Redefine Zenlink's AssetId for our generic use.
+pub type ZenlinkAssetId = zenlink_protocol::AssetId;
+
+
+/// TODO description
+pub trait TokenInfo {
+	fn currency_id(&self) -> Option<u8>;
+	fn name(&self) -> Option<&str>;
+	fn symbol(&self) -> Option<&str>;
+	fn decimals(&self) -> Option<u8>;
+}
+
+
+macro_rules! create_token_symbol {
     ($(#[$meta:meta])*
 	$vis:vis enum TokenSymbol {
         $($(#[$vmeta:meta])* $symbol:ident($name:expr, $deci:literal) = $val:literal,)*
@@ -54,13 +68,32 @@ macro_rules! create_currency_id {
 			}
 		}
 
-		impl Into<u8> for TokenSymbol {
-			fn into(self) -> u8 {
-				match self {
-					$(TokenSymbol::$symbol => ($val),)*
+		impl TryFrom<u64> for TokenSymbol {
+			type Error = ();
+
+			fn try_from(v: u64) -> Result<Self, Self::Error> {
+				match v {
+					$($val => Ok(TokenSymbol::$symbol),)*
+					_ => Err(()),
 				}
 			}
 		}
+
+		impl Into<CurrencyId> for TokenSymbol {
+			fn into(self) -> CurrencyId {
+				match self {
+					$(TokenSymbol::$symbol => CurrencyId::Token(TokenSymbol::$symbol),)*
+				}
+			}
+		}
+
+		// impl Into<u8> for TokenSymbol {
+		// 	fn into(self) -> u8 {
+		// 		match self {
+		// 			$(TokenSymbol::$symbol => ($val),)*
+		// 		}
+		// 	}
+		// }
 
 		impl TryFrom<Vec<u8>> for CurrencyId {
 			type Error = ();
@@ -68,6 +101,29 @@ macro_rules! create_currency_id {
 				match v.as_slice() {
 					$(bstringify!($symbol) => Ok(CurrencyId::Token(TokenSymbol::$symbol)),)*
 					_ => Err(()),
+				}
+			}
+		}
+
+		impl TokenInfo for TokenSymbol {
+			fn currency_id(&self) -> Option<u8> {
+				match self {
+					$(TokenSymbol::$symbol => Some($val),)*
+				}
+			}
+			fn name(&self) -> Option<&str> {
+				match self {
+					$(TokenSymbol::$symbol => Some($name),)*
+				}
+			}
+			fn symbol(&self) -> Option<&str> {
+				match self {
+					$(TokenSymbol::$symbol => Some(stringify!($symbol)),)*
+				}
+			}
+			fn decimals(&self) -> Option<u8> {
+				match self {
+					$(TokenSymbol::$symbol => Some($deci),)*
 				}
 			}
 		}
@@ -107,11 +163,6 @@ macro_rules! create_currency_id {
 					$((stringify!($symbol), $deci),)*
 				]
 			}
-			pub fn get_decimals(&self) -> usize {
-				match self {
-					$(TokenSymbol::$symbol => $deci,)*
-				}
-			}
 		}
 
 		#[test]
@@ -138,9 +189,7 @@ macro_rules! create_currency_id {
     }
 }
 
-const TOKEN_DISCRIMINANT: u64 = 2u64;
-
-create_currency_id! {
+create_token_symbol! {
 	// Represent a Token symbol with 8 bit
 	#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord, TypeInfo, MaxEncodedLen)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -160,47 +209,61 @@ create_currency_id! {
 }
 
 impl TokenSymbol {
-	pub fn is_peaq_token(&self) -> bool {
+	pub fn is_native_token(&self) -> bool {
 		match self {
 			TokenSymbol::PEAQ | TokenSymbol::KRST | TokenSymbol::AGNG => true,
 			_ => false,
 		}
 	}
 
-	pub fn get_zenlink_asset_type(&self) -> u8 {
-		if self.is_peaq_token() {
+	pub fn as_zenlink_asset_type(&self) -> u8 {
+		if self.is_native_token() {
 			zenlink_protocol::NATIVE
 		} else {
 			zenlink_protocol::LOCAL
 		}
 	}
 
-	pub fn get_zenlink_asset_index(&self) -> u64 {
-		if self.is_peaq_token() {
-			*self as u64
+	pub fn as_zenlink_asset_index(&self) -> u64 {
+		*self as u64
+	}
+}
+
+impl TryFrom<CurrencyId> for TokenSymbol {
+	type Error = ();
+
+	fn try_from(c: CurrencyId) -> Result<Self, Self::Error> {
+		if let CurrencyId::Token(symbol) = c {
+			Ok(symbol)
 		} else {
-			TOKEN_DISCRIMINANT << 8 + *self as u64
+			Err(())
 		}
 	}
 }
 
-pub mod parachain {
-	pub mod acala {
-		pub const ID: u32 = 2000;
-		pub const ACA_KEY: &[u8] = &[0, 0];
-	}
-	pub mod bifrost {
-		pub const ID: u32 = 3000;
-		pub const BNC_KEY: &[u8] = &[0, 1];
+impl From<TokenSymbol> for ZenlinkAssetId {
+	fn from(ts: TokenSymbol) -> ZenlinkAssetId {
+		ZenlinkAssetId{
+			chain_id: PARA_CHAIN_ID,
+			asset_type: ts.as_zenlink_asset_type(),
+			asset_index: ts.as_zenlink_asset_index(),
+		}
 	}
 }
 
-pub trait TokenInfo {
-	fn currency_id(&self) -> Option<u8>;
-	fn name(&self) -> Option<&str>;
-	fn symbol(&self) -> Option<&str>;
-	fn decimals(&self) -> Option<u8>;
+impl TryFrom<ZenlinkAssetId> for TokenSymbol {
+	type Error = ();
+
+	fn try_from(asset_id: ZenlinkAssetId) -> Result<Self, Self::Error> {
+		let type_idx = asset_id.asset_index & 0x0000_0000_0000_ff00;
+		if asset_id.chain_id == PARA_CHAIN_ID && type_idx == 0u64 {
+			TokenSymbol::try_from(asset_id.asset_index)
+		} else {
+			Err(())
+		}
+	}
 }
+
 
 #[derive(
 	Encode,
@@ -220,35 +283,42 @@ pub trait TokenInfo {
 pub enum CurrencyId {
 	/// All Polkadot based tokens (SS58-address-style), Relaychain- and Parachain-Tokens.
 	Token(TokenSymbol),
-	/// Ethereum EVM-address based.
+	/// Ethereum EVM-address based tokens.
 	Erc20(EvmAddress),
-	/// Liquidity Pools within the PEAQ-Parachain.
+	/// Liquidity Pairs (Pairs of Tokens) within the PEAQ-Parachain.
 	LPToken(TokenSymbol, TokenSymbol),
 }
 
 impl CurrencyId {
-	pub fn is_token_currency_id(&self) -> bool {
+	pub fn is_token(&self) -> bool {
 		matches!(self, CurrencyId::Token(_))
 	}
 
-	pub fn is_erc20_currency_id(&self) -> bool {
+	pub fn is_erc20(&self) -> bool {
 		matches!(self, CurrencyId::Erc20(_))
 	}
 
-	pub fn is_lp_token_currency_id(&self) -> bool {
+	pub fn is_lp_token(&self) -> bool {
 		matches!(self, CurrencyId::LPToken(_, _))
 	}
 
-	pub fn is_lokal_token_currency_id(&self) -> bool {
+	pub fn is_native_token(&self) -> bool {
 		if let CurrencyId::Token(symbol) = self {
-			symbol.is_peaq_token()
+			symbol.is_native_token()
 		} else {
 			false
 		}
 	}
-}
 
-const LP_DISCRIMINANT: u64 = 6u64;
+	// Internal method which simplifies conversions between Zenlink's asset_index
+	fn type_index(&self) -> u64 {
+		match self {
+			CurrencyId::Token(_) => 0,
+			CurrencyId::Erc20(_) => 1,
+			CurrencyId::LPToken(_, _) => 2,
+		}
+	}
+}
 
 impl TryFrom<CurrencyId> for ZenlinkAssetId {
 	type Error = ();
@@ -256,34 +326,18 @@ impl TryFrom<CurrencyId> for ZenlinkAssetId {
 	fn try_from(currency_id: CurrencyId) -> Result<Self, Self::Error> {
 		match currency_id {
 			CurrencyId::Token(symbol) => {
-				// log::error!("token symbol: {:?}", symbol);
-				// log::error!("chain_id: {:?}", PARA_CHAIN_ID);
-				// log::error!("zenlink_protocol::LOCAL: {:?}", zenlink_protocol::LOCAL);
-				// log::error!("asset_index: {:?}", TOKEN_DISCRIMINANT << 8 + symbol as u64);
-
 				Ok(ZenlinkAssetId {
 					chain_id: PARA_CHAIN_ID,
-					asset_type: symbol.get_zenlink_asset_type(),
-					asset_index: symbol.get_zenlink_asset_index(),
+					asset_type: symbol.as_zenlink_asset_type(),
+					asset_index: symbol.as_zenlink_asset_index(),
 				})
 			},
 			CurrencyId::LPToken(symbol0, symbol1) => {
-				// log::error!("chain_id: {:?}", PARA_CHAIN_ID);
-				// log::error!("zenlink_protocol::LOCAL: {:?}", zenlink_protocol::LOCAL);
-				// log::error!("symbol0: {:?}", symbol0);
-				// log::error!("symbol1: {:?}", symbol1);
-				// log::error!("LP_DISCRIMINANT: {:?}", LP_DISCRIMINANT);
-				// log::error!("symbol0 as u64 & 0xffff << 16: {:?}", (symbol0 as u64 & 0xffff) << 16);
-				// log::error!("symbol1 as u64 & 0xffff << 32: {:?}", (symbol1 as u64 & 0xffff) << 32);
-				// log::error!("asset_index: {:?}", (LP_DISCRIMINANT << 8) +
-				// 	((symbol0 as u64 & 0xffff) << 16) +
-				// 		((symbol1 as u64 & 0xffff) << 32));
-
 				Ok(ZenlinkAssetId {
 					chain_id: PARA_CHAIN_ID,
 					asset_type: zenlink_protocol::LOCAL,
-					asset_index: (LP_DISCRIMINANT << 8) +
-						((symbol0 as u64 & 0xffff) << 16) + ((symbol1 as u64 & 0xffff) << 32),
+					asset_index: (currency_id.type_index() << 8) +
+						((symbol0 as u64) << 16) + ((symbol1 as u64) << 24),
 				})
 			},
 			_ => Err(()),
@@ -293,61 +347,31 @@ impl TryFrom<CurrencyId> for ZenlinkAssetId {
 
 impl TryFrom<ZenlinkAssetId> for CurrencyId {
 	type Error = ();
+
 	fn try_from(asset_id: ZenlinkAssetId) -> Result<Self, Self::Error> {
-		log::error!("asset_id.chain_id: {:?}", asset_id.chain_id);
-		log::error!("asset_id.asset_type: {:?}", asset_id.asset_type);
-		log::error!("asset_id.asset_index: {:?}", asset_id.asset_index);
-		if asset_id.is_native(PARA_CHAIN_ID) {
-			return Ok(CurrencyId::Token(TokenSymbol::try_from(asset_id.asset_index as u8)?))
-		}
-
-		let discriminant = (asset_id.asset_index & 0x0000_0000_0000_ff00) >> 8;
-		log::error!("discriminant: {:?}", discriminant);
-		return if discriminant == LP_DISCRIMINANT {
-			let token0_id = ((asset_id.asset_index & 0x0000_0000_ffff_0000) >> 16) as u8;
-			let token1_id = ((asset_id.asset_index & 0x0000_ffff_0000_0000) >> 32) as u8;
-			log::error!("token0_id: {:?}", token0_id);
-			log::error!("token1_id: {:?}", token1_id);
-			Ok(CurrencyId::LPToken(
-				TokenSymbol::try_from(token0_id)?,
-				TokenSymbol::try_from(token1_id)?,
-			))
-		} else if discriminant == TOKEN_DISCRIMINANT {
-			let token_id = asset_id.asset_index as u8;
-			log::error!("token_id: {:?}", token_id);
-			Ok(CurrencyId::Token(TokenSymbol::try_from(token_id)?))
+		if asset_id.chain_id == PARA_CHAIN_ID {
+			let type_index = (asset_id.asset_index & 0x0000_0000_0000_ff00) >> 8;
+			match type_index {
+				0 => {
+					let symbol = (asset_id.asset_index & 0x0000_0000_0000_00ff) as u8;
+					let symbol = TokenSymbol::try_from(symbol)?;
+					Ok(CurrencyId::Token(symbol))
+				},
+				2 => {
+					let symbol0 = ((asset_id.asset_index & 0x0000_0000_00ff_0000) >> 16) as u8;
+					let symbol0 = TokenSymbol::try_from(symbol0)?;
+					let symbol1 = ((asset_id.asset_index & 0x0000_0000_ff00_0000) >> 24) as u8;
+					let symbol1 = TokenSymbol::try_from(symbol1)?;
+					Ok(CurrencyId::LPToken(symbol0, symbol1))
+				},
+				_ => Err(())
+			}
 		} else {
-			Err(())
+			return Err(())
 		}
 	}
 }
 
-impl TryFrom<u64> for CurrencyId {
-	type Error = ();
-
-	fn try_from(id: u64) -> Result<Self, Self::Error> {
-		let c_discr = ((id & 0x0000_0000_0000_ff00) >> 8) as u8;
-
-		let t_discr = (id & 0x0000_0000_0000_00ff) as u8;
-
-		let token_symbol = TokenSymbol::try_from(t_discr)?;
-
-		match c_discr {
-			0 | 2 => Ok(Self::Token(token_symbol)),
-			1 => {
-				let token_symbol_num_1 = ((id & 0x0000_0000_00ff_0000) >> 16) as u8;
-				let token_symbol_num_2 = ((id & 0x0000_00ff_0000_0000) >> 32) as u8;
-				let token_symbol_1 = TokenSymbol::try_from(token_symbol_num_1)?;
-				let token_symbol_2 = TokenSymbol::try_from(token_symbol_num_2)?;
-
-				Ok(Self::LPToken(token_symbol_1, token_symbol_2))
-			},
-			_ => Err(()),
-		}
-	}
-}
-
-/// Generate the EvmAddress from CurrencyId so that evm contracts can call the erc20 contract.
 impl TryFrom<CurrencyId> for EvmAddress {
 	type Error = ();
 
@@ -365,5 +389,33 @@ impl TryFrom<CurrencyId> for EvmAddress {
 impl Default for CurrencyId {
 	fn default() -> Self {
 		CurrencyId::Token(TokenSymbol::PEAQ)
+	}
+}
+
+
+/// This is the Peaq's default GenerateLpAssetId implementation.
+pub struct PeaqZenlinkLpGenerate<T>(PhantomData<T>);
+
+impl<T> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<T> {
+	fn generate_lp_asset_id(
+		asset0: ZenlinkAssetId,
+		asset1: ZenlinkAssetId
+	) -> Option<ZenlinkAssetId> {
+		let symbol0 = TokenSymbol::try_from(asset0).ok()?;
+		let symbol1 = TokenSymbol::try_from(asset1).ok()?;
+		ZenlinkAssetId::try_from(CurrencyId::LPToken(symbol0, symbol1)).ok()
+	}
+}
+
+
+// This is for hardcoding other parachains, we want to operate with.
+pub mod parachain {
+	pub mod acala {
+		pub const ID: u32 = 2000;
+		pub const ACA_KEY: &[u8] = &[0, 0];
+	}
+	pub mod bifrost {
+		pub const ID: u32 = 3000;
+		pub const BNC_KEY: &[u8] = &[0, 1];
 	}
 }
