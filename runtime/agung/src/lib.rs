@@ -838,11 +838,6 @@ impl parachain_staking::Config for Runtime {
 	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 }
 
-impl staking_fixed_percentage_reward::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = staking_fixed_percentage_reward::default_weights::SubstrateWeight<Runtime>;
-}
-
 impl staking_coefficient_reward::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
@@ -1004,7 +999,7 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
-		StakingFixedRewardCalculator: staking_fixed_percentage_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
+		// StakingFixedRewardCalculator: staking_fixed_percentage_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
 		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 28,
 
 		// XCM helpers.
@@ -1079,7 +1074,6 @@ mod benches {
 		[pallet_multisig, MultiSig]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[parachain_staking, ParachainStaking]
-		[staking_fixed_percentage_reward, StakingFixedRewardCalculator]
 		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
 		[pallet_block_reward, BlockReward]
 		[peaq_pallet_transaction, Transaction]

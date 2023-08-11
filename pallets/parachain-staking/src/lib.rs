@@ -2777,4 +2777,6 @@ pub mod pallet {
 			)
 		}
 	}
+	// [TODO] Refine
+	// [TODO] migrate for the different reward mechanism (let people know which mechanism is used)
 }

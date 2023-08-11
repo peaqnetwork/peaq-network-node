@@ -3,7 +3,7 @@ use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, StakingCoefficientRewardCalculatorConfig, StakingFixedRewardCalculatorConfig,
+	Precompiles, StakingCoefficientRewardCalculatorConfig,
 	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, DOLLARS, NANOCENTS, TOKEN_DECIMALS};
@@ -120,9 +120,6 @@ fn configure_genesis(
 		parachain_staking: ParachainStakingConfig {
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
-		},
-		staking_fixed_reward_calculator: StakingFixedRewardCalculatorConfig {
-			reward_rate_config: staking::reward_rate_config(),
 		},
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
