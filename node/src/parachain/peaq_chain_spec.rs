@@ -3,8 +3,7 @@ use cumulus_primitives_core::ParaId;
 use peaq_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, StakingCoefficientRewardCalculatorConfig,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	Precompiles, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};

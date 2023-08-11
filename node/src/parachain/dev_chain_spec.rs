@@ -4,8 +4,7 @@ use peaq_dev_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
 	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature,
-	StakingCoefficientRewardCalculatorConfig, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{Balance, CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
