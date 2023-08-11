@@ -1,21 +1,19 @@
 use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
-	AccountId, Balance, Balances, RuntimeCall, Currencies, CurrencyId, RuntimeEvent, RuntimeOrigin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, PeaqPotAccount, TokenSymbol, UnknownTokens, XcmpQueue,
-	AllPalletsWithSystem,
+	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, ParachainInfo,
+	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue,
 };
 use cumulus_primitives_core::ParaId;
-use sp_runtime::{
-	traits::{ConstU32, Convert},
-};
-use sp_std::prelude::*;
 use sp_core::bounded::BoundedVec;
+use sp_runtime::traits::{ConstU32, Convert};
+use sp_std::prelude::*;
 
 use codec::{Decode, Encode};
 use frame_support::{
+	dispatch::Weight,
 	parameter_types,
 	traits::{Everything, Nothing},
-	dispatch::Weight,
 };
 use frame_system::EnsureRoot;
 
@@ -26,8 +24,10 @@ use orml_xcm_support::{
 use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::currency::parachain;
 use polkadot_parachain::primitives::Sibling;
-use xcm::latest::{prelude::*, MultiAsset};
-use xcm::v3::Weight as XcmWeight;
+use xcm::{
+	latest::{prelude::*, MultiAsset},
+	v3::Weight as XcmWeight,
+};
 use xcm_builder::{
 	AccountId32Aliases,
 	AllowKnownQueryResponses,
@@ -154,10 +154,7 @@ impl TakeRevenue for ToTreasury {
 }
 
 pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
-	Some(MultiLocation::new(
-		0,
-		X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?)),
-	))
+	Some(MultiLocation::new(0, X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?))))
 }
 
 pub struct XcmConfig;
@@ -285,10 +282,7 @@ impl orml_xtokens::Config for Runtime {
 fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocation> {
 	Some(MultiLocation::new(
 		1,
-		X2(
-			Parachain(para_id),
-			Junction::from(BoundedVec::try_from(key).ok()?)
-		),
+		X2(Parachain(para_id), Junction::from(BoundedVec::try_from(key).ok()?)),
 	))
 }
 
@@ -302,10 +296,8 @@ impl Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
 			Token(DOT) => Some(MultiLocation::parent()),
 			Token(PEAQ) =>
 				native_currency_location(ParachainInfo::parachain_id().into(), id.encode()),
-			Token(ACA) => native_currency_location(
-				parachain::acala::ID,
-				parachain::acala::ACA_KEY.to_vec(),
-			),
+			Token(ACA) =>
+				native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()),
 			_ => None,
 		}
 	}
@@ -320,40 +312,36 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		match location {
 			MultiLocation {
 				parents: 1,
-				interior: X2(Parachain(id), GeneralKey{ data, length })
-			} =>
-				match id {
-					parachain::acala::ID => {
-						let key = &data[..data.len().min(length as usize)];
+				interior: X2(Parachain(id), GeneralKey { data, length }),
+			} => match id {
+				parachain::acala::ID => {
+					let key = &data[..data.len().min(length as usize)];
+					if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
+						match currency_id {
+							Token(ACA) => Some(currency_id),
+							_ => None,
+						}
+					} else {
+						None
+					}
+				},
+				_ => {
+					let key = &data[..data.len().min(length as usize)];
+					if ParaId::from(id) == ParachainInfo::parachain_id() {
 						if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 							match currency_id {
-								Token(ACA) => Some(currency_id),
+								Token(PEAQ) => Some(currency_id),
 								_ => None,
 							}
 						} else {
 							None
 						}
-					},
-					_ => {
-						let key = &data[..data.len().min(length as usize)];
-						if ParaId::from(id) == ParachainInfo::parachain_id() {
-							if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
-								match currency_id {
-									Token(PEAQ) => Some(currency_id),
-									_ => None,
-								}
-							} else {
-								None
-							}
-						} else {
-							None
-						}
+					} else {
+						None
 					}
 				},
-			MultiLocation {
-				parents: 0,
-				interior: X1(GeneralKey { data, length })
-			} => {
+			},
+			MultiLocation { parents: 0, interior: X1(GeneralKey { data, length }) } => {
 				let key = &data[..data.len().min(length as usize)];
 				// decode the general key
 				if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {

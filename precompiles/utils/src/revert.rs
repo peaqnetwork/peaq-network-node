@@ -28,7 +28,7 @@ pub type MayRevert<T = ()> = Result<T, Revert>;
 /// Generic error to build abi-encoded revert output.
 /// See: https://docs.soliditylang.org/en/latest/control-structures.html?highlight=revert#revert
 #[precompile_utils_macro::generate_function_selector]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum RevertSelector {
 	Generic = "Error(string)",
 }
@@ -205,9 +205,9 @@ impl core::fmt::Debug for Revert {
 	}
 }
 
-impl From<Revert> for Vec<u8> {
-	fn from(s: Revert) -> Vec<u8> {
-		s.to_string().into()
+impl Into<Vec<u8>> for Revert {
+	fn into(self) -> Vec<u8> {
+		self.to_string().into()
 	}
 }
 

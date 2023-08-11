@@ -31,9 +31,8 @@ use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversio
 use crate::{
 	mock::{
 		almost_equal, events, last_event, roll_to, AccountId, Balance, Balances, BlockNumber,
-		RuntimeEvent as MetaEvent, ExtBuilder, Session, StakePallet, System, Test,
+		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
 		BLOCKS_PER_ROUND, DECIMALS,
-		RuntimeOrigin,
 	},
 	set::OrderedSet,
 	types::{

@@ -48,14 +48,16 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	dispatch::{DispatchClass, EncodeLike, GetDispatchInfo},
 	traits::{
-		ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin, ConstBool,
+		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
 		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
 		Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
-		ConstantMultiplier, IdentityFee, Weight,
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
+		},
+		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
@@ -221,7 +223,7 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight =  Weight::from_parts(
+const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2_u64),
 	polkadot_primitives::v2::MAX_POV_SIZE as u64,
 );
@@ -578,9 +580,9 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 
 parameter_types! {
 	pub const ChainId: u64 = 9999;
-    pub BlockGasLimit: U256 = U256::from(
-        NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
-    );
+	pub BlockGasLimit: U256 = U256::from(
+		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
+	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_ref_time(WEIGHT_PER_GAS);
 }
@@ -1019,7 +1021,8 @@ pub type SignedExtra = (
 pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
+pub type CheckedExtrinsic =
+	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -1053,7 +1056,8 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<TransactionValidity> {
 		match self {
-			RuntimeCall::Ethereum(call) => call.validate_self_contained(signed_info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) =>
+				call.validate_self_contained(signed_info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1065,7 +1069,8 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) =>
+				call.pre_dispatch_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1075,9 +1080,10 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
-				call.dispatch(RuntimeOrigin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
-			),
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(RuntimeOrigin::from(
+					pallet_ethereum::RawOrigin::EthereumTransaction(info),
+				))),
 			_ => None,
 		}
 	}
@@ -1790,8 +1796,8 @@ cumulus_pallet_parachain_system::register_validate_block! {
 }
 
 parameter_types! {
-    pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
-        WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting::Config for Runtime {

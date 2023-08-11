@@ -14,11 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{prelude::*, revert::Backtrace};
+use crate::{
+	data::{
+		encode_as_function_return_value,
+		xcm::{network_id_from_bytes, network_id_to_bytes},
+	},
+	prelude::*,
+	revert::Backtrace,
+};
 use frame_support::traits::ConstU32;
 use hex_literal::hex;
 use pallet_evm::Context;
 use sp_core::{H160, H256, U256};
+use sp_std::convert::TryInto;
+use xcm::latest::{Junction, Junctions, NetworkId};
 
 fn u256_repeat_byte(byte: u8) -> U256 {
 	let value = H256::repeat_byte(byte);
@@ -31,7 +40,7 @@ fn u256_repeat_byte(byte: u8) -> U256 {
 fn display_bytes(bytes: &[u8]) {
 	bytes
 		.chunks_exact(32)
-		.map(H256::from_slice)
+		.map(|chunk| H256::from_slice(chunk))
 		.for_each(|hash| println!("{:?}", hash));
 }
 
@@ -560,7 +569,7 @@ fn write_vec_bytes() {
 
 	writer_output
 		.chunks_exact(32)
-		.map(H256::from_slice)
+		.map(|chunk| H256::from_slice(chunk))
 		.for_each(|hash| println!("{:?}", hash));
 
 	// We pad data to a multiple of 32 bytes.
@@ -613,7 +622,7 @@ fn read_vec_of_bytes() {
 
 	writer_output
 		.chunks_exact(32)
-		.map(H256::from_slice)
+		.map(|chunk| H256::from_slice(chunk))
 		.for_each(|hash| println!("{:?}", hash));
 
 	let mut reader = EvmDataReader::new(&writer_output);
@@ -640,36 +649,14 @@ fn read_vec_of_bytes() {
 //     uint64 weight
 // ) external;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, EvmData)]
 struct MultiLocation {
 	parents: u8,
 	interior: Vec<UnboundedBytes>,
 }
 
-impl EvmData for MultiLocation {
-	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
-		let mut inner_reader = reader.read_pointer()?;
-		let parents = inner_reader.read().in_field("parents")?;
-		let interior = inner_reader.read().in_field("interior")?;
-
-		Ok(MultiLocation { parents, interior })
-	}
-
-	fn write(writer: &mut EvmDataWriter, value: Self) {
-		EvmData::write(writer, (value.parents, value.interior));
-	}
-
-	fn has_static_size() -> bool {
-		<(u8, Vec<UnboundedBytes>)>::has_static_size()
-	}
-
-	fn solidity_type() -> String {
-		<(u8, Vec<UnboundedBytes>)>::solidity_type()
-	}
-}
-
 #[generate_function_selector]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum Action {
 	TransferMultiAsset = "transfer_multiasset((uint8,bytes[]),uint256,(uint8,bytes[]),uint64)",
 }
@@ -733,6 +720,108 @@ fn read_complex_solidity_function() {
 
 	// weight
 	assert_eq!(reader.read::<U256>().unwrap(), 100u32.into());
+}
+
+#[test]
+fn junctions_decoder_works() {
+	let writer_output = EvmDataWriter::new().write(Junctions::X1(Junction::OnlyChild)).build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
+
+	assert_eq!(parsed, Junctions::X1(Junction::OnlyChild));
+
+	let writer_output = EvmDataWriter::new()
+		.write(Junctions::X2(Junction::OnlyChild, Junction::OnlyChild))
+		.build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
+
+	assert_eq!(parsed, Junctions::X2(Junction::OnlyChild, Junction::OnlyChild));
+
+	let writer_output = EvmDataWriter::new()
+		.write(Junctions::X3(Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild))
+		.build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
+
+	assert_eq!(
+		parsed,
+		Junctions::X3(Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild),
+	);
+}
+
+#[test]
+fn junction_decoder_works() {
+	let writer_output = EvmDataWriter::new().write(Junction::Parachain(0)).build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junction = reader.read::<Junction>().expect("to correctly parse Junctions");
+
+	assert_eq!(parsed, Junction::Parachain(0));
+
+	let writer_output = EvmDataWriter::new()
+		.write(Junction::AccountId32 { network: None, id: [1u8; 32] })
+		.build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junction = reader.read::<Junction>().expect("to correctly parse Junctions");
+
+	assert_eq!(parsed, Junction::AccountId32 { network: None, id: [1u8; 32] });
+
+	let writer_output = EvmDataWriter::new()
+		.write(Junction::AccountIndex64 { network: None, index: u64::from_be_bytes([1u8; 8]) })
+		.build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junction = reader.read::<Junction>().expect("to correctly parse Junctions");
+
+	assert_eq!(
+		parsed,
+		Junction::AccountIndex64 { network: None, index: u64::from_be_bytes([1u8; 8]) }
+	);
+
+	let writer_output = EvmDataWriter::new()
+		.write(Junction::AccountKey20 {
+			network: None,
+			key: H160::repeat_byte(0xAA).as_bytes().try_into().unwrap(),
+		})
+		.build();
+
+	let mut reader = EvmDataReader::new(&writer_output);
+	let parsed: Junction = reader.read::<Junction>().expect("to correctly parse Junctions");
+
+	assert_eq!(
+		parsed,
+		Junction::AccountKey20 {
+			network: None,
+			key: H160::repeat_byte(0xAA).as_bytes().try_into().unwrap(),
+		}
+	);
+}
+
+#[test]
+fn network_id_decoder_works() {
+	assert_eq!(network_id_from_bytes(network_id_to_bytes(None)), Ok(None));
+
+	let mut name = [0u8; 32];
+	name[0..6].copy_from_slice(b"myname");
+	assert_eq!(
+		network_id_from_bytes(network_id_to_bytes(Some(NetworkId::ByGenesis(name)))),
+		Ok(Some(NetworkId::ByGenesis(name)))
+	);
+
+	assert_eq!(
+		network_id_from_bytes(network_id_to_bytes(Some(NetworkId::Kusama))),
+		Ok(Some(NetworkId::Kusama))
+	);
+
+	assert_eq!(
+		network_id_from_bytes(network_id_to_bytes(Some(NetworkId::Polkadot))),
+		Ok(Some(NetworkId::Polkadot))
+	);
 }
 
 #[test]
@@ -852,6 +941,37 @@ fn write_dynamic_size_tuple() {
 	let data = hex!(
 		"0000000000000000000000000000000000000000000000000000000000000020
 		0000000000000000000000000000000000000000000000000000000000000001
+		0000000000000000000000000000000000000000000000000000000000000040
+		0000000000000000000000000000000000000000000000000000000000000001
+		0000000000000000000000000000000000000000000000000000000000000020
+		0000000000000000000000000000000000000000000000000000000000000001
+		0100000000000000000000000000000000000000000000000000000000000000"
+	);
+
+	assert_eq!(output, data);
+}
+
+#[test]
+fn write_static_size_tuple_in_return_position() {
+	let output =
+		encode_as_function_return_value((Address(H160::repeat_byte(0x11)), U256::from(1u8)));
+
+	// (address, uint256) encoded by web3
+	let data = hex!(
+		"0000000000000000000000001111111111111111111111111111111111111111
+		0000000000000000000000000000000000000000000000000000000000000001"
+	);
+
+	assert_eq!(output, data);
+}
+
+#[test]
+fn write_dynamic_size_tuple_in_return_position() {
+	let output = encode_as_function_return_value((1u8, vec![UnboundedBytes::from(vec![0x01])]));
+
+	// (uint8, bytes[]) encoded by web3
+	let data = hex!(
+		"0000000000000000000000000000000000000000000000000000000000000001
 		0000000000000000000000000000000000000000000000000000000000000040
 		0000000000000000000000000000000000000000000000000000000000000001
 		0000000000000000000000000000000000000000000000000000000000000020

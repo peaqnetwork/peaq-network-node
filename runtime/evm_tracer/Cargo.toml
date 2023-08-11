@@ -1,10 +1,10 @@
 [package]
 name = "peaq-evm-tracer"
-authors = ['peaq network <https://github.com/peaqnetwork>']
+authors = ["peaq network <https://github.com/peaqnetwork>"]
 edition = "2021"
-homepage = 'https://peaq.network/'
+homepage = "https://peaq.network/"
 license = "GPL-3.0-only"
-repository = 'https://github.com/peaqnetwork/peaq-network-node/'
+repository = "https://github.com/peaqnetwork/peaq-network-node/"
 version = "0.1.0"
 
 [dependencies]

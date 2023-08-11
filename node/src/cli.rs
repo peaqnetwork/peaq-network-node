@@ -13,12 +13,7 @@ pub struct RunCmd {
 	pub parachain_id: u32,
 
 	/// Enable EVM tracing module on a non-authority node.
-	#[clap(
-		long,
-		conflicts_with = "validator",
-		conflicts_with = "collator",
-		value_delimiter = ','
-	)]
+	#[clap(long, conflicts_with = "validator", conflicts_with = "collator", value_delimiter = ',')]
 	pub ethapi: Vec<EthApi>,
 
 	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.

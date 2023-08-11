@@ -1,30 +1,30 @@
 [package]
-name = 'peaq-node'
-version = '3.0.0-polkadot-v0.9.38'
-description = 'A node of the peaq network.'
-authors = ['peaq network <https://github.com/peaqnetwork>']
-homepage = 'https://peaq.network/'
-edition = '2021'
-license = 'Unlicense'
+name = "peaq-node"
+version = "3.0.0-polkadot-v0.9.38"
+description = "A node of the peaq network."
+authors = ["peaq network <https://github.com/peaqnetwork>"]
+homepage = "https://peaq.network/"
+edition = "2021"
+license = "Unlicense"
 publish = false
-repository = 'https://github.com/peaqnetwork/peaq-network-node/'
-build = 'build.rs'
+repository = "https://github.com/peaqnetwork/peaq-network-node/"
+build = "build.rs"
 
 [[bin]]
-name = 'peaq-node'
+name = "peaq-node"
 
 [package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
+targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.38'
+git = "https://github.com/peaqnetwork/substrate"
+branch = "peaq-polkadot-v0.9.38"
 
 [dependencies]
-peaq-dev-runtime = { path = '../runtime/peaq-dev', version = '3.0.0-polkadot-v0.9.38' }
-peaq-agung-runtime = { path = '../runtime/agung', version = '3.0.0-polkadot-v0.9.38' }
-peaq-krest-runtime = { path = '../runtime/krest', version = '3.0.0-polkadot-v0.9.38' }
-peaq-runtime = { path = '../runtime/peaq', version = '3.0.0-polkadot-v0.9.38' }
+peaq-dev-runtime = { path = "../runtime/peaq-dev", version = "3.0.0-polkadot-v0.9.38" }
+peaq-agung-runtime = { path = "../runtime/agung", version = "3.0.0-polkadot-v0.9.38" }
+peaq-krest-runtime = { path = "../runtime/krest", version = "3.0.0-polkadot-v0.9.38" }
+peaq-runtime = { path = "../runtime/peaq", version = "3.0.0-polkadot-v0.9.38" }
 
 structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
@@ -83,13 +83,13 @@ pallet-base-fee = { workspace = true, default-features = true }
 pallet-dynamic-fee = { workspace = true, default-features = true }
 pallet-ethereum = { workspace = true, default-features = true }
 pallet-evm = { workspace = true, default-features = true }
-peaq-primitives-ext = { path = '../primitives/ext' }
-peaq-rpc-debug = { path = '../client/rpc/debug' }
-peaq-rpc-primitives-debug = { path = '../primitives/rpc/debug' }
-peaq-rpc-primitives-txpool = { path = '../primitives/rpc/txpool' }
-peaq-rpc-trace = { path = '../client/rpc/trace' }
-peaq-rpc-txpool = { path = '../client/rpc/txpool' }
-tokio = { workspace = true, default-features = true, features = [ 'macros', 'sync' ] }
+peaq-primitives-ext = { path = "../primitives/ext" }
+peaq-rpc-debug = { path = "../client/rpc/debug" }
+peaq-rpc-primitives-debug = { path = "../primitives/rpc/debug" }
+peaq-rpc-primitives-txpool = { path = "../primitives/rpc/txpool" }
+peaq-rpc-trace = { path = "../client/rpc/trace" }
+peaq-rpc-txpool = { path = "../client/rpc/txpool" }
+tokio = { workspace = true, default-features = true, features = [ "macros", "sync" ] }
 sc-tracing = { workspace = true, default-features = true }
 cumulus-client-cli = { workspace = true, default-features = true }
 cumulus-client-network = { workspace = true, default-features = true }
@@ -115,14 +115,14 @@ sp-transaction-pool = { workspace = true, default-features = true }
 sp-offchain = { workspace = true, default-features = true }
 sc-chain-spec = { workspace = true, default-features = true }
 fp-dynamic-fee = { workspace = true, default-features = true }
-pallet-block-reward = { path = '../pallets/block-reward' }
+pallet-block-reward = { path = "../pallets/block-reward" }
 orml-xtokens = { workspace = true, default-features = true }
 cumulus-pallet-parachain-system = { workspace = true, default-features = true }
 peaq-pallet-did-rpc = { workspace = true, default-features = true }
 peaq-pallet-rbac-rpc = { workspace = true, default-features = true }
 xcm = { workspace = true, default-features = true }
-peaq-primitives-xcm = { path = '../primitives/xcm' }
-runtime-common = { path = '../runtime/common' }
+peaq-primitives-xcm = { path = "../primitives/xcm" }
+runtime-common = { path = "../runtime/common" }
 peaq-pallet-storage-rpc = { workspace = true, default-features = true }
 zenlink-protocol = { workspace = true, default-features = true }
 zenlink-protocol-rpc = { workspace = true, default-features = true }
@@ -130,18 +130,18 @@ zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 
 [features]
 default = [
-	'aura',
-	'polkadot-cli'
+	"aura",
+	"polkadot-cli"
 	]
 aura = [
-	'peaq-dev-runtime/aura',
-	'peaq-agung-runtime/aura',
-	'peaq-krest-runtime/aura'
+	"peaq-dev-runtime/aura",
+	"peaq-agung-runtime/aura",
+	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
-	'frame-benchmarking-cli',
-	'peaq-agung-runtime/runtime-benchmarks',
-	'peaq-krest-runtime/runtime-benchmarks',
-	'peaq-dev-runtime/runtime-benchmarks',
-	'polkadot-cli/runtime-benchmarks'
+	"frame-benchmarking-cli",
+	"peaq-agung-runtime/runtime-benchmarks",
+	"peaq-krest-runtime/runtime-benchmarks",
+	"peaq-dev-runtime/runtime-benchmarks",
+	"polkadot-cli/runtime-benchmarks"
 ]

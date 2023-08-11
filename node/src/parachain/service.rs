@@ -9,8 +9,8 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
@@ -20,8 +20,9 @@ use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{NetworkBlock, NetworkService};
-use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
-use sc_service::ImportQueue;
+use sc_service::{
+	Configuration, ImportQueue, PartialComponents, TFullBackend, TFullClient, TaskManager,
+};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -234,12 +235,12 @@ where
 	let frontier_block_import =
 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
-    let parachain_block_import: ParachainBlockImport<_, _, _> =
-        ParachainBlockImport::new(frontier_block_import, backend.clone());
+	let parachain_block_import: ParachainBlockImport<_, _, _> =
+		ParachainBlockImport::new(frontier_block_import, backend.clone());
 
 	let import_queue = fn_build_import_queue(
 		client.clone(),
-        parachain_block_import.clone(),
+		parachain_block_import.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
@@ -272,23 +273,23 @@ async fn build_relay_chain_interface(
 	parachain_config: &Configuration,
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	task_manager: &mut TaskManager,
-    collator_options: CollatorOptions,
+	collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
 	if !collator_options.relay_chain_rpc_urls.is_empty() {
 		build_minimal_relay_chain_node(
-				polkadot_config,
-				task_manager,
-				collator_options.relay_chain_rpc_urls,
-				)
-			.await
+			polkadot_config,
+			task_manager,
+			collator_options.relay_chain_rpc_urls,
+		)
+		.await
 	} else {
 		build_inprocess_relay_chain(
-				polkadot_config,
-				parachain_config,
-				telemetry_worker_handle,
-				task_manager,
-				None,
-				)
+			polkadot_config,
+			parachain_config,
+			telemetry_worker_handle,
+			task_manager,
+			None,
+		)
 	}
 }
 
@@ -406,14 +407,14 @@ where
 	let is_authority = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-    let import_queue_service = params.import_queue.service();
+	let import_queue_service = params.import_queue.service();
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-            import_queue: params.import_queue,
+			import_queue: params.import_queue,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
@@ -689,13 +690,7 @@ where
 	let registry = config.prometheus_registry();
 	let spawner = task_manager.spawn_essential_handle();
 
-	Ok(BasicQueue::new(
-		verifier,
-		Box::new(block_import),
-		None,
-		&spawner,
-		registry,
-	))
+	Ok(BasicQueue::new(verifier, Box::new(block_import), None, &spawner, registry))
 }
 
 pub async fn start_node<RuntimeApi, Executor>(
@@ -822,7 +817,7 @@ where
 							Ok((slot, time, parachain_inherent, dynamic_fee))
 						}
 					},
-					block_import: block_import,
+					block_import,
 					para_client: client,
 					backoff_authoring_blocks: Option::<()>::None,
 					sync_oracle,

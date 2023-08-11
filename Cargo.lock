@@ -2751,6 +2751,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
 
 [[package]]
+name = "faster-hex"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51e2ce894d53b295cf97b05685aa077950ff3e8541af83217fc720a6437169f8"
+
+[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6634,6 +6640,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-peaq-did"
+version = "0.1.0"
+dependencies = [
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "paste",
+ "peaq-pallet-did",
+ "precompile-utils",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-evm-precompile-peaq-storage"
+version = "0.1.0"
+dependencies = [
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "num_enum",
+ "pallet-evm",
+ "parity-scale-codec",
+ "paste",
+ "peaq-pallet-storage",
+ "precompile-utils",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.38#e9481a3995da9b8ec0da391d549d4a34c6068f15"
@@ -7656,6 +7704,8 @@ dependencies = [
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
  "pallet-evm-precompile-modexp",
+ "pallet-evm-precompile-peaq-did",
+ "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
  "pallet-multisig",
@@ -9770,6 +9820,8 @@ name = "precompile-utils"
 version = "0.1.0"
 dependencies = [
  "affix",
+ "derive_more",
+ "environmental",
  "evm",
  "fp-evm",
  "frame-support",
@@ -9783,11 +9835,14 @@ dependencies = [
  "parity-scale-codec",
  "paste",
  "precompile-utils-macro",
+ "scale-info",
+ "serde",
  "sha3 0.9.1",
  "similar-asserts",
  "sp-core",
  "sp-io",
  "sp-std",
+ "xcm",
 ]
 
 [[package]]
@@ -12284,6 +12339,18 @@ name = "slice-group-by"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826167069c09b99d56f31e9ae5c99049e932a98c9dc2dac47645b08dbbf76ba7"
+
+[[package]]
+name = "slices"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2086e458a369cdca838e9f6ed04b4cc2e3ce636d99abb80c9e2eada107749cf"
+dependencies = [
+ "faster-hex",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
 
 [[package]]
 name = "slot-range-helper"
@@ -15337,9 +15404,9 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "winnow"
-version = "0.5.7"
+version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19f495880723d0999eb3500a9064d8dbcf836460b24c17df80ea7b5794053aac"
+checksum = "24e89d1a98b9799a44aaef7698fb6bc684c4e5c1cd28abbf6b784dad844f6a92"
 dependencies = [
  "memchr",
 ]

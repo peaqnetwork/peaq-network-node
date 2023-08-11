@@ -1,16 +1,16 @@
 use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
-	AccountId, Balance, Balances, RuntimeCall, Currencies, CurrencyId, RuntimeEvent, RuntimeOrigin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, PeaqPotAccount, TokenSymbol, UnknownTokens, XcmpQueue,
-	AllPalletsWithSystem,
+	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, ParachainInfo,
+	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue,
 };
 use sp_runtime::{
 	traits::{ConstU32, Convert},
 };
 use frame_support::{
+	dispatch::Weight,
 	parameter_types,
 	traits::{Everything, Nothing},
-	dispatch::Weight,
 };
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
@@ -23,8 +23,10 @@ use runtime_common::{
 use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::currency::parachain;
 use polkadot_parachain::primitives::Sibling;
-use xcm::latest::{prelude::*, MultiAsset};
-use xcm::v3::Weight as XcmWeight;
+use xcm::{
+	latest::{prelude::*, MultiAsset},
+	v3::Weight as XcmWeight,
+};
 use xcm_builder::{
 	AccountId32Aliases,
 	AllowKnownQueryResponses,
