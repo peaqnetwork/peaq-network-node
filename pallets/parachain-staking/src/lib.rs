@@ -2669,7 +2669,6 @@ pub mod pallet {
 		/// different reward rates. Rewards are immediately available without any restrictions
 		/// after minting.
 		///
-		/// [TODO] Redefine the weight
 		/// # <weight>
 		/// Weight: O(D) where D is the number of delegators of this collator
 		/// block author bounded by `MaxDelegatorsPerCollator`.
@@ -2777,6 +2776,5 @@ pub mod pallet {
 			)
 		}
 	}
-	// [TODO] Refine
 	// [TODO] migrate for the different reward mechanism (let people know which mechanism is used)
 }
