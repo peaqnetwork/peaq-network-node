@@ -458,10 +458,10 @@ pub trait PeaqCurrencyPaymentConvert
 	type ExistentialDeposit: Get<BalanceOfA<Self::Currency, Self::AccountId>>;
 
 	/// Local CurrencyId in type of Zenlink's AssetId.
-	type NativeCurrencyId: Get<CurrencyId>; // TODO rename in Native
+	type NativeCurrencyId: Get<CurrencyId>;
 
 	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
-	type LocalAcceptedIds: Get<Vec<CurrencyId>>; // TODO rename in Local
+	type LocalAcceptedIds: Get<Vec<CurrencyId>>;
 
 
 	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
