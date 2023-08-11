@@ -154,6 +154,7 @@ pub mod reward_config_calc;
 pub mod reward_rate;
 mod set;
 pub mod types;
+mod migrations;
 
 use core::marker::PhantomData;
 use frame_support::pallet;
@@ -204,7 +205,7 @@ pub mod pallet {
 	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
@@ -529,6 +530,10 @@ pub mod pallet {
 				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
 			}
 			post_weight
+		}
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migrations::on_runtime_upgrade::<T>()
 		}
 	}
 
