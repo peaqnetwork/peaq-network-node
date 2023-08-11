@@ -21,19 +21,19 @@ use std::{
 };
 
 use super::{
-	CurrencyId, EvmAddress, TokenSymbol, ZenlinkAssetId,
+	CurrencyId, EvmAddress, TokenSymbol, TradingPair, ZenlinkAssetId,
 	currency::PARA_CHAIN_ID,
 };
 
 
-// #[test]
-// fn trading_pair_works() {
-// 	let peaq = CurrencyId::Token(TokenSymbol::PEAQ);
-// 	let aca = CurrencyId::Token(TokenSymbol::ACA);
-// 	assert_eq!(TradingPair::from_currency_ids(aca, peaq).unwrap(), TradingPair(peaq, aca));
-// 	assert_eq!(TradingPair::from_currency_ids(peaq, aca).unwrap(), TradingPair(peaq, aca));
-// 	assert_eq!(TradingPair::from_currency_ids(peaq, peaq), None);
-// }
+#[test]
+fn trading_pair_works() {
+	let peaq = CurrencyId::Token(TokenSymbol::PEAQ);
+	let aca = CurrencyId::Token(TokenSymbol::ACA);
+	assert_eq!(TradingPair::from_currency_ids(aca, peaq).unwrap(), TradingPair(peaq, aca));
+	assert_eq!(TradingPair::from_currency_ids(peaq, aca).unwrap(), TradingPair(peaq, aca));
+	assert_eq!(TradingPair::from_currency_ids(peaq, peaq), None);
+}
 
 #[test]
 fn currency_id_try_from_vec_u8_works() {
