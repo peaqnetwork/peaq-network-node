@@ -256,7 +256,7 @@ parameter_types! {
 pub struct BaseFilter;
 
 impl Contains<RuntimeCall> for BaseFilter {
-	fn contains(call: &RuntimeCall) -> bool {
+	fn contains(_call: &RuntimeCall) -> bool {
 		true
 	}
 }
