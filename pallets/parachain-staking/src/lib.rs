@@ -150,11 +150,11 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
+mod migrations;
 pub mod reward_config_calc;
 pub mod reward_rate;
 mod set;
 pub mod types;
-mod migrations;
 
 use core::marker::PhantomData;
 use frame_support::pallet;

@@ -1,12 +1,14 @@
 //! Storage migrations for the block-reward pallet.
 
 use super::*;
-use frame_support::{storage_alias, weights::Weight};
-use frame_support::pallet_prelude::StorageVersion;
-use frame_support::traits::Get;
-use frame_support::dispatch::GetStorageVersion;
-use frame_support::pallet_prelude::ValueQuery;
 use crate::reward_rate::RewardRateInfo;
+use frame_support::{
+	dispatch::GetStorageVersion,
+	pallet_prelude::{StorageVersion, ValueQuery},
+	storage_alias,
+	traits::Get,
+	weights::Weight,
+};
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
 const TARGET_STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
