@@ -116,7 +116,6 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
-		// TODO jaypan git cherry pick to for the claim branch
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
 		},

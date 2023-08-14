@@ -2661,7 +2661,6 @@ pub mod pallet {
 		}
 	}
 
-	// [TODO] Upgrade: remove the reward config to other place
 	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
 	where
 		T: Config + pallet_authorship::Config + pallet_session::Config,
@@ -2781,5 +2780,4 @@ pub mod pallet {
 			)
 		}
 	}
-	// [TODO] migrate for the different reward mechanism (let people know which mechanism is used)
 }
