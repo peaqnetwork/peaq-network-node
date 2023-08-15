@@ -6,9 +6,7 @@ use peaq_krest_runtime::{
 	Precompiles, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::Balance;
-use runtime_common::{
-	DOLLARS, NANOCENTS, TOKEN_DECIMALS,
-};
+use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;

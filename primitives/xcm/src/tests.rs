@@ -21,10 +21,8 @@ use std::{
 };
 
 use super::{
-	CurrencyId, EvmAddress, TokenSymbol, TradingPair, ZenlinkAssetId,
-	currency::PARA_CHAIN_ID,
+	currency::PARA_CHAIN_ID, CurrencyId, EvmAddress, TokenSymbol, TradingPair, ZenlinkAssetId,
 };
-
 
 #[test]
 fn trading_pair_works() {
@@ -140,7 +138,7 @@ fn token_symbol_and_currency_id() {
 }
 
 fn zenassetid(asset_type: u8, asset_index: u64) -> ZenlinkAssetId {
-	ZenlinkAssetId{ chain_id: PARA_CHAIN_ID, asset_type, asset_index }
+	ZenlinkAssetId { chain_id: PARA_CHAIN_ID, asset_type, asset_index }
 }
 
 #[test]

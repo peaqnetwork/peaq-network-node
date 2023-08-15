@@ -121,11 +121,9 @@ use zenlink_protocol::{
 };
 
 use runtime_common::{
-	MILLICENTS, CENTS, DOLLARS,
 	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
-	PeaqCurrencyPaymentConvert, TransactionByteFee,
+	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
-
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -432,7 +430,7 @@ impl WeightToFeePolynomial for WeightToFee {
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
-parameter_types!{
+parameter_types! {
 	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
 		CurrencyId::Token(TokenSymbol::ROC),
 	];
@@ -762,7 +760,6 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = ();
 }
 
-
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
 macro_rules! impl_to_pot_adapter {
@@ -906,15 +903,14 @@ pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetA
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-    type MultiAssetsHandler = MultiAssets;
-    type PalletId = ZenlinkDexPalletId;
-    type AssetId = ZenlinkAssetId;
-    type LpGenerate = PairLpGenerate<Self>;
-    type TargetChains = ZenlinkRegistedParaChains;
-    type SelfParaId = SelfParaId;
-    type WeightInfo = ();
+	type MultiAssetsHandler = MultiAssets;
+	type PalletId = ZenlinkDexPalletId;
+	type AssetId = ZenlinkAssetId;
+	type LpGenerate = PairLpGenerate<Self>;
+	type TargetChains = ZenlinkRegistedParaChains;
+	type SelfParaId = SelfParaId;
+	type WeightInfo = ();
 }
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

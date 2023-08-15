@@ -18,7 +18,6 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::upper_case_acronyms)]
 
-
 use codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -29,15 +28,13 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-
 pub mod currency;
 pub mod evm;
 #[cfg(test)]
 mod tests;
 
-pub use currency::*;
 pub use crate::evm::EvmAddress;
-
+pub use currency::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -97,7 +94,6 @@ pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 
 /// Opaque, encoded, unchecked extrinsic.
 
-
 /// TODO: More documentation
 #[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -105,10 +101,7 @@ pub struct TradingPair(CurrencyId, CurrencyId);
 
 impl TradingPair {
 	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_token() &&
-			currency_id_b.is_token() &&
-			currency_id_a != currency_id_b
-		{
+		if currency_id_a.is_token() && currency_id_b.is_token() && currency_id_a != currency_id_b {
 			if currency_id_a > currency_id_b {
 				Some(TradingPair(currency_id_b, currency_id_a))
 			} else {

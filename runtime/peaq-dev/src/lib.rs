@@ -45,8 +45,9 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
 	dispatch::{DispatchClass, EncodeLike, GetDispatchInfo},
+	parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
 		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
@@ -108,7 +109,6 @@ pub use peaq_pallet_transaction;
 use peaq_pallet_mor::mor::MorBalance;
 pub use peaq_pallet_mor::{self, types::MorConfig};
 
-
 // For XCM
 mod weights;
 pub mod xcm_config;
@@ -118,16 +118,12 @@ pub mod constants;
 use xcm::latest::prelude::*;
 
 // For Zenlink-DEX-Module
-use zenlink_protocol::{
-	AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets,
-};
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 use runtime_common::{
-	MILLICENTS, CENTS, DOLLARS,
 	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
-	PeaqCurrencyPaymentConvert, TransactionByteFee,
+	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
-
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -433,7 +429,7 @@ impl WeightToFeePolynomial for WeightToFee {
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
-parameter_types!{
+parameter_types! {
 	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
 		CurrencyId::Token(TokenSymbol::DOT),
 		CurrencyId::Token(TokenSymbol::BNC),
@@ -773,7 +769,6 @@ impl peaq_pallet_mor::Config for Runtime {
 	type WeightInfo = peaq_pallet_mor::weights::SubstrateWeight<Runtime>;
 }
 
-
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
 macro_rules! impl_to_pot_adapter {
@@ -905,7 +900,6 @@ impl peaq_pallet_storage::Config for Runtime {
 	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
 }
 
-
 // Zenlink-DEX Parameter definitions
 parameter_types! {
 	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
@@ -929,15 +923,14 @@ pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetA
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-    type MultiAssetsHandler = MultiAssets;
-    type PalletId = ZenlinkDexPalletId;
-    type AssetId = ZenlinkAssetId;
-    type LpGenerate = PeaqZenlinkLpGenerate<Self>;
-    type TargetChains = ZenlinkRegistedParaChains;
-    type SelfParaId = SelfParaId;
-    type WeightInfo = ();
+	type MultiAssetsHandler = MultiAssets;
+	type PalletId = ZenlinkDexPalletId;
+	type AssetId = ZenlinkAssetId;
+	type LpGenerate = PeaqZenlinkLpGenerate<Self>;
+	type TargetChains = ZenlinkRegistedParaChains;
+	type SelfParaId = SelfParaId;
+	type WeightInfo = ();
 }
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

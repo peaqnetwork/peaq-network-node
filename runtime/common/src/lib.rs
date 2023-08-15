@@ -1,35 +1,26 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-
 use codec::{Decode, Encode};
 use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	pallet_prelude::*,
 	parameter_types,
-	traits::{Currency, Get, ExistenceRequirement, Imbalance, OnUnbalanced, WithdrawReasons},
+	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 };
 use frame_system::Config as SysConfig;
-use orml_traits::{
-	MultiCurrency,
-	currency::MutationHooks,
-};
+use orml_traits::{currency::MutationHooks, MultiCurrency};
 use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
 use sp_core::bounded::BoundedVec;
-use sp_std::{
-	marker::PhantomData, vec, vec::Vec,
-};
 use sp_runtime::{
-	Perbill, RuntimeString,
 	traits::{
-		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf,
-		Saturating, SaturatedConversion, Zero
+		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
+		Saturating, Zero,
 	},
+	Perbill, RuntimeString,
 };
-use sp_std::{
-	fmt::Debug,
-};
+use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
@@ -37,9 +28,8 @@ use zenlink_protocol::{
 };
 
 use peaq_primitives_xcm::{
-	AccountId, Balance, CurrencyId, TokenSymbol, TokenInfo, currency::parachain,
+	currency::parachain, AccountId, Balance, CurrencyId, TokenInfo, TokenSymbol,
 };
-
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;
@@ -56,7 +46,8 @@ parameter_types! {
 
 pub struct CurrencyHooks<T, DustAccount>(PhantomData<T>, DustAccount);
 
-impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance> for CurrencyHooks<T, DustAccount>
+impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance>
+	for CurrencyHooks<T, DustAccount>
 where
 	T: orml_tokens::Config,
 	DustAccount: Get<<T as frame_system::Config>::AccountId>,
@@ -71,8 +62,6 @@ where
 	type OnKilledTokenAccount = ();
 }
 
-
-
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
 pub struct LocalAssetAdaptor<Local>(PhantomData<Local>);
 
@@ -83,7 +72,7 @@ where
 	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
 			return TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, &who))
-				.unwrap_or_default();
+				.unwrap_or_default()
 		}
 		AssetBalance::default()
 	}
@@ -91,7 +80,7 @@ where
 	fn local_total_supply(asset_id: ZenlinkAssetId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
 			return TryInto::<AssetBalance>::try_into(Local::total_issuance(currency_id))
-				.unwrap_or_default();
+				.unwrap_or_default()
 		}
 		AssetBalance::default()
 	}
@@ -138,7 +127,7 @@ where
 					.map_err(|_| DispatchError::Other("convert amount in local deposit"))?,
 			)?;
 		} else {
-			return Err(DispatchError::Other("unknown asset in local transfer"));
+			return Err(DispatchError::Other("unknown asset in local transfer"))
 		}
 
 		Ok(amount)
@@ -158,13 +147,12 @@ where
 					.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
 			)?;
 		} else {
-			return Err(DispatchError::Other("unknown asset in local transfer"));
+			return Err(DispatchError::Other("unknown asset in local transfer"))
 		}
 
 		Ok(amount)
 	}
 }
-
 
 /// A MultiLocation-AccountId converter for XCM, Zenlink-Protocol and similar stuff.
 pub struct AccountIdToMultiLocation;
@@ -175,9 +163,10 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
-
 /// A MultiLocation-CurrencyId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct CurrencyIdConvert<T>(PhantomData<T>) where T: SysConfig + ParaSysConfig;
+pub struct CurrencyIdConvert<T>(PhantomData<T>)
+where
+	T: SysConfig + ParaSysConfig;
 
 impl<T> Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdConvert<T>
 where
@@ -188,23 +177,17 @@ where
 		use TokenSymbol::*;
 
 		match id {
-			Token(DOT) | Token(KSM) | Token(ROC) =>
-				Some(MultiLocation::parent()),
-			Token(PEAQ) =>
-				native_currency_location(
-					<T as ParaSysConfig>::SelfParaId::get().into(),
-					id.encode()
-				),
+			Token(DOT) | Token(KSM) | Token(ROC) => Some(MultiLocation::parent()),
+			Token(PEAQ) => native_currency_location(
+				<T as ParaSysConfig>::SelfParaId::get().into(),
+				id.encode(),
+			),
 			Token(ACA) =>
-				native_currency_location(
-					parachain::acala::ID,
-					parachain::acala::ACA_KEY.to_vec(),
-				),
-			Token(BNC) =>
-				native_currency_location(
-					parachain::bifrost::ID,
-					parachain::bifrost::BNC_KEY.to_vec(),
-				),
+				native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()),
+			Token(BNC) => native_currency_location(
+				parachain::bifrost::ID,
+				parachain::bifrost::BNC_KEY.to_vec(),
+			),
 			_ => None,
 		}
 	}
@@ -216,14 +199,11 @@ where
 {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
 		use CurrencyId::Token;
-		use TokenSymbol::*;
 		use RuntimeString::Borrowed as RsBorrowed;
+		use TokenSymbol::*;
 
 		match location {
-			MultiLocation {
-				parents: 1,
-				interior: Here,
-			} => {
+			MultiLocation { parents: 1, interior: Here } => {
 				let version = <T as SysConfig>::Version::get();
 				match version.spec_name {
 					RsBorrowed("peaq-node-dev") => Some(Token(DOT)),
@@ -235,23 +215,19 @@ where
 			},
 			MultiLocation {
 				parents: 1,
-				interior: X2(Parachain(id), GeneralKey{ data, length })
+				interior: X2(Parachain(id), GeneralKey { data, length }),
 			} => {
 				let key = &data[..data.len().min(length as usize)];
 				match id {
-					parachain::acala::ID => {
-						match key {
-							parachain::acala::ACA_KEY => Some(Token(ACA)),
-							_ => None,
-						}
+					parachain::acala::ID => match key {
+						parachain::acala::ACA_KEY => Some(Token(ACA)),
+						_ => None,
 					},
-					parachain::bifrost::ID => {
-						match key {
-							parachain::bifrost::BNC_KEY => Some(Token(BNC)),
-							_ => None,
-						}
+					parachain::bifrost::ID => match key {
+						parachain::bifrost::BNC_KEY => Some(Token(BNC)),
+						_ => None,
 					},
-					_ => {
+					_ =>
 						if ParaId::from(id) == <T as ParaSysConfig>::SelfParaId::get() {
 							if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
 								match currency_id {
@@ -263,14 +239,10 @@ where
 							}
 						} else {
 							None
-						}
-					}
+						},
 				}
 			},
-			MultiLocation {
-				parents: 0,
-				interior: X1(GeneralKey { data, length })
-			} => {
+			MultiLocation { parents: 0, interior: X1(GeneralKey { data, length }) } => {
 				let key = &data[..data.len().min(length as usize)];
 				// decode the general key
 				if let Ok(currency_id) = CurrencyId::decode(&mut &*key) {
@@ -303,20 +275,13 @@ where
 pub fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocation> {
 	Some(MultiLocation::new(
 		1,
-		X2(
-			Parachain(para_id),
-			Junction::from(BoundedVec::try_from(key).ok()?)
-		),
+		X2(Parachain(para_id), Junction::from(BoundedVec::try_from(key).ok()?)),
 	))
 }
 
 pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
-	Some(MultiLocation::new(
-		0,
-		X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?)),
-	))
+	Some(MultiLocation::new(0, X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?))))
 }
-
 
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
 pub struct PeaqCurrencyAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
@@ -358,14 +323,19 @@ where
 
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
-        if !currency_id.is_native_token() {
-            log!(info, PeaqCurrencyAdapter, "Payment with swap of {:?}-tokens", currency_id.name().unwrap());
-        }
+		if !currency_id.is_native_token() {
+			log!(
+				info,
+				PeaqCurrencyAdapter,
+				"Payment with swap of {:?}-tokens",
+				currency_id.name().unwrap()
+			);
+		}
 
-        match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-            Ok(imbalance) => Ok(Some(imbalance)),
-            Err(_) => Err(InvalidTransaction::Payment.into()),
-        }
+		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
+			Ok(imbalance) => Ok(Some(imbalance)),
+			Err(_) => Err(InvalidTransaction::Payment.into()),
+		}
 	}
 
 	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
@@ -411,23 +381,20 @@ type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
 type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
 
-
 /// Simple encapsulation of multiple return values.
 #[derive(Debug)]
 pub struct PaymentConvertInfo {
-    /// Needed amount-in for token swap.
-    pub amount_in: AssetBalance,
-    /// Resulting amount-out after token swap.
-    pub amount_out: AssetBalance,
-    /// Zenlink's path of token-pair.
-    pub zen_path: Vec<ZenlinkAssetId>,
+	/// Needed amount-in for token swap.
+	pub amount_in: AssetBalance,
+	/// Resulting amount-out after token swap.
+	pub amount_out: AssetBalance,
+	/// Zenlink's path of token-pair.
+	pub zen_path: Vec<ZenlinkAssetId>,
 }
-
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
 /// generic as possible to enable the usage in PeaqCurrencyAdapter.
-pub trait PeaqCurrencyPaymentConvert
-{
+pub trait PeaqCurrencyPaymentConvert {
 	/// AccountId type.
 	type AccountId: Parameter
 		+ Member
@@ -441,8 +408,11 @@ pub trait PeaqCurrencyPaymentConvert
 	type Currency: Currency<Self::AccountId>;
 
 	/// MultiCurrency, should be orml-currencies.
-	type MultiCurrency: MultiCurrency<Self::AccountId,
-		CurrencyId = CurrencyId, Balance = BalanceOfA<Self::Currency, Self::AccountId>>;
+	type MultiCurrency: MultiCurrency<
+		Self::AccountId,
+		CurrencyId = CurrencyId,
+		Balance = BalanceOfA<Self::Currency, Self::AccountId>,
+	>;
 
 	/// Zenlink-DEX-Protocol.
 	type DexOperator: ExportZenlink<Self::AccountId, ZenlinkAssetId>;
@@ -456,30 +426,33 @@ pub trait PeaqCurrencyPaymentConvert
 	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
 	type LocalAcceptedIds: Get<Vec<CurrencyId>>;
 
-
 	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
 	/// of the choosen currency in dependency of the priority-list and availability of tokens.
 	fn ensure_can_withdraw(
 		who: &Self::AccountId,
-		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>
+		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
 	) -> Result<CurrencyId, TransactionValidityError> {
 		let (currency_id, option) = Self::check_currencies_n_priorities(who, tx_fee)?;
 
 		if let Some(info) = option {
 			Self::DexOperator::inner_swap_assets_for_exact_assets(
-				who, info.amount_out, info.amount_in, &info.zen_path, who)
-				.map_err(|_| map_err_currency2zasset(currency_id))?;
+				who,
+				info.amount_out,
+				info.amount_in,
+				&info.zen_path,
+				who,
+			)
+			.map_err(|_| map_err_currency2zasset(currency_id))?;
 		}
 
-        Ok(currency_id)
+		Ok(currency_id)
 	}
 
 	/// Checks all accepted native currencies and selects the first with enough tokens.
 	fn check_currencies_n_priorities(
 		who: &Self::AccountId,
-		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>
-	) -> Result<(CurrencyId, Option<PaymentConvertInfo>), TransactionValidityError>
-	{
+		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
+	) -> Result<(CurrencyId, Option<PaymentConvertInfo>), TransactionValidityError> {
 		let native_id = Self::NativeCurrencyId::get();
 
 		if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee) {
@@ -504,17 +477,14 @@ pub trait PeaqCurrencyPaymentConvert
 				{
 					let amount_in =
 						BalanceOfA::<Self::Currency, Self::AccountId>::saturated_from(amounts[0]);
-					if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in)
+					if let Ok(_) =
+						Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in)
 					{
-                        let info = PaymentConvertInfo{
-                            amount_in: amounts[0],
-                            amount_out: amount_out,
-                            zen_path: zen_path,
-                        };
+						let info =
+							PaymentConvertInfo { amount_in: amounts[0], amount_out, zen_path };
 						return Ok((local_id, Some(info)))
 					}
 				}
-
 			}
 			Err(InvalidTransaction::Payment.into())
 		}
@@ -522,13 +492,12 @@ pub trait PeaqCurrencyPaymentConvert
 }
 
 fn map_err_currency2zasset(id: CurrencyId) -> TransactionValidityError {
-    InvalidTransaction::Custom(
-        match id {
-            CurrencyId::Token(symbol) => symbol as u8,
-            _ => 255u8,
-        }).into()
+	InvalidTransaction::Custom(match id {
+		CurrencyId::Token(symbol) => symbol as u8,
+		_ => 255u8,
+	})
+	.into()
 }
-
 
 #[macro_export]
 macro_rules! log_internal {
@@ -542,12 +511,24 @@ macro_rules! log_internal {
 
 #[macro_export]
 macro_rules! log_icon {
-	(BlockReward $e:expr) => { "🍪" };
-	(ParachainStaking $e:expr) => { "💸" };
-	(PeaqCurrencyAdapter $e:expr) => { "💵" };
-	(PeaqCurrencyPaymentConvert $e:expr) => { "💵" };
-	(System $e:expr) => { "🖥" };
-	(ZenlinkProtocol $e:expr) => { "💱" };
+	(BlockReward $e:expr) => {
+		"🍪"
+	};
+	(ParachainStaking $e:expr) => {
+		"💸"
+	};
+	(PeaqCurrencyAdapter $e:expr) => {
+		"💵"
+	};
+	(PeaqCurrencyPaymentConvert $e:expr) => {
+		"💵"
+	};
+	(System $e:expr) => {
+		"🖥"
+	};
+	(ZenlinkProtocol $e:expr) => {
+		"💱"
+	};
 }
 
 #[macro_export]
