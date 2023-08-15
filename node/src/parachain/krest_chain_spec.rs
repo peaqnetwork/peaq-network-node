@@ -132,7 +132,7 @@ fn configure_genesis(
 				collators_percent: Perbill::from_percent(10),
 				lp_percent: Perbill::from_percent(25),
 				machines_percent: Perbill::from_percent(10),
-				machines_subsidization_percent: Perbill::from_percent(10),
+				parachain_lease_fund_percent: Perbill::from_percent(10),
 			},
 			block_issue_reward: 3_80_517_503_805 * NANOCENTS,
 			max_currency_supply: 4_000_000 * DOLLARS,

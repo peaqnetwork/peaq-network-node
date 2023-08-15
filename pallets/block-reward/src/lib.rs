@@ -301,16 +301,16 @@ pub mod pallet {
 			let collator_balance = distro_params.collators_percent * imbalance.peek();
 			let lp_balance = distro_params.lp_percent * imbalance.peek();
 			let machines_balance = distro_params.machines_percent * imbalance.peek();
-			let machines_subsidization_balance =
-				distro_params.machines_subsidization_percent * imbalance.peek();
+			let parachain_lease_fund_balance =
+				distro_params.parachain_lease_fund_percent * imbalance.peek();
 
 			// Prepare imbalances
 			let (dapps_imbalance, remainder) = imbalance.split(dapps_balance);
 			let (collator_imbalance, remainder) = remainder.split(collator_balance);
 			let (lp_imbalance, remainder) = remainder.split(lp_balance);
 			let (machines_imbalance, remainder) = remainder.split(machines_balance);
-			let (machines_subsidization_balance, treasury_imbalance) =
-				remainder.split(machines_subsidization_balance);
+			let (parachain_lease_fund_balance, treasury_imbalance) =
+				remainder.split(parachain_lease_fund_balance);
 
 			// Payout beneficiaries
 			T::BeneficiaryPayout::treasury(treasury_imbalance);
@@ -318,7 +318,7 @@ pub mod pallet {
 			T::BeneficiaryPayout::dapps_staking(dapps_imbalance);
 			T::BeneficiaryPayout::lp_users(lp_imbalance);
 			T::BeneficiaryPayout::machines(machines_imbalance);
-			T::BeneficiaryPayout::machines_subsidization(machines_subsidization_balance);
+			T::BeneficiaryPayout::parachain_lease_fund(parachain_lease_fund_balance);
 
 			Self::deposit_event(dpt_event);
 		}
