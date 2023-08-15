@@ -30,8 +30,6 @@ use sp_runtime::{
 		OpaqueKeys,
 		PostDispatchInfoOf,
 		SaturatedConversion,
-		Saturating,
-		Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -79,8 +77,6 @@ use pallet_evm::{
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
-use pallet_transaction_payment::{Config as TransactionPaymentConfig, OnChargeTransaction};
-
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
@@ -93,7 +89,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, TokenSymbol};
+pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -116,6 +112,18 @@ pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
+use xcm::latest::prelude::*;
+
+// For Zenlink-DEX-Module
+use zenlink_protocol::{
+	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
+	ZenlinkMultiAssets,
+};
+
+use runtime_common::{
+	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
+	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+};
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -192,11 +200,6 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-use runtime_common::{
-	Balance, CurrencyHooks, EoTFeeFactor, OperationalFeeMultiplier, TransactionByteFee, CENTS,
-	DOLLARS, MILLICENTS,
-};
-
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
@@ -253,8 +256,11 @@ parameter_types! {
 
 pub struct BaseFilter;
 impl Contains<RuntimeCall> for BaseFilter {
-	fn contains(_call: &RuntimeCall) -> bool {
-		true
+	fn contains(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::ZenlinkProtocol(_m) => false,
+			_ => true,
+		}
 	}
 }
 
@@ -424,106 +430,29 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-pub struct DealWithFees;
-impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-	// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
-	// implementations will just drop the imbalances!! Instead on_unbalanceds() will
-	// use these two following methods.
-	fn on_unbalanced(amount: NegativeImbalance) {
-		Self::on_nonzero_unbalanced(amount);
-	}
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		<BlockReward as OnUnbalanced<_>>::on_unbalanced(amount);
-	}
+parameter_types! {
+	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
+		CurrencyId::Token(TokenSymbol::KSM),
+	];
 }
 
-type NegativeImbalanceOf<C, T> =
-	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+pub struct PeaqCPC;
 
-pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
-
-impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
-where
-	T: TransactionPaymentConfig,
-	C: Currency<<T as frame_system::Config>::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-{
-	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-	/// Withdraw the predicted fee from the transaction origin.
-	/// Note: The `fee` already includes the `tip`.
-	fn withdraw_fee(
-		who: &T::AccountId,
-		_call: &T::RuntimeCall,
-		_info: &DispatchInfoOf<T::RuntimeCall>,
-		total_fee: Self::Balance,
-		tip: Self::Balance,
-	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		if total_fee.is_zero() {
-			return Ok(None)
-		}
-		let inclusion_fee = total_fee - tip;
-
-		let withdraw_reason = if tip.is_zero() {
-			WithdrawReasons::TRANSACTION_PAYMENT
-		} else {
-			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-		};
-
-		// Apply Peaq Economy-of-Things Fee adjustment
-		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
-		let tx_fee = total_fee.saturating_add(eot_fee);
-
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-			Ok(imbalance) => Ok(Some(imbalance)),
-			Err(_) => Err(InvalidTransaction::Payment.into()),
-		}
-	}
-
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
-	/// Note: The `corrected_fee` already includes the `tip`.
-	fn correct_and_deposit_fee(
-		who: &T::AccountId,
-		_dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-		_post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-		cor_total_fee: Self::Balance,
-		tip: Self::Balance,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), TransactionValidityError> {
-		if let Some(paid) = already_withdrawn {
-			// Apply same Peaq Economy-of-Things Fee adjustment as above
-			let cor_inclusion_fee = cor_total_fee - tip;
-			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
-			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
-
-			// Calculate how much refund we should return
-			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);
-			// refund to the the account that paid the fees. If this fails, the
-			// account might have dropped below the existential balance. In
-			// that case we don't refund anything.
-			let refund_imbalance = C::deposit_into_existing(who, refund_amount)
-				.unwrap_or_else(|_| C::PositiveImbalance::zero());
-			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let adjusted_paid = paid
-				.offset(refund_imbalance)
-				.same()
-				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
-			// Call someone else to handle the imbalance (fee and tip separately)
-			let (tip, fee) = adjusted_paid.split(tip);
-
-			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
-		}
-		Ok(())
-	}
+impl PeaqCurrencyPaymentConvert for PeaqCPC {
+	type AccountId = AccountId;
+	type Currency = Balances;
+	type MultiCurrency = Currencies;
+	type DexOperator = ZenlinkProtocol;
+	type ExistentialDeposit = ExistentialDeposit;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type LocalAcceptedIds = PcpcLocalAccepted;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -671,7 +600,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
@@ -842,8 +771,6 @@ impl staking_coefficient_reward::Config for Runtime {
 	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
-
 /// Implements the adapters for depositing unbalanced tokens on pots
 /// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
 macro_rules! impl_to_pot_adapter {
@@ -899,7 +826,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = currency::KRST;
 }
 
 impl orml_currencies::Config for Runtime {
@@ -964,6 +891,38 @@ impl peaq_pallet_storage::Config for Runtime {
 	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
 }
 
+// Zenlink-DEX Parameter definitions
+parameter_types! {
+	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
+
+	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
+
+	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
+		// Krest local and live, 0.01 BNC
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
+
+		// Zenlink local 1 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
+		// Zenlink local 2 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
+	];
+}
+
+/// Short form for our individual configuration of Zenlink's MultiAssets.
+pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
+
+impl zenlink_protocol::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MultiAssetsHandler = MultiAssets;
+	type PalletId = ZenlinkDexPalletId;
+	type AssetId = ZenlinkAssetId;
+	type LpGenerate = PairLpGenerate<Self>;
+	type TargetChains = ZenlinkRegistedParaChains;
+	type SelfParaId = SelfParaId;
+	type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -989,12 +948,11 @@ construct_runtime!(
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
-		// // Parachain
+		// Parachain
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
 		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
-
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
@@ -1005,11 +963,11 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-
 		Currencies: orml_currencies::{Pallet, Call} = 34,
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1676,6 +1634,47 @@ impl_runtime_apis! {
 	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
 		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
 			PeaqStorage::read(&did_account, &item_type)
+		}
+	}
+
+	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
+		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
+			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
+		}
+
+		fn get_pair_by_asset_id(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId
+		) -> Option<PairInfo<AccountId, AssetBalance, ZenlinkAssetId>> {
+			ZenlinkProtocol::get_pair_by_asset_id(asset_0, asset_1)
+		}
+
+		fn get_amount_in_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::desired_in_amount(supply, path)
+		}
+
+		fn get_amount_out_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::supply_out_amount(supply, path)
+		}
+
+		fn get_estimate_lptoken(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount_0_desired: AssetBalance,
+			amount_1_desired: AssetBalance,
+			amount_0_min: AssetBalance,
+			amount_1_min: AssetBalance,
+		) -> AssetBalance {
+			ZenlinkProtocol::get_estimate_lptoken(asset_0, asset_1, amount_0_desired,
+				amount_1_desired, amount_0_min, amount_1_min)
+		}
+
+		fn calculate_remove_liquidity(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount: AssetBalance,
+		) -> Option<(AssetBalance, AssetBalance)> {
+			ZenlinkProtocol::calculate_remove_liquidity(asset_0, asset_1, amount)
 		}
 	}
 

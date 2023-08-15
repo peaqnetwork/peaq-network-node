@@ -114,6 +114,9 @@ peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false 
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 
+zenlink-protocol = { workspace = true, default-features = false }
+zenlink-protocol-runtime-api = { workspace = true, default-features = false }
+
 
 [features]
 default = ["std", "aura"]
@@ -237,6 +240,8 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-xtokens/std",
+	"zenlink-protocol/std",
+	"zenlink-protocol-runtime-api/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",
