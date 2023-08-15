@@ -7628,6 +7628,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
+ "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
@@ -7744,6 +7745,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
+ "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
@@ -7862,6 +7864,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
+ "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
@@ -7979,7 +7982,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.0.3"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.38#75aec7c72f1af3257e636b0b0370317f26d47082"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.38#5aa62a51ade239b377f9e9986c1584164cc7a333"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7998,7 +8001,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.0.3"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.38#75aec7c72f1af3257e636b0b0370317f26d47082"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.38#5aa62a51ade239b377f9e9986c1584164cc7a333"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8018,7 +8021,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.0.3"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.38#75aec7c72f1af3257e636b0b0370317f26d47082"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v0.9.38#5aa62a51ade239b377f9e9986c1584164cc7a333"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -8029,7 +8032,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.0.4"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v0.9.38#3a1bfefc99bee76e47fde28f2c7cd04bdca66847"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v0.9.38#4dcf0383e754545299ca3967df581acdb7260bd3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8047,7 +8050,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#a2245dc28e83199c9b11a6e13adbb64901bcc4b3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8065,7 +8068,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#a2245dc28e83199c9b11a6e13adbb64901bcc4b3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8083,7 +8086,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#a2245dc28e83199c9b11a6e13adbb64901bcc4b3"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -8094,7 +8097,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.38#8171780a4513edc3a664b9df1a75ed221114eaf8"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.38#2a9e8b2c2cc7038d931c93ee97f94d21e55db615"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8110,7 +8113,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.38#8171780a4513edc3a664b9df1a75ed221114eaf8"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.38#2a9e8b2c2cc7038d931c93ee97f94d21e55db615"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8130,7 +8133,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.38#8171780a4513edc3a664b9df1a75ed221114eaf8"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v0.9.38#2a9e8b2c2cc7038d931c93ee97f94d21e55db615"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -8141,7 +8144,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.0.3"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=peaq-polkadot-v0.9.38#e2c2715f6e7f4d5d208c39eb4e86376e1d722201"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=peaq-polkadot-v0.9.38#043740075b6cb7be8294ba9268ae4543925ffd57"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8440,6 +8443,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
+ "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
@@ -13140,6 +13144,58 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "staking-coefficient-reward"
+version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-timestamp",
+ "parachain-staking",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "staking-fixed-percentage-reward"
+version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-timestamp",
+ "parachain-staking",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
 
 [[package]]
 name = "static_assertions"
