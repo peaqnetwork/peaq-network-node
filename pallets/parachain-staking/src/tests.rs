@@ -20,10 +20,16 @@
 
 use std::{convert::TryInto, iter};
 
+use crate::{
+	mock::MockRewardConfig,
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate::RewardRateInfo,
+};
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
 };
+use frame_system::RawOrigin;
 use pallet_balances::{BalanceLock, Error as BalancesError, Reasons};
 use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversion};
@@ -34,12 +40,13 @@ use crate::{
 		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
 		BLOCKS_PER_ROUND, DECIMALS,
 	},
+	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 	set::OrderedSet,
 	types::{
-		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
-		StakeOf, TotalStake,
+		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
+		Stake, StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event, RewardRateInfo, STAKING_ID,
+	CandidatePool, Config, Error, Event, STAKING_ID,
 };
 
 #[test]
@@ -1380,7 +1387,7 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 			roll_to(5, vec![]);
 			let init = vec![Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
@@ -1392,7 +1399,7 @@ fn round_transitions() {
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
 
 			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			// last round startet at 5 but we are already at 9, so we expect 9 to be the new
 			// round
@@ -1410,7 +1417,7 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
 			roll_to(6, vec![]);
@@ -1421,7 +1428,7 @@ fn round_transitions() {
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
 
 			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			// there should not be a new event
 			roll_to(7, vec![]);
@@ -1442,7 +1449,7 @@ fn round_transitions() {
 		.execute_with(|| {
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 			roll_to(7, vec![]);
 			// chooses top MaxSelectedCandidates (5), in order
 			let init = vec![Event::NewRound(5, 1)];
@@ -1450,15 +1457,8 @@ fn round_transitions() {
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 
 			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
-			assert_eq!(
-				StakePallet::reward_rate_config(),
-				RewardRateInfo::new(
-					Perquintill::from_percent(col_rate),
-					Perquintill::from_percent(del_rate),
-				)
-			);
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
 			roll_to(8, vec![]);
 
@@ -1486,7 +1486,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = StakePallet::reward_rate_config();
+			let reward_rate = MockRewardConfig::get_reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
@@ -1623,7 +1623,8 @@ fn coinbase_rewards_many_blocks_simple_check() {
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = StakePallet::reward_rate_config();
+			let reward_rate = MockRewardConfig::get_reward_rate_config();
+
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
@@ -2057,31 +2058,33 @@ fn set_max_selected_candidates_total_stake() {
 		});
 }
 
-#[test]
-fn update_reward_rate() {
-	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
-		.with_collators(vec![(1, 10)])
-		.build()
-		.execute_with(|| {
-			let invalid_reward_rate = RewardRateInfo {
-				collator_rate: Perquintill::one(),
-				delegator_rate: Perquintill::one(),
-			};
-			assert!(!invalid_reward_rate.is_valid());
-
-			assert_ok!(StakePallet::set_reward_rate(
-				RuntimeOrigin::root(),
-				Perquintill::from_percent(0),
-				Perquintill::from_percent(100),
-			));
-			assert_ok!(StakePallet::set_reward_rate(
-				RuntimeOrigin::root(),
-				Perquintill::from_percent(100),
-				Perquintill::from_percent(0),
-			));
-		});
-}
+/*
+ * #[test]
+ * fn update_reward_rate() {
+ *     ExtBuilder::default()
+ *         .with_balances(vec![(1, 10)])
+ *         .with_collators(vec![(1, 10)])
+ *         .build()
+ *         .execute_with(|| {
+ *             let invalid_reward_rate = RewardRateInfo {
+ *                 collator_rate: Perquintill::one(),
+ *                 delegator_rate: Perquintill::one(),
+ *             };
+ *             assert!(!invalid_reward_rate.is_valid());
+ *
+ *             assert_ok!(StakePallet::set_reward_rate(
+ *                 RuntimeOrigin::root(),
+ *                 Perquintill::from_percent(0),
+ *                 Perquintill::from_percent(100),
+ *             ));
+ *             assert_ok!(StakePallet::set_reward_rate(
+ *                 RuntimeOrigin::root(),
+ *                 Perquintill::from_percent(100),
+ *                 Perquintill::from_percent(0),
+ *             ));
+ *         });
+ * }
+ */
 
 #[test]
 fn unlock_unstaked() {
@@ -3133,7 +3136,7 @@ fn authorities_per_round() {
 			// reward 1 once per round
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
-			let reward_rate = StakePallet::reward_rate_config();
+			let reward_rate = MockRewardConfig::get_reward_rate_config();
 
 			// roll to last block of round 0
 			roll_to(4, authors.clone());
@@ -3416,5 +3419,79 @@ fn update_total_stake_no_collator_changes() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 70, delegators: 110 }
 			);
+		});
+}
+
+#[test]
+fn collator_reward_per_block_only_collator() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			// Avoid keep live error
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+				0
+			));
+
+			let (_reads, _writes, reward) =
+				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
+					&state, 100,
+				);
+			assert_eq!(reward, Reward { owner: 1, amount: 100 });
+		});
+}
+
+#[test]
+fn collator_reward_per_block_with_delegator() {
+	let col_rate = 30;
+	let del_rate = 70;
+	let reward_rate = RewardRateInfo::new(
+		Perquintill::from_percent(col_rate),
+		Perquintill::from_percent(del_rate),
+	);
+
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			// Avoid keep live error
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+				0
+			));
+
+			let (_reads, _writes, reward) =
+				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
+					&state, 100,
+				);
+			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
+			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
+
+			let (_reards, _writes, reward_vec) =
+				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
+					&state, 100,
+				);
+			let d_1_rewards: BalanceOf<Test> = reward_rate
+				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
+			let d_2_rewards: BalanceOf<Test> = reward_rate
+				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
+			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
+			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
 		});
 }

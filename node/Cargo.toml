@@ -38,7 +38,6 @@ serde = { workspace = true, default-features = true, features = ["derive"] }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
 fc-storage = { workspace = true, default-features = true }
 
-
 codec = { workspace = true, default-features = true }
 frame-benchmarking = { workspace = true, default-features = true }
 frame-benchmarking-cli = { workspace = true, optional = true }
@@ -125,6 +124,9 @@ xcm = { workspace = true, default-features = true }
 peaq-primitives-xcm = { path = "../primitives/xcm" }
 runtime-common = { path = "../runtime/common" }
 peaq-pallet-storage-rpc = { workspace = true, default-features = true }
+zenlink-protocol = { workspace = true, default-features = true }
+zenlink-protocol-rpc = { workspace = true, default-features = true }
+zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 
 [features]
 default = [
@@ -141,5 +143,6 @@ runtime-benchmarks = [
 	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
+	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]

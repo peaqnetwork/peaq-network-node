@@ -26,10 +26,7 @@ use frame_support::{
 };
 use frame_system::{Pallet as System, RawOrigin};
 use pallet_session::Pallet as Session;
-use sp_runtime::{
-	traits::{One, SaturatedConversion, StaticLookup},
-	Perquintill,
-};
+use sp_runtime::traits::{One, SaturatedConversion, StaticLookup};
 use sp_std::{convert::TryInto, vec::Vec};
 
 const COLLATOR_ACCOUNT_SEED: u32 = 0;
@@ -49,9 +46,10 @@ fn setup_collator_candidates<T: Config>(
 
 	for acc in collators.iter() {
 		T::Currency::make_free_balance_be(acc, amount);
-		assert_ok!(
-			<Pallet<T>>::join_candidates(T::Origin::from(Some(acc.clone()).into()), amount,)
-		);
+		assert_ok!(<Pallet<T>>::join_candidates(
+			T::RuntimeOrigin::from(Some(acc.clone()).into()),
+			amount,
+		));
 		assert_eq!(<CandidatePool<T>>::get(acc).unwrap().stake, amount);
 	}
 
@@ -84,7 +82,7 @@ fn fill_delegators<T: Config>(
 	for acc in delegators.iter() {
 		T::Currency::make_free_balance_be(acc, T::MinDelegatorStake::get());
 		assert_ok!(<Pallet<T>>::join_delegators(
-			T::Origin::from(Some(acc.clone()).into()),
+			T::RuntimeOrigin::from(Some(acc.clone()).into()),
 			T::Lookup::unlookup(collator.clone()),
 			T::MinDelegatorStake::get(),
 		));
@@ -168,16 +166,6 @@ benchmarks! {
 			length: round.length,
 		});
 		assert!(!<ForceNewRound<T>>::get());
-	}
-
-	set_reward_rate {
-		let reward_rate = RewardRateInfo::new(
-			Perquintill::from_percent(60),
-			Perquintill::from_percent(40),
-		);
-	}: _(RawOrigin::Root, reward_rate.collator_rate, reward_rate.delegator_rate)
-	verify {
-		assert_eq!(<RewardRateConfig<T>>::get(), reward_rate);
 	}
 
 	set_max_selected_candidates {
@@ -538,7 +526,7 @@ benchmarks! {
 		let stake = T::MinCollatorCandidateStake::get();
 		T::Currency::make_free_balance_be(&candidate, free_balance);
 		assert_ok!(<Pallet<T>>::join_candidates(
-			T::Origin::from(Some(candidate.clone()).into()),
+			T::RuntimeOrigin::from(Some(candidate.clone()).into()),
 			stake,
 		));
 		assert_eq!(pallet_balances::Pallet::<T>::usable_balance(&candidate), (free_balance - T::MinCollatorCandidateStake::get()).into());
@@ -611,8 +599,8 @@ benchmarks! {
 impl_benchmark_test_suite!(
 	Pallet,
 	crate::mock::ExtBuilder::default()
-		.with_balances(vec![(u64::MAX, 1000 * crate::mock::MILLI_KILT)])
-		.with_collators(vec![(u64::MAX, 1000 * crate::mock::MILLI_KILT)])
+		.with_balances(vec![(u64::MAX, 1000 * crate::mock::MILLI_PEAQ)])
+		.with_collators(vec![(u64::MAX, 1000 * crate::mock::MILLI_PEAQ)])
 		.build(),
 	crate::mock::Test,
 );
