@@ -24,7 +24,7 @@ fn reward_distribution_config_is_consistent() {
 		collators_percent: Zero::zero(),
 		lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
-		machines_subsidization_percent: Zero::zero(),
+		parachain_lease_fund_percent: Zero::zero(),
 	};
 	assert!(reward_config.is_consistent());
 
@@ -35,7 +35,7 @@ fn reward_distribution_config_is_consistent() {
 		collators_percent: Zero::zero(),
 		lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
-		machines_subsidization_percent: Zero::zero(),
+		parachain_lease_fund_percent: Zero::zero(),
 	};
 	assert!(reward_config.is_consistent());
 
@@ -46,7 +46,7 @@ fn reward_distribution_config_is_consistent() {
 		collators_percent: Zero::zero(),
 		lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
-		machines_subsidization_percent: Zero::zero(),
+		parachain_lease_fund_percent: Zero::zero(),
 	};
 	assert!(!reward_config.is_consistent());
 
@@ -58,7 +58,7 @@ fn reward_distribution_config_is_consistent() {
 		collators_percent: Perbill::from_percent(25),
 		lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(4),
-		machines_subsidization_percent: Perbill::from_percent(4),
+		parachain_lease_fund_percent: Perbill::from_percent(4),
 	};
 	assert!(reward_config.is_consistent());
 }
@@ -80,7 +80,7 @@ fn reward_distribution_config_not_consistent() {
 		collators_percent: Perbill::from_percent(33),
 		lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(7),
-		machines_subsidization_percent: Perbill::from_percent(7),
+		parachain_lease_fund_percent: Perbill::from_percent(7),
 	};
 	assert!(!reward_config.is_consistent());
 
@@ -92,7 +92,7 @@ fn reward_distribution_config_not_consistent() {
 		collators_percent: Perbill::from_percent(40),
 		lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(4),
-		machines_subsidization_percent: Perbill::from_percent(5),
+		parachain_lease_fund_percent: Perbill::from_percent(5),
 	};
 	assert!(!reward_config.is_consistent());
 }
@@ -129,7 +129,7 @@ pub fn set_configuration_is_ok() {
 			collators_percent: Perbill::from_percent(60),
 			lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(3),
-			machines_subsidization_percent: Perbill::from_percent(4),
+			parachain_lease_fund_percent: Perbill::from_percent(4),
 		};
 		assert!(reward_config.is_consistent());
 
@@ -254,7 +254,7 @@ pub fn reward_distribution_as_expected() {
 			collators_percent: Perbill::from_percent(40),
 			lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(3),
-			machines_subsidization_percent: Perbill::from_percent(5),
+			parachain_lease_fund_percent: Perbill::from_percent(5),
 		};
 		assert!(reward_config.is_consistent());
 		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
@@ -281,7 +281,7 @@ pub fn reward_distribution_no_adjustable_part() {
 			collators_percent: Perbill::from_percent(3),
 			lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(5),
-			machines_subsidization_percent: Perbill::from_percent(5),
+			parachain_lease_fund_percent: Perbill::from_percent(5),
 		};
 		assert!(reward_config.is_consistent());
 		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
@@ -333,7 +333,7 @@ struct FreeBalanceSnapshot {
 	dapps: Balance,
 	lp_users: Balance,
 	machines: Balance,
-	machines_subsidization: Balance,
+	parachain_lease_fund: Balance,
 }
 
 impl FreeBalanceSnapshot {
@@ -357,8 +357,8 @@ impl FreeBalanceSnapshot {
 			machines: <TestRuntime as Config>::Currency::free_balance(
 				&MACHINE_POT.into_account_truncating(),
 			),
-			machines_subsidization: <TestRuntime as Config>::Currency::free_balance(
-				&MACHINE_SUBSIDIZATION_POT.into_account_truncating(),
+			parachain_lease_fund: <TestRuntime as Config>::Currency::free_balance(
+				&PARACHAIN_LEASE_FUND.into_account_truncating(),
 			),
 		}
 	}
@@ -370,7 +370,7 @@ impl FreeBalanceSnapshot {
 			self.dapps.is_zero() &&
 			self.lp_users.is_zero() &&
 			self.machines.is_zero() &&
-			self.machines_subsidization.is_zero()
+			self.parachain_lease_fund.is_zero()
 	}
 
 	/// Asserts that `post_reward_state` is as expected.
@@ -387,8 +387,8 @@ impl FreeBalanceSnapshot {
 		assert_eq!(self.lp_users + rewards.lp_reward, post_reward_state.lp_users);
 		assert_eq!(self.machines + rewards.machines_reward, post_reward_state.machines);
 		assert_eq!(
-			self.machines_subsidization + rewards.machines_subsidization_reward,
-			post_reward_state.machines_subsidization
+			self.parachain_lease_fund + rewards.parachain_lease_fund_reward,
+			post_reward_state.parachain_lease_fund
 		);
 	}
 }
@@ -401,7 +401,7 @@ struct Rewards {
 	collators_reward: Balance,
 	lp_reward: Balance,
 	machines_reward: Balance,
-	machines_subsidization_reward: Balance,
+	parachain_lease_fund_reward: Balance,
 }
 
 impl Rewards {
@@ -413,8 +413,7 @@ impl Rewards {
 		let collators_reward = reward_config.collators_percent * BLOCK_REWARD;
 		let lp_reward = reward_config.lp_percent * BLOCK_REWARD;
 		let machines_reward = reward_config.machines_percent * BLOCK_REWARD;
-		let machines_subsidization_reward =
-			reward_config.machines_subsidization_percent * BLOCK_REWARD;
+		let parachain_lease_fund_reward = reward_config.parachain_lease_fund_percent * BLOCK_REWARD;
 
 		Self {
 			treasury_reward,
@@ -422,7 +421,7 @@ impl Rewards {
 			collators_reward,
 			lp_reward,
 			machines_reward,
-			machines_subsidization_reward,
+			parachain_lease_fund_reward,
 		}
 	}
 }

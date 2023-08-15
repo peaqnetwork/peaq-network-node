@@ -19,13 +19,13 @@ Description - For setting up the reward amount to generate after each block.
 
 - `setConfiguration`
 
-Params - **rewardDistroParams** -> 
-* treasuryPercent 
-* dappsPercent 
-* collatorsPercent 
-* lpPercent 
-* machinesPercent 
-* machinesSubsidizationPercent.
+Params - **rewardDistroParams** ->
+* treasuryPercent
+* dappsPercent
+* collatorsPercent
+* lpPercent
+* machinesPercent
+* ParachainLeasePercent.
 
 Description - For configuring reward distribution between these accounts mentioned above. Each account gets a percentage of block reward.
 
