@@ -124,12 +124,6 @@ pallet-collective = { git = "https://github.com/peaqnetwork/substrate", branch =
 sp-weights = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 peaq-pallet-mor = { default-features = false, git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "peaq-polkadot-v0.9.38"}
 
-
-
-
-
-
-
 frame-benchmarking-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = true }
 pallet-transaction-payment-rpc = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 sc-basic-authorship = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
@@ -183,9 +177,6 @@ peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.
 peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false, version = "0.0.1" }
 sp-finality-grandpa = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 
-
-
-
 structopt = "0.3.8"
 async-trait = "0.1.59"
 jsonrpc-pubsub = "18.0.0"
@@ -222,3 +213,8 @@ evm-runtime = { version = "0.37.0", default-features = false }
 tracing = "0.1.34"
 sc-utils = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 sp-staking = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
+
+zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.38", default-features = false }
+zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.38", default-features = false }
+zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.38", default-features = false }
+

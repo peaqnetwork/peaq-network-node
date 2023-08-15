@@ -108,19 +108,23 @@ peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-fea
 frame-support = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward", default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
 runtime-common = { path = "../common", default-features = false }
+
+zenlink-protocol = { workspace = true, default-features = false }
+zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
 
 [features]
 default = ["std", "aura"]
 aura = []
 runtime-benchmarks = [
-	"frame-benchmarking",
+	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
-	"frame-system-benchmarking",
+	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
 	"pallet-balances/runtime-benchmarks",
@@ -136,11 +140,13 @@ runtime-benchmarks = [
 	"pallet-xcm/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"polkadot-parachain/runtime-benchmarks",
 
 	"peaq-pallet-transaction/runtime-benchmarks",
 	"peaq-pallet-did/runtime-benchmarks",
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
+	"staking-coefficient-reward/runtime-benchmarks",
 ]
 
 std = [
@@ -222,6 +228,7 @@ std = [
 
     "parachain-staking/std",
     "pallet-block-reward/std",
+	"staking-coefficient-reward/std",
 
 	# XCM
     "xcm/std",
@@ -233,6 +240,8 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-xtokens/std",
+	"zenlink-protocol/std",
+	"zenlink-protocol-runtime-api/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",

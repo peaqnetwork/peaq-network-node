@@ -1,30 +1,9 @@
-// KILT Blockchain – https://botlabs.org
-// Copyright (C) 2019-2022 BOTLabs GmbH
-
-// The KILT Blockchain is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// The KILT Blockchain is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-// If you feel like getting in touch with us, you can do so at info@botlabs.org
-//! Test utilities
+// Copyright (C) 2019-2022 EOTLabs GmbH
 
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-	{self as stake},
-};
+use crate::{self as reward_calculator, default_weights::SubstrateWeight};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
@@ -32,15 +11,16 @@ use frame_support::{
 	PalletId,
 };
 use pallet_authorship::EventHandler;
+use parachain_staking::{self as stake};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill, Perquintill,
+	Perbill,
 };
-use sp_std::{cell::RefCell, fmt::Debug};
+use sp_std::fmt::Debug;
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -65,6 +45,7 @@ construct_runtime!(
 		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		Aura: pallet_aura::{Pallet, Storage},
+		RewardCalculatorPallet: reward_calculator::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -126,7 +107,7 @@ impl pallet_aura::Config for Test {
 
 impl pallet_authorship::Config for Test {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type EventHandler = Pallet<Test>;
+	type EventHandler = StakePallet;
 }
 
 parameter_types! {
@@ -150,6 +131,11 @@ parameter_types! {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = SubstrateWeight<Test>;
+}
+
+impl parachain_staking::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
 	type MinBlocksPerRound = MinBlocksPerRound;
@@ -169,29 +155,7 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
-	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
-}
-
-// Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
-thread_local! {
-	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = RefCell::new(RewardRateInfo {
-		collator_rate: Perquintill::from_percent(30),
-		delegator_rate: Perquintill::from_percent(70),
-	});
-}
-
-pub struct MockRewardConfig {}
-
-impl RewardRateConfigTrait for MockRewardConfig {
-	fn get_reward_rate_config() -> RewardRateInfo {
-		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| reward_rate.borrow().clone())
-	}
-
-	fn set_reward_rate_config(info: RewardRateInfo) {
-		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| {
-			*reward_rate.borrow_mut() = info;
-		});
-	}
+	type BlockRewardCalculator = RewardCalculatorPallet;
 }
 
 impl_opaque_keys! {
@@ -234,6 +198,8 @@ pub(crate) struct ExtBuilder {
 	collators: Vec<(AccountId, Balance)>,
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
+	// reward rate
+	coefficient: u8,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 }
@@ -244,6 +210,7 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			delegators: vec![],
 			collators: vec![],
+			coefficient: 8,
 			blocks_per_round: BLOCKS_PER_ROUND,
 		}
 	}
@@ -272,24 +239,14 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(
+	pub(crate) fn with_coeffctive(
 		mut self,
-		col_reward: u64,
-		del_reward: u64,
+		coefficient: u8,
 		blocks_per_round: BlockNumber,
 	) -> Self {
-		MockRewardConfig::set_reward_rate_config(RewardRateInfo::new(
-			Perquintill::from_percent(col_reward),
-			Perquintill::from_percent(del_reward),
-		));
+		self.coefficient = coefficient;
 		self.blocks_per_round = blocks_per_round;
 
-		self
-	}
-
-	#[must_use]
-	pub(crate) fn set_blocks_per_round(mut self, blocks_per_round: BlockNumber) -> Self {
-		self.blocks_per_round = blocks_per_round;
 		self
 	}
 
@@ -312,6 +269,11 @@ impl ExtBuilder {
 		stake::GenesisConfig::<Test> { stakers, max_candidate_stake: 160_000_000 * DECIMALS }
 			.assimilate_storage(&mut t)
 			.expect("Parachain Staking's storage can be assimilated");
+
+		let reward_calculator_config =
+			reward_calculator::GenesisConfig { coefficient: self.coefficient };
+		GenesisBuild::<Test>::assimilate_storage(&reward_calculator_config, &mut t)
+			.expect("Reward Calculator's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self
@@ -355,22 +317,8 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 			);
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsReversedWithSystemFirst as OnFinalize<u64>>::on_finalize(System::block_number());
+		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		<AllPalletsReversedWithSystemFirst as OnInitialize<u64>>::on_initialize(
-			System::block_number(),
-		);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
-}
-
-pub(crate) fn last_event() -> RuntimeEvent {
-	System::events().pop().expect("Event expected").event
-}
-
-pub(crate) fn events() -> Vec<pallet::Event<Test>> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::StakePallet(inner) = e { Some(inner) } else { None })
-		.collect::<Vec<_>>()
 }
