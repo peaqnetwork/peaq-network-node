@@ -85,6 +85,8 @@ impl<AccountId: Ord, Balance: PartialEq + Ord> Ord for Stake<AccountId, Balance>
 	}
 }
 
+pub type Reward<AccountId, Balance> = Stake<AccountId, Balance>;
+
 /// The activity status of the collator.
 #[derive(
 	Copy, Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen,

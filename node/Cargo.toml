@@ -143,5 +143,6 @@ runtime-benchmarks = [
 	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
+	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]

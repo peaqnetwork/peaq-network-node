@@ -69,7 +69,7 @@ use frame_system::{
 };
 
 pub use pallet_balances::Call as BalancesCall;
-use parachain_staking::RewardRateInfo;
+use parachain_staking::reward_rate::RewardRateInfo;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
@@ -176,7 +176,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 7,
+	spec_version: 8,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -702,6 +702,9 @@ pub mod staking {
 	pub fn reward_rate_config() -> RewardRateInfo {
 		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
 	}
+	pub fn coefficient() -> u8 {
+		8
+	}
 
 	parameter_types! {
 			/// Minimum round length is 1 min
@@ -759,6 +762,12 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = ();
+	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
+}
+
+impl staking_coefficient_reward::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
 }
 
 impl peaq_pallet_mor::Config for Runtime {
@@ -965,6 +974,7 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
+		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
@@ -1024,6 +1034,31 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 >;
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		[frame_benchmarking, BaselineBench::<Runtime>]
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_balances, Balances]
+		[pallet_timestamp, Timestamp]
+		[pallet_multisig, MultiSig]
+		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[parachain_staking, ParachainStaking]
+		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
+		[pallet_block_reward, BlockReward]
+		[peaq_pallet_transaction, Transaction]
+		[peaq_pallet_did, PeaqDid]
+		[peaq_pallet_rbac, PeaqRbac]
+		[peaq_pallet_storage, PeaqStorage]
+		[peaq_pallet_mor, PeaqStorage]
+		[pallet_xcm, PolkadotXcm]
+	);
+}
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	type SignedInfo = H160;
@@ -1665,30 +1700,17 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
-
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_multisig, MultiSig);
-			list_benchmark!(list, extra, cumulus_pallet_xcmp_queue, XcmpQueue);
-
-			list_benchmark!(list, extra, parachain_staking, ParachainStaking);
-			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
-			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
-			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
-			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
-			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
-			list_benchmark!(list, extra, peaq_pallet_mor, PeaqMor);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1698,40 +1720,19 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			use baseline::Pallet as BaselineBench;
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
+			impl frame_system_benchmarking::Config for Runtime {}
+			impl baseline::Config for Runtime {}
+
+			use frame_support::traits::WhitelistedStorageKeys;
+			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_multisig, MultiSig);
-			add_benchmark!(params, batches, cumulus_pallet_xcmp_queue, XcmpQueue);
-
-			add_benchmark!(params, batches, parachain_staking, ParachainStaking);
-			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
-			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
-			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
-			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
-			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
-			add_benchmark!(params, batches, peaq_pallet_mor, PeaqMor);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
