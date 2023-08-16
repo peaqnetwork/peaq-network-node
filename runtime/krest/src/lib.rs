@@ -974,7 +974,7 @@ construct_runtime!(
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
-		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
+		Multisig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
 	}
@@ -1027,7 +1027,7 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		[pallet_multisig, MultiSig]
+		[pallet_multisig, Multisig]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[parachain_staking, ParachainStaking]
 		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
