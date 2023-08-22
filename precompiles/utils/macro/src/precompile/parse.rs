@@ -226,7 +226,7 @@ impl Precompile {
 
 		// Fallback method cannot have custom parameters.
 		if is_fallback {
-			if let Some(input) = method.sig.inputs.iter().skip(initial_arguments).next() {
+			if let Some(input) = method.sig.inputs.iter().nth(initial_arguments) {
 				let msg = if self.tagged_as_precompile_set {
 					"Fallback methods cannot take any parameter outside of the discriminant and \
 					PrecompileHandle"
@@ -288,16 +288,16 @@ impl Precompile {
 		};
 
 		// We insert the collected data in self.
-		if let Some(_) = self.variants_content.insert(
+		if self.variants_content.insert(
 			method_name.clone(),
 			Variant {
 				arguments,
-				solidity_arguments_type: solidity_arguments_type.unwrap_or(String::from("()")),
+				solidity_arguments_type: solidity_arguments_type.unwrap_or_else(|| String::from("()")),
 				modifier,
 				selectors,
 				fn_output: output_type.as_ref().clone(),
 			},
-		) {
+		).is_some() {
 			let msg = "Duplicate method name";
 			return Err(syn::Error::new(method_name.span(), msg))
 		}
@@ -332,7 +332,7 @@ impl Precompile {
 
 			let input_type = input.ty.as_ref();
 
-			self.try_register_discriminant_type(&input_type)?;
+			self.try_register_discriminant_type(input_type)?;
 		}
 
 		// Precompile handle input
@@ -361,7 +361,7 @@ impl Precompile {
 
 			let input_type = input.ty.as_ref();
 
-			if !is_same_type(&input_type, &syn::parse_quote! {&mut impl PrecompileHandle}) {
+			if !is_same_type(input_type, &syn::parse_quote! {&mut impl PrecompileHandle}) {
 				let msg = "This parameter must have type `&mut impl PrecompileHandle`";
 				return Err(syn::Error::new(input_type.span(), msg))
 			}
@@ -373,7 +373,7 @@ impl Precompile {
 	/// Records the type of the discriminant and ensure they all have the same type.
 	fn try_register_discriminant_type(&mut self, ty: &syn::Type) -> syn::Result<()> {
 		if let Some(known_type) = &self.precompile_set_discriminant_type {
-			if !is_same_type(&known_type, &ty) {
+			if !is_same_type(known_type, ty) {
 				let msg = format!(
 					"All discriminants must have the same type (found {} before)",
 					known_type.to_token_stream()
@@ -436,7 +436,7 @@ impl Precompile {
 
 		let return_segment = &return_path.segments[0];
 
-		if return_segment.ident.to_string() != "Option" {
+		if return_segment.ident != "Option" {
 			return Err(syn::Error::new(return_segment.ident.span(), msg))
 		}
 
@@ -455,7 +455,7 @@ impl Precompile {
 			_ => return Err(syn::Error::new(option_arguments.args.span(), msg)),
 		};
 
-		self.try_register_discriminant_type(&discriminant_type)?;
+		self.try_register_discriminant_type(discriminant_type)?;
 
 		self.precompile_set_discriminant_fn = Some(method.sig.ident.clone());
 
@@ -501,7 +501,7 @@ impl Precompile {
 	) -> syn::Result<u32> {
 		let signature = signature_lit.value();
 		// Split signature to get arguments type.
-		let split: Vec<_> = signature.splitn(2, "(").collect();
+		let split: Vec<_> = signature.splitn(2, '(').collect();
 		if split.len() != 2 {
 			let msg = "Selector must have form \"foo(arg1,arg2,...)\"";
 			return Err(syn::Error::new(signature_lit.span(), msg))
@@ -525,7 +525,7 @@ impl Precompile {
 		let selector = u32::from_be_bytes([digest[0], digest[1], digest[2], digest[3]]);
 
 		if let Some(previous) = self.selector_to_variant.insert(selector, method_name.clone()) {
-			let msg = format!("Selector collision with method {}", previous.to_string());
+			let msg = format!("Selector collision with method {}", previous);
 			return Err(syn::Error::new(signature_lit.span(), msg))
 		}
 
