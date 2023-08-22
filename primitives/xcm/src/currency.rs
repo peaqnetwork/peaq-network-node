@@ -206,10 +206,7 @@ create_token_symbol! {
 
 impl TokenSymbol {
 	pub fn is_native_token(&self) -> bool {
-		match self {
-			TokenSymbol::PEAQ | TokenSymbol::KRST | TokenSymbol::AGNG => true,
-			_ => false,
-		}
+		matches!(self, TokenSymbol::PEAQ | TokenSymbol::KRST | TokenSymbol::AGNG)
 	}
 
 	pub fn as_zenlink_asset_type(&self) -> u8 {
@@ -359,7 +356,7 @@ impl TryFrom<ZenlinkAssetId> for CurrencyId {
 				_ => Err(()),
 			}
 		} else {
-			return Err(())
+			Err(())
 		}
 	}
 }
