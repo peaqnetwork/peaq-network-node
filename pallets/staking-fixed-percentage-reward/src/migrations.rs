@@ -1,7 +1,7 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use super::*;
-use crate::reward_rate::RewardRateInfo;
+use parachain_staking::reward_rate::RewardRateInfo;
 use frame_support::{
 	dispatch::GetStorageVersion,
 	pallet_prelude::{StorageVersion, ValueQuery},
