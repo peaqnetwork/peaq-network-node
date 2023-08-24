@@ -1,7 +1,6 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use super::*;
-use parachain_staking::reward_rate::RewardRateInfo;
 use frame_support::{
 	dispatch::GetStorageVersion,
 	pallet_prelude::{StorageVersion, ValueQuery},
@@ -9,6 +8,7 @@ use frame_support::{
 	traits::Get,
 	weights::Weight,
 };
+use parachain_staking::reward_rate::RewardRateInfo;
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
