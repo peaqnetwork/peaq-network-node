@@ -11,6 +11,15 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-22.04
     steps:
+      - name: Diskspace
+        run: |
+          sudo df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo df -h
+      
       - name: Check out the repo
         uses: actions/checkout@v3
 
