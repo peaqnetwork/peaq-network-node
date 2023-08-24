@@ -36,7 +36,6 @@ mod upgrade {
 					weight_writes += 1;
 				}
 				weight_reads += 1;
-
 			}
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
