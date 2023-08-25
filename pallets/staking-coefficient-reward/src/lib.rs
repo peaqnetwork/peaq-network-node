@@ -6,6 +6,7 @@
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod default_weights;
+mod migrations;
 
 #[cfg(test)]
 pub(crate) mod mock;
@@ -15,6 +16,8 @@ pub(crate) mod tests;
 pub use crate::{default_weights::WeightInfo, pallet::*};
 use frame_support::pallet;
 use sp_runtime::traits::{CheckedAdd, CheckedMul};
+
+const DEFAULT_COEFFICIENT: u8 = 8;
 
 #[pallet]
 pub mod pallet {
@@ -64,6 +67,13 @@ pub mod pallet {
 		CoefficientSet(u8),
 	}
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migrations::on_runtime_upgrade::<T>()
+		}
+	}
+
 	/// Here, we setup this as u8 because the balance is u128, we might have overflow while
 	// calculating the reward because the fomula is
 	// (collator stake * coefficient) / ( collator stake * coefficient + delegator_sum)
@@ -81,7 +91,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { coefficient: 8 as u8 }
+			Self { coefficient: DEFAULT_COEFFICIENT }
 		}
 	}
 

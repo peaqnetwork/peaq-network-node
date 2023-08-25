@@ -1,7 +1,6 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use super::*;
-use crate::reward_rate::RewardRateInfo;
 use frame_support::{
 	dispatch::GetStorageVersion,
 	pallet_prelude::{StorageVersion, ValueQuery},
@@ -9,9 +8,9 @@ use frame_support::{
 	traits::Get,
 	weights::Weight,
 };
+use parachain_staking::reward_rate::RewardRateInfo;
 
-const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
-const TARGET_STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
+const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 	upgrade::Migrate::<T>::on_runtime_upgrade()
@@ -29,16 +28,15 @@ mod upgrade {
 	impl<T: Config> Migrate<T> {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
-			let weight_reads = 0;
+			let mut weight_reads = 0;
 			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
 			if onchain_storage_version.eq(&CURRENT_STORAGE_VERSION) {
-				TARGET_STORAGE_VERSION.put::<Pallet<T>>();
-				log::error!("Migrating parchain_staking to V8");
-
-				RewardRateConfig::<T>::kill();
-
-				log::error!("V8 Migrating Done.");
-				weight_writes += 2;
+				if !RewardRateConfig::<T>::exists() {
+					log::error!("Update the initial storage");
+					RewardRateConfig::<T>::put(RewardRateInfo::default());
+					weight_writes += 1;
+				}
+				weight_reads += 1;
 			}
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
