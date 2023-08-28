@@ -6,6 +6,7 @@
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod default_weights;
+mod migrations;
 
 #[cfg(test)]
 pub(crate) mod mock;
@@ -64,6 +65,13 @@ pub mod pallet {
 		/// Reware rate configuration for future validation rounds has changed.
 		/// \[collator's reward rate,delegator's reward rate\]
 		RoundRewardRateSet(Perquintill, Perquintill),
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migrations::on_runtime_upgrade::<T>()
+		}
 	}
 
 	/// Reward rate configuration.
