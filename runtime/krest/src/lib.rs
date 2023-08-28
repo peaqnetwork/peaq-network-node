@@ -257,10 +257,7 @@ parameter_types! {
 pub struct BaseFilter;
 impl Contains<RuntimeCall> for BaseFilter {
 	fn contains(call: &RuntimeCall) -> bool {
-		match call {
-			RuntimeCall::ZenlinkProtocol(_m) => false,
-			_ => true,
-		}
+		!matches!(call, RuntimeCall::ZenlinkProtocol(_m))
 	}
 }
 
