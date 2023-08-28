@@ -529,15 +529,15 @@ where
 						// Perform block tracing in a tokio blocking task.
 						let result = async {
 							tokio::task::spawn_blocking(move || {
-								Self::cache_block(client, backend, block, overrides.clone())
+								Self::cache_block(client, backend, block, overrides)
 							})
 							.await
 							.map_err(|e| {
 								format!("Tracing Substrate block {} panicked : {:?}", block, e)
 							})?
 						}
-						.await
-						.map_err(|e| e.to_string());
+						.await;
+						// .map_err(|e| e.to_string());
 
 						tracing::trace!("Block tracing finished, sending result to main task.");
 
@@ -637,7 +637,7 @@ where
 					tracing::trace!("Pooled block {} is no longer requested.", block);
 					// Remove block from the cache. Drops the value,
 					// closing all the channels contained in it.
-					let _ = self.cached_blocks.remove(&block);
+					let _ = self.cached_blocks.remove(block);
 				}
 			}
 		}

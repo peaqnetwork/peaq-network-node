@@ -296,6 +296,7 @@ async fn build_relay_chain_interface(
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
+#[allow(clippy::too_many_arguments)]
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
 async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	parachain_config: Configuration,
@@ -616,6 +617,7 @@ where
 }
 
 /// Build the import queue.
+#[allow(clippy::type_complexity)]
 pub fn build_import_queue<RuntimeApi, Executor>(
 	client: Arc<FullClient<RuntimeApi, Executor>>,
 	block_import: ParachainBlockImport<
