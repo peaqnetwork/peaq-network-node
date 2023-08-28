@@ -29,7 +29,8 @@ use sp_std::{
 	convert::TryInto,
 	fmt::Debug,
 	ops::{Add, Sub},
-	vec, vec::Vec,
+	vec,
+	vec::Vec,
 };
 
 use crate::{set::OrderedSet, Config};
@@ -220,7 +221,10 @@ where
 	Balance: Copy + Add<Output = Balance> + Saturating + PartialOrd + Eq + Ord + Debug + Zero,
 	MaxCollatorsPerDelegator: Get<u32> + Debug + PartialEq,
 {
-	pub fn try_new(collator: AccountId, amount: Balance) -> Result<Self, Vec<Stake<AccountId, Balance>>> {
+	pub fn try_new(
+		collator: AccountId,
+		amount: Balance,
+	) -> Result<Self, Vec<Stake<AccountId, Balance>>> {
 		Ok(Delegator {
 			delegations: OrderedSet::from(
 				vec![Stake { owner: collator, amount }].try_into()?, //.unwrap(),

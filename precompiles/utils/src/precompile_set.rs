@@ -323,7 +323,9 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
-	if !callable_by_precompile && <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller) {
+	if !callable_by_precompile &&
+		<R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller)
+	{
 		return Err(revert("Function not callable by precompiles"))
 	}
 
@@ -470,9 +472,7 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(
-							Err(revert("Precompile is called with too high nesting")),
-						)
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;

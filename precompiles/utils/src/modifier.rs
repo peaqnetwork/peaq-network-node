@@ -32,7 +32,6 @@ pub enum FunctionModifier {
 	Payable,
 }
 
-
 /// Check that a function call is compatible with the context it is
 /// called into.
 // #[must_use] not necessary due to return type has already #[must_use]

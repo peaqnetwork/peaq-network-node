@@ -9,8 +9,7 @@ use sp_runtime::Perquintill;
 use sp_std::vec::Vec;
 
 /// Short form definition for a complex return type.
-pub type CollatorRewardPerBlock<T> =
-	(Weight, Weight, Reward<AccountIdOf<T>, BalanceOf<T>>);
+pub type CollatorRewardPerBlock<T> = (Weight, Weight, Reward<AccountIdOf<T>, BalanceOf<T>>);
 /// Short form definition for a complex return type.
 pub type DelegatorRewardPerBlock<T> =
 	(Weight, Weight, BoundedVec<Reward<AccountIdOf<T>, BalanceOf<T>>, MaxDelegatorsPerCollator<T>>);
