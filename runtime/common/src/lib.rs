@@ -71,7 +71,7 @@ where
 {
 	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, &who))
+			return TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, who))
 				.unwrap_or_default()
 		}
 		AssetBalance::default()
@@ -87,10 +87,7 @@ where
 
 	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
 		let currency_id: Result<CurrencyId, ()> = asset_id.try_into();
-		match currency_id {
-			Ok(_) => true,
-			Err(_) => false,
-		}
+		currency_id.is_ok()
 	}
 
 	fn local_transfer(
@@ -102,8 +99,8 @@ where
 		if let Ok(currency_id) = asset_id.try_into() {
 			Local::transfer(
 				currency_id,
-				&origin,
-				&target,
+				origin,
+				target,
 				amount
 					.try_into()
 					.map_err(|_| DispatchError::Other("convert amount in local transfer"))?,
@@ -121,7 +118,7 @@ where
 		if let Ok(currency_id) = asset_id.try_into() {
 			Local::deposit(
 				currency_id,
-				&origin,
+				origin,
 				amount
 					.try_into()
 					.map_err(|_| DispatchError::Other("convert amount in local deposit"))?,
@@ -141,7 +138,7 @@ where
 		if let Ok(currency_id) = asset_id.try_into() {
 			Local::withdraw(
 				currency_id,
-				&origin,
+				origin,
 				amount
 					.try_into()
 					.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
@@ -455,7 +452,7 @@ pub trait PeaqCurrencyPaymentConvert {
 	) -> Result<(CurrencyId, Option<PaymentConvertInfo>), TransactionValidityError> {
 		let native_id = Self::NativeCurrencyId::get();
 
-		if let Ok(_) = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee) {
+		if Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee).is_ok() {
 			Ok((native_id, None))
 		} else {
 			// In theory not necessary, but as safety-buffer will add existential deposit.
@@ -477,9 +474,7 @@ pub trait PeaqCurrencyPaymentConvert {
 				{
 					let amount_in =
 						BalanceOfA::<Self::Currency, Self::AccountId>::saturated_from(amounts[0]);
-					if let Ok(_) =
-						Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in)
-					{
+					if Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in).is_ok() {
 						let info =
 							PaymentConvertInfo { amount_in: amounts[0], amount_out, zen_path };
 						return Ok((local_id, Some(info)))
