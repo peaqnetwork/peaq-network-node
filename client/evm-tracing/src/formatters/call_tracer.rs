@@ -50,7 +50,7 @@ impl super::ResponseFormatter for Formatter {
 					let gas = it.gas;
 					let gas_used = it.gas_used;
 					let inner = it.inner.clone();
-					Call::CallTracer(Box::new(CallTracerCall {
+					Call::CallTracer(CallTracerCall {
 						from,
 						gas,
 						gas_used,
@@ -98,7 +98,7 @@ impl super::ResponseFormatter for Formatter {
 								},
 						},
 						calls: Vec::new(),
-					}))
+					})
 				})
 				.collect();
 			// Geth's `callTracer` expects a tree of nested calls and we have a stack.
@@ -201,7 +201,7 @@ impl super::ResponseFormatter for Formatter {
 				}
 			}
 			// Remove `trace_address` from result.
-			if let Some(Call::CallTracer(Box::new(CallTracerCall { trace_address, .. }))) = result.get_mut(0)
+			if let Some(Call::CallTracer(CallTracerCall { trace_address, .. })) = result.get_mut(0)
 			{
 				*trace_address = None;
 			}
