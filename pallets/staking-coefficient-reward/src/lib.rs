@@ -81,7 +81,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { coefficient: 8 as u8 }
+			Self { coefficient: 8u8 }
 		}
 	}
 
