@@ -29,7 +29,7 @@ use sp_std::{
 	convert::TryInto,
 	fmt::Debug,
 	ops::{Add, Sub},
-	vec,
+	vec, vec::Vec,
 };
 
 use crate::{set::OrderedSet, Config};
