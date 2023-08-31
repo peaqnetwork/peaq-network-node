@@ -3252,6 +3252,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -7990,6 +7991,7 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-io",
  "sp-keystore",
  "sp-offchain",
  "sp-runtime",
