@@ -27,7 +27,7 @@ jobs:
         uses: ATiltedTree/setup-rust@v1.0.5
         with:
           rust-version: nightly-2022-11-03
-          components: rustfmt, clippy
+          components: rustfmt clippy
           targets: wasm32-unknown-unknown
 
       - name: Setup Linux Tools
