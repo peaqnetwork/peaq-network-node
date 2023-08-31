@@ -35,11 +35,11 @@ jobs:
 
       - name: Check, cargo clippy
         run: |
-          cargo clippy -- -Dwarnings
+          cargo clippy --release -- -Dwarnings
 
-      - name: Check, cargo check
-        run: |
-          SKIP_WASM_BUILD=1 cargo check --release
+      # - name: Check, cargo check
+      #   run: |
+      #     SKIP_WASM_BUILD=1 cargo check --release
 
       - name: Check, cargo test
         run: |
