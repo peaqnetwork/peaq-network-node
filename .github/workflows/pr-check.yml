@@ -21,11 +21,12 @@ jobs:
 
       - name: "[Setup] Rust"
         run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source ~/.cargo/env
-          rustup update nightly
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-          rustup component add rustfmt --toolchain nightly
+          TLCHNL=nightly-2022-11-03-x86_64-unknown-linux-gnu
+          TLCHNS=nightly-2022-11-03
+          curl -sSf https://sh.rustup.rs | sh -s -- --default-toolchain $TLCHNL
+          rustup target add wasm32-unknown-unknown --toolchain $TLCHNS
+          rustup component add rustfmt --toolchain $TLCHNS
+          rustup component add clippy --toolchain $TLCHNS
           cargo install cargo-expand --locked --version 1.0.34
 
       - name: Checkout Sources (actions/checkout)
