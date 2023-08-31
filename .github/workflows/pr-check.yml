@@ -23,11 +23,12 @@ jobs:
         uses: ATiltedTree/setup-rust@v1.0.5
         with:
           rust-version: nightly-2022-11-03
-          components: clippy
-          targets: wasm32-unknown-unknown
 
-      - name: "[Setup] Cargo tools"
-        run: cargo install cargo-expand
+      - name: "[Setup] Rust additional tools"
+        run: |
+          rustup target add wasm32-unknown-unknown --toolchain nightly
+          rustup component add rustfmt --toolchain nightly
+          cargo install cargo-expand --locked --version 1.0.34
 
       - name: Checkout Sources (actions/checkout)
         uses: actions/checkout@v3
