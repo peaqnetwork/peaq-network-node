@@ -23,7 +23,7 @@ jobs:
         uses: ATiltedTree/setup-rust@v1.0.5
         with:
           rust-version: nightly-2022-11-03
-          components: clippy
+          components: clippy cargo-expand
           targets: wasm32-unknown-unknown
 
       - name: Checkout Sources (actions/checkout)
@@ -36,10 +36,6 @@ jobs:
       - name: Check, cargo clippy
         run: |
           cargo clippy --release -- -Dwarnings
-
-      # - name: Check, cargo check
-      #   run: |
-      #     SKIP_WASM_BUILD=1 cargo check --release
 
       - name: Check, cargo test
         run: |
