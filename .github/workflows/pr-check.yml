@@ -1,7 +1,6 @@
 
 name: Pull Request Check & Build
 
-# Controls when the action will run.
 on:
   pull_request:
     types:
@@ -9,29 +8,26 @@ on:
       - synchronize
       - closed
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   check:
-    # The type of runner that the job will run on
     runs-on: ubuntu-20.04
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-
-      - name: Disk Space Reclaimer
+      - name: Disk Space (insightsengineering/disk-space-reclaimer)
         uses: insightsengineering/disk-space-reclaimer@v1.1.0
 
-      - name: Setup Rust
+      - name: Setup Linux Tools
+        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
+
+      - name: Setup Rust (ATiltedTree/setup-rust)
         uses: ATiltedTree/setup-rust@v1.0.5
         with:
           rust-version: nightly-2022-11-03
           components: rustfmt clippy
           targets: wasm32-unknown-unknown
 
-      - name: Setup Linux Tools
-        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
+      - name: Checkout Sources (actions/checkout)
+        uses: actions/checkout@v3
 
       - name: Run cargo fmt
         run: |
