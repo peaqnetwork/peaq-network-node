@@ -1,5 +1,5 @@
 
-name: Check Set-Up & Build
+name: Pull Request Check & Build
 
 # Controls when the action will run.
 on:
@@ -8,9 +8,6 @@ on:
       - opened
       - synchronize
       - closed
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -21,43 +18,34 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Diskspace
+      - name: Disk Space Reclaimer
+        uses: insightsengineering/disk-space-reclaimer@v1.1.0
+
+      - name: Install Linux Tools
+        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
+
+      - name: Install Rust
         run: |
-          sudo df -h
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo df -h
-
-      - name: Set-Up
-        run: sudo apt install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl protobuf-compiler
-
-      - name: Install Rustup
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
           rustup target add wasm32-unknown-unknown --toolchain nightly
           rustup component add rustfmt --toolchain nightly
+          rustup component add clippy --toolchain nightly
           cargo install cargo-expand --locked --version 1.0.34
 
-      - name: Check fmt
+      - name: Run cargo fmt
         run: |
           cargo fmt --check
 
-      - name: Check clippy
+      - name: Run cargo clippy
         run: |
           cargo clippy -- -Dwarnings
 
-      - name: Check Build
+      - name: Run Cargo check
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
 
-      - name: Check Build
+      - name: Run cargo test
         run: |
           SKIP_WASM_BUILD=1 cargo test --release
