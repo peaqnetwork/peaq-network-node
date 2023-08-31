@@ -429,6 +429,29 @@ pub fn run() -> sc_cli::Result<()> {
 
 			Ok(())
 		},
+		#[cfg(feature = "try-runtime")]
+		Some(Subcommand::TryRuntime(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			with_runtime_or_err(chain_spec, {
+				runner.async_run(|config| {
+					// grab the task manager.
+					let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+					let task_manager =
+						sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+							.map_err(|e| {
+								sc_cli::Error::Service(sc_service::Error::Prometheus(e))
+							})?;
+					Ok((cmd.run::<Block, Executor>(config), task_manager))
+				})
+			})
+		},
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime) => {
+			Err("TryRuntime wasn't enabled when building the node. \
+			You can enable it with `--features try-runtime`.".into())
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();

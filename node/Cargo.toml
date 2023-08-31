@@ -127,6 +127,7 @@ peaq-pallet-storage-rpc = { workspace = true, default-features = true }
 zenlink-protocol = { workspace = true, default-features = true }
 zenlink-protocol-rpc = { workspace = true, default-features = true }
 zenlink-protocol-runtime-api = { workspace = true, default-features = true }
+try-runtime-cli = { workspace = true, optional = true }
 
 [features]
 default = [
@@ -146,3 +147,5 @@ runtime-benchmarks = [
 	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
+
+try-runtime = [ "peaq-agung-runtime/try-runtime", "peaq-dev-runtime/try-runtime", "peaq-krest-runtime/try-runtime", "peaq-runtime/try-runtime" ]
