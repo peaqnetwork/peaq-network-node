@@ -23,16 +23,15 @@ jobs:
       - name: Disk Space Reclaimer
         uses: insightsengineering/disk-space-reclaimer@v1.1.0
 
-      - name: Install Linux Tools
-        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
+      - name: Setup Rust
+        uses: ATiltedTree/setup-rust@v1.0.5
+        with:
+          rust-version: nightly-2022-11-03
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
 
-      - name: Install Rust
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-          rustup component add rustfmt --toolchain nightly
-          rustup component add clippy --toolchain nightly
-          cargo install cargo-expand --locked --version 1.0.34
+      - name: Setup Linux Tools
+        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
 
       - name: Run cargo fmt
         run: |
