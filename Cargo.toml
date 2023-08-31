@@ -219,4 +219,4 @@ zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Modul
 zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.38", default-features = false }
 
 frame-try-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
-try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
+try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38"}
