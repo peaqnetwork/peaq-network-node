@@ -575,7 +575,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 }
 
 parameter_types! {
-	pub const EvmChainId: u64 = 9999;
+	pub const EvmChainId: u64 = 9990;
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
 	);
