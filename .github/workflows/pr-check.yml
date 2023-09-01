@@ -1,5 +1,5 @@
 
-name: Pull Request Check & Build
+name: Pull Request Check
 
 on:
   pull_request:
