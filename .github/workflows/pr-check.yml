@@ -21,10 +21,9 @@ jobs:
 
       - name: "[Setup] Rust"
         run: |
-          TLCHNL=nightly-2022-11-03-x86_64-unknown-linux-gnu
-          TLCHNS=nightly-2022-11-03
-          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHNL
-          rustup target add wasm32-unknown-unknown --toolchain $TLCHNS
+          TLCHN=nightly-2022-11-03
+          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHN
+          rustup target add wasm32-unknown-unknown --toolchain $TLCHN
           cargo install cargo-expand --locked --version 1.0.34
 
       - name: Checkout Sources (actions/checkout)
@@ -34,10 +33,10 @@ jobs:
         run: |
           cargo fmt --check
 
-      - name: "[Check] cargo clippy"
-        run: |
-          cargo clippy --release -- -Dwarnings
-
       - name: "[Check] cargo test"
         run: |
           SKIP_WASM_BUILD=1 cargo test --release
+
+      - name: "[Check] cargo clippy"
+        run: |
+          cargo clippy --release -- -Dwarnings
