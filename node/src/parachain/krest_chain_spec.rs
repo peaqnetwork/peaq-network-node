@@ -134,7 +134,7 @@ fn configure_genesis(
 				machines_percent: Perbill::from_percent(10),
 				parachain_lease_fund_percent: Perbill::from_percent(10),
 			},
-			block_issue_reward: 3_80_517_503_805 * NANOCENTS,
+			block_issue_reward: 380_517_503_805 * NANOCENTS,
 			max_currency_supply: 4_000_000 * DOLLARS,
 		},
 		vesting: Default::default(),

@@ -70,10 +70,10 @@ macro_rules! assert_event_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					$crate::mock::events().iter().find(|x| *x == e).is_some(),
 					"Event {:?} was not found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			},
 		}
@@ -87,10 +87,10 @@ macro_rules! assert_event_not_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_none(),
+					$crate::mock::events().iter().find(|x| *x == e).is_none(),
 					"Event {:?} was found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			},
 		}

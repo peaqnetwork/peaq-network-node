@@ -32,9 +32,9 @@ pub enum FunctionModifier {
 	Payable,
 }
 
-#[must_use]
 /// Check that a function call is compatible with the context it is
 /// called into.
+// #[must_use] not necessary due to return type has already #[must_use]
 pub fn check_function_modifier(
 	context: &Context,
 	is_static: bool,

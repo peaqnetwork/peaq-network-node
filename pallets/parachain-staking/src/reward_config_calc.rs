@@ -1,6 +1,6 @@
 use crate::{
 	reward_rate::RewardRateInfo,
-	types::{BalanceOf, Candidate, Reward},
+	types::{AccountIdOf, BalanceOf, Candidate, MaxDelegatorsPerCollator, Reward},
 	Config,
 };
 use core::marker::PhantomData;
@@ -8,17 +8,23 @@ use frame_support::{pallet_prelude::Weight, traits::Get, BoundedVec};
 use sp_runtime::Perquintill;
 use sp_std::vec::Vec;
 
+/// Short form definition for a complex return type.
+pub type CollatorRewardPerBlock<T> = (Weight, Weight, Reward<AccountIdOf<T>, BalanceOf<T>>);
+/// Short form definition for a complex return type.
+pub type DelegatorRewardPerBlock<T> =
+	(Weight, Weight, BoundedVec<Reward<AccountIdOf<T>, BalanceOf<T>>, MaxDelegatorsPerCollator<T>>);
+
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
 	/// Payout Machines
 	fn collator_reward_per_block(
 		state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
-	) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>);
+	) -> CollatorRewardPerBlock<T>;
 	fn delegator_reward_per_block(
 		state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
-	) -> (Weight, Weight, BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>);
+	) -> DelegatorRewardPerBlock<T>;
 }
 
 pub trait RewardRateConfigTrait {
@@ -46,7 +52,7 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 	fn collator_reward_per_block(
 		stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
-	) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>) {
+	) -> CollatorRewardPerBlock<T> {
 		let min_delegator_stake = T::MinDelegatorStake::get();
 		let delegator_sum = (&stake.delegators)
 			.into_iter()
@@ -73,8 +79,7 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 	fn delegator_reward_per_block(
 		stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
-	) -> (Weight, Weight, BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>)
-	{
+	) -> DelegatorRewardPerBlock<T> {
 		let min_delegator_stake = T::MinDelegatorStake::get();
 		let delegator_sum = (&stake.delegators)
 			.into_iter()

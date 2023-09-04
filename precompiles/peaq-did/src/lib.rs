@@ -116,7 +116,7 @@ where
 				.write::<H256>(did_account)
 				.write::<BoundedBytes<GetBytesLimit>>(name)
 				.write::<BoundedBytes<GetBytesLimit>>(value)
-				.write::<u32>(valid_for.into())
+				.write::<u32>(valid_for)
 				.build(),
 		);
 		event.record(handle)?;
@@ -162,7 +162,7 @@ where
 				.write::<H256>(did_account)
 				.write::<BoundedBytes<GetBytesLimit>>(name)
 				.write::<BoundedBytes<GetBytesLimit>>(value)
-				.write::<u32>(valid_for.into())
+				.write::<u32>(valid_for)
 				.build(),
 		);
 		event.record(handle)?;
@@ -194,7 +194,7 @@ where
 			handle.context().address,
 			SELECTOR_LOG_REMOVE_ATTRIBUTE,
 			EvmDataWriter::new()
-				.write::<H256>(did_account.into())
+				.write::<H256>(did_account)
 				.write::<BoundedBytes<GetBytesLimit>>(name)
 				.build(),
 		);

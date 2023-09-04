@@ -2514,7 +2514,7 @@ pub mod pallet {
 				// FIXME: Does not prevent the collator from being able to author a block in this (or potentially the next) session. See https://github.com/paritytech/substrate/issues/8004
 				.map(pallet_session::Pallet::<T>::disable_index);
 
-			CandidatePool::<T>::remove(&collator);
+			CandidatePool::<T>::remove(collator);
 			Ok(())
 		}
 
@@ -2628,7 +2628,7 @@ pub mod pallet {
 			let mut reads = Weight::from_ref_time(0_u64);
 			let mut writes = Weight::from_ref_time(0_u64);
 
-			if let Some(state) = CandidatePool::<T>::get(author.clone()) {
+			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
 				let issue_number = T::Currency::free_balance(&pot)
 					.checked_sub(&T::Currency::minimum_balance())
