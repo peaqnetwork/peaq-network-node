@@ -35,7 +35,7 @@ jobs:
 
       - name: "[Check] cargo test"
         run: |
-          SKIP_WASM_BUILD=1 cargo test --release
+          cargo test --release
 
       - name: "[Check] cargo clippy"
         run: |
