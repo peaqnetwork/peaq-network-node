@@ -440,23 +440,22 @@ pub fn run() -> sc_cli::Result<()> {
 					sp_io::SubstrateHostFunctions,
 					<E as NativeExecutionDispatch>::ExtendHostFunctions,
 				>;
-	
+
 				// grab the task manager.
 				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
 				let task_manager =
 					sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
 						.map_err(|e| format!("Error: {:?}", e))?;
-	
+
 				runner.async_run(|_| {
 					Ok((cmd.run::<Block, HostFunctionsOf<Executor>>(), task_manager))
 				})
 			})
 		},
 		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => {
-			Err("TryRuntime wasn't enabled when building the node. \
-			You can enable it with `--features try-runtime`.".into())
-		},
+		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
+			You can enable it with `--features try-runtime`."
+			.into()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();

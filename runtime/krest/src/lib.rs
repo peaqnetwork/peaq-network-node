@@ -96,12 +96,12 @@ pub use peaq_pallet_did;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 pub use peaq_pallet_rbac;
 use peaq_pallet_rbac::{
+	error::RbacError,
 	rbac::{Group, Permission, Rbac, Result as RbacResult, Role},
 	structs::{
 		Entity as RbacEntity, Permission2Role as RbacPermission2Role, Role2Group as RbacRole2Group,
 		Role2User as RbacRole2User, User2Group as RbacUser2Group,
 	},
-	error::RbacError
 };
 pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
