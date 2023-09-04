@@ -287,7 +287,7 @@ fn is_address_eoa_or_precompile<R: pallet_evm::Config>(address: H160) -> bool {
 
 	// check code matches dummy code
 	let code = pallet_evm::AccountCodes::<R>::get(address);
-	&code == &[0x60, 0x00, 0x60, 0x00, 0xfd]
+	code == [0x60, 0x00, 0x60, 0x00, 0xfd]
 }
 
 /// Common checks for precompile and precompile sets.
@@ -323,10 +323,10 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
-	if !callable_by_precompile {
-		if <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller) {
-			return Err(revert("Function not callable by precompiles"))
-		}
+	if !callable_by_precompile &&
+		<R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller)
+	{
+		return Err(revert("Function not callable by precompiles"))
 	}
 
 	Ok(())
@@ -472,16 +472,14 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(
-							Err(revert("Precompile is called with too high nesting").into()),
-						)
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
 				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -499,7 +497,7 @@ where
 				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -829,5 +827,11 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P>
 
 	pub fn summarize_checks(&self) -> Vec<PrecompileCheckSummary> {
 		self.inner.summarize_checks()
+	}
+}
+
+impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
+	fn default() -> Self {
+		Self::new()
 	}
 }

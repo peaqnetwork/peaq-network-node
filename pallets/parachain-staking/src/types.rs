@@ -30,6 +30,7 @@ use sp_std::{
 	fmt::Debug,
 	ops::{Add, Sub},
 	vec,
+	vec::Vec,
 };
 
 use crate::{set::OrderedSet, Config};
@@ -220,10 +221,13 @@ where
 	Balance: Copy + Add<Output = Balance> + Saturating + PartialOrd + Eq + Ord + Debug + Zero,
 	MaxCollatorsPerDelegator: Get<u32> + Debug + PartialEq,
 {
-	pub fn try_new(collator: AccountId, amount: Balance) -> Result<Self, ()> {
+	pub fn try_new(
+		collator: AccountId,
+		amount: Balance,
+	) -> Result<Self, Vec<Stake<AccountId, Balance>>> {
 		Ok(Delegator {
 			delegations: OrderedSet::from(
-				vec![Stake { owner: collator, amount }].try_into().unwrap(),
+				vec![Stake { owner: collator, amount }].try_into()?, //.unwrap(),
 			),
 			total: amount,
 		})
@@ -233,9 +237,9 @@ where
 	///
 	/// If already delegating to the same account, this call returns false and
 	/// doesn't insert the new delegation.
-	pub fn add_delegation(&mut self, stake: Stake<AccountId, Balance>) -> Result<bool, ()> {
+	pub fn add_delegation(&mut self, stake: Stake<AccountId, Balance>) -> Result<bool, usize> {
 		let amt = stake.amount;
-		if self.delegations.try_insert(stake).map_err(|_| ())? {
+		if self.delegations.try_insert(stake)? {
 			self.total = self.total.saturating_add(amt);
 			Ok(true)
 		} else {
@@ -376,4 +380,5 @@ pub(crate) struct ReplacedDelegator<T: Config> {
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
+pub type MaxDelegatorsPerCollator<T> = <T as Config>::MaxDelegatorsPerCollator;
 pub type StakeOf<T> = Stake<AccountIdOf<T>, BalanceOf<T>>;
