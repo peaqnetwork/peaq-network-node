@@ -74,8 +74,8 @@ pallet-contracts-primitives = { git = "https://github.com/peaqnetwork/substrate"
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 peaq-pallet-transaction = { git = "https://github.com/peaqnetwork/peaq-pallet-transaction.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
-peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "try-runtime-integration", default-features = false }
-peaq-pallet-rbac-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "try-runtime-integration", default-features = false }
+peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+peaq-pallet-rbac-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 peaq-pallet-storage = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 peaq-pallet-storage-runtime-api = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-multisig = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
@@ -173,7 +173,7 @@ sp-keystore = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq
 sc-chain-spec = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 fp-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.38" }
 peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v0.9.38" }
-peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "try-runtime-integration" }
+peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v0.9.38" }
 peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false, version = "0.0.1" }
 sp-finality-grandpa = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38" }
 
