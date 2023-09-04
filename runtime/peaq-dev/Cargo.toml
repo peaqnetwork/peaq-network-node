@@ -313,6 +313,7 @@ try-runtime = [
 	"peaq-pallet-transaction/try-runtime",
 	"peaq-pallet-storage/try-runtime",
 	"peaq-pallet-rbac/try-runtime",
+	"peaq-pallet-mor/try-runtime",
 
 	"parachain-staking/try-runtime",
 	"parachain-info/try-runtime",

@@ -8082,7 +8082,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=try-runtime-integration#6c44138ea8388f138d012f55850977162056289d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8100,7 +8100,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=try-runtime-integration#6c44138ea8388f138d012f55850977162056289d"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8118,7 +8118,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=try-runtime-integration#6c44138ea8388f138d012f55850977162056289d"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",

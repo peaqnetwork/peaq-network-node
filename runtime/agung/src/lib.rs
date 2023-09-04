@@ -100,7 +100,7 @@ use peaq_pallet_rbac::{
 	structs::{
 		Entity as RbacEntity, Permission2Role as RbacPermission2Role, Role2Group as RbacRole2Group,
 		Role2User as RbacRole2User, User2Group as RbacUser2Group,
-	},
+	}, error::RbacError,
 };
 pub use peaq_pallet_storage;
 use peaq_pallet_storage::traits::Storage;
@@ -1533,81 +1533,81 @@ impl_runtime_apis! {
 		fn fetch_role(
 			account: AccountId,
 			entity: EntityId
-		) -> RbacResult<RbacEntity<EntityId>> {
+		) -> RbacResult<RbacEntity<EntityId>, RbacError> {
 			PeaqRbac::get_role(&account, entity)
 		}
 
 		fn fetch_roles(
 			owner: AccountId
-		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>, RbacError> {
 			PeaqRbac::get_roles(&owner)
 		}
 
 		fn fetch_user_roles(
 			owner: AccountId,
 			user_id: EntityId
-		) -> RbacResult<Vec<RbacRole2User<EntityId>>> {
+		) -> RbacResult<Vec<RbacRole2User<EntityId>>, RbacError> {
 			PeaqRbac::get_user_roles(&owner, user_id)
 		}
 
 		fn fetch_permission(
 			owner: AccountId,
 			permission_id: EntityId
-		) -> RbacResult<RbacEntity<EntityId>> {
+		) -> RbacResult<RbacEntity<EntityId>, RbacError> {
 			PeaqRbac::get_permission(&owner, permission_id)
 		}
 
 		fn fetch_permissions(
 			owner: AccountId
-		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>, RbacError> {
 			PeaqRbac::get_permissions(&owner)
 		}
 
 		fn fetch_role_permissions(
 			owner: AccountId,
 			role_id: EntityId
-		) -> RbacResult<Vec<RbacPermission2Role<EntityId>>> {
+		) -> RbacResult<Vec<RbacPermission2Role<EntityId>>, RbacError> {
 			PeaqRbac::get_role_permissions(&owner, role_id)
 		}
 
 		fn fetch_group(
 			owner: AccountId,
 			group_id: EntityId
-		) -> RbacResult<RbacEntity<EntityId>> {
+		) -> RbacResult<RbacEntity<EntityId>, RbacError> {
 			PeaqRbac::get_group(&owner, group_id)
 		}
 
 		fn fetch_groups(
 			owner: AccountId
-		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>, RbacError> {
 			PeaqRbac::get_groups(&owner)
 		}
 
 		fn fetch_group_roles(
 			owner: AccountId,
 			group_id: EntityId
-		) -> RbacResult<Vec<RbacRole2Group<EntityId>>> {
+		) -> RbacResult<Vec<RbacRole2Group<EntityId>>, RbacError> {
 			PeaqRbac::get_group_roles(&owner, group_id)
 		}
 
 		fn fetch_user_groups(
 			owner: AccountId,
 			user_id: EntityId
-		) -> RbacResult<Vec<RbacUser2Group<EntityId>>> {
+		) -> RbacResult<Vec<RbacUser2Group<EntityId>>, RbacError> {
 			PeaqRbac::get_user_groups(&owner, user_id)
 		}
 
 		fn fetch_user_permissions(
 			owner: AccountId,
 			user_id: EntityId
-		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>, RbacError> {
 			PeaqRbac::get_user_permissions(&owner, user_id)
 		}
 
 		fn fetch_group_permissions(
 			owner: AccountId,
 			group_id: EntityId
-		) -> RbacResult<Vec<RbacEntity<EntityId>>> {
+		) -> RbacResult<Vec<RbacEntity<EntityId>>, RbacError> {
 			PeaqRbac::get_group_permissions(&owner, group_id)
 		}
 	}
