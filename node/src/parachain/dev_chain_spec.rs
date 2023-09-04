@@ -58,7 +58,7 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	Ok(ChainSpec::from_genesis(
 		"peaq-dev",
 		"dev-testnet",
-		ChainType::Local,
+		ChainType::Development,
 		move || {
 			configure_genesis(
 				wasm_binary,
