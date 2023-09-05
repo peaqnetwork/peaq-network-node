@@ -3265,6 +3265,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -7564,7 +7565,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -7682,7 +7685,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -7806,7 +7811,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -7981,6 +7988,7 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-io",
  "sp-keystore",
  "sp-offchain",
  "sp-runtime",
@@ -7992,6 +8000,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "tokio",
+ "try-runtime-cli",
  "url 2.4.0",
  "xcm",
  "zenlink-protocol",
@@ -8070,7 +8079,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#cb26cfca0c89f438e6540552f96cb4b752f1f3e2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8088,7 +8097,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#cb26cfca0c89f438e6540552f96cb4b752f1f3e2"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8106,7 +8115,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.0.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#8a9d6dd944e960c7a1e1bd54923d7832c7abfb15"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v0.9.38#cb26cfca0c89f438e6540552f96cb4b752f1f3e2"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -8393,7 +8402,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -14133,6 +14144,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "clap 4.3.23",
  "frame-remote-externalities",
+ "frame-try-runtime",
  "hex",
  "log",
  "parity-scale-codec",
