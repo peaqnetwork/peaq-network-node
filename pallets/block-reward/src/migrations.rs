@@ -30,7 +30,8 @@ pub enum StorageReleases {
 	#[default]
 	V2_0_0,
 	V2_1_0, // First changes compared to releases before, renaming HardCap to MaxCurrencySupply
-	V2_2_0, // Last version defined by this enum, next will use substrate storage_version
+	V2_2_0, // Change the machine subsidization to parachain lease fund
+	V2_3_0, // Switch to staking-collect-mechanism
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
@@ -42,6 +43,9 @@ mod v2 {
 
 	#[storage_alias]
 	type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
+	#[storage_alias]
+	type RewardDistributionConfigStorageV0<T: Config> =
+		StorageValue<Pallet<T>, RewardDistributionConfigV0, ValueQuery>;
 
 	// Neccessary, when migrating to v3
 	// #[storage_alias]
@@ -52,11 +56,10 @@ mod v2 {
 
 	impl<T: Config> MigrateToV2x<T> {
 		pub fn on_runtime_upgrade() -> Weight {
-			let mut version = Pallet::<T>::storage_releases();
-			let mut reads: u64 = 1;
-			let mut writes: u64 = 0;
-
-			if version == StorageReleases::V2_0_0 {
+			let mut weight_writes = 0;
+			let mut weight_reads = 3;
+			
+			if VersionStorage::<T>::get() == StorageReleases::V2_0_0 {
 				log!(info, "Migrating block_reward to Releases::V2_1_0");
 
 				let storage = HardCap::<T>::get();
@@ -71,29 +74,44 @@ mod v2 {
 				writes += 2;
 			}
 
-			if version == StorageReleases::V2_1_0 {
-				log!(info, "Migrating block_reward to Releases::V2_2_0 / storage_version(3)");
+			if VersionStorage::<T>::get() == StorageReleases::V2_1_0 {
+				log!(info, "Migrating block_reward to Releases::V2_1_0");
+
+				let storage: RewardDistributionConfigV0 =
+					RewardDistributionConfigStorageV0::<T>::get();
+				RewardDistributionConfigStorage::<T>::put(RewardDistributionConfig {
+					treasury_percent: storage.treasury_percent,
+					dapps_percent: storage.dapps_percent,
+					collators_percent: storage.collators_percent,
+					lp_percent: storage.lp_percent,
+					machines_percent: storage.machines_percent,
+					parachain_lease_fund_percent: storage.machines_subsidization_percent,
+				});
+				VersionStorage::<T>::put(StorageReleases::V2_2_0);
+				log!(info, "Releases::V2_2_0 Migrating Done.");
+				weight_reads += 1;
+				weight_writes += 2
+			}
+
+			if VersionStorage::<T>::get() == StorageReleases::V2_2_0 {
+				log!(info, "Migrating block_reward to Releases::V2_3_0 / storage_version(4)");
 
 				let block_issue_reward = BlockIssueReward::<T>::get();
 
-				VersionStorage::<T>::put(StorageReleases::V2_2_0);
 				AverageSelectorConfig::<T>::put(AverageSelector::default());
 				Hours12BlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 3600u32));
 				DailyBlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 7200u32));
 				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 50400u32));
+				VersionStorage::<T>::put(StorageReleases::V2_3_0);
 
-				log!(info, "Migrating to Releases::V2_2_0 / storage_version(3) - Done.");
+				log!(info, "Migrating to Releases::V2_3_0 / storage_version(4) - Done.");
 
 				version = Pallet::<T>::storage_releases();
-				reads += 2;
-				writes += 5;
+				weight_reads += 1;
+				weight_writes += 5;
 			}
 
-			if version != StorageReleases::V2_2_0 {
-				log!(warn, "Storage version seems not to be correct, please check ({:?})", version);
-			}
-
-			T::DbWeight::get().reads_writes(reads, writes)
+			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
 	}
 }

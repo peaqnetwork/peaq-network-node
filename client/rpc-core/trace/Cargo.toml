@@ -8,10 +8,11 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
 
 [dependencies]
-ethereum-types = "0.13.1"
-futures = { version = "0.3.1", features = [ "compat" ] }
-jsonrpsee = { git = "https://github.com/peaqnetwork/jsonrpsee", branch = "peaq-v0.15.1", default-features = false, features = [ "macros", "server" ] }
+futures = { workspace = true, default-features = true, features = ["compat"] }
+jsonrpsee = { workspace = true, default-features = false, features = ["macros", "server"] }
 peaq-client-evm-tracing = { path = "../../evm-tracing" }
 peaq-rpc-core-types = { path = "../types" }
-serde = { version = "1.0.136", features = [ "derive" ] }
-serde_json = "1.0"
+
+ethereum-types = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true, features = ["derive"] }
+serde_json = { workspace = true, default-features = true }

@@ -6,44 +6,53 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-affix = "0.1.2"
-hex = { version = "0.4.3", default-features = false }
-impl-trait-for-tuples = "0.2.2"
-log = "0.4"
-num_enum = { version = "0.5.3", default-features = false }
-paste = "1.0.8"
-sha3 = { version = "0.9", default-features = false }
-similar-asserts = { version = "1.1.0", optional = true }
+affix = { workspace = true }
+derive_more = { workspace = true, optional = true }
+environmental = { workspace = true }
+hex = { workspace = true }
+hex-literal = { workspace = true, optional = true }
+impl-trait-for-tuples = { workspace = true }
+log = { workspace = true }
+num_enum = { workspace = true }
+paste = { workspace = true }
+scale-info = { workspace = true, optional = true, features = [ "derive" ] }
+serde = { workspace = true, optional = true }
+sha3 = { workspace = true }
+similar-asserts = { workspace = true, optional = true }
 
 # Moonbeam
 precompile-utils-macro = { path = "macro" }
 
 # Substrate
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-frame-support = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-frame-system = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-sp-core = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-sp-io = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
-sp-std = { git = "https://github.com/peaqnetwork/substrate", default-features = false , branch = "peaq-polkadot-v0.9.29" }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+parity-scale-codec = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-std = { workspace = true }
 
 # Frontier
-evm = { git = "https://github.com/peaqnetwork/evm", branch = "peaq-polkadot-v0.9.29", default-features = false, features = [ "with-codec" ] }
-fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.29", default-features = false }
-pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v0.9.29", default-features = false }
+evm = { workspace = true, features = [ "with-codec" ] }
+fp-evm = { workspace = true }
+pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
+
+# Polkadot / XCM
+xcm = { workspace = true }
 
 [dev-dependencies]
-hex-literal = "0.3.1"
+hex-literal = { workspace = true }
 
 [features]
 default = [ "std" ]
 std = [
-	"codec/std",
+	"environmental/std",
 	"fp-evm/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-evm/std",
+	"parity-scale-codec/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
 ]
-testing = [ "similar-asserts", "std" ]
+testing = [ "derive_more", "hex-literal", "scale-info", "serde", "similar-asserts", "std" ]

@@ -1,583 +1,219 @@
 [package]
-name = 'peaq-dev-runtime'
-version = '3.0.0-polkadot-v0.9.29'
-description = 'A node of the peaq network.'
-authors = ['peaq network <https://github.com/peaqnetwork>']
-homepage = 'https://peaq.network/'
-edition = '2021'
-license = 'Unlicense'
+name = "peaq-dev-runtime"
+version = "3.0.0-polkadot-v0.9.38"
+description = "A node of the peaq network."
+authors = ["peaq network <https://github.com/peaqnetwork>"]
+homepage = "https://peaq.network/"
+edition = "2021"
+license = "Unlicense"
 publish = false
-repository = 'https://github.com/peaqnetwork/peaq-network-node/'
+repository = "https://github.com/peaqnetwork/peaq-network-node/"
 
 [package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
+targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.smallvec]
-version = '1.6.1'
-
-[dependencies.codec]
-default-features = false
-features = ['derive']
-package = 'parity-scale-codec'
-version = '3.0.0'
-
-[dependencies.rlp]
-default-features = false
-optional = true
-version = '0.5'
-
-[dependencies.sha3]
-default-features = false
-optional = true
-version = '0.8'
-
-[dependencies.frame-benchmarking]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-optional = true
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.frame-executive]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.frame-support]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.frame-system]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.frame-system-benchmarking]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-optional = true
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.frame-system-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.hex-literal]
-optional = true
-version = '0.3.1'
-
-[dependencies.pallet-aura]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-balances]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-randomness-collective-flip]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-sudo]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-timestamp]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-transaction-payment]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-transaction-payment-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.scale-info]
-default-features = false
-features = ['derive']
-version = '~2.3.1'
-
-
-[dependencies.sp-api]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-block-builder]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-consensus-aura]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-core]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-inherents]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-offchain]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-runtime]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-session]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-std]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-transaction-pool]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.sp-version]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-contracts]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-contracts-primitives]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-contracts-rpc-runtime-api]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.peaq-pallet-did]
-default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
-
-[dependencies.peaq-pallet-did-runtime-api]
-default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-did.git'
-branch = 'dev'
-
-[dependencies.peaq-pallet-transaction]
-default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-transaction.git'
-branch = 'dev'
-
-[dependencies.peaq-pallet-rbac]
-git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-default-features = false
-branch = 'dev'
-
-[dependencies.peaq-pallet-rbac-runtime-api]
-git = 'https://github.com/peaqnetwork/peaq-pallet-rbac.git'
-default-features = false
-branch = 'dev'
-
-[dependencies.peaq-pallet-storage]
-git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
-branch = 'dev'
-default-features = false
-
-[dependencies.peaq-pallet-storage-runtime-api]
-git = 'https://github.com/peaqnetwork/peaq-storage-pallet.git'
-branch = 'dev'
-default-features = false
-
-[dependencies.peaq-pallet-mor]
-default-features = false
-git = 'https://github.com/peaqnetwork/peaq-pallet-mor.git'
-branch = 'dev'
-
-[dependencies.pallet-multisig]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-utility]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-treasury]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-vesting]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-# ### Ethereum
-[dependencies.sp-io]
-default-features = false
-git = 'https://github.com/peaqnetwork/substrate'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.fp-evm]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.fp-rpc]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.fp-self-contained]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-base-fee]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-dynamic-fee]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-ethereum]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm-precompile-blake2]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm-precompile-bn128]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm-precompile-dispatch]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm-precompile-modexp]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm-precompile-sha3fips]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-[dependencies.pallet-evm-precompile-simple]
-default-features = false
-git = 'https://github.com/peaqnetwork/frontier'
-branch = 'peaq-polkadot-v0.9.29'
-
-
-# Tracing
-[dependencies.evm-tracing-events]
-path = "../../primitives/rpc/evm-tracing-events"
-optional = true
-default-features = false
-
-[dependencies.peaq-evm-tracer]
-path = "../evm_tracer"
-optional = true
-default-features = false
-
-[dependencies.peaq-rpc-primitives-debug]
-path = "../../primitives/rpc/debug"
-default-features = false
-
-[dependencies.peaq-rpc-primitives-txpool]
-path = "../../primitives/rpc/txpool"
-default-features = false
-
-
-# Parachain
-[dependencies.cumulus-primitives-core]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-[dependencies.cumulus-primitives-utility]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-[dependencies.cumulus-primitives-timestamp]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-[dependencies.cumulus-pallet-parachain-system]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-[dependencies.cumulus-pallet-aura-ext]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-[dependencies.parachain-info]
-git = "https://github.com/peaqnetwork/cumulus"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-# polkadot dependencies
-[dependencies.polkadot-parachain]
-git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.polkadot-primitives]
-git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.polkadot-runtime-common]
-git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-# Parachain continue
-[dependencies.pallet-session]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
+branch = "peaq-polkadot-v0.9.38"
 
-[dependencies.pallet-authorship]
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
+[dependencies]
+codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+smallvec = { workspace = true, default-features = false }
+rlp = { workspace = true, default-features = false, optional = true  }
+sha3 = { workspace = true, default-features = false, optional = true  }
+frame-benchmarking = { workspace = true, default-features = false, optional = true  }
+frame-executive = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-system-rpc-runtime-api = { workspace = true, default-features = false }
+hex-literal = { workspace = true, default-features = false, optional = true  }
+pallet-aura = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, default-features = false }
+pallet-randomness-collective-flip = { workspace = true, default-features = false }
+pallet-sudo = { workspace = true, default-features = false }
+pallet-timestamp = { workspace = true, default-features = false }
+pallet-transaction-payment = { workspace = true, default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = false }
+scale-info = { workspace = true, default-features = false }
+sp-api = { workspace = true, default-features = false }
+sp-block-builder = { workspace = true, default-features = false }
+sp-consensus-aura = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-inherents = { workspace = true, default-features = false }
+sp-offchain = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-session = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+sp-transaction-pool = { workspace = true, default-features = false }
+sp-version = { workspace = true, default-features = false }
+pallet-contracts = { workspace = true, default-features = false }
+pallet-contracts-primitives = { workspace = true, default-features = false }
+peaq-pallet-did = { workspace = true, default-features = false }
+peaq-pallet-did-runtime-api = { workspace = true, default-features = false }
+peaq-pallet-transaction = { workspace = true, default-features = false }
+peaq-pallet-rbac = { workspace = true, default-features = false }
+peaq-pallet-rbac-runtime-api = { workspace = true, default-features = false }
+peaq-pallet-storage = { workspace = true, default-features = false }
+peaq-pallet-storage-runtime-api = { workspace = true, default-features = false }
+pallet-multisig = { workspace = true, default-features = false }
+pallet-utility = { workspace = true, default-features = false }
+pallet-treasury = { workspace = true, default-features = false }
+pallet-vesting = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+fp-evm = { workspace = true, default-features = false }
+fp-rpc = { workspace = true, default-features = false }
+fp-self-contained = { workspace = true, default-features = false }
+pallet-base-fee = { workspace = true, default-features = false }
+pallet-dynamic-fee = { workspace = true, default-features = false }
+pallet-ethereum = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false }
+pallet-evm-precompile-blake2 = { workspace = true, default-features = false }
+pallet-evm-precompile-bn128 = { workspace = true, default-features = false }
+pallet-evm-precompile-dispatch = { workspace = true, default-features = false }
+pallet-evm-precompile-modexp = { workspace = true, default-features = false }
+pallet-evm-precompile-sha3fips = { workspace = true, default-features = false }
+pallet-evm-precompile-simple = { workspace = true, default-features = false }
+cumulus-primitives-core = { workspace = true, default-features = false }
+cumulus-primitives-utility = { workspace = true, default-features = false }
+cumulus-primitives-timestamp = { workspace = true, default-features = false }
+cumulus-pallet-parachain-system = { workspace = true, default-features = false }
+cumulus-pallet-aura-ext = { workspace = true, default-features = false }
+parachain-info = { workspace = true, default-features = false }
+polkadot-parachain = { workspace = true, default-features = false }
+polkadot-primitives = { workspace = true, default-features = false }
+polkadot-runtime-common = { workspace = true, default-features = false }
+pallet-session = { workspace = true, default-features = false }
+pallet-authorship = { workspace = true, default-features = false }
+xcm = { workspace = true, default-features = false }
+xcm-builder = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
+pallet-xcm = { workspace = true, default-features = false }
+cumulus-pallet-xcm = { workspace = true, default-features = false }
+cumulus-pallet-xcmp-queue = { workspace = true, default-features = false }
+cumulus-pallet-dmp-queue = { workspace = true, default-features = false }
+orml-currencies = { workspace = true, default-features = false }
+orml-tokens = { workspace = true, default-features = false }
+orml-traits = { workspace = true, default-features = false }
+orml-xtokens = { workspace = true, default-features = false }
+orml-unknown-tokens = { workspace = true, default-features = false }
+orml-xcm-support = { workspace = true, default-features = false }
+pallet-collective = { workspace = true, default-features = false }
+sp-weights = { workspace = true, default-features = false }
 
-[dependencies.parachain-staking]
-path = "../../pallets/parachain-staking"
-default-features = false
+evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", optional = true, default-features = false }
+peaq-evm-tracer = { path = "../evm_tracer", optional = true, default-features = false }
+peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug", default-features = false }
+peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-features = false }
 
-[dependencies.pallet-block-reward]
-path = "../../pallets/block-reward"
-default-features = false
+frame-support = { workspace = true, default-features = false }
 
+parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward", default-features = false }
+pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
+precompile-utils = { path = "../../precompiles/utils", default-features = false }
+pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-features = false }
+pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
+runtime-common = { path = "../common", default-features = false }
+peaq-pallet-mor = { workspace = true, default-features = false }
 
-# XCM
-[dependencies.xcm]
-git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.xcm-builder]
-git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.xcm-executor]
-git = "https://github.com/peaqnetwork/polkadot"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.pallet-xcm]
-git = "https://github.com/peaqnetwork/polkadot"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-[dependencies.cumulus-pallet-xcm]
-git = "https://github.com/peaqnetwork/cumulus"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.cumulus-pallet-xcmp-queue]
-git = "https://github.com/peaqnetwork/cumulus"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.cumulus-pallet-dmp-queue]
-git = "https://github.com/peaqnetwork/cumulus"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.orml-currencies]
-git = "https://github.com/peaqnetwork/open-runtime-module-library"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.orml-tokens]
-git = "https://github.com/peaqnetwork/open-runtime-module-library"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.orml-traits]
-git = "https://github.com/peaqnetwork/open-runtime-module-library"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.orml-xtokens]
-git = "https://github.com/peaqnetwork/open-runtime-module-library"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.orml-unknown-tokens]
-git = "https://github.com/peaqnetwork/open-runtime-module-library"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-[dependencies.orml-xcm-support]
-git = "https://github.com/peaqnetwork/open-runtime-module-library"
-default-features = false
-branch = "peaq-polkadot-v0.9.29"
-
-# Benchmark
-[dependencies.pallet-collective]
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.29"
-default-features = false
-
-# Customized
-[dependencies.peaq-primitives-xcm]
-path = "../../primitives/xcm"
-default-features = false
-
-[dependencies.precompile-utils]
-path = "../../precompiles/utils"
-default-features = false
-
-[dependencies.runtime-common]
-path = "../common"
-default-features = false
+zenlink-protocol = { workspace = true, default-features = false }
+zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
 
 [features]
 default = ["std", "aura"]
 aura = []
 runtime-benchmarks = [
-	'frame-benchmarking',
-	'frame-support/runtime-benchmarks',
-	'frame-system-benchmarking',
-	'frame-system/runtime-benchmarks',
-	'hex-literal',
-	'pallet-balances/runtime-benchmarks',
-	'pallet-timestamp/runtime-benchmarks',
-	'pallet-multisig/runtime-benchmarks',
-	'sp-runtime/runtime-benchmarks',
-	'pallet-contracts/runtime-benchmarks',
-	'parachain-staking/runtime-benchmarks',
-	'pallet-block-reward/runtime-benchmarks',
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"hex-literal",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"pallet-multisig/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"pallet-contracts/runtime-benchmarks",
+	"parachain-staking/runtime-benchmarks",
+	"pallet-block-reward/runtime-benchmarks",
 
-	'pallet-ethereum/runtime-benchmarks',
-	'pallet-collective/runtime-benchmarks',
-	'pallet-xcm/runtime-benchmarks',
-	'xcm-builder/runtime-benchmarks',
+	"pallet-ethereum/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"polkadot-parachain/runtime-benchmarks",
 
-	'peaq-pallet-transaction/runtime-benchmarks',
-	'peaq-pallet-did/runtime-benchmarks',
-	'peaq-pallet-rbac/runtime-benchmarks',
-	'peaq-pallet-storage/runtime-benchmarks',
-	'peaq-pallet-mor/runtime-benchmarks',
+	"peaq-pallet-transaction/runtime-benchmarks",
+	"peaq-pallet-did/runtime-benchmarks",
+	"peaq-pallet-rbac/runtime-benchmarks",
+	"peaq-pallet-storage/runtime-benchmarks",
+	"peaq-pallet-mor/runtime-benchmarks",
+	"staking-coefficient-reward/runtime-benchmarks",
 ]
 
 std = [
-	'codec/std',
-	'scale-info/std',
-	'frame-executive/std',
-	'frame-support/std',
-	'frame-system-rpc-runtime-api/std',
-	'frame-system/std',
-	'pallet-aura/std',
-	'pallet-balances/std',
-	'pallet-randomness-collective-flip/std',
-	'pallet-sudo/std',
-	'pallet-timestamp/std',
-	'pallet-transaction-payment-rpc-runtime-api/std',
-	'pallet-transaction-payment/std',
-	'pallet-multisig/std',
-	'sp-api/std',
-	'sp-block-builder/std',
-	'sp-consensus-aura/std',
-	'sp-core/std',
-	'sp-inherents/std',
-	'sp-offchain/std',
-	'sp-runtime/std',
-	'sp-session/std',
-	'sp-std/std',
-	'sp-transaction-pool/std',
-	'sp-version/std',
-	'pallet-contracts/std',
-	'pallet-contracts-primitives/std',
-	'pallet-contracts-rpc-runtime-api/std',
-	'peaq-pallet-did/std',
-	'peaq-pallet-did-runtime-api/std',
-	'peaq-pallet-transaction/std',
-	'peaq-pallet-rbac/std',
-	'peaq-pallet-rbac-runtime-api/std',
-	'peaq-pallet-storage/std',
-	'peaq-pallet-storage-runtime-api/std',
-	'peaq-pallet-mor/std',
-	'pallet-utility/std',
-	'pallet-treasury/std',
-	'pallet-collective/std',
-	'pallet-vesting/std',
+	"codec/std",
+	"scale-info/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system-rpc-runtime-api/std",
+	"frame-system/std",
+	"pallet-aura/std",
+	"pallet-balances/std",
+	"pallet-randomness-collective-flip/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
+	"pallet-multisig/std",
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-aura/std",
+	"sp-core/std",
+	"sp-inherents/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-std/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	"sp-weights/std",
+	"pallet-contracts/std",
+	"pallet-contracts-primitives/std",
+	"peaq-pallet-did/std",
+	"peaq-pallet-did-runtime-api/std",
+	"peaq-pallet-transaction/std",
+	"peaq-pallet-rbac/std",
+	"peaq-pallet-rbac-runtime-api/std",
+	"peaq-pallet-storage/std",
+	"peaq-pallet-storage-runtime-api/std",
+	"peaq-pallet-mor/std",
+	"pallet-utility/std",
+	"pallet-treasury/std",
+	"pallet-collective/std",
+	"pallet-vesting/std",
 
 	# ETH support
-	'sp-io/std',
-	'fp-evm/std',
-	'fp-self-contained/std',
-	'pallet-base-fee/std',
-	'pallet-dynamic-fee/std',
-	'pallet-ethereum/std',
-	'pallet-evm/std',
-	'pallet-evm-precompile-simple/std',
-	'pallet-evm-precompile-modexp/std',
-	'pallet-evm-precompile-sha3fips/std',
-	'sp-std/std',
-	'fp-rpc/std',
+	"sp-io/std",
+	"fp-evm/std",
+	"fp-self-contained/std",
+	"pallet-base-fee/std",
+	"pallet-dynamic-fee/std",
+	"pallet-ethereum/std",
+	"pallet-evm/std",
+	"pallet-evm-precompile-simple/std",
+	"pallet-evm-precompile-modexp/std",
+	"pallet-evm-precompile-sha3fips/std",
+	"sp-std/std",
+	"fp-rpc/std",
 
 	# Tracing
-	'evm-tracing-events/std',
-	'peaq-evm-tracer/std',
-	'peaq-rpc-primitives-debug/std',
-	'peaq-rpc-primitives-txpool/std',
+	"evm-tracing-events/std",
+	"peaq-evm-tracer/std",
+	"peaq-rpc-primitives-debug/std",
+	"peaq-rpc-primitives-txpool/std",
 
 	# Parachain
 	"cumulus-primitives-core/std",
@@ -596,6 +232,7 @@ std = [
     "pallet-authorship/std",
 
     "parachain-staking/std",
+	"staking-coefficient-reward/std",
     "pallet-block-reward/std",
 
 	# XCM
@@ -608,17 +245,22 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-xtokens/std",
+	"zenlink-protocol/std",
+	"zenlink-protocol-runtime-api/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
 	"runtime-common/std",
+	"pallet-evm-precompile-peaq-did/std",
+	"pallet-evm-precompile-peaq-storage/std",
+	"pallet-xcm/std",
 ]
 
 # Must be enabled for tracing runtimes only
 evm-tracing = [
-	'evm-tracing-events',
-	'peaq-evm-tracer',
-	'rlp',
-	'sha3'
+	"evm-tracing-events",
+	"peaq-evm-tracer",
+	"rlp",
+	"sha3"
 ]

@@ -28,6 +28,8 @@ use sp_std::{
 	cmp::Ordering,
 	fmt::Debug,
 	ops::{Add, Sub},
+	vec,
+	vec::Vec,
 };
 
 use crate::{set::OrderedSet, Config};
@@ -82,6 +84,8 @@ impl<AccountId: Ord, Balance: PartialEq + Ord> Ord for Stake<AccountId, Balance>
 		}
 	}
 }
+
+pub type Reward<AccountId, Balance> = Stake<AccountId, Balance>;
 
 /// The activity status of the collator.
 #[derive(
@@ -216,10 +220,27 @@ where
 		+ Default
 		+ CheckedSub,
 {
-	pub fn try_clear(&mut self, collator: AccountId) -> Result<(), ()> {
-		if self.owner == collator {
-			self.amount = Balance::zero();
-			Ok(())
+	pub fn try_new(
+		collator: AccountId,
+		amount: Balance,
+	) -> Result<Self, Vec<Stake<AccountId, Balance>>> {
+		Ok(Delegator {
+			delegations: OrderedSet::from(
+				vec![Stake { owner: collator, amount }].try_into()?, //.unwrap(),
+			),
+			total: amount,
+		})
+	}
+
+	/// Adds a new delegation.
+	///
+	/// If already delegating to the same account, this call returns false and
+	/// doesn't insert the new delegation.
+	pub fn add_delegation(&mut self, stake: Stake<AccountId, Balance>) -> Result<bool, usize> {
+		let amt = stake.amount;
+		if self.delegations.try_insert(stake)? {
+			self.total = self.total.saturating_add(amt);
+			Ok(true)
 		} else {
 			Err(())
 		}
@@ -320,6 +341,7 @@ pub struct DelegationCounter {
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
+pub type MaxDelegatorsPerCollator<T> = <T as Config>::MaxDelegatorsPerCollator;
 pub type StakeOf<T> = Stake<AccountIdOf<T>, BalanceOf<T>>;
 pub type NegativeImbalanceOf<T> =
 	<<T as Config>::Currency as Currency<AccountIdOf<T>>>::NegativeImbalance;

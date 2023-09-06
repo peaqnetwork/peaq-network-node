@@ -270,6 +270,15 @@ impl<T: Ord + Clone, S: Get<u32>> IntoIterator for OrderedSet<T, S> {
 	}
 }
 
+impl<'a, T: Ord + Clone, S: Get<u32>> IntoIterator for &'a OrderedSet<T, S> {
+	type Item = &'a T;
+	type IntoIter = sp_std::slice::Iter<'a, T>;
+
+	fn into_iter(self) -> Self::IntoIter {
+		self.0.iter()
+	}
+}
+
 impl<T: Ord + Clone, S: Get<u32>> From<OrderedSet<T, S>> for BoundedVec<T, S> {
 	fn from(s: OrderedSet<T, S>) -> Self {
 		s.0

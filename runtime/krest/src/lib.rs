@@ -30,8 +30,6 @@ use sp_runtime::{
 		OpaqueKeys,
 		PostDispatchInfoOf,
 		SaturatedConversion,
-		Saturating,
-		Zero,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -47,16 +45,20 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime,
+	dispatch::{DispatchClass, GetDispatchInfo},
+	parameter_types,
 	traits::{
-		ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
+		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
 		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
 		Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, DispatchClass, GetDispatchInfo, IdentityFee, Weight,
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		constants::{
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
+		},
+		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		WeightToFeePolynomial,
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
@@ -67,15 +69,13 @@ use frame_system::{
 };
 
 pub use pallet_balances::Call as BalancesCall;
-use parachain_staking::RewardRateInfo;
+use parachain_staking::reward_rate::RewardRateInfo;
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
 };
 pub use pallet_timestamp::Call as TimestampCall;
-
-use pallet_transaction_payment::{Config as TransactionPaymentConfig, OnChargeTransaction};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -89,7 +89,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, CurrencyId, TokenSymbol};
+pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -109,10 +109,23 @@ pub use peaq_pallet_transaction;
 use pallet_block_reward::types::BeneficiarySelector;
 
 // For XCM
+mod weights;
 pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
+use xcm::latest::prelude::*;
+
+// For Zenlink-DEX-Module
+use zenlink_protocol::{
+	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
+	ZenlinkMultiAssets,
+};
+
+use runtime_common::{
+	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
+	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+};
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -165,7 +178,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 3,
+	spec_version: 4,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -189,12 +202,6 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-use runtime_common::{
-	MILLICENTS, CENTS, DOLLARS,
-	Balance,
-	EoTFeeFactor, TransactionByteFee, OperationalFeeMultiplier,
-};
-
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
@@ -214,7 +221,10 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2_u64);
+const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
+	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2_u64),
+	polkadot_primitives::v2::MAX_POV_SIZE as u64,
+);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -247,12 +257,9 @@ parameter_types! {
 }
 
 pub struct BaseFilter;
-impl Contains<Call> for BaseFilter {
-	fn contains(call: &Call) -> bool {
-		match call {
-			// Other modules should works:
-			_ => true,
-		}
+impl Contains<RuntimeCall> for BaseFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		!matches!(call, RuntimeCall::ZenlinkProtocol(_m))
 	}
 }
 
@@ -267,7 +274,7 @@ impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>;
 	/// The index type for storing how many extrinsics an account has signed.
@@ -281,9 +288,9 @@ impl frame_system::Config for Runtime {
 	/// The header type.
 	type Header = peaq_primitives_xcm::Header;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
@@ -335,8 +342,9 @@ impl pallet_contracts::Config for Runtime {
 	type Time = Timestamp;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+
 	/// The safest default is to allow no calls at all.
 	///
 	/// Runtimes should whitelist dispatchables that are allowed to be called from contracts
@@ -350,14 +358,15 @@ impl pallet_contracts::Config for Runtime {
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 	type ChainExtension = ();
 	type Schedule = Schedule;
-	type CallStack = [pallet_contracts::Frame<Self>; 31];
+	type CallStack = [pallet_contracts::Frame<Self>; 5];
 	type DeletionQueueDepth = ConstU32<128>;
 	type DeletionWeightLimit = DeletionWeightLimit;
 	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
-	type ContractAccessWeight = pallet_contracts::DefaultContractAccessWeight<RuntimeBlockWeights>;
 	type MaxStorageKeyLen = ConstU32<128>;
-	type MaxCodeLen = ConstU32<{ 128 * 1024 }>;
-	type RelaxedMaxCodeLen = ConstU32<{ 256 * 1024 }>;
+	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
+
+	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
+	type UnsafeUnstableInterface = ConstBool<false>;
 }
 
 parameter_types! {
@@ -386,7 +395,7 @@ impl pallet_balances::Config for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -420,106 +429,29 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
-pub struct DealWithFees;
-impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-	// Overwrite on_unbalanced() and on_nonzero_unbalanced(), because their default
-	// implementations will just drop the imbalances!! Instead on_unbalanceds() will
-	// use these two following methods.
-	fn on_unbalanced(amount: NegativeImbalance) {
-		Self::on_nonzero_unbalanced(amount);
-	}
+type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		<BlockReward as OnUnbalanced<_>>::on_unbalanced(amount);
-	}
+parameter_types! {
+	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
+		CurrencyId::Token(TokenSymbol::KSM),
+	];
 }
 
-type NegativeImbalanceOf<C, T> =
-	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+pub struct PeaqCPC;
 
-pub struct PeaqCurrencyAdapter<C, OU>(PhantomData<(C, OU)>);
-
-impl<T, C, OU> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU>
-where
-	T: TransactionPaymentConfig,
-	C: Currency<<T as frame_system::Config>::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-{
-	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-	/// Withdraw the predicted fee from the transaction origin.
-	/// Note: The `fee` already includes the `tip`.
-	fn withdraw_fee(
-		who: &T::AccountId,
-		_call: &T::Call,
-		_info: &DispatchInfoOf<T::Call>,
-		total_fee: Self::Balance,
-		tip: Self::Balance,
-	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		if total_fee.is_zero() {
-			return Ok(None)
-		}
-		let inclusion_fee = total_fee - tip;
-
-		let withdraw_reason = if tip.is_zero() {
-			WithdrawReasons::TRANSACTION_PAYMENT
-		} else {
-			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-		};
-
-		// Apply Peaq Economy-of-Things Fee adjustment
-		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
-		let tx_fee = total_fee.saturating_add(eot_fee);
-
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-			Ok(imbalance) => Ok(Some(imbalance)),
-			Err(_) => Err(InvalidTransaction::Payment.into()),
-		}
-	}
-
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
-	/// Note: The `corrected_fee` already includes the `tip`.
-	fn correct_and_deposit_fee(
-		who: &T::AccountId,
-		_dispatch_info: &DispatchInfoOf<T::Call>,
-		_post_info: &PostDispatchInfoOf<T::Call>,
-		cor_total_fee: Self::Balance,
-		tip: Self::Balance,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), TransactionValidityError> {
-		if let Some(paid) = already_withdrawn {
-			// Apply same Peaq Economy-of-Things Fee adjustment as above
-			let cor_inclusion_fee = cor_total_fee - tip;
-			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
-			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
-
-			// Calculate how much refund we should return
-			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);
-			// refund to the the account that paid the fees. If this fails, the
-			// account might have dropped below the existential balance. In
-			// that case we don't refund anything.
-			let refund_imbalance = C::deposit_into_existing(who, refund_amount)
-				.unwrap_or_else(|_| C::PositiveImbalance::zero());
-			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let adjusted_paid = paid
-				.offset(refund_imbalance)
-				.same()
-				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
-			// Call someone else to handle the imbalance (fee and tip separately)
-			let (tip, fee) = adjusted_paid.split(tip);
-
-			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
-		}
-		Ok(())
-	}
+impl PeaqCurrencyPaymentConvert for PeaqCPC {
+	type AccountId = AccountId;
+	type Currency = Balances;
+	type MultiCurrency = Currencies;
+	type DexOperator = ZenlinkProtocol;
+	type ExistentialDeposit = ExistentialDeposit;
+	type NativeCurrencyId = GetNativeCurrencyId;
+	type LocalAcceptedIds = PcpcLocalAccepted;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type Event = Event;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, DealWithFees>;
+	type RuntimeEvent = RuntimeEvent;
+	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -527,21 +459,21 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 impl pallet_sudo::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 
 /// Config the did in pallets/did
 impl peaq_pallet_did::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
 }
 
 /// Config the utility in pallets/utility
 impl pallet_utility::Config for Runtime {
-	type Call = Call;
-	type Event = Event;
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = ();
 }
@@ -554,14 +486,15 @@ parameter_types! {
 
 type CouncilCollective = pallet_collective::Instance1;
 impl pallet_collective::Config<CouncilCollective> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
+	type RuntimeOrigin = RuntimeOrigin;
+	type Proposal = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+	type SetMembersOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // Config the treasyry in pallets/treasury
@@ -569,7 +502,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = DOLLARS;
 	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
+	pub const Burn: Permill = Permill::from_percent(1);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = DOLLARS;
@@ -603,7 +536,7 @@ impl pallet_treasury::Config for Runtime {
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type MaxApprovals = MaxApprovals;
 	type SpendOrigin = EnsureRootWithSuccess<AccountId, MaxBalance>; //EnsureWithSuccess<EnsureRoot<AccountId>, AccountId, MaxBalance>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 // Pallet EVM
@@ -629,7 +562,7 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 
 /// Approximate ratio of the amount of Weight per Gas.
 /// u64 works for approximations because Weight is a very small unit compared to gas.
-pub const WEIGHT_PER_GAS: u64 = WEIGHT_PER_SECOND.saturating_div(GAS_PER_SECOND).ref_time();
+pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PER_SECOND);
 
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
@@ -643,34 +576,36 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 424242;
-	// WeightPerGas didn't use
-	pub NoUseWeightPerGas: u64 = 20_000;
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub const EvmChainId: u64 = 2241;
+	pub BlockGasLimit: U256 = U256::from(
+		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
+	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
+	pub WeightPerGas: Weight = Weight::from_ref_time(WEIGHT_PER_GAS);
 }
 
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = BaseFee;
-	type WeightPerGas = NoUseWeightPerGas;
+	type WeightPerGas = WeightPerGas;
 	type GasWeightMapping = PeaqGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = PeaqPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
+	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
+	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 }
 
 impl pallet_ethereum::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
@@ -701,7 +636,7 @@ impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 }
 
 impl pallet_base_fee::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Threshold = BaseFeeThreshold;
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
 	type DefaultElasticity = DefaultElasticity;
@@ -716,7 +651,7 @@ parameter_types! {
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
@@ -736,14 +671,8 @@ parameter_types! {
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
 }
 
-parameter_types! {
-	pub const UncleGenerations: BlockNumber = 5;
-}
-
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
 	type EventHandler = ParachainStaking;
 }
 
@@ -753,7 +682,7 @@ parameter_types! {
 }
 
 impl pallet_session::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	type ValidatorIdOf = ConvertInto;
 	type ShouldEndSession = ParachainStaking;
@@ -767,11 +696,14 @@ impl pallet_session::Config for Runtime {
 pub mod staking {
 	use super::*;
 
-	pub const MAX_COLLATOR_STAKE: Balance = 200_000;
+	pub const MAX_COLLATOR_STAKE: Balance = 10_000 * MinCollatorStake::get();
 
 	/// Reward rate configuration which is used at genesis
 	pub fn reward_rate_config() -> RewardRateInfo {
 		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
+	}
+	pub fn coefficient() -> u8 {
+		8
 	}
 
 	parameter_types! {
@@ -796,12 +728,12 @@ pub mod staking {
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
 			/// Minimum stake required to be reserved to be a collator is 1000 KREST
-			pub const MinCollatorStake: Balance = 1_000 * DOLLARS;
+			pub const MinCollatorStake: Balance = 50_000 * DOLLARS;
 			/// Minimum stake required to be reserved to be a delegator is 100 KREST
 			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 128;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 			/// Recipient-selector for block-reward pallet (average-provider)
@@ -811,7 +743,7 @@ pub mod staking {
 
 impl parachain_staking::Config for Runtime {
 	type PotId = PotStakeId;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = Balance;
 
@@ -832,10 +764,14 @@ impl parachain_staking::Config for Runtime {
 	type AvgRecipientSelector = BeneficiarySelector;
 	type AvgBlockRewardRecipient = staking::AvgProviderParachainStaking;
 
-	type WeightInfo = (); // TODO, why there is no WeightInfo selected?!
+	type WeightInfo = ();
+	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 }
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
+impl staking_coefficient_reward::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
+}
 
 pub struct ToTreasuryPot;
 impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
@@ -848,7 +784,7 @@ impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
 impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
 }
 
@@ -868,11 +804,11 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn machines(_reward: NegativeImbalance) {}
 
-	fn machines_subsidization(_reward: NegativeImbalance) {}
+	fn parachain_lease_fund(_reward: NegativeImbalance) {}
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = currency::KRST;
 }
 
 impl orml_currencies::Config for Runtime {
@@ -898,44 +834,75 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		0
+		ExistentialDeposit::get()
 	};
 }
 
 parameter_types! {
-	pub TestAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TestAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 impl peaq_pallet_rbac::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type EntityId = EntityId;
 	type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
 }
 
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
+}
+
+// Zenlink-DEX Parameter definitions
+parameter_types! {
+	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
+
+	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
+
+	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
+		// Krest local and live, 0.01 BNC
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
+
+		// Zenlink local 1 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
+		// Zenlink local 2 for test
+		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
+	];
+}
+
+/// Short form for our individual configuration of Zenlink's MultiAssets.
+pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
+
+impl zenlink_protocol::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MultiAssetsHandler = MultiAssets;
+	type PalletId = ZenlinkDexPalletId;
+	type AssetId = ZenlinkAssetId;
+	type LpGenerate = PairLpGenerate<Self>;
+	type TargetChains = ZenlinkRegistedParaChains;
+	type SelfParaId = SelfParaId;
+	type WeightInfo = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -963,33 +930,33 @@ construct_runtime!(
 		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
-		// // Parachain
-		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 20,
+		// Parachain
+		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
 		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
-
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
+		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-
 		Currencies: orml_currencies::{Pallet, Call} = 34,
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 
 		Vesting: pallet_vesting = 50,
 
 		// Include the custom pallets
 		PeaqDid: peaq_pallet_did::{Pallet, Call, Storage, Event<T>} = 100,
 		Transaction: peaq_pallet_transaction::{Pallet, Call, Storage, Event<T>} = 101,
-		MultiSig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
+		Multisig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
 	}
@@ -1018,9 +985,10 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
+pub type CheckedExtrinsic =
+	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -1030,19 +998,43 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 >;
 
-impl fp_self_contained::SelfContainedCall for Call {
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		[frame_benchmarking, BaselineBench::<Runtime>]
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_balances, Balances]
+		[pallet_timestamp, Timestamp]
+		[pallet_multisig, Multisig]
+		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[parachain_staking, ParachainStaking]
+		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
+		[pallet_block_reward, BlockReward]
+		[peaq_pallet_transaction, Transaction]
+		[peaq_pallet_did, PeaqDid]
+		[peaq_pallet_rbac, PeaqRbac]
+		[peaq_pallet_storage, PeaqStorage]
+		[pallet_xcm, PolkadotXcm]
+	);
+}
+
+impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	type SignedInfo = H160;
 
 	fn is_self_contained(&self) -> bool {
 		match self {
-			Call::Ethereum(call) => call.is_self_contained(),
+			RuntimeCall::Ethereum(call) => call.is_self_contained(),
 			_ => false,
 		}
 	}
 
 	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
 		match self {
-			Call::Ethereum(call) => call.check_self_contained(),
+			RuntimeCall::Ethereum(call) => call.check_self_contained(),
 			_ => None,
 		}
 	}
@@ -1050,11 +1042,12 @@ impl fp_self_contained::SelfContainedCall for Call {
 	fn validate_self_contained(
 		&self,
 		signed_info: &Self::SignedInfo,
-		dispatch_info: &DispatchInfoOf<Call>,
+		dispatch_info: &DispatchInfoOf<RuntimeCall>,
 		len: usize,
 	) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(signed_info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) =>
+				call.validate_self_contained(signed_info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1062,11 +1055,12 @@ impl fp_self_contained::SelfContainedCall for Call {
 	fn pre_dispatch_self_contained(
 		&self,
 		info: &Self::SignedInfo,
-		dispatch_info: &DispatchInfoOf<Call>,
+		dispatch_info: &DispatchInfoOf<RuntimeCall>,
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			Call::Ethereum(call) => call.pre_dispatch_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) =>
+				call.pre_dispatch_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1076,9 +1070,10 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact { .. }) => Some(
-				call.dispatch(Origin::from(pallet_ethereum::RawOrigin::EthereumTransaction(info))),
-			),
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(RuntimeOrigin::from(
+					pallet_ethereum::RawOrigin::EthereumTransaction(info),
+				))),
 			_ => None,
 		}
 	}
@@ -1160,7 +1155,7 @@ impl_runtime_apis! {
 			// according to gas price from pallet ethereum. If it is any other kind of transaction,
 			// we modify its priority.
 			Ok(match &xt.0.function {
-				Call::Ethereum(transact { .. }) => intermediate_valid,
+				RuntimeCall::Ethereum(transact { .. }) => intermediate_valid,
 				_ if dispatch_info.class != DispatchClass::Normal => intermediate_valid,
 				_ => {
 					let tip = match xt.0.signature {
@@ -1242,7 +1237,7 @@ impl_runtime_apis! {
 				// transactions that preceded the requested transaction.
 				for ext in extrinsics.into_iter() {
 					let _ = match &ext.0.function {
-						Call::Ethereum(transact { transaction }) => {
+						RuntimeCall::Ethereum(transact { transaction }) => {
 							if transaction == traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
@@ -1283,7 +1278,7 @@ impl_runtime_apis! {
 				// Apply all extrinsics. Ethereum extrinsics are traced.
 				for ext in extrinsics.into_iter() {
 					match &ext.0.function {
-						Call::Ethereum(transact { transaction }) => {
+						RuntimeCall::Ethereum(transact { transaction }) => {
 							if known_transactions.contains(&transaction.hash()) {
 								// Each known extrinsic is a new call stack.
 								EvmTracer::emit_new();
@@ -1316,14 +1311,14 @@ impl_runtime_apis! {
 				ready: xts_ready
 					.into_iter()
 					.filter_map(|xt| match xt.0.function {
-						Call::Ethereum(transact { transaction }) => Some(transaction),
+						RuntimeCall::Ethereum(transact { transaction }) => Some(transaction),
 						_ => None,
 					})
 					.collect(),
 				future: xts_future
 					.into_iter()
 					.filter_map(|xt| match xt.0.function {
-						Call::Ethereum(transact { transaction }) => Some(transaction),
+						RuntimeCall::Ethereum(transact { transaction }) => Some(transaction),
 						_ => None,
 					})
 					.collect(),
@@ -1461,7 +1456,7 @@ impl_runtime_apis! {
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<EthereumTransaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
-				Call::Ethereum(transact { transaction }) => Some(transaction),
+				RuntimeCall::Ethereum(transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect::<Vec<EthereumTransaction>>()
 		}
@@ -1469,6 +1464,8 @@ impl_runtime_apis! {
 		fn elasticity() -> Option<Permill> {
 			Some(BaseFee::elasticity())
 		}
+
+		fn gas_limit_multiplier_support() {}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
@@ -1497,6 +1494,14 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+
+		fn query_weight_to_fee(weight: Weight) -> Balance {
+			TransactionPayment::weight_to_fee(weight)
+		}
+
+		fn query_length_to_fee(length: u32) -> Balance {
+			TransactionPayment::length_to_fee(length)
 		}
 	}
 
@@ -1608,85 +1613,66 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_contracts_rpc_runtime_api::ContractsApi<
-		Block, AccountId, Balance, BlockNumber, Hash,
-	>
-		for Runtime
-	{
-		fn call(
-			origin: AccountId,
-			dest: AccountId,
-			value: Balance,
-			gas_limit: u64,
-			storage_deposit_limit: Option<Balance>,
-			input_data: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractExecResult<Balance> {
-			Contracts::bare_call(origin, dest, value, Weight::from_ref_time(gas_limit),
-				storage_deposit_limit, input_data, true)
-		}
-
-		fn instantiate(
-			origin: AccountId,
-			value: Balance,
-			gas_limit: u64,
-			storage_deposit_limit: Option<Balance>,
-			code: pallet_contracts_primitives::Code<Hash>,
-			data: Vec<u8>,
-			salt: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, Balance>
-		{
-			Contracts::bare_instantiate(origin, value, Weight::from_ref_time(gas_limit),
-				storage_deposit_limit, code, data, salt, true)
-		}
-
-		fn upload_code(
-			origin: AccountId,
-			code: Vec<u8>,
-			storage_deposit_limit: Option<Balance>,
-		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
-		{
-			Contracts::bare_upload_code(origin, code, storage_deposit_limit)
-		}
-
-		fn get_storage(
-			address: AccountId,
-			key: Vec<u8>,
-		) -> pallet_contracts_primitives::GetStorageResult {
-			Contracts::get_storage(address, key)
-		}
-	}
-
 	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
 		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
 			PeaqStorage::read(&did_account, &item_type)
 		}
 	}
 
+	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
+		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
+			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
+		}
+
+		fn get_pair_by_asset_id(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId
+		) -> Option<PairInfo<AccountId, AssetBalance, ZenlinkAssetId>> {
+			ZenlinkProtocol::get_pair_by_asset_id(asset_0, asset_1)
+		}
+
+		fn get_amount_in_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::desired_in_amount(supply, path)
+		}
+
+		fn get_amount_out_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+			ZenlinkProtocol::supply_out_amount(supply, path)
+		}
+
+		fn get_estimate_lptoken(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount_0_desired: AssetBalance,
+			amount_1_desired: AssetBalance,
+			amount_0_min: AssetBalance,
+			amount_1_min: AssetBalance,
+		) -> AssetBalance {
+			ZenlinkProtocol::get_estimate_lptoken(asset_0, asset_1, amount_0_desired,
+				amount_1_desired, amount_0_min, amount_1_min)
+		}
+
+		fn calculate_remove_liquidity(
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
+			amount: AssetBalance,
+		) -> Option<(AssetBalance, AssetBalance)> {
+			ZenlinkProtocol::calculate_remove_liquidity(asset_0, asset_1, amount)
+		}
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
-
 		fn benchmark_metadata(extra: bool) -> (
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_multisig, MultiSig);
-			list_benchmark!(list, extra, cumulus_pallet_xcmp_queue, XcmpQueue);
-
-			list_benchmark!(list, extra, parachain_staking, ParachainStaking);
-			list_benchmark!(list, extra, pallet_block_reward, BlockReward);
-			list_benchmark!(list, extra, peaq_pallet_transaction, Transaction);
-			list_benchmark!(list, extra, peaq_pallet_did, PeaqDid);
-			list_benchmark!(list, extra, peaq_pallet_rbac, PeaqRbac);
-			list_benchmark!(list, extra, peaq_pallet_storage, PeaqStorage);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -1696,39 +1682,19 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
-			impl frame_system_benchmarking::Config for Runtime {}
+			use baseline::Pallet as BaselineBench;
 
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
+			impl frame_system_benchmarking::Config for Runtime {}
+			impl baseline::Config for Runtime {}
+
+			use frame_support::traits::WhitelistedStorageKeys;
+			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_multisig, MultiSig);
-			add_benchmark!(params, batches, cumulus_pallet_xcmp_queue, XcmpQueue);
-
-			add_benchmark!(params, batches, parachain_staking, ParachainStaking);
-			add_benchmark!(params, batches, pallet_block_reward, BlockReward);
-			add_benchmark!(params, batches, peaq_pallet_transaction, Transaction);
-			add_benchmark!(params, batches, peaq_pallet_did, PeaqDid);
-			add_benchmark!(params, batches, peaq_pallet_rbac, PeaqRbac);
-			add_benchmark!(params, batches, peaq_pallet_storage, PeaqStorage);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -1737,7 +1703,7 @@ impl_runtime_apis! {
 }
 
 impl peaq_pallet_transaction::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type WeightInfo = peaq_pallet_transaction::weights::SubstrateWeight<Runtime>;
 }
@@ -1749,8 +1715,8 @@ parameter_types! {
 }
 
 impl pallet_multisig::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type Currency = Balances;
 	type DepositBase = DepositBase;
 	type DepositFactor = DepositFactor;
@@ -1785,11 +1751,18 @@ cumulus_pallet_parachain_system::register_validate_block! {
 	CheckInherents = CheckInherents,
 }
 
+parameter_types! {
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
+}
+
 impl pallet_vesting::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = ConstU128<0>;
 	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
 	const MAX_VESTING_SCHEDULES: u32 = 28;
+
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 }

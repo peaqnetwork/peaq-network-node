@@ -51,16 +51,16 @@ impl frame_system::Config for TestRuntime {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
@@ -84,7 +84,7 @@ impl pallet_balances::Config for TestRuntime {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -112,7 +112,7 @@ pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
 pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
 pub(crate) const LP_POT: PalletId = PalletId(*b"lpreward");
 pub(crate) const MACHINE_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const MACHINE_SUBSIDIZATION_POT: PalletId = PalletId(*b"subsidiz");
+pub(crate) const PARACHAIN_LEASE_FUND: PalletId = PalletId(*b"parlease");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -139,13 +139,13 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 		Balances::resolve_creating(&MACHINE_POT.into_account_truncating(), reward);
 	}
 
-	fn machines_subsidization(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&MACHINE_SUBSIDIZATION_POT.into_account_truncating(), reward);
+	fn parachain_lease_fund(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&PARACHAIN_LEASE_FUND.into_account_truncating(), reward);
 	}
 }
 
 impl pallet_block_reward::Config for TestRuntime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
 	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<TestRuntime>;

@@ -20,7 +20,11 @@
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{self as stake};
+use crate::{
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate::RewardRateInfo,
+	{self as stake},
+};
 use frame_support::{
 	assert_ok, construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
@@ -37,7 +41,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill, Perquintill,
 };
-use sp_std::fmt::Debug;
+use sp_std::{cell::RefCell, fmt::Debug};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -45,9 +49,9 @@ pub(crate) type Balance = u128;
 pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
 
-pub(crate) const MILLI_KILT: Balance = 10u128.pow(12);
+pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
-pub(crate) const DECIMALS: Balance = 1000 * MILLI_KILT;
+pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
 pub(crate) const DEFAULT_ISSUE: Balance = 1000 * DECIMALS;
 
 // Configure a mock runtime to test the pallet.
@@ -59,6 +63,9 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Authorship: pallet_authorship::{Pallet, Storage},
+		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		Aura: pallet_aura::{Pallet, Storage},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -78,16 +85,16 @@ parameter_types! {
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type DbWeight = ();
-	type Origin = Origin;
+	type RuntimeOrigin = RuntimeOrigin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -111,7 +118,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
@@ -126,8 +133,6 @@ impl pallet_aura::Config for Test {
 
 impl pallet_authorship::Config for Test {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = ();
-	type FilterUncle = ();
 	type EventHandler = Pallet<Test>;
 }
 
@@ -153,7 +158,7 @@ parameter_types! {
 }
 
 impl Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
 	type MinBlocksPerRound = MinBlocksPerRound;
@@ -174,6 +179,29 @@ impl Config for Test {
 	type AvgBlockRewardRecipient = AvgProviderParachainStaking;
 	type AvgRecipientSelector = average::AverageSelector;
 	type WeightInfo = ();
+	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
+}
+
+// Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
+thread_local! {
+	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = RefCell::new(RewardRateInfo {
+		collator_rate: Perquintill::from_percent(30),
+		delegator_rate: Perquintill::from_percent(70),
+	});
+}
+
+pub struct MockRewardConfig {}
+
+impl RewardRateConfigTrait for MockRewardConfig {
+	fn get_reward_rate_config() -> RewardRateInfo {
+		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| reward_rate.borrow().clone())
+	}
+
+	fn set_reward_rate_config(info: RewardRateInfo) {
+		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| {
+			*reward_rate.borrow_mut() = info;
+		});
+	}
 }
 
 impl_opaque_keys! {
@@ -187,7 +215,7 @@ parameter_types! {
 }
 
 impl pallet_session::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = ConvertInto;
 	type ShouldEndSession = StakePallet;
@@ -220,8 +248,6 @@ pub struct ExtBuilder {
 	collators: Vec<(AccountId, Balance)>,
 	// [delegator, collator, delegation_amount]
 	delegators: Vec<(AccountId, AccountId, Balance)>,
-	// reward_rate config
-	reward_rate_config: RewardRateInfo,
 	// blocks per round
 	blocks_per_round: BlockNumber,
 	// initial average block reward
@@ -273,10 +299,10 @@ impl ExtBuilder {
 		del_reward: u64,
 		blocks_per_round: BlockNumber,
 	) -> Self {
-		self.reward_rate_config = RewardRateInfo::new(
+		MockRewardConfig::set_reward_rate_config(RewardRateInfo::new(
 			Perquintill::from_percent(col_reward),
 			Perquintill::from_percent(del_reward),
-		);
+		));
 		self.blocks_per_round = blocks_per_round;
 
 		self
@@ -304,13 +330,9 @@ impl ExtBuilder {
 		for delegator in self.delegators.clone() {
 			stakers.push((delegator.0, Some(delegator.1), delegator.2));
 		}
-		stake::GenesisConfig::<Test> {
-			stakers,
-			reward_rate_config: self.reward_rate_config.clone(),
-			max_candidate_stake: 160_000_000 * DECIMALS,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Parachain Staking's storage can be assimilated");
+		stake::GenesisConfig::<Test> { stakers, max_candidate_stake: 160_000_000 * DECIMALS }
+			.assimilate_storage(&mut t)
+			.expect("Parachain Staking's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self
@@ -334,7 +356,7 @@ impl ExtBuilder {
 
 		if self.blocks_per_round != BLOCKS_PER_ROUND {
 			ext.execute_with(|| {
-				StakePallet::set_blocks_per_round(Origin::root(), self.blocks_per_round)
+				StakePallet::set_blocks_per_round(RuntimeOrigin::root(), self.blocks_per_round)
 					.expect("Ran into issues when setting blocks_per_round");
 			});
 		}
@@ -421,15 +443,15 @@ pub(crate) fn roll_to_claim_every_reward(
 	}
 }
 
-pub(crate) fn last_event() -> pallet::Event<Test> {
-	events().pop().expect("Event expected")
+pub(crate) fn last_event() -> RuntimeEvent {
+	System::events().pop().expect("Event expected").event
 }
 
 pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| if let Event::StakePallet(inner) = e { Some(inner) } else { None })
+		.filter_map(|e| if let RuntimeEvent::StakePallet(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
 

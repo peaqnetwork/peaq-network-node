@@ -1,13 +1,9 @@
 //! A collection of node-specific RPC methods.
 
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 
-use fc_rpc::{
-	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-	SchemaV2Override, SchemaV3Override, StorageOverride,
-};
+use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use fp_storage::EthereumStorageSchema;
 use jsonrpsee::RpcModule;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
@@ -18,7 +14,7 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
 use sc_service::TransactionPool;
 use sc_transaction_pool::{ChainApi, Pool};
-use sp_api::ProvideRuntimeApi;
+use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
@@ -26,13 +22,11 @@ use sp_blockchain::{
 use sp_runtime::traits::BlakeTwo256;
 // use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
 
-//For ink! contracts
-use pallet_contracts_rpc::{Contracts, ContractsApiServer};
-
 use sc_service::TaskManager;
 use sp_runtime::traits::Block as BlockT;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use crate::primitives::*;
 
@@ -84,38 +78,6 @@ pub struct TracingConfig {
 	pub trace_filter_max_count: u32,
 }
 
-pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
-where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-{
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-
-	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
-	})
-}
-
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
 	deps: FullDeps<C, P, A>,
@@ -129,6 +91,7 @@ where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: BlockchainEvents<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: CallApiAt<Block>,
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: BlockBuilder<Block>,
@@ -139,8 +102,8 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
-	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
+	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -158,6 +121,7 @@ where
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
+	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 
 	let mut io = RpcModule::new(());
 	let FullDeps {
@@ -180,12 +144,6 @@ where
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
-	// Contracts RPC API extension
-	io.merge(Contracts::new(Arc::clone(&client)).into_rpc())?;
-
-	// TODO: are we supporting signing?
-	let signers = Vec::new();
-
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
 		fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
@@ -195,16 +153,16 @@ where
 			unreachable!()
 		}
 	}
-	let convert_transaction: Option<Never> = None;
+	let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	io.merge(
 		Eth::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
 			graph.clone(),
-			convert_transaction,
+			no_tx_converter,
 			Arc::clone(&network),
-			signers,
+			Default::default(),
 			Arc::clone(&overrides),
 			Arc::clone(&backend),
 			is_authority,
@@ -243,6 +201,7 @@ where
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(pool, Arc::clone(&client), network, subscription_task_executor, overrides)

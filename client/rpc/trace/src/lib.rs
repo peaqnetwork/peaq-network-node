@@ -42,7 +42,7 @@ use sp_blockchain::{
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 
 use ethereum_types::H256;
-use fc_rpc::{frontier_backend_client, OverrideHandle};
+use fc_rpc::OverrideHandle;
 use fp_rpc::EthereumRuntimeRPCApi;
 
 use peaq_client_evm_tracing::{
@@ -120,16 +120,13 @@ where
 				continue // no traces for genesis block.
 			}
 
-			let block_id = BlockId::<B>::Number(block_height);
-			let block_header = self
+			let block_hash = self
 				.client
-				.header(block_id)
+				.hash(block_height)
 				.map_err(|e| {
 					format!("Error when fetching block {} header : {:?}", block_height, e)
 				})?
 				.ok_or_else(|| format!("Block with height {} don't exist", block_height))?;
-
-			let block_hash = block_header.hash();
 
 			block_hashes.push(block_hash);
 		}
@@ -403,7 +400,7 @@ where
 	) -> (impl Future<Output = ()>, CacheRequester) {
 		// Communication with the outside world :
 		let (requester_tx, mut requester_rx) =
-			sc_utils::mpsc::tracing_unbounded("trace-filter-cache");
+			sc_utils::mpsc::tracing_unbounded("trace-filter-cache", 100_000);
 
 		// Task running in the service.
 		let task = async move {
@@ -540,6 +537,7 @@ where
 							})?
 						}
 						.await;
+						// .map_err(|e| e.to_string());
 
 						tracing::trace!("Block tracing finished, sending result to main task.");
 
@@ -716,39 +714,35 @@ where
 		substrate_hash: H256,
 		overrides: Arc<OverrideHandle<B>>,
 	) -> TxsTraceRes {
-		let substrate_block_id = BlockId::Hash(substrate_hash);
-
 		// Get Subtrate block data.
 		let api = client.runtime_api();
 		let block_header = client
-			.header(substrate_block_id)
+			.header(substrate_hash)
 			.map_err(|e| {
 				format!("Error when fetching substrate block {} header : {:?}", substrate_hash, e)
 			})?
-			.ok_or_else(|| format!("Subtrate block {} don't exist", substrate_block_id))?;
+			.ok_or_else(|| format!("Subtrate block {} don't exist", substrate_hash))?;
 
 		let height = *block_header.number();
 		let substrate_parent_id = BlockId::<B>::Hash(*block_header.parent_hash());
 
-		let schema = frontier_backend_client::onchain_storage_schema::<B, C, BE>(
-			client.as_ref(),
-			substrate_block_id,
-		);
+		let schema =
+			fc_storage::onchain_storage_schema::<B, C, BE>(client.as_ref(), substrate_hash);
 
 		// Get Ethereum block data.
 		let (eth_block, eth_transactions) = match overrides.schemas.get(&schema) {
 			Some(schema) => match (
-				schema.current_block(&substrate_block_id),
-				schema.current_transaction_statuses(&substrate_block_id),
+				schema.current_block(substrate_hash),
+				schema.current_transaction_statuses(substrate_hash),
 			) {
 				(Some(a), Some(b)) => (a, b),
 				_ =>
 					return Err(format!(
 						"Failed to get Ethereum block data for Substrate block {}",
-						substrate_block_id
+						substrate_hash
 					)),
 			},
-			_ => return Err(format!("No storage override at {:?}", substrate_block_id)),
+			_ => return Err(format!("No storage override at {:?}", substrate_hash)),
 		};
 
 		let eth_block_hash = eth_block.header.hash();
@@ -757,7 +751,7 @@ where
 		// Get extrinsics (containing Ethereum ones)
 		let extrinsics = backend
 			.blockchain()
-			.body(substrate_block_id)
+			.body(substrate_hash)
 			.map_err(|e| {
 				format!("Blockchain error when fetching extrinsics of block {} : {:?}", height, e)
 			})?

@@ -3,12 +3,10 @@ use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, SudoConfig, SystemConfig, WASM_BINARY,
+	Precompiles, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use runtime_common::{
-	DOLLARS, MILLICENTS, TOKEN_DECIMALS,
-	Balance,
-};
+use peaq_primitives_xcm::Balance;
+use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
@@ -121,8 +119,10 @@ fn configure_genesis(
 		},
 		parachain_staking: ParachainStakingConfig {
 			stakers,
-			reward_rate_config: staking::reward_rate_config(),
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		},
+		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
+			coefficient: staking::coefficient(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
@@ -132,11 +132,10 @@ fn configure_genesis(
 				collators_percent: Perbill::from_percent(10),
 				lp_percent: Perbill::from_percent(25),
 				machines_percent: Perbill::from_percent(10),
-				machines_subsidization_percent: Perbill::from_percent(10),
+				parachain_lease_fund_percent: Perbill::from_percent(10),
 			},
-			block_issue_reward: 7_909_867 * MILLICENTS,
-			max_currency_supply: 4_200_000_000 * DOLLARS,
-			average_selector: Default::default(),
+			block_issue_reward: 380_517_503_805 * NANOCENTS,
+			max_currency_supply: 4_000_000 * DOLLARS,
 		},
 		vesting: Default::default(),
 		aura: Default::default(),

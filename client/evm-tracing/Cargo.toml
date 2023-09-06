@@ -8,14 +8,14 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.1.0"
 
 [dependencies]
-ethereum-types = { version = "0.13.1" }
-hex = { version = "0.4", features = [ "serde" ] }
-serde = { version = "1.0.136", features = [ "derive" ] }
-serde_json = { version = "1.0" }
+ethereum-types = { workspace = true, default-features = true }
+hex = { workspace = true, default-features = true, features = [ "serde" ] }
+serde = { workspace = true, default-features = true, features = [ "derive" ] }
+serde_json = { workspace = true, default-features = true }
 
 evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events" }
 peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
 
 # Substrate
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-sp-std = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.29" }
+codec = { package = "parity-scale-codec", workspace = true, default-features = true }
+sp-std = { workspace = true, default-features = true }
