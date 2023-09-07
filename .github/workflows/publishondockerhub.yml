@@ -4,22 +4,16 @@ on:
     branches:
       - 'parachain_dev'
     tags:
-      - 'peaq-dev-local-v*' # For the peaq-dev's env in the parchain-launch usage
-      - 'krest-local-v*' # For the krest env in the parchain-launch usage
+      - 'peaq-dev-v*' # For the peaq-dev's env in the parchain-launch usage
+      - 'krest-v*' # For the krest env in the parchain-launch usage
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-22.04
     steps:
-      - name: Diskspace
-        run: |
-          sudo df -h
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo df -h
-      
+      - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
+        uses: insightsengineering/disk-space-reclaimer@v1.1.0
+
       - name: Check out the repo
         uses: actions/checkout@v3
 
@@ -38,6 +32,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=ref,event=tag
+
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
