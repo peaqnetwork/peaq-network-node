@@ -14,7 +14,9 @@ use sp_core::RuntimeDebug;
 use crate::{
 	log,
 	pallet::*,
-	types::{AverageSelector, BalanceOf, DiscAvg},
+	types::{
+		AverageSelector, BalanceOf, DiscAvg, RewardDistributionConfig, RewardDistributionConfigV0
+	},
 };
 
 // Note: This implementation could become obsolete by version 3. We may switch to regular
@@ -56,29 +58,33 @@ mod v2 {
 
 	impl<T: Config> MigrateToV2x<T> {
 		pub fn on_runtime_upgrade() -> Weight {
+			let mut weight_reads = 1;
 			let mut weight_writes = 0;
-			let mut weight_reads = 3;
-			
-			if VersionStorage::<T>::get() == StorageReleases::V2_0_0 {
+
+			let mut version = VersionStorage::<T>::get();
+
+			if version == StorageReleases::V2_0_0 {
 				log!(info, "Migrating block_reward to Releases::V2_1_0");
 
 				let storage = HardCap::<T>::get();
+
 				MaxCurrencySupply::<T>::put(storage);
 				HardCap::<T>::kill();
 				VersionStorage::<T>::put(StorageReleases::V2_1_0);
 
+				version = StorageReleases::V2_1_0;
 				log!(info, "Migration to StorageReleases::V2_1_0 - Done.");
 
-				version = Pallet::<T>::storage_releases();
-				reads += 2;
-				writes += 2;
+				weight_reads += 1;
+				weight_writes += 2;
 			}
 
-			if VersionStorage::<T>::get() == StorageReleases::V2_1_0 {
+			if version == StorageReleases::V2_1_0 {
 				log!(info, "Migrating block_reward to Releases::V2_1_0");
 
 				let storage: RewardDistributionConfigV0 =
 					RewardDistributionConfigStorageV0::<T>::get();
+
 				RewardDistributionConfigStorage::<T>::put(RewardDistributionConfig {
 					treasury_percent: storage.treasury_percent,
 					dapps_percent: storage.dapps_percent,
@@ -88,12 +94,15 @@ mod v2 {
 					parachain_lease_fund_percent: storage.machines_subsidization_percent,
 				});
 				VersionStorage::<T>::put(StorageReleases::V2_2_0);
+
+				version = StorageReleases::V2_2_0;
 				log!(info, "Releases::V2_2_0 Migrating Done.");
+
 				weight_reads += 1;
 				weight_writes += 2
 			}
 
-			if VersionStorage::<T>::get() == StorageReleases::V2_2_0 {
+			if version == StorageReleases::V2_2_0 {
 				log!(info, "Migrating block_reward to Releases::V2_3_0 / storage_version(4)");
 
 				let block_issue_reward = BlockIssueReward::<T>::get();
@@ -104,9 +113,9 @@ mod v2 {
 				WeeklyBlockReward::<T>::put(DiscAvg::<T>::new(block_issue_reward, 50400u32));
 				VersionStorage::<T>::put(StorageReleases::V2_3_0);
 
+				// version = StorageReleases::V2_3_0;
 				log!(info, "Migrating to Releases::V2_3_0 / storage_version(4) - Done.");
 
-				version = Pallet::<T>::storage_releases();
 				weight_reads += 1;
 				weight_writes += 5;
 			}

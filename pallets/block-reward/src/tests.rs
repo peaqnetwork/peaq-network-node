@@ -338,13 +338,13 @@ pub fn averaging_functionality_test() {
 			let imbalance = <TestRuntime as Config>::Currency::issue(b as Balance);
 			let amount = imbalance.peek();
 			BlockReward::on_unbalanced(imbalance);
-			System::assert_last_event(crate::mock::Event::BlockReward(
+			System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(
 				Event::TransactionFeesReceived(amount),
 			));
 		});
 		BlockReward::on_timestamp_set(0);
 		let amount = txfees.into_iter().sum::<u128>() + ISSUE_NUM;
-		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockRewardsDistributed(
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockRewardsDistributed(
 			amount,
 		)));
 		amount
@@ -388,7 +388,7 @@ pub fn averaging_functionality_test() {
 		check_avg_storage(BlockReward::hours12_avg_reward, ISSUE_NUM, exp_acc, 1, "hours12:1");
 		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 1, "daily:1");
 		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 1, "weekly:1");
-		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockRewardsDistributed(
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockRewardsDistributed(
 			ISSUE_NUM + 246,
 		)));
 
@@ -397,7 +397,7 @@ pub fn averaging_functionality_test() {
 		check_avg_storage(BlockReward::hours12_avg_reward, ISSUE_NUM, exp_acc, 2, "hours12:2");
 		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 2, "daily:2");
 		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 2, "weekly:2");
-		System::assert_last_event(crate::mock::Event::BlockReward(Event::BlockRewardsDistributed(
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockRewardsDistributed(
 			ISSUE_NUM + 124,
 		)));
 

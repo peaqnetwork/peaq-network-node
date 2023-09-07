@@ -111,7 +111,7 @@ pub mod pallet {
 	};
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -315,7 +315,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Sets the default averaging-function by AverageSelector.
+		/// Sets the default averaging-function by using the AverageSelector.
+		///
+		/// Emits `AverageSelectorChanged` with new selection.
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::set_averaging_function_selector())]
 		pub fn set_averaging_function_selector(
 			origin: OriginFor<T>,
@@ -408,8 +411,8 @@ pub mod pallet {
 				BeneficiarySelector::Collators => cfg.collators_percent,
 				BeneficiarySelector::DAppsStaking => cfg.dapps_percent,
 				BeneficiarySelector::LpUsers => cfg.lp_percent,
+				BeneficiarySelector::ParachainLeaseFund => cfg.parachain_lease_fund_percent,
 				BeneficiarySelector::Machines => cfg.machines_percent,
-				BeneficiarySelector::MachinesSubsidization => cfg.machines_subsidization_percent,
 				BeneficiarySelector::Treasury => cfg.treasury_percent,
 			}
 		}

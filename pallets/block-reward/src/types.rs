@@ -12,6 +12,7 @@ use sp_std::vec;
 
 use crate::pallet::Config;
 
+
 /// The balance type of this pallet.
 pub(crate) type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -23,6 +24,7 @@ pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 
 // Short form for the DiscreteAverage<BalanceOf<T>, Count>
 pub(crate) type DiscAvg<T> = DiscreteAverage<BalanceOf<T>>;
+
 
 /// Selector for possible beneficiaries.
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -39,8 +41,9 @@ pub enum BeneficiarySelector {
 	/// Selector for the MOR-pallet.
 	Machines,
 	/// To be defined (currently).
-	MachinesSubsidization,
+	ParachainLeaseFund,
 }
+
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait BeneficiaryPayout<Imbalance> {
@@ -63,6 +66,7 @@ pub trait BeneficiaryPayout<Imbalance> {
 	fn parachain_lease_fund(reward: Imbalance);
 }
 
+
 /// After next next version, we can remove this RewardDistributionConfigV0
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
@@ -70,22 +74,16 @@ pub trait BeneficiaryPayout<Imbalance> {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct RewardDistributionConfigV0 {
 	/// Base percentage of reward that goes to treasury
-	#[codec(compact)]
 	pub treasury_percent: Perbill,
 	/// Percentage of rewards that goes to dApps
-	#[codec(compact)]
 	pub dapps_percent: Perbill,
 	/// Percentage of reward that goes to collators
-	#[codec(compact)]
 	pub collators_percent: Perbill,
 	/// Percentage of reward that goes to lp users
-	#[codec(compact)]
 	pub lp_percent: Perbill,
 	/// Percentage of reward that goes to machines
-	#[codec(compact)]
 	pub machines_percent: Perbill,
 	/// Percentage of reward that goes to machines subsidization
-	#[codec(compact)]
 	pub machines_subsidization_percent: Perbill,
 }
 
@@ -104,28 +102,23 @@ impl Default for RewardDistributionConfigV0 {
 	}
 }
 
+
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct RewardDistributionConfig {
 	/// Base percentage of reward that goes to treasury
-	#[codec(compact)]
 	pub treasury_percent: Perbill,
 	/// Percentage of rewards that goes to dApps
-	#[codec(compact)]
 	pub dapps_percent: Perbill,
 	/// Percentage of reward that goes to collators
-	#[codec(compact)]
 	pub collators_percent: Perbill,
 	/// Percentage of reward that goes to lp users
-	#[codec(compact)]
 	pub lp_percent: Perbill,
 	/// Percentage of reward that goes to machines
-	#[codec(compact)]
 	pub machines_percent: Perbill,
 	/// Percentage of reward that goes to parachain lease fund
-	#[codec(compact)]
 	pub parachain_lease_fund_percent: Perbill,
 }
 
@@ -174,6 +167,7 @@ impl RewardDistributionConfig {
 	}
 }
 
+
 /// This is a generic struct definition for keeping an average-value of anything.
 #[derive(PartialEq, Eq, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
@@ -212,6 +206,7 @@ where
 		}
 	}
 }
+
 
 /// Enum as selector-type for requesting average-values.
 #[derive(
