@@ -32,7 +32,7 @@ use sp_std::{
 	vec::Vec,
 };
 
-use crate::{set::OrderedSet, Config};
+use crate::{set::OrderedSet, pallet::Config};
 
 /// A struct represented an amount of staked funds.
 ///
@@ -86,6 +86,7 @@ impl<AccountId: Ord, Balance: PartialEq + Ord> Ord for Stake<AccountId, Balance>
 }
 
 pub type Reward<AccountId, Balance> = Stake<AccountId, Balance>;
+
 
 /// The activity status of the collator.
 #[derive(
@@ -205,7 +206,9 @@ where
 	}
 }
 
+
 pub type Delegator<AccountId, Balance> = Stake<AccountId, Balance>;
+
 impl<AccountId, Balance> Delegator<AccountId, Balance>
 where
 	AccountId: Eq + Ord + Clone + Debug,
@@ -220,7 +223,7 @@ where
 		+ Default
 		+ CheckedSub,
 {
-	pub fn try_new(
+	pub fn try_clear(
 		collator: AccountId,
 		amount: Balance,
 	) -> Result<Self, Vec<Stake<AccountId, Balance>>> {
@@ -319,6 +322,7 @@ where
 	}
 }
 
+
 /// The total stake of the pallet.
 ///
 /// The stake includes both collators' and delegators' staked funds.
@@ -327,6 +331,7 @@ pub struct TotalStake<Balance: Default> {
 	pub collators: Balance,
 	pub delegators: Balance,
 }
+
 
 /// The number of delegations a delegator has done within the last session in
 /// which they delegated.

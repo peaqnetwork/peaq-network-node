@@ -1,12 +1,16 @@
-use crate::{
-	reward_rate::RewardRateInfo,
-	types::{AccountIdOf, BalanceOf, Candidate, MaxDelegatorsPerCollator, Reward},
-	Config,
-};
+//! Module description goes here!!!
+
 use core::marker::PhantomData;
 use frame_support::{pallet_prelude::Weight, traits::Get, BoundedVec};
 use sp_runtime::Perquintill;
 use sp_std::vec::Vec;
+
+use crate::{
+	pallet::Config,
+	reward_rate::RewardRateInfo,
+	types::{AccountIdOf, BalanceOf, Candidate, MaxDelegatorsPerCollator, Reward},
+};
+
 
 /// Short form definition for a complex return type.
 pub type CollatorRewardPerBlock<T> = (Weight, Weight, Reward<AccountIdOf<T>, BalanceOf<T>>);
@@ -14,23 +18,29 @@ pub type CollatorRewardPerBlock<T> = (Weight, Weight, Reward<AccountIdOf<T>, Bal
 pub type DelegatorRewardPerBlock<T> =
 	(Weight, Weight, BoundedVec<Reward<AccountIdOf<T>, BalanceOf<T>>, MaxDelegatorsPerCollator<T>>);
 
+
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
-	/// Payout Machines
+	/// Calculates the collator's reward per block.
 	fn collator_reward_per_block(
 		state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
 	) -> CollatorRewardPerBlock<T>;
+
+	/// Calcualtes the delegator's reward per block.
 	fn delegator_reward_per_block(
 		state: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 		issue_number: BalanceOf<T>,
 	) -> DelegatorRewardPerBlock<T>;
 }
 
+
+/// Missing description
 pub trait RewardRateConfigTrait {
 	fn get_reward_rate_config() -> RewardRateInfo;
 	fn set_reward_rate_config(reward_rate_config: RewardRateInfo);
 }
+
 
 // Default implementation
 pub struct DefaultRewardCalculator<T: Config, R: RewardRateConfigTrait> {

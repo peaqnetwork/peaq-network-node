@@ -25,9 +25,9 @@ use sp_std::{
 	convert::TryInto,
 	ops::{Index, Range, RangeFull},
 };
-
 #[cfg(feature = "std")]
 use sp_std::prelude::*;
+
 
 /// An ordered set backed by `BoundedVec`.
 #[derive(
@@ -284,6 +284,7 @@ impl<T: Ord + Clone, S: Get<u32>> From<OrderedSet<T, S>> for BoundedVec<T, S> {
 		s.0
 	}
 }
+
 
 #[cfg(test)]
 mod tests {
