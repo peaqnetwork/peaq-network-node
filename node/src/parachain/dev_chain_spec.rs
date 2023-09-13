@@ -56,7 +56,7 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
 	Ok(ChainSpec::from_genesis(
-		"Agung-network",
+		"Agung-parachain",
 		"dev-testnet",
 		ChainType::Development,
 		move || {
