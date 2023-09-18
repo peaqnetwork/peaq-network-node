@@ -86,13 +86,6 @@ pub mod pallet {
 		pub reward_rate_config: RewardRateInfo,
 	}
 
-	// #[cfg(feature = "std")]
-	// impl Default for GenesisConfig {
-	// 	fn default() -> Self {
-	// 		Self { reward_rate_config: Default::default() }
-	// 	}
-	// }
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
@@ -162,8 +155,9 @@ pub mod pallet {
 		fn get_reward_rate_config() -> RewardRateInfo {
 			Self::reward_rate_config()
 		}
+
 		fn set_reward_rate_config(reward_rate: RewardRateInfo) {
-			<RewardRateConfig<T>>::put(reward_rate);
+			RewardRateConfig::<T>::put(reward_rate);
 		}
 	}
 }

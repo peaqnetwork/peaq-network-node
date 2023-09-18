@@ -22,7 +22,7 @@ pallet-authorship = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
 pallet-block-reward = { workspace = true, default-features = false }
 pallet-session = { workspace = true, default-features = false }
-peaq-frame-ext = { workspace = true, default-features = false }
+peaq-frame-ext = { workspace = true, features = ["mockup-avg-currency"] }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
 serde = { workspace = true, default-features = false, optional = true }
 sp-runtime = { workspace = true, default-features = false }

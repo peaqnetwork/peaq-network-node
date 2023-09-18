@@ -1,7 +1,7 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use frame_support::{
-	pallet_prelude::{StorageVersion, ValueQuery},
+	pallet_prelude::{StorageVersion, GetStorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,
@@ -35,7 +35,7 @@ mod upgrade {
 			let mut weight_writes = 0;
 			let weight_reads = 0;
 
-			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
+			let onchain_storage_version = Pallet::<T>::current_storage_version();
 
 			if onchain_storage_version.eq(&CURRENT_STORAGE_VERSION) {
 				TARGET_STORAGE_VERSION.put::<Pallet<T>>();

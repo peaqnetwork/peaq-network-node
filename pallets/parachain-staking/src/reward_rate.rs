@@ -58,16 +58,20 @@ impl RewardRateInfo {
 		}
 	}
 
-	pub fn compute_collator_reward<T: Config>(&self, issue_number: BalanceOf<T>) -> BalanceOf<T> {
-		self.collator_rate * issue_number
+	pub fn compute_collator_reward<T: Config>(
+		&self,
+		avg_bl_reward: BalanceOf<T>,
+		_staking_rate: Perquintill
+	) -> BalanceOf<T> {
+		self.collator_rate * avg_bl_reward // * _staking_rate
 	}
 
 	pub fn compute_delegator_reward<T: Config>(
 		&self,
-		issue_number: BalanceOf<T>,
+		avg_bl_reward: BalanceOf<T>,
 		staking_rate: Perquintill,
 	) -> BalanceOf<T> {
-		self.delegator_rate * staking_rate * issue_number
+		self.delegator_rate * staking_rate * avg_bl_reward
 	}
 }
 

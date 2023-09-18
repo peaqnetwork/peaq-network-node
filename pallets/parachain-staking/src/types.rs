@@ -28,8 +28,6 @@ use sp_std::{
 	cmp::Ordering,
 	fmt::Debug,
 	ops::{Add, Sub},
-	vec,
-	vec::Vec,
 };
 
 use crate::{set::OrderedSet, pallet::Config};
@@ -223,27 +221,12 @@ where
 		+ Default
 		+ CheckedSub,
 {
-	pub fn try_clear(
-		collator: AccountId,
-		amount: Balance,
-	) -> Result<Self, Vec<Stake<AccountId, Balance>>> {
-		Ok(Delegator {
-			delegations: OrderedSet::from(
-				vec![Stake { owner: collator, amount }].try_into()?, //.unwrap(),
-			),
-			total: amount,
-		})
-	}
-
-	/// Adds a new delegation.
-	///
-	/// If already delegating to the same account, this call returns false and
-	/// doesn't insert the new delegation.
-	pub fn add_delegation(&mut self, stake: Stake<AccountId, Balance>) -> Result<bool, usize> {
-		let amt = stake.amount;
-		if self.delegations.try_insert(stake)? {
-			self.total = self.total.saturating_add(amt);
-			Ok(true)
+	/// Returns Ok if the delegation for the
+	/// collator exists and `Err` otherwise.
+	pub fn try_clear(&mut self, collator: AccountId) -> Result<(), ()> {
+		if self.owner == collator {
+			self.amount = Balance::zero();
+			Ok(())
 		} else {
 			Err(())
 		}
@@ -262,11 +245,7 @@ where
 
 	/// Returns Ok(Some(delegated_amount)) if successful, `Err` if delegation
 	/// was not found and Ok(None) if delegated stake would underflow.
-	pub fn try_decrement(
-		&mut self,
-		collator: AccountId,
-		less: Balance,
-	) -> Result<Option<Balance>, ()> {
+	pub fn try_decrement(&mut self, collator: AccountId, less: Balance) -> Result<Option<Balance>, ()> {
 		if self.owner == collator {
 			Ok(self.amount.checked_sub(&less).map(|new| {
 				self.amount = new;
