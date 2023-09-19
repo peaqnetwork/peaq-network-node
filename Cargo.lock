@@ -6914,6 +6914,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-peaq-rbac"
+version = "0.1.0"
+dependencies = [
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "num_enum",
+ "pallet-evm",
+ "parity-scale-codec",
+ "paste",
+ "peaq-pallet-storage",
+ "precompile-utils",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-peaq-storage"
 version = "0.1.0"
 dependencies = [

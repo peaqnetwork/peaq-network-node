@@ -1,0 +1,45 @@
+[package]
+name = "pallet-evm-precompile-peaq-rbac"
+authors = [ "Peaq" ]
+description = "A Precompile Module for Frontier EVM that implements the PEAQ RBAC standard."
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+hex = { workspace = true, default-features = false }
+log = { workspace = true, default-features = false }
+num_enum = { workspace = true, default-features = false }
+paste = { workspace = true, default-features = false }
+slices = { workspace = true, default-features = false }
+
+# Peaq
+precompile-utils = { path = "../utils", default-features = false }
+
+# Substrate
+codec = { package = "parity-scale-codec", workspace = true, default-features = false, features = [ "max-encoded-len" ]}
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+
+# Frontier
+fp-evm = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
+peaq-pallet-storage = { workspace = true, default-features = false }
+
+
+[features]
+default = [ "std" ]
+std = [
+	"codec/std",
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-evm/std",
+	"precompile-utils/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-std/std",
+	"peaq-pallet-storage/std",
+]
