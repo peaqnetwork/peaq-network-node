@@ -2,8 +2,8 @@
 name = "precompile-utils-macro"
 authors = [ "PureStake" ]
 description = ""
-edition = "2021"
 version = "0.1.0"
+edition.workspace = true
 
 [lib]
 proc-macro = true

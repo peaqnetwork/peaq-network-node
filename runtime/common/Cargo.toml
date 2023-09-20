@@ -2,11 +2,13 @@
 name = "runtime-common"
 version = "0.0.1"
 description = "A node of the peaq network."
-authors = ["peaq network <https://github.com/peaqnetwork>"]
-homepage = "https://peaq.network/"
-edition = "2021"
-publish = false
-
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license-file.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
 codec = { package = "parity-scale-codec", workspace = true, default-features = false }

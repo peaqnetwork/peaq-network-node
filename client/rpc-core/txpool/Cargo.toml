@@ -1,11 +1,13 @@
 [package]
 name = "peaq-rpc-core-txpool"
-authors = ['peaq network <https://github.com/peaqnetwork>']
-edition = "2021"
-homepage = 'https://peaq.network/'
 license = "GPL-3.0-only"
-repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
 ethereum-types = { workspace = true, default-features = true }

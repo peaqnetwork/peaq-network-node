@@ -1,9 +1,14 @@
 [package]
+name = "staking-fixed-percentage-reward"
 authors = ["Jay pan <pan@eotlabs.io>"]
 description = "Fix percentage for collators and delegaators on the parachain staking pallet."
-edition = "2021"
-name = "staking-fixed-percentage-reward"
 version = "0.0.1"
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license-file.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dev-dependencies]
 pallet-aura = { workspace = true, default-features = false }

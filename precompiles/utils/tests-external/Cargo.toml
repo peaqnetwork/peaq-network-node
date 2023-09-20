@@ -1,8 +1,13 @@
 [package]
 name = "precompile-utils-tests-external"
-authors = { workspace = true }
-edition = "2021"
 version = "0.1.0"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license-file.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [lib]
 path = "./lib.rs"

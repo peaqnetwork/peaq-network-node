@@ -2,8 +2,9 @@
 name = "precompile-utils"
 authors = [ "PureStake" ]
 description = "Utils to write EVM precompiles."
-edition = "2021"
 version = "0.1.0"
+edition.workspace = true
+repository.workspace = true
 
 [dependencies]
 affix = { workspace = true }

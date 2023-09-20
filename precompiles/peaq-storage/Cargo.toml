@@ -1,9 +1,14 @@
 [package]
 name = "pallet-evm-precompile-peaq-storage"
-authors = [ "Peaq" ]
 description = "A Precompile Module for Frontier EVM that implements the PEAQ Storage standard."
-edition = "2021"
 version = "0.1.0"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license-file.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
 hex = { workspace = true, default-features = false }
