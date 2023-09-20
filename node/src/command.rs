@@ -107,8 +107,8 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"agung" => Box::new(parachain::dev_chain_spec::get_chain_spec()?),
-			"agung-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
+			"agung" => Box::new(parachain::agung_chain_spec::get_chain_spec()?),
+			"agung-local" => Box::new(parachain::agung_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
 			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec()?),
@@ -117,11 +117,11 @@ impl SubstrateCli for Cli {
 			)?),
 			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
-				let chain_spec = parachain::dev_chain_spec::ChainSpec::from_json_file(
+				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
 				if chain_spec.is_agung() {
-					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
+					Box::new(parachain::agung_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
 				} else if chain_spec.is_krest() {

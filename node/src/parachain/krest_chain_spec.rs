@@ -11,7 +11,7 @@ use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
-use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
+use crate::parachain::agung_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
 
 use sp_core::sr25519;
 
