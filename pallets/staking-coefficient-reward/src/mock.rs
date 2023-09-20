@@ -13,10 +13,9 @@ use frame_support::{
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake};
 use sp_consensus_aura::sr25519::AuthorityId;
-use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
-	testing::{Header, UintAuthorityId},
+	testing::{H256, Header, UintAuthorityId},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill,
 };

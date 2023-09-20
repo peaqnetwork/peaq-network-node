@@ -3,10 +3,9 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::{tokens::Balance as BalanceT, Currency};
 use scale_info::TypeInfo;
-use sp_core::RuntimeDebug;
 use sp_runtime::{
 	traits::{CheckedAdd, Zero},
-	Perbill,
+	Perbill, RuntimeDebug,
 };
 use sp_std::vec;
 

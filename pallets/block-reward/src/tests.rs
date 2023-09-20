@@ -7,9 +7,8 @@ use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
 };
-use sp_core::RuntimeDebug;
 use sp_runtime::{
-	traits::{AccountIdConversion, BadOrigin, Zero},
+	traits::{AccountIdConversion, BadOrigin, RuntimeDebug, Zero},
 	Perbill,
 };
 

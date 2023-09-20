@@ -9,7 +9,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{pallet_prelude::*, storage_alias, weights::Weight};
 use scale_info::TypeInfo;
-use sp_core::RuntimeDebug;
+use sp_runtime::RuntimeDebug;
 
 use crate::{
 	log,

@@ -11,9 +11,8 @@ use frame_support::{
 	PalletId,
 };
 
-use sp_core::H256;
 use sp_runtime::{
-	testing::Header,
+	testing::{H256, Header},
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
