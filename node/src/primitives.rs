@@ -1,4 +1,4 @@
-/// Please make sure the Agung, Krest, Peaq and Dev network has the same settings
+/// Please make sure the Dev, Krest, Peaq and network has the same settings
 
 /// An index to a block.
 pub type BlockNumber = peaq_primitives_xcm::BlockNumber;

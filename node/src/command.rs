@@ -2,7 +2,7 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
-	parachain::service::{self, agung, dev, frontier_database_dir, krest, peaq, start_node},
+	parachain::service::{self, dev, frontier_database_dir, krest, peaq, start_node},
 	primitives::Block,
 };
 
@@ -28,7 +28,6 @@ use std::{io::Write, net::SocketAddr};
 
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;
-	fn is_agung(&self) -> bool;
 	fn is_krest(&self) -> bool;
 	fn is_peaq(&self) -> bool;
 }
@@ -36,9 +35,6 @@ trait IdentifyChain {
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_dev(&self) -> bool {
 		self.id().starts_with("dev")
-	}
-	fn is_agung(&self) -> bool {
-		self.id().starts_with("agung")
 	}
 	fn is_krest(&self) -> bool {
 		self.id().starts_with("krest")
@@ -53,10 +49,6 @@ macro_rules! with_runtime_or_err {
 		if $chain_spec.is_dev() {
 			#[allow(unused_imports)]
 			use dev::{RuntimeApi, Executor};
-			$( $code )*
-		} else if $chain_spec.is_agung() {
-			#[allow(unused_imports)]
-			use agung::{RuntimeApi, Executor};
 			$( $code )*
 		} else if $chain_spec.is_krest() {
 			#[allow(unused_imports)]
@@ -75,9 +67,6 @@ macro_rules! with_runtime_or_err {
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
-	}
-	fn is_agung(&self) -> bool {
-		<dyn sc_service::ChainSpec>::is_agung(self)
 	}
 	fn is_krest(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_krest(self)
@@ -122,24 +111,17 @@ impl SubstrateCli for Cli {
 			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
-			"agung-local" => Box::new(parachain::agung_chain_spec::get_chain_spec_local_testnet(
-				self.run.parachain_id,
-			)?),
 			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec()?),
 			"krest-local" => Box::new(parachain::krest_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
 			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
 			path => {
-				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
+				let chain_spec = parachain::dev_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
 				if chain_spec.is_dev() {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
-						std::path::PathBuf::from(path),
-					)?)
-				} else if chain_spec.is_agung() {
-					Box::new(parachain::agung_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
 				} else if chain_spec.is_krest() {
@@ -158,9 +140,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		if chain_spec.is_agung() {
-			&peaq_agung_runtime::VERSION
-		} else if chain_spec.is_krest() {
+		if chain_spec.is_krest() {
 			&peaq_krest_runtime::VERSION
 		} else if chain_spec.is_peaq() {
 			&peaq_runtime::VERSION

@@ -22,7 +22,6 @@ branch = "peaq-polkadot-v0.9.38"
 
 [dependencies]
 peaq-dev-runtime = { path = "../runtime/peaq-dev", version = "3.0.0-polkadot-v0.9.38" }
-peaq-agung-runtime = { path = "../runtime/agung", version = "3.0.0-polkadot-v0.9.38" }
 peaq-krest-runtime = { path = "../runtime/krest", version = "3.0.0-polkadot-v0.9.38" }
 peaq-runtime = { path = "../runtime/peaq", version = "3.0.0-polkadot-v0.9.38" }
 
@@ -137,12 +136,10 @@ default = [
 	]
 aura = [
 	"peaq-dev-runtime/aura",
-	"peaq-agung-runtime/aura",
 	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking-cli",
-	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"peaq-runtime/runtime-benchmarks",
@@ -150,7 +147,6 @@ runtime-benchmarks = [
 ]
 
 try-runtime = [
-	"peaq-agung-runtime/try-runtime",
 	"peaq-dev-runtime/try-runtime",
 	"peaq-krest-runtime/try-runtime",
 	"peaq-runtime/try-runtime",
