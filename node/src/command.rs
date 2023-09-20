@@ -145,7 +145,7 @@ impl SubstrateCli for Cli {
 		} else if chain_spec.is_peaq() {
 			&peaq_runtime::VERSION
 		} else {
-			&peaq_dev_runtime::VERSION
+			&peaq_agung_runtime::VERSION
 		}
 	}
 }

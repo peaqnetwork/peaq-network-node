@@ -7544,21 +7544,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-client-evm-tracing"
-version = "0.1.0"
-dependencies = [
- "ethereum-types",
- "evm-tracing-events",
- "hex",
- "parity-scale-codec",
- "peaq-rpc-primitives-debug",
- "serde",
- "serde_json",
- "sp-std",
-]
-
-[[package]]
-name = "peaq-dev-runtime"
+name = "peaq-agung-runtime"
 version = "3.0.0-polkadot-v0.9.38"
 dependencies = [
  "cumulus-pallet-aura-ext",
@@ -7662,6 +7648,20 @@ dependencies = [
  "xcm-executor",
  "zenlink-protocol",
  "zenlink-protocol-runtime-api",
+]
+
+[[package]]
+name = "peaq-client-evm-tracing"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types",
+ "evm-tracing-events",
+ "hex",
+ "parity-scale-codec",
+ "peaq-rpc-primitives-debug",
+ "serde",
+ "serde_json",
+ "sp-std",
 ]
 
 [[package]]
@@ -7836,7 +7836,7 @@ dependencies = [
  "pallet-evm",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
- "peaq-dev-runtime",
+ "peaq-agung-runtime",
  "peaq-krest-runtime",
  "peaq-pallet-did-rpc",
  "peaq-pallet-rbac-rpc",

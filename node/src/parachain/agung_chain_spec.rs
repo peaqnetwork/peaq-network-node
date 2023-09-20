@@ -1,6 +1,6 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
-use peaq_dev_runtime::{
+use peaq_agung_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
 	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature,
@@ -100,8 +100,8 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	))
 }
 
-fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
-	peaq_dev_runtime::opaque::SessionKeys { aura }
+fn session_keys(aura: AuraId) -> peaq_agung_runtime::opaque::SessionKeys {
+	peaq_agung_runtime::opaque::SessionKeys { aura }
 }
 
 /// Configure initial storage state for FRAME modules.
@@ -129,7 +129,7 @@ fn configure_genesis(
 			// Configure endowed accounts with initial balance of 1 << 78.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
-		session: peaq_dev_runtime::SessionConfig {
+		session: peaq_agung_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
@@ -156,7 +156,7 @@ fn configure_genesis(
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
 
-		vesting: peaq_dev_runtime::VestingConfig { vesting: vec![] },
+		vesting: peaq_agung_runtime::VestingConfig { vesting: vec![] },
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
@@ -181,7 +181,7 @@ fn configure_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
+		polkadot_xcm: peaq_agung_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		tokens: Default::default(),

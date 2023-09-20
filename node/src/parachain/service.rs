@@ -69,7 +69,7 @@ macro_rules! declare_executor {
 	};
 }
 
-declare_executor!(agung, peaq_dev_runtime);
+declare_executor!(agung, peaq_agung_runtime);
 declare_executor!(krest, peaq_krest_runtime);
 declare_executor!(peaq, peaq_runtime);
 
