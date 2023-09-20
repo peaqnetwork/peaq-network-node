@@ -20,14 +20,15 @@ use frame_support::pallet;
 pub mod pallet {
 	use super::*;
 	use parachain_staking::{
-		reward_config_calc::{CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait},
-		reward_rate::RewardRateInfo,
-		types::{BalanceOf, Candidate, Reward},
+		reward_rate_config::{
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo
+		},
+		types::BalanceOf,
 	};
 
-	use frame_support::{pallet_prelude::*, traits::StorageVersion, BoundedVec};
+	use frame_support::{pallet_prelude::*, traits::StorageVersion};
 	use frame_system::pallet_prelude::*;
-	use parachain_staking::reward_config_calc::DefaultRewardCalculator;
+	use parachain_staking::reward_rate_config::DefaultRewardCalculator;
 	use sp_runtime::Perquintill;
 	use sp_std::prelude::*;
 

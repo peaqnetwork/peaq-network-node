@@ -8,7 +8,7 @@ use frame_support::{
 	traits::Get,
 	weights::Weight,
 };
-use parachain_staking::reward_rate::RewardRateInfo;
+use parachain_staking::reward_rate_config::RewardRateInfo;
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 

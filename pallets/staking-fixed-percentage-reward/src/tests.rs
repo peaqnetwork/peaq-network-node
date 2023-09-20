@@ -5,19 +5,20 @@
 
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
-use parachain_staking::{reward_config_calc::RewardRateConfigTrait, reward_rate::RewardRateInfo};
 use sp_runtime::Perquintill;
 
+use parachain_staking::{
+	reward_rate_config::{
+		CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
+	},
+	types::{BalanceOf, Reward},
+	Config,
+};
 use crate::mock::{
 	roll_to, AccountId, Balances, ExtBuilder, RewardCalculatorPallet, RuntimeOrigin, StakePallet,
 	Test, BLOCKS_PER_ROUND, DECIMALS,
 };
 
-use parachain_staking::{
-	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
-	types::{BalanceOf, Reward},
-	Config,
-};
 
 #[test]
 fn genesis() {

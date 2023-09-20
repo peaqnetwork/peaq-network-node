@@ -16,7 +16,7 @@
 
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
-use sp_runtime::traits::{Saturating, Zero};
+use sp_runtime::traits::Saturating;
 
 use crate::{
 	types::BalanceOf,

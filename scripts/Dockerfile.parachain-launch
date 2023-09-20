@@ -4,9 +4,9 @@ WORKDIR /opt/network
 ADD target/release/peaq-node /usr/local/bin
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq-node peaq-node && \
-	mkdir -p /data /peaq-node/.local/share/peaq-node && \
-	chown -R peaq-node:peaq-node /data && \
-	ln -s /data /peaq-node/.local/share/peaq-node && \
+	mkdir -p /chain-data /peaq-node/.local/share/peaq-node && \
+	chown -R peaq-node:peaq-node /chain-data && \
+	ln -s /chain-data /peaq-node/.local/share/peaq-node && \
 # unclutter and minimize the attack surface
 	rm -rf /usr/bin /usr/sbin && \
 # Sanity checks
@@ -14,6 +14,6 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq-node peaq-node && \
 
 USER peaq-node
 EXPOSE 30333 9933 9944 9615
-VOLUME ["/data"]
+VOLUME ["/chain-data"]
 
 ENTRYPOINT ["/usr/local/bin/peaq-node"]

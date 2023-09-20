@@ -9,7 +9,7 @@ use frame_support::{
 
 use crate::{
 	pallet::{Config, Pallet},
-	reward_rate::RewardRateInfo,
+	reward_rate_config::RewardRateInfo,
 };
 
 

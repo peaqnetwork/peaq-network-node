@@ -38,8 +38,7 @@ use sp_std::{cell::RefCell, fmt::Debug};
 
 use crate::{
 	self as stake,
-	reward_rate::RewardRateInfo,
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate_config::{DefaultRewardCalculator, RewardRateInfo, RewardRateConfigTrait},
 };
 
 

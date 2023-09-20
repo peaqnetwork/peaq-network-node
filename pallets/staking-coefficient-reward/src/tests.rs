@@ -13,7 +13,7 @@ use crate::mock::{
 use sp_runtime::Perbill;
 
 use parachain_staking::{
-	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
+	reward_rate_config::CollatorDelegatorBlockRewardCalculator,
 	types::{BalanceOf, Reward},
 	Config,
 };

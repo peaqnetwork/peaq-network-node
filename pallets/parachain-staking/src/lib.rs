@@ -120,8 +120,7 @@ pub(crate) mod tests;
 
 pub mod api;
 mod migrations;
-pub mod reward_config_calc;
-pub mod reward_rate;
+pub mod reward_rate_config;
 mod set;
 pub mod types;
 
@@ -153,7 +152,7 @@ pub mod pallet {
 			AccountIdConversion, CheckedAdd, CheckedMul, Convert, One, SaturatedConversion,
 			Saturating, StaticLookup, Zero,
 		},
-		Permill, Perquintill,
+		Permill,
 	};
 	use sp_staking::SessionIndex;
 	use sp_std::{prelude::*, fmt::Debug };
@@ -161,8 +160,9 @@ pub mod pallet {
 	use crate::{
 		default_weights::WeightInfo,
 		set::OrderedSet,
-		reward_rate::RewardRateInfo,
-		reward_config_calc::{CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait},
+		reward_rate_config::{
+			CollatorDelegatorBlockRewardCalculator, RewardRateInfo, RewardRateConfigTrait
+		},
 		types::*,
 	};
 

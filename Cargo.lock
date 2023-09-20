@@ -181,9 +181,9 @@ dependencies = [
 
 [[package]]
 name = "aho-corasick"
-version = "1.0.5"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c378d78423fdad8089616f827526ee33c19f2fddbd5de1629152c9593ba4783"
+checksum = "0f2135563fb5c609d2b2b87c1e8ce7bc41b0b45430fa9661f457981503dd5bf0"
 dependencies = [
  "memchr",
 ]
@@ -1067,9 +1067,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.3"
+version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84ed82781cea27b43c9b106a979fe450a13a31aab0500595fb3fc06616de08e6"
+checksum = "b1d7b8d5ec32af0fadc644bf1fd509a688c2103b185644bb1e29d164e0703136"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1077,9 +1077,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.2"
+version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bb9faaa7c2ef94b2743a21f5a29e6f0010dff4caa69ac8e9d6cf8b6fa74da08"
+checksum = "5179bb514e4d7c2051749d8fcefa2ed6d06a9f4e6d69faf3805f5d80b8cf8d56"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1489,7 +1489,7 @@ name = "cumulus-client-cli"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.38#6fc753dd06ea650aff75f64178b91749d05c24cd"
 dependencies = [
- "clap 4.4.3",
+ "clap 4.4.4",
  "parity-scale-codec",
  "sc-chain-spec",
  "sc-cli",
@@ -2392,9 +2392,9 @@ dependencies = [
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.13"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbfc4744c1b8f2a09adc0e55242f60b1af195d88596bd8700be74418c056c555"
+checksum = "23d2f3407d9a573d666de4b5bdf10569d73ca9478087346697dcbae6244bfbcd"
 
 [[package]]
 name = "ecdsa"
@@ -3217,7 +3217,7 @@ dependencies = [
  "Inflector",
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.4.3",
+ "clap 4.4.4",
  "comfy-table",
  "frame-benchmarking",
  "frame-support",
@@ -3291,6 +3291,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "frame-support",
  "frame-system",
+ "frame-try-runtime",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -3827,9 +3828,9 @@ dependencies = [
 
 [[package]]
 name = "hermit-abi"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "443144c8cdadd93ebf52ddb4056d257f5b52c04d3c804e657d19eb73fc33668b"
+checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
 
 [[package]]
 name = "hex"
@@ -4219,7 +4220,7 @@ version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eae7b9aee968036d54dce06cebaefd919e4472e753296daccd6d344e3e2df0c2"
 dependencies = [
- "hermit-abi 0.3.2",
+ "hermit-abi 0.3.3",
  "libc",
  "windows-sys 0.48.0",
 ]
@@ -4254,7 +4255,7 @@ version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
- "hermit-abi 0.3.2",
+ "hermit-abi 0.3.3",
  "rustix 0.38.13",
  "windows-sys 0.48.0",
 ]
@@ -5409,11 +5410,11 @@ checksum = "8f232d6ef707e1956a43342693d2a31e72989554d58299d7a88738cc95b0d35c"
 
 [[package]]
 name = "memfd"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffc89ccdc6e10d6907450f753537ebc5c5d3460d2e4e62ea74bd571db62c0f9e"
+checksum = "b2cffa4ad52c6f791f4f8b15f0c05f9824b2ced1160e88cc393d64fff9a8ac64"
 dependencies = [
- "rustix 0.37.23",
+ "rustix 0.38.13",
 ]
 
 [[package]]
@@ -5939,7 +5940,7 @@ version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
 dependencies = [
- "hermit-abi 0.3.2",
+ "hermit-abi 0.3.3",
  "libc",
 ]
 
@@ -6376,7 +6377,6 @@ dependencies = [
  "peaq-frame-ext",
  "scale-info",
  "serde",
- "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -7610,7 +7610,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -7728,7 +7730,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -7864,7 +7868,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -7951,7 +7957,7 @@ name = "peaq-node"
 version = "3.0.0-polkadot-v0.9.38"
 dependencies = [
  "async-trait",
- "clap 4.4.3",
+ "clap 4.4.4",
  "cumulus-client-cli",
  "cumulus-client-consensus-aura",
  "cumulus-client-consensus-common",
@@ -8039,6 +8045,7 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-io",
  "sp-keystore",
  "sp-offchain",
  "sp-runtime",
@@ -8050,6 +8057,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "tokio",
+ "try-runtime-cli",
  "url 2.4.1",
  "xcm",
  "zenlink-protocol",
@@ -8451,7 +8459,9 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
+ "log",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -8778,7 +8788,7 @@ name = "polkadot-cli"
 version = "0.9.38"
 source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
 dependencies = [
- "clap 4.4.3",
+ "clap 4.4.4",
  "frame-benchmarking-cli",
  "futures 0.3.28",
  "log",
@@ -11062,7 +11072,7 @@ source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9
 dependencies = [
  "array-bytes 4.2.0",
  "chrono",
- "clap 4.4.3",
+ "clap 4.4.4",
  "fdlimit",
  "futures 0.3.28",
  "libp2p",
@@ -11855,7 +11865,7 @@ name = "sc-storage-monitor"
 version = "0.1.0"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.38#31e5dde4719a85a2923f2a6c14bde5f8c6aab121"
 dependencies = [
- "clap 4.4.3",
+ "clap 4.4.4",
  "futures 0.3.28",
  "log",
  "nix 0.26.4",
@@ -13685,9 +13695,9 @@ dependencies = [
 
 [[package]]
 name = "termcolor"
-version = "1.2.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be55cf8942feac5c765c2c993422806843c9a9a45d4d5c407ad6dd2ea95eb9b6"
+checksum = "6093bad37da69aab9d123a8091e4be0aa4a03e4d601ec641c327398315f62b64"
 dependencies = [
  "winapi-util",
 ]
@@ -14212,8 +14222,9 @@ name = "try-runtime-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.38#31e5dde4719a85a2923f2a6c14bde5f8c6aab121"
 dependencies = [
- "clap 4.4.3",
+ "clap 4.4.4",
  "frame-remote-externalities",
+ "frame-try-runtime",
  "hex",
  "log",
  "parity-scale-codec",
@@ -14342,9 +14353,9 @@ checksum = "1dd624098567895118886609431a7c3b8f516e41d30e0643f03d94592a147e36"
 
 [[package]]
 name = "unicode-width"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
+checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
 
 [[package]]
 name = "unicode-xid"

@@ -2,8 +2,6 @@
 
 #![allow(clippy::from_over_into)]
 
-use super::*;
-use crate::{self as reward_calculator, default_weights::SubstrateWeight};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
@@ -11,7 +9,7 @@ use frame_support::{
 	PalletId,
 };
 use pallet_authorship::EventHandler;
-use parachain_staking::{self as stake, reward_rate::RewardRateInfo};
+use parachain_staking::{self as stake, reward_rate_config::RewardRateInfo};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_runtime::{
 	impl_opaque_keys,
@@ -20,6 +18,10 @@ use sp_runtime::{
 	Perbill, Perquintill,
 };
 use sp_std::fmt::Debug;
+
+use super::*;
+use crate::{self as reward_calculator, default_weights::SubstrateWeight};
+
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;

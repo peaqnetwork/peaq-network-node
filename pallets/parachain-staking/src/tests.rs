@@ -31,9 +31,9 @@ use std::{convert::TryInto, iter};
 
 use crate::{
 	mock::*,
-	reward_rate::RewardRateInfo,
-	reward_config_calc::{
+	reward_rate_config::{
 		CollatorDelegatorBlockRewardCalculator, DefaultRewardCalculator, RewardRateConfigTrait,
+		RewardRateInfo,
 	},
 	set::OrderedSet,
 	types::{

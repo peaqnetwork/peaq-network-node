@@ -13,6 +13,7 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
+pub use crate::{default_weights::WeightInfo, pallet::*};
 
 
 const DEFAULT_COEFFICIENT: u8 = 8;
@@ -20,17 +21,17 @@ const DEFAULT_COEFFICIENT: u8 = 8;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use parachain_staking::{
-		reward_config_calc::CollatorDelegatorBlockRewardCalculator,
-		types::{BalanceOf, Candidate, Reward},
-	};
-
-	use frame_support::{pallet_prelude::*, traits::StorageVersion, BoundedVec};
+	use frame_support::{pallet_prelude::*, traits::StorageVersion};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{traits::{CheckedAdd, CheckedMul}, Perquintill};
-	use sp_std::prelude::*;
+	use sp_runtime::Perquintill;
 	use sp_std::convert::TryInto;
 
+	use parachain_staking::{
+		reward_rate_config::{
+			CollatorDelegatorBlockRewardCalculator, RewardRateInfo, RewardRateConfigTrait
+		},
+		types::BalanceOf,
+	};
 	use super::{WeightInfo, DEFAULT_COEFFICIENT};
 
 
@@ -134,32 +135,6 @@ pub mod pallet {
 			col_stake: BalanceOf<T>,
 			del_sum_stake: BalanceOf<T>,
 		) -> BalanceOf<T> {
-			// let min_delegator_stake = T::MinDelegatorStake::get();
-			// let delegator_sum = (&stake.delegators)
-			// 	.into_iter()
-			// 	.filter(|x| x.amount >= min_delegator_stake)
-			// 	.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-
-			// if let Some(coefficient_collator) =
-			// 	T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
-			// {
-			// 	if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
-			// 		let percentage = Perquintill::from_rational(coefficient_collator, denominator);
-			// 		return (
-			// 			Weight::from_ref_time(1_u64),
-			// 			Weight::from_ref_time(1_u64),
-			// 			Reward { owner: stake.id.clone(), amount: percentage * issue_number },
-			// 		)
-			// 	}
-			// }
-			// log::error!(
-			// 	"Overflow while calculating the reward {:?} {:?}",
-			// 	Self::coefficient(),
-			// 	stake.stake
-			// );
-
-			// Reward { owner: stake.id.clone(), amount: issue_number },
-
 			let collator_coeff = Self::coefficient();
 			let denom = col_stake * collator_coeff.into();
 			let divider = col_stake * collator_coeff.into() * del_sum_stake;
@@ -172,52 +147,25 @@ pub mod pallet {
 			avg_bl_reward: BalanceOf<T>,
 			col_stake: BalanceOf<T>,
 			del_stake: BalanceOf<T>,
-			del_sum_stake: BalanceOf<T>,
+			_del_sum_stake: BalanceOf<T>,
 		) -> BalanceOf<T> {
-			// let min_delegator_stake = T::MinDelegatorStake::get();
-			// let delegator_sum = (&stake.delegators)
-			// 	.into_iter()
-			// 	.filter(|x| x.amount >= min_delegator_stake)
-			// 	.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-
-			// if let Some(coefficient_collator) =
-			// 	T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
-			// {
-			// 	if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
-			// 		let inner = (&stake.delegators)
-			// 			.into_iter()
-			// 			.filter(|x| x.amount >= min_delegator_stake)
-			// 			.map(|x| Reward {
-			// 				owner: x.owner.clone(),
-			// 				amount: Perquintill::from_rational(x.amount, denominator) *
-			// 					issue_number,
-			// 			})
-			// 			.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
-
-			// 		return (
-			// 			Weight::from_ref_time(1_u64 + 4_u64),
-			// 			Weight::from_ref_time(inner.len() as u64),
-			// 			inner.try_into().expect("Did not extend vec q.e.d."),
-			// 		)
-			// 	}
-			// }
-			// log::error!(
-			// 	"Overflow while calculating the reward {:?} {:?}",
-			// 	Self::coefficient(),
-			// 	stake.stake
-			// );
-			// (
-			// 	Weight::from_ref_time(1_u64),
-			// 	Weight::from_ref_time(1_u64),
-			// 	BoundedVec::<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>::default(),
-			// )
-
 			let collator_coeff = Self::coefficient();
 			let divider = col_stake * collator_coeff.into() + del_stake;
 			let factor = Perquintill::from_rational(del_stake, divider);
 			factor * avg_bl_reward
 		}
 	}
-}
 
-pub use crate::{default_weights::WeightInfo, pallet::*};
+	impl<T: Config> RewardRateConfigTrait for Pallet<T> {
+		fn get_reward_rate_config() -> RewardRateInfo {
+			RewardRateInfo {
+				collator_rate: Perquintill::zero(),
+				delegator_rate: Perquintill::zero(),
+			}
+		}
+
+		fn set_reward_rate_config(_reward_rate: RewardRateInfo) {
+			// TODO: Log, that this function call will not change anything...
+		}
+	}
+}
