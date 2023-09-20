@@ -34,7 +34,7 @@ trait IdentifyChain {
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_agung(&self) -> bool {
-		self.id().starts_with("dev")
+		self.id().starts_with("agung")
 	}
 	fn is_krest(&self) -> bool {
 		self.id().starts_with("krest")

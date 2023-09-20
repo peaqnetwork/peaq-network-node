@@ -29,6 +29,7 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
 		.public()
 }
 
+/// [TODO] Extarct
 type AccountPublic = <Signature as Verify>::Signer;
 
 /// Generate an account ID from seed.
@@ -45,9 +46,10 @@ pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
 }
 
 pub fn get_chain_spec() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/peaq-dev-raw.json")[..])
+	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/agung-raw.json")[..])
 }
 
+/// [TODO] Rename the file name
 pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -57,7 +59,7 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		"Agung-parachain",
-		"dev-testnet",
+		"agung-testnet",
 		ChainType::Development,
 		move || {
 			configure_genesis(
