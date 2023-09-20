@@ -133,21 +133,22 @@ pub mod pallet {
 
 	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
 		fn collator_reward_per_block(
-			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
-			issue_number: BalanceOf<T>,
-		) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>) {
-			DefaultRewardCalculator::<T, Self>::collator_reward_per_block(stake, issue_number)
+			avg_bl_reward: BalanceOf<T>,
+			col_stake: BalanceOf<T>,
+			del_sum_stake: BalanceOf<T>,
+		) -> BalanceOf<T> {
+			DefaultRewardCalculator::<T, Self>::collator_reward_per_block(
+				avg_bl_reward, col_stake, del_sum_stake)
 		}
 
 		fn delegator_reward_per_block(
-			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
-			issue_number: BalanceOf<T>,
-		) -> (
-			Weight,
-			Weight,
-			BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>,
-		) {
-			DefaultRewardCalculator::<T, Self>::delegator_reward_per_block(stake, issue_number)
+			avg_bl_reward: BalanceOf<T>,
+			col_stake: BalanceOf<T>,
+			del_stake: BalanceOf<T>,
+			del_sum_stake: BalanceOf<T>,
+		) -> BalanceOf<T> {
+			DefaultRewardCalculator::<T, Self>::delegator_reward_per_block(
+				avg_bl_reward, col_stake, del_stake, del_sum_stake)
 		}
 	}
 

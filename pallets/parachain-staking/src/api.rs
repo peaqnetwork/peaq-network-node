@@ -45,18 +45,17 @@ impl<T: Config> Pallet<T> {
 			let count_unclaimed =
 				BlocksAuthored::<T>::get(&delegator_state.owner).saturating_sub(count_rewarded);
 			let stake = delegator_state.amount;
+			let state = Self::candidate_pool(&delegator_state.owner).unwrap();
 			// rewards += stake * reward_count * delegator_reward_rate
-			rewards
-				.saturating_add(Self::calc_block_rewards_delegator(stake, count_unclaimed.into()))
+			rewards.saturating_add(
+				Self::calc_block_rewards_delegator(stake, &state, count_unclaimed.into()))
 		} else if Self::is_active_candidate(acc).is_some() {
 			// #blocks for unclaimed staking rewards equals
 			// #blocks_authored_by_collator - #blocks_claimed_by_collator
 			let count_unclaimed = BlocksAuthored::<T>::get(acc).saturating_sub(count_rewarded);
-			let stake = CandidatePool::<T>::get(acc)
-				.map(|state| state.stake)
-				.unwrap_or_else(BalanceOf::<T>::zero);
+			let state = CandidatePool::<T>::get(acc).unwrap();
 			// rewards += stake * self_count * collator_reward_rate
-			rewards.saturating_add(Self::calc_block_rewards_collator(stake, count_unclaimed.into()))
+			rewards.saturating_add(Self::calc_block_rewards_collator(&state, count_unclaimed.into()))
 		} else {
 			rewards
 		}

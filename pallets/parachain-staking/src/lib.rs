@@ -2230,7 +2230,7 @@ pub mod pallet {
 		// Depends on the current total issuance and staking reward
 		// configuration for collators.
 		pub(crate) fn calc_block_rewards_collator(
-			_stake: BalanceOf<T>,
+			candidate: &CandidateOf<T, T::MaxDelegatorsPerCollator>,
 			multiplier: BalanceOf<T>,
 		) -> BalanceOf<T> {
 			// Note: Original Kilt-solution, keep comments for the moment
@@ -2249,8 +2249,8 @@ pub mod pallet {
 			// 	     do not mint tokens dynamically in dependency on demand
 			let avg_block_reward =
 				T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get());
-			let staking_rate = Perquintill::one();
-			T::BlockRewardCalculator::collator_reward_per_block(avg_block_reward, staking_rate)
+			T::BlockRewardCalculator::collator_reward_per_block(
+				avg_block_reward, candidate.stake, candidate.total - candidate.stake)
 				* multiplier
 		}
 
@@ -2263,6 +2263,7 @@ pub mod pallet {
 		// configuration for delegators.
 		pub(crate) fn calc_block_rewards_delegator(
 			stake: BalanceOf<T>,
+			candidate: &CandidateOf<T, T::MaxDelegatorsPerCollator>,
 			multiplier: BalanceOf<T>,
 		) -> BalanceOf<T> {
 			// Note: Original Kilt-solution, keep comments for the moment
@@ -2280,9 +2281,8 @@ pub mod pallet {
 			// Note: Due to Peaq's varying block-rewards, we need an average value and we
 			// 	     do not mint tokens dynamically in dependency on demand
 			let avg_block_reward = Pallet::<T>::average_block_reward();
-			let total_stake = TotalCollatorStake::<T>::get();
-			let staking_rate = Perquintill::from_rational(stake, total_stake.delegators);
-			T::BlockRewardCalculator::delegator_reward_per_block(avg_block_reward, staking_rate)
+			T::BlockRewardCalculator::delegator_reward_per_block(
+				avg_block_reward, candidate.stake, stake, candidate.total - candidate.stake)
 				* multiplier
 		}
 
@@ -2290,7 +2290,9 @@ pub mod pallet {
 		///
 		/// Updates Rewarded(col) and sets BlocksRewarded(col) to equal
 		/// BlocksAuthored(col).
-		fn do_inc_collator_reward(acc: &T::AccountId, stake: BalanceOf<T>) {
+		fn do_inc_collator_reward(acc: &T::AccountId, _stake: BalanceOf<T>) {
+			let state = Self::candidate_pool(acc).unwrap();
+
 			let count_authored = BlocksAuthored::<T>::get(acc);
 			// We can already mutate thanks to extrinsics being transactional
 			let count_rewarded = BlocksRewarded::<T>::mutate(acc, |rewarded| {
@@ -2302,7 +2304,7 @@ pub mod pallet {
 			// Note: At Peaq, we don't mint on top, we "take" it from the Pot
 			let (withdrawel, _) = T::Currency::slash(
 				&Self::account_id(),
-				Self::calc_block_rewards_collator(stake, unclaimed_blocks.into()),
+				Self::calc_block_rewards_collator(&state, unclaimed_blocks.into()),
 			);
 
 			Rewards::<T>::mutate(acc, |reward| {
@@ -2324,10 +2326,11 @@ pub mod pallet {
 				old
 			});
 			let unclaimed_blocks = count_authored.saturating_sub(count_rewarded);
+			let state = Self::candidate_pool(col).unwrap();
 			// Note: At Peaq, we don't mint on top, we "take" it from the Pot
 			let (withdrawel, _) = T::Currency::slash(
 				&Self::account_id(),
-				Self::calc_block_rewards_delegator(stake, unclaimed_blocks.into()),
+				Self::calc_block_rewards_delegator(stake, &state, unclaimed_blocks.into()),
 			);
 
 			Rewards::<T>::mutate(acc, |reward| {

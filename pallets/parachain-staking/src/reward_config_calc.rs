@@ -15,13 +15,16 @@ pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
 	/// Calculates the collator's reward per block.
 	fn collator_reward_per_block(
 		avg_bl_reward: BalanceOf<T>,
-		stake_portion: Perquintill,
+		col_stake: BalanceOf<T>,
+		del_sum_stake: BalanceOf<T>,
 	) -> BalanceOf<T>;
 
 	/// Calcualtes the delegator's reward per block.
 	fn delegator_reward_per_block(
 		avg_bl_reward: BalanceOf<T>,
-		stake_portion: Perquintill,
+		col_stake: BalanceOf<T>,
+		del_stake: BalanceOf<T>,
+		del_sum_stake: BalanceOf<T>,
 	) -> BalanceOf<T>;
 }
 
@@ -55,15 +58,20 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 {
 	fn collator_reward_per_block(
 		avg_bl_reward: BalanceOf<T>,
-		staking_rate: Perquintill,
+		col_stake: BalanceOf<T>,
+		del_sum_stake: BalanceOf<T>,
 	) -> BalanceOf<T> {
+		let staking_rate = Perquintill::one();
 		R::get_reward_rate_config().compute_collator_reward::<T>(avg_bl_reward, staking_rate)
 	}
 
 	fn delegator_reward_per_block(
 		avg_bl_reward: BalanceOf<T>,
-		staking_rate: Perquintill,
+		col_stake: BalanceOf<T>,
+		del_stake: BalanceOf<T>,
+		del_sum_stake: BalanceOf<T>,
 	) -> BalanceOf<T> {
+		let staking_rate = Perquintill::from_rational(del_stake, del_sum_stake);
 		R::get_reward_rate_config().compute_delegator_reward::<T>(avg_bl_reward, staking_rate)
 	}
 }
