@@ -203,7 +203,7 @@ where
 			MultiLocation { parents: 1, interior: Here } => {
 				let version = <T as SysConfig>::Version::get();
 				match version.spec_name {
-					RsBorrowed("peaq-node-dev") => Some(Token(DOT)),
+					RsBorrowed("peaq-node-agung") => Some(Token(ROC)),
 					RsBorrowed("peaq-node-krest") => Some(Token(KSM)),
 					RsBorrowed("peaq-node") => Some(Token(DOT)),
 					_ => None,

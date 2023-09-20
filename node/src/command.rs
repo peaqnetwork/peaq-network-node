@@ -2,7 +2,7 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
-	parachain::service::{self, dev, frontier_database_dir, krest, peaq, start_node},
+	parachain::service::{self, agung, frontier_database_dir, krest, peaq, start_node},
 	primitives::Block,
 };
 
@@ -27,13 +27,13 @@ use sp_runtime::traits::AccountIdConversion;
 use std::{io::Write, net::SocketAddr};
 
 trait IdentifyChain {
-	fn is_dev(&self) -> bool;
+	fn is_agung(&self) -> bool;
 	fn is_krest(&self) -> bool;
 	fn is_peaq(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
-	fn is_dev(&self) -> bool {
+	fn is_agung(&self) -> bool {
 		self.id().starts_with("dev")
 	}
 	fn is_krest(&self) -> bool {
@@ -46,9 +46,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 
 macro_rules! with_runtime_or_err {
 	($chain_spec:expr, { $( $code:tt )* }) => {
-		if $chain_spec.is_dev() {
+		if $chain_spec.is_agung() {
 			#[allow(unused_imports)]
-			use dev::{RuntimeApi, Executor};
+			use agung::{RuntimeApi, Executor};
 			$( $code )*
 		} else if $chain_spec.is_krest() {
 			#[allow(unused_imports)]
@@ -65,8 +65,8 @@ macro_rules! with_runtime_or_err {
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
-	fn is_dev(&self) -> bool {
-		<dyn sc_service::ChainSpec>::is_dev(self)
+	fn is_agung(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_agung(self)
 	}
 	fn is_krest(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_krest(self)
@@ -107,8 +107,8 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec()?),
-			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
+			"agung" => Box::new(parachain::dev_chain_spec::get_chain_spec()?),
+			"agung-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
 			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec()?),
@@ -120,7 +120,7 @@ impl SubstrateCli for Cli {
 				let chain_spec = parachain::dev_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
-				if chain_spec.is_dev() {
+				if chain_spec.is_agung() {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
