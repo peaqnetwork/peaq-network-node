@@ -1,7 +1,8 @@
 FROM ubuntu:20.04
 
-WORKDIR /opt/network
+WORKDIR /node
 ADD target/release/peaq-node /usr/local/bin
+ADD node/src/chain-specs/  /node/src/chain-specs
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq-node peaq-node && \
 	mkdir -p /chain-data /peaq-node/.local/share/peaq-node && \

@@ -165,7 +165,7 @@ Please use following command to run peaq-network-node parachian in the docker co
  ```bash
 docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v12062023 \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-raw.json \
+--chain ./node/src/chain-specs/agung-raw.json \
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
