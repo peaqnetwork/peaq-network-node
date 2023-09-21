@@ -128,25 +128,10 @@ use runtime_common::{
 	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
-/// An index to a block.
-type BlockNumber = peaq_primitives_xcm::BlockNumber;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = peaq_primitives_xcm::Signature;
-
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = peaq_primitives_xcm::AccountId;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-// type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
 /// Index of a transaction in the chain.
 type Index = peaq_primitives_xcm::Nonce;
 
-/// A hash of some data used by the chain.
-type Hash = peaq_primitives_xcm::Hash;
 
 /// The ID of an entity (RBAC)
 type EntityId = [u8; 32];
@@ -373,8 +358,6 @@ impl pallet_contracts::Config for Runtime {
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
-
-type Moment = peaq_primitives_xcm::Moment;
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
@@ -1007,10 +990,6 @@ construct_runtime!(
 
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// The address format for describing accounts.
-type Address = peaq_primitives_xcm::Address;
-/// Block header type as expected by this runtime.
-type Header = peaq_primitives_xcm::Header;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
