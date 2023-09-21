@@ -9,7 +9,7 @@ use sp_core::bounded::BoundedVec;
 use sp_runtime::traits::{ConstU32, Convert};
 use sp_std::prelude::*;
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use frame_support::{
 	dispatch::Weight,
 	parameter_types,

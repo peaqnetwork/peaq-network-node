@@ -15,7 +15,7 @@ ethereum-types = { workspace = true }
 evm-tracing-events = { path = "../rpc/evm-tracing-events", default-features = false }
 
 # Substrate
-codec = { workspace = true }
+parity-scale-codec = { workspace = true }
 sp-externalities = { workspace = true }
 sp-runtime-interface = { workspace = true }
 sp-std = { workspace = true }
@@ -23,7 +23,7 @@ sp-std = { workspace = true }
 [features]
 default = [ "std" ]
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"ethereum-types/std",
 	"evm-tracing-events/std",
 	"sp-externalities/std",

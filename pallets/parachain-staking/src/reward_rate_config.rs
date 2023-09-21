@@ -1,7 +1,7 @@
 //! Module description goes here!!!
 
 use core::marker::PhantomData;
-use codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	Perquintill, RuntimeDebug,

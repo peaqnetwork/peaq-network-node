@@ -13,7 +13,7 @@ use sc_service::{DatabaseSource, PartialComponents};
 use sp_runtime::traits::Block as BlockT;
 
 // Parachain
-use codec::Encode;
+use parity_scale_codec::Encode;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;

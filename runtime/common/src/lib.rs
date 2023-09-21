@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
 use frame_support::{

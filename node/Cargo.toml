@@ -40,7 +40,7 @@ serde = { workspace = true, default-features = true, features = ["derive"] }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
 fc-storage = { workspace = true, default-features = true }
 
-codec = { workspace = true, default-features = true }
+parity-scale-codec = { workspace = true, default-features = true }
 frame-benchmarking = { workspace = true, default-features = true }
 frame-benchmarking-cli = { workspace = true, optional = true }
 pallet-transaction-payment-rpc = { workspace = true, default-features = true }

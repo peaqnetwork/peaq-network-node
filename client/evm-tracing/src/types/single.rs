@@ -22,7 +22,7 @@
 use super::serialization::*;
 use serde::Serialize;
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use ethereum_types::{H256, U256};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 

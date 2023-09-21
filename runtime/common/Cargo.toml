@@ -11,7 +11,7 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-codec = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
 cumulus-primitives-core = { workspace = true, default-features = false }
 cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 frame-support = { workspace = true, default-features = false }
@@ -33,7 +33,7 @@ zenlink-protocol = { workspace = true, default-features = false }
 [features]
 default = ["std"]
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"cumulus-primitives-core/std",
 	"cumulus-pallet-parachain-system/std",
 	"frame-support/std",

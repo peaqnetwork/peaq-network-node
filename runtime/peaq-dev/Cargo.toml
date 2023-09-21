@@ -19,7 +19,7 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.38"
 
 [dependencies]
-codec = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
 sha3 = { workspace = true, default-features = false, optional = true  }
@@ -158,7 +158,7 @@ runtime-benchmarks = [
 ]
 
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"scale-info/std",
 	"frame-executive/std",
 	"frame-support/std",

@@ -12,7 +12,7 @@ repository.workspace = true
 [dependencies]
 bstringify = { workspace = true }
 serde = { workspace = true }
-codec = { workspace = true }
+parity-scale-codec = { workspace = true }
 num_enum = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
@@ -28,7 +28,7 @@ zenlink-protocol = { workspace = true }
 default = ["std"]
 std = [
 	"scale-info/std",
-	"codec/std",
+	"parity-scale-codec/std",
 	"num_enum/std",
 	"sp-runtime/std",
 	"sp-core/std",

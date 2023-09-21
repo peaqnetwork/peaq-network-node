@@ -6,7 +6,7 @@
 //!   v3 - added substrate storage_version, added AverageBlockReward storages (Daily, Weekly,
 //! Monthly, Anually)
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{pallet_prelude::*, storage_alias, weights::Weight};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;

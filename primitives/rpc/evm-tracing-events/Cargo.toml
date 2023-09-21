@@ -10,7 +10,7 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-codec = { workspace = true, default-features = false, features = ["derive"] }
+parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 environmental = { workspace = true, default-features = false }
 sp-runtime-interface = { workspace = true, default-features = false }
 
@@ -24,7 +24,7 @@ evm-runtime = { workspace = true, default-features = false }
 [features]
 default = [ "std" ]
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"environmental/std",
 	"ethereum-types/std",
 	"ethereum/std",
