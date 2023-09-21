@@ -21,7 +21,7 @@ slices = { workspace = true, default-features = false }
 precompile-utils = { path = "../utils", default-features = false }
 
 # Substrate
-codec = { package = "parity-scale-codec", workspace = true, default-features = false, features = [ "max-encoded-len" ]}
+codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }

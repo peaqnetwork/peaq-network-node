@@ -13,7 +13,7 @@ repository.workspace = true
 ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
 
 # Substrate
-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+codec = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-runtime = { workspace = true, default-features = false }

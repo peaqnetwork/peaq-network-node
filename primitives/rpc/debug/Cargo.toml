@@ -18,7 +18,7 @@ serde = { workspace = true, optional = true, features = [ "derive" ] }
 serde_json = { workspace = true, optional = true }
 
 # Substrate
-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+codec = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }

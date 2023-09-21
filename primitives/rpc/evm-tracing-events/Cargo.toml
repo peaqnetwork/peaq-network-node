@@ -10,8 +10,8 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
+codec = { workspace = true, default-features = false, features = ["derive"] }
 environmental = { workspace = true, default-features = false }
-codec = { package = "parity-scale-codec", workspace = true }
 sp-runtime-interface = { workspace = true, default-features = false }
 
 # Ethereum
