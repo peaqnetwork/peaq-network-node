@@ -31,6 +31,7 @@ use peaq_primitives_xcm::{
 	currency::parachain, AccountId, Balance, CurrencyId, TokenInfo, TokenSymbol,
 };
 
+
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;
 pub const NANOCENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 9);
@@ -185,6 +186,10 @@ where
 				parachain::bifrost::ID,
 				parachain::bifrost::BNC_KEY.to_vec(),
 			),
+			Token(MBA) => native_currency_location(
+				parachain::moonbase::ID,
+				parachain::moonbase::DEV_KEY.to_vec(),
+			),
 			_ => None,
 		}
 	}
@@ -203,7 +208,7 @@ where
 			MultiLocation { parents: 1, interior: Here } => {
 				let version = <T as SysConfig>::Version::get();
 				match version.spec_name {
-					RsBorrowed("peaq-node-dev") => Some(Token(DOT)),
+					RsBorrowed("peaq-node-dev") => Some(Token(ROC)),
 					RsBorrowed("peaq-node-agung") => Some(Token(ROC)),
 					RsBorrowed("peaq-node-krest") => Some(Token(KSM)),
 					RsBorrowed("peaq-node") => Some(Token(DOT)),
@@ -222,6 +227,10 @@ where
 					},
 					parachain::bifrost::ID => match key {
 						parachain::bifrost::BNC_KEY => Some(Token(BNC)),
+						_ => None,
+					},
+					parachain::moonbase::ID => match key {
+						parachain::moonbase::DEV_KEY => Some(Token(MBA)),
 						_ => None,
 					},
 					_ =>

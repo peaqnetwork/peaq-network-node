@@ -201,6 +201,7 @@ create_token_symbol! {
 
 		ACA("Acala", 12) = 128,
 		BNC("Bifrost Native Token", 12) = 129,
+		MBA("Moonbase Alpha Testnet Token", 18) = 130, // cannot name it DEV...
 	}
 }
 
@@ -404,5 +405,9 @@ pub mod parachain {
 	pub mod bifrost {
 		pub const ID: u32 = 3000;
 		pub const BNC_KEY: &[u8] = &[0, 1];
+	}
+	mod moonbase {
+		pub const ID: u32 = 1287;
+		pub const DEV_KEY: &[u8] = &[0, 0];
 	}
 }
