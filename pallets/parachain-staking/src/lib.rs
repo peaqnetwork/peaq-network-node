@@ -2339,7 +2339,7 @@ pub mod pallet {
 		}
 
 		/// Transforms the given PotId into an AccountId
-		pub(crate) fn account_id() -> T::AccountId {
+		pub fn account_id() -> T::AccountId {
 			T::PotId::get().into_account_truncating()
 		}
 	}

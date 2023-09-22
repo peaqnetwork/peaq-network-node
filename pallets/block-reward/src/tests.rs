@@ -8,7 +8,7 @@ use frame_support::{
 	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
 };
 use sp_runtime::{
-	traits::{AccountIdConversion, BadOrigin, RuntimeDebug, Zero},
+	traits::{AccountIdConversion, BadOrigin, Zero},
 	Perbill,
 };
 
@@ -455,7 +455,7 @@ pub fn averaging_functionality_test() {
 }
 
 /// Represents free balance snapshot at a specific point in time
-#[derive(PartialEq, Eq, Clone, RuntimeDebug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct FreeBalanceSnapshot {
 	treasury: Balance,
 	collators: Balance,
@@ -523,7 +523,7 @@ impl FreeBalanceSnapshot {
 }
 
 /// Represents reward distribution balances for a single distribution.
-#[derive(PartialEq, Eq, Clone, RuntimeDebug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct Rewards {
 	treasury_reward: Balance,
 	dapps_reward: Balance,

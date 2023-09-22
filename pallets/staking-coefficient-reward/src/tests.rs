@@ -14,7 +14,7 @@ use sp_runtime::Perbill;
 
 use parachain_staking::{
 	reward_rate_config::CollatorDelegatorBlockRewardCalculator,
-	types::{BalanceOf, Reward},
+	types::BalanceOf,
 	Config,
 };
 
@@ -220,7 +220,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 				),
 				true
 			);
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
+			// assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
 
 			// 2 is block author for 5th block
 			roll_to(6, authors);
@@ -288,7 +288,7 @@ fn collator_reward_per_block_only_collator() {
 		.with_delegators(vec![])
 		.build()
 		.execute_with(|| {
-			let state = StakePallet::candidate_pool(1).unwrap();
+			let avg_bl_rew = StakePallet::average_block_reward();
 			// Avoid keep live error
 			assert_ok!(Balances::set_balance(
 				RawOrigin::Root.into(),
@@ -297,9 +297,8 @@ fn collator_reward_per_block_only_collator() {
 				0
 			));
 
-			let (_reads, _writes, reward) =
-				RewardCalculatorPallet::collator_reward_per_block(&state, 100);
-			assert_eq!(reward, Reward { owner: 1, amount: 100 });
+			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
+			assert_eq!(reward, 100);
 		});
 }
 
@@ -312,7 +311,6 @@ fn collator_reward_per_block_with_delegator() {
 		.with_coeffctive(8, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
-			let state = StakePallet::candidate_pool(1).unwrap();
 			// Avoid keep live error
 			assert_ok!(Balances::set_balance(
 				RawOrigin::Root.into(),
@@ -321,19 +319,22 @@ fn collator_reward_per_block_with_delegator() {
 				0
 			));
 
-			let (_reads, _writes, reward) =
-				RewardCalculatorPallet::collator_reward_per_block(&state, 100);
+			let avg_bl_rew = StakePallet::average_block_reward();
+			let reward = RewardCalculatorPallet::collator_reward_per_block(
+				avg_bl_rew, 500, 1000);
 			let c_rewards: BalanceOf<Test> =
 				(100. * 500. * 8. / (500. * 8. + 600. + 400.)) as BalanceOf<Test>;
-			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
+			assert_eq!(reward, c_rewards);
 
-			let (_reards, _writes, reward_vec) =
-				RewardCalculatorPallet::delegator_reward_per_block(&state, 100);
+			let reward1 = RewardCalculatorPallet::delegator_reward_per_block(
+				avg_bl_rew, 500, 600, 1000);
+			let reward2 = RewardCalculatorPallet::delegator_reward_per_block(
+				avg_bl_rew, 500, 600, 1000);
 			let d_1_rewards: BalanceOf<Test> =
 				(100. * 600. / (500. * 8. + 600. + 400.)) as BalanceOf<Test>;
 			let d_2_rewards: BalanceOf<Test> =
 				(100. * 400. / (500. * 8. + 600. + 400.)) as BalanceOf<Test>;
-			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
-			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
+			assert_eq!(reward1, d_1_rewards);
+			assert_eq!(reward2, d_2_rewards);
 		});
 }

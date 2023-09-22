@@ -13,6 +13,7 @@ repository.workspace = true
 [dev-dependencies]
 pallet-aura = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
+peaq-frame-ext = { workspace = true, default-features = false }
 sp-consensus-aura = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
@@ -41,26 +42,27 @@ frame-benchmarking = { workspace = true, default-features = false, optional = tr
 [features]
 default = ["std"]
 runtime-benchmarks = [
-  "frame-benchmarking",
-  "frame-support/runtime-benchmarks",
-  "frame-system/runtime-benchmarks",
+	"frame-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
 ]
 std = [
-  "frame-support/std",
-  "frame-system/std",
-  "log/std",
-  "pallet-authorship/std",
-  "pallet-balances/std",
-  "pallet-session/std",
-  "parity-scale-codec/std",
-  "scale-info/std",
-  "serde",
-  "sp-runtime/std",
-  "sp-staking/std",
-  "sp-std/std",
-  "parachain-staking/std",
-  "sp-consensus-aura/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"pallet-authorship/std",
+	"pallet-balances/std",
+	"pallet-session/std",
+	"parity-scale-codec/std",
+	"peaq-frame-ext/std",
+	"scale-info/std",
+	"serde",
+	"sp-runtime/std",
+	"sp-staking/std",
+	"sp-std/std",
+	"parachain-staking/std",
+	"sp-consensus-aura/std",
 ]
 try-runtime = [
-  "frame-support/try-runtime",
+	"frame-support/try-runtime",
 ]

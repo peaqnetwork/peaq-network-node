@@ -3683,7 +3683,7 @@ fn collator_reward_per_block_only_collator() {
 
 			let reward =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					avg_bl_reward, Perquintill::from_percent(100));
+					avg_bl_reward, 500, 0);
 			assert_eq!(reward, Perquintill::from_percent(30)*avg_bl_reward);
 		});
 }
@@ -3899,17 +3899,17 @@ fn collator_reward_per_block_with_delegator() {
 
 			let reward =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					avg_bl_reward, Perquintill::from_percent(100));
+					avg_bl_reward, 500, 1000);
 			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(
 				avg_bl_reward, Perquintill::from_percent(100));
 			assert_eq!(reward, c_rewards);
 
 			let reward1 =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					avg_bl_reward, Perquintill::from_percent(60));
+					avg_bl_reward, 500, 600, 1000);
 			let reward2 =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					avg_bl_reward, Perquintill::from_percent(40));
+					avg_bl_reward, 500, 400, 1000);
 			let d_1_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_float(6. / 10.));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
