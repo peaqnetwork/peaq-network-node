@@ -1,7 +1,7 @@
 use super::{
-	constants::fee::{dot_per_second, peaq_per_second},
+	constants::fee::{roc_per_second, agung_per_second},
 	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, ParachainInfo,
-	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	ParachainSystem, AgungPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue,
 };
 use frame_support::{
@@ -74,7 +74,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	LocationToAccountId,
 	CurrencyId,
 	CurrencyIdConvert<Runtime>,
-	DepositToAlternative<PeaqPotAccount, Currencies, CurrencyId, AccountId, Balance>,
+	DepositToAlternative<AgungPotAccount, Currencies, CurrencyId, AccountId, Balance>,
 >;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
@@ -105,30 +105,30 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 
-	pub PeaqPerSecond: (AssetId, u128, u128) = (
-		local_currency_location(peaq_primitives_xcm::CurrencyId::Token(TokenSymbol::PEAQ)).unwrap().into(),
-		peaq_per_second(),
+	pub AgungPerSecond: (AssetId, u128, u128) = (
+		local_currency_location(peaq_primitives_xcm::CurrencyId::Token(TokenSymbol::AGNG)).unwrap().into(),
+		agung_per_second(),
 		0
 	);
 
-	pub DotPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), dot_per_second(), 0);
+	pub DotPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), roc_per_second(), 0);
 	pub AcaPerSecond: (AssetId, u128, u128) = (
 		native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()).unwrap().into(),
-		// TODO: Need to check the fee: ACA:DOT = 5:1
-		dot_per_second() * 5,
+		// TODO: Need to check the fee: ACA:ROC = 5:1
+		roc_per_second() * 5,
 		0
 	);
 	pub BncPerSecond: (AssetId, u128, u128) = (
 		native_currency_location(parachain::bifrost::ID, parachain::bifrost::BNC_KEY.to_vec()).unwrap().into(),
-		// TODO: Need to check the fee: ACA:DOT = 5:1
-		dot_per_second() * 5,
+		// TODO: Need to check the fee: ACA:ROC = 5:1
+		roc_per_second() * 5,
 		0
 	);
-	pub BaseRate: u128 = peaq_per_second();
+	pub BaseRate: u128 = agung_per_second();
 }
 
 pub type Trader = (
-	FixedRateOfFungible<PeaqPerSecond, ToTreasury>,
+	FixedRateOfFungible<AgungPerSecond, ToTreasury>,
 	FixedRateOfFungible<DotPerSecond, ToTreasury>,
 	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
 	FixedRateOfFungible<BncPerSecond, ToTreasury>,
@@ -149,10 +149,10 @@ impl TakeRevenue for ToTreasury {
 	fn take_revenue(revenue: MultiAsset) {
 		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
 			if let Some(currency_id) = CurrencyIdConvert::<Runtime>::convert(location) {
-				// Ensure PeaqPotAccount have ed requirement for native asset, but don't need
+				// Ensure AgungPotAccount have ed requirement for native asset, but don't need
 				// ed requirement for cross-chain asset because it's one of whitelist accounts.
 				// Ignore the result.
-				let _ = Currencies::deposit(currency_id, &PeaqPotAccount::get(), amount);
+				let _ = Currencies::deposit(currency_id, &AgungPotAccount::get(), amount);
 			}
 		}
 	}

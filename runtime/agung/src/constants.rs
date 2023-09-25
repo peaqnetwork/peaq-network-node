@@ -21,7 +21,7 @@
 pub mod fee {
 	use frame_support::weights::constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND};
 	use peaq_primitives_xcm::{
-		currency::{TokenInfo, DOT, PEAQ},
+		currency::{TokenInfo, ROC, AGNG},
 		Balance, CurrencyId,
 	};
 
@@ -33,8 +33,8 @@ pub mod fee {
 		dollar(currency_id) / 100
 	}
 
-	fn base_tx_in_peaq() -> Balance {
-		cent(PEAQ) / 10
+	fn base_tx_in_agung() -> Balance {
+		cent(AGNG) / 10
 	}
 
 	/// Handles converting a weight scalar to a fee value, based on the scale
@@ -64,13 +64,13 @@ pub mod fee {
 	// 	}
 	// }
 
-	pub fn peaq_per_second() -> u128 {
+	pub fn agung_per_second() -> u128 {
 		let base_weight = Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		let base_tx_per_second = (WEIGHT_REF_TIME_PER_SECOND as u128) / base_weight;
-		base_tx_per_second * base_tx_in_peaq()
+		base_tx_per_second * base_tx_in_agung()
 	}
 
-	pub fn dot_per_second() -> u128 {
-		peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT)
+	pub fn roc_per_second() -> u128 {
+		agung_per_second() / dollar(AGNG) * 50 * dollar(ROC)
 	}
 }

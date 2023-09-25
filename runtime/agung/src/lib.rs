@@ -432,7 +432,7 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
 	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
-		CurrencyId::Token(TokenSymbol::DOT),
+		CurrencyId::Token(TokenSymbol::ROC),
 		CurrencyId::Token(TokenSymbol::BNC),
 	];
 }
@@ -839,7 +839,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = AGNG;
 }
 
 impl orml_currencies::Config for Runtime {
@@ -871,8 +871,8 @@ parameter_type_with_key! {
 }
 
 parameter_types! {
-	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
-	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub AgungPotAccount: AccountId = PotStakeId::get().into_account_truncating();
+	pub AgungTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl orml_tokens::Config for Runtime {
@@ -886,7 +886,7 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
+	type CurrencyHooks = CurrencyHooks<Runtime, AgungTreasuryAccount>;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
