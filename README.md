@@ -163,13 +163,15 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v12062023 \
+docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v0.0.8 \
+RPC_ENDPOINT="https://rpcpc1-qa.agung.peaq.network" \
 --parachain-id 2000 \
 --chain ./node/src/chain-specs/peaq-dev-raw.json \
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
 --ws-external --rpc-cors=all \
+--execution wasm \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/rococo-local-raw.json \
@@ -180,13 +182,14 @@ docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/paracha
 #### Krest env
 
  ```bash
-docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v31052023 \
+docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v0.0.4 \
 --parachain-id 2241 \
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
 --ws-external --rpc-cors=all \
+--execution wasm \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
@@ -206,12 +209,12 @@ for peaq-network-node from the git repository
 
 #### PEAQ-Dev env
 ```bash
-git clone --branch run_peaq_dev_parachain_with_docker_commands https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch peaq-dev-v0.0.8 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 #### Krest env
 ```bash
-git clone --branch run_krest_parachain_with_docker_commands https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch krest-v0.0.4 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 2. CD into the peaq-network-node directory:
@@ -242,6 +245,7 @@ The folder .local is needed because that is where data such as session keys are 
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
+--execution wasm \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/rococo-local-raw.json \
@@ -258,6 +262,7 @@ The folder .local is needed because that is where data such as session keys are 
 --base-path chain-data \
 --port 30333 \
 --ws-port 9944 \
+--execution wasm \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
