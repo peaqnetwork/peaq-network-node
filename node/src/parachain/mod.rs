@@ -14,7 +14,7 @@ pub mod agung_chain_spec;
 pub mod krest_chain_spec;
 pub mod peaq_chain_spec;
 
-pub use service::{build_import_queue, agung, krest, new_partial, peaq, start_node};
+pub use service::{agung, build_import_queue, krest, new_partial, peaq, start_node};
 
 /// Node `ChainSpec` extensions.
 ///
