@@ -1,4 +1,7 @@
-use crate::parachain::Extensions;
+use crate::parachain::{
+	utils::{AuraId, SAFE_XCM_VERSION},
+	Extensions,
+};
 use cumulus_primitives_core::ParaId;
 use peaq_primitives_xcm::Balance;
 use peaq_runtime::{
@@ -8,7 +11,6 @@ use peaq_runtime::{
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
 use hex_literal::hex;
@@ -17,9 +19,6 @@ use std::str::FromStr;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
-
-/// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 fn session_keys(aura: AuraId) -> peaq_runtime::opaque::SessionKeys {
 	peaq_runtime::opaque::SessionKeys { aura }

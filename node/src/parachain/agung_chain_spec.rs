@@ -1,55 +1,29 @@
-use crate::parachain::Extensions;
+use crate::parachain::{
+	utils::{
+		authority_keys_from_seed, get_account_id_from_seed, AccountId, AuraId, PublicType,
+		SAFE_XCM_VERSION,
+	},
+	Extensions,
+};
 use cumulus_primitives_core::ParaId;
 use peaq_agung_runtime::{
-	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
-	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
-	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature,
-	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
+	GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PeaqMorConfig, Precompiles, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig,
+	WASM_BINARY,
 };
 use peaq_primitives_xcm::Balance;
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	Perbill,
-};
+use sp_runtime::Perbill;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
-
-/// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
-
-/// Generate a crypto pair from seed.
-pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
-}
-
-/// [TODO] Extarct
-type AccountPublic = <Signature as Verify>::Signer;
-
-/// Generate an account ID from seed.
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
-}
-
-/// Generate an Aura authority key.
-pub fn authority_keys_from_seed(s: &str) -> (AccountId, AuraId) {
-	(get_account_id_from_seed::<sr25519::Public>(s), get_from_seed::<AuraId>(s))
-}
 
 pub fn get_chain_spec() -> Result<ChainSpec, String> {
 	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/agung-raw.json")[..])
 }
 
-/// [TODO] Rename the file name
 pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -66,21 +40,21 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 				wasm_binary,
 				// stakers
 				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<PublicType>("Alice"),
 					None,
 					2 * staking::MinCollatorStake::get(),
 				)],
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<PublicType>("Alice"),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<PublicType>("Alice"),
+					get_account_id_from_seed::<PublicType>("Bob"),
+					get_account_id_from_seed::<PublicType>("Alice//stash"),
+					get_account_id_from_seed::<PublicType>("Bob//stash"),
+					get_account_id_from_seed::<PublicType>("Charlie"),
 				],
 				para_id.into(),
 			)

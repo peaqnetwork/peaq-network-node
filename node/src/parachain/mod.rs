@@ -8,6 +8,7 @@ mod shell_upgrade;
 
 /// Parachain specified service.
 pub mod service;
+mod utils;
 
 /// Parachain specs.
 pub mod agung_chain_spec;

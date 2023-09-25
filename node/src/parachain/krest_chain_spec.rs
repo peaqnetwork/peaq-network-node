@@ -1,4 +1,10 @@
-use crate::parachain::Extensions;
+use crate::parachain::{
+	utils::{
+		authority_keys_from_seed, get_account_id_from_seed, AuraId, PublicType, SAFE_XCM_VERSION,
+	},
+	Extensions,
+};
+
 use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
@@ -8,18 +14,10 @@ use peaq_krest_runtime::{
 use peaq_primitives_xcm::Balance;
 use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
-
-use crate::parachain::agung_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
-
-use sp_core::sr25519;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
-
-/// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 fn session_keys(aura: AuraId) -> peaq_krest_runtime::opaque::SessionKeys {
 	peaq_krest_runtime::opaque::SessionKeys { aura }
@@ -45,28 +43,28 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 				wasm_binary,
 				// stakers
 				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<PublicType>("Alice"),
 					None,
 					2 * staking::MinCollatorStake::get(),
 				)],
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice")],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<PublicType>("Alice"),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+					get_account_id_from_seed::<PublicType>("Alice"),
+					get_account_id_from_seed::<PublicType>("Bob"),
+					get_account_id_from_seed::<PublicType>("Charlie"),
+					get_account_id_from_seed::<PublicType>("Dave"),
+					get_account_id_from_seed::<PublicType>("Eve"),
+					get_account_id_from_seed::<PublicType>("Ferdie"),
+					get_account_id_from_seed::<PublicType>("Alice//stash"),
+					get_account_id_from_seed::<PublicType>("Bob//stash"),
+					get_account_id_from_seed::<PublicType>("Charlie//stash"),
+					get_account_id_from_seed::<PublicType>("Dave//stash"),
+					get_account_id_from_seed::<PublicType>("Eve//stash"),
+					get_account_id_from_seed::<PublicType>("Ferdie//stash"),
 				],
 				para_id.into(),
 			)
