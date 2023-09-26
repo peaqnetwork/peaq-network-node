@@ -21,7 +21,7 @@ pub mod pallet {
 	use super::*;
 	use parachain_staking::{
 		reward_rate_config::{
-			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
 		},
 		types::BalanceOf,
 	};
@@ -139,7 +139,10 @@ pub mod pallet {
 			del_sum_stake: BalanceOf<T>,
 		) -> BalanceOf<T> {
 			DefaultRewardCalculator::<T, Self>::collator_reward_per_block(
-				avg_bl_reward, col_stake, del_sum_stake)
+				avg_bl_reward,
+				col_stake,
+				del_sum_stake,
+			)
 		}
 
 		fn delegator_reward_per_block(
@@ -149,7 +152,11 @@ pub mod pallet {
 			del_sum_stake: BalanceOf<T>,
 		) -> BalanceOf<T> {
 			DefaultRewardCalculator::<T, Self>::delegator_reward_per_block(
-				avg_bl_reward, col_stake, del_stake, del_sum_stake)
+				avg_bl_reward,
+				col_stake,
+				del_stake,
+				del_sum_stake,
+			)
 		}
 	}
 

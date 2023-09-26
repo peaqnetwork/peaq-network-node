@@ -15,7 +15,6 @@ pub(crate) mod tests;
 
 pub use crate::{default_weights::WeightInfo, pallet::*};
 
-
 const DEFAULT_COEFFICIENT: u8 = 8;
 
 #[frame_support::pallet]
@@ -26,14 +25,13 @@ pub mod pallet {
 	use sp_runtime::Perquintill;
 	use sp_std::convert::TryInto;
 
+	use super::{WeightInfo, DEFAULT_COEFFICIENT};
 	use parachain_staking::{
 		reward_rate_config::{
-			CollatorDelegatorBlockRewardCalculator, RewardRateInfo, RewardRateConfigTrait
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
 		},
 		types::BalanceOf,
 	};
-	use super::{WeightInfo, DEFAULT_COEFFICIENT};
-
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -140,7 +138,6 @@ pub mod pallet {
 			let divider = col_stake * collator_coeff.into() * del_sum_stake;
 			let factor = Perquintill::from_rational(denom, divider);
 			factor * avg_bl_reward
-
 		}
 
 		fn delegator_reward_per_block(

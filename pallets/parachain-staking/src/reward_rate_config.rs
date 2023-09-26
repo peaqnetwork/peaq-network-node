@@ -3,18 +3,11 @@
 use core::marker::PhantomData;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{
-	Perquintill, RuntimeDebug,
-	traits::CheckedAdd,
-};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_runtime::{traits::CheckedAdd, Perquintill, RuntimeDebug};
 
-use crate::{
-	pallet::Config,
-	types::BalanceOf,
-};
-
+use crate::{pallet::Config, types::BalanceOf};
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
@@ -34,7 +27,6 @@ pub trait CollatorDelegatorBlockRewardCalculator<T: Config> {
 	) -> BalanceOf<T>;
 }
 
-
 /// Specifies that an object can configure and provide a staking-distribution configuration.
 pub trait RewardRateConfigTrait {
 	/// Getter method for staking-distribution configuration.
@@ -42,7 +34,6 @@ pub trait RewardRateConfigTrait {
 	/// Setter method, to configure the staking-distribution.
 	fn set_reward_rate_config(reward_rate_config: RewardRateInfo);
 }
-
 
 /// RewardRateInfo describes how much percentage of the block rewards will be distributed to the
 /// current collator and how much to its delegators. Only in case of a fixed distribution ratio.
@@ -80,7 +71,7 @@ impl RewardRateInfo {
 	pub fn compute_collator_reward<T: Config>(
 		&self,
 		avg_bl_reward: BalanceOf<T>,
-		_staking_rate: Perquintill
+		_staking_rate: Perquintill,
 	) -> BalanceOf<T> {
 		self.collator_rate * avg_bl_reward // * _staking_rate
 	}
@@ -93,7 +84,6 @@ impl RewardRateInfo {
 		self.delegator_rate * staking_rate * avg_bl_reward
 	}
 }
-
 
 // Default implementation
 pub struct DefaultRewardCalculator<T: Config, R: RewardRateConfigTrait> {
@@ -132,7 +122,6 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 		R::get_reward_rate_config().compute_delegator_reward::<T>(avg_bl_reward, staking_rate)
 	}
 }
-
 
 #[cfg(test)]
 mod tests {

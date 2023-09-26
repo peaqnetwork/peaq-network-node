@@ -18,7 +18,6 @@
 
 //! Unit testing
 
-
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
@@ -51,12 +50,13 @@ fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> B
 
 #[allow(dead_code)]
 fn calc_collator_rewards_coeff(
-		avg_reward: Balance,
-		col_stake: Balance,
-		del_sum_stake: Balance,
-		coeff: u8,
-	) -> Balance {
-	// (TotalRewards*CollatorStake*CollatorCoefficient)/(CollatorStake*CollatorCoefficient + DelegatorStake)
+	avg_reward: Balance,
+	col_stake: Balance,
+	del_sum_stake: Balance,
+	coeff: u8,
+) -> Balance {
+	// (TotalRewards*CollatorStake*CollatorCoefficient)/(CollatorStake*CollatorCoefficient +
+	// DelegatorStake)
 	let coeff = coeff as Balance;
 	let denom = col_stake * coeff;
 	let divisor = col_stake * coeff + del_sum_stake;
@@ -76,19 +76,18 @@ fn calc_delegator_rewards(
 
 #[allow(dead_code)]
 fn calc_delegator_rewards_coeff(
-		avg_reward: Balance,
-		col_stake: Balance,
-		del_stake: Balance,
-		del_sum_stake: Balance,
-		coeff: u8,
-	) -> Balance {
+	avg_reward: Balance,
+	col_stake: Balance,
+	del_stake: Balance,
+	del_sum_stake: Balance,
+	coeff: u8,
+) -> Balance {
 	// (TotalRewards*DelegatorStake)/(CollatorStake*CollatorCoefficient + DelegatorStake)
 	let coeff = coeff as Balance;
 	let divisor = col_stake * coeff + del_sum_stake;
 	let factor = Perquintill::from_rational(del_stake, divisor);
 	factor * avg_reward
 }
-
 
 #[test]
 fn should_select_collators_genesis_session() {
@@ -3713,12 +3712,16 @@ fn collator_reward_per_block_only_collator() {
 				RawOrigin::Root.into(),
 				StakePallet::account_id(),
 				1000,
-				0));
+				0
+			));
 
 			let reward =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					avg_bl_reward, 500, 0);
-			assert_eq!(reward, Perquintill::from_percent(30)*avg_bl_reward);
+					avg_bl_reward,
+					500,
+					0,
+				);
+			assert_eq!(reward, Perquintill::from_percent(30) * avg_bl_reward);
 		});
 }
 
@@ -3804,8 +3807,12 @@ fn test_varying_delegators() {
 			for i in 2..4 {
 				roll_to(BlockNumber::from(i as u64), DEFAULT_ISSUE, &authors);
 
-				StakePallet::join_delegators(RuntimeOrigin::signed(i + 1u64), 1, 5_000_000 * DECIMALS)
-					.unwrap();
+				StakePallet::join_delegators(
+					RuntimeOrigin::signed(i + 1u64),
+					1,
+					5_000_000 * DECIMALS,
+				)
+				.unwrap();
 
 				StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(2)).unwrap();
 				StakePallet::claim_rewards(RuntimeOrigin::signed(2)).unwrap();
@@ -3933,22 +3940,33 @@ fn collator_reward_per_block_with_delegator() {
 
 			let reward =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					avg_bl_reward, 500, 1000);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(
-				avg_bl_reward, Perquintill::from_percent(100));
+					avg_bl_reward,
+					500,
+					1000,
+				);
+			let c_rewards: BalanceOf<Test> = reward_rate
+				.compute_collator_reward::<Test>(avg_bl_reward, Perquintill::from_percent(100));
 			assert_eq!(reward, c_rewards);
 
 			let reward1 =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					avg_bl_reward, 500, 600, 1000);
+					avg_bl_reward,
+					500,
+					600,
+					1000,
+				);
 			let reward2 =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					avg_bl_reward, 500, 400, 1000);
+					avg_bl_reward,
+					500,
+					400,
+					1000,
+				);
 			let d_1_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_float(6. / 10.));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_float(4. / 10.));
-			assert_eq!(reward1, d_1_rewards );
-			assert_eq!(reward2, d_2_rewards );
+			assert_eq!(reward1, d_1_rewards);
+			assert_eq!(reward2, d_2_rewards);
 		});
 }

@@ -25,7 +25,7 @@ use syn::{
 pub fn main(input: TokenStream) -> TokenStream {
 	let DeriveInput { ident, mut generics, data, .. } = parse_macro_input!(input as DeriveInput);
 
-	let syn::Data::Struct (syn::DataStruct {fields: syn::Fields::Named(fields), ..}) = data else {
+	let syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(fields), .. }) = data else {
 		return quote_spanned! { ident.span() =>
 			compile_error!("EvmData can only be derived for structs with named fields");
 		}

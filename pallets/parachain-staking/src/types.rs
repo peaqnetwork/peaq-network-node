@@ -16,8 +16,8 @@
 
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::{Currency, Get};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, CheckedSub, Saturating, Zero},
@@ -30,7 +30,7 @@ use sp_std::{
 	ops::{Add, Sub},
 };
 
-use crate::{set::OrderedSet, pallet::Config};
+use crate::{pallet::Config, set::OrderedSet};
 
 /// A struct represented an amount of staked funds.
 ///
@@ -84,7 +84,6 @@ impl<AccountId: Ord, Balance: PartialEq + Ord> Ord for Stake<AccountId, Balance>
 }
 
 pub type Reward<AccountId, Balance> = Stake<AccountId, Balance>;
-
 
 /// The activity status of the collator.
 #[derive(
@@ -204,7 +203,6 @@ where
 	}
 }
 
-
 pub type Delegator<AccountId, Balance> = Stake<AccountId, Balance>;
 
 impl<AccountId, Balance> Delegator<AccountId, Balance>
@@ -235,8 +233,10 @@ where
 	/// Returns Ok(delegated_amount) if successful, `Err` if delegation was
 	/// not found.
 	pub fn try_increment(
-			&mut self, collator: AccountId, more: Balance
-		) -> Result<Balance, DelegatorTryError> {
+		&mut self,
+		collator: AccountId,
+		more: Balance,
+	) -> Result<Balance, DelegatorTryError> {
 		if self.owner == collator {
 			self.amount = self.amount.saturating_add(more);
 			Ok(self.amount)
@@ -248,8 +248,10 @@ where
 	/// Returns Ok(Some(delegated_amount)) if successful, `Err` if delegation
 	/// was not found and Ok(None) if delegated stake would underflow.
 	pub fn try_decrement(
-			&mut self, collator: AccountId, less: Balance
-		) -> Result<Option<Balance>, DelegatorTryError> {
+		&mut self,
+		collator: AccountId,
+		less: Balance,
+	) -> Result<Option<Balance>, DelegatorTryError> {
 		if self.owner == collator {
 			Ok(self.amount.checked_sub(&less).map(|new| {
 				self.amount = new;
@@ -265,7 +267,6 @@ where
 pub enum DelegatorTryError {
 	WrongAccount,
 }
-
 
 /// The current round index and transition information.
 #[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -311,7 +312,6 @@ where
 	}
 }
 
-
 /// The total stake of the pallet.
 ///
 /// The stake includes both collators' and delegators' staked funds.
@@ -320,7 +320,6 @@ pub struct TotalStake<Balance: Default> {
 	pub collators: Balance,
 	pub delegators: Balance,
 }
-
 
 /// The number of delegations a delegator has done within the last session in
 /// which they delegated.

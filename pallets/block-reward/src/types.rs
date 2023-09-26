@@ -1,7 +1,7 @@
 //! Type and trait definitions of the crate
 
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::{tokens::Balance as BalanceT, Currency};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{CheckedAdd, Zero},
@@ -10,7 +10,6 @@ use sp_runtime::{
 use sp_std::vec;
 
 use crate::pallet::Config;
-
 
 /// The balance type of this pallet.
 pub(crate) type BalanceOf<T> =
@@ -23,7 +22,6 @@ pub(crate) type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 
 // Short form for the DiscreteAverage<BalanceOf<T>, Count>
 pub(crate) type DiscAvg<T> = DiscreteAverage<BalanceOf<T>>;
-
 
 /// Selector for possible beneficiaries.
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -42,7 +40,6 @@ pub enum BeneficiarySelector {
 	/// To be defined (currently).
 	ParachainLeaseFund,
 }
-
 
 /// Defines functions used to payout the beneficiaries of block rewards
 pub trait BeneficiaryPayout<Imbalance> {
@@ -64,7 +61,6 @@ pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout Parachain
 	fn parachain_lease_fund(reward: Imbalance);
 }
-
 
 /// After next next version, we can remove this RewardDistributionConfigV0
 /// List of configuration parameters used to calculate reward distribution portions for all the
@@ -100,7 +96,6 @@ impl Default for RewardDistributionConfigV0 {
 		}
 	}
 }
-
 
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
@@ -166,7 +161,6 @@ impl RewardDistributionConfig {
 	}
 }
 
-
 /// This is a generic struct definition for keeping an average-value of anything.
 #[derive(PartialEq, Eq, Clone, Encode, Default, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
@@ -205,7 +199,6 @@ where
 		}
 	}
 }
-
 
 /// Enum as selector-type for requesting average-values.
 #[derive(

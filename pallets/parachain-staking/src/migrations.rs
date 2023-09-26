@@ -1,7 +1,7 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use frame_support::{
-	pallet_prelude::{StorageVersion, GetStorageVersion, ValueQuery},
+	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,
@@ -12,14 +12,12 @@ use crate::{
 	reward_rate_config::RewardRateInfo,
 };
 
-
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
 const TARGET_STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 	upgrade::Migrate::<T>::on_runtime_upgrade()
 }
-
 
 mod upgrade {
 	use super::*;

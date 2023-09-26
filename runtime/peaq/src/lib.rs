@@ -11,8 +11,8 @@ pub use fp_evm::GenesisAccount;
 
 use smallvec::smallvec;
 
-use parity_scale_codec::Encode;
 use pallet_evm::FeeCalculator;
+use parity_scale_codec::Encode;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};

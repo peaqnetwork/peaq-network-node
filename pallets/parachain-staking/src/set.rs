@@ -16,18 +16,17 @@
 
 // If you feel like getting in touch with us, you can do so at info@botlabs.org
 
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, DefaultNoBound, RuntimeDebug};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, SaturatedConversion};
+#[cfg(feature = "std")]
+use sp_std::prelude::*;
 use sp_std::{
 	cmp::Ordering,
 	convert::TryInto,
 	ops::{Index, Range, RangeFull},
 };
-#[cfg(feature = "std")]
-use sp_std::prelude::*;
-
 
 /// An ordered set backed by `BoundedVec`.
 #[derive(
@@ -284,7 +283,6 @@ impl<T: Ord + Clone, S: Get<u32>> From<OrderedSet<T, S>> for BoundedVec<T, S> {
 		s.0
 	}
 }
-
 
 #[cfg(test)]
 mod tests {

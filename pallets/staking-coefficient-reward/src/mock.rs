@@ -14,7 +14,7 @@ use peaq_frame_ext::mockups::avg_currency as average;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_runtime::{
 	impl_opaque_keys,
-	testing::{H256, Header, UintAuthorityId},
+	testing::{Header, UintAuthorityId, H256},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill,
 };
@@ -22,7 +22,6 @@ use sp_std::fmt::Debug;
 
 use super::*;
 use crate::{self as reward_calculator, default_weights::SubstrateWeight};
-
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -199,7 +198,6 @@ impl pallet_timestamp::Config for Test {
 impl average::Config for Test {
 	type Currency = Balances;
 }
-
 
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances

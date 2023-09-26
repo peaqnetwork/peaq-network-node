@@ -6,8 +6,8 @@
 //!   v3 - added substrate storage_version, added AverageBlockReward storages (Daily, Weekly,
 //! Monthly, Anually)
 
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{pallet_prelude::*, storage_alias, weights::Weight};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
@@ -15,7 +15,7 @@ use crate::{
 	log,
 	pallet::*,
 	types::{
-		AverageSelector, BalanceOf, DiscAvg, RewardDistributionConfig, RewardDistributionConfigV0
+		AverageSelector, BalanceOf, DiscAvg, RewardDistributionConfig, RewardDistributionConfigV0,
 	},
 };
 

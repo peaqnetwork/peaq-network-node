@@ -13,9 +13,7 @@ use crate::mock::{
 use sp_runtime::Perbill;
 
 use parachain_staking::{
-	reward_rate_config::CollatorDelegatorBlockRewardCalculator,
-	types::BalanceOf,
-	Config,
+	reward_rate_config::CollatorDelegatorBlockRewardCalculator, types::BalanceOf, Config,
 };
 
 #[test]
@@ -320,16 +318,15 @@ fn collator_reward_per_block_with_delegator() {
 			));
 
 			let avg_bl_rew = StakePallet::average_block_reward();
-			let reward = RewardCalculatorPallet::collator_reward_per_block(
-				avg_bl_rew, 500, 1000);
+			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 1000);
 			let c_rewards: BalanceOf<Test> =
 				(100. * 500. * 8. / (500. * 8. + 600. + 400.)) as BalanceOf<Test>;
 			assert_eq!(reward, c_rewards);
 
-			let reward1 = RewardCalculatorPallet::delegator_reward_per_block(
-				avg_bl_rew, 500, 600, 1000);
-			let reward2 = RewardCalculatorPallet::delegator_reward_per_block(
-				avg_bl_rew, 500, 600, 1000);
+			let reward1 =
+				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 600, 1000);
+			let reward2 =
+				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 600, 1000);
 			let d_1_rewards: BalanceOf<Test> =
 				(100. * 600. / (500. * 8. + 600. + 400.)) as BalanceOf<Test>;
 			let d_2_rewards: BalanceOf<Test> =

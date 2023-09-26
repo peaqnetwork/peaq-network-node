@@ -108,7 +108,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod default_weights;
@@ -125,7 +124,6 @@ mod set;
 pub mod types;
 
 pub use pallet::*;
-
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -155,17 +153,16 @@ pub mod pallet {
 		Permill,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::{prelude::*, fmt::Debug };
+	use sp_std::{fmt::Debug, prelude::*};
 
 	use crate::{
 		default_weights::WeightInfo,
-		set::OrderedSet,
 		reward_rate_config::{
-			CollatorDelegatorBlockRewardCalculator, RewardRateInfo, RewardRateConfigTrait
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
 		},
+		set::OrderedSet,
 		types::*,
 	};
-
 
 	/// Kilt-specific lock for staking rewards.
 	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
@@ -1371,7 +1368,6 @@ pub mod pallet {
 			.into())
 		}
 
-
 		/// Leave the set of delegators and, by implication, revoke all ongoing
 		/// delegations.
 		///
@@ -2250,8 +2246,10 @@ pub mod pallet {
 			let avg_block_reward =
 				T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get());
 			T::BlockRewardCalculator::collator_reward_per_block(
-				avg_block_reward, candidate.stake, candidate.total - candidate.stake)
-				* multiplier
+				avg_block_reward,
+				candidate.stake,
+				candidate.total - candidate.stake,
+			) * multiplier
 		}
 
 		/// Calculates the delegator staking rewards for `multiplier` many
@@ -2282,8 +2280,11 @@ pub mod pallet {
 			// 	     do not mint tokens dynamically in dependency on demand
 			let avg_block_reward = Pallet::<T>::average_block_reward();
 			T::BlockRewardCalculator::delegator_reward_per_block(
-				avg_block_reward, candidate.stake, stake, candidate.total - candidate.stake)
-				* multiplier
+				avg_block_reward,
+				candidate.stake,
+				stake,
+				candidate.total - candidate.stake,
+			) * multiplier
 		}
 
 		/// Increment the accumulated rewards of a collator.
@@ -2372,12 +2373,10 @@ pub mod pallet {
 
 	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
 		/// 1. A new session starts.
-		/// 2. In hook new_session: Read the current top n candidates from the
-		///    TopCandidates and assign this set to author blocks for the next
-		///    session.
-		/// 3. AuRa queries the authorities from the session pallet for
-		///    this session and picks authors on round-robin-basis from list of
-		///    authorities.
+		/// 2. In hook new_session: Read the current top n candidates from the TopCandidates and
+		///    assign this set to author blocks for the next session.
+		/// 3. AuRa queries the authorities from the session pallet for this session and picks
+		///    authors on round-robin-basis from list of authorities.
 		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
 			log::debug!(
 				"assembling new collators for new session {} at #{:?}",

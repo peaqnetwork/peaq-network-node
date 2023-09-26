@@ -161,9 +161,9 @@ pub fn set_block_issue_reward_is_ok() {
 		let reward = 3_123_456 as Balance;
 		// custom config so it differs from the default one
 		assert_ok!(BlockReward::set_block_issue_reward(RuntimeOrigin::root(), reward));
-		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockIssueRewardChanged(
-			reward,
-		)));
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(
+			Event::BlockIssueRewardChanged(reward),
+		));
 
 		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
 	})
@@ -343,9 +343,9 @@ pub fn averaging_functionality_test() {
 		});
 		BlockReward::on_timestamp_set(0);
 		let amount = txfees.into_iter().sum::<u128>() + ISSUE_NUM;
-		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockRewardsDistributed(
-			amount,
-		)));
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(
+			Event::BlockRewardsDistributed(amount),
+		));
 		amount
 	}
 
@@ -387,18 +387,18 @@ pub fn averaging_functionality_test() {
 		check_avg_storage(BlockReward::hours12_avg_reward, ISSUE_NUM, exp_acc, 1, "hours12:1");
 		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 1, "daily:1");
 		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 1, "weekly:1");
-		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockRewardsDistributed(
-			ISSUE_NUM + 246,
-		)));
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(
+			Event::BlockRewardsDistributed(ISSUE_NUM + 246),
+		));
 
 		// Do it twice during one block...
 		exp_acc += do_one_block_event_checked(&vec![62; 2]);
 		check_avg_storage(BlockReward::hours12_avg_reward, ISSUE_NUM, exp_acc, 2, "hours12:2");
 		check_avg_storage(BlockReward::daily_avg_reward, ISSUE_NUM, exp_acc, 2, "daily:2");
 		check_avg_storage(BlockReward::weekly_avg_reward, ISSUE_NUM, exp_acc, 2, "weekly:2");
-		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(Event::BlockRewardsDistributed(
-			ISSUE_NUM + 124,
-		)));
+		System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(
+			Event::BlockRewardsDistributed(ISSUE_NUM + 124),
+		));
 
 		let txfees: Vec<Balance> = vec![1];
 		let balance = ISSUE_NUM + txfees[0];

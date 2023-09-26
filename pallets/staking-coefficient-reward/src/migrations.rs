@@ -10,7 +10,6 @@ use frame_support::{
 
 use super::{Config, Pallet, DEFAULT_COEFFICIENT};
 
-
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {

@@ -30,7 +30,7 @@ use peaq_frame_ext::mockups::avg_currency as average;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_runtime::{
 	impl_opaque_keys,
-	testing::{H256, Header, UintAuthorityId},
+	testing::{Header, UintAuthorityId, H256},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill, Perquintill,
 };
@@ -38,9 +38,8 @@ use sp_std::{cell::RefCell, fmt::Debug};
 
 use crate::{
 	self as stake,
-	reward_rate_config::{DefaultRewardCalculator, RewardRateInfo, RewardRateConfigTrait},
+	reward_rate_config::{DefaultRewardCalculator, RewardRateConfigTrait, RewardRateInfo},
 };
-
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -52,7 +51,6 @@ pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
 pub(crate) const DEFAULT_ISSUE: Balance = 1000 * DECIMALS;
-
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -70,7 +68,6 @@ construct_runtime!(
 		Average: average::{Pallet, Config<T>, Storage},
 	}
 );
-
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -238,7 +235,6 @@ impl pallet_timestamp::Config for Test {
 impl average::Config for Test {
 	type Currency = Balances;
 }
-
 
 pub struct ExtBuilder {
 	// endowed accounts with balances
@@ -450,12 +446,7 @@ pub(crate) fn events() -> Vec<stake::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e|
-			if let RuntimeEvent::StakePallet(inner) = e {
-				Some(inner)
-			} else {
-				None
-			})
+		.filter_map(|e| if let RuntimeEvent::StakePallet(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
 

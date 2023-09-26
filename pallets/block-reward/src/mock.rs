@@ -12,7 +12,7 @@ use frame_support::{
 };
 
 use sp_runtime::{
-	testing::{H256, Header},
+	testing::{Header, H256},
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 

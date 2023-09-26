@@ -1,10 +1,10 @@
 use cumulus_primitives_core::ParaId;
+use pallet_block_reward::types::AverageSelector;
 use peaq_krest_runtime::{
 	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
 	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
 	Precompiles, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use pallet_block_reward::types::AverageSelector;
 use peaq_primitives_xcm::Balance;
 use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -12,8 +12,8 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
 use crate::parachain::{
-	Extensions,
 	dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed},
+	Extensions,
 };
 
 use sp_core::sr25519;

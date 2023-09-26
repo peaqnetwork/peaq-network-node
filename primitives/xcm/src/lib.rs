@@ -122,7 +122,9 @@ impl TradingPair {
 }
 
 impl Decode for TradingPair {
-	fn decode<I: parity_scale_codec::Input>(input: &mut I) -> sp_std::result::Result<Self, parity_scale_codec::Error> {
+	fn decode<I: parity_scale_codec::Input>(
+		input: &mut I,
+	) -> sp_std::result::Result<Self, parity_scale_codec::Error> {
 		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
 		TradingPair::from_currency_ids(first, second)
 			.ok_or_else(|| parity_scale_codec::Error::from("invalid currency id"))

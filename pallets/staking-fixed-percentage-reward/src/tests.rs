@@ -7,6 +7,10 @@ use frame_support::assert_ok;
 use frame_system::RawOrigin;
 use sp_runtime::Perquintill;
 
+use crate::mock::{
+	roll_to, AccountId, Balances, ExtBuilder, RewardCalculatorPallet, RuntimeOrigin, StakePallet,
+	Test, BLOCKS_PER_ROUND, DECIMALS,
+};
 use parachain_staking::{
 	reward_rate_config::{
 		CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
@@ -14,11 +18,6 @@ use parachain_staking::{
 	types::BalanceOf,
 	Config,
 };
-use crate::mock::{
-	roll_to, AccountId, Balances, ExtBuilder, RewardCalculatorPallet, RuntimeOrigin, StakePallet,
-	Test, BLOCKS_PER_ROUND, DECIMALS,
-};
-
 
 #[test]
 fn genesis() {
@@ -73,8 +72,8 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
 			// compute rewards
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(
-				1000, Perquintill::from_percent(0));
+			let c_rewards: BalanceOf<Test> =
+				reward_rate.compute_collator_reward::<Test>(1000, Perquintill::from_percent(0));
 			let d_rewards: BalanceOf<Test> =
 				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
 
@@ -216,16 +215,15 @@ fn collator_reward_per_block_with_delegator() {
 			));
 
 			let avg_bl_rew = StakePallet::average_block_reward();
-			let reward = RewardCalculatorPallet::collator_reward_per_block(
-				avg_bl_rew, 500, 1000);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(
-				avg_bl_rew, Perquintill::from_percent(0));
+			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 1000);
+			let c_rewards: BalanceOf<Test> = reward_rate
+				.compute_collator_reward::<Test>(avg_bl_rew, Perquintill::from_percent(0));
 			assert_eq!(reward, c_rewards);
 
-			let reward_vec1 = RewardCalculatorPallet::delegator_reward_per_block(
-				avg_bl_rew, 500, 600, 1000);
-			let reward_vec2 = RewardCalculatorPallet::delegator_reward_per_block(
-				avg_bl_rew, 500, 400, 1000);
+			let reward_vec1 =
+				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 600, 1000);
+			let reward_vec2 =
+				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 400, 1000);
 			let d_1_rewards: BalanceOf<Test> = reward_rate
 				.compute_delegator_reward::<Test>(avg_bl_rew, Perquintill::from_float(0.6));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
