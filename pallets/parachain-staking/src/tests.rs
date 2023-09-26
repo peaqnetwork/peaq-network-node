@@ -44,11 +44,28 @@ use crate::{
 };
 
 /// Method calculates the reward rate for a collator in dependency of given paramters
+// #[allow(dead_code)]
 fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> Balance {
 	reward_cfg.collator_rate * *avg_reward
 }
 
+#[allow(dead_code)]
+fn calc_collator_rewards_coeff(
+		avg_reward: Balance,
+		col_stake: Balance,
+		del_sum_stake: Balance,
+		coeff: u8,
+	) -> Balance {
+	// (TotalRewards*CollatorStake*CollatorCoefficient)/(CollatorStake*CollatorCoefficient + DelegatorStake)
+	let coeff = coeff as Balance;
+	let denom = col_stake * coeff;
+	let divisor = col_stake * coeff + del_sum_stake;
+	let factor = Perquintill::from_rational(denom, divisor);
+	factor * avg_reward
+}
+
 /// Method calculates the reward rate for a collator in dependency of given paramters
+// #[allow(dead_code)]
 fn calc_delegator_rewards(
 	avg_reward: &Balance,
 	stake_rate: &Perquintill,
@@ -56,6 +73,22 @@ fn calc_delegator_rewards(
 ) -> Balance {
 	reward_cfg.delegator_rate * *stake_rate * *avg_reward
 }
+
+#[allow(dead_code)]
+fn calc_delegator_rewards_coeff(
+		avg_reward: Balance,
+		col_stake: Balance,
+		del_stake: Balance,
+		del_sum_stake: Balance,
+		coeff: u8,
+	) -> Balance {
+	// (TotalRewards*DelegatorStake)/(CollatorStake*CollatorCoefficient + DelegatorStake)
+	let coeff = coeff as Balance;
+	let divisor = col_stake * coeff + del_sum_stake;
+	let factor = Perquintill::from_rational(del_stake, divisor);
+	factor * avg_reward
+}
+
 
 #[test]
 fn should_select_collators_genesis_session() {
@@ -1444,9 +1477,9 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 
 			// compute rewards
 			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
-			let st_rate_d1_1 = Perquintill::from_rational(32u128, 64u128);
-			let st_rate_d1_2 = Perquintill::from_rational(16u128, 64u128);
-			let st_rate_d2_1 = Perquintill::from_rational(16u128, 64u128);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 16u128);
 			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
 			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
 			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
@@ -1581,7 +1614,7 @@ fn coinbase_rewards_many_blocks_simple_check() {
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let d_stake_rate = Perquintill::from_rational(32u128, 64u128);
+			let d_stake_rate = Perquintill::from_percent(100);
 
 			let reward_rate = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
@@ -1602,8 +1635,9 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			let rewards_5 = Balances::free_balance(&5).saturating_sub(20_000_000 * DECIMALS);
 
 			// calculate expected rewards after these years
-			let c_rewards = calc_collator_rewards(&issue_number, &reward_rate);
-			let d_rewards = calc_delegator_rewards(&issue_number, &d_stake_rate, &reward_rate);
+			let avg_bl_reward = StakePallet::average_block_reward();
+			let c_rewards = calc_collator_rewards(&avg_bl_reward, &reward_rate);
+			let d_rewards = calc_delegator_rewards(&avg_bl_reward, &d_stake_rate, &reward_rate);
 			let expected_collator_rewards = end_block as u128 * c_rewards;
 			let expected_delegator_rewards = end_block as u128 * d_rewards;
 
@@ -1612,7 +1646,7 @@ fn coinbase_rewards_many_blocks_simple_check() {
 
 			// delegator rewards should be about the same
 			assert!(
-				almost_equal(rewards_3, rewards_4 + rewards_5, Perbill::from_perthousand(1)),
+				almost_equal(rewards_3 + rewards_4, rewards_5, Perbill::from_perthousand(1)),
 				"left {:?}, right {:?}",
 				rewards_3,
 				rewards_4 + rewards_5
@@ -3622,9 +3656,9 @@ fn coinbase_rewards_some_blocks_multiple_claims() {
 
 			// compute rewards
 			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
-			let st_rate_d1_1 = Perquintill::from_rational(32u128, 64u128);
-			let st_rate_d1_2 = Perquintill::from_rational(16u128, 64u128);
-			let st_rate_d2_1 = Perquintill::from_rational(16u128, 64u128);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 16u128);
 			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
 			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
 			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
@@ -3713,9 +3747,9 @@ fn rewards_flow_and_register_working() {
 
 			// compute rewards
 			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
-			let st_rate_d1_1 = Perquintill::from_rational(32u128, 64u128);
-			let st_rate_d1_2 = Perquintill::from_rational(16u128, 64u128);
-			let st_rate_d2_1 = Perquintill::from_rational(16u128, 64u128);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 16u128);
 			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
 			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
 			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);

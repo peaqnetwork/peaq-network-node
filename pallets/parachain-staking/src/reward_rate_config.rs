@@ -118,7 +118,7 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 		_col_stake: BalanceOf<T>,
 		_del_sum_stake: BalanceOf<T>,
 	) -> BalanceOf<T> {
-		let staking_rate = Perquintill::one();
+		let staking_rate = Perquintill::zero();
 		R::get_reward_rate_config().compute_collator_reward::<T>(avg_bl_reward, staking_rate)
 	}
 
