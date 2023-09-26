@@ -223,39 +223,49 @@ where
 {
 	/// Returns Ok if the delegation for the
 	/// collator exists and `Err` otherwise.
-	pub fn try_clear(&mut self, collator: AccountId) -> Result<(), ()> {
+	pub fn try_clear(&mut self, collator: AccountId) -> Result<(), DelegatorTryError> {
 		if self.owner == collator {
 			self.amount = Balance::zero();
 			Ok(())
 		} else {
-			Err(())
+			Err(DelegatorTryError::WrongAccount)
 		}
 	}
 
 	/// Returns Ok(delegated_amount) if successful, `Err` if delegation was
 	/// not found.
-	pub fn try_increment(&mut self, collator: AccountId, more: Balance) -> Result<Balance, ()> {
+	pub fn try_increment(
+			&mut self, collator: AccountId, more: Balance
+		) -> Result<Balance, DelegatorTryError> {
 		if self.owner == collator {
 			self.amount = self.amount.saturating_add(more);
 			Ok(self.amount)
 		} else {
-			Err(())
+			Err(DelegatorTryError::WrongAccount)
 		}
 	}
 
 	/// Returns Ok(Some(delegated_amount)) if successful, `Err` if delegation
 	/// was not found and Ok(None) if delegated stake would underflow.
-	pub fn try_decrement(&mut self, collator: AccountId, less: Balance) -> Result<Option<Balance>, ()> {
+	pub fn try_decrement(
+			&mut self, collator: AccountId, less: Balance
+		) -> Result<Option<Balance>, DelegatorTryError> {
 		if self.owner == collator {
 			Ok(self.amount.checked_sub(&less).map(|new| {
 				self.amount = new;
 				self.amount
 			}))
 		} else {
-			Err(())
+			Err(DelegatorTryError::WrongAccount)
 		}
 	}
 }
+
+/// Feels not neccessary, but clippy wants it...
+pub enum DelegatorTryError {
+	WrongAccount,
+}
+
 
 /// The current round index and transition information.
 #[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]

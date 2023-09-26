@@ -27,7 +27,7 @@ use sha3::{Digest, Keccak256};
 use sp_api::{ApiExt, BlockId, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::Block as BlockT;
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, sync::Arc};
 
 use peaq_rpc_primitives_txpool::{Transaction as TransactionV2, TxPoolResponse, TxPoolRuntimeApi};
 
@@ -109,7 +109,7 @@ where
 			};
 			pending
 				.entry(from_address)
-				.or_insert_with(HashMap::new)
+				.or_default()
 				.insert(nonce, T::get(hash, from_address, txn));
 		}
 		let mut queued = TransactionMap::<T>::new();
@@ -126,7 +126,7 @@ where
 			};
 			queued
 				.entry(from_address)
-				.or_insert_with(HashMap::new)
+				.or_default()
 				.insert(nonce, T::get(hash, from_address, txn));
 		}
 		Ok(TxPoolResult { pending, queued })
