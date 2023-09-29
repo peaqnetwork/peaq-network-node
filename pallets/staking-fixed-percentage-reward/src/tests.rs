@@ -186,6 +186,14 @@ fn collator_reward_per_block_only_collator() {
 			));
 
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
+			assert_eq!(reward, 0);
+
+			const BLOCKS_PER_DAY: usize = 24*60*5;
+			let mut authors: Vec<Option<AccountId>> = vec![Some(1u64); BLOCKS_PER_DAY+1];
+			authors[0] = None;
+			roll_to(BLOCKS_PER_DAY as u64, authors);
+			let avg_bl_rew = StakePallet::average_block_reward();
+			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
 			assert_eq!(reward, 100);
 		});
 }

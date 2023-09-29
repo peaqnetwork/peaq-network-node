@@ -5,7 +5,7 @@ use crate::{
 };
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced},
+	traits::{Currency, OnTimestampSet, OnUnbalanced},
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, BadOrigin, Zero},
@@ -335,11 +335,7 @@ pub fn averaging_functionality_test() {
 	fn do_one_block_event_checked(txfees: &Vec<u128>) -> u128 {
 		txfees.iter().for_each(|&b| {
 			let imbalance = <TestRuntime as Config>::Currency::issue(b as Balance);
-			let amount = imbalance.peek();
 			BlockReward::on_unbalanced(imbalance);
-			System::assert_last_event(crate::mock::RuntimeEvent::BlockReward(
-				Event::TransactionFeesReceived(amount),
-			));
 		});
 		BlockReward::on_timestamp_set(0);
 		let amount = txfees.into_iter().sum::<u128>() + ISSUE_NUM;

@@ -39,9 +39,13 @@
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
 //! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//!    example: ```ignore pub struct BeneficiaryPayout(); impl
-//!    BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout { fn treasury(reward:
-//!    NegativeImbalanceOf<T>) { Balances::resolve_creating(&TREASURY_POT.into_account(), reward); }
+//!    example:
+//!    ```ignore
+//!    pub struct BeneficiaryPayout();
+//!    impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
+//!    		fn treasury(reward: NegativeImbalanceOf<T>) {
+//!    			Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+//!    		}
 //!
 //!         fn collators(reward: NegativeImbalanceOf<T>) {
 //!             Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
@@ -180,9 +184,6 @@ pub mod pallet {
 
 		/// Rewards have been distributed
 		BlockRewardsDistributed(BalanceOf<T>),
-
-		/// Rewards have been distributed
-		TransactionFeesReceived(BalanceOf<T>),
 
 		/// Setup the averaging-method for Average-Block-Reward
 		AverageSelectorChanged(AverageSelector),
@@ -360,7 +361,6 @@ pub mod pallet {
 		fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
 			let value = amount.peek();
 			TokenLocker::<T>::mutate(|lock| *lock += value);
-			Self::deposit_event(Event::<T>::TransactionFeesReceived(value));
 		}
 	}
 
