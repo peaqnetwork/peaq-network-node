@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 affix = { workspace = true }
-derive_more = { workspace = true, optional = true }
+derive_more = { workspace = true, optional = true, features = ["display"] }
 environmental = { workspace = true }
 hex = { workspace = true }
 hex-literal = { workspace = true, optional = true }
