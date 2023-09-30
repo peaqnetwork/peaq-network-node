@@ -8,8 +8,9 @@ use frame_system::RawOrigin;
 use sp_runtime::Perquintill;
 
 use crate::mock::{
-	roll_to_claim_every_reward, roll_to_then_claim_rewards, AccountId, Balance, Balances, ExtBuilder,
-	RewardCalculatorPallet, RuntimeOrigin, StakePallet, Test, BLOCKS_PER_ROUND, DECIMALS,
+	roll_to_claim_every_reward, roll_to_then_claim_rewards, AccountId, Balance, Balances,
+	ExtBuilder, RewardCalculatorPallet, RuntimeOrigin, StakePallet, Test, BLOCKS_PER_ROUND,
+	DECIMALS,
 };
 use parachain_staking::{
 	reward_rate_config::{
@@ -18,8 +19,6 @@ use parachain_staking::{
 	types::BalanceOf,
 	Config,
 };
-
-
 
 fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> Balance {
 	reward_cfg.collator_rate * *avg_reward
@@ -32,7 +31,6 @@ fn calc_delegator_rewards(
 ) -> Balance {
 	reward_cfg.delegator_rate * *stake_rate * *avg_reward
 }
-
 
 #[test]
 fn genesis() {

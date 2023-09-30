@@ -16,7 +16,6 @@ use parachain_staking::{
 	reward_rate_config::CollatorDelegatorBlockRewardCalculator, types::BalanceOf, Config,
 };
 
-
 #[test]
 fn genesis() {
 	ExtBuilder::default()

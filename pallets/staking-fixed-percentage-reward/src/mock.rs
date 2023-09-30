@@ -3,9 +3,10 @@
 #![allow(clippy::from_over_into)]
 
 use frame_support::{
-	assert_ok, construct_runtime, parameter_types, PalletId,
+	assert_ok, construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
+	PalletId,
 };
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake, reward_rate_config::RewardRateInfo};
@@ -313,7 +314,6 @@ impl ExtBuilder {
 	}
 }
 
-
 /// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
 /// working fine.
 pub(crate) fn roll_to_then_claim_rewards(
@@ -348,21 +348,18 @@ fn claim_all_rewards() {
 	}
 }
 
-
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	Average::update(issued.peek(), |x|x);
+	Average::update(issued.peek(), |x| x);
 	StakePallet::on_unbalanced(issued);
 	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 }
-
 
 fn finish_block_start_next() {
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 }
-
 
 pub(crate) fn roll_to_claim_every_reward(
 	n: BlockNumber,

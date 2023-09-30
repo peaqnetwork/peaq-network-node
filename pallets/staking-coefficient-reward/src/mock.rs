@@ -319,7 +319,7 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>, issue_number: Balance) {
 	while System::block_number() < n {
 		let issued = Balances::issue(issue_number);
-		Average::update(issued.peek(), |x|x);
+		Average::update(issued.peek(), |x| x);
 		StakePallet::on_unbalanced(issued);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			Balances::make_free_balance_be(

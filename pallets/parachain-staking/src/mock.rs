@@ -376,7 +376,6 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 // 	pub authors: Vec<Option<AccountId>>,
 // }
 
-
 /// Incrementelly traverses from the current block to the provided one and
 /// potentially sets block authors.
 ///
@@ -492,7 +491,7 @@ fn claim_all_rewards() {
 /// possible to transfer more tokens to parachain-staking pallet, than only issued (EoT).
 pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
-	Average::update(issued.peek(), |x|x);
+	Average::update(issued.peek(), |x| x);
 	StakePallet::on_unbalanced(issued);
 	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 }
