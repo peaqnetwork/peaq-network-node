@@ -43,9 +43,9 @@
 //!    ```ignore
 //!    pub struct BeneficiaryPayout();
 //!    impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
-//!    		fn treasury(reward: NegativeImbalanceOf<T>) {
-//!    			Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
-//!    		}
+//!         fn treasury(reward: NegativeImbalanceOf<T>) {
+//!             Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
+//!         }
 //!
 //!         fn collators(reward: NegativeImbalanceOf<T>) {
 //!             Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
