@@ -79,6 +79,7 @@ peaq-pallet-rbac-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pall
 peaq-pallet-storage = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 peaq-pallet-storage-runtime-api = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-multisig = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
+pallet-assets = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-utility = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-treasury = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }
 pallet-vesting = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false }

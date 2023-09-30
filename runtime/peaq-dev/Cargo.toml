@@ -34,6 +34,7 @@ pallet-sudo = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = false }
+pallet-assets = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-block-builder = { workspace = true, default-features = false }
@@ -139,6 +140,7 @@ runtime-benchmarks = [
 	"pallet-contracts/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"pallet-block-reward/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
 
 	"pallet-ethereum/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
@@ -170,6 +172,8 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-multisig/std",
+	"pallet-assets/std",
+
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -303,6 +307,7 @@ try-runtime = [
 	"pallet-xcm/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-multisig/try-runtime",
+	"pallet-assets/try-runtime",
 
 	"orml-currencies/try-runtime",
 	"orml-tokens/try-runtime",

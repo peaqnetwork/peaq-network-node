@@ -11,7 +11,8 @@ pub use fp_evm::GenesisAccount;
 
 use smallvec::smallvec;
 
-use codec::Encode;
+use codec::{Encode, Compact};
+
 use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -49,6 +50,7 @@ pub use frame_support::{
 	dispatch::{DispatchClass, EncodeLike, GetDispatchInfo},
 	parameter_types,
 	traits::{
+		AsEnsureOriginWithArg,
 		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
 		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
 		Randomness, StorageInfo, WithdrawReasons,
@@ -65,7 +67,7 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess,
+	EnsureRoot, EnsureRootWithSuccess, EnsureSigned
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -201,6 +203,7 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
+// [TODO] Need to check with Astar's value
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
@@ -958,8 +961,8 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
-		Treasury: pallet_treasury  = 9,
-		Council: pallet_collective::<Instance1>=10,
+		Treasury: pallet_treasury= 9,
+		Council: pallet_collective::<Instance1> = 10,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
@@ -987,6 +990,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
+		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1058,6 +1062,7 @@ mod benches {
 		[peaq_pallet_storage, PeaqStorage]
 		[peaq_pallet_mor, PeaqStorage]
 		[pallet_xcm, PolkadotXcm]
+		[pallet_assets, Assets]
 	);
 }
 
@@ -1824,4 +1829,44 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+}
+
+parameter_types! {
+	// [TODO] Need double check below values
+	// [TODO] Need to use ExistentialDeposit to Balances
+    pub const AssetDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
+    pub const AssetsStringLimit: u32 = 50;
+    /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+    // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+    pub const MetadataDepositBase: Balance = deposit(1, 68);
+    pub const MetadataDepositPerByte: Balance = deposit(0, 1);
+    pub const AssetAccountDeposit: Balance = deposit(1, 18);
+}
+
+impl pallet_assets::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Balance = Balance;
+    type AssetId = PeaqAssetId;
+    type Currency = Balances;
+    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+    type ForceOrigin = EnsureRoot<AccountId>;
+    type AssetDeposit = AssetDeposit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type AssetAccountDeposit = AssetAccountDeposit;
+    type ApprovalDeposit = AssetExistentialDeposit;
+    type StringLimit = AssetsStringLimit;
+    type Freezer = ();
+    type Extra = ();
+	// [TODO] Comment out
+    // type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
+	type WeightInfo = ();
+    type RemoveItemsLimit = ConstU32<1000>;
+    type AssetIdParameter = Compact<PeaqAssetId>;
+	// [TODO] Comment out
+	type CallbackHandle = ();
+    // type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+    // #[cfg(feature = "runtime-benchmarks")]
+    // type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
 }
