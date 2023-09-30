@@ -31,7 +31,6 @@ pub(crate) type BlockNumber = u64;
 
 pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
-pub(crate) const BLOCKS_PER_DAY: BlockNumber = 24*60*5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
 
 // Configure a mock runtime to test the pallet.

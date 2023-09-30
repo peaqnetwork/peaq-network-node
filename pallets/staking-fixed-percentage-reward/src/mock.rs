@@ -3,7 +3,7 @@
 #![allow(clippy::from_over_into)]
 
 use frame_support::{
-	construct_runtime, parameter_types, PalletId,
+	assert_ok, construct_runtime, parameter_types, PalletId,
 	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
 };
@@ -313,19 +313,6 @@ impl ExtBuilder {
 	}
 }
 
-pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
-	while System::block_number() < n {
-		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			Balances::make_free_balance_be(
-				&StakePallet::account_id(),
-				1000 + Balances::minimum_balance(),
-			);
-			StakePallet::note_author(*author);
-		}
-		finish_block_start_next();
-	}
-}
-
 
 /// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
 /// working fine.
@@ -374,4 +361,36 @@ fn finish_block_start_next() {
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+}
+
+
+pub(crate) fn roll_to_claim_every_reward(
+	n: BlockNumber,
+	issue_number: Balance,
+	authors: &Vec<Option<AccountId>>,
+) {
+	while System::block_number() < n {
+		simulate_issuance(issue_number);
+		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
+			StakePallet::note_author(*author);
+			// author has to increment rewards before claiming
+			assert_ok!(StakePallet::increment_collator_rewards(RuntimeOrigin::signed(*author)));
+			// author claims rewards
+			assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(*author)));
+
+			// claim rewards for delegators
+			let col_state =
+				StakePallet::candidate_pool(author).expect("Block author must be candidate");
+			for delegation in col_state.delegators {
+				// delegator has to increment rewards before claiming
+				assert_ok!(StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(
+					delegation.owner
+				)));
+				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
+				// delegators such that the claiming would throw
+				assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(delegation.owner)));
+			}
+		}
+		finish_block_start_next();
+	}
 }

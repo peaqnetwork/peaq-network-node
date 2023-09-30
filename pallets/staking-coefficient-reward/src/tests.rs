@@ -8,7 +8,7 @@ use frame_system::RawOrigin;
 
 use crate::mock::{
 	almost_equal, roll_to, AccountId, Balance, Balances, ExtBuilder, RewardCalculatorPallet,
-	RuntimeOrigin, StakePallet, Test, BLOCKS_PER_ROUND, BLOCKS_PER_DAY, DECIMALS,
+	RuntimeOrigin, StakePallet, Test, BLOCKS_PER_ROUND, DECIMALS,
 };
 use sp_runtime::Perbill;
 
@@ -301,10 +301,9 @@ fn collator_reward_per_block_only_collator() {
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
 			assert_eq!(reward, 0);
 
-			let mut authors: Vec<Option<AccountId>> = vec![Some(1u64); BLOCKS_PER_DAY+1];
-			authors[0] = None;
+			let authors: Vec<Option<AccountId>> = vec![None, Some(1u64)];
 
-			roll_to(BLOCKS_PER_DAY as u64, authors, issue_number);
+			roll_to(2, authors, issue_number);
 			let avg_bl_rew = StakePallet::average_block_reward();
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
 			assert_eq!(reward, 100);
@@ -329,10 +328,9 @@ fn collator_reward_per_block_with_delegator() {
 			));
 
 			let issue_number: Balance = 100;
-			let mut authors: Vec<Option<AccountId>> = vec![Some(1u64); BLOCKS_PER_DAY+1];
-			authors[0] = None;
+			let authors: Vec<Option<AccountId>> = vec![None, Some(1u64)];
 
-			roll_to(BLOCKS_PER_DAY as u64, authors, issue_number);
+			roll_to(2, authors, issue_number);
 
 			let avg_bl_rew = StakePallet::average_block_reward();
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 1000);
