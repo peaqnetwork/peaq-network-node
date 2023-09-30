@@ -6,6 +6,7 @@ use super::{
 };
 use frame_support::{
 	dispatch::Weight,
+	match_types,
 	parameter_types,
 	traits::{Everything, Nothing},
 };
@@ -26,10 +27,13 @@ use xcm::{
 	v3::Weight as XcmWeight,
 };
 use xcm_builder::{
+	// [TODO] Need to check
+	// Account32Hash
 	AccountId32Aliases,
 	AllowKnownQueryResponses,
 	AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom,
+	CurrencyAdapter,
 	// AllowUnpaidExecutionFrom,
 	EnsureXcmOrigin,
 	FixedRateOfFungible,
@@ -43,12 +47,15 @@ use xcm_builder::{
 	SovereignSignedViaLocation,
 	TakeRevenue,
 	TakeWeightCredit,
+	IsConcrete,
+	ParentAsSuperuser,
+	AllowUnpaidExecutionFrom,
 };
 use xcm_executor::XcmExecutor;
 
 parameter_types! {
-	pub const RocLocation: MultiLocation = MultiLocation::parent();
-	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
+	pub const RelayLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
@@ -62,7 +69,10 @@ pub type LocationToAccountId = (
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
-	AccountId32Aliases<RococoNetwork, AccountId>,
+	AccountId32Aliases<RelayNetwork, AccountId>,
+	// [TODO] Need to check
+    // Derives a private `Account32` by hashing `("multiloc", received multilocation)`
+    // Account32Hash<RelayNetwork, AccountId>,
 );
 
 /// Means for transacting assets on this chain.
@@ -76,6 +86,42 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	CurrencyIdConvert<Runtime>,
 	DepositToAlternative<PeaqPotAccount, Currencies, CurrencyId, AccountId, Balance>,
 >;
+
+/// XCM from myself to myself or from other chain to myself for token
+/// [TODO] Wow...
+/// Means for transacting the native currency on this chain.
+pub type CurrencyTransactor = CurrencyAdapter<
+    // Use this currency:
+    Balances,
+    // Use this currency when it is a fungible asset matching the given location or name:
+    IsConcrete<PeaqLocation>,
+    // Convert an XCM MultiLocation into a local account id:
+    LocationToAccountId,
+    // Our chain's account ID type (we can't get away without mentioning it explicitly):
+    AccountId,
+    // We don't track any teleports of `Balances`.
+    (),
+>;
+
+// /// [TODO] Wow...
+// /// Means for transacting assets besides the native currency on this chain.
+// pub type FungiblesTransactor = FungiblesAdapter<
+//     // Use this fungibles implementation:
+//     Assets,
+//     // Use this currency when it is a fungible asset matching the given location or name:
+//     ConvertedConcreteId<AssetId, Balance, AstarAssetLocationIdConverter, JustTry>,
+//     // Convert an XCM MultiLocation into a local account id:
+//     LocationToAccountId,
+//     // Our chain's account ID type (we can't get away without mentioning it explicitly):
+//     AccountId,
+//     // We don't support teleport so no need to check any assets.
+//     NoChecking,
+//     // We don't support teleport so this is just a dummy account.
+//     DummyCheckingAccount,
+// >;
+
+/// Means for transacting assets on this chain.
+pub type AssetTransactors = CurrencyTransactor;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -91,15 +137,20 @@ pub type XcmOriginToCallOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
-	// Native signed account converter; this just converts an `AccountId32` origin into a normal
-	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<RococoNetwork, RuntimeOrigin>,
+	// [TODO] Need to cehck
+    // Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
+    // transaction from the Root origin.
+    ParentAsSuperuser<RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
+	// [TODO] Need to check order
+	// Native signed account converter; this just converts an `AccountId32` origin into a normal
+	// `Origin::Signed` origin of the same 32-byte value.
+	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 );
 
 parameter_types! {
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+    pub PeaqLocation: MultiLocation = Here.into_location();
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	pub const UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 1024);
 	pub const MaxInstructions: u32 = 100;
@@ -127,6 +178,14 @@ parameter_types! {
 	pub BaseRate: u128 = peaq_per_second();
 }
 
+match_types! {
+    pub type ParentOrParentsPlurality: impl Contains<MultiLocation> = {
+        MultiLocation { parents: 1, interior: Here } |
+        MultiLocation { parents: 1, interior: X1(Plurality { .. }) }
+    };
+}
+
+// [TODO]...
 pub type Trader = (
 	FixedRateOfFungible<PeaqPerSecond, ToTreasury>,
 	FixedRateOfFungible<DotPerSecond, ToTreasury>,
@@ -137,6 +196,9 @@ pub type Trader = (
 pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
+	// [TODO] Need to check
+    // Parent and its plurality get free execution
+    AllowUnpaidExecutionFrom<ParentOrParentsPlurality>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
 	// Subscriptions for version tracking are OK.
@@ -165,9 +227,11 @@ impl xcm_executor::Config for XcmConfig {
 	type CallDispatcher = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+    type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToCallOrigin;
+	// [TODO]...
 	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
+	// [TODO]...
 	type IsTeleporter = Everything;
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
@@ -190,7 +254,7 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RococoNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
 
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
