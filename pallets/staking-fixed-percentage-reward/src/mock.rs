@@ -3,10 +3,9 @@
 #![allow(clippy::from_over_into)]
 
 use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
+	construct_runtime, parameter_types, PalletId,
+	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
-	PalletId,
 };
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake, reward_rate_config::RewardRateInfo};
@@ -323,8 +322,56 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 			);
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+		finish_block_start_next();
 	}
+}
+
+
+/// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
+/// working fine.
+pub(crate) fn roll_to_then_claim_rewards(
+	n: BlockNumber,
+	issue_number: Balance,
+	authors: &Vec<Option<AccountId>>,
+) {
+	while System::block_number() < n {
+		simulate_issuance(issue_number);
+		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
+			StakePallet::note_author(*author);
+		}
+		if System::block_number() == n - 1 {
+			claim_all_rewards();
+		}
+		finish_block_start_next();
+	}
+}
+
+/// Method executes the claim-rewards of all collators and delegators for test purposes.
+fn claim_all_rewards() {
+	// let candidates = StakePallet::top_candidates();
+	// for i in 0..candidates.len() {
+	for c_stake in StakePallet::top_candidates().into_iter() {
+		let _ = StakePallet::increment_collator_rewards(RuntimeOrigin::signed(c_stake.owner));
+		let _ = StakePallet::claim_rewards(RuntimeOrigin::signed(c_stake.owner));
+		let candidate = StakePallet::candidate_pool(c_stake.owner).unwrap();
+		for d_stake in candidate.delegators.into_iter() {
+			let _ = StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(d_stake.owner));
+			let _ = StakePallet::claim_rewards(RuntimeOrigin::signed(d_stake.owner));
+		}
+	}
+}
+
+
+pub(crate) fn simulate_issuance(issue_number: Balance) {
+	let issued = Balances::issue(issue_number);
+	Average::update(issued.peek(), |x|x);
+	StakePallet::on_unbalanced(issued);
+	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
+}
+
+
+fn finish_block_start_next() {
+	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+	System::set_block_number(System::block_number() + 1);
+	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 }

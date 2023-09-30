@@ -8,8 +8,8 @@ use frame_system::RawOrigin;
 use sp_runtime::Perquintill;
 
 use crate::mock::{
-	roll_to, AccountId, Balances, ExtBuilder, RewardCalculatorPallet, RuntimeOrigin, StakePallet,
-	Test, BLOCKS_PER_ROUND, DECIMALS,
+	roll_to, roll_to_then_claim_rewards, AccountId, Balance, Balances, ExtBuilder,
+	RewardCalculatorPallet, RuntimeOrigin, StakePallet, Test, BLOCKS_PER_ROUND, DECIMALS,
 };
 use parachain_staking::{
 	reward_rate_config::{
@@ -67,21 +67,25 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = RewardCalculatorPallet::get_reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
+			let reward_rate = RewardCalculatorPallet::get_reward_rate_config();
+			let issue_rate: Balance = 1000;
+
 			// compute rewards
 			let c_rewards: BalanceOf<Test> =
-				reward_rate.compute_collator_reward::<Test>(1000, Perquintill::from_percent(0));
+				reward_rate.compute_collator_reward::<Test>(issue_rate, Perquintill::from_percent(0));
+			assert_eq!(c_rewards, 300);
 			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+				reward_rate.compute_delegator_reward::<Test>(issue_rate, Perquintill::one());
+			assert_eq!(d_rewards, 700);
 
 			let c_total_rewards = c_rewards + d_rewards;
 			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2. / 3.));
+				.compute_delegator_reward::<Test>(issue_rate, Perquintill::from_float(2. / 3.));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1. / 3.));
+				.compute_delegator_reward::<Test>(issue_rate, Perquintill::from_float(1. / 3.));
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
@@ -99,7 +103,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 1st block
-			roll_to(2, authors.clone());
+			roll_to_then_claim_rewards(2, issue_rate, &authors);
 			assert_eq!(Balances::usable_balance(&1), user_1 + c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
 			assert_eq!(Balances::usable_balance(&3), user_3 + d_1_rewards);
@@ -188,13 +192,11 @@ fn collator_reward_per_block_only_collator() {
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
 			assert_eq!(reward, 0);
 
-			const BLOCKS_PER_DAY: usize = 24*60*5;
-			let mut authors: Vec<Option<AccountId>> = vec![Some(1u64); BLOCKS_PER_DAY+1];
-			authors[0] = None;
-			roll_to(BLOCKS_PER_DAY as u64, authors);
+			let authors: Vec<Option<AccountId>> = vec![None, Some(1u64)];
+			roll_to_then_claim_rewards(2, 1000, &authors);
 			let avg_bl_rew = StakePallet::average_block_reward();
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
-			assert_eq!(reward, 100);
+			assert_eq!(reward, 300);
 		});
 }
 

@@ -7,14 +7,15 @@ use frame_support::assert_ok;
 use frame_system::RawOrigin;
 
 use crate::mock::{
-	almost_equal, roll_to, AccountId, Balances, ExtBuilder, RewardCalculatorPallet, RuntimeOrigin,
-	StakePallet, Test, BLOCKS_PER_ROUND, DECIMALS,
+	almost_equal, roll_to, AccountId, Balance, Balances, ExtBuilder, RewardCalculatorPallet,
+	RuntimeOrigin, StakePallet, Test, BLOCKS_PER_ROUND, BLOCKS_PER_DAY, DECIMALS,
 };
 use sp_runtime::Perbill;
 
 use parachain_staking::{
 	reward_rate_config::CollatorDelegatorBlockRewardCalculator, types::BalanceOf, Config,
 };
+
 
 #[test]
 fn genesis() {
@@ -56,6 +57,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 		.with_coeffctive(8, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
+			let issue_number: Balance = 100;
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
@@ -90,7 +92,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 1st block
-			roll_to(2, authors.clone());
+			roll_to(2, authors.clone(), issue_number);
 			assert_eq!(
 				almost_equal(
 					Balances::usable_balance(&1),
@@ -119,7 +121,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 2nd block
-			roll_to(3, authors.clone());
+			roll_to(3, authors.clone(), issue_number);
 			assert_eq!(
 				almost_equal(
 					Balances::usable_balance(&1),
@@ -148,7 +150,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 3rd block
-			roll_to(4, authors.clone());
+			roll_to(4, authors.clone(), issue_number);
 			assert_eq!(
 				almost_equal(
 					Balances::usable_balance(&1),
@@ -177,7 +179,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 2 is block author for 4th block
-			roll_to(5, authors.clone());
+			roll_to(5, authors.clone(), issue_number);
 			assert_eq!(
 				almost_equal(
 					Balances::usable_balance(&1),
@@ -221,7 +223,7 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			// assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
 
 			// 2 is block author for 5th block
-			roll_to(6, authors);
+			roll_to(6, authors, issue_number);
 			assert_eq!(
 				almost_equal(
 					Balances::usable_balance(&1),
@@ -287,6 +289,7 @@ fn collator_reward_per_block_only_collator() {
 		.build()
 		.execute_with(|| {
 			let avg_bl_rew = StakePallet::average_block_reward();
+			let issue_number: Balance = 100;
 			// Avoid keep live error
 			assert_ok!(Balances::set_balance(
 				RawOrigin::Root.into(),
@@ -295,6 +298,14 @@ fn collator_reward_per_block_only_collator() {
 				0
 			));
 
+			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
+			assert_eq!(reward, 0);
+
+			let mut authors: Vec<Option<AccountId>> = vec![Some(1u64); BLOCKS_PER_DAY+1];
+			authors[0] = None;
+
+			roll_to(BLOCKS_PER_DAY as u64, authors, issue_number);
+			let avg_bl_rew = StakePallet::average_block_reward();
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 0);
 			assert_eq!(reward, 100);
 		});
@@ -317,6 +328,12 @@ fn collator_reward_per_block_with_delegator() {
 				0
 			));
 
+			let issue_number: Balance = 100;
+			let mut authors: Vec<Option<AccountId>> = vec![Some(1u64); BLOCKS_PER_DAY+1];
+			authors[0] = None;
+
+			roll_to(BLOCKS_PER_DAY as u64, authors, issue_number);
+
 			let avg_bl_rew = StakePallet::average_block_reward();
 			let reward = RewardCalculatorPallet::collator_reward_per_block(avg_bl_rew, 500, 1000);
 			let c_rewards: BalanceOf<Test> =
@@ -326,7 +343,7 @@ fn collator_reward_per_block_with_delegator() {
 			let reward1 =
 				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 600, 1000);
 			let reward2 =
-				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 600, 1000);
+				RewardCalculatorPallet::delegator_reward_per_block(avg_bl_rew, 500, 400, 1000);
 			let d_1_rewards: BalanceOf<Test> =
 				(100. * 600. / (500. * 8. + 600. + 400.)) as BalanceOf<Test>;
 			let d_2_rewards: BalanceOf<Test> =

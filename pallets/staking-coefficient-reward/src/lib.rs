@@ -133,9 +133,9 @@ pub mod pallet {
 			col_stake: BalanceOf<T>,
 			del_sum_stake: BalanceOf<T>,
 		) -> BalanceOf<T> {
-			let collator_coeff = Self::coefficient();
-			let denom = col_stake * collator_coeff.into();
-			let divider = col_stake * collator_coeff.into() * del_sum_stake;
+			let collator_coeff = BalanceOf::<T>::from(Self::coefficient());
+			let denom = col_stake * collator_coeff;
+			let divider = col_stake * collator_coeff + del_sum_stake;
 			let factor = Perquintill::from_rational(denom, divider);
 			factor * avg_bl_reward
 		}
@@ -144,10 +144,10 @@ pub mod pallet {
 			avg_bl_reward: BalanceOf<T>,
 			col_stake: BalanceOf<T>,
 			del_stake: BalanceOf<T>,
-			_del_sum_stake: BalanceOf<T>,
+			del_sum_stake: BalanceOf<T>,
 		) -> BalanceOf<T> {
-			let collator_coeff = Self::coefficient();
-			let divider = col_stake * collator_coeff.into() + del_stake;
+			let collator_coeff = BalanceOf::<T>::from(Self::coefficient());
+			let divider = col_stake * collator_coeff + del_sum_stake;
 			let factor = Perquintill::from_rational(del_stake, divider);
 			factor * avg_bl_reward
 		}

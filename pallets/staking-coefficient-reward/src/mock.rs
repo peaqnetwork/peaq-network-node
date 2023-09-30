@@ -4,7 +4,7 @@
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
@@ -31,6 +31,7 @@ pub(crate) type BlockNumber = u64;
 
 pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
+pub(crate) const BLOCKS_PER_DAY: BlockNumber = 24*60*5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
 
 // Configure a mock runtime to test the pallet.
@@ -316,8 +317,11 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 	left.max(right) - left.min(right) <= err
 }
 
-pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
+pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>, issue_number: Balance) {
 	while System::block_number() < n {
+		let issued = Balances::issue(issue_number);
+		Average::update(issued.peek(), |x|x);
+		StakePallet::on_unbalanced(issued);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			Balances::make_free_balance_be(
 				&StakePallet::account_id(),
