@@ -11,7 +11,7 @@ pub use fp_evm::GenesisAccount;
 
 use smallvec::smallvec;
 
-use codec::{Encode, Compact};
+use codec::{Compact, Encode};
 
 use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
@@ -50,10 +50,9 @@ pub use frame_support::{
 	dispatch::{DispatchClass, EncodeLike, GetDispatchInfo},
 	parameter_types,
 	traits::{
-		AsEnsureOriginWithArg,
-		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
-		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
-		Randomness, StorageInfo, WithdrawReasons,
+		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
+		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
+		OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
 		constants::{
@@ -67,7 +66,7 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess, EnsureSigned
+	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -1834,39 +1833,39 @@ impl pallet_vesting::Config for Runtime {
 parameter_types! {
 	// [TODO] Need double check below values
 	// [TODO] Need to use ExistentialDeposit to Balances
-    pub const AssetDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetDeposit: Balance = ExistentialDeposit::get();
 	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
-    pub const AssetsStringLimit: u32 = 50;
-    /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-    // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-    pub const MetadataDepositBase: Balance = deposit(1, 68);
-    pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-    pub const AssetAccountDeposit: Balance = deposit(1, 18);
+	pub const AssetsStringLimit: u32 = 50;
+	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+	pub const MetadataDepositBase: Balance = deposit(1, 68);
+	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
+	pub const AssetAccountDeposit: Balance = deposit(1, 18);
 }
 
 impl pallet_assets::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Balance = Balance;
-    type AssetId = PeaqAssetId;
-    type Currency = Balances;
-    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-    type ForceOrigin = EnsureRoot<AccountId>;
-    type AssetDeposit = AssetDeposit;
-    type MetadataDepositBase = MetadataDepositBase;
-    type MetadataDepositPerByte = MetadataDepositPerByte;
-    type AssetAccountDeposit = AssetAccountDeposit;
-    type ApprovalDeposit = AssetExistentialDeposit;
-    type StringLimit = AssetsStringLimit;
-    type Freezer = ();
-    type Extra = ();
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = PeaqAssetId;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type AssetDeposit = AssetDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type AssetAccountDeposit = AssetAccountDeposit;
+	type ApprovalDeposit = AssetExistentialDeposit;
+	type StringLimit = AssetsStringLimit;
+	type Freezer = ();
+	type Extra = ();
 	// [TODO] Comment out
-    // type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
+	// type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
 	type WeightInfo = ();
-    type RemoveItemsLimit = ConstU32<1000>;
-    type AssetIdParameter = Compact<PeaqAssetId>;
+	type RemoveItemsLimit = ConstU32<1000>;
+	type AssetIdParameter = Compact<PeaqAssetId>;
 	// [TODO] Comment out
 	type CallbackHandle = ();
-    // type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
-    // #[cfg(feature = "runtime-benchmarks")]
-    // type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
+	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+	// #[cfg(feature = "runtime-benchmarks")]
+	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
 }
