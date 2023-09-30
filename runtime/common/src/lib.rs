@@ -20,7 +20,7 @@ use sp_runtime::{
 	},
 	Perbill, RuntimeString,
 };
-use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
+use sp_std::{fmt::Debug, borrow::Borrow, marker::PhantomData, vec, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
@@ -28,7 +28,7 @@ use zenlink_protocol::{
 };
 
 use peaq_primitives_xcm::{
-	currency::parachain, AccountId, Balance, CurrencyId, TokenInfo, TokenSymbol,
+	currency::parachain, AccountId, Balance, CurrencyId, PeaqAssetId, TokenInfo, TokenSymbol,
 };
 
 // Contracts price units.
@@ -531,4 +531,122 @@ macro_rules! log {
 	($level:tt, $module:tt, $pattern:expr $(, $values:expr)* $(,)?) => {
 		log_internal!($level, core::stringify!($module), log_icon!($module ""), $pattern $(, $values)*)
 	};
+}
+
+/// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
+pub struct PeaqAssetIdConvert<T>(PhantomData<T>)
+where
+	T: SysConfig + ParaSysConfig;
+
+// [TODO] We can move it I guess
+impl<T> xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>
+	for PeaqAssetIdConvert<T>
+where
+	T: SysConfig + ParaSysConfig,
+{
+	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqAssetId, ()> {
+		let	peaq_location = native_currency_location(
+				<T as ParaSysConfig>::SelfParaId::get().into(),
+				[0, 0].encode()
+			).expect("Fail").into_versioned();
+		let relay_location = MultiLocation::parent().into_versioned();
+		let aca_loaction = native_currency_location(
+				parachain::acala::ID,
+				parachain::acala::ACA_KEY.to_vec()).expect("Fail").into_versioned();
+		let bnc_location = native_currency_location(
+				parachain::bifrost::ID,
+				parachain::bifrost::BNC_KEY.to_vec()).expect("Fail").into_versioned();
+		let now = location.borrow().clone().into_versioned();
+		if now == peaq_location {
+			Ok(0)
+		} else if now == relay_location {
+			Ok(1)
+		} else if now == aca_loaction {
+			Ok(2)
+		} else if now == bnc_location {
+			Ok(3)
+		} else {
+			Err(())
+		}
+	}
+
+    fn reverse_ref(id: impl Borrow<PeaqAssetId>) -> Result<MultiLocation, ()> {
+		let	peaq_location = native_currency_location(
+				<T as ParaSysConfig>::SelfParaId::get().into(),
+				[0, 0].encode()
+			).expect("Fail");
+		let relay_location = MultiLocation::parent();
+		let aca_loaction = native_currency_location(
+				parachain::acala::ID,
+				parachain::acala::ACA_KEY.to_vec()).expect("Fail");
+		let bnc_location = native_currency_location(
+				parachain::bifrost::ID,
+				parachain::bifrost::BNC_KEY.to_vec()).expect("Fail");
+
+		match id.borrow().clone() {
+			0 => Ok(peaq_location),
+			1 => Ok(relay_location),
+			2 => Ok(aca_loaction),
+			3 => Ok(bnc_location),
+			_ => Err(()),
+		}
+	}
+}
+
+impl<T> Convert<PeaqAssetId, Option<MultiLocation>> for PeaqAssetIdConvert<T>
+where
+	T: SysConfig + ParaSysConfig,
+{
+	fn convert(id: PeaqAssetId) -> Option<MultiLocation> {
+		let	peaq_location = native_currency_location(
+				<T as ParaSysConfig>::SelfParaId::get().into(),
+				[0, 0].encode()
+			).expect("Fail");
+		let relay_location = MultiLocation::parent();
+		let aca_loaction = native_currency_location(
+				parachain::acala::ID,
+				parachain::acala::ACA_KEY.to_vec()).expect("Fail");
+		let bnc_location = native_currency_location(
+				parachain::bifrost::ID,
+				parachain::bifrost::BNC_KEY.to_vec()).expect("Fail");
+
+		match id {
+			0 => Some(peaq_location),
+			1 => Some(relay_location),
+			2 => Some(aca_loaction),
+			3 => Some(bnc_location),
+			_ => None,
+		}
+	}
+}
+
+impl<T> Convert<MultiLocation, Option<PeaqAssetId>> for PeaqAssetIdConvert<T>
+where
+	T: SysConfig + ParaSysConfig,
+{
+	fn convert(location: MultiLocation) -> Option<PeaqAssetId> {
+		let	peaq_location = native_currency_location(
+				<T as ParaSysConfig>::SelfParaId::get().into(),
+				[0, 0].encode()
+			).expect("Fail").into_versioned();
+		let relay_location = MultiLocation::parent().into_versioned();
+		let aca_loaction = native_currency_location(
+				parachain::acala::ID,
+				parachain::acala::ACA_KEY.to_vec()).expect("Fail").into_versioned();
+		let bnc_location = native_currency_location(
+				parachain::bifrost::ID,
+				parachain::bifrost::BNC_KEY.to_vec()).expect("Fail").into_versioned();
+		let now = location.clone().into_versioned();
+		if now == peaq_location {
+			Some(0)
+		} else if now == relay_location {
+			Some(1)
+		} else if now == aca_loaction {
+			Some(2)
+		} else if now == bnc_location {
+			Some(3)
+		} else {
+			None
+		}
+	}
 }

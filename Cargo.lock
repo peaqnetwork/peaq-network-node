@@ -10712,6 +10712,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "xcm",
+ "xcm-executor",
  "zenlink-protocol",
 ]
 

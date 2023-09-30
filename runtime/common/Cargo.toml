@@ -26,6 +26,7 @@ sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
 
 
 [features]
@@ -47,5 +48,6 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"xcm/std",
+    "xcm-executor/std",
 	"zenlink-protocol/std",
 ]

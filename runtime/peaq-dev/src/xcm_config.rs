@@ -1,6 +1,6 @@
 use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
-	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, ParachainInfo,
+	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, PeaqAssetId, ParachainInfo,
 	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue,
 };
@@ -20,6 +20,7 @@ use peaq_primitives_xcm::currency::parachain;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{
 	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
+	PeaqAssetIdConvert,
 };
 use sp_runtime::traits::{ConstU32, Convert};
 use xcm::{
@@ -75,6 +76,7 @@ pub type LocationToAccountId = (
     // Account32Hash<RelayNetwork, AccountId>,
 );
 
+/// [TODO] Should remove
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	Currencies,
@@ -87,7 +89,7 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	DepositToAlternative<PeaqPotAccount, Currencies, CurrencyId, AccountId, Balance>,
 >;
 
-/// XCM from myself to myself or from other chain to myself for token
+/// XCM from myself to myself
 /// [TODO] Wow...
 /// Means for transacting the native currency on this chain.
 pub type CurrencyTransactor = CurrencyAdapter<
@@ -338,8 +340,8 @@ parameter_types! {
 impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type CurrencyId = CurrencyId;
-	type CurrencyIdConvert = CurrencyIdConvert<Runtime>;
+	type CurrencyId = PeaqAssetId;
+	type CurrencyIdConvert = PeaqAssetIdConvert<Runtime>;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
