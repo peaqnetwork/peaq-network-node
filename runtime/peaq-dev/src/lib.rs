@@ -94,13 +94,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	ZenlinkAssetId,
-	CurrencyId,
-	Balance,
-	PeaqAssetId,
-	Amount,
-	PeaqZenlinkLpGenerate,
-	TokenSymbol,
+	Amount, Balance, CurrencyId, PeaqAssetId, PeaqZenlinkLpGenerate, TokenSymbol, ZenlinkAssetId,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
@@ -1884,9 +1878,8 @@ impl pallet_assets::Config for Runtime {
 }
 
 impl xc_asset_config::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type AssetId = PeaqAssetId;
-    type ManagerOrigin = EnsureRoot<AccountId>;
-    type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
+	type RuntimeEvent = RuntimeEvent;
+	type AssetId = PeaqAssetId;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
-

@@ -692,8 +692,8 @@ macro_rules! log {
 // /// Used to deposit XCM fees into a destination account.
 // ///
 // /// Only handles fungible assets for now.
-// /// If for any reason taking of the fee fails, it will be burned and and error trace will be printed.
-// ///
+// /// If for any reason taking of the fee fails, it will be burned and and error trace will be
+// printed. ///
 // pub struct XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>(
 //     sp_std::marker::PhantomData<(AccountId, Matcher, Assets, FeeDestination)>,
 // );
@@ -727,10 +727,9 @@ macro_rules! log {
 //             Err(_) => {
 //                 log::error!(
 //                     target: "xcm::weight",
-//                     "XcmFeeHandler:take_revenue failed to match fungible asset, it has been burned."
-//                 );
+//                     "XcmFeeHandler:take_revenue failed to match fungible asset, it has been
+// burned."                 );
 //             }
 //         }
 //     }
 // }
-

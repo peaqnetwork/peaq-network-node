@@ -1,58 +1,37 @@
 use super::{
-	constants::fee::{dot_per_second, peaq_per_second},
-	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, PeaqAssetId, ParachainInfo,
-	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin, UnknownTokens, XcmpQueue, Assets, WeightToFee, BlockReward,
-	XcAssetConfig
+	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward, ParachainInfo,
+	ParachainSystem, PeaqAssetId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue,
 };
 use frame_support::{
 	dispatch::Weight,
-	match_types,
-	parameter_types,
-	traits::{Everything, Nothing, fungibles},
+	match_types, parameter_types,
+	traits::{fungibles, ContainsPair, Everything, Nothing},
 };
 use frame_system::EnsureRoot;
-use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
 use orml_traits::location::{RelativeReserveProvider, Reserve};
-use orml_xcm_support::{
-	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
-};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
-use peaq_primitives_xcm::{
-	currency::parachain,
-	PeaqAssetIdConvert,
-	FixedRateOfForeignAsset,
-	TokenSymbol
-};
+use peaq_primitives_xcm::{FixedRateOfForeignAsset, PeaqAssetIdConvert};
 use polkadot_parachain::primitives::Sibling;
-use runtime_common::{
-	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
-	local_peaq_asset_location,
-};
-use sp_runtime::traits::{ConstU32, Convert};
-use xcm::{
-	latest::{prelude::*, MultiAsset},
-	v3::Weight as XcmWeight,
-};
-use frame_support::dispatch::GetDispatchInfo;
-use xcm_executor::traits::WeightBounds;
-use frame_support::traits::ContainsPair;
+use runtime_common::AccountIdToMultiLocation;
+use sp_runtime::traits::ConstU32;
+use xcm::latest::{prelude::*, MultiAsset};
 use xcm_builder::{
-	// [TODO] Need to check
-	// Account32Hash
-	UsingComponents,
 	AccountId32Aliases,
 	AllowKnownQueryResponses,
 	AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom,
-	CurrencyAdapter,
-	FungiblesAdapter,
+	AllowUnpaidExecutionFrom,
 	ConvertedConcreteId,
+	CurrencyAdapter,
 	// AllowUnpaidExecutionFrom,
 	EnsureXcmOrigin,
-	FixedRateOfFungible,
 	FixedWeightBounds,
+	FungiblesAdapter,
+	IsConcrete,
+	NoChecking,
+	ParentAsSuperuser,
 	ParentIsPreset,
 	RelayChainAsNative,
 	SiblingParachainAsNative,
@@ -62,22 +41,16 @@ use xcm_builder::{
 	SovereignSignedViaLocation,
 	TakeRevenue,
 	TakeWeightCredit,
-	NoChecking,
-	IsConcrete,
-	ParentAsSuperuser,
-	AllowUnpaidExecutionFrom,
+	// [TODO] Need to check
+	// Account32Hash
+	UsingComponents,
 };
-use xcm_executor::XcmExecutor;
-use xcm_executor::traits::{JustTry};
+use xcm_executor::{traits::JustTry, XcmExecutor};
 
-use frame_system::Config as SysConfig;
-use cumulus_pallet_parachain_system::Config as ParaSysConfig;
-use xcm_executor::traits::{MatchesFungibles};
-use sp_std::{marker::PhantomData, borrow::Borrow};
 use frame_support::pallet_prelude::Get;
 use sp_runtime::traits::Zero;
-use codec::{Encode, Decode};
-use cumulus_primitives_core::ParaId;
+use sp_std::marker::PhantomData;
+use xcm_executor::traits::MatchesFungibles;
 
 pub type PeaqAssetLocationIdConverter = PeaqAssetIdConvert<PeaqAssetId, XcAssetConfig>;
 
@@ -86,8 +59,8 @@ parameter_types! {
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorMultiLocation =
 	X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
-    pub PeaqLocation: MultiLocation = Here.into_location();
-    pub DummyCheckingAccount: AccountId = PolkadotXcm::check_account();
+	pub PeaqLocation: MultiLocation = Here.into_location();
+	pub DummyCheckingAccount: AccountId = PolkadotXcm::check_account();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -101,24 +74,24 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RococoNetwork, AccountId>,
 	// [TODO] Need to check
-    // Derives a private `Account32` by hashing `("multiloc", received multilocation)`
-    // Account32Hash<RococoNetwork, AccountId>,
+	// Derives a private `Account32` by hashing `("multiloc", received multilocation)`
+	// Account32Hash<RococoNetwork, AccountId>,
 );
 
 /// XCM from myself to myself
 /// [TODO] Wow...
 /// Means for transacting the native currency on this chain.
 pub type CurrencyTransactor = CurrencyAdapter<
-    // Use this currency:
-    Balances,
-    // Use this currency when it is a fungible asset matching the given location or name:
-    IsConcrete<PeaqLocation>,
-    // Convert an XCM MultiLocation into a local account id:
-    LocationToAccountId,
-    // Our chain's account ID type (we can't get away without mentioning it explicitly):
-    AccountId,
-    // We don't track any teleports of `Balances`.
-    (),
+	// Use this currency:
+	Balances,
+	// Use this currency when it is a fungible asset matching the given location or name:
+	IsConcrete<PeaqLocation>,
+	// Convert an XCM MultiLocation into a local account id:
+	LocationToAccountId,
+	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+	AccountId,
+	// We don't track any teleports of `Balances`.
+	(),
 >;
 
 // impl<T> Convert<PeaqAssetId, Option<MultiLocation>> for PeaqAssetIdConvert<T>
@@ -126,8 +99,8 @@ pub type CurrencyTransactor = CurrencyAdapter<
 // 	T: SysConfig + ParaSysConfig,
 // {
 // 	fn convert(id: PeaqAssetId) -> Option<MultiLocation> {
-// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>>::reverse(id).ok()
-// 	}
+// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation,
+// PeaqAssetId>>::reverse(id).ok() 	}
 // }
 //
 // impl<T> Convert<MultiLocation, Option<PeaqAssetId>> for PeaqAssetIdConvert<T>
@@ -135,70 +108,69 @@ pub type CurrencyTransactor = CurrencyAdapter<
 // 	T: SysConfig + ParaSysConfig,
 // {
 // 	fn convert(location: MultiLocation) -> Option<PeaqAssetId> {
-// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>>::convert(location).ok()
-// 	}
+// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation,
+// PeaqAssetId>>::convert(location).ok() 	}
 // }
 
 /// Used to deposit XCM fees into a destination account.
 ///
 /// Only handles fungible assets for now.
-/// If for any reason taking of the fee fails, it will be burned and and error trace will be printed.
-///
+/// If for any reason taking of the fee fails, it will be burned and and error trace will be
+/// printed.
 pub struct XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>(
-    sp_std::marker::PhantomData<(AccountId, Matcher, Assets, FeeDestination)>,
+	sp_std::marker::PhantomData<(AccountId, Matcher, Assets, FeeDestination)>,
 );
 impl<
-        AccountId,
-        Assets: fungibles::Mutate<AccountId>,
-        Matcher: MatchesFungibles<Assets::AssetId, Assets::Balance>,
-        FeeDestination: Get<AccountId>,
-    > TakeRevenue for XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>
+		AccountId,
+		Assets: fungibles::Mutate<AccountId>,
+		Matcher: MatchesFungibles<Assets::AssetId, Assets::Balance>,
+		FeeDestination: Get<AccountId>,
+	> TakeRevenue for XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>
 {
-    fn take_revenue(revenue: MultiAsset) {
-        match Matcher::matches_fungibles(&revenue) {
-            Ok((asset_id, amount)) => {
-                if amount > Zero::zero() {
-                    if let Err(error) =
-                        Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
-                    {
-                        log::error!(
-                            target: "xcm::weight",
-                            "XcmFeeHandler::take_revenue failed when minting asset: {:?}", error,
-                        );
-                    } else {
-                        log::trace!(
-                            target: "xcm::weight",
-                            "XcmFeeHandler::take_revenue took {:?} of asset Id {:?}",
-                            amount, asset_id,
-                        );
-                    }
-                }
-            }
-            Err(_) => {
-                log::error!(
-                    target: "xcm::weight",
-                    "XcmFeeHandler:take_revenue failed to match fungible asset, it has been burned."
-                );
-            }
-        }
-    }
+	fn take_revenue(revenue: MultiAsset) {
+		match Matcher::matches_fungibles(&revenue) {
+			Ok((asset_id, amount)) =>
+				if amount > Zero::zero() {
+					if let Err(error) =
+						Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
+					{
+						log::error!(
+							target: "xcm::weight",
+							"XcmFeeHandler::take_revenue failed when minting asset: {:?}", error,
+						);
+					} else {
+						log::trace!(
+							target: "xcm::weight",
+							"XcmFeeHandler::take_revenue took {:?} of asset Id {:?}",
+							amount, asset_id,
+						);
+					}
+				},
+			Err(_) => {
+				log::error!(
+					target: "xcm::weight",
+					"XcmFeeHandler:take_revenue failed to match fungible asset, it has been burned."
+				);
+			},
+		}
+	}
 }
 
 /// [TODO] Wow...
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
-    // Use this fungibles implementation:
-    Assets,
-    // Use this currency when it is a fungible asset matching the given location or name:
-    ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
-    // Convert an XCM MultiLocation into a local account id:
-    LocationToAccountId,
-    // Our chain's account ID type (we can't get away without mentioning it explicitly):
-    AccountId,
-    // We don't support teleport so no need to check any assets.
-    NoChecking,
-    // We don't support teleport so this is just a dummy account.
-    DummyCheckingAccount,
+	// Use this fungibles implementation:
+	Assets,
+	// Use this currency when it is a fungible asset matching the given location or name:
+	ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
+	// Convert an XCM MultiLocation into a local account id:
+	LocationToAccountId,
+	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+	AccountId,
+	// We don't support teleport so no need to check any assets.
+	NoChecking,
+	// We don't support teleport so this is just a dummy account.
+	DummyCheckingAccount,
 >;
 
 /// Means for transacting assets on this chain.
@@ -219,9 +191,9 @@ pub type XcmOriginToCallOrigin = (
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
 	// [TODO] Need to cehck
-    // Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-    // transaction from the Root origin.
-    ParentAsSuperuser<RuntimeOrigin>,
+	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
+	// transaction from the Root origin.
+	ParentAsSuperuser<RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 	// [TODO] Need to check order
@@ -262,11 +234,11 @@ pub type XcmOriginToCallOrigin = (
  *     ) -> Result<Weight, ()> {
  *         let instr_weight = match instruction {
  *             Transact { require_weight_at_most, .. } => *require_weight_at_most,
- *             SetErrorHandler(xcm) | SetAppendix(xcm) => Self::weight_with_limit(xcm, instrs_limit)?,
- *             _ => Weight::zero(),
+ *             SetErrorHandler(xcm) | SetAppendix(xcm) => Self::weight_with_limit(xcm,
+ * instrs_limit)?,             _ => Weight::zero(),
  *         };
- *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds lnstr_weight: {:?}", instr_weight);
- *         let weight = T::get().checked_add(&instr_weight).ok_or(());
+ *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds lnstr_weight: {:?}",
+ * instr_weight);         let weight = T::get().checked_add(&instr_weight).ok_or(());
  *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds now_weight: {:?}", weight);
  *         return weight
  *     }
@@ -278,54 +250,33 @@ parameter_types! {
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	pub const UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 1024);
 	pub const MaxInstructions: u32 = 100;
-
-	pub PeaqPerSecond: (AssetId, u128, u128) = (
-		local_peaq_asset_location(0).unwrap().into(),
-		peaq_per_second(),
-		0
-	);
-
-	pub DotPerSecond: (AssetId, u128, u128) = (MultiLocation::parent().into(), dot_per_second(), 0);
-	pub AcaPerSecond: (AssetId, u128, u128) = (
-		native_currency_location(parachain::acala::ID, parachain::acala::ACA_KEY.to_vec()).unwrap().into(),
-		// TODO: Need to check the fee: ACA:DOT = 5:1
-		dot_per_second() * 5,
-		0
-	);
-	pub BncPerSecond: (AssetId, u128, u128) = (
-		native_currency_location(parachain::bifrost::ID, parachain::bifrost::BNC_KEY.to_vec()).unwrap().into(),
-		// TODO: Need to check the fee: ACA:DOT = 5:1
-		dot_per_second() * 5,
-		0
-	);
-	pub BaseRate: u128 = peaq_per_second();
 }
 
 match_types! {
-    pub type ParentOrParentsPlurality: impl Contains<MultiLocation> = {
-        MultiLocation { parents: 1, interior: Here } |
-        MultiLocation { parents: 1, interior: X1(Plurality { .. }) }
-    };
+	pub type ParentOrParentsPlurality: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(Plurality { .. }) }
+	};
 }
 
 // Used to handle XCM fee deposit into treasury account
 pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
-    AccountId,
-    ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
-    Assets,
-    PeaqPotAccount,
+	AccountId,
+	ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
+	Assets,
+	PeaqPotAccount,
 >;
 
 pub type Trader = (
 	UsingComponents<WeightToFee, PeaqLocation, AccountId, Balances, BlockReward>,
-	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>
+	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
 pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
-    // Parent and its plurality get free execution
-    AllowUnpaidExecutionFrom<ParentOrParentsPlurality>,
+	// Parent and its plurality get free execution
+	AllowUnpaidExecutionFrom<ParentOrParentsPlurality>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
 	// Subscriptions for version tracking are OK.
@@ -336,33 +287,33 @@ pub type Barrier = (
 ///
 /// Basically, we trust any cross-chain asset from any location to act as a reserve since
 /// in order to support the xc-asset, we need to first register it in the `XcAssetConfig` pallet.
-///
 pub struct ReserveAssetFilter;
 impl ContainsPair<MultiAsset, MultiLocation> for ReserveAssetFilter {
-    fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-        log::error!("show asset: {:?} and origin: {:?}", asset, origin);
-        // We assume that relay chain and sibling parachain assets are trusted reserves for their assets
-        let reserve_location = if let Concrete(location) = &asset.id {
-            log::error!("show location: {:?} and asset.id: {:?}", location, asset.id);
-            match (location.parents, location.first_interior()) {
-                // sibling parachain
-                (1, Some(Parachain(id))) => Some(MultiLocation::new(1, X1(Parachain(*id)))),
-                // relay chain
-                (1, _) => Some(MultiLocation::parent()),
-                _ => None,
-            }
-        } else {
-            log::error!("None show asset.id: {:?}", asset.id);
-            None
-        };
+	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		log::error!("show asset: {:?} and origin: {:?}", asset, origin);
+		// We assume that relay chain and sibling parachain assets are trusted reserves for their
+		// assets
+		let reserve_location = if let Concrete(location) = &asset.id {
+			log::error!("show location: {:?} and asset.id: {:?}", location, asset.id);
+			match (location.parents, location.first_interior()) {
+				// sibling parachain
+				(1, Some(Parachain(id))) => Some(MultiLocation::new(1, X1(Parachain(*id)))),
+				// relay chain
+				(1, _) => Some(MultiLocation::parent()),
+				_ => None,
+			}
+		} else {
+			log::error!("None show asset.id: {:?}", asset.id);
+			None
+		};
 
-        log::error!("show origin: {:?} and reserve_location: {:?}", origin, reserve_location);
-        if let Some(ref reserve) = reserve_location {
-            origin == reserve
-        } else {
-            false
-        }
-    }
+		log::error!("show origin: {:?} and reserve_location: {:?}", origin, reserve_location);
+		if let Some(ref reserve) = reserve_location {
+			origin == reserve
+		} else {
+			false
+		}
+	}
 }
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
@@ -373,9 +324,9 @@ impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type CallDispatcher = RuntimeCall;
 	type XcmSender = XcmRouter;
-    type AssetTransactor = AssetTransactors;
+	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToCallOrigin;
-    type IsReserve = ReserveAssetFilter;
+	type IsReserve = ReserveAssetFilter;
 	// type IsReserve = Everything;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
@@ -466,12 +417,12 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 
 parameter_types! {
 	pub const MaxAssetsForTransfer: usize = 2;
-    pub PeaqLocationAbsolute: MultiLocation = MultiLocation {
-        parents: 1,
-        interior: X1(
-            Parachain(ParachainInfo::parachain_id().into())
-        )
-    };
+	pub PeaqLocationAbsolute: MultiLocation = MultiLocation {
+		parents: 1,
+		interior: X1(
+			Parachain(ParachainInfo::parachain_id().into())
+		)
+	};
 
 }
 
@@ -480,20 +431,24 @@ parameter_types! {
 /// addition will convert self absolute location to relative location.
 pub struct AbsoluteAndRelativeReserveProvider<AbsoluteLocation>(PhantomData<AbsoluteLocation>);
 impl<AbsoluteLocation: Get<MultiLocation>> Reserve
-    for AbsoluteAndRelativeReserveProvider<AbsoluteLocation>
+	for AbsoluteAndRelativeReserveProvider<AbsoluteLocation>
 {
-    fn reserve(asset: &MultiAsset) -> Option<MultiLocation> {
-        RelativeReserveProvider::reserve(asset).map(|reserve_location| {
-			log::error!("show reserve_location: {:?}, and AbsoluteLocation: {:?}", reserve_location, AbsoluteLocation::get());
-            if reserve_location == AbsoluteLocation::get() {
-                log::error!("show here: {:?}", MultiLocation::here());
-                MultiLocation::here()
-            } else {
-                log::error!("show reserve_location please: {:?}", reserve_location);
-                reserve_location
-            }
-        })
-    }
+	fn reserve(asset: &MultiAsset) -> Option<MultiLocation> {
+		RelativeReserveProvider::reserve(asset).map(|reserve_location| {
+			log::error!(
+				"show reserve_location: {:?}, and AbsoluteLocation: {:?}",
+				reserve_location,
+				AbsoluteLocation::get()
+			);
+			if reserve_location == AbsoluteLocation::get() {
+				log::error!("show here: {:?}", MultiLocation::here());
+				MultiLocation::here()
+			} else {
+				log::error!("show reserve_location please: {:?}", reserve_location);
+				reserve_location
+			}
+		})
+	}
 }
 
 impl orml_xtokens::Config for Runtime {
@@ -511,6 +466,6 @@ impl orml_xtokens::Config for Runtime {
 	type MinXcmFee = DisabledParachainFee;
 	type MultiLocationsFilter = Everything;
 	// type ReserveProvider = AbsoluteReserveProvider;
-    type ReserveProvider = AbsoluteAndRelativeReserveProvider<PeaqLocationAbsolute>;
+	type ReserveProvider = AbsoluteAndRelativeReserveProvider<PeaqLocationAbsolute>;
 	type UniversalLocation = UniversalLocation;
 }

@@ -30,13 +30,12 @@ use sp_std::prelude::*;
 
 pub mod currency;
 pub mod evm;
-pub mod xcm_asset_id;
 #[cfg(test)]
 mod tests;
+pub mod xcm_asset_id;
 
-pub use crate::evm::EvmAddress;
+pub use crate::{evm::EvmAddress, xcm_asset_id::*};
 pub use currency::*;
-pub use crate::xcm_asset_id::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;
