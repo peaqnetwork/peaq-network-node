@@ -6,6 +6,7 @@ homepage = 'https://peaq.network/'
 edition = "2021"
 
 [dependencies]
+log = { workspace = true }
 bstringify = { workspace = true }
 serde = { workspace = true }
 codec = { package = "parity-scale-codec", workspace = true }
@@ -21,11 +22,13 @@ frame-support = { workspace = true }
 zenlink-protocol = { workspace = true }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 xcm-executor = { workspace = true, default-features = false }
+xcm-builder = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
 std = [
+	"log/std",
 	"scale-info/std",
 	"codec/std",
 	"num_enum/std",
@@ -38,5 +41,6 @@ std = [
 	"xc-asset-config/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"xcm-builder/std",
 	"zenlink-protocol/std",
 ]

@@ -128,7 +128,6 @@ pub mod xcm_config;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 pub mod constants;
-use xcm::latest::prelude::*;
 
 // For Zenlink-DEX-Module
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};

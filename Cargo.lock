@@ -8224,6 +8224,7 @@ dependencies = [
  "bstringify",
  "evm",
  "frame-support",
+ "log",
  "num_enum",
  "parity-scale-codec",
  "scale-info",
@@ -8235,6 +8236,7 @@ dependencies = [
  "sp-std",
  "xc-asset-config",
  "xcm",
+ "xcm-builder",
  "xcm-executor",
  "zenlink-protocol",
 ]

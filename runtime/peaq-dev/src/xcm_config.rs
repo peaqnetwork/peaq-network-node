@@ -1,6 +1,6 @@
 use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
-	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, PeaqAssetId, ParachainInfo,
+	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, PeaqAssetId, ParachainInfo,
 	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, UnknownTokens, XcmpQueue, Assets, WeightToFee, BlockReward,
 	XcAssetConfig
@@ -22,6 +22,7 @@ use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::{
 	currency::parachain,
 	PeaqAssetIdConvert,
+	FixedRateOfForeignAsset,
 	TokenSymbol
 };
 use polkadot_parachain::primitives::Sibling;
@@ -119,80 +120,6 @@ pub type CurrencyTransactor = CurrencyAdapter<
     // We don't track any teleports of `Balances`.
     (),
 >;
-
-/*
- * /// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
- * pub struct PeaqAssetIdConvert<T>(PhantomData<T>)
- * where
- *     T: SysConfig + ParaSysConfig;
- *
- * // [TODO] We can move it I guess
- * impl<T> xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>
- *     for PeaqAssetIdConvert<T>
- * where
- *     T: SysConfig + ParaSysConfig,
- * {
- *     fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqAssetId, ()> {
- *         let	peaq_location = native_currency_location(
- *                 <T as ParaSysConfig>::SelfParaId::get().into(),
- *                 [0, 0].encode()
- *             ).expect("Fail").into_versioned();
- *         let relay_location = MultiLocation::parent().into_versioned();
- *         let aca_loaction = native_currency_location(
- *                 parachain::acala::ID,
- *                 parachain::acala::ACA_KEY.to_vec()).expect("Fail").into_versioned();
- *         let bnc_location = native_currency_location(
- *                 parachain::bifrost::ID,
- *                 parachain::bifrost::BNC_KEY.to_vec()).expect("Fail").into_versioned();
- *         let now = location.borrow().clone().into_versioned();
- *
- *         // log::error!("PeaqAssetIdConvert: {:?}, {:?}, {:?}, {:?}", peaq_location, relay_location, aca_loaction, bnc_location);
- *         if now == peaq_location {
- *             // log::error!("Convert: now PeaqAssetIdConvert: {:?}", peaq_location);
- *             Ok(0)
- *         } else if now == relay_location {
- *             Ok(1)
- *         } else if now == aca_loaction {
- *             Ok(2)
- *         } else if now == bnc_location {
- *             // log::error!("Convert: bnc PeaqAssetIdConvert: {:?}", bnc_location);
- *             Ok(3)
- *         } else {
- *             Err(())
- *         }
- *     }
- *
- *     fn reverse_ref(id: impl Borrow<PeaqAssetId>) -> Result<MultiLocation, ()> {
- *         let	peaq_location = native_currency_location(
- *                 <T as ParaSysConfig>::SelfParaId::get().into(),
- *                 [0, 0].encode()
- *             ).expect("Fail");
- *         let relay_location = MultiLocation::parent();
- *         let aca_loaction = native_currency_location(
- *                 parachain::acala::ID,
- *                 parachain::acala::ACA_KEY.to_vec()).expect("Fail");
- *         let bnc_location = native_currency_location(
- *                 parachain::bifrost::ID,
- *                 parachain::bifrost::BNC_KEY.to_vec()).expect("Fail");
- *
- *         // log::error!("PeaqAssetIdConvert: {:?}, {:?}, {:?}, {:?}", peaq_location, relay_location, aca_loaction, bnc_location);
- *         // log::error!("id {:?}", id.borrow().clone());
- *         match id.borrow().clone() {
- *             0 => Ok(peaq_location),
- *             1 => {
- *                 // log::error!("Reverse: id {:?}, relay_location {:?}", id.borrow().clone(), relay_location);
- *                 Ok(relay_location)
- *             },
- *             2 => Ok(aca_loaction),
- *             3 => {
- *                 // log::error!("Reverse: id {:?}, bnc_location {:?}", id.borrow().clone(), bnc_location);
- *                 Ok(bnc_location)
- *             },
- *             _ => Err(()),
- *         }
- *     }
- * }
- */
 
 // impl<T> Convert<PeaqAssetId, Option<MultiLocation>> for PeaqAssetIdConvert<T>
 // where
@@ -391,10 +318,7 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 
 pub type Trader = (
 	UsingComponents<WeightToFee, PeaqLocation, AccountId, Balances, BlockReward>,
-	FixedRateOfFungible<PeaqPerSecond, PeaqXcmFungibleFeeHandler>,
-	FixedRateOfFungible<DotPerSecond, PeaqXcmFungibleFeeHandler>,
-	FixedRateOfFungible<AcaPerSecond, PeaqXcmFungibleFeeHandler>,
-	FixedRateOfFungible<BncPerSecond, PeaqXcmFungibleFeeHandler>,
+	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>
 );
 
 pub type Barrier = (
@@ -407,22 +331,6 @@ pub type Barrier = (
 	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<Everything>,
 );
-
-// [TODO]...
-pub struct ToTreasury;
-
-impl TakeRevenue for ToTreasury {
-	fn take_revenue(revenue: MultiAsset) {
-		if let MultiAsset { id: Concrete(location), fun: Fungible(amount) } = revenue {
-			if let Some(currency_id) = CurrencyIdConvert::<Runtime>::convert(location) {
-				// Ensure PeaqPotAccount have ed requirement for native asset, but don't need
-				// ed requirement for cross-chain asset because it's one of whitelist accounts.
-				// Ignore the result.
-				let _ = Currencies::deposit(currency_id, &PeaqPotAccount::get(), amount);
-			}
-		}
-	}
-}
 
 /// Used to determine whether the cross-chain asset is coming from a trusted reserve or not
 ///
