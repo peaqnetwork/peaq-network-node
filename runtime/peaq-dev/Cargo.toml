@@ -17,6 +17,7 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.38"
 
 [dependencies]
+sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false, features = ["std", "force-debug"] }
 codec = { package = "parity-scale-codec", workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
@@ -263,7 +264,8 @@ std = [
 	"pallet-xcm/std",
 
 	# try-runtime
-	"frame-try-runtime/std"
+	"frame-try-runtime/std",
+	"sp-debug-derive/std"
 ]
 
 # Must be enabled for tracing runtimes only

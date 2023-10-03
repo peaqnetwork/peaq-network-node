@@ -71,6 +71,8 @@ pub mod fee {
 	}
 
 	pub fn dot_per_second() -> u128 {
+		log::error!("total: {:?}, peaq_per_second: {:?}",
+			peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT), peaq_per_second());
 		peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT)
 	}
 }
