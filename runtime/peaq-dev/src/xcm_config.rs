@@ -2,7 +2,8 @@ use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
 	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, PeaqAssetId, ParachainInfo,
 	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue, Assets, WeightToFee, BlockReward
+	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue, Assets, WeightToFee, BlockReward,
+	XcAssetConfig
 };
 use frame_support::{
 	dispatch::Weight,
@@ -19,6 +20,7 @@ use orml_xcm_support::{
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::currency::parachain;
+use peaq_primitives_xcm::xcm::AssetLocationIdConverter;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{
 	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
@@ -73,6 +75,7 @@ use sp_runtime::traits::Zero;
 use codec::{Encode, Decode};
 use cumulus_primitives_core::ParaId;
 
+pub type PeaqAssetLocationIdConverter = AssetLocationIdConverter<PeaqAssetId, XcAssetConfig>;
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -114,95 +117,97 @@ pub type CurrencyTransactor = CurrencyAdapter<
     (),
 >;
 
-/// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct PeaqAssetIdConvert<T>(PhantomData<T>)
-where
-	T: SysConfig + ParaSysConfig;
+/*
+ * /// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
+ * pub struct PeaqAssetIdConvert<T>(PhantomData<T>)
+ * where
+ *     T: SysConfig + ParaSysConfig;
+ *
+ * // [TODO] We can move it I guess
+ * impl<T> xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>
+ *     for PeaqAssetIdConvert<T>
+ * where
+ *     T: SysConfig + ParaSysConfig,
+ * {
+ *     fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqAssetId, ()> {
+ *         let	peaq_location = native_currency_location(
+ *                 <T as ParaSysConfig>::SelfParaId::get().into(),
+ *                 [0, 0].encode()
+ *             ).expect("Fail").into_versioned();
+ *         let relay_location = MultiLocation::parent().into_versioned();
+ *         let aca_loaction = native_currency_location(
+ *                 parachain::acala::ID,
+ *                 parachain::acala::ACA_KEY.to_vec()).expect("Fail").into_versioned();
+ *         let bnc_location = native_currency_location(
+ *                 parachain::bifrost::ID,
+ *                 parachain::bifrost::BNC_KEY.to_vec()).expect("Fail").into_versioned();
+ *         let now = location.borrow().clone().into_versioned();
+ *
+ *         // log::error!("PeaqAssetIdConvert: {:?}, {:?}, {:?}, {:?}", peaq_location, relay_location, aca_loaction, bnc_location);
+ *         if now == peaq_location {
+ *             // log::error!("Convert: now PeaqAssetIdConvert: {:?}", peaq_location);
+ *             Ok(0)
+ *         } else if now == relay_location {
+ *             Ok(1)
+ *         } else if now == aca_loaction {
+ *             Ok(2)
+ *         } else if now == bnc_location {
+ *             // log::error!("Convert: bnc PeaqAssetIdConvert: {:?}", bnc_location);
+ *             Ok(3)
+ *         } else {
+ *             Err(())
+ *         }
+ *     }
+ *
+ *     fn reverse_ref(id: impl Borrow<PeaqAssetId>) -> Result<MultiLocation, ()> {
+ *         let	peaq_location = native_currency_location(
+ *                 <T as ParaSysConfig>::SelfParaId::get().into(),
+ *                 [0, 0].encode()
+ *             ).expect("Fail");
+ *         let relay_location = MultiLocation::parent();
+ *         let aca_loaction = native_currency_location(
+ *                 parachain::acala::ID,
+ *                 parachain::acala::ACA_KEY.to_vec()).expect("Fail");
+ *         let bnc_location = native_currency_location(
+ *                 parachain::bifrost::ID,
+ *                 parachain::bifrost::BNC_KEY.to_vec()).expect("Fail");
+ *
+ *         // log::error!("PeaqAssetIdConvert: {:?}, {:?}, {:?}, {:?}", peaq_location, relay_location, aca_loaction, bnc_location);
+ *         // log::error!("id {:?}", id.borrow().clone());
+ *         match id.borrow().clone() {
+ *             0 => Ok(peaq_location),
+ *             1 => {
+ *                 // log::error!("Reverse: id {:?}, relay_location {:?}", id.borrow().clone(), relay_location);
+ *                 Ok(relay_location)
+ *             },
+ *             2 => Ok(aca_loaction),
+ *             3 => {
+ *                 // log::error!("Reverse: id {:?}, bnc_location {:?}", id.borrow().clone(), bnc_location);
+ *                 Ok(bnc_location)
+ *             },
+ *             _ => Err(()),
+ *         }
+ *     }
+ * }
+ */
 
-// [TODO] We can move it I guess
-impl<T> xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>
-	for PeaqAssetIdConvert<T>
-where
-	T: SysConfig + ParaSysConfig,
-{
-	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqAssetId, ()> {
-		let	peaq_location = native_currency_location(
-				<T as ParaSysConfig>::SelfParaId::get().into(),
-				[0, 0].encode()
-			).expect("Fail").into_versioned();
-		let relay_location = MultiLocation::parent().into_versioned();
-		let aca_loaction = native_currency_location(
-				parachain::acala::ID,
-				parachain::acala::ACA_KEY.to_vec()).expect("Fail").into_versioned();
-		let bnc_location = native_currency_location(
-				parachain::bifrost::ID,
-				parachain::bifrost::BNC_KEY.to_vec()).expect("Fail").into_versioned();
-		let now = location.borrow().clone().into_versioned();
-
-		// log::error!("PeaqAssetIdConvert: {:?}, {:?}, {:?}, {:?}", peaq_location, relay_location, aca_loaction, bnc_location);
-		if now == peaq_location {
-			// log::error!("Convert: now PeaqAssetIdConvert: {:?}", peaq_location);
-			Ok(0)
-		} else if now == relay_location {
-			Ok(1)
-		} else if now == aca_loaction {
-			Ok(2)
-		} else if now == bnc_location {
-			// log::error!("Convert: bnc PeaqAssetIdConvert: {:?}", bnc_location);
-			Ok(3)
-		} else {
-			Err(())
-		}
-	}
-
-    fn reverse_ref(id: impl Borrow<PeaqAssetId>) -> Result<MultiLocation, ()> {
-		let	peaq_location = native_currency_location(
-				<T as ParaSysConfig>::SelfParaId::get().into(),
-				[0, 0].encode()
-			).expect("Fail");
-		let relay_location = MultiLocation::parent();
-		let aca_loaction = native_currency_location(
-				parachain::acala::ID,
-				parachain::acala::ACA_KEY.to_vec()).expect("Fail");
-		let bnc_location = native_currency_location(
-				parachain::bifrost::ID,
-				parachain::bifrost::BNC_KEY.to_vec()).expect("Fail");
-
-		// log::error!("PeaqAssetIdConvert: {:?}, {:?}, {:?}, {:?}", peaq_location, relay_location, aca_loaction, bnc_location);
-		// log::error!("id {:?}", id.borrow().clone());
-		match id.borrow().clone() {
-			0 => Ok(peaq_location),
-			1 => {
-				// log::error!("Reverse: id {:?}, relay_location {:?}", id.borrow().clone(), relay_location);
-				Ok(relay_location)
-			},
-			2 => Ok(aca_loaction),
-			3 => {
-				// log::error!("Reverse: id {:?}, bnc_location {:?}", id.borrow().clone(), bnc_location);
-				Ok(bnc_location)
-			},
-			_ => Err(()),
-		}
-	}
-}
-
-impl<T> Convert<PeaqAssetId, Option<MultiLocation>> for PeaqAssetIdConvert<T>
-where
-	T: SysConfig + ParaSysConfig,
-{
-	fn convert(id: PeaqAssetId) -> Option<MultiLocation> {
-		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>>::reverse(id).ok()
-	}
-}
-
-impl<T> Convert<MultiLocation, Option<PeaqAssetId>> for PeaqAssetIdConvert<T>
-where
-	T: SysConfig + ParaSysConfig,
-{
-	fn convert(location: MultiLocation) -> Option<PeaqAssetId> {
-		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>>::convert(location).ok()
-	}
-}
+// impl<T> Convert<PeaqAssetId, Option<MultiLocation>> for PeaqAssetIdConvert<T>
+// where
+// 	T: SysConfig + ParaSysConfig,
+// {
+// 	fn convert(id: PeaqAssetId) -> Option<MultiLocation> {
+// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>>::reverse(id).ok()
+// 	}
+// }
+//
+// impl<T> Convert<MultiLocation, Option<PeaqAssetId>> for PeaqAssetIdConvert<T>
+// where
+// 	T: SysConfig + ParaSysConfig,
+// {
+// 	fn convert(location: MultiLocation) -> Option<PeaqAssetId> {
+// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation, PeaqAssetId>>::convert(location).ok()
+// 	}
+// }
 
 /// Used to deposit XCM fees into a destination account.
 ///
@@ -255,7 +260,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
     // Use this fungibles implementation:
     Assets,
     // Use this currency when it is a fungible asset matching the given location or name:
-    ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetIdConvert<Runtime>, JustTry>,
+    ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
     // Convert an XCM MultiLocation into a local account id:
     LocationToAccountId,
     // Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -376,7 +381,7 @@ match_types! {
 // Used to handle XCM fee deposit into treasury account
 pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
     AccountId,
-    ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetIdConvert<Runtime>, JustTry>,
+    ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
     Assets,
     PeaqPotAccount,
 >;
@@ -584,7 +589,7 @@ impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = PeaqAssetId;
-	type CurrencyIdConvert = PeaqAssetIdConvert<Runtime>;
+	type CurrencyIdConvert = PeaqAssetLocationIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = PeaqLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;

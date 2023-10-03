@@ -19,6 +19,9 @@ sha3 = { workspace = true }
 serde_json = { workspace = true }
 frame-support = { workspace = true }
 zenlink-protocol = { workspace = true }
+xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
+xcm-executor = { workspace = true, default-features = false }
+xcm = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -32,5 +35,8 @@ std = [
 	"evm/std",
 	"evm/with-serde",
 	"frame-support/std",
+	"xc-asset-config/std",
+	"xcm-executor/std",
+	"xcm/std",
 	"zenlink-protocol/std",
 ]

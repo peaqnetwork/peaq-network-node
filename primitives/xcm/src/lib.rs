@@ -30,6 +30,7 @@ use sp_std::prelude::*;
 
 pub mod currency;
 pub mod evm;
+pub mod xcm;
 #[cfg(test)]
 mod tests;
 

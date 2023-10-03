@@ -990,6 +990,7 @@ construct_runtime!(
 		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
+		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1062,6 +1063,7 @@ mod benches {
 		[peaq_pallet_mor, PeaqStorage]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
+		[xc_asset_config, XCAssetConfig]
 	);
 }
 
@@ -1869,3 +1871,11 @@ impl pallet_assets::Config for Runtime {
 	// #[cfg(feature = "runtime-benchmarks")]
 	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
 }
+
+impl xc_asset_config::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AssetId = AssetId;
+    type ManagerOrigin = EnsureRoot<AccountId>;
+    type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
+}
+
