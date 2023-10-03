@@ -7,7 +7,6 @@ use sp_runtime::traits::Convert;
 /// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
 pub struct PeaqAssetIdConvert<AssetId, AssetMapper>(PhantomData<(AssetId, AssetMapper)>);
 
-// [TODO] We can move it I guess
 impl<AssetId, AssetMapper> xcm_executor::traits::Convert<MultiLocation, AssetId>
     for PeaqAssetIdConvert<AssetId, AssetMapper>
 where

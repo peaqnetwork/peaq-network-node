@@ -7,7 +7,7 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	pallet_prelude::*,
 	parameter_types,
-	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons, fungibles},
+	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 };
 use frame_system::Config as SysConfig;
 use orml_traits::{currency::MutationHooks, MultiCurrency};
@@ -20,10 +20,8 @@ use sp_runtime::{
 	},
 	Perbill, RuntimeString,
 };
-use sp_std::{fmt::Debug, borrow::Borrow, marker::PhantomData, vec, vec::Vec};
+use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use xcm::latest::prelude::*;
-use xcm_executor::traits::{MatchesFungibles};
-use xcm_builder::TakeRevenue;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 	LocalAssetHandler,
@@ -46,6 +44,7 @@ parameter_types! {
 	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
+// [TODO] Need to move...
 pub struct CurrencyHooks<T, DustAccount>(PhantomData<T>, DustAccount);
 
 impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance>
@@ -162,6 +161,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
+// [TODO] Need to remove in the future
 /// A MultiLocation-CurrencyId converter for XCM, Zenlink-Protocol and similar stuff.
 pub struct CurrencyIdConvert<T>(PhantomData<T>)
 where
@@ -192,6 +192,7 @@ where
 	}
 }
 
+// [TODO] Need to remove in the future
 impl<T> Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert<T>
 where
 	T: SysConfig + ParaSysConfig,
@@ -258,6 +259,7 @@ where
 	}
 }
 
+// [TODO] Need to remove in the future
 impl<T> Convert<MultiAsset, Option<CurrencyId>> for CurrencyIdConvert<T>
 where
 	T: SysConfig + ParaSysConfig,
@@ -286,6 +288,7 @@ pub fn local_peaq_asset_location(key: PeaqAssetId) -> Option<MultiLocation> {
 	Some(MultiLocation::new(0, X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?))))
 }
 
+// [TODO] Need to modify
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
 pub struct PeaqCurrencyAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
 
@@ -395,6 +398,7 @@ pub struct PaymentConvertInfo {
 	pub zen_path: Vec<ZenlinkAssetId>,
 }
 
+// [TODO] Need to modify
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
 /// generic as possible to enable the usage in PeaqCurrencyAdapter.
 pub trait PeaqCurrencyPaymentConvert {
@@ -492,6 +496,7 @@ pub trait PeaqCurrencyPaymentConvert {
 	}
 }
 
+// [TODO] Need to modify
 fn map_err_currency2zasset(id: CurrencyId) -> TransactionValidityError {
 	InvalidTransaction::Custom(match id {
 		CurrencyId::Token(symbol) => symbol as u8,

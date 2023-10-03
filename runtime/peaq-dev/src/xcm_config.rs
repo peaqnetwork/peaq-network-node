@@ -2,7 +2,7 @@ use super::{
 	constants::fee::{dot_per_second, peaq_per_second},
 	AccountId, AllPalletsWithSystem, Balance, Balances, Currencies, CurrencyId, PeaqAssetId, ParachainInfo,
 	ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin, TokenSymbol, UnknownTokens, XcmpQueue, Assets, WeightToFee, BlockReward,
+	RuntimeOrigin, UnknownTokens, XcmpQueue, Assets, WeightToFee, BlockReward,
 	XcAssetConfig
 };
 use frame_support::{
@@ -19,8 +19,11 @@ use orml_xcm_support::{
 };
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
-use peaq_primitives_xcm::currency::parachain;
-use peaq_primitives_xcm::xcm::AssetLocationIdConverter;
+use peaq_primitives_xcm::{
+	currency::parachain,
+	PeaqAssetIdConvert,
+	TokenSymbol
+};
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{
 	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
@@ -75,7 +78,7 @@ use sp_runtime::traits::Zero;
 use codec::{Encode, Decode};
 use cumulus_primitives_core::ParaId;
 
-pub type PeaqAssetLocationIdConverter = AssetLocationIdConverter<PeaqAssetId, XcAssetConfig>;
+pub type PeaqAssetLocationIdConverter = PeaqAssetIdConvert<PeaqAssetId, XcAssetConfig>;
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;

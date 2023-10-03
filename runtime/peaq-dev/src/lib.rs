@@ -43,6 +43,9 @@ use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+// [TODO] Need to move to other place
+use xcm::latest::prelude::*;
+
 // A few exports that help ease life for downstream crates.
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
@@ -90,7 +93,15 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::*;
+use peaq_primitives_xcm::{
+	ZenlinkAssetId,
+	CurrencyId,
+	Balance,
+	PeaqAssetId,
+	Amount,
+	PeaqZenlinkLpGenerate,
+	TokenSymbol,
+};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -122,6 +133,7 @@ use xcm::latest::prelude::*;
 // For Zenlink-DEX-Module
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
+// [TODO] Change the PeaqCurrencyAdapter
 use runtime_common::{
 	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
 	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
@@ -841,7 +853,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::PEAQ);
 }
 
 impl orml_currencies::Config for Runtime {
@@ -1874,7 +1886,7 @@ impl pallet_assets::Config for Runtime {
 
 impl xc_asset_config::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type AssetId = AssetId;
+    type AssetId = PeaqAssetId;
     type ManagerOrigin = EnsureRoot<AccountId>;
     type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
