@@ -39,7 +39,9 @@
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
 //! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//!    example: ```ignore pub struct BeneficiaryPayout();
+//!    example:
+//!	   ```ignore
+//!        pub struct BeneficiaryPayout();
 //!
 //!        impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
 //!            fn treasury(reward: NegativeImbalanceOf<T>) {

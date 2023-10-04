@@ -220,9 +220,9 @@ dependencies = [
 
 [[package]]
 name = "anstream"
-version = "0.6.1"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6cd65a4b849ace0b7f6daeebcc1a1d111282227ca745458c61dbf670e52a597"
+checksum = "2ab91ebe16eb252986481c5b62f6098f3b698a45e34b5b98200cf20dd2484a44"
 dependencies = [
  "anstyle",
  "anstyle-parse",
@@ -258,9 +258,9 @@ dependencies = [
 
 [[package]]
 name = "anstyle-wincon"
-version = "3.0.0"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0238ca56c96dfa37bdf7c373c8886dd591322500aceeeccdb2216fe06dc2f796"
+checksum = "f0699d10d2f4d628a98ee7b57b289abbc98ff3bad977cb3152709d4bf2330628"
 dependencies = [
  "anstyle",
  "windows-sys 0.48.0",
@@ -410,7 +410,7 @@ dependencies = [
  "log",
  "parking",
  "polling",
- "rustix 0.37.23",
+ "rustix 0.37.24",
  "slab",
  "socket2 0.4.9",
  "waker-fn",
@@ -2575,9 +2575,9 @@ dependencies = [
 
 [[package]]
 name = "errno"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "136526188508e25c6fef639d7927dfb3e0e3084488bf202267829cf7fc23dbdd"
+checksum = "add4f07d43996f76ef320709726a556a9d4f965d9410d8d0271132d2f8293480"
 dependencies = [
  "errno-dragonfly",
  "libc",
@@ -3541,7 +3541,7 @@ checksum = "d2411eed028cdf8c8034eaf21f9915f956b6c3abec4d4c7949ee67f0721127bd"
 dependencies = [
  "futures-io",
  "rustls 0.20.9",
- "webpki 0.22.1",
+ "webpki 0.22.2",
 ]
 
 [[package]]
@@ -4120,9 +4120,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.0.1"
+version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad227c3af19d4914570ad36d30409928b75967c298feb9ea1969db3a610bb14e"
+checksum = "8adf3ddd720272c6ea8bf59463c04e0f93d0bbf7c5439b691bca2987e0270897"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.1",
@@ -4234,7 +4234,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
  "hermit-abi 0.3.3",
- "rustix 0.38.14",
+ "rustix 0.38.15",
  "windows-sys 0.48.0",
 ]
 
@@ -4496,7 +4496,7 @@ dependencies = [
 [[package]]
 name = "kusama-runtime"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -4593,7 +4593,7 @@ dependencies = [
 [[package]]
 name = "kusama-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -5044,7 +5044,7 @@ dependencies = [
  "ring",
  "rustls 0.20.9",
  "thiserror",
- "webpki 0.22.1",
+ "webpki 0.22.2",
  "x509-parser 0.14.0",
  "yasna",
 ]
@@ -5249,9 +5249,9 @@ checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a9bad9f94746442c783ca431b22403b519cd7fbeed0533fdd6328b2f2212128"
+checksum = "3852614a3bd9ca9804678ba6be5e3b8ce76dfc902cae004e3e0c44051b6e88db"
 
 [[package]]
 name = "lock_api"
@@ -5383,9 +5383,9 @@ dependencies = [
 
 [[package]]
 name = "memchr"
-version = "2.6.3"
+version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f232d6ef707e1956a43342693d2a31e72989554d58299d7a88738cc95b0d35c"
+checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
 
 [[package]]
 name = "memfd"
@@ -5393,7 +5393,7 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2cffa4ad52c6f791f4f8b15f0c05f9824b2ced1160e88cc393d64fff9a8ac64"
 dependencies = [
- "rustix 0.38.14",
+ "rustix 0.38.15",
 ]
 
 [[package]]
@@ -7355,7 +7355,7 @@ dependencies = [
 [[package]]
 name = "pallet-xcm"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7375,7 +7375,7 @@ dependencies = [
 [[package]]
 name = "pallet-xcm-benchmarks"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8610,7 +8610,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1d3afd2628e69da2be385eb6f2fd57c8ac7977ceeff6dc166ff1657b0e386a9"
 dependencies = [
  "fixedbitset",
- "indexmap 2.0.1",
+ "indexmap 2.0.2",
 ]
 
 [[package]]
@@ -8692,7 +8692,7 @@ checksum = "4503fa043bf02cee09a9582e9554b4c6403b2ef55e4612e96561d294419429f8"
 [[package]]
 name = "polkadot-approval-distribution"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-metrics",
@@ -8707,7 +8707,7 @@ dependencies = [
 [[package]]
 name = "polkadot-availability-bitfield-distribution"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-network-protocol",
@@ -8721,7 +8721,7 @@ dependencies = [
 [[package]]
 name = "polkadot-availability-distribution"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "derive_more",
  "fatality",
@@ -8744,7 +8744,7 @@ dependencies = [
 [[package]]
 name = "polkadot-availability-recovery"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "fatality",
  "futures 0.3.28",
@@ -8765,7 +8765,7 @@ dependencies = [
 [[package]]
 name = "polkadot-cli"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "clap 4.4.6",
  "frame-benchmarking-cli",
@@ -8793,7 +8793,7 @@ dependencies = [
 [[package]]
 name = "polkadot-client"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "frame-benchmarking",
@@ -8835,7 +8835,7 @@ dependencies = [
 [[package]]
 name = "polkadot-collator-protocol"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "always-assert",
  "bitvec",
@@ -8857,7 +8857,7 @@ dependencies = [
 [[package]]
 name = "polkadot-core-primitives"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -8869,7 +8869,7 @@ dependencies = [
 [[package]]
 name = "polkadot-dispute-distribution"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "derive_more",
  "fatality",
@@ -8894,7 +8894,7 @@ dependencies = [
 [[package]]
 name = "polkadot-erasure-coding"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "parity-scale-codec",
  "polkadot-node-primitives",
@@ -8908,7 +8908,7 @@ dependencies = [
 [[package]]
 name = "polkadot-gossip-support"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "futures-timer",
@@ -8928,7 +8928,7 @@ dependencies = [
 [[package]]
 name = "polkadot-network-bridge"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "always-assert",
  "async-trait",
@@ -8952,7 +8952,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-collation-generation"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "parity-scale-codec",
@@ -8970,7 +8970,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-approval-voting"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -8999,7 +8999,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-av-store"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "futures 0.3.28",
@@ -9019,7 +9019,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-backing"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "fatality",
@@ -9038,7 +9038,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-bitfield-signing"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-subsystem",
@@ -9053,7 +9053,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-candidate-validation"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -9072,7 +9072,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-chain-api"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-metrics",
@@ -9087,7 +9087,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-chain-selection"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "futures-timer",
@@ -9104,7 +9104,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-dispute-coordinator"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "fatality",
  "futures 0.3.28",
@@ -9123,7 +9123,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-parachains-inherent"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -9140,7 +9140,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-provisioner"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "fatality",
@@ -9158,7 +9158,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-pvf"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "always-assert",
  "assert_matches",
@@ -9190,7 +9190,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-pvf-checker"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "polkadot-node-primitives",
@@ -9206,7 +9206,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-runtime-api"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "futures 0.3.28",
  "lru 0.9.0",
@@ -9221,7 +9221,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-jaeger"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "lazy_static",
  "log",
@@ -9239,7 +9239,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-metrics"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bs58",
  "futures 0.3.28",
@@ -9258,7 +9258,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-network-protocol"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9281,7 +9281,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-primitives"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bounded-vec",
  "futures 0.3.28",
@@ -9303,7 +9303,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-subsystem"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "polkadot-node-jaeger",
  "polkadot-node-subsystem-types",
@@ -9313,7 +9313,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-subsystem-types"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9336,7 +9336,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-subsystem-util"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -9369,7 +9369,7 @@ dependencies = [
 [[package]]
 name = "polkadot-overseer"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "futures 0.3.28",
@@ -9392,7 +9392,7 @@ dependencies = [
 [[package]]
 name = "polkadot-parachain"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "derive_more",
  "frame-support",
@@ -9408,7 +9408,7 @@ dependencies = [
 [[package]]
 name = "polkadot-performance-test"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "env_logger 0.9.3",
  "kusama-runtime",
@@ -9423,7 +9423,7 @@ dependencies = [
 [[package]]
 name = "polkadot-primitives"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "hex-literal",
@@ -9449,7 +9449,7 @@ dependencies = [
 [[package]]
 name = "polkadot-rpc"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
@@ -9481,7 +9481,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -9570,7 +9570,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-common"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -9618,7 +9618,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -9632,7 +9632,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-metrics"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bs58",
  "parity-scale-codec",
@@ -9644,7 +9644,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-parachains"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitflags 1.3.2",
  "bitvec",
@@ -9687,7 +9687,7 @@ dependencies = [
 [[package]]
 name = "polkadot-service"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "async-trait",
  "beefy-gadget",
@@ -9795,7 +9795,7 @@ dependencies = [
 [[package]]
 name = "polkadot-statement-distribution"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "arrayvec 0.5.2",
  "fatality",
@@ -9816,7 +9816,7 @@ dependencies = [
 [[package]]
 name = "polkadot-statement-table"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "parity-scale-codec",
  "polkadot-primitives",
@@ -10206,7 +10206,7 @@ dependencies = [
  "thiserror",
  "tinyvec",
  "tracing",
- "webpki 0.22.1",
+ "webpki 0.22.2",
 ]
 
 [[package]]
@@ -10441,13 +10441,13 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.9.5"
+version = "1.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "697061221ea1b4a94a624f67d0ae2bfe4e22b8a17b6a192afb11046542cc8c47"
+checksum = "ebee201405406dbf528b8b672104ae6d6d63e6d118cb10e4d51abbc7b58044ff"
 dependencies = [
  "aho-corasick",
  "memchr",
- "regex-automata 0.3.8",
+ "regex-automata 0.3.9",
  "regex-syntax 0.7.5",
 ]
 
@@ -10462,9 +10462,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f401f4955220693b56f8ec66ee9c78abffd8d1c4f23dc41a23839eb88f0795"
+checksum = "59b23e92ee4318893fa3fe3e6fb365258efbfe6ac6ab30f090cdcbb7aa37efa9"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -10563,7 +10563,7 @@ dependencies = [
 [[package]]
 name = "rococo-runtime"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "beefy-merkle-tree",
  "frame-benchmarking",
@@ -10649,7 +10649,7 @@ dependencies = [
 [[package]]
 name = "rococo-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -10805,12 +10805,12 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.23"
+version = "0.37.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d69718bf81c6127a49dc64e44a742e8bb9213c0ff8869a22c308f84c1d4ab06"
+checksum = "4279d76516df406a8bd37e7dff53fd37d1a093f997a3c34a5c21658c126db06d"
 dependencies = [
  "bitflags 1.3.2",
- "errno 0.3.3",
+ "errno 0.3.4",
  "io-lifetimes 1.0.11",
  "libc",
  "linux-raw-sys 0.3.8",
@@ -10819,14 +10819,14 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.14"
+version = "0.38.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "747c788e9ce8e92b12cd485c49ddf90723550b654b32508f979b71a7b1ecda4f"
+checksum = "d2f9da0cbd88f9f09e7814e388301c8414c51c62aa6ce1e4b5c551d49d96e531"
 dependencies = [
  "bitflags 2.4.0",
- "errno 0.3.3",
+ "errno 0.3.4",
  "libc",
- "linux-raw-sys 0.4.7",
+ "linux-raw-sys 0.4.8",
  "windows-sys 0.48.0",
 ]
 
@@ -10852,7 +10852,7 @@ dependencies = [
  "log",
  "ring",
  "sct 0.7.0",
- "webpki 0.22.1",
+ "webpki 0.22.2",
 ]
 
 [[package]]
@@ -12442,7 +12442,7 @@ dependencies = [
 [[package]]
 name = "slot-range-helper"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -13664,7 +13664,7 @@ dependencies = [
  "cfg-if",
  "fastrand 2.0.1",
  "redox_syscall 0.3.5",
- "rustix 0.38.14",
+ "rustix 0.38.15",
  "windows-sys 0.48.0",
 ]
 
@@ -13890,7 +13890,7 @@ checksum = "c43ee83903113e03984cb9e5cebe6c04a5116269e900e3ddba8f068a62adda59"
 dependencies = [
  "rustls 0.20.9",
  "tokio",
- "webpki 0.22.1",
+ "webpki 0.22.2",
 ]
 
 [[package]]
@@ -13951,7 +13951,7 @@ version = "0.19.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
- "indexmap 2.0.1",
+ "indexmap 2.0.2",
  "toml_datetime",
  "winnow",
 ]
@@ -14044,7 +14044,7 @@ dependencies = [
 [[package]]
 name = "tracing-gum"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "polkadot-node-jaeger",
  "polkadot-primitives",
@@ -14055,7 +14055,7 @@ dependencies = [
 [[package]]
 name = "tracing-gum-proc-macro"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "expander 0.0.6",
  "proc-macro-crate 1.3.1",
@@ -14901,9 +14901,9 @@ dependencies = [
 
 [[package]]
 name = "webpki"
-version = "0.22.1"
+version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0e74f82d49d545ad128049b7e88f6576df2da6b02e9ce565c6f533be576957e"
+checksum = "07ecc0cd7cac091bf682ec5efa18b1cff79d617b84181f38b3951dbe135f607f"
 dependencies = [
  "ring",
  "untrusted",
@@ -14915,7 +14915,7 @@ version = "0.22.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c71e40d7d2c34a5106301fb632274ca37242cd0c9d3e64dbece371a40a2d87"
 dependencies = [
- "webpki 0.22.1",
+ "webpki 0.22.2",
 ]
 
 [[package]]
@@ -15135,7 +15135,7 @@ dependencies = [
 [[package]]
 name = "westend-runtime"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -15226,7 +15226,7 @@ dependencies = [
 [[package]]
 name = "westend-runtime-constants"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -15246,7 +15246,7 @@ dependencies = [
  "either",
  "home",
  "once_cell",
- "rustix 0.38.14",
+ "rustix 0.38.15",
 ]
 
 [[package]]
@@ -15619,7 +15619,7 @@ dependencies = [
 [[package]]
 name = "xcm"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples",
@@ -15635,7 +15635,7 @@ dependencies = [
 [[package]]
 name = "xcm-builder"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -15656,7 +15656,7 @@ dependencies = [
 [[package]]
 name = "xcm-executor"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "environmental",
  "frame-benchmarking",
@@ -15676,7 +15676,7 @@ dependencies = [
 [[package]]
 name = "xcm-procedural"
 version = "0.9.38"
-source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#356bf054e2e7312268712be98792d2cec22bf623"
+source = "git+https://github.com/peaqnetwork/polkadot?branch=peaq-polkadot-v0.9.38#8e4e8996008002932b948726a20385d5d0aeb151"
 dependencies = [
  "Inflector",
  "proc-macro2",
