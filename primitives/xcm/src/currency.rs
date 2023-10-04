@@ -201,7 +201,7 @@ create_token_symbol! {
 
 		ACA("Acala", 12) = 128,
 		BNC("Bifrost Native Token", 12) = 129,
-		MBA("Moonbase Alpha Testnet Token", 18) = 130, // cannot name it DEV...
+		MBA("Moonbase Alpha Token", 18) = 130, // cannot name it DEV...
 	}
 }
 
