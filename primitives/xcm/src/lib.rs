@@ -29,13 +29,13 @@ use sp_runtime::{
 use sp_std::prelude::*;
 
 pub mod currency;
+pub mod currency_asset_id;
 pub mod evm;
 #[cfg(test)]
 mod tests;
 pub mod xcm_asset_id;
-pub mod currency_asset_id;
 
-pub use crate::{evm::EvmAddress, xcm_asset_id::*, currency_asset_id::*};
+pub use crate::{currency_asset_id::*, evm::EvmAddress, xcm_asset_id::*};
 pub use currency::*;
 
 /// An index to a block.

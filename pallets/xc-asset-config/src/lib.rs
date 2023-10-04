@@ -314,10 +314,7 @@ pub mod pallet {
 		/// Removes all information related to asset, removing it from XCM support.
 		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::remove_asset())]
-		pub fn remove_asset(
-			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-		) -> DispatchResult {
+		pub fn remove_asset(origin: OriginFor<T>, asset_id: T::AssetId) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
 			let asset_location =

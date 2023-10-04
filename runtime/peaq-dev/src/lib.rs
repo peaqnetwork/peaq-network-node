@@ -94,7 +94,8 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Amount, Balance, CurrencyId, PeaqAssetId, NewPeaqZenlinkLpGenerate, TokenSymbol, NewZenlinkAssetId,
+	Amount, Balance, CurrencyId, NewPeaqZenlinkLpGenerate, NewZenlinkAssetId, PeaqAssetId,
+	TokenSymbol,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
