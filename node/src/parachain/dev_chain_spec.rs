@@ -182,7 +182,7 @@ fn configure_genesis(
 		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
-		tokens: Default::default(),
+		// tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
 		peaq_mor: PeaqMorConfig {

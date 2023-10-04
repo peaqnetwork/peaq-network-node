@@ -10710,6 +10710,7 @@ dependencies = [
  "log",
  "orml-tokens",
  "orml-traits",
+ "pallet-assets",
  "pallet-block-reward",
  "pallet-transaction-payment",
  "parity-scale-codec",

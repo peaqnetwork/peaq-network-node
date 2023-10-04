@@ -79,7 +79,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin};
 	use frame_system::pallet_prelude::*;
-	use parity_scale_codec::HasCompact;
+	// use parity_scale_codec::HasCompact;
 	use sp_std::boxed::Box;
 	use xcm::{v3::MultiLocation, VersionedMultiLocation};
 

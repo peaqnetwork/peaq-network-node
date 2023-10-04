@@ -11,7 +11,7 @@ pub use fp_evm::GenesisAccount;
 
 use smallvec::smallvec;
 
-use codec::{Compact, Encode};
+use codec::Encode;
 
 use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
@@ -84,6 +84,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
+use peaq_primitives_xcm::NewCurrencyId;
 mod precompiles;
 pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
@@ -94,7 +95,9 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Amount, Balance, CurrencyId, NewPeaqZenlinkLpGenerate, NewZenlinkAssetId, PeaqAssetId,
+	Amount, Balance,
+	// CurrencyId,
+	NewPeaqZenlinkLpGenerate, NewZenlinkAssetId, PeaqAssetId,
 	TokenSymbol,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -129,8 +132,16 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 
 // [TODO] Change the PeaqCurrencyAdapter
 use runtime_common::{
-	CurrencyHooks, NewLocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
-	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	CurrencyHooks,
+	PeaqNewLocalAssetAdaptor,
+	OperationalFeeMultiplier,
+	LocalAssetAdaptor,
+	// PeaqCurrencyAdapter,
+	// PeaqCurrencyPaymentConvert,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	NewPeaqCurrencyPaymentConvert, NewPeaqCurrencyAdapter,
+	PeaqMultiCurrenciesWrapper,
+	PeaqBasicCurrencyAdapter,
 };
 
 /// An index to a block.
@@ -439,27 +450,49 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
-	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
-		CurrencyId::Token(TokenSymbol::DOT),
-		CurrencyId::Token(TokenSymbol::BNC),
+	/*
+	 * pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
+	 *     CurrencyId::Token(TokenSymbol::DOT),
+	 *     CurrencyId::Token(TokenSymbol::BNC),
+	 * ];
+	 */
+
+	// [TODO] Should use the other ways... Maybe use the asset list?
+	pub NewPcpcLocalAccepted: Vec<NewCurrencyId> = vec![
+		NewCurrencyId::Token(1),
+		NewCurrencyId::Token(3),
 	];
 }
 
-pub struct PeaqCPC;
+/*
+ * pub struct PeaqCPC;
+ *
+ * impl PeaqCurrencyPaymentConvert for PeaqCPC {
+ *     type AccountId = AccountId;
+ *     type Currency = Balances;
+ *     type MultiCurrency = Currencies;
+ *     type DexOperator = ZenlinkProtocol;
+ *     type ExistentialDeposit = ExistentialDeposit;
+ *     type NativeCurrencyId = GetNativeCurrencyId;
+ *     type LocalAcceptedIds = PcpcLocalAccepted;
+ * }
+ *
+ */
+pub struct NewPeaqCPC;
 
-impl PeaqCurrencyPaymentConvert for PeaqCPC {
+impl NewPeaqCurrencyPaymentConvert for NewPeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
-	type MultiCurrency = Currencies;
+	type MultiCurrency = MultiCurrencyAsset;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
-	type NativeCurrencyId = GetNativeCurrencyId;
-	type LocalAcceptedIds = PcpcLocalAccepted;
+	type NativeCurrencyId = GetNativeNewCurrencyId;
+	type LocalAcceptedIds = NewPcpcLocalAccepted;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward, PeaqCPC>;
+	type OnChargeTransaction = NewPeaqCurrencyAdapter<Balances, BlockReward, NewPeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -847,16 +880,19 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::PEAQ);
+	// pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::PEAQ);
+	pub const GetNativeNewCurrencyId: NewCurrencyId = NewCurrencyId::Token(0);
 }
 
-impl orml_currencies::Config for Runtime {
-	type MultiCurrency = Tokens;
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
-	type WeightInfo = ();
-}
-
+/*
+ * impl orml_currencies::Config for Runtime {
+ *     type MultiCurrency = MultiCurrencyAsset;
+ *     type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+ *     type GetNativeCurrencyId = GetNativeNewCurrencyId;
+ *     type WeightInfo = ();
+ * }
+ *
+ */
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
 		PotStakeId::get().into_account_truncating(),
@@ -872,34 +908,40 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		ExistentialDeposit::get()
-	};
-}
+/*
+ * parameter_type_with_key! {
+ *     pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+ *         ExistentialDeposit::get()
+ *     };
+ * }
+ */
 
 parameter_types! {
 	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
 	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
-}
+/*
+ * impl orml_tokens::Config for Runtime {
+ *     type RuntimeEvent = RuntimeEvent;
+ *     type Balance = Balance;
+ *     type Amount = Amount;
+ *     type CurrencyId = CurrencyId;
+ *     type WeightInfo = ();
+ *     type ExistentialDeposits = ExistentialDeposits;
+ *     type MaxLocks = MaxLocks;
+ *     type DustRemovalWhitelist = DustRemovalWhitelist;
+ *     type MaxReserves = ();
+ *     type ReserveIdentifier = [u8; 8];
+ *     type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
+ * }
+ */
 
-impl orml_unknown_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
+/*
+ * impl orml_unknown_tokens::Config for Runtime {
+ *     type RuntimeEvent = RuntimeEvent;
+ * }
+ */
 
 pub type MoreThanHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
@@ -936,8 +978,11 @@ parameter_types! {
 	];
 }
 
+type NativeCurrency = PeaqBasicCurrencyAdapter<Balances>;
+type MultiCurrencyAsset = PeaqMultiCurrenciesWrapper<Runtime, Assets, NativeCurrency, GetNativeNewCurrencyId>;
+
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, NewLocalAssetAdaptor<Assets>>;
+pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, PeaqNewLocalAssetAdaptor<MultiCurrencyAsset>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -990,10 +1035,10 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-		Currencies: orml_currencies::{Pallet, Call} = 34,
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
+		// Currencies: orml_currencies::{Pallet, Call} = 34,
+		// Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
+		// UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
 		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,

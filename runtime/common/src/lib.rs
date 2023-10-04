@@ -32,7 +32,8 @@ use peaq_primitives_xcm::{
 };
 
 pub mod asset;
-pub use asset::NewLocalAssetAdaptor;
+pub use asset::{PeaqNewLocalAssetAdaptor, NewPeaqCurrencyAdapter, NewPeaqCurrencyPaymentConvert, PeaqMultiCurrenciesWrapper};
+pub use asset::{PeaqBasicCurrencyAdapter};
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;
@@ -478,6 +479,7 @@ pub trait PeaqCurrencyPaymentConvert {
 
 			// Iterate through all accepted local currencies and check availability.
 			for &local_id in local_ids.iter() {
+
 				let local_zen_id = ZenlinkAssetId::try_from(local_id)
 					.map_err(|_| map_err_currency2zasset(local_id))?;
 				let zen_path = vec![local_zen_id, native_zen_id];
@@ -527,6 +529,9 @@ macro_rules! log_icon {
 		"💸"
 	};
 	(PeaqCurrencyAdapter $e:expr) => {
+		"💵"
+	};
+	(NewPeaqCurrencyAdapter $e:expr) => {
 		"💵"
 	};
 	(PeaqCurrencyPaymentConvert $e:expr) => {
