@@ -129,7 +129,7 @@ pub mod pallet {
 
 		/// The Asset Id. This will be used to create the asset and to associate it with
 		/// a AssetLocation
-		type AssetId: Member + Parameter + Default + Copy + HasCompact + MaxEncodedLen;
+		type AssetId: Member + Parameter + Default + Copy + MaxEncodedLen;
 
 		/// The required origin for managing cross-chain asset configuration
 		///
@@ -204,7 +204,7 @@ pub mod pallet {
 		pub fn register_asset_location(
 			origin: OriginFor<T>,
 			asset_location: Box<VersionedMultiLocation>,
-			#[pallet::compact] asset_id: T::AssetId,
+			asset_id: T::AssetId,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -258,7 +258,7 @@ pub mod pallet {
 		pub fn change_existing_asset_location(
 			origin: OriginFor<T>,
 			new_asset_location: Box<VersionedMultiLocation>,
-			#[pallet::compact] asset_id: T::AssetId,
+			asset_id: T::AssetId,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -316,7 +316,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::remove_asset())]
 		pub fn remove_asset(
 			origin: OriginFor<T>,
-			#[pallet::compact] asset_id: T::AssetId,
+			asset_id: T::AssetId,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 

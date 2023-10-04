@@ -15,7 +15,7 @@ pub struct PeaqAssetIdConvert<AssetId, AssetMapper>(PhantomData<(AssetId, AssetM
 impl<AssetId, AssetMapper> xcm_executor::traits::Convert<MultiLocation, AssetId>
 	for PeaqAssetIdConvert<AssetId, AssetMapper>
 where
-	AssetId: Clone + Eq + Bounded,
+	AssetId: Clone + Eq,
 	AssetMapper: XcAssetLocation<AssetId>,
 {
 	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
@@ -100,7 +100,7 @@ where
 impl<AssetId, AssetMapper> Convert<AssetId, Option<MultiLocation>>
 	for PeaqAssetIdConvert<AssetId, AssetMapper>
 where
-	AssetId: Clone + Eq + Bounded,
+	AssetId: Clone + Eq,
 	AssetMapper: XcAssetLocation<AssetId>,
 {
 	fn convert(id: AssetId) -> Option<MultiLocation> {

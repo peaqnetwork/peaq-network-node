@@ -1,4 +1,4 @@
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, MaxEncodedLen, Compact};
 use sp_std::marker::PhantomData;
 use zenlink_protocol::GenerateLpAssetId;
 pub type NewZenlinkAssetId = zenlink_protocol::AssetId;
@@ -7,6 +7,8 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::RuntimeDebug;
+// use frame_support::traits::tokens::AssetId as AssetIdT;
+
 
 /// Id used for identifying assets.
 ///
@@ -15,7 +17,7 @@ use sp_runtime::RuntimeDebug;
 /// [2^32; 2^64-1]  Statemine assets (simple map)
 /// [2^64; 2^128-1] Ecosystem assets
 /// 2^128-1         Relay chain token (KSM)
-pub type PeaqAssetId = u128;
+pub type PeaqAssetId = NewCurrencyId;
 
 #[derive(
 	Encode,
@@ -77,25 +79,25 @@ where AssetId: Clone + From<u64>
 	}
 }
 
-
-
-impl PeaqInternalWrapId {
-	pub fn is_native_token(&self) -> bool {
-		self.0 == 0
-	}
-
-	pub fn as_zenlink_asset_type(&self) -> u8 {
-		if self.is_native_token() {
-			zenlink_protocol::NATIVE
-		} else {
-			zenlink_protocol::LOCAL
-		}
-	}
-
-	pub fn as_zenlink_asset_index(&self) -> u64 {
-		self.0 as u64
-	}
-}
+/*
+ * impl PeaqInternalWrapId {
+ *     pub fn is_native_token(&self) -> bool {
+ *         self.0 == 0
+ *     }
+ *
+ *     pub fn as_zenlink_asset_type(&self) -> u8 {
+ *         if self.is_native_token() {
+ *             zenlink_protocol::NATIVE
+ *         } else {
+ *             zenlink_protocol::LOCAL
+ *         }
+ *     }
+ *
+ *     pub fn as_zenlink_asset_index(&self) -> u64 {
+ *         self.0 as u64
+ *     }
+ * }
+ */
 /*
  * impl PeaqAssetId {
  *     pub fn is_native_token(&self) -> bool {
@@ -116,73 +118,182 @@ impl PeaqInternalWrapId {
  * }
  */
 
-impl From<PeaqInternalWrapId> for NewZenlinkAssetId {
-	fn from(ts: PeaqInternalWrapId) -> NewZenlinkAssetId {
-		NewZenlinkAssetId {
-			chain_id: PARA_CHAIN_ID,
-			asset_type: ts.as_zenlink_asset_type(),
-			asset_index: ts.as_zenlink_asset_index(),
-		}
-	}
+/*
+ * impl From<PeaqInternalWrapId> for NewZenlinkAssetId {
+ *     fn from(ts: PeaqInternalWrapId) -> NewZenlinkAssetId {
+ *         NewZenlinkAssetId {
+ *             chain_id: PARA_CHAIN_ID,
+ *             asset_type: ts.as_zenlink_asset_type(),
+ *             asset_index: ts.as_zenlink_asset_index(),
+ *         }
+ *     }
+ * }
+ *
+ * impl From<PeaqAssetId> for PeaqInternalWrapId {
+ *     fn from(asset_id: PeaqAssetId) -> PeaqInternalWrapId {
+ *         PeaqInternalWrapId(asset_id)
+ *     }
+ * }
+ *
+ * impl TryInto<PeaqAssetId> for PeaqInternalWrapId {
+ *     type Error = ();
+ *     fn try_into(self) -> Result<PeaqAssetId, Self::Error> {
+ *         if self.is_native_token() {
+ *             Err(())
+ *         } else {
+ *             Ok(self.0)
+ *         }
+ *     }
+ * }
+ *
+ * pub fn try_convert(asset_id: NewZenlinkAssetId) -> Result<PeaqAssetId, ()> {
+ *     PeaqInternalWrapId::try_from(asset_id)?.try_into()
+ * }
+ *
+ * impl TryFrom<NewZenlinkAssetId> for PeaqInternalWrapId {
+ *     type Error = ();
+ *     // Convert from Zenlink AssetId to Peaq AssetId
+ *     fn try_from(asset_id: NewZenlinkAssetId) -> Result<Self, Self::Error> {
+ *         if asset_id.chain_id == PARA_CHAIN_ID	{
+ *             Ok((asset_id.asset_index as u128).into())
+ *         } else {
+ *             Err(())
+ *         }
+ *     }
+ * }
+ */
+
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	Copy,
+	Clone,
+	RuntimeDebug,
+	PartialOrd,
+	Ord,
+	TypeInfo,
+	MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub enum NewCurrencyId {
+	/// All Polkadot based tokens (SS58-address-style), Relaychain- and Parachain-Tokens.
+	Token(u64),
+	/// Liquidity Pairs (Pairs of Tokens) within the PEAQ-Parachain.
+	LPToken(u64, u64),
 }
 
-impl From<PeaqAssetId> for PeaqInternalWrapId {
-	fn from(asset_id: PeaqAssetId) -> PeaqInternalWrapId {
-		PeaqInternalWrapId(asset_id)
-	}
-}
+/*
+ * impl AssetIdT for NewCurrencyId {
+ * }
+ */
 
-impl TryInto<PeaqAssetId> for PeaqInternalWrapId {
-	type Error = ();
-	fn try_into(self) -> Result<PeaqAssetId, Self::Error> {
-		if self.is_native_token() {
-			Err(())
+impl NewCurrencyId {
+	pub fn is_token(&self) -> bool {
+		matches!(self, NewCurrencyId::Token(_))
+	}
+
+	pub fn is_lp_token(&self) -> bool {
+		matches!(self, NewCurrencyId::LPToken(_, _))
+	}
+
+	pub fn is_native_token(&self) -> bool {
+		if let NewCurrencyId::Token(symbol) = self {
+			*symbol == 0 as u64
 		} else {
-			Ok(self.0)
+			false
+		}
+	}
+
+	// Internal method which simplifies conversions between Zenlink's asset_index
+	fn type_index(&self) -> u64 {
+		match self {
+			NewCurrencyId::Token(_) => 0,
+			NewCurrencyId::LPToken(_, _) => 1,
 		}
 	}
 }
 
-pub fn try_convert(asset_id: NewZenlinkAssetId) -> Result<PeaqAssetId, ()> {
-	PeaqInternalWrapId::try_from(asset_id)?.try_into()
+impl TryFrom<NewCurrencyId> for NewZenlinkAssetId {
+	type Error = ();
+
+	fn try_from(currency_id: NewCurrencyId) -> Result<Self, Self::Error> {
+		match currency_id {
+			NewCurrencyId::Token(symbol) => {
+				let asset_type = if symbol == 0 {
+					zenlink_protocol::NATIVE
+				} else {
+					zenlink_protocol::LOCAL
+				};
+				Ok(NewZenlinkAssetId {
+					chain_id: PARA_CHAIN_ID,
+					asset_type: asset_type,
+					asset_index: symbol as u64,
+				})
+			},
+			NewCurrencyId::LPToken(symbol0, symbol1) => Ok(NewZenlinkAssetId {
+				chain_id: PARA_CHAIN_ID,
+				asset_type: zenlink_protocol::LOCAL,
+				asset_index: (currency_id.type_index() << 8) +
+					((symbol0 as u64) << 16) +
+					((symbol1 as u64) << 24),
+			}),
+			_ => Err(()),
+		}
+	}
 }
 
-impl TryFrom<NewZenlinkAssetId> for PeaqInternalWrapId {
+impl TryFrom<NewZenlinkAssetId> for NewCurrencyId {
 	type Error = ();
-	// Convert from Zenlink AssetId to Peaq AssetId
+
 	fn try_from(asset_id: NewZenlinkAssetId) -> Result<Self, Self::Error> {
-		if asset_id.chain_id == PARA_CHAIN_ID	{
-			Ok((asset_id.asset_index as u128).into())
+		if asset_id.chain_id == PARA_CHAIN_ID {
+			let type_index = (asset_id.asset_index & 0x0000_0000_0000_ff00) >> 8 as u8;
+			match type_index {
+				0 => {
+					let symbol = (asset_id.asset_index & 0x0000_0000_0000_00ff) as u64;
+					Ok(NewCurrencyId::Token(symbol))
+				},
+				1 => {
+					let symbol0 = ((asset_id.asset_index & 0x0000_0000_00ff_0000) >> 16) as u64;
+					let symbol1 = ((asset_id.asset_index & 0x0000_0000_ff00_0000) >> 24) as u64;
+					Ok(NewCurrencyId::LPToken(symbol0, symbol1))
+				},
+				_ => Err(()),
+			}
 		} else {
 			Err(())
 		}
+	}
+}
+
+
+impl Default for NewCurrencyId {
+	fn default() -> Self {
+		NewCurrencyId::Token(0 as u64)
 	}
 }
 
 /// TODO: The local asset id should from 0 ~ 0x_ffff_ffff
 /// This is the Peaq's default GenerateLpAssetId implementation.
-pub struct NewPeaqZenlinkLpGenerate<AssetId>(PhantomData<AssetId>);
+pub struct NewPeaqZenlinkLpGenerate<T>(PhantomData<T>);
 
-impl<AssetId> GenerateLpAssetId<NewZenlinkAssetId> for NewPeaqZenlinkLpGenerate<AssetId>
-where
-	AssetId: Clone + From<u64>,
-	u64: From<AssetId>,
+impl<T> GenerateLpAssetId<NewZenlinkAssetId> for NewPeaqZenlinkLpGenerate<T>
 {
 	fn generate_lp_asset_id(
 		asset0: NewZenlinkAssetId,
 		asset1: NewZenlinkAssetId,
 	) -> Option<NewZenlinkAssetId> {
-		let asset_id0 = PeaqAssetIdZenlinkAssetIdConvertor::<AssetId>::convert(asset0);
-		let asset_id1 = PeaqAssetIdZenlinkAssetIdConvertor::<AssetId>::convert(asset1);
-		if asset_id0.is_none() || asset_id1.is_none() {
-			return None;
+		let asset_id0: PeaqAssetId = asset0.try_into().ok()?;
+		let asset_id1: PeaqAssetId = asset1.try_into().ok()?;
+
+		match (asset_id0, asset_id1) {
+			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
+				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
+			},
+			(_, _) => None,
 		}
-		let asset_id0 = asset_id0.unwrap();
-		let asset_id1 = asset_id1.unwrap();
-		let asset_id: AssetId =
-			((<AssetId as TryInto<u64>>::try_into(asset_id0).unwrap() & 0x0000_0000_ffff_ffff |
-			 <AssetId as TryInto<u64>>::try_into(asset_id1).unwrap()  & 0x0000_0000_ffff_ffff) <<
-			 32).into();
-		Some(PeaqAssetIdZenlinkAssetIdConvertor::<AssetId>::convert(asset_id))
 	}
 }

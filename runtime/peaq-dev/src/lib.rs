@@ -1869,7 +1869,7 @@ impl pallet_assets::Config for Runtime {
 	// type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
-	type AssetIdParameter = Compact<PeaqAssetId>;
+	type AssetIdParameter = PeaqAssetId;
 	// [TODO] Comment out
 	type CallbackHandle = ();
 	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
