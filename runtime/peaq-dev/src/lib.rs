@@ -94,7 +94,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Amount, Balance, CurrencyId, PeaqAssetId, PeaqZenlinkLpGenerate, TokenSymbol, ZenlinkAssetId,
+	Amount, Balance, CurrencyId, PeaqAssetId, NewPeaqZenlinkLpGenerate, TokenSymbol, NewZenlinkAssetId,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
@@ -128,7 +128,7 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 
 // [TODO] Change the PeaqCurrencyAdapter
 use runtime_common::{
-	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
+	CurrencyHooks, NewLocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
 	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
@@ -936,14 +936,14 @@ parameter_types! {
 }
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
+pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, NewLocalAssetAdaptor<Assets>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
-	type AssetId = ZenlinkAssetId;
-	type LpGenerate = PeaqZenlinkLpGenerate<Self>;
+	type AssetId = NewZenlinkAssetId;
+	type LpGenerate = NewPeaqZenlinkLpGenerate<Self>;
 	type TargetChains = ZenlinkRegistedParaChains;
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
@@ -1669,29 +1669,29 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
-		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
+	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, NewZenlinkAssetId> for Runtime {
+		fn get_balance(asset_id: NewZenlinkAssetId, owner: AccountId) -> AssetBalance {
 			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
 		}
 
 		fn get_pair_by_asset_id(
-			asset_0: ZenlinkAssetId,
-			asset_1: ZenlinkAssetId
-		) -> Option<PairInfo<AccountId, AssetBalance, ZenlinkAssetId>> {
+			asset_0: NewZenlinkAssetId,
+			asset_1: NewZenlinkAssetId
+		) -> Option<PairInfo<AccountId, AssetBalance, NewZenlinkAssetId>> {
 			ZenlinkProtocol::get_pair_by_asset_id(asset_0, asset_1)
 		}
 
-		fn get_amount_in_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+		fn get_amount_in_price(supply: AssetBalance, path: Vec<NewZenlinkAssetId>) -> AssetBalance {
 			ZenlinkProtocol::desired_in_amount(supply, path)
 		}
 
-		fn get_amount_out_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
+		fn get_amount_out_price(supply: AssetBalance, path: Vec<NewZenlinkAssetId>) -> AssetBalance {
 			ZenlinkProtocol::supply_out_amount(supply, path)
 		}
 
 		fn get_estimate_lptoken(
-			asset_0: ZenlinkAssetId,
-			asset_1: ZenlinkAssetId,
+			asset_0: NewZenlinkAssetId,
+			asset_1: NewZenlinkAssetId,
 			amount_0_desired: AssetBalance,
 			amount_1_desired: AssetBalance,
 			amount_0_min: AssetBalance,
@@ -1702,8 +1702,8 @@ impl_runtime_apis! {
 		}
 
 		fn calculate_remove_liquidity(
-			asset_0: ZenlinkAssetId,
-			asset_1: ZenlinkAssetId,
+			asset_0: NewZenlinkAssetId,
+			asset_1: NewZenlinkAssetId,
 			amount: AssetBalance,
 		) -> Option<(AssetBalance, AssetBalance)> {
 			ZenlinkProtocol::calculate_remove_liquidity(asset_0, asset_1, amount)

@@ -33,8 +33,9 @@ pub mod evm;
 #[cfg(test)]
 mod tests;
 pub mod xcm_asset_id;
+pub mod currency_asset_id;
 
-pub use crate::{evm::EvmAddress, xcm_asset_id::*};
+pub use crate::{evm::EvmAddress, xcm_asset_id::*, currency_asset_id::*};
 pub use currency::*;
 
 /// An index to a block.
@@ -90,21 +91,13 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type.
 pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 
-/// Id used for identifying assets.
-///
-/// AssetId allocation:
-/// [1; 2^32-1]     Custom user assets (permissionless)
-/// [2^32; 2^64-1]  Statemine assets (simple map)
-/// [2^64; 2^128-1] Ecosystem assets
-/// 2^128-1         Relay chain token (KSM)
-pub type PeaqAssetId = u128;
-
 /// Block ID.
 /// pub type BlockId = generic::BlockId<NativeBlock>;
 
 /// Opaque, encoded, unchecked extrinsic.
 
 /// TODO: More documentation
+// [TODO]... Do we need this????
 #[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct TradingPair(CurrencyId, CurrencyId);

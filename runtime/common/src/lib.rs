@@ -31,6 +31,9 @@ use peaq_primitives_xcm::{
 	currency::parachain, AccountId, Balance, CurrencyId, PeaqAssetId, TokenInfo, TokenSymbol,
 };
 
+pub mod asset;
+pub use asset::NewLocalAssetAdaptor;
+
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;
 pub const NANOCENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 9);
@@ -733,3 +736,4 @@ macro_rules! log {
 //         }
 //     }
 // }
+
