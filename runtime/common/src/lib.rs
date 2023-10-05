@@ -32,8 +32,7 @@ use peaq_primitives_xcm::{
 };
 
 pub mod asset;
-pub use asset::{PeaqNewLocalAssetAdaptor, NewPeaqCurrencyAdapter, NewPeaqCurrencyPaymentConvert, PeaqMultiCurrenciesWrapper};
-pub use asset::{PeaqBasicCurrencyAdapter};
+pub use asset::*;
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;

@@ -97,7 +97,7 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use peaq_primitives_xcm::{
 	Amount, Balance,
 	// CurrencyId,
-	NewPeaqZenlinkLpGenerate, NewZenlinkAssetId, PeaqAssetId,
+	NewZenlinkAssetId, PeaqAssetId,
 	TokenSymbol,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -142,6 +142,7 @@ use runtime_common::{
 	NewPeaqCurrencyPaymentConvert, NewPeaqCurrencyAdapter,
 	PeaqMultiCurrenciesWrapper,
 	PeaqBasicCurrencyAdapter,
+	NewPeaqZenlinkLpGenerate,
 };
 
 /// An index to a block.
@@ -989,7 +990,7 @@ impl zenlink_protocol::Config for Runtime {
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = NewZenlinkAssetId;
-	type LpGenerate = NewPeaqZenlinkLpGenerate<Self>;
+	type LpGenerate = NewPeaqZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqPotAccount>;
 	type TargetChains = ZenlinkRegistedParaChains;
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();

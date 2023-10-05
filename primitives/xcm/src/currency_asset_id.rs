@@ -141,22 +141,24 @@ impl Default for NewCurrencyId {
 	}
 }
 
-/// TODO: The local asset id should from 0 ~ 0x_ffff_ffff
-/// This is the Peaq's default GenerateLpAssetId implementation.
-pub struct NewPeaqZenlinkLpGenerate<T>(PhantomData<T>);
-
-impl<T> GenerateLpAssetId<NewZenlinkAssetId> for NewPeaqZenlinkLpGenerate<T> {
-	fn generate_lp_asset_id(
-		asset0: NewZenlinkAssetId,
-		asset1: NewZenlinkAssetId,
-	) -> Option<NewZenlinkAssetId> {
-		let asset_id0: PeaqAssetId = asset0.try_into().ok()?;
-		let asset_id1: PeaqAssetId = asset1.try_into().ok()?;
-
-		match (asset_id0, asset_id1) {
-			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) =>
-				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok(),
-			(_, _) => None,
-		}
-	}
-}
+/*
+ * /// TODO: The local asset id should from 0 ~ 0x_ffff_ffff
+ * /// This is the Peaq's default GenerateLpAssetId implementation.
+ * pub struct NewPeaqZenlinkLpGenerate<T>(PhantomData<T>);
+ *
+ * impl<T> GenerateLpAssetId<NewZenlinkAssetId> for NewPeaqZenlinkLpGenerate<T> {
+ *     fn generate_lp_asset_id(
+ *         asset0: NewZenlinkAssetId,
+ *         asset1: NewZenlinkAssetId,
+ *     ) -> Option<NewZenlinkAssetId> {
+ *         let asset_id0: PeaqAssetId = asset0.try_into().ok()?;
+ *         let asset_id1: PeaqAssetId = asset1.try_into().ok()?;
+ *
+ *         match (asset_id0, asset_id1) {
+ *             (NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) =>
+ *                 NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok(),
+ *             (_, _) => None,
+ *         }
+ *     }
+ * }
+ */
