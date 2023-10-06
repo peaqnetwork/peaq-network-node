@@ -685,14 +685,29 @@ where
 		match (asset_id0, asset_id1) {
 			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
 				let lp_currency = NewCurrencyId::LPToken(symbol0, symbol1);
-				if !Local::asset_exists(lp_currency) {
-					// [TODO] That's so weird if somebody send the rpc and create the lp token...
-					// [TODO] Set metadata
-					Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()?;
-				}
 				lp_currency.try_into().ok()
+				/*
+				 * if !Local::asset_exists(lp_currency) {
+				 *     // [TODO] That's so weird if somebody send the rpc and create the lp token...
+				 *     // [TODO] Set metadata
+				 *     Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()?;
+				 * }
+				 */
 			},
 			(_, _) => None,
+		}
+	}
+
+	fn create_lp_asset(
+		asset0: &NewZenlinkAssetId,
+		asset1: &NewZenlinkAssetId,
+	) -> Option<()> {
+		match Self::generate_lp_asset_id(*asset0, *asset1) {
+			Some(lp_asset_id) => {
+				let lp_currency = lp_asset_id.try_into().ok()?;
+				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()
+			},
+			None => None
 		}
 	}
 }

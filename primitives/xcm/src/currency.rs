@@ -393,6 +393,13 @@ impl<T> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<T> {
 		let symbol1 = TokenSymbol::try_from(asset1).ok()?;
 		ZenlinkAssetId::try_from(CurrencyId::LPToken(symbol0, symbol1)).ok()
 	}
+
+	fn create_lp_asset(
+		_asset0: &ZenlinkAssetId,
+		_asset1: &ZenlinkAssetId,
+	) -> Option<()> {
+		Some(())
+	}
 }
 
 // This is for hardcoding other parachains, we want to operate with.
