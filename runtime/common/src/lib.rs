@@ -89,6 +89,14 @@ where
 		AssetBalance::default()
 	}
 
+	fn local_minimum_balance(asset_id: ZenlinkAssetId) -> AssetBalance {
+		if let Ok(currency_id) = asset_id.try_into() {
+			return TryInto::<AssetBalance>::try_into(Local::minimum_balance(currency_id))
+				.unwrap_or_default()
+		}
+		AssetBalance::default()
+	}
+
 	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
 		let currency_id: Result<CurrencyId, ()> = asset_id.try_into();
 		currency_id.is_ok()

@@ -139,10 +139,12 @@ use runtime_common::{
 	// PeaqCurrencyAdapter,
 	// PeaqCurrencyPaymentConvert,
 	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
-	NewPeaqCurrencyPaymentConvert, NewPeaqCurrencyAdapter,
+	NewPeaqCurrencyPaymentConvert,
+	NewPeaqCurrencyAdapter,
 	PeaqMultiCurrenciesWrapper,
 	PeaqBasicCurrencyAdapter,
 	NewPeaqZenlinkLpGenerate,
+	// PeaqTestZenlinkMultiAssets,
 };
 
 /// An index to a block.
@@ -966,17 +968,6 @@ parameter_types! {
 	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
 
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
-
-	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
-		// Krest local and live, 0.01 BNC
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
-
-		// Zenlink local 1 for test
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
-		// Zenlink local 2 for test
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
-	];
 }
 
 type NativeCurrency = PeaqBasicCurrencyAdapter<Balances>;
@@ -991,7 +982,7 @@ impl zenlink_protocol::Config for Runtime {
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = NewZenlinkAssetId;
 	type LpGenerate = NewPeaqZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqPotAccount>;
-	type TargetChains = ZenlinkRegistedParaChains;
+	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
 }
