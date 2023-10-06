@@ -15,22 +15,6 @@ use sp_runtime::{RuntimeDebug};
 /// 2^128-1         Relay chain token (KSM)
 pub type PeaqAssetId = NewCurrencyId;
 
-#[derive(
-	Encode,
-	Decode,
-	Eq,
-	PartialEq,
-	Copy,
-	Clone,
-	RuntimeDebug,
-	PartialOrd,
-	Ord,
-	TypeInfo,
-	MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-struct PeaqInternalWrapId(pub PeaqAssetId);
 const PARA_CHAIN_ID: u32 = 2000;
 use sp_std::convert::{TryFrom};
 
