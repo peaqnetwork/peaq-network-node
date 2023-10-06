@@ -144,7 +144,6 @@ use runtime_common::{
 	PeaqMultiCurrenciesWrapper,
 	PeaqBasicCurrencyAdapter,
 	NewPeaqZenlinkLpGenerate,
-	// PeaqTestZenlinkMultiAssets,
 };
 
 /// An index to a block.

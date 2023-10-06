@@ -6,12 +6,8 @@ use frame_support::{
 };
 use zenlink_protocol::{
 	GenerateLpAssetId,
-	MultiAssetsHandler,
 	LocalAssetHandler,
-	OtherAssetHandler,
-	*,
 };
-use frame_support::traits::ExistenceRequirement::{AllowDeath, KeepAlive};
 use frame_support::ensure;
 use orml_traits::BasicCurrency;
 use frame_support::traits::tokens::WithdrawConsequence;
@@ -69,6 +65,7 @@ where
 	fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::minimum_balance();
+			// [TODO] Should remove logs
 			log::error!("NativeCurrency::minimum_balance: out: {:?}", out);
 			out
 		} else {
@@ -413,8 +410,6 @@ where
 
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
-		log::error!("WWW {:?}", currency_id);
-		// [TODO].. .That's weird
 		if !currency_id.is_native_token() {
 			log!(
 				info,
@@ -581,7 +576,6 @@ pub trait NewPeaqCurrencyPaymentConvert {
 					}
 				}
 			}
-			log::error!(" QQQQQQ");
 			Err(InvalidTransaction::Payment.into())
 		}
 	}
@@ -684,15 +678,7 @@ where
 
 		match (asset_id0, asset_id1) {
 			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
-				let lp_currency = NewCurrencyId::LPToken(symbol0, symbol1);
-				lp_currency.try_into().ok()
-				/*
-				 * if !Local::asset_exists(lp_currency) {
-				 *     // [TODO] That's so weird if somebody send the rpc and create the lp token...
-				 *     // [TODO] Set metadata
-				 *     Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()?;
-				 * }
-				 */
+				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
 			},
 			(_, _) => None,
 		}
@@ -702,159 +688,16 @@ where
 		asset0: &NewZenlinkAssetId,
 		asset1: &NewZenlinkAssetId,
 	) -> Option<()> {
-		match Self::generate_lp_asset_id(*asset0, *asset1) {
-			Some(lp_asset_id) => {
-				let lp_currency = lp_asset_id.try_into().ok()?;
-				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()
+		let asset_id0: PeaqAssetId = (*asset0).try_into().ok()?;
+		let asset_id1: PeaqAssetId = (*asset1).try_into().ok()?;
+
+		match (asset_id0, asset_id1) {
+			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
+				let lp_currency = NewCurrencyId::LPToken(symbol0, symbol1);
+				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()?;
+				Some(())
 			},
-			None => None
+			(_, _) => None,
 		}
 	}
 }
-
-
-/*
- * pub struct PeaqTestZenlinkMultiAssets<T, Native = (), Local = (), Other = ()>(
- *     PhantomData<(T, Native, Local, Other)>,
- * );
- *
- * impl<T: Config<AssetId = AssetId>, NativeCurrency, Local, Other>
- *     MultiAssetsHandler<T::AccountId, AssetId>
- *     for PeaqTestZenlinkMultiAssets<Pallet<T>, NativeCurrency, Local, Other>
- * where
- *     NativeCurrency: Currency<T::AccountId>,
- *     Local: LocalAssetHandler<T::AccountId>,
- *     Other: OtherAssetHandler<T::AccountId>,
- * {
- *     fn balance_of(asset_id: AssetId, who: &<T as frame_system::Config>::AccountId) -> AssetBalance {
- *         let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.is_native(self_chain_id) =>
- *                 NativeCurrency::free_balance(who).saturated_into::<AssetBalance>(),
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id =>
- *                 Local::local_balance_of(asset_id, who),
- *             RESERVED if asset_id.chain_id == self_chain_id =>
- *                 Other::other_balance_of(asset_id, who),
- *             _ => Default::default(),
- *         }
- *     }
- *
- *     fn total_supply(asset_id: AssetId) -> AssetBalance {
- *         let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.is_native(T::SelfParaId::get()) =>
- *                 NativeCurrency::total_issuance().saturated_into::<AssetBalance>(),
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id =>
- *                 Local::local_total_supply(asset_id),
- *             RESERVED if asset_id.chain_id == self_chain_id => Other::other_total_supply(asset_id),
- *             _ => Default::default(),
- *         }
- *     }
- *
- *     fn minimum_balance(asset_id: AssetId) -> AssetBalance {
- *    		let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.is_native(T::SelfParaId::get()) =>
- *                 NativeCurrency::minimum_balance().saturated_into::<AssetBalance>(),
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id =>
- *                 Local::local_minimum_balance(asset_id),
- *             RESERVED if asset_id.chain_id == self_chain_id => Other::other_minimum_balance(asset_id),
- *             _ if asset_id.is_foreign(self_chain_id) => Pallet::<T>::foreign_minimum_balance(asset_id),
- *             _ => Default::default(),
- *         }
- *     }
- *
- *     fn is_exists(asset_id: AssetId) -> bool {
- *         let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.chain_id == self_chain_id =>
- *                 asset_id.is_native(T::SelfParaId::get()),
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id =>
- *                 Local::local_is_exists(asset_id),
- *             RESERVED if asset_id.chain_id == self_chain_id => Other::other_is_exists(asset_id),
- *             _ => Default::default(),
- *         }
- *     }
- *
- *     fn transfer(
- *         asset_id: AssetId,
- *         origin: &<T as frame_system::Config>::AccountId,
- *         target: &<T as frame_system::Config>::AccountId,
- *         amount: AssetBalance,
- *     ) -> DispatchResult {
- *         let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.is_native(T::SelfParaId::get()) => {
- *                 let balance_amount = amount
- *                     .try_into()
- *                     .map_err(|_| DispatchError::Other("AmountToBalanceConversionFailed"))?;
- *
- *                 let out = NativeCurrency::transfer(origin, target, balance_amount, AllowDeath);
- *                 log::error!("ZZZenlink: transfer native asset: {:?} from {:?} to {:?} with amount: {:?} result: {:?}", asset_id, origin, target, amount, out);
- *                 return out;
- *             },
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id => {
- *                 let out = Local::local_transfer(asset_id, origin, target, amount);
- *                 log::error!("ZZZenlink: transfer local asset: {:?} from {:?} to {:?} with amount: {:?} result: {:?}", asset_id, origin, target, amount, out);
- *                 return out;
- *             },
- *             RESERVED if asset_id.chain_id == self_chain_id =>
- *                 Other::other_transfer(asset_id, origin, target, amount),
- *             _ => Err(Error::<T>::UnsupportedAssetType.into()),
- *         }
- *     }
- *
- *     fn deposit(
- *         asset_id: AssetId,
- *         target: &<T as frame_system::Config>::AccountId,
- *         amount: AssetBalance,
- *     ) -> Result<AssetBalance, DispatchError> {
- *         let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.is_native(T::SelfParaId::get()) => {
- *                 let balance_amount = amount
- *                     .try_into()
- *                     .map_err(|_| DispatchError::Other("AmountToBalanceConversionFailed"))?;
- *
- *                 let _ = NativeCurrency::deposit_creating(target, balance_amount);
- *
- *                 Ok(amount)
- *             },
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id =>
- *                 Local::local_deposit(asset_id, target, amount),
- *             RESERVED if asset_id.chain_id == self_chain_id =>
- *                 Other::other_deposit(asset_id, target, amount),
- *             _ => Err(Error::<T>::UnsupportedAssetType.into()),
- *         }
- *     }
- *
- *     fn withdraw(
- *         asset_id: AssetId,
- *         origin: &<T as frame_system::Config>::AccountId,
- *         amount: AssetBalance,
- *     ) -> Result<AssetBalance, DispatchError> {
- *         let self_chain_id: u32 = T::SelfParaId::get();
- *         match asset_id.asset_type {
- *             NATIVE if asset_id.is_native(self_chain_id) => {
- *                 let balance_amount = amount
- *                     .try_into()
- *                     .map_err(|_| DispatchError::Other("AmountToBalanceConversionFailed"))?;
- *
- *                 let _ = NativeCurrency::withdraw(
- *                     origin,
- *                     balance_amount,
- *                     WithdrawReasons::TRANSFER,
- *                     ExistenceRequirement::AllowDeath,
- *                 )?;
- *
- *                 Ok(amount)
- *             },
- *             LOCAL | LIQUIDITY if asset_id.chain_id == self_chain_id =>
- *                 Local::local_withdraw(asset_id, origin, amount),
- *             RESERVED if asset_id.chain_id == self_chain_id =>
- *                 Other::other_withdraw(asset_id, origin, amount),
- *             _ => Err(Error::<T>::UnsupportedAssetType.into()),
- *         }
- *     }
- * }
- */
