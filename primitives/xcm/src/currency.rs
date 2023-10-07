@@ -394,10 +394,7 @@ impl<T> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<T> {
 		ZenlinkAssetId::try_from(CurrencyId::LPToken(symbol0, symbol1)).ok()
 	}
 
-	fn create_lp_asset(
-		_asset0: &ZenlinkAssetId,
-		_asset1: &ZenlinkAssetId,
-	) -> Option<()> {
+	fn create_lp_asset(_asset0: &ZenlinkAssetId, _asset1: &ZenlinkAssetId) -> Option<()> {
 		Some(())
 	}
 }

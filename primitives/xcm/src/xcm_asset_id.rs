@@ -1,5 +1,5 @@
 use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
-use sp_runtime::traits::{Convert};
+use sp_runtime::traits::Convert;
 use sp_std::{borrow::Borrow, marker::PhantomData};
 use xc_asset_config::{ExecutionPaymentRate, XcAssetLocation};
 use xcm::latest::{

@@ -486,7 +486,6 @@ pub trait PeaqCurrencyPaymentConvert {
 
 			// Iterate through all accepted local currencies and check availability.
 			for &local_id in local_ids.iter() {
-
 				let local_zen_id = ZenlinkAssetId::try_from(local_id)
 					.map_err(|_| map_err_currency2zasset(local_id))?;
 				let zen_path = vec![local_zen_id, native_zen_id];

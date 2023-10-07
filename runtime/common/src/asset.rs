@@ -1,54 +1,40 @@
-use frame_support::Parameter;
+use crate::EoTFeeFactor;
 use frame_support::{
-	pallet_prelude::{DispatchError, DispatchResult},
-	traits::{fungibles},
-	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
-};
-use zenlink_protocol::{
-	GenerateLpAssetId,
-	LocalAssetHandler,
-};
-use frame_support::ensure;
-use orml_traits::BasicCurrency;
-use frame_support::traits::tokens::WithdrawConsequence;
-use frame_support::pallet_prelude::InvalidTransaction;
-use frame_support::pallet_prelude::TransactionValidityError;
-use frame_support::pallet_prelude::MaxEncodedLen;
-use frame_support::pallet_prelude::MaybeSerializeDeserialize;
-use sp_runtime::traits::CheckedSub;
-use orml_traits::MultiCurrency;
-use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
-use pallet_assets::{Config as AssetsConfig};
-use frame_system::Config as SysConfig;
-use sp_runtime::{
-	traits::{
-		DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
-		Saturating, Zero, Convert,
+	ensure,
+	pallet_prelude::{
+		DispatchError, DispatchResult, InvalidTransaction, MaxEncodedLen,
+		MaybeSerializeDeserialize, TransactionValidityError,
 	},
+	traits::{
+		fungibles, tokens::WithdrawConsequence, Currency, ExistenceRequirement, Get, Imbalance,
+		OnUnbalanced, WithdrawReasons,
+	},
+	Parameter,
+};
+use frame_system::Config as SysConfig;
+use orml_traits::{BasicCurrency, MultiCurrency};
+use pallet_assets::Config as AssetsConfig;
+use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
+use sp_runtime::traits::{
+	CheckedSub, Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf,
+	SaturatedConversion, Saturating, Zero,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
-use crate::EoTFeeFactor;
+use zenlink_protocol::{GenerateLpAssetId, LocalAssetHandler};
 
+use frame_support::traits::Currency as PalletCurrency;
 use peaq_primitives_xcm::{
-	NewZenlinkAssetId,
-	PeaqAssetId,
-	NewCurrencyIdToZenlinkId,
+	NewCurrencyId, NewCurrencyIdToZenlinkId, NewZenlinkAssetId, PeaqAssetId,
 };
-use peaq_primitives_xcm::NewCurrencyId;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
-use frame_support::{
-	traits::{
-		Currency as PalletCurrency
-	}
-};
 
+use crate::{log, log_icon, log_internal};
 
-use crate::{log, log_internal, log_icon};
-
-pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId>
-	(PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId)>);
+pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId>(
+	PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId)>,
+);
 
 impl<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId> MultiCurrency<T::AccountId>
 	for PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId>
@@ -112,7 +98,11 @@ where
 		}
 	}
 
-	fn ensure_can_withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn ensure_can_withdraw(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		if currency_id == GetNativeCurrencyId::get() {
 			log::error!(
 				"Show: ensure_can_withdraw: currency_id: {:?}, who: {:?}, amount: {:?}",
@@ -148,7 +138,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
-			return Ok(());
+			return Ok(())
 		}
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::transfer(from, to, amount);
@@ -166,9 +156,13 @@ where
 		}
 	}
 
-	fn deposit(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn deposit(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::deposit(who, amount);
@@ -186,9 +180,13 @@ where
 		}
 	}
 
-	fn withdraw(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
+	fn withdraw(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(());
+			return Ok(())
 		}
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::withdraw(who, amount);
@@ -218,7 +216,11 @@ where
 		}
 	}
 
-	fn slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> Self::Balance {
+	fn slash(
+		currency_id: Self::CurrencyId,
+		who: &T::AccountId,
+		amount: Self::Balance,
+	) -> Self::Balance {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::slash(who, amount);
 			log::error!("NativeCurrency::slash: out: {:?}", out);
@@ -241,23 +243,34 @@ where
 {
 	fn local_balance_of(asset_id: NewZenlinkAssetId, who: &AccountId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!("PeaqNewLocalAssetAdaptor: local_balance_of: currency_id: {:?}, who: {:?}", currency_id, who);
+			log::error!(
+				"PeaqNewLocalAssetAdaptor: local_balance_of: currency_id: {:?}, who: {:?}",
+				currency_id,
+				who
+			);
 			let aa = TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, who))
 				.unwrap_or_default();
 			log::error!("PeaqNewLocalAssetAdaptor: local_balance_of: aa: {:?}", aa);
-			return aa;
+			return aa
 		}
-		log::error!("fail PeaqNewLocalAssetAdaptor: local_balance_of: asset_id: {:?}, who: {:?}", asset_id, who);
+		log::error!(
+			"fail PeaqNewLocalAssetAdaptor: local_balance_of: asset_id: {:?}, who: {:?}",
+			asset_id,
+			who
+		);
 		AssetBalance::default()
 	}
 
 	fn local_total_supply(asset_id: NewZenlinkAssetId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!("PeaqNewLocalAssetAdaptor: local_total_supply: currency_id: {:?}", currency_id);
+			log::error!(
+				"PeaqNewLocalAssetAdaptor: local_total_supply: currency_id: {:?}",
+				currency_id
+			);
 			let aa = TryInto::<AssetBalance>::try_into(Local::total_issuance(currency_id))
 				.unwrap_or_default();
 			log::error!("PeaqNewLocalAssetAdaptor: local_total_supply: aa: {:?}", aa);
-			return aa;
+			return aa
 		}
 		log::error!("fail PeaqNewLocalAssetAdaptor: local_total_supply: asset_id: {:?}", asset_id);
 		AssetBalance::default()
@@ -265,13 +278,19 @@ where
 
 	fn local_minimum_balance(asset_id: NewZenlinkAssetId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!("PeaqNewLocalAssetAdaptor: local_minimum_balance: currency_id: {:?}", currency_id);
+			log::error!(
+				"PeaqNewLocalAssetAdaptor: local_minimum_balance: currency_id: {:?}",
+				currency_id
+			);
 			let aa = TryInto::<AssetBalance>::try_into(Local::minimum_balance(currency_id))
 				.unwrap_or_default();
 			log::error!("PeaqNewLocalAssetAdaptor: local_minimum_balance: aa: {:?}", aa);
-			return aa;
+			return aa
 		}
-		log::error!("fail PeaqNewLocalAssetAdaptor: local_minimum_balance: asset_id: {:?}", asset_id);
+		log::error!(
+			"fail PeaqNewLocalAssetAdaptor: local_minimum_balance: asset_id: {:?}",
+			asset_id
+		);
 		AssetBalance::default()
 	}
 
@@ -299,7 +318,7 @@ where
 					.map_err(|_| DispatchError::Other("convert amount in local transfer"))?,
 			);
 			log::error!("PeaqNewLocalAssetAdaptor: local_transfer: aa: {:?}", aa);
-			return aa;
+			return aa
 		} else {
 			log::error!("fail PeaqNewLocalAssetAdaptor: local_transfer: asset_id: {:?}, origin: {:?}, target: {:?}, amount: {:?}", asset_id, origin, target, amount);
 			Err(DispatchError::Other("unknown asset in local transfer"))
@@ -369,7 +388,6 @@ pub struct NewPaymentConvertInfo {
 	pub zen_path: Vec<NewZenlinkAssetId>,
 }
 
-
 // [TODO] Need to modify
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
 pub struct NewPeaqCurrencyAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
@@ -412,12 +430,7 @@ where
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
 		if !currency_id.is_native_token() {
-			log!(
-				info,
-				NewPeaqCurrencyAdapter,
-				"Payment with swap of {:?}-tokens",
-				currency_id
-			);
+			log!(info, NewPeaqCurrencyAdapter, "Payment with swap of {:?}-tokens", currency_id);
 		}
 
 		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath) {
@@ -519,10 +532,7 @@ pub trait NewPeaqCurrencyPaymentConvert {
 			)
 			.map_err(|_| map_err_newcurrency2zasset(currency_id))?;
 		}
-		log::error!(
-			"QQ Show: ensure_can_withdraw: currency_id: {:?}",
-			currency_id
-		);
+		log::error!("QQ Show: ensure_can_withdraw: currency_id: {:?}", currency_id);
 		Ok(currency_id)
 	}
 
@@ -540,9 +550,7 @@ pub trait NewPeaqCurrencyPaymentConvert {
 			tx_fee
 		);
 		let qq = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee);
-		log::error!(
-			"Show: ensure_can_withdraw: {:?}", qq
-		);
+		log::error!("Show: ensure_can_withdraw: {:?}", qq);
 		if qq.is_ok() {
 			log::error!(
 				"Show: check_currencies_n_priorities: native_id: {:?}, who: {:?} tx_fee: {:?}",
@@ -558,14 +566,16 @@ pub trait NewPeaqCurrencyPaymentConvert {
 			// Prepare ZenlinkAssetId(s) from NewCurrencyId(s).
 			// let native_zen_id = ZenlinkAssetId::try_from(native_id)
 			//	.map_err(|_| map_err_newcurrency2zasset(native_id))?;
-			let native_zen_id = NewCurrencyIdToZenlinkId::<Self::SelfParaId>::convert(native_id).ok_or_else(|| map_err_newcurrency2zasset(native_id))?;
+			let native_zen_id = NewCurrencyIdToZenlinkId::<Self::SelfParaId>::convert(native_id)
+				.ok_or_else(|| map_err_newcurrency2zasset(native_id))?;
 
 			let local_ids = Self::LocalAcceptedIds::get();
 
 			// Iterate through all accepted local currencies and check availability.
 			for &local_id in local_ids.iter() {
 				// TODO
-				let local_zen_id = NewCurrencyIdToZenlinkId::<Self::SelfParaId>::convert(local_id).ok_or_else(|| map_err_newcurrency2zasset(local_id))?;
+				let local_zen_id = NewCurrencyIdToZenlinkId::<Self::SelfParaId>::convert(local_id)
+					.ok_or_else(|| map_err_newcurrency2zasset(local_id))?;
 				// let local_zen_id = ZenlinkAssetId::try_from(local_id)
 				//	.map_err(|_| map_err_newcurrency2zasset(local_id))?;
 				let zen_path = vec![local_zen_id, native_zen_id];
@@ -595,18 +605,16 @@ fn map_err_newcurrency2zasset(id: NewCurrencyId) -> TransactionValidityError {
 	.into()
 }
 
-
 /// Adapt other currency traits implementation to `BasicCurrency`.
 pub struct PeaqBasicCurrencyAdapter<Currency>(PhantomData<Currency>);
 
 type PalletBalanceOf<A, Currency> = <Currency as PalletCurrency<A>>::Balance;
 
 // Adapt `frame_support::traits::Currency`
-impl<AccountId, Currency> BasicCurrency<AccountId>
-	for PeaqBasicCurrencyAdapter<Currency>
+impl<AccountId, Currency> BasicCurrency<AccountId> for PeaqBasicCurrencyAdapter<Currency>
 where
 	Currency: PalletCurrency<AccountId>,
-    AccountId: Debug
+	AccountId: Debug,
 {
 	type Balance = PalletBalanceOf<AccountId, Currency>;
 
@@ -649,7 +657,8 @@ where
 	}
 
 	fn withdraw(who: &AccountId, amount: Self::Balance) -> DispatchResult {
-		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath).map(|_| ())
+		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath)
+			.map(|_| ())
 	}
 
 	fn can_slash(who: &AccountId, amount: Self::Balance) -> bool {
@@ -663,14 +672,15 @@ where
 }
 
 /// This is the Peaq's default GenerateLpAssetId implementation.
-pub struct NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(PhantomData<(T,
-Local, ExistentialDeposit, AdminAccount)>);
+pub struct NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(
+	PhantomData<(T, Local, ExistentialDeposit, AdminAccount)>,
+);
 
-impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<NewZenlinkAssetId> for
-	NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>
+impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<NewZenlinkAssetId>
+	for NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>
 where
-	Local: fungibles::Create<T::AccountId, AssetId = NewCurrencyId, Balance = T::Balance> +
-		fungibles::Inspect<T::AccountId, AssetId = NewCurrencyId, Balance = T::Balance>,
+	Local: fungibles::Create<T::AccountId, AssetId = NewCurrencyId, Balance = T::Balance>
+		+ fungibles::Inspect<T::AccountId, AssetId = NewCurrencyId, Balance = T::Balance>,
 	T: SysConfig + AssetsConfig + ZenProtConfig,
 	ExistentialDeposit: Get<T::Balance>,
 	AdminAccount: Get<T::AccountId>,
@@ -684,24 +694,24 @@ where
 
 		match (asset_id0, asset_id1) {
 			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
-				NewCurrencyIdToZenlinkId::<T::SelfParaId>::convert(NewCurrencyId::LPToken(symbol0, symbol1))
-//				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
+				NewCurrencyIdToZenlinkId::<T::SelfParaId>::convert(NewCurrencyId::LPToken(
+					symbol0, symbol1,
+				))
+				//				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
 			},
 			(_, _) => None,
 		}
 	}
 
-	fn create_lp_asset(
-		asset0: &NewZenlinkAssetId,
-		asset1: &NewZenlinkAssetId,
-	) -> Option<()> {
+	fn create_lp_asset(asset0: &NewZenlinkAssetId, asset1: &NewZenlinkAssetId) -> Option<()> {
 		let asset_id0: PeaqAssetId = (*asset0).try_into().ok()?;
 		let asset_id1: PeaqAssetId = (*asset1).try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
 			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
 				let lp_currency = NewCurrencyId::LPToken(symbol0, symbol1);
-				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get()).ok()?;
+				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get())
+					.ok()?;
 				Some(())
 			},
 			(_, _) => None,

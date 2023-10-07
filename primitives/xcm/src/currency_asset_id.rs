@@ -1,13 +1,12 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 pub type NewZenlinkAssetId = zenlink_protocol::AssetId;
+use frame_support::traits::Get;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::{RuntimeDebug};
-use frame_support::traits::Get;
-use sp_runtime::traits::Convert;
-use sp_std::marker::PhantomData;
 use sp_core::H160;
+use sp_runtime::{traits::Convert, RuntimeDebug};
+use sp_std::marker::PhantomData;
 
 // use frame_support::traits::tokens::AssetId as AssetIdT;
 
@@ -21,7 +20,7 @@ use sp_core::H160;
 pub type PeaqAssetId = NewCurrencyId;
 
 const PARA_CHAIN_ID: u32 = 2000;
-use sp_std::convert::{TryFrom};
+use sp_std::convert::TryFrom;
 
 // PeaqAssetId <> NewZenlinkAssetId
 
@@ -78,13 +77,11 @@ impl TryFrom<NewCurrencyId> for u64 {
 	type Error = ();
 
 	fn try_from(currency_id: NewCurrencyId) -> Result<Self, Self::Error> {
-        match currency_id {
-            NewCurrencyId::Token(symbol) => Ok(symbol as u64),
-            NewCurrencyId::LPToken(symbol0, symbol1) => Ok(
-				(currency_id.type_index() << 8) +
-                ((symbol0 as u64) << 16) +
-                ((symbol1 as u64) << 24)
-            ),
+		match currency_id {
+			NewCurrencyId::Token(symbol) => Ok(symbol as u64),
+			NewCurrencyId::LPToken(symbol0, symbol1) => Ok((currency_id.type_index() << 8) +
+				((symbol0 as u64) << 16) +
+				((symbol1 as u64) << 24)),
 		}
 	}
 }
@@ -125,29 +122,26 @@ impl Default for NewCurrencyId {
 
 pub struct NewCurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<NewCurrencyId, Option<NewZenlinkAssetId>> for NewCurrencyIdToZenlinkId<GetParaId>
+impl<GetParaId> Convert<NewCurrencyId, Option<NewZenlinkAssetId>>
+	for NewCurrencyIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {
 	fn convert(currency_id: NewCurrencyId) -> Option<NewZenlinkAssetId> {
 		let asset_index = <NewCurrencyId as TryInto<u64>>::try_into(currency_id).ok()?;
-        match currency_id {
-            NewCurrencyId::Token(symbol) => {
-                let asset_type =
-                    if symbol == 0 { zenlink_protocol::NATIVE } else { zenlink_protocol::LOCAL };
-                Some(NewZenlinkAssetId {
-                    chain_id: GetParaId::get(),
-                    asset_type,
-                    asset_index,
-                })
-            },
-            NewCurrencyId::LPToken(_, _) => Some(NewZenlinkAssetId {
-                chain_id: GetParaId::get(),
-                asset_type: zenlink_protocol::LOCAL,
-                asset_index,
-            }),
-        }
-    }
+		match currency_id {
+			NewCurrencyId::Token(symbol) => {
+				let asset_type =
+					if symbol == 0 { zenlink_protocol::NATIVE } else { zenlink_protocol::LOCAL };
+				Some(NewZenlinkAssetId { chain_id: GetParaId::get(), asset_type, asset_index })
+			},
+			NewCurrencyId::LPToken(_, _) => Some(NewZenlinkAssetId {
+				chain_id: GetParaId::get(),
+				asset_type: zenlink_protocol::LOCAL,
+				asset_index,
+			}),
+		}
+	}
 }
 
 pub struct NewCurrencyIdToEVMAddress<GetPrefix>(PhantomData<GetPrefix>);
@@ -157,12 +151,12 @@ where
 	GetPrefix: Get<&'static [u8]>,
 {
 	fn convert(currency_id: NewCurrencyId) -> H160 {
-        let mut data = [0u8; 20];
+		let mut data = [0u8; 20];
 		let index: u64 = <NewCurrencyId as TryInto<u64>>::try_into(currency_id).unwrap();
-        data[0..4].copy_from_slice(GetPrefix::get());
-        data[4..20].copy_from_slice(&index.to_be_bytes());
-        H160::from(data)
-    }
+		data[0..4].copy_from_slice(GetPrefix::get());
+		data[4..20].copy_from_slice(&index.to_be_bytes());
+		H160::from(data)
+	}
 }
 
 impl<GetPrefix> Convert<H160, Option<NewCurrencyId>> for NewCurrencyIdToEVMAddress<GetPrefix>
@@ -170,15 +164,15 @@ where
 	GetPrefix: Get<&'static [u8]>,
 {
 	fn convert(address: H160) -> Option<NewCurrencyId> {
-        let mut data = [0u8; 16];
-        let address_bytes: [u8; 20] = address.into();
-        if GetPrefix::get().eq(&address_bytes[0..4]) {
-            data.copy_from_slice(&address_bytes[4..20]);
+		let mut data = [0u8; 16];
+		let address_bytes: [u8; 20] = address.into();
+		if GetPrefix::get().eq(&address_bytes[0..4]) {
+			data.copy_from_slice(&address_bytes[4..20]);
 			(u128::from_be_bytes(data) as u64).try_into().ok()
-        } else {
-            None
-        }
-    }
+		} else {
+			None
+		}
+	}
 }
 
 #[test]
@@ -202,5 +196,8 @@ fn test_NewCurrencyId_to_u64() {
 	assert_eq!(idx, <NewCurrencyId as TryInto<u64>>::try_into(NewCurrencyId::Token(2)).unwrap());
 
 	let idx = 0x0000_0000_0201_0100u64;
-	assert_eq!(idx, <NewCurrencyId as TryInto<u64>>::try_into(NewCurrencyId::LPToken(1, 2)).unwrap());
+	assert_eq!(
+		idx,
+		<NewCurrencyId as TryInto<u64>>::try_into(NewCurrencyId::LPToken(1, 2)).unwrap()
+	);
 }

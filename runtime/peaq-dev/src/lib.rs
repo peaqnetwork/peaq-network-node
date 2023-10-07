@@ -17,6 +17,7 @@ use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
+use sp_runtime::traits::Convert;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -38,7 +39,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
-use sp_runtime::traits::Convert;
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -96,11 +96,13 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Amount, Balance,
-	// CurrencyId,
-	NewZenlinkAssetId, PeaqAssetId,
-	TokenSymbol,
+	Amount,
+	Balance,
 	NewCurrencyIdToEVMAddress,
+	// CurrencyId,
+	NewZenlinkAssetId,
+	PeaqAssetId,
+	TokenSymbol,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
@@ -130,25 +132,28 @@ use orml_traits::parameter_type_with_key;
 pub mod constants;
 
 // For Zenlink-DEX-Module
-use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
-pub use precompiles::{EVMAssetPrefix};
+pub use precompiles::EVMAssetPrefix;
 
 // [TODO] Change the PeaqCurrencyAdapter
 use runtime_common::{
 	CurrencyHooks,
-	PeaqNewLocalAssetAdaptor,
-	OperationalFeeMultiplier,
 	LocalAssetAdaptor,
+	NewPeaqCurrencyAdapter,
+	NewPeaqCurrencyPaymentConvert,
+	NewPeaqZenlinkLpGenerate,
+	OperationalFeeMultiplier,
+	PeaqBasicCurrencyAdapter,
+	PeaqMultiCurrenciesWrapper,
+	PeaqNewLocalAssetAdaptor,
 	// PeaqCurrencyAdapter,
 	// PeaqCurrencyPaymentConvert,
-	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
-	NewPeaqCurrencyPaymentConvert,
-	NewPeaqCurrencyAdapter,
-	PeaqMultiCurrenciesWrapper,
-	PeaqBasicCurrencyAdapter,
-	NewPeaqZenlinkLpGenerate,
+	TransactionByteFee,
+	CENTS,
+	DOLLARS,
+	MILLICENTS,
 };
 
 /// An index to a block.
@@ -976,10 +981,12 @@ parameter_types! {
 }
 
 type NativeCurrency = PeaqBasicCurrencyAdapter<Balances>;
-type MultiCurrencyAsset = PeaqMultiCurrenciesWrapper<Runtime, Assets, NativeCurrency, GetNativeNewCurrencyId>;
+type MultiCurrencyAsset =
+	PeaqMultiCurrenciesWrapper<Runtime, Assets, NativeCurrency, GetNativeNewCurrencyId>;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, PeaqNewLocalAssetAdaptor<MultiCurrencyAsset>>;
+pub type MultiAssets =
+	ZenlinkMultiAssets<ZenlinkProtocol, Balances, PeaqNewLocalAssetAdaptor<MultiCurrencyAsset>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -1930,12 +1937,11 @@ impl xc_asset_config::Config for Runtime {
 
 // Move to primitives
 impl EVMAddressToAssetId<PeaqAssetId> for Runtime {
-    fn address_to_asset_id(address: H160) -> Option<PeaqAssetId> {
+	fn address_to_asset_id(address: H160) -> Option<PeaqAssetId> {
 		NewCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
-    }
+	}
 
-    fn asset_id_to_address(asset_id: PeaqAssetId) -> H160 {
+	fn asset_id_to_address(asset_id: PeaqAssetId) -> H160 {
 		NewCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
-    }
+	}
 }
-
