@@ -1,5 +1,4 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-use zenlink_protocol::AssetId as ZenlinkAssetId;
 use frame_support::traits::Get;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
@@ -7,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::H160;
 use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::marker::PhantomData;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use sp_std::convert::TryFrom;
 

@@ -91,13 +91,9 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-use zenlink_protocol::AssetId as ZenlinkAssetId;
-use peaq_primitives_xcm::{
-	Balance,
-	PeaqCurrencyIdToEVMAddress,
-	PeaqCurrencyId,
-};
+use peaq_primitives_xcm::{Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 pub use peaq_pallet_did;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
@@ -118,9 +114,9 @@ use peaq_pallet_mor::mor::MorBalance;
 pub use peaq_pallet_mor::{self, types::MorConfig};
 
 // For XCM
+pub mod constants;
 mod weights;
 pub mod xcm_config;
-pub mod constants;
 
 // For Zenlink-DEX-Module
 use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
@@ -128,19 +124,10 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 
 pub use precompiles::EVMAssetPrefix;
 
-// [TODO] Change the PeaqCurrencyAdapter
 use runtime_common::{
-	NewPeaqCurrencyAdapter,
-	NewPeaqCurrencyPaymentConvert,
-	NewPeaqZenlinkLpGenerate,
-	OperationalFeeMultiplier,
-	PeaqNativeCurrencyWrapper,
-	PeaqMultiCurrenciesWrapper,
-	PeaqLocalAssetHandler,
-	TransactionByteFee,
-	CENTS,
-	DOLLARS,
-	MILLICENTS,
+	OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, PeaqLocalAssetHandler,
+	PeaqMultiCurrenciesAdapter, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper,
+	PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -458,7 +445,7 @@ parameter_types! {
 
 pub struct NewPeaqCPC;
 
-impl NewPeaqCurrencyPaymentConvert for NewPeaqCPC {
+impl PeaqMultiCurrenciesPaymentConvert for NewPeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
 	type MultiCurrency = PeaqMultiCurrencies;
@@ -471,7 +458,7 @@ impl NewPeaqCurrencyPaymentConvert for NewPeaqCPC {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = NewPeaqCurrencyAdapter<Balances, BlockReward, NewPeaqCPC>;
+	type OnChargeTransaction = PeaqMultiCurrenciesAdapter<Balances, BlockReward, NewPeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -906,8 +893,12 @@ parameter_types! {
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
 }
 
-type PeaqMultiCurrencies =
-	PeaqMultiCurrenciesWrapper<Runtime, Assets, PeaqNativeCurrencyWrapper<Balances>, GetNativePeaqCurrencyId>;
+type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
+	Runtime,
+	Assets,
+	PeaqNativeCurrencyWrapper<Balances>,
+	GetNativePeaqCurrencyId,
+>;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
 pub type MultiAssets =
@@ -918,7 +909,8 @@ impl zenlink_protocol::Config for Runtime {
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
-	type LpGenerate = NewPeaqZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqPotAccount>;
+	// [TODO] PeaqPotAccount to Sudo users
+	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqPotAccount>;
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();

@@ -1,7 +1,7 @@
 use super::{
 	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward, ParachainInfo,
-	ParachainSystem, PeaqCurrencyId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue,
+	ParachainSystem, PeaqCurrencyId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
+	RuntimeEvent, RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue,
 };
 use frame_support::{
 	dispatch::Weight,

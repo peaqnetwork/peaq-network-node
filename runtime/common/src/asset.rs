@@ -23,9 +23,7 @@ use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use zenlink_protocol::{GenerateLpAssetId, LocalAssetHandler};
 
 use frame_support::traits::Currency as PalletCurrency;
-use peaq_primitives_xcm::{
-	PeaqCurrencyId, PeaqCurrencyIdToZenlinkId,
-};
+use peaq_primitives_xcm::{PeaqCurrencyId, PeaqCurrencyIdToZenlinkId};
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
@@ -287,10 +285,7 @@ where
 			log::debug!("PeaqLocalAssetHandler: local_minimum_balance: out: {:?}", out);
 			return out
 		}
-		log::debug!(
-			"fail PeaqLocalAssetHandler: local_minimum_balance: asset_id: {:?}",
-			asset_id
-		);
+		log::debug!("fail PeaqLocalAssetHandler: local_minimum_balance: asset_id: {:?}", asset_id);
 		AssetBalance::default()
 	}
 
@@ -390,14 +385,14 @@ pub struct NewPaymentConvertInfo {
 
 // [TODO] Need to modify
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct NewPeaqCurrencyAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
+pub struct PeaqMultiCurrenciesAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
 
-impl<T, C, OU, PCPC> OnChargeTransaction<T> for NewPeaqCurrencyAdapter<C, OU, PCPC>
+impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqMultiCurrenciesAdapter<C, OU, PCPC>
 where
 	T: SysConfig + TransPayConfig + ZenProtConfig,
 	C: Currency<T::AccountId>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-	PCPC: NewPeaqCurrencyPaymentConvert<AccountId = T::AccountId, Currency = C>,
+	PCPC: PeaqMultiCurrenciesPaymentConvert<AccountId = T::AccountId, Currency = C>,
 	AssetBalance: From<BalanceOf<C, T>>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
@@ -430,7 +425,7 @@ where
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
 		if !currency_id.is_native_token() {
-			log!(info, NewPeaqCurrencyAdapter, "Payment with swap of {:?}-tokens", currency_id);
+			log!(info, PeaqMultiCurrenciesAdapter, "Payment with swap of {:?}-tokens", currency_id);
 		}
 
 		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath) {
@@ -480,7 +475,7 @@ where
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
 /// generic as possible to enable the usage in PeaqCurrencyAdapter.
-pub trait NewPeaqCurrencyPaymentConvert {
+pub trait PeaqMultiCurrenciesPaymentConvert {
 	/// AccountId type.
 	type AccountId: Parameter
 		+ Member
@@ -545,7 +540,7 @@ pub trait NewPeaqCurrencyPaymentConvert {
 		let out = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee);
 		if out.is_ok() {
 			log::error!(
-				"NewPeaqCurrencyPaymentConvert: check_currencies_n_priorities: native_id: {:?}, who: {:?} tx_fee: {:?}",
+				"PeaqMultiCurrenciesPaymentConvert: check_currencies_n_priorities: native_id: {:?}, who: {:?} tx_fee: {:?}",
 				native_id,
 				who,
 				tx_fee
@@ -635,7 +630,12 @@ where
 	}
 
 	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance) -> DispatchResult {
-		log::debug!("PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}", from, to, amount);
+		log::debug!(
+			"PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}",
+			from,
+			to,
+			amount
+		);
 		Currency::transfer(from, to, amount, ExistenceRequirement::KeepAlive)
 	}
 
@@ -664,12 +664,12 @@ where
 }
 
 /// This is the Peaq's default GenerateLpAssetId implementation.
-pub struct NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(
+pub struct PeaqAssetZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(
 	PhantomData<(T, Local, ExistentialDeposit, AdminAccount)>,
 );
 
 impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<ZenlinkAssetId>
-	for NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>
+	for PeaqAssetZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>
 where
 	Local: fungibles::Create<T::AccountId, AssetId = PeaqCurrencyId, Balance = T::Balance>
 		+ fungibles::Inspect<T::AccountId, AssetId = PeaqCurrencyId, Balance = T::Balance>,
