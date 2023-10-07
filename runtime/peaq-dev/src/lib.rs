@@ -490,6 +490,7 @@ impl NewPeaqCurrencyPaymentConvert for NewPeaqCPC {
 	type ExistentialDeposit = ExistentialDeposit;
 	type NativeCurrencyId = GetNativeNewCurrencyId;
 	type LocalAcceptedIds = NewPcpcLocalAccepted;
+	type SelfParaId = SelfParaId;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -1892,6 +1893,7 @@ impl pallet_assets::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = PeaqAssetId;
 	type Currency = Balances;
+	// [TODO] Need implement our own to avoid user create LP Assets
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;

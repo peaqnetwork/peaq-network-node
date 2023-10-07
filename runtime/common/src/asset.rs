@@ -23,7 +23,7 @@ use frame_system::Config as SysConfig;
 use sp_runtime::{
 	traits::{
 		DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
-		Saturating, Zero,
+		Saturating, Zero, Convert,
 	},
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
@@ -32,6 +32,7 @@ use crate::EoTFeeFactor;
 use peaq_primitives_xcm::{
 	NewZenlinkAssetId,
 	PeaqAssetId,
+	NewCurrencyIdToZenlinkId,
 };
 use peaq_primitives_xcm::NewCurrencyId;
 use zenlink_protocol::{
@@ -498,6 +499,8 @@ pub trait NewPeaqCurrencyPaymentConvert {
 	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
 	type LocalAcceptedIds: Get<Vec<NewCurrencyId>>;
 
+	type SelfParaId: Get<u32>;
+
 	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
 	/// of the choosen currency in dependency of the priority-list and availability of tokens.
 	fn ensure_can_withdraw(
@@ -553,15 +556,18 @@ pub trait NewPeaqCurrencyPaymentConvert {
 			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
 
 			// Prepare ZenlinkAssetId(s) from NewCurrencyId(s).
-			let native_zen_id = ZenlinkAssetId::try_from(native_id)
-				.map_err(|_| map_err_newcurrency2zasset(native_id))?;
+			// let native_zen_id = ZenlinkAssetId::try_from(native_id)
+			//	.map_err(|_| map_err_newcurrency2zasset(native_id))?;
+			let native_zen_id = NewCurrencyIdToZenlinkId::<Self::SelfParaId>::convert(native_id).ok_or_else(|| map_err_newcurrency2zasset(native_id))?;
+
 			let local_ids = Self::LocalAcceptedIds::get();
 
 			// Iterate through all accepted local currencies and check availability.
 			for &local_id in local_ids.iter() {
 				// TODO
-				let local_zen_id = ZenlinkAssetId::try_from(local_id)
-					.map_err(|_| map_err_newcurrency2zasset(local_id))?;
+				let local_zen_id = NewCurrencyIdToZenlinkId::<Self::SelfParaId>::convert(local_id).ok_or_else(|| map_err_newcurrency2zasset(local_id))?;
+				// let local_zen_id = ZenlinkAssetId::try_from(local_id)
+				//	.map_err(|_| map_err_newcurrency2zasset(local_id))?;
 				let zen_path = vec![local_zen_id, native_zen_id];
 				let amount_out: AssetBalance = tx_fee.saturated_into();
 
@@ -665,7 +671,7 @@ impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<NewZenlinkAss
 where
 	Local: fungibles::Create<T::AccountId, AssetId = NewCurrencyId, Balance = T::Balance> +
 		fungibles::Inspect<T::AccountId, AssetId = NewCurrencyId, Balance = T::Balance>,
-	T: SysConfig + AssetsConfig,
+	T: SysConfig + AssetsConfig + ZenProtConfig,
 	ExistentialDeposit: Get<T::Balance>,
 	AdminAccount: Get<T::AccountId>,
 {
@@ -678,7 +684,8 @@ where
 
 		match (asset_id0, asset_id1) {
 			(NewCurrencyId::Token(symbol0), NewCurrencyId::Token(symbol1)) => {
-				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
+				NewCurrencyIdToZenlinkId::<T::SelfParaId>::convert(NewCurrencyId::LPToken(symbol0, symbol1))
+//				NewCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
 			},
 			(_, _) => None,
 		}
