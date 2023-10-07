@@ -231,6 +231,7 @@ where
 	}
 }
 
+// [TODO] Merge with LocalAssetAdaptor
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
 pub struct PeaqLocalAssetHandler<Local>(PhantomData<Local>);
 
@@ -385,9 +386,10 @@ pub struct NewPaymentConvertInfo {
 
 // [TODO] Need to modify
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct PeaqMultiCurrenciesAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
+// [TODO] Merge with CurrencyIdConvert
+pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
 
-impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqMultiCurrenciesAdapter<C, OU, PCPC>
+impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC>
 where
 	T: SysConfig + TransPayConfig + ZenProtConfig,
 	C: Currency<T::AccountId>,
@@ -425,7 +427,7 @@ where
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
 		if !currency_id.is_native_token() {
-			log!(info, PeaqMultiCurrenciesAdapter, "Payment with swap of {:?}-tokens", currency_id);
+			log!(info, PeaqMultiCurrenciesOnChargeTransaction, "Payment with swap of {:?}-tokens", currency_id);
 		}
 
 		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath) {
@@ -473,6 +475,7 @@ where
 	}
 }
 
+// [TODO] Merge with PeaqCurrencyPaymentConvert
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
 /// generic as possible to enable the usage in PeaqCurrencyAdapter.
 pub trait PeaqMultiCurrenciesPaymentConvert {
@@ -527,6 +530,7 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 			)
 			.map_err(|_| map_err_newcurrency2zasset(currency_id))?;
 		}
+
 		Ok(currency_id)
 	}
 

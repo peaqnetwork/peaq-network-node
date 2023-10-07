@@ -126,7 +126,7 @@ pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
 	OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, PeaqLocalAssetHandler,
-	PeaqMultiCurrenciesAdapter, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper,
+	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper,
 	PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
@@ -458,7 +458,7 @@ impl PeaqMultiCurrenciesPaymentConvert for NewPeaqCPC {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqMultiCurrenciesAdapter<Balances, BlockReward, NewPeaqCPC>;
+	type OnChargeTransaction = PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, NewPeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;

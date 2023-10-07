@@ -533,7 +533,7 @@ macro_rules! log_icon {
 	(PeaqCurrencyAdapter $e:expr) => {
 		"💵"
 	};
-	(PeaqMultiCurrenciesAdapter $e:expr) => {
+	(PeaqMultiCurrenciesOnChargeTransaction $e:expr) => {
 		"💵"
 	};
 	(PeaqCurrencyPaymentConvert $e:expr) => {
