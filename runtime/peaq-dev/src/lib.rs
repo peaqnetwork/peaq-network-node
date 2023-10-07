@@ -82,7 +82,6 @@ pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
-use peaq_primitives_xcm::NewCurrencyId;
 mod precompiles;
 pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
@@ -94,9 +93,9 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
 	Balance,
-	NewCurrencyIdToEVMAddress,
+	PeaqCurrencyIdToEVMAddress,
 	NewZenlinkAssetId,
-	PeaqAssetId,
+	PeaqCurrencyId,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
@@ -451,9 +450,9 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
 	// [TODO] Should use the other ways... Maybe use the asset list?
-	pub NewPcpcLocalAccepted: Vec<NewCurrencyId> = vec![
-		NewCurrencyId::Token(1),
-		NewCurrencyId::Token(3),
+	pub NewPcpcLocalAccepted: Vec<PeaqCurrencyId> = vec![
+		PeaqCurrencyId::Token(1),
+		PeaqCurrencyId::Token(3),
 	];
 }
 
@@ -465,7 +464,7 @@ impl NewPeaqCurrencyPaymentConvert for NewPeaqCPC {
 	type MultiCurrency = MultiCurrencyAsset;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
-	type NativeCurrencyId = GetNativeNewCurrencyId;
+	type NativeCurrencyId = GetNativePeaqCurrencyId;
 	type LocalAcceptedIds = NewPcpcLocalAccepted;
 	type SelfParaId = SelfParaId;
 }
@@ -860,7 +859,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeNewCurrencyId: NewCurrencyId = NewCurrencyId::Token(0);
+	pub const GetNativePeaqCurrencyId: PeaqCurrencyId = PeaqCurrencyId::Token(0);
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -909,7 +908,7 @@ parameter_types! {
 
 type NativeCurrency = PeaqBasicCurrencyAdapter<Balances>;
 type MultiCurrencyAsset =
-	PeaqMultiCurrenciesWrapper<Runtime, Assets, NativeCurrency, GetNativeNewCurrencyId>;
+	PeaqMultiCurrenciesWrapper<Runtime, Assets, NativeCurrency, GetNativePeaqCurrencyId>;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
 pub type MultiAssets =
@@ -1827,7 +1826,7 @@ parameter_types! {
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = PeaqAssetId;
+	type AssetId = PeaqCurrencyId;
 	type Currency = Balances;
 	// [TODO] Need implement our own to avoid user create LP Assets
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
@@ -1844,7 +1843,7 @@ impl pallet_assets::Config for Runtime {
 	// type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
-	type AssetIdParameter = PeaqAssetId;
+	type AssetIdParameter = PeaqCurrencyId;
 	// [TODO] Comment out
 	type CallbackHandle = ();
 	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
@@ -1854,18 +1853,18 @@ impl pallet_assets::Config for Runtime {
 
 impl xc_asset_config::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type AssetId = PeaqAssetId;
+	type AssetId = PeaqCurrencyId;
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
 
 // Move to primitives
-impl EVMAddressToAssetId<PeaqAssetId> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<PeaqAssetId> {
-		NewCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+impl EVMAddressToAssetId<PeaqCurrencyId> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<PeaqCurrencyId> {
+		PeaqCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
 	}
 
-	fn asset_id_to_address(asset_id: PeaqAssetId) -> H160 {
-		NewCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	fn asset_id_to_address(asset_id: PeaqCurrencyId) -> H160 {
+		PeaqCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
 	}
 }

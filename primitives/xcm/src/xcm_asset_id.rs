@@ -10,10 +10,10 @@ use xcm_builder::TakeRevenue;
 use xcm_executor::traits::WeightTrader;
 
 /// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct PeaqAssetIdConvert<AssetId, AssetMapper>(PhantomData<(AssetId, AssetMapper)>);
+pub struct PeaqCurrencyIdConvert<AssetId, AssetMapper>(PhantomData<(AssetId, AssetMapper)>);
 
 impl<AssetId, AssetMapper> xcm_executor::traits::Convert<MultiLocation, AssetId>
-	for PeaqAssetIdConvert<AssetId, AssetMapper>
+	for PeaqCurrencyIdConvert<AssetId, AssetMapper>
 where
 	AssetId: Clone + Eq,
 	AssetMapper: XcAssetLocation<AssetId>,
@@ -36,13 +36,13 @@ where
 }
 
 impl<AssetId, AssetMapper> Convert<AssetId, Option<MultiLocation>>
-	for PeaqAssetIdConvert<AssetId, AssetMapper>
+	for PeaqCurrencyIdConvert<AssetId, AssetMapper>
 where
 	AssetId: Clone + Eq,
 	AssetMapper: XcAssetLocation<AssetId>,
 {
 	fn convert(id: AssetId) -> Option<MultiLocation> {
-		<PeaqAssetIdConvert<AssetId, AssetMapper> as xcm_executor::traits::Convert<
+		<PeaqCurrencyIdConvert<AssetId, AssetMapper> as xcm_executor::traits::Convert<
 			MultiLocation,
 			AssetId,
 		>>::reverse(id)

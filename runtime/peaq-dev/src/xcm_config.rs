@@ -1,6 +1,6 @@
 use super::{
 	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward, ParachainInfo,
-	ParachainSystem, PeaqAssetId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	ParachainSystem, PeaqCurrencyId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue,
 };
 use frame_support::{
@@ -12,7 +12,7 @@ use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
-use peaq_primitives_xcm::{FixedRateOfForeignAsset, PeaqAssetIdConvert};
+use peaq_primitives_xcm::{FixedRateOfForeignAsset, PeaqCurrencyIdConvert};
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::AccountIdToMultiLocation;
 use sp_runtime::traits::ConstU32;
@@ -52,7 +52,7 @@ use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
-pub type PeaqAssetLocationIdConverter = PeaqAssetIdConvert<PeaqAssetId, XcAssetConfig>;
+pub type PeaqAssetLocationIdConverter = PeaqCurrencyIdConvert<PeaqCurrencyId, XcAssetConfig>;
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -144,7 +144,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
 	Assets,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
+	ConvertedConcreteId<PeaqCurrencyId, Balance, PeaqAssetLocationIdConverter, JustTry>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -201,7 +201,7 @@ match_types! {
 // Used to handle XCM fee deposit into treasury account
 pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 	AccountId,
-	ConvertedConcreteId<PeaqAssetId, Balance, PeaqAssetLocationIdConverter, JustTry>,
+	ConvertedConcreteId<PeaqCurrencyId, Balance, PeaqAssetLocationIdConverter, JustTry>,
 	Assets,
 	PeaqPotAccount,
 >;
@@ -393,7 +393,7 @@ impl<AbsoluteLocation: Get<MultiLocation>> Reserve
 impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type CurrencyId = PeaqAssetId;
+	type CurrencyId = PeaqCurrencyId;
 	type CurrencyIdConvert = PeaqAssetLocationIdConverter;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = PeaqLocation;
