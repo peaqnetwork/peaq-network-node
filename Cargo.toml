@@ -7,7 +7,8 @@ members = [
     "precompiles/utils",
     "precompiles/utils/macro",
 	"precompiles/peaq-did",
-	"precompiles/peaq-storage"
+	"precompiles/peaq-storage",
+	"precompiles/assets-erc20"
 ]
 
 # make sure dev builds with backtrace do

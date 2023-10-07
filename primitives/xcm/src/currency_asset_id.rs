@@ -7,6 +7,8 @@ use sp_runtime::{RuntimeDebug};
 use frame_support::traits::Get;
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
+use sp_core::H160;
+
 // use frame_support::traits::tokens::AssetId as AssetIdT;
 
 /// Id used for identifying assets.
@@ -144,6 +146,37 @@ where
                 asset_type: zenlink_protocol::LOCAL,
                 asset_index,
             }),
+        }
+    }
+}
+
+pub struct NewCurrencyIdToEVMAddress<GetPrefix>(PhantomData<GetPrefix>);
+
+impl<GetPrefix> Convert<NewCurrencyId, H160> for NewCurrencyIdToEVMAddress<GetPrefix>
+where
+	GetPrefix: Get<&'static [u8]>,
+{
+	fn convert(currency_id: NewCurrencyId) -> H160 {
+        let mut data = [0u8; 20];
+		let index: u64 = <NewCurrencyId as TryInto<u64>>::try_into(currency_id).unwrap();
+        data[0..4].copy_from_slice(GetPrefix::get());
+        data[4..20].copy_from_slice(&index.to_be_bytes());
+        H160::from(data)
+    }
+}
+
+impl<GetPrefix> Convert<H160, Option<NewCurrencyId>> for NewCurrencyIdToEVMAddress<GetPrefix>
+where
+	GetPrefix: Get<&'static [u8]>,
+{
+	fn convert(address: H160) -> Option<NewCurrencyId> {
+        let mut data = [0u8; 16];
+        let address_bytes: [u8; 20] = address.into();
+        if GetPrefix::get().eq(&address_bytes[0..4]) {
+            data.copy_from_slice(&address_bytes[4..20]);
+			(u128::from_be_bytes(data) as u64).try_into().ok()
+        } else {
+            None
         }
     }
 }

@@ -38,6 +38,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
+use sp_runtime::traits::Convert;
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -99,6 +100,7 @@ use peaq_primitives_xcm::{
 	// CurrencyId,
 	NewZenlinkAssetId, PeaqAssetId,
 	TokenSymbol,
+	NewCurrencyIdToEVMAddress,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
@@ -129,6 +131,9 @@ pub mod constants;
 
 // For Zenlink-DEX-Module
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
+use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+
+pub use precompiles::{EVMAssetPrefix};
 
 // [TODO] Change the PeaqCurrencyAdapter
 use runtime_common::{
@@ -639,7 +644,7 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = PeaqPrecompiles<Self>;
+	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -1922,3 +1927,15 @@ impl xc_asset_config::Config for Runtime {
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
+
+// Move to primitives
+impl EVMAddressToAssetId<PeaqAssetId> for Runtime {
+    fn address_to_asset_id(address: H160) -> Option<PeaqAssetId> {
+		NewCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+    }
+
+    fn asset_id_to_address(asset_id: PeaqAssetId) -> H160 {
+		NewCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+    }
+}
+
