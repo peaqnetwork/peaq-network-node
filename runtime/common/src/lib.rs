@@ -20,6 +20,7 @@ use sp_runtime::{
 	},
 	Perbill, RuntimeString,
 };
+use sp_std::convert::TryFrom;
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
@@ -67,11 +68,12 @@ where
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
-pub struct LocalAssetAdaptor<Local>(PhantomData<Local>);
+pub struct LocalAssetAdaptor<Local, CurrencyId>(PhantomData<(Local, CurrencyId)>);
 
-impl<Local, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local>
+impl<Local, CurrencyId, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local, CurrencyId>
 where
 	Local: MultiCurrency<AccountId, CurrencyId = CurrencyId>,
+	CurrencyId: TryFrom<ZenlinkAssetId>,
 {
 	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
@@ -98,8 +100,7 @@ where
 	}
 
 	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
-		let currency_id: Result<CurrencyId, ()> = asset_id.try_into();
-		currency_id.is_ok()
+		<ZenlinkAssetId as TryInto<CurrencyId>>::try_into(asset_id).is_ok()
 	}
 
 	fn local_transfer(

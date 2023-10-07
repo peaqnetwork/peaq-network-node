@@ -125,7 +125,7 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, PeaqLocalAssetHandler,
+	OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, LocalAssetAdaptor,
 	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper,
 	PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
@@ -902,7 +902,7 @@ type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
 pub type MultiAssets =
-	ZenlinkMultiAssets<ZenlinkProtocol, Balances, PeaqLocalAssetHandler<PeaqMultiCurrencies>>;
+	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<PeaqMultiCurrencies, PeaqCurrencyId>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
