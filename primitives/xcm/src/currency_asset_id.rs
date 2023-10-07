@@ -1,5 +1,5 @@
 use codec::{Decode, Encode, MaxEncodedLen};
-pub type NewZenlinkAssetId = zenlink_protocol::AssetId;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 use frame_support::traits::Get;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
@@ -99,10 +99,10 @@ impl TryFrom<u64> for PeaqCurrencyId {
 	}
 }
 
-impl TryFrom<NewZenlinkAssetId> for PeaqCurrencyId {
+impl TryFrom<ZenlinkAssetId> for PeaqCurrencyId {
 	type Error = ();
 
-	fn try_from(asset_id: NewZenlinkAssetId) -> Result<Self, Self::Error> {
+	fn try_from(asset_id: ZenlinkAssetId) -> Result<Self, Self::Error> {
 		asset_id.asset_index.try_into()
 	}
 }
@@ -115,20 +115,20 @@ impl Default for PeaqCurrencyId {
 
 pub struct PeaqCurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<PeaqCurrencyId, Option<NewZenlinkAssetId>>
+impl<GetParaId> Convert<PeaqCurrencyId, Option<ZenlinkAssetId>>
 	for PeaqCurrencyIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {
-	fn convert(currency_id: PeaqCurrencyId) -> Option<NewZenlinkAssetId> {
+	fn convert(currency_id: PeaqCurrencyId) -> Option<ZenlinkAssetId> {
 		let asset_index = <PeaqCurrencyId as TryInto<u64>>::try_into(currency_id).ok()?;
 		match currency_id {
 			PeaqCurrencyId::Token(symbol) => {
 				let asset_type =
 					if symbol == 0 { zenlink_protocol::NATIVE } else { zenlink_protocol::LOCAL };
-				Some(NewZenlinkAssetId { chain_id: GetParaId::get(), asset_type, asset_index })
+				Some(ZenlinkAssetId { chain_id: GetParaId::get(), asset_type, asset_index })
 			},
-			PeaqCurrencyId::LPToken(_, _) => Some(NewZenlinkAssetId {
+			PeaqCurrencyId::LPToken(_, _) => Some(ZenlinkAssetId {
 				chain_id: GetParaId::get(),
 				asset_type: zenlink_protocol::LOCAL,
 				asset_index,

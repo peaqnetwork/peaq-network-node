@@ -91,10 +91,10 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 use peaq_primitives_xcm::{
 	Balance,
 	PeaqCurrencyIdToEVMAddress,
-	NewZenlinkAssetId,
 	PeaqCurrencyId,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -134,9 +134,9 @@ use runtime_common::{
 	NewPeaqCurrencyPaymentConvert,
 	NewPeaqZenlinkLpGenerate,
 	OperationalFeeMultiplier,
-	PeaqBasicCurrencyAdapter,
+	PeaqNativeCurrencyWrapper,
 	PeaqMultiCurrenciesWrapper,
-	PeaqNewLocalAssetAdaptor,
+	PeaqLocalAssetHandler,
 	TransactionByteFee,
 	CENTS,
 	DOLLARS,
@@ -461,7 +461,7 @@ pub struct NewPeaqCPC;
 impl NewPeaqCurrencyPaymentConvert for NewPeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
-	type MultiCurrency = MultiCurrencyAsset;
+	type MultiCurrency = PeaqMultiCurrencies;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
 	type NativeCurrencyId = GetNativePeaqCurrencyId;
@@ -906,19 +906,18 @@ parameter_types! {
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
 }
 
-type NativeCurrency = PeaqBasicCurrencyAdapter<Balances>;
-type MultiCurrencyAsset =
-	PeaqMultiCurrenciesWrapper<Runtime, Assets, NativeCurrency, GetNativePeaqCurrencyId>;
+type PeaqMultiCurrencies =
+	PeaqMultiCurrenciesWrapper<Runtime, Assets, PeaqNativeCurrencyWrapper<Balances>, GetNativePeaqCurrencyId>;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
 pub type MultiAssets =
-	ZenlinkMultiAssets<ZenlinkProtocol, Balances, PeaqNewLocalAssetAdaptor<MultiCurrencyAsset>>;
+	ZenlinkMultiAssets<ZenlinkProtocol, Balances, PeaqLocalAssetHandler<PeaqMultiCurrencies>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
-	type AssetId = NewZenlinkAssetId;
+	type AssetId = ZenlinkAssetId;
 	type LpGenerate = NewPeaqZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqPotAccount>;
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
@@ -1642,29 +1641,29 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, NewZenlinkAssetId> for Runtime {
-		fn get_balance(asset_id: NewZenlinkAssetId, owner: AccountId) -> AssetBalance {
+	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
+		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
 			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
 		}
 
 		fn get_pair_by_asset_id(
-			asset_0: NewZenlinkAssetId,
-			asset_1: NewZenlinkAssetId
-		) -> Option<PairInfo<AccountId, AssetBalance, NewZenlinkAssetId>> {
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId
+		) -> Option<PairInfo<AccountId, AssetBalance, ZenlinkAssetId>> {
 			ZenlinkProtocol::get_pair_by_asset_id(asset_0, asset_1)
 		}
 
-		fn get_amount_in_price(supply: AssetBalance, path: Vec<NewZenlinkAssetId>) -> AssetBalance {
+		fn get_amount_in_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
 			ZenlinkProtocol::desired_in_amount(supply, path)
 		}
 
-		fn get_amount_out_price(supply: AssetBalance, path: Vec<NewZenlinkAssetId>) -> AssetBalance {
+		fn get_amount_out_price(supply: AssetBalance, path: Vec<ZenlinkAssetId>) -> AssetBalance {
 			ZenlinkProtocol::supply_out_amount(supply, path)
 		}
 
 		fn get_estimate_lptoken(
-			asset_0: NewZenlinkAssetId,
-			asset_1: NewZenlinkAssetId,
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
 			amount_0_desired: AssetBalance,
 			amount_1_desired: AssetBalance,
 			amount_0_min: AssetBalance,
@@ -1675,8 +1674,8 @@ impl_runtime_apis! {
 		}
 
 		fn calculate_remove_liquidity(
-			asset_0: NewZenlinkAssetId,
-			asset_1: NewZenlinkAssetId,
+			asset_0: ZenlinkAssetId,
+			asset_1: ZenlinkAssetId,
 			amount: AssetBalance,
 		) -> Option<(AssetBalance, AssetBalance)> {
 			ZenlinkProtocol::calculate_remove_liquidity(asset_0, asset_1, amount)

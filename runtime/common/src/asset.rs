@@ -24,7 +24,7 @@ use zenlink_protocol::{GenerateLpAssetId, LocalAssetHandler};
 
 use frame_support::traits::Currency as PalletCurrency;
 use peaq_primitives_xcm::{
-	PeaqCurrencyId, PeaqCurrencyIdToZenlinkId, NewZenlinkAssetId,
+	PeaqCurrencyId, PeaqCurrencyIdToZenlinkId,
 };
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
@@ -53,11 +53,11 @@ where
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::minimum_balance();
 			// [TODO] Should remove logs
-			log::error!("NativeCurrency::minimum_balance: out: {:?}", out);
+			log::debug!("NativeCurrency::minimum_balance: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::minimum_balance(currency_id);
-			log::error!("MultiCurrencies::minimum_balance: out: {:?}", out);
+			log::debug!("MultiCurrencies::minimum_balance: out: {:?}", out);
 			out
 		}
 	}
@@ -65,11 +65,11 @@ where
 	fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::total_issuance();
-			log::error!("NativeCurrency::total_issuance: out: {:?}", out);
+			log::debug!("NativeCurrency::total_issuance: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::total_issuance(currency_id);
-			log::error!("MultiCurrencies::total_issuance: out: {:?}", out);
+			log::debug!("MultiCurrencies::total_issuance: out: {:?}", out);
 			out
 		}
 	}
@@ -77,11 +77,11 @@ where
 	fn total_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::total_balance(who);
-			log::error!("NativeCurrency::total_balance: out: {:?}", out);
+			log::debug!("NativeCurrency::total_balance: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::balance(currency_id, who);
-			log::error!("MultiCurrencies::balance: out: {:?}", out);
+			log::debug!("MultiCurrencies::balance: out: {:?}", out);
 			out
 		}
 	}
@@ -89,11 +89,11 @@ where
 	fn free_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::free_balance(who);
-			log::error!("NativeCurrency::free_balance: out: {:?}", out);
+			log::debug!("NativeCurrency::free_balance: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::balance(currency_id, who);
-			log::error!("MultiCurrencies::balance: out: {:?}", out);
+			log::debug!("MultiCurrencies::balance: out: {:?}", out);
 			out
 		}
 	}
@@ -104,25 +104,25 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == GetNativeCurrencyId::get() {
-			log::error!(
-				"Show: ensure_can_withdraw: currency_id: {:?}, who: {:?}, amount: {:?}",
+			log::debug!(
+				"PeaqMultiCurrenciesWrapper: ensure_can_withdraw: currency_id: {:?}, who: {:?}, amount: {:?}",
 				currency_id,
 				who,
 				amount
 			);
 
-			let aa = NativeCurrency::ensure_can_withdraw(who, amount);
-			log::error!("Show: ensure_can_withdraw: aa: {:?}", aa);
-			return aa
+			let out = NativeCurrency::ensure_can_withdraw(who, amount);
+			log::debug!("PeaqMultiCurrenciesWrapper: ensure_can_withdraw: out: {:?}", out);
+			return out
 		} else {
-			log::error!(
-				"Show: ensure_can_withdraw: currency_id: {:?}, who: {:?}, amount: {:?}",
+			log::debug!(
+				"PeaqMultiCurrenciesWrapper: ensure_can_withdraw: currency_id: {:?}, who: {:?}, amount: {:?}",
 				currency_id,
 				who,
 				amount
 			);
 			let out = MultiCurrencies::can_withdraw(currency_id, who, amount);
-			log::error!("Show: ensure_can_withdraw: out: {:?}", out);
+			log::debug!("PeaqMultiCurrenciesWrapper: ensure_can_withdraw: out: {:?}", out);
 			if WithdrawConsequence::Success == out {
 				return Ok(())
 			} else {
@@ -142,12 +142,12 @@ where
 		}
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::transfer(from, to, amount);
-			log::error!("NativeCurrency::transfer: out: {:?}", out);
+			log::debug!("NativeCurrency::transfer: out: {:?}", out);
 			out
 		} else {
 			// TODO...
 			let out = MultiCurrencies::transfer(currency_id, from, to, amount, true);
-			log::error!("MultiCurrencies::transfer: out: {:?}", out);
+			log::debug!("MultiCurrencies::transfer: out: {:?}", out);
 			if out.is_ok() {
 				return Ok(())
 			} else {
@@ -166,15 +166,15 @@ where
 		}
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::deposit(who, amount);
-			log::error!("NativeCurrency::deposit: out: {:?}", out);
+			log::debug!("NativeCurrency::deposit: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::mint_into(currency_id, who, amount);
-			log::error!("MultiCurrencies::mint_into: out: {:?}", out);
+			log::debug!("MultiCurrencies::mint_into: out: {:?}", out);
 			if out.is_ok() {
 				return Ok(())
 			} else {
-				log::error!("Show: deposit: out: {:?}", out);
+				log::debug!("PeaqMultiCurrenciesWrapper: deposit: out: {:?}", out);
 				return Err(DispatchError::Other("Deposit failed"))
 			}
 		}
@@ -190,15 +190,15 @@ where
 		}
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::withdraw(who, amount);
-			log::error!("NativeCurrency::withdraw: out: {:?}", out);
+			log::debug!("NativeCurrency::withdraw: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::burn_from(currency_id, who, amount);
-			log::error!("MultiCurrencies::burn_from: out: {:?}", out);
+			log::debug!("MultiCurrencies::burn_from: out: {:?}", out);
 			if out.is_ok() {
 				return Ok(())
 			} else {
-				log::error!("MultiCurrencies::transfer: out: {:?}", out);
+				log::debug!("MultiCurrencies::transfer: out: {:?}", out);
 				return Err(DispatchError::Other("Withdraw failed"))
 			}
 		}
@@ -207,11 +207,11 @@ where
 	fn can_slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> bool {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::can_slash(who, amount);
-			log::error!("NativeCurrency::can_slash: out: {:?}", out);
+			log::debug!("NativeCurrency::can_slash: out: {:?}", out);
 			out
 		} else {
 			let out = Self::free_balance(currency_id, who) >= amount;
-			log::error!("Self::can_slash: out: {:?}", out);
+			log::debug!("Self::can_slash: out: {:?}", out);
 			out
 		}
 	}
@@ -223,93 +223,93 @@ where
 	) -> Self::Balance {
 		if currency_id == GetNativeCurrencyId::get() {
 			let out = NativeCurrency::slash(who, amount);
-			log::error!("NativeCurrency::slash: out: {:?}", out);
+			log::debug!("NativeCurrency::slash: out: {:?}", out);
 			out
 		} else {
 			let out = MultiCurrencies::slash(currency_id, who, amount).ok().unwrap();
-			log::error!("MultiCurrencies::slash: out: {:?}", out);
+			log::debug!("MultiCurrencies::slash: out: {:?}", out);
 			out
 		}
 	}
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
-pub struct PeaqNewLocalAssetAdaptor<Local>(PhantomData<Local>);
+pub struct PeaqLocalAssetHandler<Local>(PhantomData<Local>);
 
-impl<Local, AccountId> LocalAssetHandler<AccountId> for PeaqNewLocalAssetAdaptor<Local>
+impl<Local, AccountId> LocalAssetHandler<AccountId> for PeaqLocalAssetHandler<Local>
 where
 	Local: MultiCurrency<AccountId, CurrencyId = PeaqCurrencyId>,
 	AccountId: Debug,
 {
-	fn local_balance_of(asset_id: NewZenlinkAssetId, who: &AccountId) -> AssetBalance {
+	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!(
-				"PeaqNewLocalAssetAdaptor: local_balance_of: currency_id: {:?}, who: {:?}",
+			log::debug!(
+				"PeaqLocalAssetHandler: local_balance_of: currency_id: {:?}, who: {:?}",
 				currency_id,
 				who
 			);
-			let aa = TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, who))
+			let out = TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, who))
 				.unwrap_or_default();
-			log::error!("PeaqNewLocalAssetAdaptor: local_balance_of: aa: {:?}", aa);
-			return aa
+			log::debug!("PeaqLocalAssetHandler: local_balance_of: out: {:?}", out);
+			return out
 		}
-		log::error!(
-			"fail PeaqNewLocalAssetAdaptor: local_balance_of: asset_id: {:?}, who: {:?}",
+		log::debug!(
+			"PeaqLocalAssetHandler: local_balance_of: asset_id: {:?}, who: {:?}, error",
 			asset_id,
 			who
 		);
 		AssetBalance::default()
 	}
 
-	fn local_total_supply(asset_id: NewZenlinkAssetId) -> AssetBalance {
+	fn local_total_supply(asset_id: ZenlinkAssetId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!(
-				"PeaqNewLocalAssetAdaptor: local_total_supply: currency_id: {:?}",
+			log::debug!(
+				"PeaqLocalAssetHandler: local_total_supply: currency_id: {:?}",
 				currency_id
 			);
-			let aa = TryInto::<AssetBalance>::try_into(Local::total_issuance(currency_id))
+			let out = TryInto::<AssetBalance>::try_into(Local::total_issuance(currency_id))
 				.unwrap_or_default();
-			log::error!("PeaqNewLocalAssetAdaptor: local_total_supply: aa: {:?}", aa);
-			return aa
+			log::debug!("PeaqLocalAssetHandler: local_total_supply: out: {:?}", out);
+			return out
 		}
-		log::error!("fail PeaqNewLocalAssetAdaptor: local_total_supply: asset_id: {:?}", asset_id);
+		log::debug!("fail PeaqLocalAssetHandler: local_total_supply: asset_id: {:?}", asset_id);
 		AssetBalance::default()
 	}
 
-	fn local_minimum_balance(asset_id: NewZenlinkAssetId) -> AssetBalance {
+	fn local_minimum_balance(asset_id: ZenlinkAssetId) -> AssetBalance {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!(
-				"PeaqNewLocalAssetAdaptor: local_minimum_balance: currency_id: {:?}",
+			log::debug!(
+				"PeaqLocalAssetHandler: local_minimum_balance: currency_id: {:?}",
 				currency_id
 			);
-			let aa = TryInto::<AssetBalance>::try_into(Local::minimum_balance(currency_id))
+			let out = TryInto::<AssetBalance>::try_into(Local::minimum_balance(currency_id))
 				.unwrap_or_default();
-			log::error!("PeaqNewLocalAssetAdaptor: local_minimum_balance: aa: {:?}", aa);
-			return aa
+			log::debug!("PeaqLocalAssetHandler: local_minimum_balance: out: {:?}", out);
+			return out
 		}
-		log::error!(
-			"fail PeaqNewLocalAssetAdaptor: local_minimum_balance: asset_id: {:?}",
+		log::debug!(
+			"fail PeaqLocalAssetHandler: local_minimum_balance: asset_id: {:?}",
 			asset_id
 		);
 		AssetBalance::default()
 	}
 
-	fn local_is_exists(asset_id: NewZenlinkAssetId) -> bool {
-		log::error!("PeaqNewLocalAssetAdaptor: local_is_exists: asset_id: {:?}", asset_id);
+	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
+		log::debug!("PeaqLocalAssetHandler: local_is_exists: asset_id: {:?}", asset_id);
 		let currency_id: Result<PeaqCurrencyId, ()> = asset_id.try_into();
-		log::error!("PeaqNewLocalAssetAdaptor: local_is_exists: currency_id: {:?}", currency_id);
+		log::debug!("PeaqLocalAssetHandler: local_is_exists: currency_id: {:?}", currency_id);
 		currency_id.is_ok()
 	}
 
 	fn local_transfer(
-		asset_id: NewZenlinkAssetId,
+		asset_id: ZenlinkAssetId,
 		origin: &AccountId,
 		target: &AccountId,
 		amount: AssetBalance,
 	) -> DispatchResult {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!("PeaqNewLocalAssetAdaptor: local_transfer: currency_id: {:?}, origin: {:?}, target: {:?}, amount: {:?}", currency_id, origin, target, amount);
-			let aa = Local::transfer(
+			log::debug!("PeaqLocalAssetHandler: local_transfer: currency_id: {:?}, origin: {:?}, target: {:?}, amount: {:?}", currency_id, origin, target, amount);
+			let out = Local::transfer(
 				currency_id,
 				origin,
 				target,
@@ -317,32 +317,32 @@ where
 					.try_into()
 					.map_err(|_| DispatchError::Other("convert amount in local transfer"))?,
 			);
-			log::error!("PeaqNewLocalAssetAdaptor: local_transfer: aa: {:?}", aa);
-			return aa
+			log::debug!("PeaqLocalAssetHandler: local_transfer: out: {:?}", out);
+			return out
 		} else {
-			log::error!("fail PeaqNewLocalAssetAdaptor: local_transfer: asset_id: {:?}, origin: {:?}, target: {:?}, amount: {:?}", asset_id, origin, target, amount);
+			log::debug!("fail PeaqLocalAssetHandler: local_transfer: asset_id: {:?}, origin: {:?}, target: {:?}, amount: {:?}", asset_id, origin, target, amount);
 			Err(DispatchError::Other("unknown asset in local transfer"))
 		}
 	}
 
 	fn local_deposit(
-		asset_id: NewZenlinkAssetId,
+		asset_id: ZenlinkAssetId,
 		origin: &AccountId,
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!("PeaqNewLocalAssetAdaptor: local_deposit: currency_id: {:?}, origin: {:?}, amount: {:?}", currency_id, origin, amount);
-			let aa = Local::deposit(
+			log::debug!("PeaqLocalAssetHandler: local_deposit: currency_id: {:?}, origin: {:?}, amount: {:?}", currency_id, origin, amount);
+			let out = Local::deposit(
 				currency_id,
 				origin,
 				amount
 					.try_into()
 					.map_err(|_| DispatchError::Other("convert amount in local deposit"))?,
 			);
-			log::error!("PeaqNewLocalAssetAdaptor: local_deposit: aa: {:?}", aa);
-			aa?
+			log::debug!("PeaqLocalAssetHandler: local_deposit: out: {:?}", out);
+			out?
 		} else {
-			log::error!("fail PeaqNewLocalAssetAdaptor: local_deposit: asset_id: {:?}, origin: {:?}, amount: {:?}", asset_id, origin, amount);
+			log::debug!("fail PeaqLocalAssetHandler: local_deposit: asset_id: {:?}, origin: {:?}, amount: {:?}", asset_id, origin, amount);
 			return Err(DispatchError::Other("unknown asset in local transfer"))
 		}
 
@@ -350,21 +350,21 @@ where
 	}
 
 	fn local_withdraw(
-		asset_id: NewZenlinkAssetId,
+		asset_id: ZenlinkAssetId,
 		origin: &AccountId,
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
 		if let Ok(currency_id) = asset_id.try_into() {
-			log::error!("PeaqNewLocalAssetAdaptor: local_withdraw: currency_id: {:?}, origin: {:?}, amount: {:?}", currency_id, origin, amount);
-			let aa = Local::withdraw(
+			log::debug!("PeaqLocalAssetHandler: local_withdraw: currency_id: {:?}, origin: {:?}, amount: {:?}", currency_id, origin, amount);
+			let out = Local::withdraw(
 				currency_id,
 				origin,
 				amount
 					.try_into()
 					.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
 			);
-			log::error!("PeaqNewLocalAssetAdaptor: local_withdraw: aa: {:?}", aa);
-			aa?;
+			log::debug!("PeaqLocalAssetHandler: local_withdraw: out: {:?}", out);
+			out?;
 		} else {
 			return Err(DispatchError::Other("unknown asset in local transfer"))
 		}
@@ -385,7 +385,7 @@ pub struct NewPaymentConvertInfo {
 	/// Resulting amount-out after token swap.
 	pub amount_out: AssetBalance,
 	/// Zenlink's path of token-pair.
-	pub zen_path: Vec<NewZenlinkAssetId>,
+	pub zen_path: Vec<ZenlinkAssetId>,
 }
 
 // [TODO] Need to modify
@@ -532,7 +532,6 @@ pub trait NewPeaqCurrencyPaymentConvert {
 			)
 			.map_err(|_| map_err_newcurrency2zasset(currency_id))?;
 		}
-		log::error!("QQ Show: ensure_can_withdraw: currency_id: {:?}", currency_id);
 		Ok(currency_id)
 	}
 
@@ -543,17 +542,10 @@ pub trait NewPeaqCurrencyPaymentConvert {
 	) -> Result<(PeaqCurrencyId, Option<NewPaymentConvertInfo>), TransactionValidityError> {
 		let native_id = Self::NativeCurrencyId::get();
 
-		log::error!(
-			"Show: check_currencies_n_priorities: native_id: {:?}, who: {:?} tx_fee: {:?}",
-			native_id,
-			who,
-			tx_fee
-		);
-		let qq = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee);
-		log::error!("Show: ensure_can_withdraw: {:?}", qq);
-		if qq.is_ok() {
+		let out = Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee);
+		if out.is_ok() {
 			log::error!(
-				"Show: check_currencies_n_priorities: native_id: {:?}, who: {:?} tx_fee: {:?}",
+				"NewPeaqCurrencyPaymentConvert: check_currencies_n_priorities: native_id: {:?}, who: {:?} tx_fee: {:?}",
 				native_id,
 				who,
 				tx_fee
@@ -606,12 +598,12 @@ fn map_err_newcurrency2zasset(id: PeaqCurrencyId) -> TransactionValidityError {
 }
 
 /// Adapt other currency traits implementation to `BasicCurrency`.
-pub struct PeaqBasicCurrencyAdapter<Currency>(PhantomData<Currency>);
+pub struct PeaqNativeCurrencyWrapper<Currency>(PhantomData<Currency>);
 
 type PalletBalanceOf<A, Currency> = <Currency as PalletCurrency<A>>::Balance;
 
 // Adapt `frame_support::traits::Currency`
-impl<AccountId, Currency> BasicCurrency<AccountId> for PeaqBasicCurrencyAdapter<Currency>
+impl<AccountId, Currency> BasicCurrency<AccountId> for PeaqNativeCurrencyWrapper<Currency>
 where
 	Currency: PalletCurrency<AccountId>,
 	AccountId: Debug,
@@ -643,7 +635,7 @@ where
 	}
 
 	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance) -> DispatchResult {
-		log::error!("QQ Show: transfer: from: {:?}, to: {:?}, amount: {:?}", from, to, amount);
+		log::debug!("PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}", from, to, amount);
 		Currency::transfer(from, to, amount, ExistenceRequirement::KeepAlive)
 	}
 
@@ -676,7 +668,7 @@ pub struct NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(
 	PhantomData<(T, Local, ExistentialDeposit, AdminAccount)>,
 );
 
-impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<NewZenlinkAssetId>
+impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<ZenlinkAssetId>
 	for NewPeaqZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>
 where
 	Local: fungibles::Create<T::AccountId, AssetId = PeaqCurrencyId, Balance = T::Balance>
@@ -686,9 +678,9 @@ where
 	AdminAccount: Get<T::AccountId>,
 {
 	fn generate_lp_asset_id(
-		asset0: NewZenlinkAssetId,
-		asset1: NewZenlinkAssetId,
-	) -> Option<NewZenlinkAssetId> {
+		asset0: ZenlinkAssetId,
+		asset1: ZenlinkAssetId,
+	) -> Option<ZenlinkAssetId> {
 		let asset_id0: PeaqCurrencyId = asset0.try_into().ok()?;
 		let asset_id1: PeaqCurrencyId = asset1.try_into().ok()?;
 
@@ -703,7 +695,7 @@ where
 		}
 	}
 
-	fn create_lp_asset(asset0: &NewZenlinkAssetId, asset1: &NewZenlinkAssetId) -> Option<()> {
+	fn create_lp_asset(asset0: &ZenlinkAssetId, asset1: &ZenlinkAssetId) -> Option<()> {
 		let asset_id0: PeaqCurrencyId = (*asset0).try_into().ok()?;
 		let asset_id1: PeaqCurrencyId = (*asset1).try_into().ok()?;
 
