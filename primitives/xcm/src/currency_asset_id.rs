@@ -19,10 +19,7 @@ use sp_std::marker::PhantomData;
 /// 2^128-1         Relay chain token (KSM)
 pub type PeaqAssetId = NewCurrencyId;
 
-const PARA_CHAIN_ID: u32 = 2000;
 use sp_std::convert::TryFrom;
-
-// PeaqAssetId <> NewZenlinkAssetId
 
 #[derive(
 	Encode,

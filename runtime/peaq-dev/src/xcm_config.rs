@@ -94,24 +94,6 @@ pub type CurrencyTransactor = CurrencyAdapter<
 	(),
 >;
 
-// impl<T> Convert<PeaqAssetId, Option<MultiLocation>> for PeaqAssetIdConvert<T>
-// where
-// 	T: SysConfig + ParaSysConfig,
-// {
-// 	fn convert(id: PeaqAssetId) -> Option<MultiLocation> {
-// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation,
-// PeaqAssetId>>::reverse(id).ok() 	}
-// }
-//
-// impl<T> Convert<MultiLocation, Option<PeaqAssetId>> for PeaqAssetIdConvert<T>
-// where
-// 	T: SysConfig + ParaSysConfig,
-// {
-// 	fn convert(location: MultiLocation) -> Option<PeaqAssetId> {
-// 		<PeaqAssetIdConvert<T> as xcm_executor::traits::Convert<MultiLocation,
-// PeaqAssetId>>::convert(location).ok() 	}
-// }
-
 /// Used to deposit XCM fees into a destination account.
 ///
 /// Only handles fungible assets for now.
@@ -201,49 +183,6 @@ pub type XcmOriginToCallOrigin = (
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RococoNetwork, RuntimeOrigin>,
 );
-
-/*
- * pub struct PeaqFixedWeightBounds<T, C, M>(PhantomData<(T, C, M)>);
- * impl<T: Get<Weight>, C: Decode + GetDispatchInfo, M: Get<u32>> WeightBounds<C>
- *     for PeaqFixedWeightBounds<T, C, M>
- * {
- *     fn weight(message: &mut Xcm<C>) -> Result<Weight, ()> {
- *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds message: {:?}", message);
- *         let mut instructions_left = M::get();
- *         let haha = Self::weight_with_limit(message, &mut instructions_left);
- *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds weight: {:?}", haha);
- *         haha
- *     }
- *     fn instr_weight(instruction: &Instruction<C>) -> Result<Weight, ()> {
- *         Self::instr_weight_with_limit(instruction, &mut u32::max_value())
- *     }
- * }
- *
- * impl<T: Get<Weight>, C: Decode + GetDispatchInfo, M> PeaqFixedWeightBounds<T, C, M> {
- *     fn weight_with_limit(message: &Xcm<C>, instrs_limit: &mut u32) -> Result<Weight, ()> {
- *         let mut r: Weight = Weight::zero();
- *         *instrs_limit = instrs_limit.checked_sub(message.0.len() as u32).ok_or(())?;
- *         for m in message.0.iter() {
- *             r = r.checked_add(&Self::instr_weight_with_limit(m, instrs_limit)?).ok_or(())?;
- *         }
- *         Ok(r)
- *     }
- *     fn instr_weight_with_limit(
- *         instruction: &Instruction<C>,
- *         instrs_limit: &mut u32,
- *     ) -> Result<Weight, ()> {
- *         let instr_weight = match instruction {
- *             Transact { require_weight_at_most, .. } => *require_weight_at_most,
- *             SetErrorHandler(xcm) | SetAppendix(xcm) => Self::weight_with_limit(xcm,
- * instrs_limit)?,             _ => Weight::zero(),
- *         };
- *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds lnstr_weight: {:?}",
- * instr_weight);         let weight = T::get().checked_add(&instr_weight).ok_or(());
- *         log::error!(target: "xcm::weight", "PeaqFixedWeightBounds now_weight: {:?}", weight);
- *         return weight
- *     }
- * }
- */
 
 parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;

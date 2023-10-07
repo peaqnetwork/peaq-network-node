@@ -18,13 +18,10 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::upper_case_acronyms)]
 
-use codec::{Decode, Encode};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic, RuntimeDebug,
+	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
 };
 use sp_std::prelude::*;
 
@@ -95,41 +92,5 @@ pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 /// pub type BlockId = generic::BlockId<NativeBlock>;
 
 /// Opaque, encoded, unchecked extrinsic.
-
-/// TODO: More documentation
-// [TODO]... Do we need this????
-#[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct TradingPair(CurrencyId, CurrencyId);
-
-impl TradingPair {
-	pub fn from_currency_ids(currency_id_a: CurrencyId, currency_id_b: CurrencyId) -> Option<Self> {
-		if currency_id_a.is_token() && currency_id_b.is_token() && currency_id_a != currency_id_b {
-			if currency_id_a > currency_id_b {
-				Some(TradingPair(currency_id_b, currency_id_a))
-			} else {
-				Some(TradingPair(currency_id_a, currency_id_b))
-			}
-		} else {
-			None
-		}
-	}
-
-	pub fn first(&self) -> CurrencyId {
-		self.0
-	}
-
-	pub fn second(&self) -> CurrencyId {
-		self.1
-	}
-}
-
-impl Decode for TradingPair {
-	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
-		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
-		TradingPair::from_currency_ids(first, second)
-			.ok_or_else(|| codec::Error::from("invalid currency id"))
-	}
-}
 
 pub const MIRRORED_TOKENS_ADDRESS_START: u64 = 0x1000000;
