@@ -48,19 +48,25 @@ impl PeaqCurrencyId {
 		matches!(self, PeaqCurrencyId::LPToken(_, _))
 	}
 
-	pub fn is_native_token(&self) -> bool {
-		if let PeaqCurrencyId::Token(symbol) = self {
-			*symbol == 0 as u64
-		} else {
-			false
-		}
-	}
-
 	// Internal method which simplifies conversions between Zenlink's asset_index
 	pub fn type_index(&self) -> u64 {
 		match self {
 			PeaqCurrencyId::Token(_) => 0,
 			PeaqCurrencyId::LPToken(_, _) => 1,
+		}
+	}
+}
+
+pub trait CurrencyIdExt {
+	fn is_native_token(&self) -> bool;
+}
+
+impl CurrencyIdExt for PeaqCurrencyId {
+	fn is_native_token(&self) -> bool {
+		if let PeaqCurrencyId::Token(symbol) = self {
+			*symbol == 0 as u64
+		} else {
+			false
 		}
 	}
 }

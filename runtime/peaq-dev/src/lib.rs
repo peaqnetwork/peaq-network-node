@@ -91,7 +91,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-use peaq_primitives_xcm::{Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress};
+use peaq_primitives_xcm::{Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
@@ -453,7 +453,8 @@ impl PeaqMultiCurrenciesPaymentConvert for NewPeaqCPC {
 	type ExistentialDeposit = ExistentialDeposit;
 	type NativeCurrencyId = GetNativePeaqCurrencyId;
 	type LocalAcceptedIds = NewPcpcLocalAccepted;
-	type SelfParaId = SelfParaId;
+	type CurrencyId = PeaqCurrencyId;
+	type CurrencyIdToZenlinkId = PeaqCurrencyIdToZenlinkId::<SelfParaId>;
 }
 
 impl pallet_transaction_payment::Config for Runtime {

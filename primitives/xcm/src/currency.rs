@@ -27,7 +27,8 @@ use sp_std::{
 	convert::{Into, TryFrom},
 	marker::PhantomData,
 };
-use zenlink_protocol::GenerateLpAssetId;
+use sp_runtime::traits::Convert;
+use frame_support::traits::Get;
 
 /// This is mystery!
 pub const PARA_CHAIN_ID: u32 = 2000;
@@ -294,14 +295,6 @@ impl CurrencyId {
 		matches!(self, CurrencyId::LPToken(_, _))
 	}
 
-	pub fn is_native_token(&self) -> bool {
-		if let CurrencyId::Token(symbol) = self {
-			symbol.is_native_token()
-		} else {
-			false
-		}
-	}
-
 	// Internal method which simplifies conversions between Zenlink's asset_index
 	fn type_index(&self) -> u64 {
 		match self {
@@ -312,24 +305,12 @@ impl CurrencyId {
 	}
 }
 
-impl TryFrom<CurrencyId> for ZenlinkAssetId {
-	type Error = ();
-
-	fn try_from(currency_id: CurrencyId) -> Result<Self, Self::Error> {
-		match currency_id {
-			CurrencyId::Token(symbol) => Ok(ZenlinkAssetId {
-				chain_id: PARA_CHAIN_ID,
-				asset_type: symbol.as_zenlink_asset_type(),
-				asset_index: symbol.as_zenlink_asset_index(),
-			}),
-			CurrencyId::LPToken(symbol0, symbol1) => Ok(ZenlinkAssetId {
-				chain_id: PARA_CHAIN_ID,
-				asset_type: zenlink_protocol::LOCAL,
-				asset_index: (currency_id.type_index() << 8) +
-					((symbol0 as u64) << 16) +
-					((symbol1 as u64) << 24),
-			}),
-			_ => Err(()),
+impl CurrencyIdExt for CurrencyId {
+	fn is_native_token(&self) -> bool {
+		if let CurrencyId::Token(symbol) = self {
+			symbol.is_native_token()
+		} else {
+			false
 		}
 	}
 }
@@ -361,6 +342,33 @@ impl TryFrom<ZenlinkAssetId> for CurrencyId {
 	}
 }
 
+pub struct CurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
+
+impl<GetParaId> Convert<CurrencyId, Option<ZenlinkAssetId>>
+	for CurrencyIdToZenlinkId<GetParaId>
+where
+	GetParaId: Get<u32>,
+{
+	fn convert(currency_id: CurrencyId) -> Option<ZenlinkAssetId> {
+		match currency_id {
+			CurrencyId::Token(symbol) => Some(ZenlinkAssetId {
+				chain_id: PARA_CHAIN_ID,
+				asset_type: symbol.as_zenlink_asset_type(),
+				asset_index: symbol.as_zenlink_asset_index(),
+			}),
+			CurrencyId::LPToken(symbol0, symbol1) => Some(ZenlinkAssetId {
+				chain_id: PARA_CHAIN_ID,
+				asset_type: zenlink_protocol::LOCAL,
+				// [TODO] Looks likes an issue if symbol0 > 255 or symbol1 > 255
+				asset_index: (currency_id.type_index() << 8) +
+					((symbol0 as u64) << 16) +
+					((symbol1 as u64) << 24),
+			}),
+			_ => None,
+		}
+	}
+}
+
 impl TryFrom<CurrencyId> for EvmAddress {
 	type Error = ();
 
@@ -378,24 +386,6 @@ impl TryFrom<CurrencyId> for EvmAddress {
 impl Default for CurrencyId {
 	fn default() -> Self {
 		CurrencyId::Token(TokenSymbol::PEAQ)
-	}
-}
-
-/// This is the Peaq's default GenerateLpAssetId implementation.
-pub struct PeaqZenlinkLpGenerate<T>(PhantomData<T>);
-
-impl<T> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<T> {
-	fn generate_lp_asset_id(
-		asset0: ZenlinkAssetId,
-		asset1: ZenlinkAssetId,
-	) -> Option<ZenlinkAssetId> {
-		let symbol0 = TokenSymbol::try_from(asset0).ok()?;
-		let symbol1 = TokenSymbol::try_from(asset1).ok()?;
-		ZenlinkAssetId::try_from(CurrencyId::LPToken(symbol0, symbol1)).ok()
-	}
-
-	fn create_lp_asset(_asset0: &ZenlinkAssetId, _asset1: &ZenlinkAssetId) -> Option<()> {
-		Some(())
 	}
 }
 

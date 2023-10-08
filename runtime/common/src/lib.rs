@@ -27,9 +27,11 @@ use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 	LocalAssetHandler,
 };
+use zenlink_protocol::GenerateLpAssetId;
 
 use peaq_primitives_xcm::{
 	currency::parachain, AccountId, Balance, CurrencyId, TokenInfo, TokenSymbol,
+	CurrencyIdToZenlinkId,
 };
 
 pub mod asset;
@@ -296,101 +298,6 @@ pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
 	Some(MultiLocation::new(0, X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?))))
 }
 
-// [TODO] Need to modify
-/// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct PeaqCurrencyAdapter<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
-
-impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqCurrencyAdapter<C, OU, PCPC>
-where
-	T: SysConfig + TransPayConfig + ZenProtConfig,
-	C: Currency<T::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-	PCPC: PeaqCurrencyPaymentConvert<AccountId = T::AccountId, Currency = C>,
-	AssetBalance: From<BalanceOf<C, T>>,
-{
-	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	type Balance = <C as Currency<T::AccountId>>::Balance;
-
-	/// Withdraw the predicted fee from the transaction origin.
-	/// Note: The `fee` already includes the `tip`.
-	fn withdraw_fee(
-		who: &T::AccountId,
-		_call: &T::RuntimeCall,
-		_info: &DispatchInfoOf<T::RuntimeCall>,
-		total_fee: Self::Balance,
-		tip: Self::Balance,
-	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-		if total_fee.is_zero() {
-			return Ok(None)
-		}
-		let inclusion_fee = total_fee - tip;
-
-		let withdraw_reason = if tip.is_zero() {
-			WithdrawReasons::TRANSACTION_PAYMENT
-		} else {
-			WithdrawReasons::TRANSACTION_PAYMENT | WithdrawReasons::TIP
-		};
-
-		// Apply Peaq Economy-of-Things Fee adjustment.
-		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
-		let tx_fee = total_fee.saturating_add(eot_fee);
-
-		// Check if user can withdraw in any valid currency.
-		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
-		if !currency_id.is_native_token() {
-			log!(
-				info,
-				PeaqCurrencyAdapter,
-				"Payment with swap of {:?}-tokens",
-				currency_id.name().unwrap()
-			);
-		}
-
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::KeepAlive) {
-			Ok(imbalance) => Ok(Some(imbalance)),
-			Err(_) => Err(InvalidTransaction::Payment.into()),
-		}
-	}
-
-	/// Hand the fee and the tip over to the `[OnUnbalanced]` implementation.
-	/// Since the predicted fee might have been too high, parts of the fee may
-	/// be refunded.
-	/// Note: The `corrected_fee` already includes the `tip`.
-	fn correct_and_deposit_fee(
-		who: &T::AccountId,
-		_dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-		_post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-		cor_total_fee: Self::Balance,
-		tip: Self::Balance,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<(), TransactionValidityError> {
-		if let Some(paid) = already_withdrawn {
-			// Apply same Peaq Economy-of-Things Fee adjustment as above
-			let cor_inclusion_fee = cor_total_fee - tip;
-			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
-			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
-
-			// Calculate how much refund we should return
-			let refund_amount = paid.peek().saturating_sub(cor_tx_fee);
-			// refund to the the account that paid the fees. If this fails, the
-			// account might have dropped below the existential balance. In
-			// that case we don't refund anything.
-			let refund_imbalance = C::deposit_into_existing(who, refund_amount)
-				.unwrap_or_else(|_| C::PositiveImbalance::zero());
-			// merge the imbalance caused by paying the fees and refunding parts of it again.
-			let adjusted_paid = paid
-				.offset(refund_imbalance)
-				.same()
-				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?;
-			// Call someone else to handle the imbalance (fee and tip separately)
-			let (tip, fee) = adjusted_paid.split(tip);
-
-			OU::on_unbalanceds(Some(fee).into_iter().chain(Some(tip)));
-		}
-		Ok(())
-	}
-}
-
 type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
 type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
@@ -406,112 +313,6 @@ pub struct PaymentConvertInfo {
 	pub zen_path: Vec<ZenlinkAssetId>,
 }
 
-// [TODO] Need to modify
-/// Individual trait to handle payments in non-local currencies. The intention is to keep it as
-/// generic as possible to enable the usage in PeaqCurrencyAdapter.
-pub trait PeaqCurrencyPaymentConvert {
-	/// AccountId type.
-	type AccountId: Parameter
-		+ Member
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ MaybeDisplay
-		+ Ord
-		+ MaxEncodedLen;
-
-	/// Currency type.
-	type Currency: Currency<Self::AccountId>;
-
-	/// MultiCurrency, should be orml-currencies.
-	type MultiCurrency: MultiCurrency<
-		Self::AccountId,
-		CurrencyId = CurrencyId,
-		Balance = BalanceOfA<Self::Currency, Self::AccountId>,
-	>;
-
-	/// Zenlink-DEX-Protocol.
-	type DexOperator: ExportZenlink<Self::AccountId, ZenlinkAssetId>;
-
-	/// Existential deposit.
-	type ExistentialDeposit: Get<BalanceOfA<Self::Currency, Self::AccountId>>;
-
-	/// Local CurrencyId in type of Zenlink's AssetId.
-	type NativeCurrencyId: Get<CurrencyId>;
-
-	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
-	type LocalAcceptedIds: Get<Vec<CurrencyId>>;
-
-	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
-	/// of the choosen currency in dependency of the priority-list and availability of tokens.
-	fn ensure_can_withdraw(
-		who: &Self::AccountId,
-		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
-	) -> Result<CurrencyId, TransactionValidityError> {
-		let (currency_id, option) = Self::check_currencies_n_priorities(who, tx_fee)?;
-
-		if let Some(info) = option {
-			Self::DexOperator::inner_swap_assets_for_exact_assets(
-				who,
-				info.amount_out,
-				info.amount_in,
-				&info.zen_path,
-				who,
-			)
-			.map_err(|_| map_err_currency2zasset(currency_id))?;
-		}
-
-		Ok(currency_id)
-	}
-
-	/// Checks all accepted native currencies and selects the first with enough tokens.
-	fn check_currencies_n_priorities(
-		who: &Self::AccountId,
-		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
-	) -> Result<(CurrencyId, Option<PaymentConvertInfo>), TransactionValidityError> {
-		let native_id = Self::NativeCurrencyId::get();
-
-		if Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee).is_ok() {
-			Ok((native_id, None))
-		} else {
-			// In theory not necessary, but as safety-buffer will add existential deposit.
-			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
-
-			// Prepare ZenlinkAssetId(s) from CurrencyId(s).
-			let native_zen_id = ZenlinkAssetId::try_from(native_id)
-				.map_err(|_| map_err_currency2zasset(native_id))?;
-			let local_ids = Self::LocalAcceptedIds::get();
-
-			// Iterate through all accepted local currencies and check availability.
-			for &local_id in local_ids.iter() {
-				let local_zen_id = ZenlinkAssetId::try_from(local_id)
-					.map_err(|_| map_err_currency2zasset(local_id))?;
-				let zen_path = vec![local_zen_id, native_zen_id];
-				let amount_out: AssetBalance = tx_fee.saturated_into();
-
-				if let Ok(amounts) = Self::DexOperator::get_amount_in_by_path(amount_out, &zen_path)
-				{
-					let amount_in =
-						BalanceOfA::<Self::Currency, Self::AccountId>::saturated_from(amounts[0]);
-					if Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in).is_ok() {
-						let info =
-							PaymentConvertInfo { amount_in: amounts[0], amount_out, zen_path };
-						return Ok((local_id, Some(info)))
-					}
-				}
-			}
-			Err(InvalidTransaction::Payment.into())
-		}
-	}
-}
-
-// [TODO] Need to modify
-fn map_err_currency2zasset(id: CurrencyId) -> TransactionValidityError {
-	InvalidTransaction::Custom(match id {
-		CurrencyId::Token(symbol) => symbol as u8,
-		_ => 255u8,
-	})
-	.into()
-}
 
 #[macro_export]
 macro_rules! log_internal {
@@ -553,4 +354,26 @@ macro_rules! log {
 	($level:tt, $module:tt, $pattern:expr $(, $values:expr)* $(,)?) => {
 		log_internal!($level, core::stringify!($module), log_icon!($module ""), $pattern $(, $values)*)
 	};
+}
+
+// [TODO]... Do we need this?
+/// This is the Peaq's default GenerateLpAssetId implementation.
+pub struct PeaqZenlinkLpGenerate<SelfParaId>(PhantomData<SelfParaId>);
+
+impl<SelfParaId> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<SelfParaId>
+where
+	SelfParaId: Get<u32>,
+{
+	fn generate_lp_asset_id(
+		asset0: ZenlinkAssetId,
+		asset1: ZenlinkAssetId,
+	) -> Option<ZenlinkAssetId> {
+		let symbol0 = TokenSymbol::try_from(asset0).ok()?;
+		let symbol1 = TokenSymbol::try_from(asset1).ok()?;
+		CurrencyIdToZenlinkId::<SelfParaId>::convert(CurrencyId::LPToken(symbol0, symbol1))
+	}
+
+	fn create_lp_asset(_asset0: &ZenlinkAssetId, _asset1: &ZenlinkAssetId) -> Option<()> {
+		Some(())
+	}
 }

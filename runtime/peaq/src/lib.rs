@@ -89,7 +89,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol};
+pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol, CurrencyIdToZenlinkId};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -122,8 +122,8 @@ use zenlink_protocol::{
 };
 
 use runtime_common::{
-	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
-	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqMultiCurrenciesOnChargeTransaction,
+	PeaqMultiCurrenciesPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -447,7 +447,7 @@ parameter_types! {
 
 pub struct PeaqCPC;
 
-impl PeaqCurrencyPaymentConvert for PeaqCPC {
+impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
 	type MultiCurrency = Currencies;
@@ -455,11 +455,13 @@ impl PeaqCurrencyPaymentConvert for PeaqCPC {
 	type ExistentialDeposit = ExistentialDeposit;
 	type NativeCurrencyId = GetNativeCurrencyId;
 	type LocalAcceptedIds = PcpcLocalAccepted;
+	type CurrencyId = CurrencyId;
+	type CurrencyIdToZenlinkId = CurrencyIdToZenlinkId<SelfParaId>;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward, PeaqCPC>;
+	type OnChargeTransaction = PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
