@@ -406,7 +406,7 @@ pub mod parachain {
 		pub const ID: u32 = 3000;
 		pub const BNC_KEY: &[u8] = &[0, 1];
 	}
-	mod moonbase {
+	pub mod moonbase {
 		pub const ID: u32 = 1287;
 		pub const DEV_KEY: &[u8] = &[0, 0];
 	}
