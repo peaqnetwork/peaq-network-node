@@ -438,6 +438,7 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 parameter_types! {
 	// [TODO] Should use the other ways... Maybe use the asset list?
 	pub NewPcpcLocalAccepted: Vec<PeaqCurrencyId> = vec![
+		// [TODO] Should I ass the PeaqCurrencyId::SelfReserve ?
 		PeaqCurrencyId::Token(1),
 		PeaqCurrencyId::Token(3),
 	];
@@ -847,7 +848,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativePeaqCurrencyId: PeaqCurrencyId = PeaqCurrencyId::Token(0);
+	pub const GetNativePeaqCurrencyId: PeaqCurrencyId = PeaqCurrencyId::SelfReserve;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {

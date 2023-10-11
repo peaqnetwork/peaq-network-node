@@ -6,13 +6,16 @@ use super::{
 use frame_support::{
 	dispatch::Weight,
 	match_types, parameter_types,
-	traits::{fungibles, ContainsPair, Everything, Nothing},
+	traits::{fungibles, ContainsPair, Everything, Nothing, PalletInfoAccess},
 };
+use sp_std::borrow::Borrow;
+use sp_runtime::traits::Convert;
+use xc_asset_config::XcAssetLocation;
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
-use peaq_primitives_xcm::{FixedRateOfForeignAsset, PeaqCurrencyIdConvert};
+use peaq_primitives_xcm::{FixedRateOfForeignAsset};
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::AccountIdToMultiLocation;
 use sp_runtime::traits::ConstU32;
@@ -46,13 +49,63 @@ use xcm_builder::{
 	UsingComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
+use codec::{Decode, Encode};
+use sp_core::bounded::BoundedVec;
 
 use frame_support::pallet_prelude::Get;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
-pub type PeaqAssetLocationIdConverter = PeaqCurrencyIdConvert<PeaqCurrencyId, XcAssetConfig>;
+/// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
+pub struct PeaqCurrencyIdConvert<AssetMapper>(PhantomData<AssetMapper>);
+
+impl<AssetMapper> xcm_executor::traits::Convert<MultiLocation, PeaqCurrencyId>
+	for PeaqCurrencyIdConvert<AssetMapper>
+where
+	AssetMapper: XcAssetLocation<PeaqCurrencyId>,
+{
+	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqCurrencyId, ()> {
+		let location = location.borrow().clone();
+		if location == SelfReserve::get() {
+			return Ok(PeaqCurrencyId::SelfReserve);
+		}
+		if let Some(asset_id) = AssetMapper::get_asset_id(location) {
+			Ok(asset_id)
+		} else {
+			Err(())
+		}
+	}
+
+	fn reverse_ref(id: impl Borrow<PeaqCurrencyId>) -> Result<MultiLocation, ()> {
+		let id = id.borrow().clone();
+		if id == PeaqCurrencyId::SelfReserve {
+			return Ok(SelfReserve::get());
+		}
+		if let Some(multilocation) = AssetMapper::get_xc_asset_location(id) {
+			Ok(multilocation)
+		} else {
+			Err(())
+		}
+	}
+}
+
+impl<AssetMapper> Convert<PeaqCurrencyId, Option<MultiLocation>>
+	for PeaqCurrencyIdConvert<AssetMapper>
+where
+	AssetMapper: XcAssetLocation<PeaqCurrencyId>,
+{
+	fn convert(id: PeaqCurrencyId) -> Option<MultiLocation> {
+		<PeaqCurrencyIdConvert<AssetMapper> as xcm_executor::traits::Convert<
+			MultiLocation,
+			PeaqCurrencyId,
+		>>::reverse(id)
+		.ok()
+	}
+}
+
+
+pub type PeaqAssetLocationIdConverter = PeaqCurrencyIdConvert<XcAssetConfig>;
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -61,6 +114,14 @@ parameter_types! {
 	X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 	pub PeaqLocation: MultiLocation = Here.into_location();
 	pub DummyCheckingAccount: AccountId = PolkadotXcm::check_account();
+
+    pub SelfReserve: MultiLocation = MultiLocation::new(
+        0,
+        X1(GeneralKey {
+            data: [0; 32],
+            length: 2
+            })
+    );
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -85,7 +146,7 @@ pub type CurrencyTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<PeaqLocation>,
+	IsConcrete<SelfReserve>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -207,7 +268,7 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 >;
 
 pub type Trader = (
-	UsingComponents<WeightToFee, PeaqLocation, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserve, AccountId, Balances, BlockReward>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 

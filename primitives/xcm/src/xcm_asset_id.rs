@@ -9,47 +9,6 @@ use xcm::latest::{
 use xcm_builder::TakeRevenue;
 use xcm_executor::traits::WeightTrader;
 
-/// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct PeaqCurrencyIdConvert<AssetId, AssetMapper>(PhantomData<(AssetId, AssetMapper)>);
-
-impl<AssetId, AssetMapper> xcm_executor::traits::Convert<MultiLocation, AssetId>
-	for PeaqCurrencyIdConvert<AssetId, AssetMapper>
-where
-	AssetId: Clone + Eq,
-	AssetMapper: XcAssetLocation<AssetId>,
-{
-	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-		if let Some(asset_id) = AssetMapper::get_asset_id(location.borrow().clone()) {
-			Ok(asset_id)
-		} else {
-			Err(())
-		}
-	}
-
-	fn reverse_ref(id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
-		if let Some(multilocation) = AssetMapper::get_xc_asset_location(id.borrow().clone()) {
-			Ok(multilocation)
-		} else {
-			Err(())
-		}
-	}
-}
-
-impl<AssetId, AssetMapper> Convert<AssetId, Option<MultiLocation>>
-	for PeaqCurrencyIdConvert<AssetId, AssetMapper>
-where
-	AssetId: Clone + Eq,
-	AssetMapper: XcAssetLocation<AssetId>,
-{
-	fn convert(id: AssetId) -> Option<MultiLocation> {
-		<PeaqCurrencyIdConvert<AssetId, AssetMapper> as xcm_executor::traits::Convert<
-			MultiLocation,
-			AssetId,
-		>>::reverse(id)
-		.ok()
-	}
-}
-
 // [TODO] Need to check
 /// Used as weight trader for foreign assets.
 ///

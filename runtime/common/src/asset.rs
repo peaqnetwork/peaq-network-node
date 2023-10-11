@@ -525,11 +525,20 @@ where
 		let asset_id1: PeaqCurrencyId = asset1.try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
+			(PeaqCurrencyId::SelfReserve, PeaqCurrencyId::Token(symbol1)) => {
+				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
+					0, symbol1,
+				))
+			},
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::SelfReserve) => {
+				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
+					0, symbol0,
+				))
+			},
 			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) => {
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					symbol0, symbol1,
 				))
-				//				PeaqCurrencyId::LPToken(symbol0, symbol1).try_into().ok()
 			},
 			(_, _) => None,
 		}
@@ -540,6 +549,18 @@ where
 		let asset_id1: PeaqCurrencyId = (*asset1).try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::SelfReserve) => {
+				let lp_currency = PeaqCurrencyId::LPToken(0, symbol0);
+				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get())
+					.ok()?;
+				Some(())
+			},
+			(PeaqCurrencyId::SelfReserve, PeaqCurrencyId::Token(symbol1)) => {
+				let lp_currency = PeaqCurrencyId::LPToken(0, symbol1);
+				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get())
+					.ok()?;
+				Some(())
+			},
 			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) => {
 				let lp_currency = PeaqCurrencyId::LPToken(symbol0, symbol1);
 				Local::create(lp_currency, AdminAccount::get(), true, ExistentialDeposit::get())
