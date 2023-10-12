@@ -2667,6 +2667,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-accounts"
+version = "2.18.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "libsecp256k1",
+ "orml-currencies",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "precompile-utils",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "evm-core"
 version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

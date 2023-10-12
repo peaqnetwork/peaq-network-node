@@ -32,7 +32,7 @@ pub mod evm;
 mod tests;
 pub mod xcm_asset_id;
 
-pub use crate::{currency_asset_id::*, evm::EvmAddress, xcm_asset_id::*};
+pub use crate::{currency_asset_id::*, evm::*, xcm_asset_id::*};
 pub use currency::*;
 
 /// An index to a block.
