@@ -349,7 +349,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 	fn call(
 		&mut self,
 		address: H160,
-		transfer: Option<evm::Transfer>,
+		transfer: Option<fp_evm::Transfer>,
 		input: Vec<u8>,
 		target_gas: Option<u64>,
 		is_static: bool,
