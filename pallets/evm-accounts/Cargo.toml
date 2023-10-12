@@ -4,6 +4,7 @@ version = "2.18.0"
 edition = "2021"
 
 [dependencies]
+log = { workspace = true, default-features = false }
 parity-scale-codec = { workspace = true, default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false, features = ["hmac", "static-context"], optional = true }
 scale-info = { workspace = true }
@@ -29,6 +30,7 @@ orml-tokens = { workspace = true, default-features = false }
 [features]
 default = ["std"]
 std = [
+	"log/std",
 	"parity-scale-codec/std",
 	"libsecp256k1",
 	"libsecp256k1/std",

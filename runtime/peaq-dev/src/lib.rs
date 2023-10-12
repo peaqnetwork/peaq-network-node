@@ -39,6 +39,9 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
+// [TODO] Rename
+use evm_accounts::EvmAddressMapping;
+use evm_accounts::EVMAddressMapping;
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -76,6 +79,7 @@ use parachain_staking::reward_rate::RewardRateInfo;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
+	AddressMapping,
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
@@ -604,7 +608,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = Runtime;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -969,6 +973,7 @@ construct_runtime!(
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
 		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
+		EVMAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 41,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1042,6 +1047,7 @@ mod benches {
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
 		[xc_asset_config, XCAssetConfig]
+		[evm_accounts, EVMAccounts]
 	);
 }
 
@@ -1858,6 +1864,15 @@ impl xc_asset_config::Config for Runtime {
 	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
 
+impl evm_accounts::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type AddressMapping = EvmAddressMapping<Runtime>;
+	type ChainId = EvmChainId;
+	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
+}
+
+
 // Move to primitives
 impl EVMAddressToAssetId<PeaqCurrencyId> for Runtime {
 	fn address_to_asset_id(address: H160) -> Option<PeaqCurrencyId> {
@@ -1866,5 +1881,12 @@ impl EVMAddressToAssetId<PeaqCurrencyId> for Runtime {
 
 	fn asset_id_to_address(asset_id: PeaqCurrencyId) -> H160 {
 		PeaqCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	}
+}
+
+impl AddressMapping<AccountId> for Runtime
+{
+	fn into_account_id(address: H160) -> AccountId {
+		EvmAddressMapping::<Runtime>::get_account_id(&address)
 	}
 }

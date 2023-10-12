@@ -36,7 +36,7 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use precompile_utils::prelude::keccak256;
 // use module_support::{AddressMapping, EVMAccountsManager};
-use orml_traits::currency::TransferAll;
+// use orml_traits::currency::TransferAll;
 use peaq_primitives_xcm::{evm::EvmAddress, to_bytes, AccountIndex};
 use sp_core::crypto::AccountId32;
 use sp_core::{H160, H256};
@@ -80,8 +80,11 @@ pub mod module {
 		#[pallet::constant]
 		type ChainId: Get<u64>;
 
-		/// Merge free balance from source to dest.
-		type TransferAll: TransferAll<Self::AccountId>;
+		/*
+		 * /// TODO, transfer all assets?
+		 * /// Merge free balance from source to dest.
+		 * type TransferAll: TransferAll<Self::AccountId>;
+		 */
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;

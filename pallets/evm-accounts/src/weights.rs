@@ -53,8 +53,8 @@ pub trait WeightInfo {
 }
 
 /// Weights for module_evm_accounts using the Acala node and recommended hardware.
-pub struct AcalaWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for AcalaWeight<T> {
+pub struct SubstrateWeight<T>(PhantomData<T>);
+impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn claim_account() -> Weight {
 		Weight::from_parts(340_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
