@@ -7,35 +7,33 @@ use cumulus_primitives_core::ParaId;
 use frame_support::{
 	pallet_prelude::*,
 	parameter_types,
-	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
+	traits::{Get},
 };
 use frame_system::Config as SysConfig;
 use orml_traits::{currency::MutationHooks, MultiCurrency};
-use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
 use sp_core::bounded::BoundedVec;
 use sp_runtime::{
 	traits::{
-		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
-		Saturating, Zero,
+		Convert,
 	},
 	Perbill, RuntimeString,
 };
-use sp_std::convert::TryFrom;
-use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
+use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
-	LocalAssetHandler,
+	AssetBalance, AssetId as ZenlinkAssetId,
+	GenerateLpAssetId, LocalAssetHandler,
 };
-use zenlink_protocol::GenerateLpAssetId;
 
 use peaq_primitives_xcm::{
-	currency::parachain, AccountId, Balance, CurrencyId, TokenInfo, TokenSymbol,
-	CurrencyIdToZenlinkId,
+	currency::parachain, AccountId, Balance, CurrencyId, CurrencyIdToZenlinkId,
+	TokenSymbol,
 };
 
 pub mod asset;
 pub use asset::*;
+pub mod xcm_impls;
+pub use xcm_impls::*;
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;
@@ -72,7 +70,8 @@ where
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
 pub struct LocalAssetAdaptor<Local, CurrencyId>(PhantomData<(Local, CurrencyId)>);
 
-impl<Local, CurrencyId, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local, CurrencyId>
+impl<Local, CurrencyId, AccountId> LocalAssetHandler<AccountId>
+	for LocalAssetAdaptor<Local, CurrencyId>
 where
 	Local: MultiCurrency<AccountId, CurrencyId = CurrencyId>,
 	CurrencyId: TryFrom<ZenlinkAssetId>,
@@ -298,10 +297,6 @@ pub fn local_currency_location(key: CurrencyId) -> Option<MultiLocation> {
 	Some(MultiLocation::new(0, X1(Junction::from(BoundedVec::try_from(key.encode()).ok()?))))
 }
 
-type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
-type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
-type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
-
 /// Simple encapsulation of multiple return values.
 #[derive(Debug)]
 pub struct PaymentConvertInfo {
@@ -312,7 +307,6 @@ pub struct PaymentConvertInfo {
 	/// Zenlink's path of token-pair.
 	pub zen_path: Vec<ZenlinkAssetId>,
 }
-
 
 #[macro_export]
 macro_rules! log_internal {

@@ -67,7 +67,7 @@ pub trait CurrencyIdExt {
 
 impl CurrencyIdExt for PeaqCurrencyId {
 	fn is_native_token(&self) -> bool {
-		return PeaqCurrencyId::SelfReserve == *self;
+		return PeaqCurrencyId::SelfReserve == *self
 	}
 }
 
@@ -94,7 +94,7 @@ impl TryFrom<u64> for PeaqCurrencyId {
 
 	fn try_from(index: u64) -> Result<Self, Self::Error> {
 		if index == 0 {
-			return Ok(PeaqCurrencyId::SelfReserve);
+			return Ok(PeaqCurrencyId::SelfReserve)
 		}
 		let type_index = (index & 0x0000_0000_0000_ff00) >> 8 as u8;
 		match type_index {
@@ -137,9 +137,11 @@ where
 	fn convert(currency_id: PeaqCurrencyId) -> Option<ZenlinkAssetId> {
 		let asset_index = <PeaqCurrencyId as TryInto<u64>>::try_into(currency_id).ok()?;
 		match currency_id {
-			PeaqCurrencyId::SelfReserve => {
-				Some(ZenlinkAssetId { chain_id: GetParaId::get(), asset_type: zenlink_protocol::NATIVE, asset_index })
-			},
+			PeaqCurrencyId::SelfReserve => Some(ZenlinkAssetId {
+				chain_id: GetParaId::get(),
+				asset_type: zenlink_protocol::NATIVE,
+				asset_index,
+			}),
 			PeaqCurrencyId::Token(symbol) => {
 				let asset_type =
 					if symbol == 0 { zenlink_protocol::NATIVE } else { zenlink_protocol::LOCAL };

@@ -1,4 +1,4 @@
-use crate::EoTFeeFactor;
+use crate::{EoTFeeFactor, PaymentConvertInfo};
 use frame_support::{
 	ensure,
 	pallet_prelude::{
@@ -21,10 +21,9 @@ use sp_runtime::traits::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use zenlink_protocol::GenerateLpAssetId;
-use crate::PaymentConvertInfo;
 
 use frame_support::traits::Currency as PalletCurrency;
-use peaq_primitives_xcm::{PeaqCurrencyId, PeaqCurrencyIdToZenlinkId, CurrencyIdExt};
+use peaq_primitives_xcm::{CurrencyIdExt, PeaqCurrencyId, PeaqCurrencyIdToZenlinkId};
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
@@ -280,7 +279,12 @@ where
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
 		if !currency_id.is_native_token() {
-			log!(info, PeaqMultiCurrenciesOnChargeTransaction, "Payment with swap of {:?}-tokens", currency_id);
+			log!(
+				info,
+				PeaqMultiCurrenciesOnChargeTransaction,
+				"Payment with swap of {:?}-tokens",
+				currency_id
+			);
 		}
 
 		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath) {
@@ -411,8 +415,10 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 			// Iterate through all accepted local currencies and check availability.
 			for &local_id in local_ids.iter() {
 				// TODO
-				let local_zen_id = Self::CurrencyIdToZenlinkId::convert(local_id)
-					.ok_or_else(|| TransactionValidityError::Invalid(InvalidTransaction::Custom(55)))?;
+				let local_zen_id =
+					Self::CurrencyIdToZenlinkId::convert(local_id).ok_or_else(|| {
+						TransactionValidityError::Invalid(InvalidTransaction::Custom(55))
+					})?;
 				let zen_path = vec![local_zen_id, native_zen_id];
 				let amount_out: AssetBalance = tx_fee.saturated_into();
 
@@ -525,21 +531,18 @@ where
 		let asset_id1: PeaqCurrencyId = asset1.try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
-			(PeaqCurrencyId::SelfReserve, PeaqCurrencyId::Token(symbol1)) => {
+			(PeaqCurrencyId::SelfReserve, PeaqCurrencyId::Token(symbol1)) =>
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					0, symbol1,
-				))
-			},
-			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::SelfReserve) => {
+				)),
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::SelfReserve) =>
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					0, symbol0,
-				))
-			},
-			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) => {
+				)),
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) =>
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					symbol0, symbol1,
-				))
-			},
+				)),
 			(_, _) => None,
 		}
 	}
@@ -571,3 +574,4 @@ where
 		}
 	}
 }
+

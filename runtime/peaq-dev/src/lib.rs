@@ -91,7 +91,9 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-use peaq_primitives_xcm::{Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId};
+use peaq_primitives_xcm::{
+	Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId,
+};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
@@ -125,9 +127,10 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, LocalAssetAdaptor,
-	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper,
-	PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
+	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
+	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
+	MILLICENTS,
 };
 
 /// An index to a block.
@@ -455,12 +458,13 @@ impl PeaqMultiCurrenciesPaymentConvert for NewPeaqCPC {
 	type NativeCurrencyId = GetNativePeaqCurrencyId;
 	type LocalAcceptedIds = NewPcpcLocalAccepted;
 	type CurrencyId = PeaqCurrencyId;
-	type CurrencyIdToZenlinkId = PeaqCurrencyIdToZenlinkId::<SelfParaId>;
+	type CurrencyIdToZenlinkId = PeaqCurrencyIdToZenlinkId<SelfParaId>;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, NewPeaqCPC>;
+	type OnChargeTransaction =
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, NewPeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -903,8 +907,11 @@ type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
 >;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets =
-	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<PeaqMultiCurrencies, PeaqCurrencyId>>;
+pub type MultiAssets = ZenlinkMultiAssets<
+	ZenlinkProtocol,
+	Balances,
+	LocalAssetAdaptor<PeaqMultiCurrencies, PeaqCurrencyId>,
+>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

@@ -19,16 +19,15 @@
 use crate::{evm::EvmAddress, *};
 use bstringify::bstringify;
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::traits::Get;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::{
 	convert::{Into, TryFrom},
 	marker::PhantomData,
 };
-use sp_runtime::traits::Convert;
-use frame_support::traits::Get;
 
 /// This is mystery!
 pub const PARA_CHAIN_ID: u32 = 2000;
@@ -344,8 +343,7 @@ impl TryFrom<ZenlinkAssetId> for CurrencyId {
 
 pub struct CurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<CurrencyId, Option<ZenlinkAssetId>>
-	for CurrencyIdToZenlinkId<GetParaId>
+impl<GetParaId> Convert<CurrencyId, Option<ZenlinkAssetId>> for CurrencyIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {

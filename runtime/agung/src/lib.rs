@@ -89,7 +89,9 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol, CurrencyIdToZenlinkId};
+pub use peaq_primitives_xcm::{
+	currency, Amount, Balance, CurrencyId, CurrencyIdToZenlinkId, TokenSymbol,
+};
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 
 pub use peaq_pallet_did;
@@ -122,8 +124,9 @@ use zenlink_protocol::{
 };
 
 use runtime_common::{
-	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqMultiCurrenciesOnChargeTransaction,
-	PeaqMultiCurrenciesPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier,
+	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, TransactionByteFee,
+	CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -453,7 +456,8 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
+	type OnChargeTransaction =
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -912,7 +916,8 @@ parameter_types! {
 }
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies, CurrencyId>>;
+pub type MultiAssets =
+	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies, CurrencyId>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

@@ -29,6 +29,7 @@ xcm = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
+xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 
 
 [features]
@@ -54,4 +55,5 @@ std = [
     "xcm-executor/std",
 	"xcm-builder/std",
 	"zenlink-protocol/std",
+	"xc-asset-config/std",
 ]
