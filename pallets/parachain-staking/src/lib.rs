@@ -209,7 +209,6 @@ pub mod pallet {
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -2625,8 +2624,8 @@ pub mod pallet {
 		// }
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_ref_time(0_u64);
-			let mut writes = Weight::from_ref_time(0_u64);
+			let mut reads = Weight::from_parts(0, 1);
+			let mut writes = Weight::from_parts(0, 1);
 
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
