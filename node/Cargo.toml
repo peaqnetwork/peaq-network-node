@@ -18,7 +18,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.38"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies]
 peaq-dev-runtime = { path = "../runtime/peaq-dev", version = "3.0.0-polkadot-v0.9.38" }
@@ -48,7 +48,6 @@ sc-client-api = { workspace = true, default-features = true }
 sc-consensus = { workspace = true, default-features = true }
 sc-consensus-aura = { workspace = true, default-features = true }
 sc-executor = { workspace = true, default-features = true }
-sc-finality-grandpa = { workspace = true, default-features = true }
 sc-keystore = { workspace = true, default-features = true }
 sc-rpc = { workspace = true, default-features = true }
 sc-rpc-api = { workspace = true, default-features = true }
@@ -62,7 +61,6 @@ sp-blockchain = { workspace = true, default-features = true }
 sp-consensus = { workspace = true, default-features = true }
 sp-consensus-aura = { workspace = true, default-features = true }
 sp-core = { workspace = true, default-features = true }
-sp-finality-grandpa = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 sp-timestamp = { workspace = true, default-features = true }
 substrate-frame-rpc-system = { workspace = true, default-features = true }

@@ -14,7 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.38"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies]
 codec = { package = "parity-scale-codec", workspace = true, default-features = false }
@@ -29,7 +29,7 @@ frame-system-rpc-runtime-api = { workspace = true, default-features = false }
 hex-literal = { workspace = true, default-features = false, optional = true  }
 pallet-aura = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
-pallet-randomness-collective-flip = { workspace = true, default-features = false }
+pallet-insecure-randomness-collective-flip = { workspace = true, default-features = false }
 pallet-sudo = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
@@ -162,7 +162,7 @@ std = [
 	"frame-system/std",
 	"pallet-aura/std",
 	"pallet-balances/std",
-	"pallet-randomness-collective-flip/std",
+	"pallet-insecure-randomness-collective-flip/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -281,7 +281,7 @@ try-runtime = [
 
 	"pallet-aura/try-runtime",
 	"pallet-balances/try-runtime",
-	"pallet-randomness-collective-flip/try-runtime",
+	"pallet-insecure-randomness-collective-flip/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-evm/try-runtime",
