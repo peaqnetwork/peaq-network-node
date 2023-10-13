@@ -348,8 +348,8 @@ where
 	}
 }
 
-pub struct CallKillAccount<T>(PhantomData<T>);
-impl<T: Config> OnKilledAccount<T::AccountId> for CallKillAccount<T> {
+pub struct CallKillEVMLinkAccount<T>(PhantomData<T>);
+impl<T: Config> OnKilledAccount<T::AccountId> for CallKillEVMLinkAccount<T> {
 	fn on_killed_account(who: &T::AccountId) {
 		// remove mapping created by `claim_account` or `get_or_create_evm_address`
 		if let Some(evm_addr) = Pallet::<T>::evm_addresses(who) {

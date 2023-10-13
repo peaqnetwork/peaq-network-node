@@ -40,8 +40,7 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 // [TODO] Rename
-use evm_accounts::EvmAddressMapping;
-use evm_accounts::EVMAddressMapping;
+use evm_accounts::{EvmAddressMapping, CallKillEVMLinkAccount, EVMAddressMapping};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -315,7 +314,9 @@ impl frame_system::Config for Runtime {
 	/// What to do if a new account is created.
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
+	type OnKilledAccount = (
+		CallKillEVMLinkAccount<Runtime>,
+	);
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
