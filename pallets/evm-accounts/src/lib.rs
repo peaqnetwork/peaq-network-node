@@ -35,29 +35,33 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use precompile_utils::prelude::keccak256;
-// use module_support::{AddressMapping, EVMAccountsManager};
-// use orml_traits::currency::TransferAll;
-use peaq_primitives_xcm::{evm::EvmAddress, to_bytes, AccountIndex};
+use pallet_evm::{
+	AddressMapping as PalletEVMAddressMapping,
+};
+
+use peaq_primitives_xcm::{evm::EvmAddress, to_bytes};
 use sp_core::crypto::AccountId32;
 use sp_core::{H160, H256};
 use sp_io::{
 	crypto::secp256k1_ecdsa_recover,
-	hashing::{blake2_256, keccak_256},
+	hashing::{keccak_256},
 };
 use sp_runtime::{
-	traits::{LookupError, StaticLookup, Zero},
-	MultiAddress,
+	traits::{Zero},
 };
 use sp_std::{marker::PhantomData, vec::Vec};
+use sp_runtime::traits::Convert;
 
 mod traits;
 mod mock;
 mod tests;
+mod convert_impl;
 pub mod weights;
 
 pub use traits::EVMAddressMapping;
 pub use module::*;
 pub use weights::WeightInfo;
+use convert_impl::*;
 
 /// A signature (a 512-bit value, plus 8 bits for recovery ID).
 pub type Eip712Signature = [u8; 65];
@@ -73,9 +77,12 @@ pub mod module {
 		/// The Currency for managing Evm account assets.
 		type Currency: Currency<Self::AccountId>;
 
-		/// Mapping from address to account id.
-		type AddressMapping: EVMAddressMapping<Self::AccountId>;
-
+		type OriginAddressMapping: PalletEVMAddressMapping<Self::AccountId>;
+/*
+ *         /// Mapping from address to account id.
+ *         type AddressMapping: EVMAddressMapping<Self::AccountId>;
+ *
+ */
 		/// Chain ID of EVM.
 		#[pallet::constant]
 		type ChainId: Get<u64>;
@@ -184,17 +191,6 @@ pub mod module {
 
 			Ok(())
 		}
-
-		/// Claim account mapping between Substrate accounts and a generated EVM
-		/// address based off of those accounts.
-		/// Ensure eth_address has not been mapped
-		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::claim_default_account())]
-		pub fn claim_default_account(origin: OriginFor<T>) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			let _ = Self::do_claim_default_evm_address(who)?;
-			Ok(())
-		}
 	}
 }
 
@@ -257,15 +253,6 @@ impl<T: Config> Pallet<T> {
 		domain_seperator_msg.extend_from_slice(frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref()); // genesis block hash
 		keccak_256(domain_seperator_msg.as_slice())
 	}
-
-	fn do_claim_default_evm_address(who: T::AccountId) -> Result<EvmAddress, DispatchError> {
-		// ensure account_id has not been mapped
-		ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
-
-		let eth_address = T::AddressMapping::get_or_create_evm_address(&who);
-
-		Ok(eth_address)
-	}
 }
 
 fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
@@ -274,29 +261,24 @@ fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
 		.ok()
 }
 
-// Creates an EvmAddress from an AccountId by appending the bytes "evm:" to
-// the account_id and hashing it.
-fn account_to_default_evm_address(account_id: &impl Encode) -> EvmAddress {
-	let payload = (b"evm:", account_id);
-	EvmAddress::from_slice(&payload.using_encoded(blake2_256)[0..20])
-}
-
-pub struct EvmAddressMapping<T>(sp_std::marker::PhantomData<T>);
-
-impl<T: Config> EVMAddressMapping<T::AccountId> for EvmAddressMapping<T>
+impl<T: Config> PalletEVMAddressMapping<T::AccountId> for Pallet<T>
 where
 	T::AccountId: IsType<AccountId32>,
+	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
+{
+	fn into_account_id(address: EvmAddress) -> T::AccountId {
+		EVMAddressToAccountId::<T>::convert(address)
+	}
+}
+
+impl<T: Config> EVMAddressMapping<T::AccountId> for Pallet<T>
+where
+	T::AccountId: IsType<AccountId32>,
+	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
 {
 	// Returns the AccountId used to generate the given EvmAddress.
 	fn get_account_id(address: &EvmAddress) -> T::AccountId {
-		if let Some(acc) = Accounts::<T>::get(address) {
-			acc
-		} else {
-			let mut data: [u8; 32] = [0u8; 32];
-			data[0..4].copy_from_slice(b"evm:");
-			data[4..24].copy_from_slice(&address[..]);
-			AccountId32::from(data).into()
-		}
+		Self::into_account_id(*address)
 	}
 
 	// Returns the EvmAddress associated with a given AccountId or the
@@ -304,47 +286,13 @@ where
 	// Returns None if there is no EvmAddress associated with the AccountId
 	// and there is no underlying EvmAddress in the AccountId.
 	fn get_evm_address(account_id: &T::AccountId) -> Option<EvmAddress> {
-		// Return the EvmAddress if a mapping to account_id exists
-		EvmAddresses::<T>::get(account_id).or_else(|| {
-			let data: &[u8] = account_id.into_ref().as_ref();
-			// Return the underlying EVM address if it exists otherwise return None
-			if data.starts_with(b"evm:") {
-				Some(EvmAddress::from_slice(&data[4..24]))
-			} else {
-				None
-			}
-		})
-	}
-
-	// Returns the EVM address associated with an account ID and generates an
-	// account mapping if no association exists.
-	fn get_or_create_evm_address(account_id: &T::AccountId) -> EvmAddress {
-		Self::get_evm_address(account_id).unwrap_or_else(|| {
-			let addr = account_to_default_evm_address(account_id);
-
-			// create reverse mapping
-			Accounts::<T>::insert(addr, account_id);
-			EvmAddresses::<T>::insert(account_id, addr);
-
-			Pallet::<T>::deposit_event(Event::ClaimAccount {
-				account_id: account_id.clone(),
-				evm_address: addr,
-			});
-
-			addr
-		})
-	}
-
-	// Returns the default EVM address associated with an account ID.
-	fn get_default_evm_address(account_id: &T::AccountId) -> EvmAddress {
-		account_to_default_evm_address(account_id)
+		AccountIdToEVMAddress::<T>::convert(account_id.clone())
 	}
 
 	// Returns true if a given AccountId is associated with a given EvmAddress
 	// and false if is not.
 	fn is_linked(account_id: &T::AccountId, evm: &EvmAddress) -> bool {
 		Self::get_evm_address(account_id).as_ref() == Some(evm)
-			|| &account_to_default_evm_address(account_id.into_ref()) == evm
 	}
 }
 
@@ -374,27 +322,6 @@ impl<T: Config> OnKilledAccount<T::AccountId> for CallKillEVMLinkAccount<T> {
  *
  *     fn unlookup(a: Self::Target) -> Self::Source {
  *         MultiAddress::Id(a)
- *     }
- * }
- */
-
-/*
- * impl<T: Config> EVMAccountsManager<T::AccountId> for Pallet<T> {
- *     /// Returns the AccountId used to generate the given EvmAddress.
- *     fn get_account_id(address: &EvmAddress) -> T::AccountId {
- *         T::AddressMapping::get_account_id(address)
- *     }
- *
- *     /// Returns the EvmAddress associated with a given AccountId or the underlying EvmAddress of the
- *     /// AccountId.
- *     fn get_evm_address(account_id: &T::AccountId) -> Option<EvmAddress> {
- *         T::AddressMapping::get_evm_address(account_id)
- *     }
- *
- *     /// Claim account mapping between AccountId and a generated EvmAddress based off of the
- *     /// AccountId.
- *     fn claim_default_evm_address(account_id: &T::AccountId) -> Result<EvmAddress, DispatchError> {
- *         Self::do_claim_default_evm_address(account_id.clone())
  *     }
  * }
  */

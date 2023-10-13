@@ -39,8 +39,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
-// [TODO] Rename
-use evm_accounts::{EvmAddressMapping, CallKillEVMLinkAccount, EVMAddressMapping};
+use evm_accounts::{CallKillEVMLinkAccount};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -78,7 +77,6 @@ use parachain_staking::reward_rate::RewardRateInfo;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
-	AddressMapping,
 };
 pub use pallet_timestamp::Call as TimestampCall;
 
@@ -609,7 +607,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = Runtime;
+	type AddressMapping = EVMAccounts;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -1868,7 +1866,7 @@ impl xc_asset_config::Config for Runtime {
 impl evm_accounts::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type AddressMapping = EvmAddressMapping<Runtime>;
+	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type ChainId = EvmChainId;
 	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
 }
@@ -1882,12 +1880,5 @@ impl EVMAddressToAssetId<PeaqCurrencyId> for Runtime {
 
 	fn asset_id_to_address(asset_id: PeaqCurrencyId) -> H160 {
 		PeaqCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
-	}
-}
-
-impl AddressMapping<AccountId> for Runtime
-{
-	fn into_account_id(address: H160) -> AccountId {
-		EvmAddressMapping::<Runtime>::get_account_id(&address)
 	}
 }

@@ -49,7 +49,6 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for module_evm_accounts.
 pub trait WeightInfo {
 	fn claim_account() -> Weight;
-	fn claim_default_account() -> Weight;
 }
 
 /// Weights for module_evm_accounts using the Acala node and recommended hardware.
@@ -60,11 +59,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
-	fn claim_default_account() -> Weight {
-		Weight::from_parts(19_000_000, 0)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
-	}
 }
 
 // For backwards compatibility and tests
@@ -72,11 +66,6 @@ impl WeightInfo for () {
 	fn claim_account() -> Weight {
 		Weight::from_parts(340_000_000, 0)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
-	}
-	fn claim_default_account() -> Weight {
-		Weight::from_parts(19_000_000, 0)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 }

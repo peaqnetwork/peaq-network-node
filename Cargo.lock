@@ -2678,6 +2678,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
+ "pallet-evm",
  "parity-scale-codec",
  "peaq-primitives-xcm",
  "precompile-utils",

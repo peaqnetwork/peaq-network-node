@@ -21,6 +21,7 @@ orml-traits = { workspace = true, default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 # module-support = { path = "../support", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
+pallet-evm = { workspace = true, default-features = false }
 
 [dev-dependencies]
 pallet-balances = { workspace = true, default-features = false }
@@ -44,6 +45,7 @@ std = [
 	"peaq-primitives-xcm/std",
 	"orml-traits/std",
 	"precompile-utils/std",
+	"pallet-evm/std",
 	# "module-support/std",
 ]
 runtime-benchmarks = [
