@@ -6,13 +6,35 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-#[cfg(feature = "std")]
-pub use fp_evm::GenesisAccount;
 
-use smallvec::smallvec;
-
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use codec::Encode;
-use pallet_evm::FeeCalculator;
+use fp_rpc::TransactionStatus;
+use frame_system::{
+	limits::{BlockLength, BlockWeights},
+	EnsureRoot, EnsureRootWithSuccess,
+};
+use orml_currencies::BasicCurrencyAdapter;
+use orml_traits::parameter_type_with_key;
+use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use pallet_evm::{
+	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
+	HashedAddressMapping, Runner,
+};
+use parachain_staking::reward_rate::RewardRateInfo;
+use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
+use peaq_pallet_rbac::{
+	error::RbacError,
+	rbac::{Group, Permission, Rbac, Result as RbacResult, Role},
+	structs::{
+		Entity as RbacEntity, Permission2Role as RbacPermission2Role, Role2Group as RbacRole2Group,
+		Role2User as RbacRole2User, User2Group as RbacUser2Group,
+	},
+};
+use peaq_pallet_storage::traits::Storage;
+use peaq_rpc_primitives_txpool::TxPoolResponse;
+use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -37,13 +59,27 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
-
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use xcm::latest::prelude::*;
+use zenlink_protocol::{
+	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
+	ZenlinkMultiAssets,
+};
+
+use runtime_common::{
+	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
+	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+};
+
+
+pub mod constants;
+mod precompiles;
+mod weights;
+pub mod xcm_config;
 
 // A few exports that help ease life for downstream crates.
-use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime,
 	dispatch::{DispatchClass, GetDispatchInfo},
@@ -62,69 +98,19 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
-
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess,
-};
-
+#[cfg(feature = "std")]
+pub use fp_evm::GenesisAccount;
 pub use pallet_balances::Call as BalancesCall;
-use parachain_staking::reward_rate::RewardRateInfo;
-
-use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{
-	Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner,
-};
 pub use pallet_timestamp::Call as TimestampCall;
-
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-
-mod precompiles;
 pub use precompiles::PeaqPrecompiles;
-pub type Precompiles = PeaqPrecompiles<Runtime>;
-
-// Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-
-use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-
-pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol};
-use peaq_rpc_primitives_txpool::TxPoolResponse;
-
 pub use peaq_pallet_did;
-use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 pub use peaq_pallet_rbac;
-use peaq_pallet_rbac::{
-	error::RbacError,
-	rbac::{Group, Permission, Rbac, Result as RbacResult, Role},
-	structs::{
-		Entity as RbacEntity, Permission2Role as RbacPermission2Role, Role2Group as RbacRole2Group,
-		Role2User as RbacRole2User, User2Group as RbacUser2Group,
-	},
-};
 pub use peaq_pallet_storage;
-use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
+pub use peaq_primitives_xcm::{currency, Amount, Balance, CurrencyId, TokenSymbol};
 
-// For XCM
-mod weights;
-pub mod xcm_config;
-use orml_currencies::BasicCurrencyAdapter;
-use orml_traits::parameter_type_with_key;
-pub mod constants;
-use xcm::latest::prelude::*;
-
-// For Zenlink-DEX-Module
-use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
-	ZenlinkMultiAssets,
-};
-
-use runtime_common::{
-	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
-	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
-};
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -148,6 +134,8 @@ type Hash = peaq_primitives_xcm::Hash;
 
 /// The ID of an entity (RBAC)
 type EntityId = [u8; 32];
+
+pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -222,7 +210,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2_u64),
-	polkadot_primitives::v2::MAX_POV_SIZE as u64,
+	polkadot_primitives::v4::MAX_POV_SIZE as u64,
 );
 
 parameter_types! {
@@ -367,14 +355,13 @@ impl pallet_contracts::Config for Runtime {
 	type ChainExtension = ();
 	type Schedule = Schedule;
 	type CallStack = [pallet_contracts::Frame<Self>; 5];
-	type DeletionQueueDepth = ConstU32<128>;
-	type DeletionWeightLimit = DeletionWeightLimit;
 	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
 	type MaxStorageKeyLen = ConstU32<128>;
 	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
 
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 	type UnsafeUnstableInterface = ConstBool<false>;
+	type DefaultDepositLimit = (); // TODO
 }
 
 parameter_types! {
@@ -408,6 +395,10 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type FreezeIdentifier = (); // TODO
+    type MaxHolds = (); // TODO
+    type HoldIdentifier = (); // TODO
+    type MaxFreezes = (); // TODO
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -469,6 +460,7 @@ impl pallet_transaction_payment::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
 /// Config the did in pallets/did
@@ -503,6 +495,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 	type SetMembersOrigin = EnsureRoot<Self::AccountId>;
+	type MaxProposalWeight = ();
 }
 
 // Config the treasyry in pallets/treasury
@@ -575,7 +568,7 @@ pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PE
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
+		Weight::from_all(gas.saturating_mul(WEIGHT_PER_GAS))
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
@@ -589,7 +582,7 @@ parameter_types! {
 		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
-	pub WeightPerGas: Weight = Weight::from_ref_time(WEIGHT_PER_GAS);
+	pub WeightPerGas: Weight = Weight::from_all(WEIGHT_PER_GAS);
 }
 
 impl pallet_evm::Config for Runtime {
@@ -610,11 +603,17 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
+	type GasLimitPovSizeRatio = (); // TODO
+	type GasLimitStorageGrowthRatio = (); // TODO
+	type Timestamp = Timestamp;
+	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type PostLogContent = (); // TODO
+	type ExtraDataLength = (); // TODO
 }
 
 frame_support::parameter_types! {
@@ -1124,6 +1123,14 @@ impl_runtime_apis! {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
 		}
+
+		fn metadata_at_version(_version: u32) -> Option<OpaqueMetadata> {
+			None // TODO
+		}
+
+    	fn metadata_versions() -> Vec<u32> {
+			Vec::new() // TODO
+		}
 	}
 
 	impl sp_block_builder::BlockBuilder<Block> for Runtime {
@@ -1368,7 +1375,7 @@ impl_runtime_apis! {
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
-			EVM::account_codes(address)
+			pallet_evm::AccountCodes::<Runtime>::get(address)
 		}
 
 		fn author() -> H160 {
@@ -1378,7 +1385,7 @@ impl_runtime_apis! {
 		fn storage_at(address: H160, index: U256) -> H256 {
 			let mut tmp = [0u8; 32];
 			index.to_big_endian(&mut tmp);
-			EVM::account_storages(address, H256::from_slice(&tmp[..]))
+			pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
 		}
 
 		fn call(
@@ -1414,6 +1421,8 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
+				None, // TODO Option<hidden_include::dispatch::Weight>
+				None, // Option<u64>
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1450,20 +1459,22 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
+				None, // TODO Option<hidden_include::dispatch::Weight>
+				None, // TODO Option<u64>
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-			Ethereum::current_transaction_statuses()
+			pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
 		}
 
 		fn current_block() -> Option<pallet_ethereum::Block> {
-			Ethereum::current_block()
+			pallet_ethereum::CurrentBlock::<Runtime>::get()
 		}
 
 		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
-			Ethereum::current_receipts()
+			pallet_ethereum::CurrentReceipts::<Runtime>::get()
 		}
 
 		fn current_all() -> (
@@ -1472,9 +1483,9 @@ impl_runtime_apis! {
 			Option<Vec<TransactionStatus>>
 		) {
 			(
-				Ethereum::current_block(),
-				Ethereum::current_receipts(),
-				Ethereum::current_transaction_statuses()
+				Self::current_block(),
+				Self::current_receipts(),
+				Self::current_transaction_statuses()
 			)
 		}
 
@@ -1488,10 +1499,16 @@ impl_runtime_apis! {
 		}
 
 		fn elasticity() -> Option<Permill> {
-			Some(BaseFee::elasticity())
+			Some(pallet_base_fee::Elasticity::<Runtime>::get())
 		}
 
 		fn gas_limit_multiplier_support() {}
+
+		fn pending_block(
+			_xts: Vec<<Block as BlockT>::Extrinsic>,
+		) -> (Option<ethereum::Block<ethereum::TransactionV2>>, Option<Vec<TransactionStatus>>) {
+			(None, None) // TODO
+		}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
