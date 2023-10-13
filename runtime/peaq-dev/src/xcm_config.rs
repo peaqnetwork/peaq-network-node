@@ -12,9 +12,11 @@ use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
-use runtime_common::FixedRateOfForeignAsset;
 use polkadot_parachain::primitives::Sibling;
-use runtime_common::{AccountIdToMultiLocation, PeaqCurrencyIdConvert, self_native_currency_location};
+use runtime_common::{
+	self_native_currency_location, AccountIdToMultiLocation, FixedRateOfForeignAsset,
+	PeaqCurrencyIdConvert,
+};
 use sp_runtime::traits::ConstU32;
 use xcm::latest::{prelude::*, MultiAsset};
 use xcm_builder::{

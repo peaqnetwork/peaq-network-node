@@ -23,11 +23,6 @@ peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false 
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
 pallet-evm = { workspace = true, default-features = false }
 
-[dev-dependencies]
-pallet-balances = { workspace = true, default-features = false }
-orml-currencies = { workspace = true, default-features = false }
-orml-tokens = { workspace = true, default-features = false }
-
 [features]
 default = ["std"]
 std = [

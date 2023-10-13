@@ -4,30 +4,19 @@
 use codec::{Decode, Encode};
 use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
-use frame_support::{
-	pallet_prelude::*,
-	parameter_types,
-	traits::{Get},
-};
+use frame_support::{pallet_prelude::*, parameter_types, traits::Get};
 use frame_system::Config as SysConfig;
 use orml_traits::{currency::MutationHooks, MultiCurrency};
 use sp_core::bounded::BoundedVec;
-use sp_runtime::{
-	traits::{
-		Convert,
-	},
-	Perbill, RuntimeString,
-};
+use sp_runtime::{traits::Convert, Perbill, RuntimeString};
 use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId,
-	GenerateLpAssetId, LocalAssetHandler,
+	AssetBalance, AssetId as ZenlinkAssetId, GenerateLpAssetId, LocalAssetHandler,
 };
 
 use peaq_primitives_xcm::{
-	currency::parachain, AccountId, Balance, CurrencyId, CurrencyIdToZenlinkId,
-	TokenSymbol,
+	currency::parachain, AccountId, Balance, CurrencyId, CurrencyIdToZenlinkId, TokenSymbol,
 };
 
 pub mod asset;

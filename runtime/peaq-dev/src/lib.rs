@@ -13,6 +13,7 @@ use smallvec::smallvec;
 
 use codec::Encode;
 
+use evm_accounts::CallKillEVMLinkAccount;
 use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -39,7 +40,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
-use evm_accounts::{CallKillEVMLinkAccount};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -312,9 +312,7 @@ impl frame_system::Config for Runtime {
 	/// What to do if a new account is created.
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = (
-		CallKillEVMLinkAccount<Runtime>,
-	);
+	type OnKilledAccount = (CallKillEVMLinkAccount<Runtime>,);
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
@@ -1870,7 +1868,6 @@ impl evm_accounts::Config for Runtime {
 	type ChainId = EvmChainId;
 	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
 }
-
 
 // Move to primitives
 impl EVMAddressToAssetId<PeaqCurrencyId> for Runtime {

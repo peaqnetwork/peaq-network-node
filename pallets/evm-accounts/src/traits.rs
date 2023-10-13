@@ -1,4 +1,4 @@
-use peaq_primitives_xcm::{evm::EvmAddress};
+use peaq_primitives_xcm::evm::EvmAddress;
 
 /// A mapping between `AccountId` and `EvmAddress`.
 pub trait EVMAddressMapping<AccountId> {

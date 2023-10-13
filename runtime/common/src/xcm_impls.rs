@@ -1,30 +1,17 @@
-use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
-use sp_std::marker::PhantomData;
-use xc_asset_config::{ExecutionPaymentRate};
+use frame_support::{pallet_prelude::Get, weights::constants::WEIGHT_REF_TIME_PER_SECOND};
+use peaq_primitives_xcm::PeaqCurrencyId;
+use sp_runtime::traits::Convert;
+use sp_std::{borrow::Borrow, marker::PhantomData};
+use xc_asset_config::{ExecutionPaymentRate, XcAssetLocation};
 use xcm::latest::{
-	prelude::{Fungibility, MultiAsset, MultiLocation, XcmError},
+	prelude::{Fungibility, GeneralKey, MultiAsset, MultiLocation, XcmError, X1},
 	Weight,
 };
 use xcm_builder::TakeRevenue;
 use xcm_executor::traits::WeightTrader;
-use peaq_primitives_xcm::{PeaqCurrencyId};
-use xc_asset_config::XcAssetLocation;
-use frame_support::pallet_prelude::Get;
-use sp_std::borrow::Borrow;
-use sp_runtime::traits::Convert;
-use xcm::latest::{
-	prelude::{X1, GeneralKey},
-};
-
 
 pub fn self_native_currency_location() -> MultiLocation {
-	MultiLocation::new(
-			0,
-			X1(GeneralKey {
-				data: [0; 32],
-				length: 2
-				})
-		)
+	MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }))
 }
 
 /// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.

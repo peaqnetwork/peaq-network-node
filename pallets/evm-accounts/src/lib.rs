@@ -26,45 +26,40 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-use parity_scale_codec::Encode;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, IsType, OnKilledAccount},
+	traits::{
+		fungible, fungible::Inspect, Currency, ExistenceRequirement, IsType, OnKilledAccount,
+	},
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
+use pallet_evm::AddressMapping as PalletEVMAddressMapping;
+use parity_scale_codec::Encode;
 use precompile_utils::prelude::keccak256;
-use pallet_evm::{
-	AddressMapping as PalletEVMAddressMapping,
-};
 
 use peaq_primitives_xcm::{evm::EvmAddress, to_bytes};
-use sp_core::crypto::AccountId32;
-use sp_core::{H160, H256};
-use sp_io::{
-	crypto::secp256k1_ecdsa_recover,
-	hashing::{keccak_256},
-};
-use sp_runtime::{
-	traits::{Zero},
-};
+use sp_core::{crypto::AccountId32, H160, H256};
+use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
+use sp_runtime::traits::{Convert, Zero};
 use sp_std::{marker::PhantomData, vec::Vec};
-use sp_runtime::traits::Convert;
 
-mod traits;
+mod convert_impl;
 mod mock;
 mod tests;
-mod convert_impl;
+mod traits;
 pub mod weights;
 
-pub use traits::EVMAddressMapping;
-pub use module::*;
-pub use weights::WeightInfo;
 use convert_impl::*;
+pub use module::*;
+pub use traits::EVMAddressMapping;
+pub use weights::WeightInfo;
 
 /// A signature (a 512-bit value, plus 8 bits for recovery ID).
 pub type Eip712Signature = [u8; 65];
+type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 
 #[frame_support::pallet]
 pub mod module {
@@ -75,14 +70,15 @@ pub mod module {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The Currency for managing Evm account assets.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Currency<Self::AccountId>
+			+ fungible::Inspect<Self::AccountId, Balance = BalanceOf<Self>>;
 
 		type OriginAddressMapping: PalletEVMAddressMapping<Self::AccountId>;
-/*
- *         /// Mapping from address to account id.
- *         type AddressMapping: EVMAddressMapping<Self::AccountId>;
- *
- */
+		/*
+		 *         /// Mapping from address to account id.
+		 *         type AddressMapping: EVMAddressMapping<Self::AccountId>;
+		 *
+		 */
 		/// Chain ID of EVM.
 		#[pallet::constant]
 		type ChainId: Get<u64>;
@@ -102,10 +98,7 @@ pub mod module {
 	pub enum Event<T: Config> {
 		/// Mapping between Substrate accounts and EVM accounts
 		/// claim account.
-		ClaimAccount {
-			account_id: T::AccountId,
-			evm_address: EvmAddress,
-		},
+		ClaimAccount { account_id: T::AccountId, evm_address: EvmAddress },
 	}
 
 	/// Error for evm accounts module.
@@ -128,14 +121,16 @@ pub mod module {
 	/// Accounts: map EvmAddress => Option<AccountId>
 	#[pallet::storage]
 	#[pallet::getter(fn accounts)]
-	pub type Accounts<T: Config> = StorageMap<_, Twox64Concat, EvmAddress, T::AccountId, OptionQuery>;
+	pub type Accounts<T: Config> =
+		StorageMap<_, Twox64Concat, EvmAddress, T::AccountId, OptionQuery>;
 
 	/// The EvmAddress for Substrate Accounts
 	///
 	/// EvmAddresses: map AccountId => Option<EvmAddress>
 	#[pallet::storage]
 	#[pallet::getter(fn evm_addresses)]
-	pub type EvmAddresses<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, EvmAddress, OptionQuery>;
+	pub type EvmAddresses<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, EvmAddress, OptionQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -163,31 +158,24 @@ pub mod module {
 
 			// ensure account_id and eth_address has not been mapped
 			ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
-			ensure!(
-				!Accounts::<T>::contains_key(eth_address),
-				Error::<T>::EthAddressHasMapped
-			);
+			ensure!(!Accounts::<T>::contains_key(eth_address), Error::<T>::EthAddressHasMapped);
 
 			// recover evm address from signature
-			let address = Self::verify_eip712_signature(&who, &eth_signature).ok_or(Error::<T>::BadSignature)?;
+			let address = Self::verify_eip712_signature(&who, &eth_signature)
+				.ok_or(Error::<T>::BadSignature)?;
 			ensure!(eth_address == address, Error::<T>::InvalidSignature);
 
-/*
- *             // check if the evm padded address already exists
- *             let account_id = T::AddressMapping::get_account_id(&eth_address);
- *             if frame_system::Pallet::<T>::account_exists(&account_id) {
- *                 // merge balance from `evm padded address` to `origin`
- *                 T::TransferAll::transfer_all(&account_id, &who)?;
- *             }
- *
- */
+			let account_id = T::OriginAddressMapping::into_account_id(eth_address);
+			if frame_system::Pallet::<T>::account_exists(&account_id) {
+				// merge balance from `evm padded address` to `origin`
+				let amount = T::Currency::reducible_balance(&account_id, false);
+				T::Currency::transfer(&account_id, &who, amount, ExistenceRequirement::AllowDeath)?;
+			}
+
 			Accounts::<T>::insert(eth_address, &who);
 			EvmAddresses::<T>::insert(&who, eth_address);
 
-			Self::deposit_event(Event::ClaimAccount {
-				account_id: who,
-				evm_address: eth_address,
-			});
+			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address: eth_address });
 
 			Ok(())
 		}
@@ -245,12 +233,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn evm_account_domain_separator() -> [u8; 32] {
-		let domain_hash = keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)");
+		let domain_hash =
+			keccak256!("EIP712Domain(string name,string version,uint256 chainId,bytes32 salt)");
 		let mut domain_seperator_msg = domain_hash.to_vec();
 		domain_seperator_msg.extend_from_slice(&keccak256!("Peaq EVM claim")); // name
 		domain_seperator_msg.extend_from_slice(&keccak256!("1")); // version
 		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
-		domain_seperator_msg.extend_from_slice(frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref()); // genesis block hash
+		domain_seperator_msg.extend_from_slice(
+			frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref(),
+		); // genesis block hash
 		keccak_256(domain_seperator_msg.as_slice())
 	}
 }
@@ -315,9 +306,9 @@ impl<T: Config> OnKilledAccount<T::AccountId> for CallKillEVMLinkAccount<T> {
  *
  *     fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
  *         match a {
- *             MultiAddress::Address20(i) => Ok(T::AddressMapping::get_account_id(&EvmAddress::from_slice(&i))),
- *             _ => Err(LookupError),
- *         }
+ *             MultiAddress::Address20(i) =>
+ * Ok(T::AddressMapping::get_account_id(&EvmAddress::from_slice(&i))),             _ =>
+ * Err(LookupError),         }
  *     }
  *
  *     fn unlookup(a: Self::Target) -> Self::Source {
