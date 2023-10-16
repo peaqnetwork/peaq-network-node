@@ -90,7 +90,8 @@ where
 			log::debug!("NativeCurrency::free_balance: out: {:?}", out);
 			out
 		} else {
-			let out = MultiCurrencies::balance(currency_id, who);
+			// Keep alive setup as true
+			let out = MultiCurrencies::reducible_balance(currency_id, who, true);
 			log::debug!("MultiCurrencies::balance: out: {:?}", out);
 			out
 		}
@@ -143,7 +144,7 @@ where
 			log::debug!("NativeCurrency::transfer: out: {:?}", out);
 			out
 		} else {
-			// TODO...
+			// Keep alive setup as true
 			let out = MultiCurrencies::transfer(currency_id, from, to, amount, true);
 			log::debug!("MultiCurrencies::transfer: out: {:?}", out);
 			if out.is_ok() {
@@ -172,7 +173,6 @@ where
 			if out.is_ok() {
 				return Ok(())
 			} else {
-				log::debug!("PeaqMultiCurrenciesWrapper: deposit: out: {:?}", out);
 				return Err(DispatchError::Other("Deposit failed"))
 			}
 		}
@@ -196,7 +196,6 @@ where
 			if out.is_ok() {
 				return Ok(())
 			} else {
-				log::debug!("MultiCurrencies::transfer: out: {:?}", out);
 				return Err(DispatchError::Other("Withdraw failed"))
 			}
 		}
