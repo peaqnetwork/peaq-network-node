@@ -33,14 +33,22 @@ use sp_std::convert::TryFrom;
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum PeaqCurrencyId {
+	// [TODO] Remove
 	/// It presents the native token of the parachain.
 	SelfReserve,
 	/// All Polkadot based tokens (SS58-address-style), Relaychain- and Parachain-Tokens.
-	Token(u64),
+	/// 0 is balance
+	/// 0 ~ 1FFF_FFFF is the custumoized value
+	/// The first 3 bits are the identifier
+	///		0 is the token
+	///		1 is the LPToken
+	Token(u32),
 	/// Liquidity Pairs (Pairs of Tokens) within the PEAQ-Parachain.
-	LPToken(u64, u64),
+	LPToken(u32, u32),
 }
 
+const NATIVE_CURRNECY_ID :PeaqCurrencyId = PeaqCurrencyId::Token(0);
+const TOKEN_MASK: u32 = 0b0001_1111_1111_1111_1111_1111_1111_1111;
 impl PeaqCurrencyId {
 	pub fn is_token(&self) -> bool {
 		matches!(self, PeaqCurrencyId::Token(_))
@@ -64,10 +72,9 @@ impl PeaqCurrencyId {
 		match *self {
 			PeaqCurrencyId::SelfReserve => false,
 			PeaqCurrencyId::Token(symbol) => {
-				if symbol == 0 as u64 {
+				if symbol == 0 as u32 {
 					return false
-				// [TODO] Need to change the limit
-				} else if symbol < u32::MAX as u64 {
+				} else if symbol < TOKEN_MASK {
 					return true
 				} else {
 					return false
@@ -99,9 +106,13 @@ impl TryFrom<PeaqCurrencyId> for u64 {
 			// [TODO]... Need to think again
 			PeaqCurrencyId::SelfReserve => Ok(0 as u64),
 			PeaqCurrencyId::Token(symbol) => Ok(symbol as u64),
-			PeaqCurrencyId::LPToken(symbol0, symbol1) => Ok((currency_id.type_index() << 8) +
-				((symbol0 as u64) << 16) +
-				((symbol1 as u64) << 24)),
+			PeaqCurrencyId::LPToken(symbol0, symbol1) => {
+				Ok(
+					(((symbol0 & TOKEN_MASK) as u64) << 32) +
+					((symbol1 & TOKEN_MASK) as u64) +
+					((1 as u64) << 61)
+				)
+			},
 		}
 	}
 }
@@ -114,15 +125,15 @@ impl TryFrom<u64> for PeaqCurrencyId {
 		if index == 0 {
 			return Ok(PeaqCurrencyId::SelfReserve)
 		}
-		let type_index = (index & 0x0000_0000_0000_ff00) >> 8 as u8;
+		let type_index = (index >> 61) as u8;
 		match type_index {
 			0 => {
-				let symbol = (index & 0x0000_0000_0000_00ff) as u64;
+				let symbol = (index & (TOKEN_MASK as u64)) as u32;
 				Ok(PeaqCurrencyId::Token(symbol))
 			},
 			1 => {
-				let symbol0 = ((index & 0x0000_0000_00ff_0000) >> 16) as u64;
-				let symbol1 = ((index & 0x0000_0000_ff00_0000) >> 24) as u64;
+				let symbol0 = ((index >> 32) & (TOKEN_MASK as u64)) as u32;
+				let symbol1 = (index & (TOKEN_MASK as u64)) as u32;
 				Ok(PeaqCurrencyId::LPToken(symbol0, symbol1))
 			},
 			_ => Err(()),
@@ -215,7 +226,7 @@ fn test_u64_to_PeaqCurrencyId() {
 	assert_eq!(currency_id, 2u64.try_into().unwrap());
 
 	let currency_id = PeaqCurrencyId::LPToken(1, 2);
-	assert_eq!(currency_id, 0x0000_0000_0201_0100u64.try_into().unwrap());
+	assert_eq!(currency_id, 0x2000_0001_0000_0002u64.try_into().unwrap());
 }
 
 #[test]
@@ -226,7 +237,7 @@ fn test_PeaqCurrencyId_to_u64() {
 	let idx = 2u64;
 	assert_eq!(idx, <PeaqCurrencyId as TryInto<u64>>::try_into(PeaqCurrencyId::Token(2)).unwrap());
 
-	let idx = 0x0000_0000_0201_0100u64;
+	let idx = 0x2000_0001_0000_0002u64;
 	assert_eq!(
 		idx,
 		<PeaqCurrencyId as TryInto<u64>>::try_into(PeaqCurrencyId::LPToken(1, 2)).unwrap()

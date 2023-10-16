@@ -530,18 +530,22 @@ where
 		let asset_id1: PeaqCurrencyId = asset1.try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
-			(PeaqCurrencyId::SelfReserve, PeaqCurrencyId::Token(symbol1)) =>
+			(PeaqCurrencyId::SelfReserve, PeaqCurrencyId::Token(symbol1)) => {
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					0, symbol1,
-				)),
-			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::SelfReserve) =>
+				))
+			},
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::SelfReserve) => {
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					0, symbol0,
-				)),
-			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) =>
+				))
+			},
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) => {
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					symbol0, symbol1,
-				)),
+				))
+			},
+
 			(_, _) => None,
 		}
 	}
