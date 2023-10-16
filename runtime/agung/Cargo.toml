@@ -121,6 +121,7 @@ zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
 frame-try-runtime ={ workspace=true, default-features = false, optional = true}
 log = {workspace = true, default-features = false}
+ethereum = {workspace = true, default-features = false}
 
 [features]
 default = ["std", "aura"]

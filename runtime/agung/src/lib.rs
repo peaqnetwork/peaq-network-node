@@ -222,7 +222,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2_u64),
-	polkadot_primitives::v2::MAX_POV_SIZE as u64,
+	polkadot_primitives::v4::MAX_POV_SIZE as u64,
 );
 
 parameter_types! {
@@ -359,14 +359,13 @@ impl pallet_contracts::Config for Runtime {
 	type ChainExtension = ();
 	type Schedule = Schedule;
 	type CallStack = [pallet_contracts::Frame<Self>; 5];
-	type DeletionQueueDepth = ConstU32<128>;
-	type DeletionWeightLimit = DeletionWeightLimit;
 	type AddressGenerator = pallet_contracts::DefaultAddressGenerator;
 	type MaxStorageKeyLen = ConstU32<128>;
 	type MaxCodeLen = ConstU32<{ 123 * 1024 }>;
 
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 	type UnsafeUnstableInterface = ConstBool<false>;
+	type DefaultDepositLimit = (); // TODO
 }
 
 parameter_types! {
@@ -400,6 +399,10 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type FreezeIdentifier = (); // TODO
+    type MaxHolds = (); // TODO
+    type HoldIdentifier = (); // TODO
+    type MaxFreezes = (); // TODO
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -461,6 +464,7 @@ impl pallet_transaction_payment::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
 /// Config the did in pallets/did
@@ -495,6 +499,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 	type SetMembersOrigin = EnsureRoot<Self::AccountId>;
+	type MaxProposalWeight = (); // TODO
 }
 
 // Config the treasyry in pallets/treasury
@@ -567,7 +572,7 @@ pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PE
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		Weight::from_ref_time(gas.saturating_mul(WEIGHT_PER_GAS))
+		Weight::from_all(gas.saturating_mul(WEIGHT_PER_GAS))
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
@@ -581,7 +586,7 @@ parameter_types! {
 		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
-	pub WeightPerGas: Weight = Weight::from_ref_time(WEIGHT_PER_GAS);
+	pub WeightPerGas: Weight = Weight::from_all(WEIGHT_PER_GAS);
 }
 
 impl pallet_evm::Config for Runtime {
@@ -602,11 +607,17 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
+	type GasLimitPovSizeRatio = (); // TODO
+	type GasLimitStorageGrowthRatio = (); // TODO
+	type Timestamp = Timestamp;
+	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type PostLogContent = (); // TODO
+	type ExtraDataLength = (); // TODO
 }
 
 frame_support::parameter_types! {
@@ -1116,6 +1127,14 @@ impl_runtime_apis! {
 		fn metadata() -> OpaqueMetadata {
 			OpaqueMetadata::new(Runtime::metadata().into())
 		}
+
+		fn metadata_at_version(_version: u32) -> Option<OpaqueMetadata> {
+			None // TODO
+		}
+
+    	fn metadata_versions() -> Vec<u32> {
+			Vec::new() // TODO
+		}
 	}
 
 	impl sp_block_builder::BlockBuilder<Block> for Runtime {
@@ -1360,7 +1379,7 @@ impl_runtime_apis! {
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
-			EVM::account_codes(address)
+			pallet_evm::AccountCodes::<Runtime>::get(address)
 		}
 
 		fn author() -> H160 {
@@ -1370,7 +1389,7 @@ impl_runtime_apis! {
 		fn storage_at(address: H160, index: U256) -> H256 {
 			let mut tmp = [0u8; 32];
 			index.to_big_endian(&mut tmp);
-			EVM::account_storages(address, H256::from_slice(&tmp[..]))
+			pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
 		}
 
 		fn call(
@@ -1406,6 +1425,8 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
+				None, // TODO Option<hidden_include::dispatch::Weight>
+				None, // Option<u64>
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1442,20 +1463,22 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
+				None, // TODO Option<hidden_include::dispatch::Weight>
+				None, // Option<u64>
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-			Ethereum::current_transaction_statuses()
+			pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
 		}
 
 		fn current_block() -> Option<pallet_ethereum::Block> {
-			Ethereum::current_block()
+			pallet_ethereum::CurrentBlock::<Runtime>::get()
 		}
 
 		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
-			Ethereum::current_receipts()
+			pallet_ethereum::CurrentReceipts::<Runtime>::get()
 		}
 
 		fn current_all() -> (
@@ -1464,9 +1487,9 @@ impl_runtime_apis! {
 			Option<Vec<TransactionStatus>>
 		) {
 			(
-				Ethereum::current_block(),
-				Ethereum::current_receipts(),
-				Ethereum::current_transaction_statuses()
+				Self::current_block(),
+				Self::current_receipts(),
+				Self::current_transaction_statuses()
 			)
 		}
 
@@ -1480,10 +1503,16 @@ impl_runtime_apis! {
 		}
 
 		fn elasticity() -> Option<Permill> {
-			Some(BaseFee::elasticity())
+			Some(pallet_base_fee::Elasticity::<Runtime>::get())
 		}
 
 		fn gas_limit_multiplier_support() {}
+
+		fn pending_block(
+			_xts: Vec<<Block as BlockT>::Extrinsic>,
+		) -> (Option<ethereum::BlockV2>, Option<Vec<TransactionStatus>>) {
+			(None, None) // TODO
+		}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

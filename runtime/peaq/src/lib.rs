@@ -495,7 +495,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 	type SetMembersOrigin = EnsureRoot<Self::AccountId>;
-	type MaxProposalWeight = ();
+	type MaxProposalWeight = (); // TODO
 }
 
 // Config the treasyry in pallets/treasury
@@ -1506,7 +1506,7 @@ impl_runtime_apis! {
 
 		fn pending_block(
 			_xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> (Option<ethereum::Block<ethereum::TransactionV2>>, Option<Vec<TransactionStatus>>) {
+		) -> (Option<ethereum::BlockV2>, Option<Vec<TransactionStatus>>) {
 			(None, None) // TODO
 		}
 	}
