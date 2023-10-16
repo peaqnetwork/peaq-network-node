@@ -59,6 +59,24 @@ impl PeaqCurrencyId {
 			PeaqCurrencyId::LPToken(_, _) => 1,
 		}
 	}
+
+	pub fn is_allow_to_create(&self) -> bool {
+		match *self {
+			PeaqCurrencyId::SelfReserve => false,
+			PeaqCurrencyId::Token(symbol) => {
+				if symbol == 0 as u64 {
+					return false
+				// [TODO] Need to change the limit
+				} else if symbol < u32::MAX as u64 {
+					return true
+				} else {
+					return false
+				}
+			},
+			// Only allow Zenlink protocol to create it
+			PeaqCurrencyId::LPToken(_, _) => false,
+		}
+	}
 }
 
 pub trait CurrencyIdExt {

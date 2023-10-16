@@ -266,8 +266,19 @@ parameter_types! {
 
 pub struct BaseFilter;
 impl Contains<RuntimeCall> for BaseFilter {
-	fn contains(_call: &RuntimeCall) -> bool {
-		true
+	fn contains(call: &RuntimeCall) -> bool {
+        match call {
+            // Filter permission-less assets creation/destroying.
+            // Custom asset's `id` should fit in `u32` as not to mix with service assets.
+            RuntimeCall::Assets(method) => match method {
+                pallet_assets::Call::create { id, .. } => id.is_allow_to_create(),
+                _ => true,
+            },
+            // These modules are not allowed to be called by transactions:
+            // To leave collator just shutdown it, next session funds will be released
+            // Other modules should works:
+            _ => true,
+        }
 	}
 }
 
