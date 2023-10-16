@@ -12,6 +12,7 @@ ethereum = { workspace = true, default-features = false, features = [ "with-code
 
 # Substrate
 codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+scale-info = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-runtime = { workspace = true, default-features = false }
