@@ -7,12 +7,11 @@ use peaq_runtime::{
 	Precompiles, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
-use sc_service::{ChainType, Properties};
+use sc_service::{ChainType, Properties, config::MultiaddrWithPeerId};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
 use hex_literal::hex;
-use sc_network_common::config::MultiaddrWithPeerId;
 use std::str::FromStr;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.

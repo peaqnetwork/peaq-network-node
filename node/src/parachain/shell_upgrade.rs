@@ -5,7 +5,6 @@ use cumulus_primitives_core::relay_chain::{Hash as PHash, PersistedValidationDat
 use futures::lock::Mutex;
 use sc_consensus::{import_queue::Verifier as VerifierT, BlockImportParams};
 use sp_api::ApiExt;
-use sp_consensus::CacheKeyId;
 use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
 use sp_runtime::{generic::BlockId, traits::Header as HeaderT};
 use std::sync::Arc;
@@ -96,7 +95,7 @@ where
 	async fn verify(
 		&mut self,
 		block_import: BlockImportParams<Block, ()>,
-	) -> Result<(BlockImportParams<Block, ()>, Option<Vec<(CacheKeyId, Vec<u8>)>>), String> {
+	) -> Result<BlockImportParams<Block, ()>, String> {
 		let block_id = BlockId::hash(*block_import.header.parent_hash());
 
 		if self
