@@ -19,6 +19,7 @@ use peaq_primitives_xcm::currency::parachain;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{
 	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
+	pallet_currency_location,
 };
 use sp_runtime::traits::{ConstU32, Convert};
 use xcm::{
@@ -124,6 +125,12 @@ parameter_types! {
 		dot_per_second() * 5,
 		0
 	);
+	pub MbaPerSecond: (AssetId, u128, u128) = (
+		pallet_currency_location(parachain::moonbase::ID, parachain::moonbase::DEV_PALLET).unwrap().into(),
+		// TODO: Need to check the fee: ACA:DOT = 5:1
+		dot_per_second() * 5,
+		0
+	);
 	pub BaseRate: u128 = peaq_per_second();
 }
 
@@ -132,6 +139,7 @@ pub type Trader = (
 	FixedRateOfFungible<DotPerSecond, ToTreasury>,
 	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
 	FixedRateOfFungible<BncPerSecond, ToTreasury>,
+	FixedRateOfFungible<MbaPerSecond, ToTreasury>,
 );
 
 pub type Barrier = (

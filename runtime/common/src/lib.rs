@@ -186,9 +186,9 @@ where
 				parachain::bifrost::ID,
 				parachain::bifrost::BNC_KEY.to_vec(),
 			),
-			Token(MBA) => native_currency_location(
+			Token(MBA) => pallet_currency_location(
 				parachain::moonbase::ID,
-				parachain::moonbase::DEV_KEY.to_vec(),
+				parachain::moonbase::DEV_PALLET,
 			),
 			_ => None,
 		}
@@ -217,6 +217,18 @@ where
 			},
 			MultiLocation {
 				parents: 1,
+				interior: X2(Parachain(id), PalletInstance(pallet)),
+			} => {
+				match id {
+					parachain::moonbase::ID => match pallet {
+						parachain::moonbase::DEV_PALLET => Some(Token(MBA)),
+						_ => None,
+					},
+					_ => None,
+				}
+			},
+			MultiLocation {
+				parents: 1,
 				interior: X2(Parachain(id), GeneralKey { data, length }),
 			} => {
 				let key = &data[..data.len().min(length as usize)];
@@ -227,10 +239,6 @@ where
 					},
 					parachain::bifrost::ID => match key {
 						parachain::bifrost::BNC_KEY => Some(Token(BNC)),
-						_ => None,
-					},
-					parachain::moonbase::ID => match key {
-						parachain::moonbase::DEV_KEY => Some(Token(MBA)),
 						_ => None,
 					},
 					_ =>
@@ -282,6 +290,13 @@ pub fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocat
 	Some(MultiLocation::new(
 		1,
 		X2(Parachain(para_id), Junction::from(BoundedVec::try_from(key).ok()?)),
+	))
+}
+
+pub fn pallet_currency_location(para_id: u32, pallet: u8) -> Option<MultiLocation> {
+	Some(MultiLocation::new(
+		1,
+		X2(Parachain(para_id), PalletInstance(pallet)),
 	))
 }
 

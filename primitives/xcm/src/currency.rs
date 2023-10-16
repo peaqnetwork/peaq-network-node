@@ -30,7 +30,7 @@ use sp_std::{
 use zenlink_protocol::GenerateLpAssetId;
 
 /// This is mystery!
-pub const PARA_CHAIN_ID: u32 = 2000;
+pub const PARA_CHAIN_ID: u32 = 3013;
 
 // Redefine Zenlink's AssetId for our generic use.
 pub type ZenlinkAssetId = zenlink_protocol::AssetId;
@@ -399,7 +399,8 @@ impl<T> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<T> {
 // This is for hardcoding other parachains, we want to operate with.
 pub mod parachain {
 	pub mod acala {
-		pub const ID: u32 = 2000;
+		// Randomly choose one
+		pub const ID: u32 = 1111;
 		pub const ACA_KEY: &[u8] = &[0, 0];
 	}
 	pub mod bifrost {
@@ -407,7 +408,7 @@ pub mod parachain {
 		pub const BNC_KEY: &[u8] = &[0, 1];
 	}
 	pub mod moonbase {
-		pub const ID: u32 = 1287;
-		pub const DEV_KEY: &[u8] = &[0, 0];
+		pub const ID: u32 = 1000;
+		pub const DEV_PALLET: u8 = 3;
 	}
 }
