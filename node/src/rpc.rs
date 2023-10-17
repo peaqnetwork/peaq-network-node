@@ -55,22 +55,32 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub is_authority: bool,
 	/// Network service
 	pub network: Arc<NetworkService<Block, Hash>>,
+	/// Chain syncing service
+	pub sync: Arc<SyncingService<Block>>,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
+	/// The list of optional RPC extensions.
+	pub ethapi_cmd: Vec<EthApiCmd>,
+	/// Frontier Backend.
+	pub frontier_backend: Arc<dyn fc_db::BackendReader<Block> + Send + Sync>,
 	/// Backend.
-	pub backend: Arc<fc_db::Backend<Block>>,
+	pub backend: Arc<BE>,
+	/// Manual seal command sink
+	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
-	/// The list of optional RPC extensions.
-	pub ethapi_cmd: Vec<EthApiCmd>,
+	/// Channels for manual xcm messages (downward, hrmp)
+	pub xcm_senders: Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<OverrideHandle<Block>>,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
+	/// Mandated parent hashes for a given block hash.
+	pub forced_parent_hashes: Option<BTreeMap<H256, H256>>,
 }
 
 pub struct TracingConfig {
@@ -131,14 +141,19 @@ where
 		deny_unsafe,
 		is_authority,
 		network,
+		sync,
 		filter_pool,
-		backend,
+		ethapi_cmd,
+		command_sink,
+		frontier_backend,
+		backend: _,
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
-		ethapi_cmd,
+		xcm_senders,
 		overrides,
 		block_data_cache,
+		forced_parent_hashes,
 	} = deps;
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
@@ -161,17 +176,17 @@ where
 			Arc::clone(&pool),
 			graph.clone(),
 			no_tx_converter,
-			Arc::clone(&network),
-			Default::default(),
+			Arc::clone(&sync),
+			Default::default(), // signers
 			Arc::clone(&overrides),
-			Arc::clone(&backend),
+			Arc::clone(&frontier_backend),
 			is_authority,
 			Arc::clone(&block_data_cache),
 			fee_history_cache,
 			fee_history_limit,
 			10_u64,
+			forced_parent_hashes,
 		)
-		.into_rpc(),
 	)?;
 
 	if let Some(filter_pool) = filter_pool {

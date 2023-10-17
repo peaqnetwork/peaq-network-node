@@ -14,19 +14,23 @@ use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fp_storage::EthereumStorageSchema;
 use futures::StreamExt;
-use polkadot_service::CollatorPair;
-use sc_client_api::BlockchainEvents;
-use sc_consensus::import_queue::BasicQueue;
+use polkadot_service::{Backend, CollatorPair};
+use sc_client_api::{BlockchainEvents, HeaderBackend, StorageProvider};
+use sc_consensus::{import_queue::BasicQueue};
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{config::FullNetworkConfiguration, NetworkBlock, NetworkService};
+use sc_network_sync::SyncingService;
 use sc_service::{
 	Configuration, ImportQueue, PartialComponents, TFullBackend, TFullClient, TaskManager,
 };
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_api::ConstructRuntimeApi;
+use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi};
+use sp_consensus::SyncOracle;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::traits::BlakeTwo256;
+use sp_keystore::KeystorePtr;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use substrate_prometheus_endpoint::Registry;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -36,7 +40,10 @@ use crate::primitives::*;
 use sc_service::BasePath;
 
 use crate::cli_opt::{EthApi as EthApiCmd, RpcConfig};
-use fc_rpc::EthTask;
+use fc_rpc::{
+	EthTask, RuntimeApiStorageOverride, OverrideHandle, StorageOverride,
+	SchemaV3Override, SchemaV2Override, SchemaV1Override,
+};
 use sc_cli::SubstrateCli;
 
 use sp_core::U256;
@@ -271,6 +278,34 @@ where
 	Ok(params)
 }
 
+// pub fn overrides_handle<B, C, BE>(client: Arc<C>) -> Arc<OverrideHandle<B>>
+// where
+// 	B: BlockT,
+// 	C: ProvideRuntimeApi<B>,
+// 	C::Api: fp_rpc::EthereumRuntimeRPCApi<B>,
+// 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
+// 	BE: Backend<B> + 'static,
+// {
+// 	let mut overrides_map = BTreeMap::new();
+// 	overrides_map.insert(
+// 		EthereumStorageSchema::V1,
+// 		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
+// 		);
+// 	overrides_map.insert(
+// 		EthereumStorageSchema::V2,
+// 		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
+// 		);
+// 	overrides_map.insert(
+// 		EthereumStorageSchema::V3,
+// 		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
+// 		);
+
+// 	Arc::new(OverrideHandle {
+// 		schemas: overrides_map,
+// 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+// 	})
+// }
+
 async fn build_relay_chain_interface(
 	polkadot_config: Configuration,
 	parachain_config: &Configuration,
@@ -370,7 +405,7 @@ where
 		Arc<dyn RelayChainInterface>,
 		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>>,
 		Arc<NetworkService<Block, Hash>>,
-		// SyncCryptoStorePtr,
+		KeystorePtr,
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
@@ -402,11 +437,6 @@ where
 	)
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
-	// .map_err(|e| match e {
-	// 	RelayChainError::BlockchainError(x) => x,
-	// 	s => format!("{}", s).into(),
-	// })
-	// ?;
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
 	let force_authoring = parachain_config.force_authoring;
@@ -433,23 +463,35 @@ where
 
 	let overrides = fc_storage::overrides_handle(client.clone());
 
+	let pubsub_notification_sinks: Arc<fc_mapping_sync::EthereumBlockNotificationSinks<
+		fc_mapping_sync::EthereumBlockNotification<Block>>> = Default::default();
+	// let overrides = overrides_handle(client.clone());
+
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		Some("frontier"),
-		fc_mapping_sync::kv::MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-			3,
-			0,
-			fc_mapping_sync::SyncStrategy::Parachain,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
+	match frontier_backend.as_ref() {
+		fc_db::Backend::KeyValue(b) => {
+			task_manager.spawn_essential_handle().spawn(
+				"frontier-mapping-sync-worker",
+				Some("frontier"),
+				fc_mapping_sync::kv::MappingSyncWorker::new(
+					client.import_notification_stream(),
+					Duration::new(6, 0),
+					client.clone(),
+					backend.clone(),
+					overrides.clone(),
+					Arc::new(b.clone()),
+					3,
+					0,
+					fc_mapping_sync::SyncStrategy::Parachain,
+					sync_service.clone(),
+					pubsub_notification_sinks.clone(),
+				)
+				.for_each(|()| futures::future::ready(()))
+			);
+		},
+		_ => panic!("not implemented"),
+	};
 
 	// Spawn Frontier EthFilterApi maintenance task.
 	if let Some(filter_pool_2) = filter_pool.clone() {
@@ -556,20 +598,24 @@ where
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		config: parachain_config,
-		keystore: params.keystore_container.sync_keystore(),
+		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
+		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
 	})?;
 
 	let announce_block = {
-		let network = network.clone();
-		Arc::new(move |hash, data| network.announce_block(hash, data))
+		let sync_service = sync_service.clone();
+		Arc::new(move |hash, data| sync_service.announce_block(hash, data))
 	};
 
 	let relay_chain_slot_duration = Duration::from_secs(6);
+	let overseer_handle = relay_chain_interface
+		.overseer_handle()
+		.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
 	if is_authority {
 		let parachain_consensus = fn_build_consensus(
@@ -581,7 +627,7 @@ where
 			relay_chain_interface.clone(),
 			transaction_pool,
 			network,
-			params.keystore_container.sync_keystore(),
+			params.keystore_container.keystore(),
 			force_authoring,
 		)?;
 
@@ -597,10 +643,12 @@ where
 			spawner,
 			parachain_consensus,
 			import_queue: import_queue_service,
+			recovery_handle: Box::new(overseer_handle),
 			collator_key: collator_key.ok_or_else(|| {
 				sc_service::error::Error::Other("Collator Key is None".to_string())
 			})?,
 			relay_chain_slot_duration,
+			sync_service,
 		};
 
 		start_collator(params).await?;
@@ -613,6 +661,8 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			import_queue: import_queue_service,
+			recovery_handle: Box::new(overseer_handle),
+			sync_service,
 		};
 
 		start_full_node(params)?;

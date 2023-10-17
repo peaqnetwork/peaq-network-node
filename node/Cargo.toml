@@ -68,6 +68,7 @@ sp-inherents = { workspace = true, default-features = true }
 pallet-contracts = { workspace = true, default-features = true }
 sc-network = { workspace = true, default-features = true }
 sc-network-common = { workspace = true, default-features = true }
+sc-network-sync = { workspace = true, default-features = true }
 hex-literal = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
 fc-db = { workspace = true, default-features = true }
