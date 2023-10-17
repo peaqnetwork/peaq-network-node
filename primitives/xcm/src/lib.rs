@@ -26,12 +26,12 @@ use sp_runtime::{
 use sp_std::prelude::*;
 
 pub mod currency;
-pub mod peaq_currency_id;
 pub mod evm;
+pub mod peaq_currency_id;
 #[cfg(test)]
 mod tests;
 
-pub use crate::{peaq_currency_id::*, evm::*};
+pub use crate::{evm::*, peaq_currency_id::*};
 pub use currency::*;
 
 /// An index to a block.

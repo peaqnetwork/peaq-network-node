@@ -1,19 +1,16 @@
-use sp_std::{fmt::Debug, marker::PhantomData};
-use orml_traits::{BasicCurrency, MultiCurrency};
 use frame_support::{
 	ensure,
+	pallet_prelude::{DispatchError, DispatchResult},
 	traits::{
-		fungibles, tokens::WithdrawConsequence, ExistenceRequirement, Get, Imbalance,
-		WithdrawReasons,
-}};
-use frame_support::traits::Currency as PalletCurrency;
-use frame_support::pallet_prelude::DispatchResult;
-use frame_support::pallet_prelude::DispatchError;
-use sp_runtime::traits::{
-	CheckedSub, Zero,
+		fungibles, tokens::WithdrawConsequence, Currency as PalletCurrency, ExistenceRequirement,
+		Get, Imbalance, WithdrawReasons,
+	},
 };
 use frame_system::Config as SysConfig;
+use orml_traits::{BasicCurrency, MultiCurrency};
 use pallet_assets::Config as AssetsConfig;
+use sp_runtime::traits::{CheckedSub, Zero};
+use sp_std::{fmt::Debug, marker::PhantomData};
 
 pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId>(
 	PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId)>,
@@ -236,5 +233,3 @@ where
 		gap
 	}
 }
-
-

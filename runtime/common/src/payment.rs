@@ -1,25 +1,21 @@
 use crate::{EoTFeeFactor, PaymentConvertInfo};
 use frame_support::{
 	pallet_prelude::{
-		InvalidTransaction, MaxEncodedLen,
-		MaybeSerializeDeserialize, TransactionValidityError,
+		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
 	},
-	traits::{
-		Currency, ExistenceRequirement, Get, Imbalance,
-		OnUnbalanced, WithdrawReasons,
-	},
+	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	Parameter,
 };
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
 use sp_runtime::traits::{
-	Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf,
-	SaturatedConversion, Saturating, Zero,
+	Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
+	Saturating, Zero,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
-use peaq_primitives_xcm::{CurrencyIdExt};
+use peaq_primitives_xcm::CurrencyIdExt;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };

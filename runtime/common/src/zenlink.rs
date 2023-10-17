@@ -1,22 +1,12 @@
-use frame_support::{
-	traits::{
-		fungibles, Get,
-	},
-};
+use frame_support::traits::{fungibles, Get};
 use frame_system::Config as SysConfig;
 use pallet_assets::Config as AssetsConfig;
-use sp_runtime::traits::{
-	Convert,
-};
-use sp_std::{marker::PhantomData};
+use sp_runtime::traits::Convert;
+use sp_std::marker::PhantomData;
 use zenlink_protocol::GenerateLpAssetId;
 
 use peaq_primitives_xcm::{PeaqCurrencyId, PeaqCurrencyIdToZenlinkId};
-use zenlink_protocol::{
-	AssetId as ZenlinkAssetId, Config as ZenProtConfig,
-};
-
-
+use zenlink_protocol::{AssetId as ZenlinkAssetId, Config as ZenProtConfig};
 
 /// This is the Peaq's default GenerateLpAssetId implementation.
 pub struct PeaqAssetZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(
@@ -40,11 +30,10 @@ where
 		let asset_id1: PeaqCurrencyId = asset1.try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
-			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) => {
+			(PeaqCurrencyId::Token(symbol0), PeaqCurrencyId::Token(symbol1)) =>
 				PeaqCurrencyIdToZenlinkId::<T::SelfParaId>::convert(PeaqCurrencyId::LPToken(
 					symbol0, symbol1,
-				))
-			},
+				)),
 
 			(_, _) => None,
 		}

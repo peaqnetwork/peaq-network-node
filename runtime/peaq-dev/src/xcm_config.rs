@@ -1,7 +1,8 @@
 use super::{
-	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward, ParachainInfo,
-	ParachainSystem, PeaqCurrencyId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue, GetNativePeaqCurrencyId,
+	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward,
+	GetNativePeaqCurrencyId, ParachainInfo, ParachainSystem, PeaqCurrencyId, PeaqPotAccount,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcAssetConfig,
+	XcmpQueue,
 };
 use frame_support::{
 	dispatch::Weight,
@@ -13,11 +14,9 @@ use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xc_asset_config::MultiLocationToPeaqCurrencyId;
-use runtime_common::{
-	AccountIdToMultiLocation, FixedRateOfForeignAsset,
-};
+use runtime_common::{AccountIdToMultiLocation, FixedRateOfForeignAsset};
 use sp_runtime::traits::ConstU32;
+use xc_asset_config::MultiLocationToPeaqCurrencyId;
 use xcm::latest::{prelude::*, MultiAsset};
 use xcm_builder::{
 	AccountId32Aliases,
@@ -53,12 +52,8 @@ use frame_support::pallet_prelude::Get;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
-use peaq_primitives_xcm::{
-	NATIVE_CURRNECY_ID,
-};
 
 pub type PeaqAssetLocationIdConverter = MultiLocationToPeaqCurrencyId<Runtime>;
-
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -418,5 +413,3 @@ impl xc_asset_config::Config for Runtime {
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
-
-

@@ -1,6 +1,6 @@
-use frame_support::{weights::constants::WEIGHT_REF_TIME_PER_SECOND};
-use sp_std::{marker::PhantomData};
-use xc_asset_config::{ExecutionPaymentRate};
+use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
+use sp_std::marker::PhantomData;
+use xc_asset_config::ExecutionPaymentRate;
 use xcm::latest::{
 	prelude::{Fungibility, MultiAsset, MultiLocation, XcmError},
 	Weight,

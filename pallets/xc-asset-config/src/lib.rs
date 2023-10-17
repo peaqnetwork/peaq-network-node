@@ -57,12 +57,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_std::{borrow::Borrow};
 use frame_support::pallet;
-use xcm_executor::traits::Convert as XCMConvert;
-use sp_runtime::traits::Convert;
-use sp_std::marker::PhantomData;
 pub use pallet::*;
+use sp_runtime::traits::Convert;
+use sp_std::{borrow::Borrow, marker::PhantomData};
+use xcm_executor::traits::Convert as XCMConvert;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
@@ -76,10 +75,7 @@ pub mod migrations;
 
 pub mod weights;
 pub use weights::WeightInfo;
-use xcm::latest::{
-	prelude::{MultiLocation},
-};
-
+use xcm::latest::prelude::MultiLocation;
 
 #[pallet]
 pub mod pallet {
@@ -118,14 +114,14 @@ pub mod pallet {
 	impl<T: Config> XcAssetLocation<T::AssetId> for Pallet<T> {
 		fn get_xc_asset_location(asset_id: T::AssetId) -> Option<MultiLocation> {
 			if asset_id == T::NativeAssetId::get() {
-				return Some(T::NativeAssetLocation::get());
+				return Some(T::NativeAssetLocation::get())
 			}
 			AssetIdToLocation::<T>::get(asset_id).and_then(|x| x.try_into().ok())
 		}
 
 		fn get_asset_id(asset_location: MultiLocation) -> Option<T::AssetId> {
 			if asset_location == T::NativeAssetLocation::get() {
-				return Some(T::NativeAssetId::get());
+				return Some(T::NativeAssetId::get())
 			}
 			AssetLocationToId::<T>::get(asset_location.into_versioned())
 		}
@@ -230,10 +226,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				asset_id != T::NativeAssetId::get(),
-				Error::<T>::NativeAssetRelated
-			);
+			ensure!(asset_id != T::NativeAssetId::get(), Error::<T>::NativeAssetRelated);
 
 			// Ensure such an assetId does not exist
 			ensure!(
@@ -299,10 +292,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				asset_id != T::NativeAssetId::get(),
-				Error::<T>::NativeAssetRelated
-			);
+			ensure!(asset_id != T::NativeAssetId::get(), Error::<T>::NativeAssetRelated);
 
 			let v3_asset_loc = MultiLocation::try_from(*new_asset_location)
 				.map_err(|_| Error::<T>::MultiLocationNotSupported)?;
@@ -369,10 +359,7 @@ pub mod pallet {
 		pub fn remove_asset(origin: OriginFor<T>, asset_id: T::AssetId) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				asset_id != T::NativeAssetId::get(),
-				Error::<T>::NativeAssetRelated
-			);
+			ensure!(asset_id != T::NativeAssetId::get(), Error::<T>::NativeAssetRelated);
 
 			let asset_location =
 				AssetIdToLocation::<T>::get(&asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;

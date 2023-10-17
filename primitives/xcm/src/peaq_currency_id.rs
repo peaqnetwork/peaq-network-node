@@ -44,7 +44,7 @@ pub enum PeaqCurrencyId {
 	LPToken(u32, u32),
 }
 
-pub const NATIVE_CURRNECY_ID :PeaqCurrencyId = PeaqCurrencyId::Token(0);
+pub const NATIVE_CURRNECY_ID: PeaqCurrencyId = PeaqCurrencyId::Token(0);
 const TOKEN_MASK: u32 = 0b0001_1111_1111_1111_1111_1111_1111_1111;
 impl PeaqCurrencyId {
 	pub fn is_token(&self) -> bool {
@@ -68,13 +68,12 @@ impl PeaqCurrencyId {
 			return false
 		}
 		match *self {
-			PeaqCurrencyId::Token(symbol) => {
+			PeaqCurrencyId::Token(symbol) =>
 				if symbol < TOKEN_MASK {
 					return true
 				} else {
 					return false
-				}
-			},
+				},
 			// Only allow Zenlink protocol to create it
 			PeaqCurrencyId::LPToken(_, _) => false,
 		}
@@ -99,17 +98,10 @@ impl TryFrom<PeaqCurrencyId> for u64 {
 	fn try_from(currency_id: PeaqCurrencyId) -> Result<Self, Self::Error> {
 		match currency_id {
 			PeaqCurrencyId::Token(symbol) =>
-				Ok(
-					(symbol as u64) +
-					((currency_id.type_index() as u64) << 61)
-				),
-			PeaqCurrencyId::LPToken(symbol0, symbol1) => {
-				Ok(
-					(((symbol0 & TOKEN_MASK) as u64) << 32) +
-					((symbol1 & TOKEN_MASK) as u64) +
-					((currency_id.type_index() as u64) << 61)
-				)
-			},
+				Ok((symbol as u64) + ((currency_id.type_index() as u64) << 61)),
+			PeaqCurrencyId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) <<
+				32) + ((symbol1 & TOKEN_MASK) as u64) +
+				((currency_id.type_index() as u64) << 61)),
 		}
 	}
 }
