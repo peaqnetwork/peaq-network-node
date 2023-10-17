@@ -19,10 +19,14 @@ use peaq_primitives_xcm::{
 	currency::parachain, AccountId, Balance, CurrencyId, CurrencyIdToZenlinkId, TokenSymbol,
 };
 
-pub mod asset;
-pub use asset::*;
+pub mod payment;
+pub use payment::*;
 pub mod xcm_impls;
 pub use xcm_impls::*;
+pub mod wrapper;
+pub use wrapper::*;
+pub mod zenlink;
+pub use zenlink::*;
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;

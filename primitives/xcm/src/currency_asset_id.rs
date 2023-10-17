@@ -33,9 +33,6 @@ use sp_std::convert::TryFrom;
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub enum PeaqCurrencyId {
-	// [TODO] Remove
-	/// It presents the native token of the parachain.
-	SelfReserve,
 	/// All Polkadot based tokens (SS58-address-style), Relaychain- and Parachain-Tokens.
 	/// 0 is balance
 	/// 0 ~ 1FFF_FFFF is the custumoized value
@@ -47,7 +44,7 @@ pub enum PeaqCurrencyId {
 	LPToken(u32, u32),
 }
 
-const NATIVE_CURRNECY_ID :PeaqCurrencyId = PeaqCurrencyId::Token(0);
+pub const NATIVE_CURRNECY_ID :PeaqCurrencyId = PeaqCurrencyId::Token(0);
 const TOKEN_MASK: u32 = 0b0001_1111_1111_1111_1111_1111_1111_1111;
 impl PeaqCurrencyId {
 	pub fn is_token(&self) -> bool {
@@ -61,20 +58,18 @@ impl PeaqCurrencyId {
 	// Internal method which simplifies conversions between Zenlink's asset_index
 	pub fn type_index(&self) -> u64 {
 		match self {
-			PeaqCurrencyId::SelfReserve => 0,
-			// [TODO] Neet to check
 			PeaqCurrencyId::Token(_) => 0,
 			PeaqCurrencyId::LPToken(_, _) => 1,
 		}
 	}
 
 	pub fn is_allow_to_create(&self) -> bool {
+		if self.is_native_token() {
+			return false
+		}
 		match *self {
-			PeaqCurrencyId::SelfReserve => false,
 			PeaqCurrencyId::Token(symbol) => {
-				if symbol == 0 as u32 {
-					return false
-				} else if symbol < TOKEN_MASK {
+				if symbol < TOKEN_MASK {
 					return true
 				} else {
 					return false
@@ -92,39 +87,37 @@ pub trait CurrencyIdExt {
 
 impl CurrencyIdExt for PeaqCurrencyId {
 	fn is_native_token(&self) -> bool {
-		return PeaqCurrencyId::SelfReserve == *self
+		return NATIVE_CURRNECY_ID == *self
 	}
 }
 
-// PeaqCurrencyId::SelfReserve and PeaqCurrencyId::Token(0) map to 0
+// PeaqCurrencyId::Token(0) map to 0
 // This is for Zenlink Protocol
 impl TryFrom<PeaqCurrencyId> for u64 {
 	type Error = ();
 
 	fn try_from(currency_id: PeaqCurrencyId) -> Result<Self, Self::Error> {
 		match currency_id {
-			// [TODO]... Need to think again
-			PeaqCurrencyId::SelfReserve => Ok(0 as u64),
-			PeaqCurrencyId::Token(symbol) => Ok(symbol as u64),
+			PeaqCurrencyId::Token(symbol) =>
+				Ok(
+					(symbol as u64) +
+					((currency_id.type_index() as u64) << 61)
+				),
 			PeaqCurrencyId::LPToken(symbol0, symbol1) => {
 				Ok(
 					(((symbol0 & TOKEN_MASK) as u64) << 32) +
 					((symbol1 & TOKEN_MASK) as u64) +
-					((1 as u64) << 61)
+					((currency_id.type_index() as u64) << 61)
 				)
 			},
 		}
 	}
 }
 
-// 0 -> PeaqCurrencyId::SelfReserve
 impl TryFrom<u64> for PeaqCurrencyId {
 	type Error = ();
 
 	fn try_from(index: u64) -> Result<Self, Self::Error> {
-		if index == 0 {
-			return Ok(PeaqCurrencyId::SelfReserve)
-		}
 		let type_index = (index >> 61) as u8;
 		match type_index {
 			0 => {
@@ -151,11 +144,11 @@ impl TryFrom<ZenlinkAssetId> for PeaqCurrencyId {
 
 impl Default for PeaqCurrencyId {
 	fn default() -> Self {
-		PeaqCurrencyId::SelfReserve
+		NATIVE_CURRNECY_ID
 	}
 }
 
-// Zenlink (2000, 0, 0) and (2000, 2, 0) map to PeaqCurrencyId::SelfReserve
+// Zenlink (2000, 0, 0) and (2000, 2, 0) map to PeaqCurrencyId::Token(0)
 pub struct PeaqCurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
 impl<GetParaId> Convert<PeaqCurrencyId, Option<ZenlinkAssetId>>
@@ -166,11 +159,6 @@ where
 	fn convert(currency_id: PeaqCurrencyId) -> Option<ZenlinkAssetId> {
 		let asset_index = <PeaqCurrencyId as TryInto<u64>>::try_into(currency_id).ok()?;
 		match currency_id {
-			PeaqCurrencyId::SelfReserve => Some(ZenlinkAssetId {
-				chain_id: GetParaId::get(),
-				asset_type: zenlink_protocol::NATIVE,
-				asset_index,
-			}),
 			PeaqCurrencyId::Token(symbol) => {
 				let asset_type =
 					if symbol == 0 { zenlink_protocol::NATIVE } else { zenlink_protocol::LOCAL };
@@ -185,7 +173,6 @@ where
 	}
 }
 
-// [TODO] Need to check the currencyId PeaqCurrencyId::SelfReserve's situation
 pub struct PeaqCurrencyIdToEVMAddress<GetPrefix>(PhantomData<GetPrefix>);
 
 impl<GetPrefix> Convert<PeaqCurrencyId, H160> for PeaqCurrencyIdToEVMAddress<GetPrefix>

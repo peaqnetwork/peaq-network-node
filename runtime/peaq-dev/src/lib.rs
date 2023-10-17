@@ -94,6 +94,7 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
 	Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId,
+	NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -452,23 +453,22 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
 	// [TODO] Should use the other ways... Maybe use the asset list?
-	pub NewPcpcLocalAccepted: Vec<PeaqCurrencyId> = vec![
-		// [TODO] Should I ass the PeaqCurrencyId::SelfReserve ?
+	pub PcpcLocalAccepted: Vec<PeaqCurrencyId> = vec![
 		PeaqCurrencyId::Token(1),
 		PeaqCurrencyId::Token(3),
 	];
 }
 
-pub struct NewPeaqCPC;
+pub struct PeaqCPC;
 
-impl PeaqMultiCurrenciesPaymentConvert for NewPeaqCPC {
+impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
 	type MultiCurrency = PeaqMultiCurrencies;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
 	type NativeCurrencyId = GetNativePeaqCurrencyId;
-	type LocalAcceptedIds = NewPcpcLocalAccepted;
+	type LocalAcceptedIds = PcpcLocalAccepted;
 	type CurrencyId = PeaqCurrencyId;
 	type CurrencyIdToZenlinkId = PeaqCurrencyIdToZenlinkId<SelfParaId>;
 }
@@ -476,7 +476,7 @@ impl PeaqMultiCurrenciesPaymentConvert for NewPeaqCPC {
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
-		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, NewPeaqCPC>;
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -864,7 +864,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativePeaqCurrencyId: PeaqCurrencyId = PeaqCurrencyId::SelfReserve;
+	pub const GetNativePeaqCurrencyId: PeaqCurrencyId = NATIVE_CURRNECY_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {

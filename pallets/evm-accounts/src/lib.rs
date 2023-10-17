@@ -83,12 +83,6 @@ pub mod module {
 		#[pallet::constant]
 		type ChainId: Get<u64>;
 
-		/*
-		 * /// TODO, transfer all assets?
-		 * /// Merge free balance from source to dest.
-		 * type TransferAll: TransferAll<Self::AccountId>;
-		 */
-
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
 	}

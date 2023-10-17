@@ -1,5 +1,8 @@
 use frame_support::{pallet_prelude::Get, weights::constants::WEIGHT_REF_TIME_PER_SECOND};
-use peaq_primitives_xcm::PeaqCurrencyId;
+use peaq_primitives_xcm::{
+	PeaqCurrencyId,
+	NATIVE_CURRNECY_ID,
+};
 use sp_runtime::traits::Convert;
 use sp_std::{borrow::Borrow, marker::PhantomData};
 use xc_asset_config::{ExecutionPaymentRate, XcAssetLocation};
@@ -25,8 +28,9 @@ where
 {
 	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqCurrencyId, ()> {
 		let location = location.borrow().clone();
+		// [TODO] Should I move to the AssetMapping?
 		if location == SelfReserve::get() {
-			return Ok(PeaqCurrencyId::SelfReserve)
+			return Ok(NATIVE_CURRNECY_ID);
 		}
 		if let Some(asset_id) = AssetMapper::get_asset_id(location) {
 			Ok(asset_id)
@@ -37,7 +41,7 @@ where
 
 	fn reverse_ref(id: impl Borrow<PeaqCurrencyId>) -> Result<MultiLocation, ()> {
 		let id = id.borrow().clone();
-		if id == PeaqCurrencyId::SelfReserve {
+		if id == NATIVE_CURRNECY_ID {
 			return Ok(SelfReserve::get())
 		}
 		if let Some(multilocation) = AssetMapper::get_xc_asset_location(id) {
