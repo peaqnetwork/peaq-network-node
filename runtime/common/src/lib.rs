@@ -41,7 +41,7 @@ parameter_types! {
 	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
-// [TODO] Need to move...
+// [TODO] After moving to the asset integration, we can remove it
 pub struct CurrencyHooks<T, DustAccount>(PhantomData<T>, DustAccount);
 
 impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance>
@@ -343,7 +343,8 @@ macro_rules! log {
 	};
 }
 
-// [TODO]... Do we need this?
+// [TODO]... It's an issue now because in the zenlink setting, we are using the other implemntation
+// But I haven't removed it yet
 /// This is the Peaq's default GenerateLpAssetId implementation.
 pub struct PeaqZenlinkLpGenerate<SelfParaId>(PhantomData<SelfParaId>);
 

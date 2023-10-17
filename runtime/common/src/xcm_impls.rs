@@ -67,7 +67,6 @@ where
 	}
 }
 
-// [TODO] Need to check
 /// Used as weight trader for foreign assets.
 ///
 /// In case foreigin asset is supported as payment asset, XCM execution time

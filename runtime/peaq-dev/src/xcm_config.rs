@@ -83,7 +83,6 @@ pub type LocationToAccountId = (
 );
 
 /// XCM from myself to myself
-/// [TODO] Wow...
 /// Means for transacting the native currency on this chain.
 pub type CurrencyTransactor = CurrencyAdapter<
 	// Use this currency:
@@ -142,7 +141,6 @@ impl<
 	}
 }
 
-/// [TODO] Wow...
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
@@ -378,16 +376,9 @@ impl<AbsoluteLocation: Get<MultiLocation>> Reserve
 {
 	fn reserve(asset: &MultiAsset) -> Option<MultiLocation> {
 		RelativeReserveProvider::reserve(asset).map(|reserve_location| {
-			log::error!(
-				"show reserve_location: {:?}, and AbsoluteLocation: {:?}",
-				reserve_location,
-				AbsoluteLocation::get()
-			);
 			if reserve_location == AbsoluteLocation::get() {
-				log::error!("show here: {:?}", MultiLocation::here());
 				MultiLocation::here()
 			} else {
-				log::error!("show reserve_location please: {:?}", reserve_location);
 				reserve_location
 			}
 		})
