@@ -1,71 +1,12 @@
-use frame_support::{pallet_prelude::Get, weights::constants::WEIGHT_REF_TIME_PER_SECOND};
-use peaq_primitives_xcm::{
-	PeaqCurrencyId,
-	NATIVE_CURRNECY_ID,
-};
-use sp_runtime::traits::Convert;
-use sp_std::{borrow::Borrow, marker::PhantomData};
-use xc_asset_config::{ExecutionPaymentRate, XcAssetLocation};
+use frame_support::{weights::constants::WEIGHT_REF_TIME_PER_SECOND};
+use sp_std::{marker::PhantomData};
+use xc_asset_config::{ExecutionPaymentRate};
 use xcm::latest::{
-	prelude::{Fungibility, GeneralKey, MultiAsset, MultiLocation, XcmError, X1},
+	prelude::{Fungibility, MultiAsset, MultiLocation, XcmError},
 	Weight,
 };
 use xcm_builder::TakeRevenue;
 use xcm_executor::traits::WeightTrader;
-
-pub fn self_native_currency_location() -> MultiLocation {
-	MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }))
-}
-
-/// A MultiLocation-AssetId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct PeaqCurrencyIdConvert<AssetMapper, SelfReserve>(PhantomData<(AssetMapper, SelfReserve)>);
-
-impl<AssetMapper, SelfReserve> xcm_executor::traits::Convert<MultiLocation, PeaqCurrencyId>
-	for PeaqCurrencyIdConvert<AssetMapper, SelfReserve>
-where
-	AssetMapper: XcAssetLocation<PeaqCurrencyId>,
-	SelfReserve: Get<MultiLocation>,
-{
-	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<PeaqCurrencyId, ()> {
-		let location = location.borrow().clone();
-		// [TODO] Should I move to the AssetMapping?
-		if location == SelfReserve::get() {
-			return Ok(NATIVE_CURRNECY_ID);
-		}
-		if let Some(asset_id) = AssetMapper::get_asset_id(location) {
-			Ok(asset_id)
-		} else {
-			Err(())
-		}
-	}
-
-	fn reverse_ref(id: impl Borrow<PeaqCurrencyId>) -> Result<MultiLocation, ()> {
-		let id = id.borrow().clone();
-		if id == NATIVE_CURRNECY_ID {
-			return Ok(SelfReserve::get())
-		}
-		if let Some(multilocation) = AssetMapper::get_xc_asset_location(id) {
-			Ok(multilocation)
-		} else {
-			Err(())
-		}
-	}
-}
-
-impl<AssetMapper, SelfReserve> Convert<PeaqCurrencyId, Option<MultiLocation>>
-	for PeaqCurrencyIdConvert<AssetMapper, SelfReserve>
-where
-	AssetMapper: XcAssetLocation<PeaqCurrencyId>,
-	SelfReserve: Get<MultiLocation>,
-{
-	fn convert(id: PeaqCurrencyId) -> Option<MultiLocation> {
-		<PeaqCurrencyIdConvert<AssetMapper, SelfReserve> as xcm_executor::traits::Convert<
-			MultiLocation,
-			PeaqCurrencyId,
-		>>::reverse(id)
-		.ok()
-	}
-}
 
 /// Used as weight trader for foreign assets.
 ///

@@ -692,6 +692,7 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	pub const AssetAdminId: PalletId = PalletId(*b"AssetAdm");
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
@@ -883,6 +884,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 }
 
 parameter_types! {
+	pub PeaqAssetAdm: AccountId = AssetAdminId::get().into_account_truncating();
 	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
 	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
@@ -931,7 +933,7 @@ impl zenlink_protocol::Config for Runtime {
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
 	// [TODO] PeaqPotAccount to Sudo users
-	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqPotAccount>;
+	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqAssetAdm>;
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
@@ -1825,8 +1827,6 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	// [TODO] Need double check below values
-	// [TODO] Need to use ExistentialDeposit to Balances
 	pub const AssetDeposit: Balance = ExistentialDeposit::get();
 	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
 	pub const AssetsStringLimit: u32 = 50;
@@ -1863,13 +1863,6 @@ impl pallet_assets::Config for Runtime {
 	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	// #[cfg(feature = "runtime-benchmarks")]
 	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
-}
-
-impl xc_asset_config::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type AssetId = PeaqCurrencyId;
-	type ManagerOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
 }
 
 impl evm_accounts::Config for Runtime {

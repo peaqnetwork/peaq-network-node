@@ -57,7 +57,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use sp_std::{borrow::Borrow};
 use frame_support::pallet;
+use xcm_executor::traits::Convert as XCMConvert;
+use sp_runtime::traits::Convert;
+use sp_std::marker::PhantomData;
 pub use pallet::*;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
@@ -72,6 +76,10 @@ pub mod migrations;
 
 pub mod weights;
 pub use weights::WeightInfo;
+use xcm::latest::{
+	prelude::{MultiLocation},
+};
+
 
 #[pallet]
 pub mod pallet {
@@ -109,10 +117,16 @@ pub mod pallet {
 
 	impl<T: Config> XcAssetLocation<T::AssetId> for Pallet<T> {
 		fn get_xc_asset_location(asset_id: T::AssetId) -> Option<MultiLocation> {
+			if asset_id == T::NativeAssetId::get() {
+				return Some(T::NativeAssetLocation::get());
+			}
 			AssetIdToLocation::<T>::get(asset_id).and_then(|x| x.try_into().ok())
 		}
 
 		fn get_asset_id(asset_location: MultiLocation) -> Option<T::AssetId> {
+			if asset_location == T::NativeAssetLocation::get() {
+				return Some(T::NativeAssetId::get());
+			}
 			AssetLocationToId::<T>::get(asset_location.into_versioned())
 		}
 	}
@@ -131,6 +145,12 @@ pub mod pallet {
 		/// a AssetLocation
 		type AssetId: Member + Parameter + Default + Copy + MaxEncodedLen;
 
+		/// Native Asset Id for the Token(0)
+		type NativeAssetId: Get<Self::AssetId>;
+
+		/// Local location for the Token(0)
+		type NativeAssetLocation: Get<MultiLocation>;
+
 		/// The required origin for managing cross-chain asset configuration
 		///
 		/// Should most likely be root.
@@ -147,6 +167,8 @@ pub mod pallet {
 		AssetDoesNotExist,
 		/// Failed to convert to latest versioned MultiLocation
 		MultiLocationNotSupported,
+		/// Asset is not supported as payment currency.
+		NativeAssetRelated,
 	}
 
 	#[pallet::event]
@@ -208,6 +230,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
+			ensure!(
+				asset_id != T::NativeAssetId::get(),
+				Error::<T>::NativeAssetRelated
+			);
+
 			// Ensure such an assetId does not exist
 			ensure!(
 				!AssetIdToLocation::<T>::contains_key(&asset_id),
@@ -217,6 +244,11 @@ pub mod pallet {
 			let v3_asset_loc = MultiLocation::try_from(*asset_location)
 				.map_err(|_| Error::<T>::MultiLocationNotSupported)?;
 			let asset_location = VersionedMultiLocation::V3(v3_asset_loc);
+
+			ensure!(
+				asset_location != T::NativeAssetLocation::get().into_versioned(),
+				Error::<T>::NativeAssetRelated
+			);
 
 			AssetIdToLocation::<T>::insert(&asset_id, asset_location.clone());
 			AssetLocationToId::<T>::insert(&asset_location, asset_id);
@@ -241,6 +273,11 @@ pub mod pallet {
 			let asset_location = VersionedMultiLocation::V3(v3_asset_loc);
 
 			ensure!(
+				asset_location != T::NativeAssetLocation::get().into_versioned(),
+				Error::<T>::NativeAssetRelated
+			);
+
+			ensure!(
 				AssetLocationToId::<T>::contains_key(&asset_location),
 				Error::<T>::AssetDoesNotExist
 			);
@@ -262,9 +299,19 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
+			ensure!(
+				asset_id != T::NativeAssetId::get(),
+				Error::<T>::NativeAssetRelated
+			);
+
 			let v3_asset_loc = MultiLocation::try_from(*new_asset_location)
 				.map_err(|_| Error::<T>::MultiLocationNotSupported)?;
 			let new_asset_location = VersionedMultiLocation::V3(v3_asset_loc);
+
+			ensure!(
+				new_asset_location != T::NativeAssetLocation::get().into_versioned(),
+				Error::<T>::NativeAssetRelated
+			);
 
 			let previous_asset_location =
 				AssetIdToLocation::<T>::get(&asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;
@@ -305,6 +352,11 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::MultiLocationNotSupported)?;
 			let asset_location = VersionedMultiLocation::V3(v3_asset_loc);
 
+			ensure!(
+				asset_location != T::NativeAssetLocation::get().into_versioned(),
+				Error::<T>::NativeAssetRelated
+			);
+
 			AssetLocationUnitsPerSecond::<T>::remove(&asset_location);
 
 			Self::deposit_event(Event::SupportedAssetRemoved { asset_location });
@@ -317,6 +369,11 @@ pub mod pallet {
 		pub fn remove_asset(origin: OriginFor<T>, asset_id: T::AssetId) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
+			ensure!(
+				asset_id != T::NativeAssetId::get(),
+				Error::<T>::NativeAssetRelated
+			);
+
 			let asset_location =
 				AssetIdToLocation::<T>::get(&asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;
 
@@ -327,5 +384,41 @@ pub mod pallet {
 			Self::deposit_event(Event::AssetRemoved { asset_id, asset_location });
 			Ok(())
 		}
+	}
+}
+
+pub struct MultiLocationToPeaqCurrencyId<T: Config>(PhantomData<T>);
+
+impl<T: Config> XCMConvert<MultiLocation, T::AssetId> for MultiLocationToPeaqCurrencyId<T>
+where
+	T: Config,
+	Pallet<T>: XcAssetLocation<T::AssetId>,
+{
+	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<T::AssetId, ()> {
+		let location = location.borrow().clone();
+		if let Some(asset_id) = Pallet::<T>::get_asset_id(location) {
+			Ok(asset_id)
+		} else {
+			Err(())
+		}
+	}
+
+	fn reverse_ref(id: impl Borrow<T::AssetId>) -> Result<MultiLocation, ()> {
+		let id = id.borrow().clone();
+		if let Some(multilocation) = Pallet::<T>::get_xc_asset_location(id) {
+			Ok(multilocation)
+		} else {
+			Err(())
+		}
+	}
+}
+
+impl<T: Config> Convert<T::AssetId, Option<MultiLocation>> for MultiLocationToPeaqCurrencyId<T>
+where
+	T: Config,
+	Pallet<T>: XcAssetLocation<T::AssetId>,
+{
+	fn convert(id: T::AssetId) -> Option<MultiLocation> {
+		<Self as XCMConvert<MultiLocation, T::AssetId>>::reverse_ref(id).ok()
 	}
 }

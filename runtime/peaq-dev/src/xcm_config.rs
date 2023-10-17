@@ -1,7 +1,7 @@
 use super::{
 	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward, ParachainInfo,
 	ParachainSystem, PeaqCurrencyId, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue,
+	RuntimeEvent, RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue, GetNativePeaqCurrencyId,
 };
 use frame_support::{
 	dispatch::Weight,
@@ -13,9 +13,9 @@ use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use xc_asset_config::MultiLocationToPeaqCurrencyId;
 use runtime_common::{
-	self_native_currency_location, AccountIdToMultiLocation, FixedRateOfForeignAsset,
-	PeaqCurrencyIdConvert,
+	AccountIdToMultiLocation, FixedRateOfForeignAsset,
 };
 use sp_runtime::traits::ConstU32;
 use xcm::latest::{prelude::*, MultiAsset};
@@ -53,8 +53,12 @@ use frame_support::pallet_prelude::Get;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
+use peaq_primitives_xcm::{
+	NATIVE_CURRNECY_ID,
+};
 
-pub type PeaqAssetLocationIdConverter = PeaqCurrencyIdConvert<XcAssetConfig, SelfReserve>;
+pub type PeaqAssetLocationIdConverter = MultiLocationToPeaqCurrencyId<Runtime>;
+
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -63,8 +67,6 @@ parameter_types! {
 	X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
 	pub PeaqLocation: MultiLocation = Here.into_location();
 	pub DummyCheckingAccount: AccountId = PolkadotXcm::check_account();
-
-	pub SelfReserve: MultiLocation = self_native_currency_location();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -88,7 +90,7 @@ pub type CurrencyTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<SelfReserve>,
+	IsConcrete<SelfReserveLocation>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -209,7 +211,7 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 >;
 
 pub type Trader = (
-	UsingComponents<WeightToFee, SelfReserve, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
@@ -399,7 +401,22 @@ impl orml_xtokens::Config for Runtime {
 
 	type MinXcmFee = DisabledParachainFee;
 	type MultiLocationsFilter = Everything;
-	// type ReserveProvider = AbsoluteReserveProvider;
 	type ReserveProvider = AbsoluteAndRelativeReserveProvider<PeaqLocationAbsolute>;
 	type UniversalLocation = UniversalLocation;
 }
+
+parameter_types! {
+	pub SelfReserveLocation: MultiLocation =
+		MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }));
+}
+
+impl xc_asset_config::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AssetId = PeaqCurrencyId;
+	type NativeAssetId = GetNativePeaqCurrencyId;
+	type NativeAssetLocation = SelfReserveLocation;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
+}
+
+
