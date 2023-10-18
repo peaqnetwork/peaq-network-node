@@ -1,7 +1,6 @@
 //! A collection of node-specific RPC methods.
 
-use std::sync::Arc;
-
+use cumulus_primitives_core::ParaId;
 use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
@@ -10,6 +9,7 @@ use sc_client_api::{
 	client::BlockchainEvents,
 };
 use sc_network::NetworkService;
+use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
 use sc_service::TransactionPool;
@@ -19,15 +19,15 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
-use sp_runtime::traits::BlakeTwo256;
-// use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
-
+use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApiServer};
 use sc_service::TaskManager;
-use sp_runtime::traits::Block as BlockT;
-pub mod tracing;
-use crate::cli_opt::EthApi as EthApiCmd;
+use sp_core::H256;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+use std::{collections::BTreeMap, sync::Arc};
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
+pub mod tracing;
+use crate::cli_opt::EthApi as EthApiCmd;
 use crate::primitives::*;
 
 pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
@@ -42,7 +42,7 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, A: ChainApi> {
+pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -90,7 +90,7 @@ pub struct TracingConfig {
 
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
-	deps: FullDeps<C, P, A>,
+	deps: FullDeps<C, P, A, BE>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	maybe_tracing_config: Option<TracingConfig>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
@@ -146,7 +146,7 @@ where
 		ethapi_cmd,
 		command_sink,
 		frontier_backend,
-		backend: _,
+		backend,
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
@@ -193,7 +193,8 @@ where
 		io.merge(
 			EthFilter::new(
 				client.clone(),
-				backend,
+				frontier_backend,
+				fc_rpc::TxPool::new(client.clone(), graph.clone()),
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
@@ -213,14 +214,26 @@ where
 		.into_rpc(),
 	)?;
 
+	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+		fc_mapping_sync::EthereumBlockNotification<Block>
+		> = Default::default();
+	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
-		EthPubSub::new(pool, Arc::clone(&client), network, subscription_task_executor, overrides)
-			.into_rpc(),
+		EthPubSub::new(
+			pool,
+			Arc::clone(&client),
+			sync.clone(),
+			subscription_task_executor,
+			overrides,
+			pubsub_notification_sinks.clone(),
+		)
+		.into_rpc(),
 	)?;
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;

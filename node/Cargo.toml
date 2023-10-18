@@ -30,6 +30,7 @@ structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
 jsonrpc-pubsub = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
+flume = { workspace = true, default-features = true }
 log = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 jsonrpc-core = { workspace = true, default-features = true }
@@ -47,6 +48,7 @@ sc-cli = { workspace = true, default-features = true }
 sc-client-api = { workspace = true, default-features = true }
 sc-consensus = { workspace = true, default-features = true }
 sc-consensus-aura = { workspace = true, default-features = true }
+sc-consensus-manual-seal = { workspace = true, default-features = true }
 sc-executor = { workspace = true, default-features = true }
 sc-keystore = { workspace = true, default-features = true }
 sc-rpc = { workspace = true, default-features = true }

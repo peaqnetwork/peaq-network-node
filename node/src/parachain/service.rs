@@ -547,6 +547,7 @@ where
 	let rpc_builder = {
 		let client = client.clone();
 		let network = network.clone();
+		let sync = sync_service.clone();
 		let pool = transaction_pool.clone();
 
 		let filter_pool = filter_pool.clone();
@@ -559,20 +560,28 @@ where
 
 		move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
-				backend: frontier_backend.clone(),
 				client: client.clone(),
-				deny_unsafe,
-				ethapi_cmd: ethapi_cmd.clone(),
-				filter_pool: filter_pool.clone(),
-				graph: pool.pool().clone(),
 				pool: pool.clone(),
+				graph: pool.pool().clone(),
+				deny_unsafe,
 				is_authority,
+				network: network.clone(),
+				sync: sync.clone(),
+				filter_pool: filter_pool.clone(),
+				ethapi_cmd: ethapi_cmd.clone(),
+				frontier_backend: match frontier_backend.as_ref() {
+					fc_db::Backend::KeyValue(b) => Arc::new(b),
+					// fc_db::Backend::Sql(b) => Arc::new(b),
+				},
+				backend: backend.clone(),
+				command_sink: None,
 				max_past_logs,
 				fee_history_limit,
 				fee_history_cache: fee_history_cache.clone(),
-				network: network.clone(),
-				block_data_cache: block_data_cache.clone(),
+				xcm_senders: None,
 				overrides: overrides.clone(),
+				block_data_cache: block_data_cache.clone(),
+				forced_parent_hashes: None,
 			};
 
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
