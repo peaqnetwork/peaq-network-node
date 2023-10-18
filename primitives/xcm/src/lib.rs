@@ -36,18 +36,9 @@ mod tests;
 pub use crate::evm::EvmAddress;
 pub use currency::*;
 
-/// An index to a block.
-pub type BlockNumber = u32;
 
-/// Alias to 512-bit hash when used in the context of a transaction signature on
-/// the chain.
-pub type Signature = MultiSignature;
-
-/// Alias to the public key used for this chain, actually a `MultiSigner`. Like
-/// the signature, this also isn't a fixed size when encoded, as different
-/// cryptos have different size public keys.
-pub type AccountPublic = <Signature as Verify>::Signer;
-
+/// Auction ID
+/// pub type AuctionId = u32;
 /// Alias to the opaque account ID type for this chain, actually a
 /// `AccountId32`. This is always 32 bytes.
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
@@ -56,8 +47,30 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 /// them.
 pub type AccountIndex = u32;
 
+/// Alias to the public key used for this chain, actually a `MultiSigner`. Like the signature, this
+/// also isn't a fixed size when encoded, as different cryptos have different size public keys.
+pub type AccountPublic = <Signature as Verify>::Signer;
+
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
+
+/// Signed version of Balance
+pub type Amount = i128;
+
+/// Balance of an account.
+pub type Balance = u128;
+
+/// Block type as expected by runtime.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+/// BlockId type as expected by this runtime.
+pub type BlockId = generic::BlockId<Block>;
+
+/// An index to a block.
+pub type BlockNumber = u32;
+
+/// Counter for the number of eras that have passed.
+/// pub type EraIndex = u32;
 
 /// Index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
@@ -68,31 +81,21 @@ pub type Hash = sp_core::H256;
 /// An instant or duration in time.
 pub type Moment = u64;
 
-/// Counter for the number of eras that have passed.
-/// pub type EraIndex = u32;
+/// Header type.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Signed version of Balance
-pub type Amount = i128;
-
-/// Auction ID
-/// pub type AuctionId = u32;
+/// The ID type of an RBAC entity.
+pub type RbacEntityId = [u8; 32];
 
 /// Share type
 /// pub type Share = u128;
 
-/// Header type.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
 
-/// Block type.
-pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
+/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+pub type Signature = MultiSignature;
 
-/// Block ID.
-/// pub type BlockId = generic::BlockId<NativeBlock>;
-
-/// Opaque, encoded, unchecked extrinsic.
 
 /// TODO: More documentation
 #[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
