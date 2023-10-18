@@ -465,11 +465,10 @@ where
 
 	let pubsub_notification_sinks: Arc<fc_mapping_sync::EthereumBlockNotificationSinks<
 		fc_mapping_sync::EthereumBlockNotification<Block>>> = Default::default();
-	// let overrides = overrides_handle(client.clone());
 
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
-	match frontier_backend.as_ref() {
+	match frontier_backend.clone() {
 		fc_db::Backend::KeyValue(b) => {
 			task_manager.spawn_essential_handle().spawn(
 				"frontier-mapping-sync-worker",
@@ -516,6 +515,7 @@ where
 		),
 	);
 
+	let frontier_backend = Arc::new(frontier_backend);
 	let ethapi_cmd = rpc_config.ethapi.clone();
 	let tracing_requesters =
 		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
@@ -569,7 +569,7 @@ where
 				sync: sync.clone(),
 				filter_pool: filter_pool.clone(),
 				ethapi_cmd: ethapi_cmd.clone(),
-				frontier_backend: match frontier_backend.as_ref() {
+				frontier_backend: match frontier_backend.clone() {
 					fc_db::Backend::KeyValue(b) => Arc::new(b),
 					// fc_db::Backend::Sql(b) => Arc::new(b),
 				},
