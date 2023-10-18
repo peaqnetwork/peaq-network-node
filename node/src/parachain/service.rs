@@ -13,13 +13,19 @@ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
+use fc_rpc::{
+	EthTask, RuntimeApiStorageOverride, OverrideHandle, StorageOverride, SchemaV3Override,
+	SchemaV2Override, SchemaV1Override,
+};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 use futures::StreamExt;
 use peaq_primitives_xcm::*;
 use polkadot_service::{Backend, CollatorPair};
+use sc_cli::SubstrateCli;
 use sc_client_api::{BlockchainEvents, HeaderBackend, StorageProvider};
 use sc_consensus::{import_queue::BasicQueue};
+use sp_core::U256;
 use sc_executor::NativeElseWasmExecutor;
 use sc_network::{config::FullNetworkConfiguration, NetworkBlock, NetworkService};
 use sc_network_sync::SyncingService;
@@ -32,21 +38,13 @@ use sp_consensus::SyncOracle;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+use sc_service::BasePath;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use substrate_prometheus_endpoint::Registry;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use super::shell_upgrade::*;
-use sc_service::BasePath;
-
 use crate::cli_opt::{EthApi as EthApiCmd, RpcConfig};
-use fc_rpc::{
-	EthTask, RuntimeApiStorageOverride, OverrideHandle, StorageOverride,
-	SchemaV3Override, SchemaV2Override, SchemaV1Override,
-};
-use sc_cli::SubstrateCli;
-
-use sp_core::U256;
 
 macro_rules! declare_executor {
 	($mod_type:tt, $runtime_ns:tt) => {
@@ -85,15 +83,11 @@ type FullClient<RuntimeApi, Executor> =
 type FullBackend = TFullBackend<Block>;
 
 pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
-	let config_dir = config
+	config
 		.base_path
-		.as_ref()
-		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
-		.unwrap_or_else(|| {
-			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
-				.config_dir(config.chain_spec.id())
-		});
-	config_dir.join("frontier").join(path)
+		.config_dir(config.chain_spec.id())
+		.join("frontier")
+		.join(path)
 }
 
 pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
@@ -126,41 +120,41 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 	)?))
 }
 
-#[allow(clippy::type_complexity)]
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
+#[allow(clippy::type_complexity)]
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
 ) -> Result<
-	PartialComponents<
-		FullClient<RuntimeApi, Executor>,
-		FullBackend,
-		(),
-		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
-		(
-			ParachainBlockImport<
-				Block,
-				FrontierBlockImport<
+		PartialComponents<
+			FullClient<RuntimeApi, Executor>,
+			FullBackend,
+			(),
+			sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+			sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+			(
+				ParachainBlockImport<
 					Block,
-					Arc<FullClient<RuntimeApi, Executor>>,
-					FullClient<RuntimeApi, Executor>,
+					FrontierBlockImport<
+						Block,
+						Arc<FullClient<RuntimeApi, Executor>>,
+						FullClient<RuntimeApi, Executor>,
+					>,
+					FullBackend,
 				>,
-				FullBackend,
-			>,
-			Option<FilterPool>,
-			Option<Telemetry>,
-			Option<TelemetryWorkerHandle>,
-			Arc<fc_db::Backend<Block>>,
-			FeeHistoryCache,
-		),
-	>,
-	sc_service::Error,
->
+				Option<FilterPool>,
+				Option<Telemetry>,
+				Option<TelemetryWorkerHandle>,
+				Arc<fc_db::Backend<Block>>,
+				FeeHistoryCache,
+			),
+		>,
+		sc_service::Error
+	>
 where
 	RuntimeApi:
 		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
@@ -243,7 +237,7 @@ where
 
 	let frontier_backend = open_frontier_backend(client.clone(), config)?;
 	let frontier_block_import =
-		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+		FrontierBlockImport::new(client.clone(), client.clone());
 
 	let parachain_block_import: ParachainBlockImport<_, _, _> =
 		ParachainBlockImport::new(frontier_block_import, backend.clone());
@@ -468,8 +462,8 @@ where
 
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
-	match frontier_backend.clone() {
-		fc_db::Backend::KeyValue(b) => {
+	match frontier_backend.as_ref() {
+		fc_db::Backend::KeyValue(b) =>
 			task_manager.spawn_essential_handle().spawn(
 				"frontier-mapping-sync-worker",
 				Some("frontier"),
@@ -487,9 +481,7 @@ where
 					pubsub_notification_sinks.clone(),
 				)
 				.for_each(|()| futures::future::ready(()))
-			);
-		},
-		_ => panic!("not implemented"),
+			),
 	};
 
 	// Spawn Frontier EthFilterApi maintenance task.
@@ -515,7 +507,6 @@ where
 		),
 	);
 
-	let frontier_backend = Arc::new(frontier_backend);
 	let ethapi_cmd = rpc_config.ethapi.clone();
 	let tracing_requesters =
 		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
@@ -549,6 +540,7 @@ where
 		let network = network.clone();
 		let sync = sync_service.clone();
 		let pool = transaction_pool.clone();
+		let backend = backend.clone();
 
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
@@ -569,9 +561,8 @@ where
 				sync: sync.clone(),
 				filter_pool: filter_pool.clone(),
 				ethapi_cmd: ethapi_cmd.clone(),
-				frontier_backend: match frontier_backend.clone() {
-					fc_db::Backend::KeyValue(b) => Arc::new(b),
-					// fc_db::Backend::Sql(b) => Arc::new(b),
+				frontier_backend: match frontier_backend.as_ref() {
+					fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
 				},
 				backend: backend.clone(),
 				command_sink: None,
