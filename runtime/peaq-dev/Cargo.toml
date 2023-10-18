@@ -249,6 +249,8 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-xtokens/std",
+	"orml-unknown-tokens/std",
+	"orml-xcm-support/std",
 	"zenlink-protocol/std",
 	"zenlink-protocol-runtime-api/std",
 
@@ -264,7 +266,7 @@ std = [
 	"frame-try-runtime/std",
 
 	# rmrk
-	"pallet-rmrk-core/std"
+	"pallet-rmrk-core/std",
 ]
 
 # Must be enabled for tracing runtimes only
