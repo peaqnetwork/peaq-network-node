@@ -9,7 +9,7 @@ repository = "https://github.com/AstarNetwork/Astar"
 description = "FRAME pallet for managing block reward issuance & distribution"
 
 [dependencies]
-codec = { package = "parity-scale-codec", workspace = true, default-features = false, features = ["derive"] }
+parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
@@ -25,7 +25,7 @@ sp-std = { workspace = true, default-features = false }
 [features]
 default = ["std"]
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"log/std",
 	"frame-benchmarking/std",
 	"frame-support/std",

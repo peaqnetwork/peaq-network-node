@@ -16,6 +16,7 @@ use fc_db::DatabaseSource;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
 use futures::StreamExt;
+use peaq_primitives_xcm::*;
 use polkadot_service::{Backend, CollatorPair};
 use sc_client_api::{BlockchainEvents, HeaderBackend, StorageProvider};
 use sc_consensus::{import_queue::BasicQueue};
@@ -36,7 +37,6 @@ use substrate_prometheus_endpoint::Registry;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use super::shell_upgrade::*;
-use crate::primitives::*;
 use sc_service::BasePath;
 
 use crate::cli_opt::{EthApi as EthApiCmd, RpcConfig};
@@ -358,7 +358,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>
-		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>
+		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
@@ -781,7 +781,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>
-		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>
+		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>

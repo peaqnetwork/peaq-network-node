@@ -20,7 +20,7 @@
 #![allow(clippy::too_many_arguments)]
 #![feature(trivial_bounds)]
 
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 pub use ethereum::{TransactionV0 as LegacyTransaction, TransactionV2 as Transaction};
 use scale_info::TypeInfo;
 use sp_runtime::{RuntimeDebug, traits::Block as BlockT};

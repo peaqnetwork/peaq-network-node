@@ -3,13 +3,13 @@
 use cumulus_client_consensus_common::{ParachainCandidate, ParachainConsensus};
 use cumulus_primitives_core::relay_chain::{Hash as PHash, PersistedValidationData};
 use futures::lock::Mutex;
+use peaq_primitives_xcm::*;
 use sc_consensus::{import_queue::Verifier as VerifierT, BlockImportParams};
 use sp_api::ApiExt;
 use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
 use sp_runtime::{generic::BlockId, traits::Header as HeaderT};
 use std::sync::Arc;
 
-use crate::primitives::*;
 
 pub enum BuildOnAccess<R> {
 	Uninitialized(Option<Box<dyn FnOnce() -> R + Send + Sync>>),

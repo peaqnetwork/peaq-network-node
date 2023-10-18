@@ -18,7 +18,7 @@ extern crate alloc;
 
 use super::Context;
 use alloc::vec::Vec;
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use ethereum_types::{H160, H256, U256};
 pub use evm::{ExitError, ExitReason, ExitSucceed, Opcode};
 
@@ -64,7 +64,7 @@ pub enum RuntimeEvent {
 		context: Context,
 		// This needs to be marshalled in the runtime no matter what.
 		opcode: Vec<u8>,
-		// We can use ExitReason with `with-codec` feature,
+		// We can use ExitReason with `with-parity_scale_codec` feature,
 		position: Result<u64, ExitReason>,
 		stack: Option<Stack>,
 		memory: Option<Memory>,

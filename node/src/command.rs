@@ -1,30 +1,31 @@
+
+use cumulus_client_cli::generate_genesis_block;
+use cumulus_primitives_core::ParaId;
+#[cfg(feature = "frame-benchmarking-cli")]
+use frame_benchmarking_cli::BenchmarkCmd;
+use log::info;
+use parity_scale_codec::Encode;
+use peaq_primitives_xcm::*;
+use sc_cli::{
+	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
+	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
+};
+use sc_service::{
+	DatabaseSource, PartialComponents,
+	config::{BasePath, PrometheusConfig},
+};
+use sp_runtime::traits::Block as BlockT;
+use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::traits::AccountIdConversion;
+use std::{io::Write, net::SocketAddr};
+
 use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
 	parachain::service::{self, agung, dev, frontier_database_dir, krest, peaq, start_node},
-	primitives::Block,
 };
 
-#[cfg(feature = "frame-benchmarking-cli")]
-use frame_benchmarking_cli::BenchmarkCmd;
-use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
-use sc_service::{DatabaseSource, PartialComponents};
-use sp_runtime::traits::Block as BlockT;
-
-// Parachain
-use codec::Encode;
-use cumulus_client_cli::generate_genesis_block;
-use cumulus_primitives_core::ParaId;
-use log::info;
-use sc_cli::{
-	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
-	SharedParams,
-};
-use sc_service::config::{BasePath, PrometheusConfig};
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::AccountIdConversion;
-use std::{io::Write, net::SocketAddr};
 
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;

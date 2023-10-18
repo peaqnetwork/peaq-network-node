@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use codec::Encode;
+use parity_scale_codec::Encode;
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
@@ -33,33 +33,21 @@ use peaq_pallet_rbac::{
 use peaq_pallet_storage::traits::Storage;
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use runtime_common::{
-	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqCurrencyAdapter,
-	PeaqCurrencyPaymentConvert, TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
-};
+use runtime_common::*;
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
+	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 	traits::{
-		AccountIdConversion,
-		AccountIdLookup,
-		BlakeTwo256,
-		Block as BlockT,
-		ConvertInto,
-		DispatchInfoOf,
-		Dispatchable,
-		// NumberFor,
-		OpaqueKeys,
-		PostDispatchInfoOf,
-		SaturatedConversion,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
@@ -106,7 +94,6 @@ pub use peaq_pallet_did;
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
-pub use peaq_primitives_xcm::*;
 
 
 pub type Precompiles = PeaqPrecompiles<Runtime>;

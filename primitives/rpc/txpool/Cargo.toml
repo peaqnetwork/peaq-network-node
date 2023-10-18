@@ -11,7 +11,7 @@ version = "0.6.0"
 ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
 
 # Substrate
-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }

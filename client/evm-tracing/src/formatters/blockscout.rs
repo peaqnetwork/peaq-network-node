@@ -22,7 +22,7 @@ use crate::{
 		CallResult, CallType, CreateResult,
 	},
 };
-use codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use ethereum_types::{H160, U256};
 use serde::Serialize;
 
