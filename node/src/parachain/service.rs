@@ -93,8 +93,8 @@ pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::P
 pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<fc_db::Backend<Block>, String> {
-	Ok(fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
+) -> Result<Arc<fc_db::Backend<Block>>, String> {
+	Ok(Arc::new(fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
 			source: match config.database {
@@ -117,7 +117,7 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 				}
 			},
 		},
-	)?))
+	)?)))
 }
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -202,12 +202,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new(
-		config.wasm_method,
-		config.default_heap_pages,
-		config.max_runtime_instances,
-		config.runtime_cache_size,
-	);
+	let executor = sc_service::new_native_or_wasm_executor(&config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -398,7 +393,7 @@ where
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
 		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>>,
-		Arc<NetworkService<Block, Hash>>,
+		Arc<SyncingService<Block>>,
 		KeystorePtr,
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
@@ -626,7 +621,7 @@ where
 			&task_manager,
 			relay_chain_interface.clone(),
 			transaction_pool,
-			network,
+			sync_service.clone(),
 			params.keystore_container.keystore(),
 			force_authoring,
 		)?;

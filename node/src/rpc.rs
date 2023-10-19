@@ -186,7 +186,7 @@ where
 			fee_history_limit,
 			10_u64,
 			forced_parent_hashes,
-		)
+		).into_rpc(),
 	)?;
 
 	if let Some(filter_pool) = filter_pool {
