@@ -68,12 +68,7 @@ impl PeaqCurrencyId {
 			return false
 		}
 		match *self {
-			PeaqCurrencyId::Token(symbol) =>
-				if symbol < TOKEN_MASK {
-					return true
-				} else {
-					return false
-				},
+			PeaqCurrencyId::Token(symbol) => symbol < TOKEN_MASK,
 			// Only allow Zenlink protocol to create it
 			PeaqCurrencyId::LPToken(_, _) => false,
 		}
