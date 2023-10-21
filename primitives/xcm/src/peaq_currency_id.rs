@@ -197,7 +197,7 @@ where
 }
 
 #[test]
-fn test_u64_to_PeaqCurrencyId() {
+fn test_u64_to_peaq_currency_id() {
 	let currency_id = PeaqCurrencyId::Token(1);
 	assert_eq!(currency_id, 1u64.try_into().unwrap());
 
@@ -209,7 +209,7 @@ fn test_u64_to_PeaqCurrencyId() {
 }
 
 #[test]
-fn test_PeaqCurrencyId_to_u64() {
+fn test_peaq_currency_id_to_u64() {
 	let idx = 1u64;
 	assert_eq!(idx, <PeaqCurrencyId as TryInto<u64>>::try_into(PeaqCurrencyId::Token(1)).unwrap());
 

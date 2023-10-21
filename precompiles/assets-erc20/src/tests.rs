@@ -58,7 +58,7 @@ fn selector_less_than_four_bytes() {
 		// This selector is only three bytes long when four are required.
 		precompiles()
 			.prepare_test(Account::Alice, Account::AssetId(0u128), vec![1u8, 2u8, 3u8])
-			.execute_reverts(|output| output == b"tried to parse selector out of bounds");
+			.execute_reverts(|output| output == b"Tried to read selector out of bounds");
 	});
 }
 
@@ -75,7 +75,7 @@ fn no_selector_exists_but_length_is_right() {
 
 		precompiles()
 			.prepare_test(Account::Alice, Account::AssetId(0u128), vec![1u8, 2u8, 3u8, 4u8])
-			.execute_reverts(|output| output == b"unknown selector");
+			.execute_reverts(|output| output == b"Unknown selector");
 	});
 }
 
@@ -460,7 +460,7 @@ fn transfer_not_enough_founds() {
 				.execute_reverts(|output| {
 					from_utf8(&output)
 						.unwrap()
-						.contains("Dispatched call failed with error: DispatchErrorWithPostInfo") &&
+						.contains("Dispatched call failed with error: Module(ModuleError") &&
 						from_utf8(&output).unwrap().contains("BalanceLow")
 				});
 		});
@@ -636,10 +636,8 @@ fn transfer_from_non_incremental_approval() {
 				)
 				.execute_reverts(|output| {
 					output ==
-						b"Dispatched call failed with error: DispatchErrorWithPostInfo { \
-					post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes }, \
-					error: Module(ModuleError { index: 2, error: [10, 0, 0, 0], \
-					message: Some(\"Unapproved\") }) }"
+						b"Dispatched call failed with error: Module(ModuleError { index: 2, error: \
+						[10, 0, 0, 0], message: Some(\"Unapproved\") })"
 				});
 		});
 }
@@ -687,10 +685,8 @@ fn transfer_from_above_allowance() {
 				)
 				.execute_reverts(|output| {
 					output ==
-						b"Dispatched call failed with error: DispatchErrorWithPostInfo { \
-					post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes }, \
-					error: Module(ModuleError { index: 2, error: [10, 0, 0, 0], \
-					message: Some(\"Unapproved\") }) }"
+						b"Dispatched call failed with error: Module(ModuleError { index: 2, error: \
+						[10, 0, 0, 0], message: Some(\"Unapproved\") })"
 				});
 		});
 }

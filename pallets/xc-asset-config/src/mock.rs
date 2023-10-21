@@ -17,6 +17,11 @@
 // along with Astar. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_xc_asset_config};
+use xcm::latest::prelude::{
+	MultiLocation,
+	Junction::GeneralKey,
+	X1
+};
 
 use frame_support::{construct_runtime, parameter_types, traits::ConstU32, weights::Weight};
 use sp_core::H256;
@@ -26,6 +31,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use frame_system::EnsureRoot;
 
 type BlockNumber = u64;
 type Balance = u128;
@@ -97,19 +103,23 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
-	type FreezeIdentifier = ();
-	type MaxHolds = ConstU32<0>;
-	type MaxFreezes = ConstU32<0>;
 }
 
 type AssetId = u128;
 
+parameter_types! {
+	pub const GetNativePeaqCurrencyId: AssetId = 0;
+	pub SelfReserveLocation: MultiLocation =
+		MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }));
+}
+
 impl pallet_xc_asset_config::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
-	type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
-	type WeightInfo = ();
+	type NativeAssetId = GetNativePeaqCurrencyId;
+	type NativeAssetLocation = SelfReserveLocation;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = crate::weights::SubstrateWeight<Self>;
 }
 
 pub struct ExternalityBuilder;
