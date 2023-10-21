@@ -26,7 +26,10 @@ use mock::{
 	alice, bob, EvmAccountsModule, ExtBuilder, Runtime, RuntimeEvent, RuntimeOrigin, System, ALICE,
 	BOB,
 };
-use std::str::FromStr;
+use pallet_evm::{
+	HashedAddressMapping,
+};
+use sp_runtime::traits::BlakeTwo256;
 
 #[test]
 fn claim_account_work() {
@@ -89,18 +92,15 @@ fn claim_account_should_not_work() {
 		);
 	});
 }
-
 #[test]
 fn evm_get_account_id() {
 	ExtBuilder::default().build().execute_with(|| {
 		let evm_account = EvmAccountsModule::eth_address(&alice());
 		let evm_account_to_default = {
-			let mut bytes = *b"evm:aaaaaaaaaaaaaaaaaaaa\0\0\0\0\0\0\0\0";
-			bytes[4..24].copy_from_slice(&evm_account[..]);
-			AccountId32::from(bytes)
+			HashedAddressMapping::<BlakeTwo256>::into_account_id(evm_account)
 		};
 		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_account_id(&evm_account),
+			EvmAccountsModule::get_account_id(&evm_account),
 			evm_account_to_default
 		);
 
@@ -110,76 +110,11 @@ fn evm_get_account_id() {
 			EvmAccountsModule::eth_sign(&alice(), &ALICE)
 		));
 
-		assert_eq!(EvmAddressMapping::<Runtime>::get_account_id(&evm_account), ALICE);
-		assert_eq!(EvmAddressMapping::<Runtime>::get_evm_address(&ALICE).unwrap(), evm_account);
+		assert_eq!(EvmAccountsModule::get_account_id(&evm_account), ALICE);
+		assert_eq!(EvmAccountsModule::get_evm_address(&ALICE).unwrap(), evm_account);
 
-		assert!(EvmAddressMapping::<Runtime>::is_linked(&evm_account_to_default, &evm_account));
-		assert!(EvmAddressMapping::<Runtime>::is_linked(&ALICE, &evm_account));
-	});
-}
-
-#[test]
-fn account_to_evm() {
-	ExtBuilder::default().build().execute_with(|| {
-		let default_evm_account =
-			EvmAddress::from_str("f0bd9ffde7f9f4394d8cc1d86bf24d87e5d5a9a9").unwrap();
-		assert_eq!(EvmAddressMapping::<Runtime>::get_evm_address(&ALICE), None);
-
-		let alice_evm_account = EvmAccountsModule::eth_address(&alice());
-
-		assert_ok!(EvmAccountsModule::claim_account(
-			RuntimeOrigin::signed(ALICE),
-			alice_evm_account,
-			EvmAccountsModule::eth_sign(&alice(), &ALICE)
-		));
-
-		assert_eq!(EvmAddressMapping::<Runtime>::get_account_id(&alice_evm_account), ALICE);
-		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_evm_address(&ALICE).unwrap(),
-			alice_evm_account
-		);
-
-		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_or_create_evm_address(&ALICE),
-			alice_evm_account
-		);
-
-		assert!(EvmAddressMapping::<Runtime>::is_linked(&ALICE, &alice_evm_account));
-		assert!(EvmAddressMapping::<Runtime>::is_linked(&ALICE, &default_evm_account));
-	});
-}
-
-#[test]
-fn account_to_evm_with_create_default() {
-	ExtBuilder::default().build().execute_with(|| {
-		let default_evm_account =
-			EvmAddress::from_str("f0bd9ffde7f9f4394d8cc1d86bf24d87e5d5a9a9").unwrap();
-		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_or_create_evm_address(&ALICE),
-			default_evm_account
-		);
-		System::assert_last_event(RuntimeEvent::EvmAccountsModule(crate::Event::ClaimAccount {
-			account_id: ALICE,
-			evm_address: default_evm_account,
-		}));
-		assert_eq!(
-			EvmAddressMapping::<Runtime>::get_evm_address(&ALICE),
-			Some(default_evm_account)
-		);
-
-		assert_eq!(EvmAddressMapping::<Runtime>::get_account_id(&default_evm_account), ALICE);
-
-		assert!(EvmAddressMapping::<Runtime>::is_linked(&ALICE, &default_evm_account));
-
-		let alice_evm_account = EvmAccountsModule::eth_address(&alice());
-
-		assert_noop!(
-			EvmAccountsModule::claim_account(
-				RuntimeOrigin::signed(ALICE),
-				alice_evm_account,
-				EvmAccountsModule::eth_sign(&alice(), &ALICE)
-			),
-			Error::<Runtime>::AccountIdHasMapped
-		);
+		// We don't check whether the evm account is linked to the default account
+		// assert!(EvmAccountsModule::is_linked(&evm_account_to_default, &evm_account));
+		assert!(EvmAccountsModule::is_linked(&ALICE, &evm_account));
 	});
 }

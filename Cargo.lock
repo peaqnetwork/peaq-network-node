@@ -2675,6 +2675,7 @@ dependencies = [
  "libsecp256k1",
  "log",
  "orml-traits",
+ "pallet-balances",
  "pallet-evm",
  "parity-scale-codec",
  "peaq-primitives-xcm",

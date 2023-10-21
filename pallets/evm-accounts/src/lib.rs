@@ -276,6 +276,7 @@ where
 
 	// Returns true if a given AccountId is associated with a given EvmAddress
 	// and false if is not.
+	// Note: we don't check whether the default EvmAddress of the AccountId is linked or not
 	fn is_linked(account_id: &T::AccountId, evm: &EvmAddress) -> bool {
 		Self::get_evm_address(account_id).as_ref() == Some(evm)
 	}

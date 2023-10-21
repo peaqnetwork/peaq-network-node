@@ -38,7 +38,7 @@ use std::str::from_utf8;
 
 use crate::{mock::*, *};
 
-use precompile_utils::{testing::*, EvmDataWriter, LogsBuilder};
+use precompile_utils::{testing::*, EvmDataWriter, prelude::LogsBuilder};
 use sha3::{Digest, Keccak256};
 
 fn precompiles() -> Erc20AssetsPrecompileSet<Runtime> {

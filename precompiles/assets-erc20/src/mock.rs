@@ -114,7 +114,7 @@ impl AddressMapping<Account> for Account {
 pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
 // Implement the trait, where we convert AccountId to AssetID
-impl AddressToAssetId<AssetId> for Runtime {
+impl EVMAddressToAssetId<AssetId> for Runtime {
 	/// The way to convert an account to assetId is by ensuring that the prefix is 0XFFFFFFFF
 	/// and by taking the lowest 128 bits as the assetId
 	fn address_to_asset_id(address: H160) -> Option<AssetId> {
@@ -244,7 +244,6 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_evm::SubstrateBlockHashMapping<Self>;
 	type FindAuthor = ();
 	type OnCreate = ();
-	type WeightInfo = ();
 }
 
 // These parameters dont matter much as this will only be called by root with the forced arguments

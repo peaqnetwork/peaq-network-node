@@ -22,14 +22,19 @@
 
 use super::*;
 use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{ConstU128, ConstU64, Everything, Nothing},
+	construct_runtime,
+	traits::{ConstU128, ConstU64, Everything},
 };
 use orml_traits::parameter_type_with_key;
-use primitives::{Amount, Balance, CurrencyId, TokenSymbol};
+use peaq_primitives_xcm::{Balance, CurrencyId};
 use sp_core::{crypto::AccountId32, H256};
 use sp_io::hashing::keccak_256;
 use sp_runtime::{testing::Header, traits::IdentityLookup};
+use sp_runtime::traits::BlakeTwo256;
+use pallet_evm::{
+	HashedAddressMapping,
+};
+
 
 pub type AccountId = AccountId32;
 pub type BlockNumber = u64;
@@ -85,39 +90,48 @@ parameter_type_with_key! {
 	};
 }
 
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type CurrencyHooks = ();
-	type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type DustRemovalWhitelist = Nothing;
-}
-
-parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::ACA);
-}
-
-impl orml_currencies::Config for Runtime {
-	type MultiCurrency = Tokens;
-	type NativeCurrency = AdaptedBasicCurrency;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
-	type WeightInfo = ();
-}
-pub type AdaptedBasicCurrency =
-	orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+/*
+ * impl orml_tokens::Config for Runtime {
+ *     type RuntimeEvent = RuntimeEvent;
+ *     type Balance = Balance;
+ *     type Amount = Amount;
+ *     type CurrencyId = CurrencyId;
+ *     type WeightInfo = ();
+ *     type ExistentialDeposits = ExistentialDeposits;
+ *     type CurrencyHooks = ();
+ *     type MaxLocks = ();
+ *     type MaxReserves = ();
+ *     type ReserveIdentifier = [u8; 8];
+ *     type DustRemovalWhitelist = Nothing;
+ * }
+ *
+ */
+/*
+ * parameter_types! {
+ *     pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::ACA);
+ * }
+ *
+ */
+/*
+ * impl orml_currencies::Config for Runtime {
+ *     type MultiCurrency = Tokens;
+ *     type NativeCurrency = AdaptedBasicCurrency;
+ *     type GetNativeCurrencyId = GetNativeCurrencyId;
+ *     type WeightInfo = ();
+ * }
+ */
+/*
+ * pub type AdaptedBasicCurrency =
+ *     orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+ */
 
 impl Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ChainId = ();
-	type AddressMapping = EvmAddressMapping<Runtime>;
-	type TransferAll = Currencies;
+	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
+	// type AddressMapping = EVMAddressMapping<Runtime>;
+	// type TransferAll = Currencies;
 	type WeightInfo = ();
 }
 
@@ -132,9 +146,9 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		EvmAccountsModule: evm_accounts::{Pallet, Call, Storage, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		// Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Currencies: orml_currencies::{Pallet, Call},
+		// Currencies: orml_currencies::{Pallet, Call},
 	}
 );
 
