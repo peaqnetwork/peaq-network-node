@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+use crate::CurrencyIdToZenlinkId;
 use frame_support::assert_ok;
 use std::{
 	convert::{From, TryFrom, TryInto},
 	str::FromStr,
 };
-use crate::CurrencyIdToZenlinkId;
 
 use super::{currency::PARA_CHAIN_ID, CurrencyId, EvmAddress, TokenSymbol, ZenlinkAssetId};
 use frame_support::parameter_types;
@@ -184,7 +184,6 @@ fn currency_id_and_zenlink_asset_id() {
 	parameter_types! {
 		pub const GetParaId: u32 = PARA_CHAIN_ID;
 	}
-
 
 	let peaq = TokenSymbol::PEAQ;
 	let krst = TokenSymbol::KRST;

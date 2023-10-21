@@ -26,9 +26,7 @@ use mock::{
 	alice, bob, EvmAccountsModule, ExtBuilder, Runtime, RuntimeEvent, RuntimeOrigin, System, ALICE,
 	BOB,
 };
-use pallet_evm::{
-	HashedAddressMapping,
-};
+use pallet_evm::HashedAddressMapping;
 use sp_runtime::traits::BlakeTwo256;
 
 #[test]
@@ -96,13 +94,9 @@ fn claim_account_should_not_work() {
 fn evm_get_account_id() {
 	ExtBuilder::default().build().execute_with(|| {
 		let evm_account = EvmAccountsModule::eth_address(&alice());
-		let evm_account_to_default = {
-			HashedAddressMapping::<BlakeTwo256>::into_account_id(evm_account)
-		};
-		assert_eq!(
-			EvmAccountsModule::get_account_id(&evm_account),
-			evm_account_to_default
-		);
+		let evm_account_to_default =
+			{ HashedAddressMapping::<BlakeTwo256>::into_account_id(evm_account) };
+		assert_eq!(EvmAccountsModule::get_account_id(&evm_account), evm_account_to_default);
 
 		assert_ok!(EvmAccountsModule::claim_account(
 			RuntimeOrigin::signed(ALICE),

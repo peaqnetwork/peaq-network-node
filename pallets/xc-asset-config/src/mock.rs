@@ -17,21 +17,17 @@
 // along with Astar. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_xc_asset_config};
-use xcm::latest::prelude::{
-	MultiLocation,
-	Junction::GeneralKey,
-	X1
-};
+use xcm::latest::prelude::{Junction::GeneralKey, MultiLocation, X1};
 
 use frame_support::{construct_runtime, parameter_types, traits::ConstU32, weights::Weight};
 use sp_core::H256;
 
+use frame_system::EnsureRoot;
 use sp_io::TestExternalities;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use frame_system::EnsureRoot;
 
 type BlockNumber = u64;
 type Balance = u128;

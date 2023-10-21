@@ -26,15 +26,14 @@ use frame_support::{
 	traits::{ConstU128, ConstU64, Everything},
 };
 use orml_traits::parameter_type_with_key;
+use pallet_evm::HashedAddressMapping;
 use peaq_primitives_xcm::{Balance, CurrencyId};
 use sp_core::{crypto::AccountId32, H256};
 use sp_io::hashing::keccak_256;
-use sp_runtime::{testing::Header, traits::IdentityLookup};
-use sp_runtime::traits::BlakeTwo256;
-use pallet_evm::{
-	HashedAddressMapping,
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
 };
-
 
 pub type AccountId = AccountId32;
 pub type BlockNumber = u64;
