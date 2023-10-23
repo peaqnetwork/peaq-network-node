@@ -1,0 +1,25 @@
+name: Deploy to Remote Server
+
+on:
+  push:
+    branches:
+      - add/1205782676034164_autotest-deplyoment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY_AUTOTEST }}
+          
+      # - name: Copy Docker Compose File
+      #   run: scp -i ${{ secrets.SSH_PRIVATE_KEY }} docker-compose.yml user@remotehost:/path/to/remote/folder
+
+      - name: SSH into Remote Server
+        run: ssh -i ${{ secrets.SSH_KEY_AUTOTEST }} ubuntu@autotest.peaq.network 'cd /home/jay/parachain-launch/yoyo && sudo docker compose down -v && sudo docker compose up -d --build --remove-orphans'
