@@ -22,6 +22,7 @@ jobs:
       #   run: scp -i ${{ secrets.SSH_PRIVATE_KEY }} docker-compose.yml user@remotehost:/path/to/remote/folder
 
       - name: SSH into Remote Server
-        run: ssh -i ${{ secrets.SSH_KEY_AUTOTEST }} ubuntu@autotest.peaq.network 'cd /home/jay/parachain-launch/yoyo && sudo docker compose down -v && sudo docker compose up -d --build --remove-orphans'
+        run: ssh -i ${{ secrets.SSH_KEY_AUTOTEST }} ubuntu@autotest.peaq.network 
+        #'cd /home/jay/parachain-launch/yoyo && sudo docker compose down -v && sudo docker compose up -d --build --remove-orphans'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY_AUTOTEST }}
