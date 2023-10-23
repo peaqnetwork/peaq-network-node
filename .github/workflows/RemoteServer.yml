@@ -23,3 +23,5 @@ jobs:
 
       - name: SSH into Remote Server
         run: ssh -i ${{ secrets.SSH_KEY_AUTOTEST }} ubuntu@autotest.peaq.network 'cd /home/jay/parachain-launch/yoyo && sudo docker compose down -v && sudo docker compose up -d --build --remove-orphans'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY_AUTOTEST }}
