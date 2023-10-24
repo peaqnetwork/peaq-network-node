@@ -6,6 +6,7 @@ use pallet_evm_precompile_peaq_storage::PeaqStoragePrecompile;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
 use precompile_utils::precompile_set::*;
+use pallet_evm_precompile_peaq_rbac::PeaqRbacPrecompile;
 
 type EthereumPrecompilesChecks = (AcceptDelegateCall, CallableByContract, CallableByPrecompile);
 
@@ -50,6 +51,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2049>,
 					PeaqStoragePrecompile<R>,
+					(AcceptDelegateCall, CallableByContract),
+				>,
+				PrecompileAt<
+					AddressU64<2050>,
+					PeaqRbacPrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
 				>,
 			),

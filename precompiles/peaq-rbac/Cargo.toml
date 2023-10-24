@@ -26,7 +26,7 @@ sp-std = { workspace = true, default-features = false }
 # Frontier
 fp-evm = { workspace = true, default-features = false }
 pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
-peaq-pallet-storage = { workspace = true, default-features = false }
+peaq-pallet-rbac = { workspace = true, default-features = false }
 
 
 [features]
@@ -41,5 +41,5 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
-	"peaq-pallet-storage/std",
+	"peaq-pallet-rbac/std",
 ]
