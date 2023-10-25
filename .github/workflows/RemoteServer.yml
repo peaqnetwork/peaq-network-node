@@ -49,5 +49,5 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            sudo TAG=$(echo ${{ steps.meta.outputs.tags}} | sed -n 's/[^:]*:\(.*\)/\1/p')" docker compose down -v
-            sudo TAG=$(echo ${{ steps.meta.outputs.tags}} | sed -n 's/[^:]*:\(.*\)/\1/p')" docker compose up -d --build --remove-orphans
+            sudo TAG=echo ${{ steps.meta.outputs.tags}} | sed -n 's/[^:]*:\(.*\)/\1/p' docker compose down -v
+            sudo TAG=echo ${{ steps.meta.outputs.tags}} | sed -n 's/[^:]*:\(.*\)/\1/p' docker compose up -d --build --remove-orphans
