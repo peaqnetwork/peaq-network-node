@@ -1,10 +1,8 @@
 name: Deploy to Remote Server
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  issue_comment:
+    types: [created]
 
 jobs:
   deploy:
@@ -33,14 +31,14 @@ jobs:
             type=ref,event=pr
             type=ref,event=tag
 
-      # - name: Build and push
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: .
-      #     file: scripts/Dockerfile
-      #     push: ${{ github.event_name != 'pull_request' }} && contains(github.event.comment.body, '/deploy')
-      #     tags: ${{ steps.meta.outputs.tags }}
-      #     labels: ${{ steps.meta.outputs.labels }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: scripts/Dockerfile
+          push: true #${{ github.event_name == 'pull_request' }} && contains(github.event.comment.body, '/deploy')
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       - name: Extract Tag
         id: image-version
         run: |
