@@ -20,5 +20,6 @@ jobs:
           key: ${{ secrets.SSH_KEY_AUTOTEST }}
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
+            cd /home/jay/parachain-launch/yoyo/
             sudo TAG=krest-v0.0.4 docker compose down -v
             sudo TAG=krest-v0.0.4 docker compose up -d --build --remove-orphans
