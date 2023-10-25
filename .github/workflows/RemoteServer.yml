@@ -32,14 +32,14 @@ jobs:
             type=ref,event=pr
             type=ref,event=tag
 
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: scripts/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      # - name: Build and push
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: .
+      #     file: scripts/Dockerfile
+      #     push: ${{ github.event_name != 'pull_request' }}
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -49,5 +49,5 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            sudo TAG=${{ steps.meta.outputs.tags }} docker compose down -v
-            sudo TAG=${{ steps.meta.outputs.tags }} docker compose up -d --build --remove-orphans
+            sudo TAG=${{ steps.meta.outputs.tags#*: }} docker compose down -v
+            sudo TAG=${{ steps.meta.outputs.tags#*: }} docker compose up -d --build --remove-orphans
