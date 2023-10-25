@@ -51,5 +51,6 @@ jobs:
             cd /home/jay/parachain-launch/yoyo/
             image_name=${{ steps.meta.outputs.tags}}
             tag=${image_name#*:}
+            echo $tag
             sudo TAG=$tag docker compose down -v
             sudo TAG=$tag docker compose up -d --build --remove-orphans
