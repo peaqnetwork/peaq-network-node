@@ -6,12 +6,11 @@
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
-	BoundedVec,
 };
 use peaq_pallet_rbac::rbac::Role;
 use precompile_utils::{data::String, prelude::*};
-use sp_core::{Decode, H256, U256};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_core::{Decode, H256};
+use sp_std::{marker::PhantomData};
 
 use fp_evm::PrecompileHandle;
 
@@ -59,11 +58,11 @@ where
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
-			Err(e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 			Ok(v) => Ok(EntityAttribute {
 				id: v.id.into(),
 				name: v.name.into(),
-				enabled: v.enabled.into(),
+				enabled: v.enabled,
 			}),
 		}
 	}
@@ -83,7 +82,7 @@ where
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
-			Some(caller_addr.clone()).into(),
+			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::add_role {
 				role_id: role_id_addr,
 				name: name.as_bytes().to_vec(),
