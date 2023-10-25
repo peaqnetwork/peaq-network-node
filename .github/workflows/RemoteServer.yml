@@ -2,7 +2,9 @@ name: Deploy to Remote Server
 
 on:
   issue_comment:
-    types: [created]
+    types:
+    - created
+    - synchronize
 
 jobs:
   deploy:
