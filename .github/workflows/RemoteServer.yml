@@ -54,5 +54,6 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
+            echo $tag
             sudo TAG=$tag docker compose down -v
             sudo TAG=$tag docker compose up -d --build --remove-orphans
