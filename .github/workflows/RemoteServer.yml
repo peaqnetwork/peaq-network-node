@@ -21,9 +21,17 @@ jobs:
       # - name: Copy Docker Compose File
       #   run: scp -i ${{ secrets.SSH_PRIVATE_KEY }} docker-compose.yml user@remotehost:/path/to/remote/folder
 
-      - name: SSH into Remote Server
-        run: ping autotest.peaq.network  
-        #ssh -i ${{ secrets.SSH_KEY_AUTOTEST }} ubuntu@autotest.peaq.network 
-        #'cd /home/jay/parachain-launch/yoyo && sudo docker compose down -v && sudo docker compose up -d --build --remove-orphans'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY_AUTOTEST }}
+      # - name: SSH into Remote Server
+      #   run: ping autotest.peaq.network  
+      #   #ssh -i ${{ secrets.SSH_KEY_AUTOTEST }} ubuntu@autotest.peaq.network 
+      #   #'cd /home/jay/parachain-launch/yoyo && sudo docker compose down -v && sudo docker compose up -d --build --remove-orphans'
+      #   env:
+      #     SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY_AUTOTEST }}
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AUTOTEST_HOST }}
+          username: ${{ secrets.AUTOTEST_USERNAME }}
+          key: ${{ secrets.SSH_KEY_AUTOTEST }}
+          port: ${{ secrets.AUTOTEST_SSH_PORT }}
+          script: whoami
