@@ -20,9 +20,8 @@ use pallet_evm::AddressMapping;
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type EntityIdOf<Runtime> = <Runtime as peaq_pallet_rbac::Config>::EntityId;
 
-type GetBytesLimit = ConstU32<32>;
+type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
 
-use peaq_pallet_rbac::structs::Entity;
 #[derive(EvmData)]
 pub struct EntityAttribute {
 	pub id: H256,
@@ -30,6 +29,8 @@ pub struct EntityAttribute {
 	pub enabled: bool,
 }
 
+// Selectors
+pub(crate) const SELECTOR_LOG_ADD_ROLE: [u8; 32] = keccak256!("AddRole(address,bytes32,string)");
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
 // represent both.
@@ -46,7 +47,7 @@ where
 	EntityIdOf<Runtime>: From<[u8; 32]>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
 {
-	#[precompile::public("fetch_role(bytes32,bytes32)")]
+	#[precompile::public("fetch_role(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role(
 		handle: &mut impl PrecompileHandle,
@@ -65,5 +66,41 @@ where
 				enabled: v.enabled.into(),
 			}),
 		}
+	}
+
+	#[precompile::public("add_role(bytes32,string)")]
+	#[precompile::view]
+	fn add_role(
+		handle: &mut impl PrecompileHandle,
+		role_id: H256,
+		name: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let role_id_addr: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr.clone()).into(),
+			peaq_pallet_rbac::Call::<Runtime>::add_role {
+				role_id: role_id_addr,
+				name: name.as_bytes().to_vec(),
+			},
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ADD_ROLE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id)
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
 	}
 }
