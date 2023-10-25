@@ -10,7 +10,7 @@ interface RBAC {
 
     struct EntityAttribute {
         bytes32 owner;
-	    string name;
+	    bytes name;
 	    bool enabled;
     }
 
