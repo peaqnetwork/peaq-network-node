@@ -1,15 +1,16 @@
 name: Deploy to Remote Server
 
 on:
-  issue_comment:
+  pull_request_review:
     types:
     - created
     - synchronize
+    - submitted
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/deploy')
+    if: github.event.review.pull_request  && contains(github.event.comment.body, '/deploy')
     steps:
       # - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
       #   uses: insightsengineering/disk-space-reclaimer@v1.1.0
