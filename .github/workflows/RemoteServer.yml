@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
-        uses: insightsengineering/disk-space-reclaimer@v1.1.0
+      # - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
+      #   uses: insightsengineering/disk-space-reclaimer@v1.1.0
 
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -40,6 +40,11 @@ jobs:
       #     push: ${{ github.event_name != 'pull_request' }}
       #     tags: ${{ steps.meta.outputs.tags }}
       #     labels: ${{ steps.meta.outputs.labels }}
+      - name: Extract Tag
+        run: |
+          input_string=${{ steps.meta.outputs.tags}}
+          tag=$(echo "$input_string" | cut -d ':' -f 2)
+          echo "Extracted Tag: $tag"
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -49,5 +54,5 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            sudo TAG=echo ${{ steps.meta.outputs.tags}} | sed -n 's/[^:]*:\(.*\)/\1/p' docker compose down -v
-            sudo TAG=echo ${{ steps.meta.outputs.tags}} | sed -n 's/[^:]*:\(.*\)/\1/p' docker compose up -d --build --remove-orphans
+            sudo TAG=$tag docker compose down -v
+            sudo TAG=$tag docker compose up -d --build --remove-orphans
