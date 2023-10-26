@@ -7,17 +7,14 @@ on:
       - 'peaq-dev-v*' # For the peaq-dev's env in the parchain-launch usage
       - 'krest-v*' # For the krest env in the parchain-launch usage
 jobs:
-  runner_cleanup:
-    name: Free Runner Disk Space
+       
+  push_to_registry:
+  
+    name: Build and Push Peaq Docker Image to Docker Hub
     runs-on: ubuntu-20.04
     steps:
       - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
         uses: insightsengineering/disk-space-reclaimer@v1.1.0
-  push_to_registry:
-    name: Build and Push Peaq Docker Image to Docker Hub
-    runs-on: ubuntu-20.04
-    needs: runner_cleanup
-    steps:
       - name: Check out the repo
         uses: actions/checkout@v3
 
