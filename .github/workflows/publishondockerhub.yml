@@ -2,7 +2,7 @@ name: Build and Publish
 on:
   push:
     branches:
-      - 'parachain_dev'
+      - 'ci/1205782676034164_auto-deploy'
     tags:
       - 'peaq-dev-v*' # For the peaq-dev's env in the parchain-launch usage
       - 'krest-v*' # For the krest env in the parchain-launch usage
@@ -42,6 +42,12 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    needs: push_to_registry
+    steps:
       - name: Extract Tag
         id: image-version
         run: |
@@ -49,7 +55,7 @@ jobs:
           tag=$(echo "$input_string" | cut -d ':' -f 2)
           echo "Extracted Tag: $tag"
            echo "::set-output name=tag::$tag"
-           
+
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -60,5 +66,6 @@ jobs:
           script: |
             cd /home/jay/parachain-launch/yoyo/
             echo ${{ steps.extract.outputs.tag }}
+            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose pull
             sudo TAG=${{ steps.image-version.outputs.tag }} docker compose down -v
             sudo TAG=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
