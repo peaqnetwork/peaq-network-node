@@ -73,8 +73,6 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            echo ${{ env.tag }}
-            echo ${{ steps.image-version.outputs.tag }}
-            sudo TAG=${{ env.tag }} docker compose pull
-            sudo TAG=${{ env.tag }} docker compose down -v
-            sudo TAG=${{ env.tag }} docker compose up -d --build --remove-orphans
+            sudo TAG=${{ steps.extract.outputs.tag }} docker compose pull
+            sudo TAG=${{ steps.extract.outputs.tag }} docker compose down -v
+            sudo TAG=${{ steps.extract.outputs.tag }} docker compose up -d --build --remove-orphans
