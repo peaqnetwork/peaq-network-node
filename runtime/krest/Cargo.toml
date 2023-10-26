@@ -17,6 +17,7 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.38"
 
 [dependencies]
+# sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false, features = ["std", "force-debug"] }
 codec = { package = "parity-scale-codec", workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
@@ -34,6 +35,7 @@ pallet-sudo = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = false }
+pallet-assets = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-block-builder = { workspace = true, default-features = false }
@@ -112,14 +114,17 @@ staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward"
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
+pallet-evm-precompile-assets-erc20 = { path = "../../precompiles/assets-erc20", default-features = false }
 pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-features = false }
 pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
 runtime-common = { path = "../common", default-features = false }
+xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
+evm-accounts = { path = "../../pallets/evm-accounts", default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
-frame-try-runtime ={ workspace=true, default-features = false, optional = true}
+frame-try-runtime = { workspace = true, default-features = false, optional = true }
 log = {workspace = true, default-features = false}
 
 [features]
@@ -138,6 +143,9 @@ runtime-benchmarks = [
 	"pallet-contracts/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"pallet-block-reward/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"xc-asset-config/runtime-benchmarks",
+	"evm-accounts/runtime-benchmarks",
 
 	"pallet-ethereum/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
@@ -168,6 +176,8 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-multisig/std",
+	"pallet-assets/std",
+
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -231,8 +241,8 @@ std = [
     "pallet-authorship/std",
 
     "parachain-staking/std",
-    "pallet-block-reward/std",
 	"staking-coefficient-reward/std",
+    "pallet-block-reward/std",
 
 	# XCM
     "xcm/std",
@@ -246,16 +256,22 @@ std = [
 	"orml-xtokens/std",
 	"zenlink-protocol/std",
 	"zenlink-protocol-runtime-api/std",
+	"xc-asset-config/std",
+	"evm-accounts/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",
 	"precompile-utils/std",
 	"runtime-common/std",
+
+	"pallet-evm-precompile-assets-erc20/std",
 	"pallet-evm-precompile-peaq-did/std",
 	"pallet-evm-precompile-peaq-storage/std",
+	"pallet-xcm/std",
 
-	# TryRuntime
+	# try-runtime
 	"frame-try-runtime/std",
+	# "sp-debug-derive/std"
 ]
 
 # Must be enabled for tracing runtimes only
@@ -299,6 +315,7 @@ try-runtime = [
 	"pallet-xcm/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-multisig/try-runtime",
+	"pallet-assets/try-runtime",
 
 	"orml-currencies/try-runtime",
 	"orml-tokens/try-runtime",
@@ -312,6 +329,8 @@ try-runtime = [
 
 	"parachain-staking/try-runtime",
 	"parachain-info/try-runtime",
+	"xc-asset-config/try-runtime",
+	"evm-accounts/try-runtime",
 
 	"staking-coefficient-reward/try-runtime",
 
