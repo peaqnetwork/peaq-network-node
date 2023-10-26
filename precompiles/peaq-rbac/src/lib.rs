@@ -3,6 +3,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // primitives and utils imports
+use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
@@ -10,9 +11,7 @@ use frame_support::{
 use peaq_pallet_rbac::rbac::Role;
 use precompile_utils::{data::String, prelude::*};
 use sp_core::{Decode, H256};
-use sp_std::{marker::PhantomData};
-
-use fp_evm::PrecompileHandle;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
 
@@ -59,12 +58,32 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
-			Ok(v) => Ok(EntityAttribute {
-				id: v.id.into(),
-				name: v.name.into(),
-				enabled: v.enabled,
-			}),
+			Ok(v) =>
+				Ok(EntityAttribute { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 		}
+	}
+
+	#[precompile::public("fetch_roles(bytes32)")]
+	#[precompile::view]
+	fn fetch_roles(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+	) -> EvmResult<Vec<EntityAttribute>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+
+		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_roles(&owner_account) {
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the items")).into()),
+			Ok(v) => Ok(v
+				.iter()
+				.map(|entity| EntityAttribute {
+					id: entity.id.into(),
+					name: entity.name.clone().into(),
+					enabled: entity.enabled,
+				})
+				.collect::<Vec<EntityAttribute>>()),
+		};
+		result
 	}
 
 	#[precompile::public("add_role(bytes32,string)")]
