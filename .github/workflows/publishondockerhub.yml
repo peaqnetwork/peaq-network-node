@@ -48,6 +48,7 @@ jobs:
           tag=$(echo "$input_string" | cut -d ':' -f 2)
           echo "Extracted Tag: $tag"
           echo "tag=$tag" >> $GITHUB_ENV
+          echo ${{ env.tag }}
           #echo "::set-env name=tag::$tag"
       
   deploy:
@@ -64,7 +65,7 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            echo ${{ env.MY_VARIABLE }}
+            echo ${{ env.tag }}
             sudo TAG=${{ env.tag }} docker compose pull
             sudo TAG=${{ env.tag }} docker compose down -v
             sudo TAG=${{ env.tag }} docker compose up -d --build --remove-orphans
