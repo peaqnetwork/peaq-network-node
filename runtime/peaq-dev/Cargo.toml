@@ -17,7 +17,7 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.38"
 
 [dependencies]
-sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false, features = ["std", "force-debug"] }
+# sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false, features = ["std", "force-debug"] }
 codec = { package = "parity-scale-codec", workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
@@ -125,7 +125,7 @@ evm-accounts = { path = "../../pallets/evm-accounts", default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
-frame-try-runtime = {workspace = true, default-features = false, optional = true }
+frame-try-runtime = { workspace = true, default-features = false, optional = true }
 log = {workspace = true, default-features = false}
 
 [features]
@@ -274,7 +274,7 @@ std = [
 
 	# try-runtime
 	"frame-try-runtime/std",
-	"sp-debug-derive/std"
+	# "sp-debug-derive/std"
 ]
 
 # Must be enabled for tracing runtimes only

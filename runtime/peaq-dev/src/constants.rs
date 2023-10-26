@@ -64,6 +64,7 @@ pub mod fee {
 	// 	}
 	// }
 
+	// [TODO] Can remove?
 	pub fn peaq_per_second() -> u128 {
 		let base_weight = Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		let base_tx_per_second = (WEIGHT_REF_TIME_PER_SECOND as u128) / base_weight;
@@ -71,11 +72,6 @@ pub mod fee {
 	}
 
 	pub fn dot_per_second() -> u128 {
-		log::error!(
-			"total: {:?}, peaq_per_second: {:?}",
-			peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT),
-			peaq_per_second()
-		);
 		peaq_per_second() / dollar(PEAQ) * 50 * dollar(DOT)
 	}
 }

@@ -12,10 +12,13 @@ pub use fp_evm::GenesisAccount;
 use smallvec::smallvec;
 
 use codec::Encode;
+
+use evm_accounts::CallKillEVMLinkAccount;
 use pallet_evm::FeeCalculator;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
+use sp_runtime::traits::Convert;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -46,12 +49,12 @@ use sp_version::RuntimeVersion;
 use fp_rpc::TransactionStatus;
 pub use frame_support::{
 	construct_runtime,
-	dispatch::{DispatchClass, GetDispatchInfo},
+	dispatch::{DispatchClass, EncodeLike, GetDispatchInfo},
 	parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
-		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
-		Randomness, StorageInfo, WithdrawReasons,
+		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
+		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
+		OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
 		constants::{
@@ -65,7 +68,7 @@ pub use frame_support::{
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess,
+	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
 
 pub use pallet_balances::Call as BalancesCall;
@@ -89,10 +92,12 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
-pub use peaq_primitives_xcm::{
-	currency, Amount, Balance, CurrencyId, CurrencyIdToZenlinkId, TokenSymbol,
+use peaq_primitives_xcm::{
+	Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId,
+	NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 pub use peaq_pallet_did;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
@@ -110,23 +115,21 @@ use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
 // For XCM
+pub mod constants;
 mod weights;
 pub mod xcm_config;
-use orml_currencies::BasicCurrencyAdapter;
-use orml_traits::parameter_type_with_key;
-pub mod constants;
-use xcm::latest::prelude::*;
 
 // For Zenlink-DEX-Module
-use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, MultiAssetsHandler, PairInfo, PairLpGenerate,
-	ZenlinkMultiAssets,
-};
+use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
+
+pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	CurrencyHooks, LocalAssetAdaptor, OperationalFeeMultiplier,
-	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, TransactionByteFee,
-	CENTS, DOLLARS, MILLICENTS,
+	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
+	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
+	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
+	MILLICENTS,
 };
 
 /// An index to a block.
@@ -204,6 +207,7 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
+// [TODO] Need to check with Astar's value
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
@@ -259,10 +263,20 @@ parameter_types! {
 }
 
 pub struct BaseFilter;
-
 impl Contains<RuntimeCall> for BaseFilter {
-	fn contains(_call: &RuntimeCall) -> bool {
-		true
+	fn contains(call: &RuntimeCall) -> bool {
+		match call {
+			// Filter permission-less assets creation/destroying.
+			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
+			RuntimeCall::Assets(method) => match method {
+				pallet_assets::Call::create { id, .. } => id.is_allow_to_create(),
+				_ => true,
+			},
+			// These modules are not allowed to be called by transactions:
+			// To leave collator just shutdown it, next session funds will be released
+			// Other modules should works:
+			_ => true,
+		}
 	}
 }
 
@@ -307,7 +321,7 @@ impl frame_system::Config for Runtime {
 	/// What to do if a new account is created.
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
+	type OnKilledAccount = (CallKillEVMLinkAccount<Runtime>,);
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
@@ -435,8 +449,10 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
-	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
-		CurrencyId::Token(TokenSymbol::ROC),
+	// [TODO] Should use the other ways... Maybe use the asset list?
+	pub PcpcLocalAccepted: Vec<PeaqCurrencyId> = vec![
+		PeaqCurrencyId::Token(1),
+		PeaqCurrencyId::Token(3),
 	];
 }
 
@@ -445,13 +461,13 @@ pub struct PeaqCPC;
 impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
-	type MultiCurrency = Currencies;
+	type MultiCurrency = PeaqMultiCurrencies;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
-	type NativeCurrencyId = GetNativeCurrencyId;
+	type NativeCurrencyId = GetNativePeaqCurrencyId;
 	type LocalAcceptedIds = PcpcLocalAccepted;
-	type CurrencyId = CurrencyId;
-	type CurrencyIdToZenlinkId = CurrencyIdToZenlinkId<SelfParaId>;
+	type CurrencyId = PeaqCurrencyId;
+	type CurrencyIdToZenlinkId = PeaqCurrencyIdToZenlinkId<SelfParaId>;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -597,11 +613,11 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = EVMAccounts;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = PeaqPrecompiles<Self>;
+	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -673,6 +689,7 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	pub const AssetAdminId: PalletId = PalletId(*b"AssetAdm");
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
 }
@@ -832,14 +849,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::AGNG;
-}
-
-impl orml_currencies::Config for Runtime {
-	type MultiCurrency = Tokens;
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
-	type WeightInfo = ();
+	pub const GetNativePeaqCurrencyId: PeaqCurrencyId = NATIVE_CURRNECY_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -856,33 +866,10 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		ExistentialDeposit::get()
-	};
-}
-
 parameter_types! {
+	pub PeaqAssetAdm: AccountId = AssetAdminId::get().into_account_truncating();
 	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
 	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
-}
-
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
-}
-
-impl orml_unknown_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 }
 
 impl peaq_pallet_rbac::Config for Runtime {
@@ -902,30 +889,30 @@ parameter_types! {
 	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
 
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
-
-	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
-		// Krest local and live, 0.01 BNC
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
-
-		// Zenlink local 1 for test
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
-		// Zenlink local 2 for test
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
-	];
 }
 
+type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
+	Runtime,
+	Assets,
+	PeaqNativeCurrencyWrapper<Balances>,
+	GetNativePeaqCurrencyId,
+>;
+
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets =
-	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies, CurrencyId>>;
+pub type MultiAssets = ZenlinkMultiAssets<
+	ZenlinkProtocol,
+	Balances,
+	LocalAssetAdaptor<PeaqMultiCurrencies, PeaqCurrencyId>,
+>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
-	type LpGenerate = PairLpGenerate<Self>;
-	type TargetChains = ZenlinkRegistedParaChains;
+	// [TODO] PeaqPotAccount to Sudo users
+	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqAssetAdm>;
+	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
 }
@@ -946,8 +933,8 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
-		Treasury: pallet_treasury  = 9,
-		Council: pallet_collective::<Instance1>=10,
+		Treasury: pallet_treasury = 9,
+		Council: pallet_collective::<Instance1> = 10,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
@@ -970,11 +957,11 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-		Currencies: orml_currencies::{Pallet, Call} = 34,
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
+		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
+		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
+		EVMAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 41,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1044,6 +1031,9 @@ mod benches {
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
 		[pallet_xcm, PolkadotXcm]
+		[pallet_assets, Assets]
+		[xc_asset_config, XCAssetConfig]
+		[evm_accounts, EVMAccounts]
 	);
 }
 
@@ -1810,4 +1800,62 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+}
+
+parameter_types! {
+	pub const AssetDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetsStringLimit: u32 = 50;
+	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+	pub const MetadataDepositBase: Balance = deposit(1, 68);
+	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
+	pub const AssetAccountDeposit: Balance = deposit(1, 18);
+}
+
+impl pallet_assets::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = PeaqCurrencyId;
+	type Currency = Balances;
+	// [TODO] Need implement our own to avoid user create LP Assets
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type AssetDeposit = AssetDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type AssetAccountDeposit = AssetAccountDeposit;
+	type ApprovalDeposit = AssetExistentialDeposit;
+	type StringLimit = AssetsStringLimit;
+	type Freezer = ();
+	type Extra = ();
+	// [TODO] Comment out
+	// type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
+	type WeightInfo = ();
+	type RemoveItemsLimit = ConstU32<1000>;
+	type AssetIdParameter = PeaqCurrencyId;
+	// [TODO] Comment out
+	type CallbackHandle = ();
+	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+	// #[cfg(feature = "runtime-benchmarks")]
+	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
+}
+
+impl evm_accounts::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type ChainId = EvmChainId;
+	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
+}
+
+// Move to primitives
+impl EVMAddressToAssetId<PeaqCurrencyId> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<PeaqCurrencyId> {
+		PeaqCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+	}
+
+	fn asset_id_to_address(asset_id: PeaqCurrencyId) -> H160 {
+		PeaqCurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	}
 }

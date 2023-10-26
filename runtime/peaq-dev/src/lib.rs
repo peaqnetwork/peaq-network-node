@@ -889,11 +889,6 @@ parameter_types! {
 	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
-pub type MoreThanHalfCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
->;
-
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EntityId = EntityId;
@@ -955,7 +950,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
-		Treasury: pallet_treasury= 9,
+		Treasury: pallet_treasury = 9,
 		Council: pallet_collective::<Instance1> = 10,
 
 		// EVM
