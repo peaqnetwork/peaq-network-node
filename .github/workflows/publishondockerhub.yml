@@ -49,7 +49,7 @@ jobs:
           echo "Extracted Tag: $tag"
           
           echo "::set-output name=tag::$tag"
-          echo "tag=${{ steps.image-version.outputs.tag }}" >> $GITHUB_ENV
+          echo "tag=$(echo "$input_string" | cut -d ':' -f 2)" >> $GITHUB_ENV
           echo ${{ env.tag }}
           #echo "::set-env name=tag::$tag"
           echo ${{ steps.image-version.outputs.tag }}
