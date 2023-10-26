@@ -65,6 +65,6 @@ jobs:
           script: |
             cd /home/jay/parachain-launch/yoyo/
             echo ${{ env.MY_VARIABLE }}
-            sudo TAG=${{ env.MY_VARIABLE }} docker compose pull
-            sudo TAG=${{ env.MY_VARIABLE }} docker compose down -v
-            sudo TAG=${{ env.MY_VARIABLE }} docker compose up -d --build --remove-orphans
+            sudo TAG=${{ env.tag }} docker compose pull
+            sudo TAG=${{ env.tag }} docker compose down -v
+            sudo TAG=${{ env.tag }} docker compose up -d --build --remove-orphans
