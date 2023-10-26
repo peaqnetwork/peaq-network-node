@@ -33,29 +33,27 @@ jobs:
             type=ref,event=pr
             type=ref,event=tag
 
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: scripts/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-20.04
-    needs: push_to_registry
-    steps:
+      # - name: Build and push
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: .
+      #     file: scripts/Dockerfile
+      #     push: ${{ github.event_name != 'pull_request' }}
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}
       - name: Extract Tag
         id: image-version
         run: |
           input_string=${{ steps.meta.outputs.tags}}
           tag=$(echo "$input_string" | cut -d ':' -f 2)
           echo "Extracted Tag: $tag"
-           echo "::set-output name=tag::$tag"
-
+          echo "::set-env name=tag::$tag"
+      
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    needs: push_to_registry
+    steps:
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -65,7 +63,7 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            echo ${{ steps.extract.outputs.tag }}
-            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose pull
-            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose down -v
-            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
+            echo ${{ env.MY_VARIABLE }}
+            sudo TAG=${{ env.MY_VARIABLE }} docker compose pull
+            sudo TAG=${{ env.MY_VARIABLE }} docker compose down -v
+            sudo TAG=${{ env.MY_VARIABLE }} docker compose up -d --build --remove-orphans
