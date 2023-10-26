@@ -19,12 +19,30 @@ interface RBAC {
         bytes32 role
     ) external view returns (EntityAttribute memory);
 
+    function fetch_roles(
+        bytes32 owner,
+        bytes32 role
+    ) external view returns (EntityAttribute[] memory);
+
     function add_role(
         bytes32 role_id,
         bytes memory name
     ) external returns (bool);
 
+    function update_role(
+        bytes32 role_id,
+        bytes memory name
+    ) external returns (bool);
+
     event RoleAdded(
+        address sender,
+        bytes32 owner,
+        bytes32 role_id,
+        bytes name
+    );
+
+    event RoleUpdated(
+        address sender,
         bytes32 owner,
         bytes32 role_id,
         bytes name
