@@ -41,3 +41,24 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Extract Tag
+        id: image-version
+        run: |
+          input_string=${{ steps.meta.outputs.tags}}
+          tag=$(echo "$input_string" | cut -d ':' -f 2)
+          echo "Extracted Tag: $tag"
+           echo "::set-output name=tag::$tag"
+           
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AUTOTEST_HOST }}
+          username: ${{ secrets.AUTOTEST_USERNAME }}
+          key: ${{ secrets.SSH_KEY_AUTOTEST }}
+          port: ${{ secrets.AUTOTEST_SSH_PORT }}
+          script: |
+            cd /home/jay/parachain-launch/yoyo/
+            echo ${{ steps.extract.outputs.tag }}
+            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose down -v
+            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
