@@ -46,10 +46,12 @@ jobs:
         run: |
           input_string=${{ steps.meta.outputs.tags}}
           tag=$(echo "$input_string" | cut -d ':' -f 2)
+          env | sort
           echo "Extracted Tag: $tag"
           echo "tag=$(echo "$input_string" | cut -d ':' -f 2)" 
           echo "::set-output name=tag::$tag"
           echo "tag=$(echo "$input_string" | cut -d ':' -f 2)" >> $GITHUB_ENV
+          env | sort
           echo ${{ env.tag }}
           #echo "::set-env name=tag::$tag"
           echo ${{ steps.image-version.outputs.tag }}
