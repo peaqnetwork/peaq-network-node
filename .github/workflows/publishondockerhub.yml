@@ -47,7 +47,8 @@ jobs:
           input_string=${{ steps.meta.outputs.tags}}
           tag=$(echo "$input_string" | cut -d ':' -f 2)
           echo "Extracted Tag: $tag"
-          echo "::set-env name=tag::$tag"
+          echo "tag=$tag" >> $GITHUB_ENV
+          #echo "::set-env name=tag::$tag"
       
   deploy:
     name: Deploy
