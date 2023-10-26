@@ -15,7 +15,7 @@ interface RBAC {
     }
 
     function fetch_role(
-        address owner,
+        bytes32 owner,
         bytes32 role
     ) external view returns (EntityAttribute memory);
 
@@ -25,7 +25,7 @@ interface RBAC {
     ) external returns (bool);
 
     event RoleAdded(
-        address owner,
+        bytes32 owner,
         bytes32 role_id,
         bytes name
     );
