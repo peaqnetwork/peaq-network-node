@@ -46,7 +46,7 @@ where
 	EntityIdOf<Runtime>: From<[u8; 32]>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
 {
-	#[precompile::public("fetch_role(address,bytes32)")]
+	#[precompile::public("fetch_role(bytes32,bytes32)")]
 	#[precompile::view]
 	fn fetch_role(
 		handle: &mut impl PrecompileHandle,
