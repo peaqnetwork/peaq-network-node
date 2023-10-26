@@ -29,6 +29,9 @@ pub struct EntityAttribute {
 
 // Selectors
 pub(crate) const SELECTOR_LOG_ADD_ROLE: [u8; 32] = keccak256!("AddRole(address,bytes32,bytes)");
+pub(crate) const SELECTOR_LOG_UPDATE_ROLE: [u8; 32] =
+	keccak256!("UpdateRole(address,bytes32,bytes)");
+
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
 // represent both.
@@ -86,7 +89,7 @@ where
 		result
 	}
 
-	#[precompile::public("add_role(bytes32,string)")]
+	#[precompile::public("add_role(bytes32,bytes)")]
 	#[precompile::view]
 	fn add_role(
 		handle: &mut impl PrecompileHandle,
@@ -111,6 +114,42 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ADD_ROLE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id)
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("update_role(bytes32,bytes)")]
+	#[precompile::view]
+	fn update_role(
+		handle: &mut impl PrecompileHandle,
+		role_id: H256,
+		name: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let role_id_addr: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::update_role {
+				role_id: role_id_addr,
+				name: name.as_bytes().to_vec(),
+			},
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UPDATE_ROLE,
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
 				.write::<H256>(role_id)
