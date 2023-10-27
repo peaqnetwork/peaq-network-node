@@ -7048,7 +7048,7 @@ dependencies = [
 [[package]]
 name = "pallet-rmrk-core"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/rmrk-substrate?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
+source = "git+https://github.com/peaqnetwork/rmrk-substrate.git?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7756,6 +7756,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
@@ -10543,7 +10544,7 @@ dependencies = [
 [[package]]
 name = "rmrk-traits"
 version = "0.0.1"
-source = "git+https://github.com/peaqnetwork/rmrk-substrate?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
+source = "git+https://github.com/peaqnetwork/rmrk-substrate.git?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
 dependencies = [
  "frame-support",
  "frame-system",

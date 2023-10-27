@@ -51,7 +51,7 @@ pub use frame_support::{
 	traits::{
 		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
 		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
-		Randomness, StorageInfo, WithdrawReasons,
+		Randomness, StorageInfo, WithdrawReasons,AsEnsureOriginWithArg,
 	},
 	weights::{
 		constants::{
@@ -314,6 +314,68 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+}
+
+pub const RMRK: Balance = 1;
+
+parameter_types! {
+	pub ClassBondAmount: Balance = 100;
+	pub MaxMetadataLength: u32 = 256;
+	pub const ResourceSymbolLimit: u32 = 10;
+	pub const PartsLimit: u32 = 50;
+	pub const MaxPriorities: u32 = 3;
+	pub const PropertiesLimit: u32 = 15;
+	pub const NestingBudget: u32 = 3;
+	pub const CollectionSymbolLimit: u32 = 100;
+	pub const MaxResourcesOnMint: u32 = 3;
+}
+
+impl pallet_rmrk_core::Config for Runtime{
+	type RuntimeEvent = RuntimeEvent;
+	type ProtocolOrigin = EnsureRoot<AccountId>;
+	type ResourceSymbolLimit = ResourceSymbolLimit;
+	type PartsLimit = PartsLimit;
+	type MaxPriorities = MaxPriorities;
+	type CollectionSymbolLimit = CollectionSymbolLimit;
+	type MaxResourcesOnMint = MaxResourcesOnMint;
+	type PropertiesLimit = PropertiesLimit;
+	type NestingBudget = NestingBudget;
+	type WeightInfo = pallet_rmrk_core::weights::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = RmrkBenchmark;
+	type TransferHooks = ();
+
+}
+
+parameter_types! {
+	pub const CollectionDeposit: Balance = 10_000 * RMRK; // 1 UNIT deposit to create asset class
+	pub const ItemDeposit: Balance = 100 * RMRK; // 1/100 UNIT deposit to create asset instance
+	pub const KeyLimit: u32 = 32;	// Max 32 bytes per key
+	pub const ValueLimit: u32 = 64;	// Max 64 bytes per value
+	pub const UniquesMetadataDepositBase: Balance = 1000 * RMRK;
+	pub const AttributeDepositBase: Balance = 100 * RMRK;
+	pub const DepositPerBytes: Balance = 10 * RMRK;
+	pub const UniquesStringLimit: u32 = 32;
+}
+
+impl pallet_uniques::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type CollectionId = u32;
+	type ItemId = u32;
+	type Currency = Balances;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type Locker = pallet_rmrk_core::Pallet<Runtime>;
+	type CollectionDeposit = CollectionDeposit;
+	type ItemDeposit = ItemDeposit;
+	type MetadataDepositBase = UniquesMetadataDepositBase;
+	type AttributeDepositBase = AttributeDepositBase;
+	type DepositPerByte = DepositPerBytes;
+	type StringLimit = UniquesStringLimit;
+	type KeyLimit = KeyLimit;
+	type ValueLimit = ValueLimit;
+	type WeightInfo = ();
+	// type InstanceReserveStrategy = NFT;
 }
 
 parameter_types! {
@@ -961,11 +1023,15 @@ construct_runtime!(
 		Treasury: pallet_treasury  = 9,
 		Council: pallet_collective::<Instance1>=10,
 
+		// rmrk core pallet
+		RmrkCore: pallet_rmrk_core::{Pallet, Call, Storage, Event<T>} = 11,
+		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 12,
+
 		// EVM
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 12,
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 13,
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 14,
+		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 15,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 16,
 
 		// Parachain
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
