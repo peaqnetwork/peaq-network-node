@@ -1,6 +1,6 @@
+use crate::{AccountId, PeaqCurrencyId};
 use pallet_assets::AssetsCallback;
 use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
-use crate::{PeaqCurrencyId, AccountId};
 use sp_core::U256;
 use sp_std::marker::PhantomData;
 
@@ -18,19 +18,19 @@ pub const EVM_REVERT_CODE: &[u8] = &[0x60, 0x00, 0x60, 0x00, 0xfd];
 pub struct EvmRevertCodeHandler<A, R>(PhantomData<(A, R)>);
 impl<A, R> AssetsCallback<PeaqCurrencyId, AccountId> for EvmRevertCodeHandler<A, R>
 where
-    A: EVMAddressToAssetId<PeaqCurrencyId>,
-    R: pallet_evm::Config,
+	A: EVMAddressToAssetId<PeaqCurrencyId>,
+	R: pallet_evm::Config,
 {
-    fn created(id: &PeaqCurrencyId, _: &AccountId) {
-        let address = A::asset_id_to_address(*id);
-        // In case of collision, we need to cancel the asset creation.
-        // However, in this asset version, we cannot return Err
-        // ensure!(!pallet_evm::AccountCodes::<R>::contains_key(&address), ());
-        pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
-    }
+	fn created(id: &PeaqCurrencyId, _: &AccountId) {
+		let address = A::asset_id_to_address(*id);
+		// In case of collision, we need to cancel the asset creation.
+		// However, in this asset version, we cannot return Err
+		// ensure!(!pallet_evm::AccountCodes::<R>::contains_key(&address), ());
+		pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
+	}
 
-    fn destroyed(id: &PeaqCurrencyId) {
-        let address = A::asset_id_to_address(*id);
-        pallet_evm::AccountCodes::<R>::remove(address);
-    }
+	fn destroyed(id: &PeaqCurrencyId) {
+		let address = A::asset_id_to_address(*id);
+		pallet_evm::AccountCodes::<R>::remove(address);
+	}
 }

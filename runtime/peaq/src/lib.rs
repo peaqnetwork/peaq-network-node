@@ -93,9 +93,8 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId,
-	EvmRevertCodeHandler,
-	NATIVE_CURRNECY_ID,
+	Balance, EvmRevertCodeHandler, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress,
+	PeaqCurrencyIdToZenlinkId, NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
