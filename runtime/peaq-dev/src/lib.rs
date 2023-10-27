@@ -94,6 +94,7 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
 	Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId,
+	EvmRevertCodeHandler,
 	NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -209,10 +210,11 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+const SUPPLY_FACTOR: u128 = 100;
+const STORAGE_BYTE_FEE: Balance = 100 * CENTS;
 
-// [TODO] Need to check with Astar's value
 const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+	items as Balance * 1 * CENTS * SUPPLY_FACTOR + (bytes as Balance) * STORAGE_BYTE_FEE
 }
 
 /// The version information used to identify this runtime when compiled natively.
@@ -927,7 +929,6 @@ impl zenlink_protocol::Config for Runtime {
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
-	// [TODO] PeaqPotAccount to Sudo users
 	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqAssetAdm>;
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
@@ -1837,7 +1838,6 @@ impl pallet_assets::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = PeaqCurrencyId;
 	type Currency = Balances;
-	// [TODO] Need implement our own to avoid user create LP Assets
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
@@ -1853,9 +1853,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = PeaqCurrencyId;
-	// [TODO] Comment out
-	type CallbackHandle = ();
-	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	// #[cfg(feature = "runtime-benchmarks")]
 	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
 }

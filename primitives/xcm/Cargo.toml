@@ -18,9 +18,12 @@ evm = { workspace = true }
 scale-info = { workspace = true }
 sha3 = { workspace = true }
 serde_json = { workspace = true }
-frame-support = { workspace = true }
-zenlink-protocol = { workspace = true }
+frame-support = { workspace = true, default-features = false }
+zenlink-protocol = { workspace = true, default-features = false }
+pallet-assets = { workspace = true, default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
+pallet-evm-precompile-assets-erc20 = { path = "../../precompiles/assets-erc20", default-features = false }
+pallet-evm = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
@@ -38,6 +41,9 @@ std = [
 	"evm/std",
 	"evm/with-serde",
 	"frame-support/std",
+	"pallet-assets/std",
+	"pallet-evm-precompile-assets-erc20/std",
+	"pallet-evm/std",
 	"xc-asset-config/std",
 	"xcm-executor/std",
 	"xcm/std",

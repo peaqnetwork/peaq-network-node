@@ -94,6 +94,7 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
 	Balance, PeaqCurrencyId, PeaqCurrencyIdToEVMAddress, PeaqCurrencyIdToZenlinkId,
+	EvmRevertCodeHandler,
 	NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -687,6 +688,7 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
+// [TODO] Extract to common
 parameter_types! {
 	pub const AssetAdminId: PalletId = PalletId(*b"AssetAdm");
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
@@ -908,7 +910,6 @@ impl zenlink_protocol::Config for Runtime {
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
-	// [TODO] PeaqPotAccount to Sudo users
 	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqAssetAdm>;
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
@@ -1816,7 +1817,6 @@ impl pallet_assets::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = PeaqCurrencyId;
 	type Currency = Balances;
-	// [TODO] Need implement our own to avoid user create LP Assets
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type AssetDeposit = AssetDeposit;
@@ -1827,14 +1827,10 @@ impl pallet_assets::Config for Runtime {
 	type StringLimit = AssetsStringLimit;
 	type Freezer = ();
 	type Extra = ();
-	// [TODO] Comment out
-	// type WeightInfo = weights::pallet_assets::SubstrateWeight<Runtime>;
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = PeaqCurrencyId;
-	// [TODO] Comment out
-	type CallbackHandle = ();
-	// type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	// #[cfg(feature = "runtime-benchmarks")]
 	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
 }
