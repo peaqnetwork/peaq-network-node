@@ -36,14 +36,12 @@ interface RBAC {
 
     event RoleAdded(
         address sender,
-        bytes32 owner,
         bytes32 role_id,
         bytes name
     );
 
     event RoleUpdated(
         address sender,
-        bytes32 owner,
         bytes32 role_id,
         bytes name
     );
