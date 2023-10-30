@@ -104,7 +104,6 @@ where
 	}
 
 	#[precompile::public("add_role(bytes32,bytes)")]
-	#[precompile::view]
 	fn add_role(
 		handle: &mut impl PrecompileHandle,
 		role_id: H256,
@@ -140,7 +139,6 @@ where
 	}
 
 	#[precompile::public("update_role(bytes32,bytes)")]
-	#[precompile::view]
 	fn update_role(
 		handle: &mut impl PrecompileHandle,
 		role_id: H256,
@@ -176,7 +174,6 @@ where
 	}
 
 	#[precompile::public("disable_role(bytes32)")]
-	#[precompile::view]
 	fn disable_role(handle: &mut impl PrecompileHandle, role_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
@@ -237,7 +234,6 @@ where
 	}
 
 	#[precompile::public("assign_role_to_user(bytes32,bytes32)")]
-	#[precompile::view]
 	fn assign_role_to_user(
 		handle: &mut impl PrecompileHandle,
 		role_id: H256,
@@ -270,7 +266,6 @@ where
 	}
 
 	#[precompile::public("unassign_role_to_user(bytes32,bytes32)")]
-	#[precompile::view]
 	fn unassign_role_to_user(
 		handle: &mut impl PrecompileHandle,
 		role_id: H256,
