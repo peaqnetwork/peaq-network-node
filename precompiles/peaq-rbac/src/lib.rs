@@ -8,7 +8,7 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use peaq_pallet_rbac::rbac::Role;
+use peaq_pallet_rbac::rbac::{Rbac, Role};
 use precompile_utils::{data::String, prelude::*};
 use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -27,10 +27,20 @@ pub struct EntityAttribute {
 	pub enabled: bool,
 }
 
+#[derive(EvmData)]
+pub struct Role2User {
+	pub role: H256,
+	pub user: H256,
+}
+
 // Selectors
 pub(crate) const SELECTOR_LOG_ADD_ROLE: [u8; 32] = keccak256!("AddRole(address,bytes32,bytes)");
 pub(crate) const SELECTOR_LOG_UPDATE_ROLE: [u8; 32] =
 	keccak256!("UpdateRole(address,bytes32,bytes)");
+pub(crate) const SELECTOR_LOG_DISABLE_ROLE: [u8; 32] = keccak256!("DisableRole(address,bytes32)");
+pub(crate) const SELECTOR_LOG_FETCH_USER_ROLES: [u8; 32] = keccak256!("FetchUserRoles(address)");
+pub(crate) const SELECTOR_LOG_ASSIGN_ROLE_TO_USER: [u8; 32] =
+	keccak256!("AssignRoleToUser(address,bytes32,bytes32)");
 
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
@@ -154,6 +164,100 @@ where
 				.write::<Address>(Address::from(handle.context().caller))
 				.write::<H256>(role_id)
 				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("disable_role(bytes32)")]
+	#[precompile::view]
+	fn disable_role(handle: &mut impl PrecompileHandle, role_id: H256) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let role_id_addr: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::disable_role { role_id: role_id_addr },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_DISABLE_ROLE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("fetch_user_roles(bytes32)")]
+	#[precompile::view]
+	fn fetch_user_roles(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		user_id: H256,
+	) -> EvmResult<Vec<Role2User>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let user_id_addr: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+		let owner_addr = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+
+		let result =
+			match peaq_pallet_rbac::Pallet::<Runtime>::get_user_roles(&owner_addr, user_id_addr) {
+				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Ok(v) => Ok(v
+					.iter()
+					.map(|val| Role2User { role: val.role.into(), user: val.user.into() })
+					.collect::<Vec<Role2User>>()),
+			};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_USER_ROLES,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
+	}
+
+	#[precompile::public("assign_role_to_user(bytes32,bytes32)")]
+	#[precompile::view]
+	fn assign_role_to_user(
+		handle: &mut impl PrecompileHandle,
+		role_id: H256,
+		user_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_user { role_id, user_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ASSIGN_ROLE_TO_USER,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id.into())
+				.write::<H256>(user_id.into())
 				.build(),
 		);
 		event.record(handle)?;

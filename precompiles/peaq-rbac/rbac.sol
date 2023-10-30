@@ -14,6 +14,11 @@ interface RBAC {
 	    bool enabled;
     }
 
+    struct Role2User{
+        bytes32 role;
+        bytes32 user;
+    }
+
     function fetch_role(
         bytes32 owner,
         bytes32 role
@@ -34,6 +39,15 @@ interface RBAC {
         bytes memory name
     ) external returns (bool);
 
+    function disable_role(
+        bytes32 role_id
+    ) external returns (bool);
+
+    function fetch_user_roles(bytes32 owner, bytes32 user_id) external view returns (Role2User[] memory);
+
+    function assign_role_to_user(bytes32 role_id, bytes32 user_id) external returns (bool);
+    // Events
+
     event RoleAdded(
         address sender,
         bytes32 role_id,
@@ -44,5 +58,20 @@ interface RBAC {
         address sender,
         bytes32 role_id,
         bytes name
+    );
+
+    event RoleRemoved(
+        address sender,
+        bytes32 role_id
+    );
+
+    event FetchedUserRoles(
+        address sender
+    );
+
+    event RoleAssignedToUser(
+        address sender,
+        bytes32 role_id,
+        bytes32 user_id
     );
 }
