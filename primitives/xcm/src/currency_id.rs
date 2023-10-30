@@ -1,9 +1,9 @@
+use crate::EvmAddress;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::Get;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_core::H160;
 use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::marker::PhantomData;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -94,8 +94,8 @@ impl TryFrom<CurrencyId> for u64 {
 		match currency_id {
 			CurrencyId::Token(symbol) =>
 				Ok((symbol as u64) + ((currency_id.type_index() as u64) << 61)),
-			CurrencyId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) <<
-				32) + ((symbol1 & TOKEN_MASK) as u64) +
+			CurrencyId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) << 32) +
+				((symbol1 & TOKEN_MASK) as u64) +
 				((currency_id.type_index() as u64) << 61)),
 		}
 	}
@@ -138,8 +138,7 @@ impl Default for CurrencyId {
 // Zenlink (2000, 0, 0) and (2000, 2, 0) map to CurrencyId::Token(0)
 pub struct CurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<CurrencyId, Option<ZenlinkAssetId>>
-	for CurrencyIdToZenlinkId<GetParaId>
+impl<GetParaId> Convert<CurrencyId, Option<ZenlinkAssetId>> for CurrencyIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {
@@ -162,24 +161,24 @@ where
 
 pub struct CurrencyIdToEVMAddress<GetPrefix>(PhantomData<GetPrefix>);
 
-impl<GetPrefix> Convert<CurrencyId, H160> for CurrencyIdToEVMAddress<GetPrefix>
+impl<GetPrefix> Convert<CurrencyId, EvmAddress> for CurrencyIdToEVMAddress<GetPrefix>
 where
 	GetPrefix: Get<&'static [u8]>,
 {
-	fn convert(currency_id: CurrencyId) -> H160 {
+	fn convert(currency_id: CurrencyId) -> EvmAddress {
 		let mut data = [0u8; 20];
 		let index: u64 = <CurrencyId as TryInto<u64>>::try_into(currency_id).unwrap();
 		data[0..4].copy_from_slice(GetPrefix::get());
 		data[4..20].copy_from_slice(&index.to_be_bytes());
-		H160::from(data)
+		EvmAddress::from(data)
 	}
 }
 
-impl<GetPrefix> Convert<H160, Option<CurrencyId>> for CurrencyIdToEVMAddress<GetPrefix>
+impl<GetPrefix> Convert<EvmAddress, Option<CurrencyId>> for CurrencyIdToEVMAddress<GetPrefix>
 where
 	GetPrefix: Get<&'static [u8]>,
 {
-	fn convert(address: H160) -> Option<CurrencyId> {
+	fn convert(address: EvmAddress) -> Option<CurrencyId> {
 		let mut data = [0u8; 16];
 		let address_bytes: [u8; 20] = address.into();
 		if GetPrefix::get().eq(&address_bytes[0..4]) {
@@ -212,8 +211,5 @@ fn test_currency_id_to_u64() {
 	assert_eq!(idx, <CurrencyId as TryInto<u64>>::try_into(CurrencyId::Token(2)).unwrap());
 
 	let idx = 0x2000_0001_0000_0002u64;
-	assert_eq!(
-		idx,
-		<CurrencyId as TryInto<u64>>::try_into(CurrencyId::LPToken(1, 2)).unwrap()
-	);
+	assert_eq!(idx, <CurrencyId as TryInto<u64>>::try_into(CurrencyId::LPToken(1, 2)).unwrap());
 }

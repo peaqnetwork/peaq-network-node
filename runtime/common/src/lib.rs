@@ -7,9 +7,7 @@ use sp_core::bounded::BoundedVec;
 use sp_runtime::{traits::Convert, Perbill};
 use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
 use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler,
-};
+use zenlink_protocol::{AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler};
 
 use peaq_primitives_xcm::{AccountId, Balance};
 

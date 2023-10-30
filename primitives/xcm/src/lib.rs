@@ -24,10 +24,10 @@ use sp_runtime::{
 	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
 };
 
-pub mod evm;
 pub mod currency_id;
+pub mod evm;
 
-pub use crate::{evm::*, currency_id::*};
+pub use crate::{currency_id::*, evm::*};
 
 /// An index to a block.
 pub type BlockNumber = u32;

@@ -93,8 +93,8 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Balance, EvmRevertCodeHandler, CurrencyId, CurrencyIdToEVMAddress,
-	CurrencyIdToZenlinkId, NATIVE_CURRNECY_ID,
+	Balance, CurrencyId, CurrencyIdToEVMAddress, CurrencyIdToZenlinkId, EvmAddress,
+	EvmRevertCodeHandler, NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -1830,7 +1830,7 @@ impl pallet_assets::Config for Runtime {
 	type AssetIdParameter = CurrencyId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	// #[cfg(feature = "runtime-benchmarks")]
-	// type BenchmarkHelper = astar_primitives::benchmarks::AssetsBenchmarkHelper;
+	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
 }
 
 impl evm_accounts::Config for Runtime {
@@ -1841,13 +1841,12 @@ impl evm_accounts::Config for Runtime {
 	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
 }
 
-// [TODO] Move to primitives
 impl EVMAddressToAssetId<CurrencyId> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<CurrencyId> {
+	fn address_to_asset_id(address: EvmAddress) -> Option<CurrencyId> {
 		CurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
 	}
 
-	fn asset_id_to_address(asset_id: CurrencyId) -> H160 {
+	fn asset_id_to_address(asset_id: CurrencyId) -> EvmAddress {
 		CurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
 	}
 }
