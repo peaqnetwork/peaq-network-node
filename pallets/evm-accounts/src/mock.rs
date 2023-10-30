@@ -89,48 +89,11 @@ parameter_type_with_key! {
 	};
 }
 
-/*
- * impl orml_tokens::Config for Runtime {
- *     type RuntimeEvent = RuntimeEvent;
- *     type Balance = Balance;
- *     type Amount = Amount;
- *     type CurrencyId = CurrencyId;
- *     type WeightInfo = ();
- *     type ExistentialDeposits = ExistentialDeposits;
- *     type CurrencyHooks = ();
- *     type MaxLocks = ();
- *     type MaxReserves = ();
- *     type ReserveIdentifier = [u8; 8];
- *     type DustRemovalWhitelist = Nothing;
- * }
- *
- */
-/*
- * parameter_types! {
- *     pub const GetNativeCurrencyId: CurrencyId = CurrencyId::Token(TokenSymbol::ACA);
- * }
- *
- */
-/*
- * impl orml_currencies::Config for Runtime {
- *     type MultiCurrency = Tokens;
- *     type NativeCurrency = AdaptedBasicCurrency;
- *     type GetNativeCurrencyId = GetNativeCurrencyId;
- *     type WeightInfo = ();
- * }
- */
-/*
- * pub type AdaptedBasicCurrency =
- *     orml_currencies::BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
- */
-
 impl Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ChainId = ();
 	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
-	// type AddressMapping = EVMAddressMapping<Runtime>;
-	// type TransferAll = Currencies;
 	type WeightInfo = ();
 }
 
@@ -145,9 +108,7 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		EvmAccountsModule: evm_accounts::{Pallet, Call, Storage, Event<T>},
-		// Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		// Currencies: orml_currencies::{Pallet, Call},
 	}
 );
 

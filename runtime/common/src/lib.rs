@@ -6,7 +6,7 @@ use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
 use frame_support::{pallet_prelude::*, parameter_types, traits::Get};
 use frame_system::Config as SysConfig;
-use orml_traits::{currency::MutationHooks, MultiCurrency};
+use orml_traits::MultiCurrency;
 use sp_core::bounded::BoundedVec;
 use sp_runtime::{traits::Convert, Perbill, RuntimeString};
 use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
@@ -39,25 +39,6 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;
 	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
-}
-
-// [TODO] After moving to the asset integration, we can remove it
-pub struct CurrencyHooks<T, DustAccount>(PhantomData<T>, DustAccount);
-
-impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance>
-	for CurrencyHooks<T, DustAccount>
-where
-	T: orml_tokens::Config,
-	DustAccount: Get<<T as frame_system::Config>::AccountId>,
-{
-	type OnDust = orml_tokens::TransferDust<T, DustAccount>;
-	type OnSlash = ();
-	type PreDeposit = ();
-	type PostDeposit = ();
-	type PreTransfer = ();
-	type PostTransfer = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.

@@ -357,7 +357,6 @@ parameter_types! {
 
 }
 
-/// [TODO Jay] Double check
 /// `MultiAsset` reserve location provider. It's based on `RelativeReserveProvider` and in
 /// addition will convert self absolute location to relative location.
 pub struct AbsoluteAndRelativeReserveProvider<AbsoluteLocation>(PhantomData<AbsoluteLocation>);
