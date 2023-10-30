@@ -169,7 +169,7 @@ where
 		let mut data = [0u8; 20];
 		let index: u64 = <CurrencyId as TryInto<u64>>::try_into(currency_id).unwrap();
 		data[0..4].copy_from_slice(GetPrefix::get());
-		data[4..20].copy_from_slice(&index.to_be_bytes());
+		data[4..20].copy_from_slice(&(index as u128).to_be_bytes());
 		EvmAddress::from(data)
 	}
 }
