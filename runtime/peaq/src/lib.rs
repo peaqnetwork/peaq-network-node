@@ -448,10 +448,9 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
-	// [TODO] Should use the other ways... Maybe use the asset list?
+	// [TODO] Should have a way to increase it without doing runtime upgrade
 	pub PcpcLocalAccepted: Vec<PeaqCurrencyId> = vec![
 		PeaqCurrencyId::Token(1),
-		PeaqCurrencyId::Token(3),
 	];
 }
 

@@ -42,8 +42,6 @@ use xcm_builder::{
 	SovereignSignedViaLocation,
 	TakeRevenue,
 	TakeWeightCredit,
-	// [TODO] Need to check
-	// Account32Hash
 	UsingComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
@@ -74,9 +72,6 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RococoNetwork, AccountId>,
-	// [TODO] Need to check
-	// Derives a private `Account32` by hashing `("multiloc", received multilocation)`
-	// Account32Hash<RococoNetwork, AccountId>,
 );
 
 /// XCM from myself to myself
@@ -171,16 +166,14 @@ pub type XcmOriginToCallOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognized.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
-	// [TODO] Need to cehck
 	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
 	// transaction from the Root origin.
 	ParentAsSuperuser<RuntimeOrigin>,
-	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<RuntimeOrigin>,
-	// [TODO] Need to check order
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RococoNetwork, RuntimeOrigin>,
+	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
+	XcmPassthrough<RuntimeOrigin>,
 );
 
 parameter_types! {
