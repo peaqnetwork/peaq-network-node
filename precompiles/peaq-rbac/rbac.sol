@@ -66,6 +66,12 @@ interface RBAC {
         bytes32 permission_id
     ) external returns (EntityAttribute memory);
 
+    function fetch_permissions(
+        bytes32 owner
+    ) external returns (EntityAttribute[] memory);
+
+    function add_permission(bytes32 permission_id, bytes memory name) external returns (bool);
+
     // ======================= Events ======================= //
 
     event RoleAdded(address sender, bytes32 role_id, bytes name);
@@ -85,4 +91,8 @@ interface RBAC {
     );
 
     event PermissionFetched(address sender);
+
+    event AllPermissionsFetched (address sender);
+
+    event PermissionAdded(address sender, bytes32 permission_id, bytes name);
 }
