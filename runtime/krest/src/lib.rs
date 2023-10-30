@@ -685,7 +685,6 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-// [TODO] Extract to common
 parameter_types! {
 	pub const AssetAdminId: PalletId = PalletId(*b"AssetAdm");
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");

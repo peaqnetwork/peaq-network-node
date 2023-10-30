@@ -3,7 +3,6 @@
 
 use frame_support::{pallet_prelude::*, parameter_types};
 use orml_traits::MultiCurrency;
-use sp_core::bounded::BoundedVec;
 use sp_runtime::{traits::Convert, Perbill};
 use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
 use xcm::latest::prelude::*;
@@ -138,14 +137,6 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		X1(AccountId32 { network: None, id: account.into() }).into()
 	}
-}
-
-// TODO
-pub fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocation> {
-	Some(MultiLocation::new(
-		1,
-		X2(Parachain(para_id), Junction::from(BoundedVec::try_from(key).ok()?)),
-	))
 }
 
 /// Simple encapsulation of multiple return values.

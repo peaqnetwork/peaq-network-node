@@ -208,11 +208,9 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
-const SUPPLY_FACTOR: u128 = 100;
-const STORAGE_BYTE_FEE: Balance = 100 * CENTS;
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 1 * CENTS * SUPPLY_FACTOR + (bytes as Balance) * STORAGE_BYTE_FEE
+	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
