@@ -25,9 +25,9 @@ use sp_runtime::{
 };
 
 pub mod evm;
-pub mod peaq_currency_id;
+pub mod currency_id;
 
-pub use crate::{evm::*, peaq_currency_id::*};
+pub use crate::{evm::*, currency_id::*};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -82,7 +82,5 @@ pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type.
 pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 
-/// Block ID.
-/// pub type BlockId = generic::BlockId<NativeBlock>;
-
-/// Opaque, encoded, unchecked extrinsic.
+// Block ID.
+// pub type BlockId = generic::BlockId<NativeBlock>;

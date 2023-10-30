@@ -1,4 +1,4 @@
-use crate::{AccountId, PeaqCurrencyId};
+use crate::{AccountId, CurrencyId};
 use pallet_assets::AssetsCallback;
 use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
 use sp_core::U256;
@@ -16,12 +16,12 @@ pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
 pub const EVM_REVERT_CODE: &[u8] = &[0x60, 0x00, 0x60, 0x00, 0xfd];
 
 pub struct EvmRevertCodeHandler<A, R>(PhantomData<(A, R)>);
-impl<A, R> AssetsCallback<PeaqCurrencyId, AccountId> for EvmRevertCodeHandler<A, R>
+impl<A, R> AssetsCallback<CurrencyId, AccountId> for EvmRevertCodeHandler<A, R>
 where
-	A: EVMAddressToAssetId<PeaqCurrencyId>,
+	A: EVMAddressToAssetId<CurrencyId>,
 	R: pallet_evm::Config,
 {
-	fn created(id: &PeaqCurrencyId, _: &AccountId) {
+	fn created(id: &CurrencyId, _: &AccountId) {
 		let address = A::asset_id_to_address(*id);
 		// In case of collision, we need to cancel the asset creation.
 		// However, in this asset version, we cannot return Err
@@ -29,7 +29,7 @@ where
 		pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
 	}
 
-	fn destroyed(id: &PeaqCurrencyId) {
+	fn destroyed(id: &CurrencyId) {
 		let address = A::asset_id_to_address(*id);
 		pallet_evm::AccountCodes::<R>::remove(address);
 	}

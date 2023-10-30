@@ -374,9 +374,9 @@ pub mod pallet {
 	}
 }
 
-pub struct MultiLocationToPeaqCurrencyId<T: Config>(PhantomData<T>);
+pub struct MultiLocationToCurrencyId<T: Config>(PhantomData<T>);
 
-impl<T: Config> XCMConvert<MultiLocation, T::AssetId> for MultiLocationToPeaqCurrencyId<T>
+impl<T: Config> XCMConvert<MultiLocation, T::AssetId> for MultiLocationToCurrencyId<T>
 where
 	T: Config,
 	Pallet<T>: XcAssetLocation<T::AssetId>,
@@ -400,7 +400,7 @@ where
 	}
 }
 
-impl<T: Config> Convert<T::AssetId, Option<MultiLocation>> for MultiLocationToPeaqCurrencyId<T>
+impl<T: Config> Convert<T::AssetId, Option<MultiLocation>> for MultiLocationToCurrencyId<T>
 where
 	T: Config,
 	Pallet<T>: XcAssetLocation<T::AssetId>,

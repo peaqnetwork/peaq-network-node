@@ -32,7 +32,7 @@ use sp_std::convert::TryFrom;
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub enum PeaqCurrencyId {
+pub enum CurrencyId {
 	/// All Polkadot based tokens (SS58-address-style), Relaychain- and Parachain-Tokens.
 	/// 0 is balance
 	/// 0 ~ 1FFF_FFFF is the custumoized value
@@ -44,22 +44,22 @@ pub enum PeaqCurrencyId {
 	LPToken(u32, u32),
 }
 
-pub const NATIVE_CURRNECY_ID: PeaqCurrencyId = PeaqCurrencyId::Token(0);
+pub const NATIVE_CURRNECY_ID: CurrencyId = CurrencyId::Token(0);
 const TOKEN_MASK: u32 = 0b0001_1111_1111_1111_1111_1111_1111_1111;
-impl PeaqCurrencyId {
+impl CurrencyId {
 	pub fn is_token(&self) -> bool {
-		matches!(self, PeaqCurrencyId::Token(_))
+		matches!(self, CurrencyId::Token(_))
 	}
 
 	pub fn is_lp_token(&self) -> bool {
-		matches!(self, PeaqCurrencyId::LPToken(_, _))
+		matches!(self, CurrencyId::LPToken(_, _))
 	}
 
 	// Internal method which simplifies conversions between Zenlink's asset_index
 	pub fn type_index(&self) -> u64 {
 		match self {
-			PeaqCurrencyId::Token(_) => 0,
-			PeaqCurrencyId::LPToken(_, _) => 1,
+			CurrencyId::Token(_) => 0,
+			CurrencyId::LPToken(_, _) => 1,
 		}
 	}
 
@@ -68,9 +68,9 @@ impl PeaqCurrencyId {
 			return false
 		}
 		match *self {
-			PeaqCurrencyId::Token(symbol) => symbol < TOKEN_MASK,
+			CurrencyId::Token(symbol) => symbol < TOKEN_MASK,
 			// Only allow Zenlink protocol to create it
-			PeaqCurrencyId::LPToken(_, _) => false,
+			CurrencyId::LPToken(_, _) => false,
 		}
 	}
 }
@@ -79,29 +79,29 @@ pub trait CurrencyIdExt {
 	fn is_native_token(&self) -> bool;
 }
 
-impl CurrencyIdExt for PeaqCurrencyId {
+impl CurrencyIdExt for CurrencyId {
 	fn is_native_token(&self) -> bool {
 		return NATIVE_CURRNECY_ID == *self
 	}
 }
 
-// PeaqCurrencyId::Token(0) map to 0
+// CurrencyId::Token(0) map to 0
 // This is for Zenlink Protocol
-impl TryFrom<PeaqCurrencyId> for u64 {
+impl TryFrom<CurrencyId> for u64 {
 	type Error = ();
 
-	fn try_from(currency_id: PeaqCurrencyId) -> Result<Self, Self::Error> {
+	fn try_from(currency_id: CurrencyId) -> Result<Self, Self::Error> {
 		match currency_id {
-			PeaqCurrencyId::Token(symbol) =>
+			CurrencyId::Token(symbol) =>
 				Ok((symbol as u64) + ((currency_id.type_index() as u64) << 61)),
-			PeaqCurrencyId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) <<
+			CurrencyId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) <<
 				32) + ((symbol1 & TOKEN_MASK) as u64) +
 				((currency_id.type_index() as u64) << 61)),
 		}
 	}
 }
 
-impl TryFrom<u64> for PeaqCurrencyId {
+impl TryFrom<u64> for CurrencyId {
 	type Error = ();
 
 	fn try_from(index: u64) -> Result<Self, Self::Error> {
@@ -109,19 +109,19 @@ impl TryFrom<u64> for PeaqCurrencyId {
 		match type_index {
 			0 => {
 				let symbol = (index & (TOKEN_MASK as u64)) as u32;
-				Ok(PeaqCurrencyId::Token(symbol))
+				Ok(CurrencyId::Token(symbol))
 			},
 			1 => {
 				let symbol0 = ((index >> 32) & (TOKEN_MASK as u64)) as u32;
 				let symbol1 = (index & (TOKEN_MASK as u64)) as u32;
-				Ok(PeaqCurrencyId::LPToken(symbol0, symbol1))
+				Ok(CurrencyId::LPToken(symbol0, symbol1))
 			},
 			_ => Err(()),
 		}
 	}
 }
 
-impl TryFrom<ZenlinkAssetId> for PeaqCurrencyId {
+impl TryFrom<ZenlinkAssetId> for CurrencyId {
 	type Error = ();
 
 	fn try_from(asset_id: ZenlinkAssetId) -> Result<Self, Self::Error> {
@@ -129,29 +129,29 @@ impl TryFrom<ZenlinkAssetId> for PeaqCurrencyId {
 	}
 }
 
-impl Default for PeaqCurrencyId {
+impl Default for CurrencyId {
 	fn default() -> Self {
 		NATIVE_CURRNECY_ID
 	}
 }
 
-// Zenlink (2000, 0, 0) and (2000, 2, 0) map to PeaqCurrencyId::Token(0)
-pub struct PeaqCurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
+// Zenlink (2000, 0, 0) and (2000, 2, 0) map to CurrencyId::Token(0)
+pub struct CurrencyIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<PeaqCurrencyId, Option<ZenlinkAssetId>>
-	for PeaqCurrencyIdToZenlinkId<GetParaId>
+impl<GetParaId> Convert<CurrencyId, Option<ZenlinkAssetId>>
+	for CurrencyIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {
-	fn convert(currency_id: PeaqCurrencyId) -> Option<ZenlinkAssetId> {
-		let asset_index = <PeaqCurrencyId as TryInto<u64>>::try_into(currency_id).ok()?;
+	fn convert(currency_id: CurrencyId) -> Option<ZenlinkAssetId> {
+		let asset_index = <CurrencyId as TryInto<u64>>::try_into(currency_id).ok()?;
 		match currency_id {
-			PeaqCurrencyId::Token(symbol) => {
+			CurrencyId::Token(symbol) => {
 				let asset_type =
 					if symbol == 0 { zenlink_protocol::NATIVE } else { zenlink_protocol::LOCAL };
 				Some(ZenlinkAssetId { chain_id: GetParaId::get(), asset_type, asset_index })
 			},
-			PeaqCurrencyId::LPToken(_, _) => Some(ZenlinkAssetId {
+			CurrencyId::LPToken(_, _) => Some(ZenlinkAssetId {
 				chain_id: GetParaId::get(),
 				asset_type: zenlink_protocol::LOCAL,
 				asset_index,
@@ -160,26 +160,26 @@ where
 	}
 }
 
-pub struct PeaqCurrencyIdToEVMAddress<GetPrefix>(PhantomData<GetPrefix>);
+pub struct CurrencyIdToEVMAddress<GetPrefix>(PhantomData<GetPrefix>);
 
-impl<GetPrefix> Convert<PeaqCurrencyId, H160> for PeaqCurrencyIdToEVMAddress<GetPrefix>
+impl<GetPrefix> Convert<CurrencyId, H160> for CurrencyIdToEVMAddress<GetPrefix>
 where
 	GetPrefix: Get<&'static [u8]>,
 {
-	fn convert(currency_id: PeaqCurrencyId) -> H160 {
+	fn convert(currency_id: CurrencyId) -> H160 {
 		let mut data = [0u8; 20];
-		let index: u64 = <PeaqCurrencyId as TryInto<u64>>::try_into(currency_id).unwrap();
+		let index: u64 = <CurrencyId as TryInto<u64>>::try_into(currency_id).unwrap();
 		data[0..4].copy_from_slice(GetPrefix::get());
 		data[4..20].copy_from_slice(&index.to_be_bytes());
 		H160::from(data)
 	}
 }
 
-impl<GetPrefix> Convert<H160, Option<PeaqCurrencyId>> for PeaqCurrencyIdToEVMAddress<GetPrefix>
+impl<GetPrefix> Convert<H160, Option<CurrencyId>> for CurrencyIdToEVMAddress<GetPrefix>
 where
 	GetPrefix: Get<&'static [u8]>,
 {
-	fn convert(address: H160) -> Option<PeaqCurrencyId> {
+	fn convert(address: H160) -> Option<CurrencyId> {
 		let mut data = [0u8; 16];
 		let address_bytes: [u8; 20] = address.into();
 		if GetPrefix::get().eq(&address_bytes[0..4]) {
@@ -192,28 +192,28 @@ where
 }
 
 #[test]
-fn test_u64_to_peaq_currency_id() {
-	let currency_id = PeaqCurrencyId::Token(1);
+fn test_u64_to_currency_id() {
+	let currency_id = CurrencyId::Token(1);
 	assert_eq!(currency_id, 1u64.try_into().unwrap());
 
-	let currency_id = PeaqCurrencyId::Token(2);
+	let currency_id = CurrencyId::Token(2);
 	assert_eq!(currency_id, 2u64.try_into().unwrap());
 
-	let currency_id = PeaqCurrencyId::LPToken(1, 2);
+	let currency_id = CurrencyId::LPToken(1, 2);
 	assert_eq!(currency_id, 0x2000_0001_0000_0002u64.try_into().unwrap());
 }
 
 #[test]
-fn test_peaq_currency_id_to_u64() {
+fn test_currency_id_to_u64() {
 	let idx = 1u64;
-	assert_eq!(idx, <PeaqCurrencyId as TryInto<u64>>::try_into(PeaqCurrencyId::Token(1)).unwrap());
+	assert_eq!(idx, <CurrencyId as TryInto<u64>>::try_into(CurrencyId::Token(1)).unwrap());
 
 	let idx = 2u64;
-	assert_eq!(idx, <PeaqCurrencyId as TryInto<u64>>::try_into(PeaqCurrencyId::Token(2)).unwrap());
+	assert_eq!(idx, <CurrencyId as TryInto<u64>>::try_into(CurrencyId::Token(2)).unwrap());
 
 	let idx = 0x2000_0001_0000_0002u64;
 	assert_eq!(
 		idx,
-		<PeaqCurrencyId as TryInto<u64>>::try_into(PeaqCurrencyId::LPToken(1, 2)).unwrap()
+		<CurrencyId as TryInto<u64>>::try_into(CurrencyId::LPToken(1, 2)).unwrap()
 	);
 }

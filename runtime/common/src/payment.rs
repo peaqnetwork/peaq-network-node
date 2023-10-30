@@ -149,7 +149,7 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 	/// Existential deposit.
 	type ExistentialDeposit: Get<BalanceOfA<Self::Currency, Self::AccountId>>;
 
-	/// Local PeaqCurrencyId in type of Zenlink's AssetId.
+	/// Local CurrencyId in type of Zenlink's AssetId.
 	type NativeCurrencyId: Get<Self::CurrencyId>;
 
 	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
@@ -194,7 +194,7 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 			// In theory not necessary, but as safety-buffer will add existential deposit.
 			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
 
-			// Prepare ZenlinkAssetId(s) from PeaqCurrencyId(s).
+			// Prepare ZenlinkAssetId(s) from CurrencyId(s).
 			let native_zen_id = Self::CurrencyIdToZenlinkId::convert(native_id)
 				.ok_or_else(|| TransactionValidityError::Invalid(InvalidTransaction::Custom(55)))?;
 
