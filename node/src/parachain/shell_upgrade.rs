@@ -1,5 +1,5 @@
-///! Special [`ParachainConsensus`] implementation that waits for the upgrade from
-///! shell to a parachain runtime that implements Aura.
+//! Special [`ParachainConsensus`] implementation that waits for the upgrade from shell to a
+//! parachain runtime that implements Aura.
 use cumulus_client_consensus_common::{ParachainCandidate, ParachainConsensus};
 use cumulus_primitives_core::relay_chain::{Hash as PHash, PersistedValidationData};
 use futures::lock::Mutex;
@@ -7,9 +7,8 @@ use peaq_primitives_xcm::*;
 use sc_consensus::{import_queue::Verifier as VerifierT, BlockImportParams};
 use sp_api::ApiExt;
 use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
-use sp_runtime::{generic::BlockId, traits::Header as HeaderT};
+use sp_runtime::traits::Header as HeaderT;
 use std::sync::Arc;
-
 
 pub enum BuildOnAccess<R> {
 	Uninitialized(Option<Box<dyn FnOnce() -> R + Send + Sync>>),

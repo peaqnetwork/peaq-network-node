@@ -27,7 +27,7 @@ use sha3::{Digest, Keccak256};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::Block as BlockT;
-use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, sync::Arc};
 
 use peaq_rpc_primitives_txpool::{Transaction as TransactionV2, TxPoolResponse, TxPoolRuntimeApi};
 
@@ -72,13 +72,12 @@ where
 		// Use the runtime to match the (here) opaque extrinsics against ethereum transactions.
 		let best_block = self.client.info().best_hash;
 		let api = self.client.runtime_api();
-		let api_version = if let Ok(Some(api_version)) =
-			api.api_version::<dyn TxPoolRuntimeApi<B>>(best_block)
-		{
-			api_version
-		} else {
-			return Err(internal_err("failed to retrieve Runtime Api version".to_string()))
-		};
+		let api_version =
+			if let Ok(Some(api_version)) = api.api_version::<dyn TxPoolRuntimeApi<B>>(best_block) {
+				api_version
+			} else {
+				return Err(internal_err("failed to retrieve Runtime Api version".to_string()))
+			};
 		let ethereum_txns: TxPoolResponse = if api_version == 1 {
 			#[allow(deprecated)]
 			let res = api.extrinsic_filter_before_version_2(best_block, txs_ready, txs_future)
@@ -109,7 +108,7 @@ where
 			};
 			pending
 				.entry(from_address)
-				.or_insert_with(HashMap::new)
+				.or_default()
 				.insert(nonce, T::get(hash, from_address, txn));
 		}
 		let mut queued = TransactionMap::<T>::new();
@@ -126,7 +125,7 @@ where
 			};
 			queued
 				.entry(from_address)
-				.or_insert_with(HashMap::new)
+				.or_default()
 				.insert(nonce, T::get(hash, from_address, txn));
 		}
 		Ok(TxPoolResult { pending, queued })

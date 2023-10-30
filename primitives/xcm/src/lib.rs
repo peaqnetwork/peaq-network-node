@@ -36,7 +36,6 @@ mod tests;
 pub use crate::evm::EvmAddress;
 pub use currency::*;
 
-
 /// Auction ID
 /// pub type AuctionId = u32;
 /// Alias to the opaque account ID type for this chain, actually a
@@ -96,7 +95,6 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
-
 /// TODO: More documentation
 #[derive(Encode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -125,7 +123,9 @@ impl TradingPair {
 }
 
 impl Decode for TradingPair {
-	fn decode<I: parity_scale_codec::Input>(input: &mut I) -> sp_std::result::Result<Self, parity_scale_codec::Error> {
+	fn decode<I: parity_scale_codec::Input>(
+		input: &mut I,
+	) -> sp_std::result::Result<Self, parity_scale_codec::Error> {
 		let (first, second): (CurrencyId, CurrencyId) = Decode::decode(input)?;
 		TradingPair::from_currency_ids(first, second)
 			.ok_or_else(|| parity_scale_codec::Error::from("invalid currency id"))

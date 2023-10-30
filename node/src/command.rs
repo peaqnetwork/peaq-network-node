@@ -1,4 +1,3 @@
-
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 #[cfg(feature = "frame-benchmarking-cli")]
@@ -11,13 +10,12 @@ use sc_cli::{
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::{
-	DatabaseSource, PartialComponents,
 	config::{BasePath, PrometheusConfig},
+	DatabaseSource, PartialComponents,
 };
-use sp_runtime::traits::Block as BlockT;
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::AccountIdConversion;
-use std::{io::Write, net::SocketAddr};
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+use std::io::Write;
 
 use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
@@ -25,7 +23,6 @@ use crate::{
 	parachain,
 	parachain::service::{self, agung, dev, frontier_database_dir, krest, peaq, start_node},
 };
-
 
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;

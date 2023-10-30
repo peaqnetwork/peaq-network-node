@@ -324,8 +324,9 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
 	if !callable_by_precompile {
-		match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller, 0) { // TODO
-			IsPrecompileResult::Answer{is_precompile, extra_cost: _} =>
+		match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller, 0) {
+			// TODO
+			IsPrecompileResult::Answer { is_precompile, extra_cost: _ } =>
 				if is_precompile {
 					Ok(())
 				} else {
@@ -409,19 +410,15 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 	}
 
 	fn record_external_cost(
-        &mut self,
-        _ref_time: Option<u64>,
-        _proof_size: Option<u64>,
-        _storage_growth: Option<u64>
-    ) -> Result<(), evm::ExitError> {
+		&mut self,
+		_ref_time: Option<u64>,
+		_proof_size: Option<u64>,
+		_storage_growth: Option<u64>,
+	) -> Result<(), evm::ExitError> {
 		todo!()
 	}
 
-	fn refund_external_cost(
-        &mut self,
-        _ref_time: Option<u64>,
-        _proof_size: Option<u64>
-    ) {
+	fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {
 		todo!()
 	}
 }
@@ -640,8 +637,9 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160) -> bool {
-		if let IsPrecompileResult::Answer{is_precompile, extra_cost: _} =
-			self.precompile_set.is_precompile(address, 1) {
+		if let IsPrecompileResult::Answer { is_precompile, extra_cost: _ } =
+			self.precompile_set.is_precompile(address, 1)
+		{
 			address.as_bytes().starts_with(A::get()) && is_precompile
 		} else {
 			false
@@ -840,7 +838,7 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 	fn is_precompile(&self, address: H160, remaining_gas: u64) -> IsPrecompileResult {
 		let is_precompile = self.inner.is_precompile(address);
 		if remaining_gas > 0 {
-			IsPrecompileResult::Answer{is_precompile, extra_cost: 0}
+			IsPrecompileResult::Answer { is_precompile, extra_cost: 0 }
 		} else {
 			IsPrecompileResult::OutOfGas
 		}

@@ -116,10 +116,10 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-    type FreezeIdentifier = ();
-    type MaxHolds = ();
-    type HoldIdentifier = ();
-    type MaxFreezes = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 impl pallet_aura::Config for Test {
@@ -361,9 +361,7 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 		}
 		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(
-			System::block_number(),
-		);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
 }
 

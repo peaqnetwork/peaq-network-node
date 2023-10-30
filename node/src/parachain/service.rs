@@ -9,36 +9,29 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
-use fc_rpc::{
-	EthTask, RuntimeApiStorageOverride, OverrideHandle, StorageOverride, SchemaV3Override,
-	SchemaV2Override, SchemaV1Override,
-};
+use fc_rpc::EthTask;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use fp_storage::EthereumStorageSchema;
 use futures::StreamExt;
 use peaq_primitives_xcm::*;
-use polkadot_service::{Backend, CollatorPair};
-use sc_cli::SubstrateCli;
-use sc_client_api::{BlockchainEvents, HeaderBackend, StorageProvider};
-use sc_consensus::{import_queue::BasicQueue};
-use sp_core::U256;
+use polkadot_service::CollatorPair;
+use sc_client_api::BlockchainEvents;
+use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
-use sc_network::{config::FullNetworkConfiguration, NetworkBlock, NetworkService};
+use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_service::{
 	Configuration, ImportQueue, PartialComponents, TFullBackend, TFullClient, TaskManager,
 };
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi};
-use sp_consensus::SyncOracle;
+use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::U256;
 use sp_keystore::KeystorePtr;
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
-use sc_service::BasePath;
+use sp_runtime::traits::BlakeTwo256;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use substrate_prometheus_endpoint::Registry;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -83,11 +76,7 @@ type FullClient<RuntimeApi, Executor> =
 type FullBackend = TFullBackend<Block>;
 
 pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
-	config
-		.base_path
-		.config_dir(config.chain_spec.id())
-		.join("frontier")
-		.join(path)
+	config.base_path.config_dir(config.chain_spec.id()).join("frontier").join(path)
 }
 
 pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
@@ -102,19 +91,15 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 					path: frontier_database_dir(config, "db"),
 					cache_size: 0,
 				},
-				DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
-					path: frontier_database_dir(config, "paritydb"),
-				},
+				DatabaseSource::ParityDb { .. } =>
+					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") },
 				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
 					rocksdb_path: frontier_database_dir(config, "db"),
 					paritydb_path: frontier_database_dir(config, "paritydb"),
 					cache_size: 0,
 				},
-				_ => {
-					return Err(
-						"Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()
-					)
-				}
+				_ =>
+					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
 			},
 		},
 	)?)))
@@ -130,31 +115,31 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
 ) -> Result<
-		PartialComponents<
-			FullClient<RuntimeApi, Executor>,
-			FullBackend,
-			(),
-			sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-			sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
-			(
-				ParachainBlockImport<
+	PartialComponents<
+		FullClient<RuntimeApi, Executor>,
+		FullBackend,
+		(),
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+		(
+			ParachainBlockImport<
+				Block,
+				FrontierBlockImport<
 					Block,
-					FrontierBlockImport<
-						Block,
-						Arc<FullClient<RuntimeApi, Executor>>,
-						FullClient<RuntimeApi, Executor>,
-					>,
-					FullBackend,
+					Arc<FullClient<RuntimeApi, Executor>>,
+					FullClient<RuntimeApi, Executor>,
 				>,
-				Option<FilterPool>,
-				Option<Telemetry>,
-				Option<TelemetryWorkerHandle>,
-				Arc<fc_db::Backend<Block>>,
-				FeeHistoryCache,
-			),
-		>,
-		sc_service::Error
-	>
+				FullBackend,
+			>,
+			Option<FilterPool>,
+			Option<Telemetry>,
+			Option<TelemetryWorkerHandle>,
+			Arc<fc_db::Backend<Block>>,
+			FeeHistoryCache,
+		),
+	>,
+	sc_service::Error,
+>
 where
 	RuntimeApi:
 		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
@@ -202,7 +187,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_native_or_wasm_executor(&config);
+	let executor = sc_service::new_native_or_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -231,8 +216,7 @@ where
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
 	let frontier_backend = open_frontier_backend(client.clone(), config)?;
-	let frontier_block_import =
-		FrontierBlockImport::new(client.clone(), client.clone());
+	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
 	let parachain_block_import: ParachainBlockImport<_, _, _> =
 		ParachainBlockImport::new(frontier_block_import, backend.clone());
@@ -452,31 +436,33 @@ where
 
 	let overrides = fc_storage::overrides_handle(client.clone());
 
-	let pubsub_notification_sinks: Arc<fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>>> = Default::default();
+	let pubsub_notification_sinks: Arc<
+		fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		>,
+	> = Default::default();
 
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
 	match frontier_backend.as_ref() {
-		fc_db::Backend::KeyValue(b) =>
-			task_manager.spawn_essential_handle().spawn(
-				"frontier-mapping-sync-worker",
-				Some("frontier"),
-				fc_mapping_sync::kv::MappingSyncWorker::new(
-					client.import_notification_stream(),
-					Duration::new(6, 0),
-					client.clone(),
-					backend.clone(),
-					overrides.clone(),
-					Arc::new(b.clone()),
-					3,
-					0,
-					fc_mapping_sync::SyncStrategy::Parachain,
-					sync_service.clone(),
-					pubsub_notification_sinks.clone(),
-				)
-				.for_each(|()| futures::future::ready(()))
-			),
+		fc_db::Backend::KeyValue(b) => task_manager.spawn_essential_handle().spawn(
+			"frontier-mapping-sync-worker",
+			Some("frontier"),
+			fc_mapping_sync::kv::MappingSyncWorker::new(
+				client.import_notification_stream(),
+				Duration::new(6, 0),
+				client.clone(),
+				backend.clone(),
+				overrides.clone(),
+				Arc::new(b.clone()),
+				3,
+				0,
+				fc_mapping_sync::SyncStrategy::Parachain,
+				sync_service.clone(),
+				pubsub_notification_sinks.clone(),
+			)
+			.for_each(|()| futures::future::ready(())),
+		),
 	};
 
 	// Spawn Frontier EthFilterApi maintenance task.

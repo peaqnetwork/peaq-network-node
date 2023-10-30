@@ -102,9 +102,11 @@ impl DebugServer for Debug {
 
 		let (tx, rx) = oneshot::channel();
 		// Send a message from the rpc handler to the service level task.
-		requester.unbounded_send(((RequesterInput::Block(id), params), tx)).map_err(|err| {
-			internal_err(format!("failed to send request to debug service : {:?}", err))
-		})?;
+		requester
+			.unbounded_send(((RequesterInput::Block(id), params), tx))
+			.map_err(|err| {
+				internal_err(format!("failed to send request to debug service : {:?}", err))
+			})?;
 
 		// Receive a message from the service level task and send the rpc response.
 		rx.await

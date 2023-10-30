@@ -9,19 +9,18 @@ use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
+use sc_consensus_manual_seal::rpc::EngineCommand;
 use sc_network::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
-use sc_service::TransactionPool;
+use sc_service::{TaskManager, TransactionPool};
 use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
-use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApiServer};
-use sc_service::TaskManager;
 use sp_core::H256;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use std::{collections::BTreeMap, sync::Arc};
@@ -40,6 +39,8 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub fee_history_limit: u64,
 	pub fee_history_cache: FeeHistoryCache,
 }
+
+pub type XcmSenders = Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi, BE> {
@@ -74,7 +75,7 @@ pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Channels for manual xcm messages (downward, hrmp)
-	pub xcm_senders: Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>,
+	pub xcm_senders: XcmSenders,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<OverrideHandle<Block>>,
 	/// Cache for Ethereum block data.
@@ -144,13 +145,13 @@ where
 		sync,
 		filter_pool,
 		ethapi_cmd,
-		command_sink,
+		command_sink: _,
 		frontier_backend,
-		backend,
+		backend: _,
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
-		xcm_senders,
+		xcm_senders: _,
 		overrides,
 		block_data_cache,
 		forced_parent_hashes,
@@ -186,7 +187,8 @@ where
 			fee_history_limit,
 			10_u64,
 			forced_parent_hashes,
-		).into_rpc(),
+		)
+		.into_rpc(),
 	)?;
 
 	if let Some(filter_pool) = filter_pool {
@@ -215,8 +217,8 @@ where
 	)?;
 
 	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>
-		> = Default::default();
+		fc_mapping_sync::EthereumBlockNotification<Block>,
+	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;

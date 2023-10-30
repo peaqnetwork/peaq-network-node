@@ -22,9 +22,7 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, Config as ZenProtConfig, ExportZenlink, LocalAssetHandler,
-};
+use zenlink_protocol::{AssetBalance, Config as ZenProtConfig, ExportZenlink, LocalAssetHandler};
 
 pub use peaq_primitives_xcm::*;
 

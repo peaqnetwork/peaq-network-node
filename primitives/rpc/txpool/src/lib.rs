@@ -20,10 +20,10 @@
 #![allow(clippy::too_many_arguments)]
 #![feature(trivial_bounds)]
 
-use parity_scale_codec::{Decode, Encode};
 pub use ethereum::{TransactionV0 as LegacyTransaction, TransactionV2 as Transaction};
+use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_runtime::{RuntimeDebug, traits::Block as BlockT};
+use sp_runtime::{traits::Block as BlockT, RuntimeDebug};
 use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]

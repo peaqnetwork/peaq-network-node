@@ -7,7 +7,7 @@ use peaq_runtime::{
 	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
-use sc_service::{ChainType, Properties, config::MultiaddrWithPeerId};
+use sc_service::{config::MultiaddrWithPeerId, ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 

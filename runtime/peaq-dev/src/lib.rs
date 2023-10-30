@@ -6,7 +6,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use parity_scale_codec::Encode;
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
@@ -21,6 +20,7 @@ use pallet_evm::{
 	HashedAddressMapping, Runner,
 };
 use parachain_staking::reward_rate::RewardRateInfo;
+use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_mor::mor::MorBalance;
 use peaq_pallet_rbac::{
@@ -41,7 +41,6 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
@@ -49,16 +48,14 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
+	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets,
-};
-
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 pub mod constants;
 mod precompiles;
@@ -66,6 +63,8 @@ mod weights;
 pub mod xcm_config;
 
 // A few exports that help ease life for downstream crates.
+#[cfg(feature = "std")]
+pub use fp_evm::GenesisAccount;
 pub use frame_support::{
 	construct_runtime,
 	dispatch::{DispatchClass, GetDispatchInfo},
@@ -84,19 +83,16 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
-#[cfg(feature = "std")]
-pub use fp_evm::GenesisAccount;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use precompiles::PeaqPrecompiles;
 pub use peaq_pallet_did;
 pub use peaq_pallet_mor::{self, types::MorConfig};
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
-
+pub use precompiles::PeaqPrecompiles;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 // Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
@@ -353,9 +349,9 @@ impl pallet_balances::Config for Runtime {
 	type AccountStore = System;
 	type WeightInfo = ();
 	type FreezeIdentifier = (); // TODO
-    type MaxHolds = (); // TODO
-    type HoldIdentifier = (); // TODO
-    type MaxFreezes = (); // TODO
+	type MaxHolds = (); // TODO
+	type HoldIdentifier = (); // TODO
+	type MaxFreezes = (); // TODO
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -1096,7 +1092,7 @@ impl_runtime_apis! {
 			None // TODO
 		}
 
-    	fn metadata_versions() -> Vec<u32> {
+		fn metadata_versions() -> Vec<u32> {
 			Vec::new() // TODO
 		}
 	}

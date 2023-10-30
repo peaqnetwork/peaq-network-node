@@ -87,9 +87,9 @@ impl pallet_balances::Config for TestRuntime {
 	type AccountStore = System;
 	type WeightInfo = ();
 	type FreezeIdentifier = ();
-    type MaxHolds = ();
-    type HoldIdentifier = ();
-    type MaxFreezes = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 parameter_types! {
