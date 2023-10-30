@@ -14,6 +14,7 @@ use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
+use peaq_pallet_rbac::rbac::Permission;
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type EntityIdOf<Runtime> = <Runtime as peaq_pallet_rbac::Config>::EntityId;
@@ -34,13 +35,16 @@ pub struct Role2User {
 }
 
 // Selectors
-pub(crate) const SELECTOR_LOG_ADD_ROLE: [u8; 32] = keccak256!("AddRole(address,bytes32,bytes)");
+pub(crate) const SELECTOR_LOG_ADD_ROLE: [u8; 32] = keccak256!("RoleAdded(address,bytes32,bytes)");
 pub(crate) const SELECTOR_LOG_UPDATE_ROLE: [u8; 32] =
-	keccak256!("UpdateRole(address,bytes32,bytes)");
-pub(crate) const SELECTOR_LOG_DISABLE_ROLE: [u8; 32] = keccak256!("DisableRole(address,bytes32)");
-pub(crate) const SELECTOR_LOG_FETCH_USER_ROLES: [u8; 32] = keccak256!("FetchUserRoles(address)");
+	keccak256!("RoleUpdated(address,bytes32,bytes)");
+pub(crate) const SELECTOR_LOG_DISABLE_ROLE: [u8; 32] = keccak256!("RoleRemoved(address,bytes32)");
+pub(crate) const SELECTOR_LOG_FETCH_USER_ROLES: [u8; 32] = keccak256!("FetchedUserRoles(address)");
 pub(crate) const SELECTOR_LOG_ASSIGN_ROLE_TO_USER: [u8; 32] =
-	keccak256!("AssignRoleToUser(address,bytes32,bytes32)");
+	keccak256!("RoleAssignedToUser(address,bytes32,bytes32)");
+pub(crate) const SELECTOR_LOG_UNASSIGNED_ROLE_TO_USER: [u8; 32] =
+	keccak256!("RoleUnassignedToUser(address,bytes32,bytes32)");
+pub(crate) const SELECTOR_LOG_FETCH_PERMISSION: [u8; 32] = keccak256!("PermissionFetched(address)");
 
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
@@ -263,5 +267,69 @@ where
 		event.record(handle)?;
 
 		Ok(true)
+	}
+
+	#[precompile::public("unassign_role_to_user(bytes32,bytes32)")]
+	#[precompile::view]
+	fn unassign_role_to_user(
+		handle: &mut impl PrecompileHandle,
+		role_id: H256,
+		user_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_user { role_id, user_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UNASSIGNED_ROLE_TO_USER,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id.into())
+				.write::<H256>(user_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("fetch_permission(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_permission(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		permission_id: H256,
+	) -> EvmResult<EntityAttribute> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let permission_id: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+
+		let result =
+			match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
+				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Ok(v) =>
+					Ok(EntityAttribute { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+			};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_PERMISSION,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
 	}
 }

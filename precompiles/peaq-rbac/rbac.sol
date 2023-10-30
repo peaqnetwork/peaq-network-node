@@ -2,22 +2,27 @@
 
 pragma solidity >=0.8.3;
 
-address constant PRECOMPILE_ADDR = address(0x0000000000000000000000000000000000000802);
+address constant PRECOMPILE_ADDR = address(
+    0x0000000000000000000000000000000000000802
+);
 
 RBAC constant RBAC_CONTRACT = RBAC(PRECOMPILE_ADDR);
 
 interface RBAC {
+    // ======================= Return Structs ======================= //
 
     struct EntityAttribute {
         bytes32 owner;
-	    bytes name;
-	    bool enabled;
+        bytes name;
+        bool enabled;
     }
 
-    struct Role2User{
+    struct Role2User {
         bytes32 role;
         bytes32 user;
     }
+
+    // ======================= Entry Points ======================= //
 
     function fetch_role(
         bytes32 owner,
@@ -39,39 +44,45 @@ interface RBAC {
         bytes memory name
     ) external returns (bool);
 
-    function disable_role(
-        bytes32 role_id
+    function disable_role(bytes32 role_id) external returns (bool);
+
+    function fetch_user_roles(
+        bytes32 owner,
+        bytes32 user_id
+    ) external view returns (Role2User[] memory);
+
+    function assign_role_to_user(
+        bytes32 role_id,
+        bytes32 user_id
     ) external returns (bool);
 
-    function fetch_user_roles(bytes32 owner, bytes32 user_id) external view returns (Role2User[] memory);
-
-    function assign_role_to_user(bytes32 role_id, bytes32 user_id) external returns (bool);
-    // Events
-
-    event RoleAdded(
-        address sender,
+    function unassign_role_to_user(
         bytes32 role_id,
-        bytes name
-    );
+        bytes32 user_id
+    ) external returns (bool);
 
-    event RoleUpdated(
-        address sender,
-        bytes32 role_id,
-        bytes name
-    );
+    function fetch_permission(
+        bytes32 owner,
+        bytes32 permission_id
+    ) external returns (EntityAttribute memory);
 
-    event RoleRemoved(
-        address sender,
-        bytes32 role_id
-    );
+    // ======================= Events ======================= //
 
-    event FetchedUserRoles(
-        address sender
-    );
+    event RoleAdded(address sender, bytes32 role_id, bytes name);
 
-    event RoleAssignedToUser(
+    event RoleUpdated(address sender, bytes32 role_id, bytes name);
+
+    event RoleRemoved(address sender, bytes32 role_id);
+
+    event FetchedUserRoles(address sender);
+
+    event RoleAssignedToUser(address sender, bytes32 role_id, bytes32 user_id);
+
+    event RoleUnassignedToUser(
         address sender,
         bytes32 role_id,
         bytes32 user_id
     );
+
+    event PermissionFetched(address sender);
 }
