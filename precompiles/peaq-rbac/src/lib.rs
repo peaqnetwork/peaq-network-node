@@ -45,6 +45,10 @@ pub(crate) const SELECTOR_LOG_ASSIGN_ROLE_TO_USER: [u8; 32] =
 pub(crate) const SELECTOR_LOG_UNASSIGNED_ROLE_TO_USER: [u8; 32] =
 	keccak256!("RoleUnassignedToUser(address,bytes32,bytes32)");
 pub(crate) const SELECTOR_LOG_FETCH_PERMISSION: [u8; 32] = keccak256!("PermissionFetched(address)");
+pub(crate) const SELECTOR_LOG_FETCH_PERMISSIONS: [u8; 32] =
+	keccak256!("AllPermissionsFetched(address)");
+pub(crate) const SELECTOR_LOG_ADD_PERMISSION: [u8; 32] =
+	keccak256!("PermissionAdded(address,bytes32,bytes)");
 
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
@@ -326,5 +330,73 @@ where
 		event.record(handle)?;
 
 		result
+	}
+
+	#[precompile::public("fetch_permissions(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_permissions(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+	) -> EvmResult<Vec<EntityAttribute>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+
+		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_permissions(&owner) {
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Ok(v) => Ok(v
+				.iter()
+				.map(|entity| EntityAttribute {
+					id: entity.id.into(),
+					name: entity.name.clone().into(),
+					enabled: entity.enabled,
+				})
+				.collect::<Vec<EntityAttribute>>()),
+		};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_PERMISSIONS,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
+	}
+
+	#[precompile::public("add_permission(bytes32,bytes)")]
+	fn add_permission(
+		handle: &mut impl PrecompileHandle,
+		permission_id: H256,
+		name: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let permission_id: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::add_permission {
+				permission_id,
+				name: name.clone().into(),
+			},
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ADD_PERMISSION,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(permission_id.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
 	}
 }
