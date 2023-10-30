@@ -23,16 +23,13 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature, OpaqueExtrinsic as UncheckedExtrinsic,
 };
-use sp_std::prelude::*;
 
-pub mod currency;
 pub mod evm;
 pub mod peaq_currency_id;
 #[cfg(test)]
 mod tests;
 
 pub use crate::{evm::*, peaq_currency_id::*};
-pub use currency::*;
 
 /// An index to a block.
 pub type BlockNumber = u32;

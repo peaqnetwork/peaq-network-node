@@ -27,7 +27,7 @@ use frame_support::{
 };
 use orml_traits::parameter_type_with_key;
 use pallet_evm::HashedAddressMapping;
-use peaq_primitives_xcm::{Balance, CurrencyId};
+use peaq_primitives_xcm::Balance;
 use sp_core::{crypto::AccountId32, H256};
 use sp_io::hashing::keccak_256;
 use sp_runtime::{
@@ -81,12 +81,6 @@ impl pallet_balances::Config for Runtime {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
-}
-
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		Default::default()
-	};
 }
 
 impl Config for Runtime {

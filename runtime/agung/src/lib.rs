@@ -115,7 +115,6 @@ use peaq_pallet_storage::traits::Storage;
 pub use peaq_pallet_transaction;
 
 // For XCM
-pub mod constants;
 mod weights;
 pub mod xcm_config;
 

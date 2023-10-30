@@ -118,7 +118,6 @@ use peaq_pallet_mor::mor::MorBalance;
 pub use peaq_pallet_mor::{self, types::MorConfig};
 
 // For XCM
-pub mod constants;
 mod weights;
 pub mod xcm_config;
 
