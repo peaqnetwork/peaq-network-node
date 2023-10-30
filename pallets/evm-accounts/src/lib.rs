@@ -294,6 +294,7 @@ impl<T: Config> OnKilledAccount<T::AccountId> for CallKillEVMLinkAccount<T> {
 }
 
 /*
+ * // TODO, Need to survey
  * // I guess it is related to the address unification, but let us survey it later
  * impl<T: Config> StaticLookup for Pallet<T> {
  *     type Source = MultiAddress<T::AccountId, AccountIndex>;
