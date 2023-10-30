@@ -1,34 +1,33 @@
 //! A collection of node-specific RPC methods.
 
-use std::sync::Arc;
-
+use cumulus_primitives_core::ParaId;
 use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
+use peaq_primitives_xcm::*;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
+use sc_consensus_manual_seal::rpc::EngineCommand;
 use sc_network::NetworkService;
+use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
-use sc_service::TransactionPool;
+use sc_service::{TaskManager, TransactionPool};
 use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
-use sp_runtime::traits::BlakeTwo256;
-// use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
-
-use sc_service::TaskManager;
-use sp_runtime::traits::Block as BlockT;
-pub mod tracing;
-use crate::cli_opt::EthApi as EthApiCmd;
+use sp_core::H256;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+use std::{collections::BTreeMap, sync::Arc};
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
-use crate::primitives::*;
+pub mod tracing;
+use crate::cli_opt::EthApi as EthApiCmd;
 
 pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
@@ -41,8 +40,10 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub fee_history_cache: FeeHistoryCache,
 }
 
+pub type XcmSenders = Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>;
+
 /// Full client dependencies.
-pub struct FullDeps<C, P, A: ChainApi> {
+pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -55,22 +56,32 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub is_authority: bool,
 	/// Network service
 	pub network: Arc<NetworkService<Block, Hash>>,
+	/// Chain syncing service
+	pub sync: Arc<SyncingService<Block>>,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
+	/// The list of optional RPC extensions.
+	pub ethapi_cmd: Vec<EthApiCmd>,
+	/// Frontier Backend.
+	pub frontier_backend: Arc<dyn fc_db::BackendReader<Block> + Send + Sync>,
 	/// Backend.
-	pub backend: Arc<fc_db::Backend<Block>>,
+	pub backend: Arc<BE>,
+	/// Manual seal command sink
+	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
-	/// The list of optional RPC extensions.
-	pub ethapi_cmd: Vec<EthApiCmd>,
+	/// Channels for manual xcm messages (downward, hrmp)
+	pub xcm_senders: XcmSenders,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<OverrideHandle<Block>>,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
+	/// Mandated parent hashes for a given block hash.
+	pub forced_parent_hashes: Option<BTreeMap<H256, H256>>,
 }
 
 pub struct TracingConfig {
@@ -80,7 +91,7 @@ pub struct TracingConfig {
 
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, BE, A>(
-	deps: FullDeps<C, P, A>,
+	deps: FullDeps<C, P, A, BE>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	maybe_tracing_config: Option<TracingConfig>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
@@ -93,11 +104,11 @@ where
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: CallApiAt<Block>,
 	C: Send + Sync + 'static,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>,
-	C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>,
+	C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
@@ -131,14 +142,19 @@ where
 		deny_unsafe,
 		is_authority,
 		network,
+		sync,
 		filter_pool,
-		backend,
+		ethapi_cmd,
+		command_sink: _,
+		frontier_backend,
+		backend: _,
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
-		ethapi_cmd,
+		xcm_senders: _,
 		overrides,
 		block_data_cache,
+		forced_parent_hashes,
 	} = deps;
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
@@ -161,15 +177,16 @@ where
 			Arc::clone(&pool),
 			graph.clone(),
 			no_tx_converter,
-			Arc::clone(&network),
-			Default::default(),
+			Arc::clone(&sync),
+			Default::default(), // signers
 			Arc::clone(&overrides),
-			Arc::clone(&backend),
+			Arc::clone(&frontier_backend),
 			is_authority,
 			Arc::clone(&block_data_cache),
 			fee_history_cache,
 			fee_history_limit,
 			10_u64,
+			forced_parent_hashes,
 		)
 		.into_rpc(),
 	)?;
@@ -178,7 +195,8 @@ where
 		io.merge(
 			EthFilter::new(
 				client.clone(),
-				backend,
+				frontier_backend,
+				fc_rpc::TxPool::new(client.clone(), graph.clone()),
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
@@ -198,14 +216,26 @@ where
 		.into_rpc(),
 	)?;
 
+	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+		fc_mapping_sync::EthereumBlockNotification<Block>,
+	> = Default::default();
+	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
-		EthPubSub::new(pool, Arc::clone(&client), network, subscription_task_executor, overrides)
-			.into_rpc(),
+		EthPubSub::new(
+			pool,
+			Arc::clone(&client),
+			sync.clone(),
+			subscription_task_executor,
+			overrides,
+			pubsub_notification_sinks.clone(),
+		)
+		.into_rpc(),
 	)?;
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;

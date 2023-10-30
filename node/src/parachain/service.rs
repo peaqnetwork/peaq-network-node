@@ -9,38 +9,35 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
+use fc_rpc::EthTask;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use futures::StreamExt;
+use peaq_primitives_xcm::*;
 use polkadot_service::CollatorPair;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
-use sc_network::{NetworkBlock, NetworkService};
+use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
+use sc_network_sync::SyncingService;
 use sc_service::{
 	Configuration, ImportQueue, PartialComponents, TFullBackend, TFullClient, TaskManager,
 };
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_keystore::SyncCryptoStorePtr;
+use sp_core::U256;
+use sp_keystore::KeystorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use substrate_prometheus_endpoint::Registry;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use super::shell_upgrade::*;
-use crate::primitives::*;
-use sc_service::BasePath;
-
 use crate::cli_opt::{EthApi as EthApiCmd, RpcConfig};
-use fc_rpc::EthTask;
-use sc_cli::SubstrateCli;
-
-use sp_core::U256;
 
 macro_rules! declare_executor {
 	($mod_type:tt, $runtime_ns:tt) => {
@@ -79,24 +76,16 @@ type FullClient<RuntimeApi, Executor> =
 type FullBackend = TFullBackend<Block>;
 
 pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
-	let config_dir = config
-		.base_path
-		.as_ref()
-		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
-		.unwrap_or_else(|| {
-			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
-				.config_dir(config.chain_spec.id())
-		});
-	config_dir.join("frontier").join(path)
+	config.base_path.config_dir(config.chain_spec.id()).join("frontier").join(path)
 }
 
 pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
 ) -> Result<Arc<fc_db::Backend<Block>>, String> {
-	Ok(Arc::new(fc_db::Backend::<Block>::new(
+	Ok(Arc::new(fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
 		client,
-		&fc_db::DatabaseSettings {
+		&fc_db::kv::DatabaseSettings {
 			source: match config.database {
 				DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
 					path: frontier_database_dir(config, "db"),
@@ -113,14 +102,14 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
 			},
 		},
-	)?))
+	)?)))
 }
 
-#[allow(clippy::type_complexity)]
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
+#[allow(clippy::type_complexity)]
 pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
@@ -198,12 +187,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new(
-		config.wasm_method,
-		config.default_heap_pages,
-		config.max_runtime_instances,
-		config.runtime_cache_size,
-	);
+	let executor = sc_service::new_native_or_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -232,8 +216,7 @@ where
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
 	let frontier_backend = open_frontier_backend(client.clone(), config)?;
-	let frontier_block_import =
-		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
 	let parachain_block_import: ParachainBlockImport<_, _, _> =
 		ParachainBlockImport::new(frontier_block_import, backend.clone());
@@ -267,6 +250,34 @@ where
 
 	Ok(params)
 }
+
+// pub fn overrides_handle<B, C, BE>(client: Arc<C>) -> Arc<OverrideHandle<B>>
+// where
+// 	B: BlockT,
+// 	C: ProvideRuntimeApi<B>,
+// 	C::Api: fp_rpc::EthereumRuntimeRPCApi<B>,
+// 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
+// 	BE: Backend<B> + 'static,
+// {
+// 	let mut overrides_map = BTreeMap::new();
+// 	overrides_map.insert(
+// 		EthereumStorageSchema::V1,
+// 		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
+// 		);
+// 	overrides_map.insert(
+// 		EthereumStorageSchema::V2,
+// 		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
+// 		);
+// 	overrides_map.insert(
+// 		EthereumStorageSchema::V3,
+// 		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
+// 		);
+
+// 	Arc::new(OverrideHandle {
+// 		schemas: overrides_map,
+// 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+// 	})
+// }
 
 async fn build_relay_chain_interface(
 	polkadot_config: Configuration,
@@ -320,7 +331,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>
-		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>
+		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
@@ -366,8 +377,8 @@ where
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
 		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>>,
-		Arc<NetworkService<Block, Hash>>,
-		SyncCryptoStorePtr,
+		Arc<SyncingService<Block>>,
+		KeystorePtr,
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
@@ -398,10 +409,7 @@ where
 		collator_options.clone(),
 	)
 	.await
-	.map_err(|e| match e {
-		RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
-		s => format!("{}", s).into(),
-	})?;
+	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
 	let force_authoring = parachain_config.force_authoring;
@@ -409,9 +417,11 @@ where
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
-	let (network, system_rpc_tx, tx_handler_controller, start_network) =
+	let network_config = FullNetworkConfiguration::new(&parachain_config.network);
+	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
+			net_config: network_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
@@ -419,30 +429,41 @@ where
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
-			warp_sync: None,
+			warp_sync_params: None,
 		})?;
 
 	let fee_history_limit = rpc_config.fee_history_limit;
 
 	let overrides = fc_storage::overrides_handle(client.clone());
 
+	let pubsub_notification_sinks: Arc<
+		fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		>,
+	> = Default::default();
+
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		Some("frontier"),
-		fc_mapping_sync::MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-			3,
-			0,
-			fc_mapping_sync::SyncStrategy::Parachain,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
+	match frontier_backend.as_ref() {
+		fc_db::Backend::KeyValue(b) => task_manager.spawn_essential_handle().spawn(
+			"frontier-mapping-sync-worker",
+			Some("frontier"),
+			fc_mapping_sync::kv::MappingSyncWorker::new(
+				client.import_notification_stream(),
+				Duration::new(6, 0),
+				client.clone(),
+				backend.clone(),
+				overrides.clone(),
+				Arc::new(b.clone()),
+				3,
+				0,
+				fc_mapping_sync::SyncStrategy::Parachain,
+				sync_service.clone(),
+				pubsub_notification_sinks.clone(),
+			)
+			.for_each(|()| futures::future::ready(())),
+		),
+	};
 
 	// Spawn Frontier EthFilterApi maintenance task.
 	if let Some(filter_pool_2) = filter_pool.clone() {
@@ -498,7 +519,9 @@ where
 	let rpc_builder = {
 		let client = client.clone();
 		let network = network.clone();
+		let sync = sync_service.clone();
 		let pool = transaction_pool.clone();
+		let backend = backend.clone();
 
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
@@ -510,20 +533,27 @@ where
 
 		move |deny_unsafe, subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
-				backend: frontier_backend.clone(),
 				client: client.clone(),
-				deny_unsafe,
-				ethapi_cmd: ethapi_cmd.clone(),
-				filter_pool: filter_pool.clone(),
-				graph: pool.pool().clone(),
 				pool: pool.clone(),
+				graph: pool.pool().clone(),
+				deny_unsafe,
 				is_authority,
+				network: network.clone(),
+				sync: sync.clone(),
+				filter_pool: filter_pool.clone(),
+				ethapi_cmd: ethapi_cmd.clone(),
+				frontier_backend: match frontier_backend.as_ref() {
+					fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
+				},
+				backend: backend.clone(),
+				command_sink: None,
 				max_past_logs,
 				fee_history_limit,
 				fee_history_cache: fee_history_cache.clone(),
-				network: network.clone(),
-				block_data_cache: block_data_cache.clone(),
+				xcm_senders: None,
 				overrides: overrides.clone(),
+				block_data_cache: block_data_cache.clone(),
+				forced_parent_hashes: None,
 			};
 
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
@@ -549,20 +579,24 @@ where
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		config: parachain_config,
-		keystore: params.keystore_container.sync_keystore(),
+		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
+		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
 	})?;
 
 	let announce_block = {
-		let network = network.clone();
-		Arc::new(move |hash, data| network.announce_block(hash, data))
+		let sync_service = sync_service.clone();
+		Arc::new(move |hash, data| sync_service.announce_block(hash, data))
 	};
 
 	let relay_chain_slot_duration = Duration::from_secs(6);
+	let overseer_handle = relay_chain_interface
+		.overseer_handle()
+		.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
 	if is_authority {
 		let parachain_consensus = fn_build_consensus(
@@ -573,8 +607,8 @@ where
 			&task_manager,
 			relay_chain_interface.clone(),
 			transaction_pool,
-			network,
-			params.keystore_container.sync_keystore(),
+			sync_service.clone(),
+			params.keystore_container.keystore(),
 			force_authoring,
 		)?;
 
@@ -590,10 +624,12 @@ where
 			spawner,
 			parachain_consensus,
 			import_queue: import_queue_service,
+			recovery_handle: Box::new(overseer_handle),
 			collator_key: collator_key.ok_or_else(|| {
 				sc_service::error::Error::Other("Collator Key is None".to_string())
 			})?,
 			relay_chain_slot_duration,
+			sync_service,
 		};
 
 		start_collator(params).await?;
@@ -606,6 +642,8 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			import_queue: import_queue_service,
+			recovery_handle: Box::new(overseer_handle),
+			sync_service,
 		};
 
 		start_full_node(params)?;
@@ -715,7 +753,7 @@ where
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>
-		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, EntityId>
+		+ peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 		+ peaq_rpc_primitives_debug::DebugRuntimeApi<Block>

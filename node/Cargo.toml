@@ -20,18 +20,14 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.38"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies]
-peaq-dev-runtime = { path = "../runtime/peaq-dev", version = "3.0.0-polkadot-v0.9.38" }
-peaq-agung-runtime = { path = "../runtime/agung", version = "3.0.0-polkadot-v0.9.38" }
-peaq-krest-runtime = { path = "../runtime/krest", version = "3.0.0-polkadot-v0.9.38" }
-peaq-runtime = { path = "../runtime/peaq", version = "3.0.0-polkadot-v0.9.38" }
-
 structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
 jsonrpc-pubsub = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
+flume = { workspace = true, default-features = true }
 log = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 jsonrpc-core = { workspace = true, default-features = true }
@@ -49,8 +45,8 @@ sc-cli = { workspace = true, default-features = true }
 sc-client-api = { workspace = true, default-features = true }
 sc-consensus = { workspace = true, default-features = true }
 sc-consensus-aura = { workspace = true, default-features = true }
+sc-consensus-manual-seal = { workspace = true, default-features = true }
 sc-executor = { workspace = true, default-features = true }
-sc-finality-grandpa = { workspace = true, default-features = true }
 sc-keystore = { workspace = true, default-features = true }
 sc-rpc = { workspace = true, default-features = true }
 sc-rpc-api = { workspace = true, default-features = true }
@@ -64,7 +60,6 @@ sp-blockchain = { workspace = true, default-features = true }
 sp-consensus = { workspace = true, default-features = true }
 sp-consensus-aura = { workspace = true, default-features = true }
 sp-core = { workspace = true, default-features = true }
-sp-finality-grandpa = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 sp-timestamp = { workspace = true, default-features = true }
 substrate-frame-rpc-system = { workspace = true, default-features = true }
@@ -72,6 +67,7 @@ sp-inherents = { workspace = true, default-features = true }
 pallet-contracts = { workspace = true, default-features = true }
 sc-network = { workspace = true, default-features = true }
 sc-network-common = { workspace = true, default-features = true }
+sc-network-sync = { workspace = true, default-features = true }
 hex-literal = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
 fc-db = { workspace = true, default-features = true }
@@ -85,12 +81,6 @@ pallet-base-fee = { workspace = true, default-features = true }
 pallet-dynamic-fee = { workspace = true, default-features = true }
 pallet-ethereum = { workspace = true, default-features = true }
 pallet-evm = { workspace = true, default-features = true }
-peaq-primitives-ext = { path = "../primitives/ext" }
-peaq-rpc-debug = { path = "../client/rpc/debug" }
-peaq-rpc-primitives-debug = { path = "../primitives/rpc/debug" }
-peaq-rpc-primitives-txpool = { path = "../primitives/rpc/txpool" }
-peaq-rpc-trace = { path = "../client/rpc/trace" }
-peaq-rpc-txpool = { path = "../client/rpc/txpool" }
 tokio = { workspace = true, default-features = true, features = [ "macros", "sync" ] }
 sc-tracing = { workspace = true, default-features = true }
 cumulus-client-cli = { workspace = true, default-features = true }
@@ -117,20 +107,31 @@ sp-transaction-pool = { workspace = true, default-features = true }
 sp-offchain = { workspace = true, default-features = true }
 sc-chain-spec = { workspace = true, default-features = true }
 fp-dynamic-fee = { workspace = true, default-features = true }
-pallet-block-reward = { path = "../pallets/block-reward" }
 orml-xtokens = { workspace = true, default-features = true }
 cumulus-pallet-parachain-system = { workspace = true, default-features = true }
 peaq-pallet-did-rpc = { workspace = true, default-features = true }
 peaq-pallet-rbac-rpc = { workspace = true, default-features = true }
 xcm = { workspace = true, default-features = true }
-peaq-primitives-xcm = { path = "../primitives/xcm" }
-runtime-common = { path = "../runtime/common" }
 peaq-pallet-storage-rpc = { workspace = true, default-features = true }
 zenlink-protocol = { workspace = true, default-features = true }
 zenlink-protocol-rpc = { workspace = true, default-features = true }
 zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
+
+peaq-dev-runtime = { path = "../runtime/peaq-dev", version = "3.0.0-polkadot-v0.9.38" }
+peaq-agung-runtime = { path = "../runtime/agung", version = "3.0.0-polkadot-v0.9.38" }
+peaq-krest-runtime = { path = "../runtime/krest", version = "3.0.0-polkadot-v0.9.38" }
+peaq-runtime = { path = "../runtime/peaq", version = "3.0.0-polkadot-v0.9.38" }
+peaq-primitives-ext = { path = "../primitives/ext" }
+peaq-rpc-debug = { path = "../client/rpc/debug" }
+peaq-rpc-primitives-debug = { path = "../primitives/rpc/debug" }
+peaq-rpc-primitives-txpool = { path = "../primitives/rpc/txpool" }
+peaq-rpc-trace = { path = "../client/rpc/trace" }
+peaq-rpc-txpool = { path = "../client/rpc/txpool" }
+pallet-block-reward = { path = "../pallets/block-reward" }
+peaq-primitives-xcm = { path = "../primitives/xcm" }
+runtime-common = { path = "../runtime/common" }
 
 [features]
 default = [

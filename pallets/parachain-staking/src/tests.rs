@@ -3708,11 +3708,10 @@ fn collator_reward_per_block_only_collator() {
 
 			let avg_bl_reward = StakePallet::average_block_reward();
 			// Avoid keep live error
-			assert_ok!(Balances::set_balance(
+			assert_ok!(Balances::force_set_balance(
 				RawOrigin::Root.into(),
 				StakePallet::account_id(),
 				1000,
-				0
 			));
 
 			let reward =
@@ -3931,11 +3930,10 @@ fn collator_reward_per_block_with_delegator() {
 			let reward_rate = StakePallet::reward_rate_config();
 			let avg_bl_reward = StakePallet::average_block_reward();
 			// Avoid keep live error
-			assert_ok!(Balances::set_balance(
+			assert_ok!(Balances::force_set_balance(
 				RawOrigin::Root.into(),
 				StakePallet::account_id(),
 				1000,
-				0
 			));
 
 			let reward =

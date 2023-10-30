@@ -18,10 +18,12 @@
 // These clippy lints are disabled because the macro-generated code triggers them.
 #![allow(clippy::unnecessary_mut_passed)]
 #![allow(clippy::too_many_arguments)]
+#![feature(trivial_bounds)]
 
 pub use ethereum::{TransactionV0 as LegacyTransaction, TransactionV2 as Transaction};
 use parity_scale_codec::{Decode, Encode};
-use sp_runtime::traits::Block as BlockT;
+use scale_info::TypeInfo;
+use sp_runtime::{traits::Block as BlockT, RuntimeDebug};
 use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]
@@ -30,7 +32,7 @@ pub struct TxPoolResponseLegacy {
 	pub future: Vec<LegacyTransaction>,
 }
 
-#[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TxPoolResponse {
 	pub ready: Vec<Transaction>,
 	pub future: Vec<Transaction>,

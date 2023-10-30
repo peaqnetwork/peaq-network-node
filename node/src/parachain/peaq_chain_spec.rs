@@ -1,18 +1,17 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
-use peaq_primitives_xcm::Balance;
+use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
-	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
-	EthereumConfig, GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig,
-	Precompiles, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
+	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, Precompiles,
+	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
-use sc_service::{ChainType, Properties};
+use sc_service::{config::MultiaddrWithPeerId, ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
 use hex_literal::hex;
-use sc_network_common::config::MultiaddrWithPeerId;
 use std::str::FromStr;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.

@@ -19,7 +19,7 @@
 //! default and must be disabled explicely throught type annotations.
 
 use crate::{data::String, revert, substrate::RuntimeHelper};
-use fp_evm::{Precompile, PrecompileHandle, PrecompileResult, PrecompileSet};
+use fp_evm::{IsPrecompileResult, Precompile, PrecompileHandle, PrecompileResult, PrecompileSet};
 use frame_support::pallet_prelude::Get;
 use impl_trait_for_tuples::impl_for_tuples;
 use sp_core::{H160, H256};
@@ -323,13 +323,20 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
-	if !callable_by_precompile &&
-		<R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller)
-	{
-		return Err(revert("Function not callable by precompiles"))
+	if !callable_by_precompile {
+		match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller, 0) {
+			// TODO
+			IsPrecompileResult::Answer { is_precompile, extra_cost: _ } =>
+				if is_precompile {
+					Ok(())
+				} else {
+					Err(revert("Function not callable by precompiles"))
+				},
+			IsPrecompileResult::OutOfGas => Err(revert("Out of gas")),
+		}
+	} else {
+		Err(revert("Function not callable by precompiles"))
 	}
-
-	Ok(())
 }
 
 pub struct AddressU64<const N: u64>;
@@ -400,6 +407,19 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 
 	fn gas_limit(&self) -> Option<u64> {
 		self.handle.gas_limit()
+	}
+
+	fn record_external_cost(
+		&mut self,
+		_ref_time: Option<u64>,
+		_proof_size: Option<u64>,
+		_storage_growth: Option<u64>,
+	) -> Result<(), evm::ExitError> {
+		todo!()
+	}
+
+	fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {
+		todo!()
 	}
 }
 
@@ -617,7 +637,13 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160) -> bool {
-		address.as_bytes().starts_with(A::get()) && self.precompile_set.is_precompile(address)
+		if let IsPrecompileResult::Answer { is_precompile, extra_cost: _ } =
+			self.precompile_set.is_precompile(address, 1)
+		{
+			address.as_bytes().starts_with(A::get()) && is_precompile
+		} else {
+			false
+		}
 	}
 
 	#[inline(always)]
@@ -809,8 +835,13 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 		self.inner.execute::<R>(handle)
 	}
 
-	fn is_precompile(&self, address: H160) -> bool {
-		self.inner.is_precompile(address)
+	fn is_precompile(&self, address: H160, remaining_gas: u64) -> IsPrecompileResult {
+		let is_precompile = self.inner.is_precompile(address);
+		if remaining_gas > 0 {
+			IsPrecompileResult::Answer { is_precompile, extra_cost: 0 }
+		} else {
+			IsPrecompileResult::OutOfGas
+		}
 	}
 }
 

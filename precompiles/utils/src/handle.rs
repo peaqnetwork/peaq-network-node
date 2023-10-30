@@ -167,6 +167,19 @@ mod tests {
 		fn gas_limit(&self) -> Option<u64> {
 			unimplemented!()
 		}
+
+		fn record_external_cost(
+			&mut self,
+			_ref_time: Option<u64>,
+			_proof_size: Option<u64>,
+			_storage_growth: Option<u64>,
+		) -> Result<(), evm::ExitError> {
+			unimplemented!()
+		}
+
+		fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {
+			unimplemented!()
+		}
 	}
 
 	#[test]

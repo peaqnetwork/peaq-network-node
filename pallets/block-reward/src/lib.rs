@@ -38,7 +38,20 @@
 //! ## Usage
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
-//! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait.
+//! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
+//!    example: ```ignore pub struct BeneficiaryPayout(); impl
+//!    BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout { fn treasury(reward:
+//!    NegativeImbalanceOf<T>) { Balances::resolve_creating(&TREASURY_POT.into_account(), reward); }
+//!
+//!         fn collators(reward: NegativeImbalanceOf<T>) {
+//!             Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
+//!         }
+//!
+//!         fn dapps_staking(reward: NegativeImbalanceOf<T>) {
+//!             DappsStaking::rewards(reward);
+//!         }
+//!     }
+//!     ```
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
 //! 4. Set `MaxCurrencySupply` to limit maximum currency supply in the genesis configuration.
 
@@ -97,7 +110,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 

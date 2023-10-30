@@ -13,15 +13,15 @@ sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 
 [dependencies]
-parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
-hex-literal = { workspace = true, default-features = false }
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
+hex-literal = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
 pallet-authorship = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
-pallet-block-reward = { workspace = true, default-features = false }
+pallet-block-reward = { workspace = true }
 pallet-session = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 peaq-frame-ext = { workspace = true, features = ["mockup-avg-currency"] }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
 serde = { workspace = true, default-features = false, optional = true }
@@ -35,31 +35,32 @@ frame-benchmarking = { workspace = true, default-features = false, optional = tr
 [features]
 default = ["std"]
 runtime-benchmarks = [
-  "frame-benchmarking",
-  "frame-support/runtime-benchmarks",
-  "frame-system/runtime-benchmarks",
-  "pallet-balances/runtime-benchmarks",
-  "sp-runtime/runtime-benchmarks",
-  "sp-staking/runtime-benchmarks",
+    "frame-benchmarking",
+    "frame-support/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+    "pallet-balances/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
+    "sp-staking/runtime-benchmarks",
 ]
 std = [
-  "parity-scale-codec/std",
-  "frame-benchmarking?/std",
-  "frame-support/std",
-  "frame-system/std",
-  "log/std",
-  "pallet-authorship/std",
-  "pallet-balances/std",
-  "pallet-block-reward/std",
-  "pallet-session/std",
-  "peaq-frame-ext/std",
-  "scale-info/std",
-  "serde",
-  "sp-runtime/std",
-  "sp-staking/std",
-  "sp-std/std",
-  "sp-consensus-aura/std",
+    "parity-scale-codec/std",
+    "frame-benchmarking?/std",
+    "frame-support/std",
+    "frame-system/std",
+    "log/std",
+    "pallet-authorship/std",
+    "pallet-balances/std",
+    "pallet-block-reward/std",
+    "pallet-session/std",
+    "peaq-frame-ext/std",
+    "parity-scale-codec/std",
+    "scale-info/std",
+    "serde",
+    "sp-runtime/std",
+    "sp-staking/std",
+    "sp-std/std",
+    "sp-consensus-aura/std",
 ]
 try-runtime = [
-  "frame-support/try-runtime",
+    "frame-support/try-runtime",
 ]
