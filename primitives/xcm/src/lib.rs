@@ -26,8 +26,6 @@ use sp_runtime::{
 
 pub mod evm;
 pub mod peaq_currency_id;
-#[cfg(test)]
-mod tests;
 
 pub use crate::{evm::*, peaq_currency_id::*};
 
@@ -88,5 +86,3 @@ pub type NativeBlock = generic::Block<Header, UncheckedExtrinsic>;
 /// pub type BlockId = generic::BlockId<NativeBlock>;
 
 /// Opaque, encoded, unchecked extrinsic.
-
-pub const MIRRORED_TOKENS_ADDRESS_START: u64 = 0x1000000;
