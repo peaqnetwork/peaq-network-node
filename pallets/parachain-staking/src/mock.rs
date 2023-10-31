@@ -59,12 +59,12 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Storage},
-		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Aura: pallet_aura::{Pallet, Storage},
+		System: frame_system,
+		Balances: pallet_balances,
+		Aura: pallet_aura,
+		Session: pallet_session,
+		Authorship: pallet_authorship,
+		StakePallet: stake,
 	}
 );
 

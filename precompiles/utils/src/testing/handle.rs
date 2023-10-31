@@ -17,7 +17,7 @@
 use crate::testing::PrettyLog;
 use fp_evm::{Context, ExitError, ExitReason, Log, PrecompileHandle, Transfer};
 use sp_core::{H160, H256};
-use sp_std::boxed::Box;
+use sp_std::{boxed::Box, borrow::Cow};
 
 pub struct Subcall {
 	pub address: H160,
@@ -120,6 +120,22 @@ impl PrecompileHandle for MockHandle {
 		} else {
 			Ok(())
 		}
+	}
+
+	fn record_external_cost(
+        &mut self,
+        _ref_time: Option<u64>,
+        _proof_size: Option<u64>,
+        _storage_growth: Option<u64>
+    ) -> Result<(), ExitError> {
+		Err(ExitError::Other(Cow::from("not implemented yet")))
+	}
+
+	fn refund_external_cost(
+        &mut self,
+        _ref_time: Option<u64>,
+        _proof_size: Option<u64>
+    ) {
 	}
 
 	fn remaining_gas(&self) -> u64 {
