@@ -22,6 +22,11 @@ interface RBAC {
         bytes32 user;
     }
 
+    struct Permission2Role {
+        bytes32 permission;
+        bytes32 role;
+    }
+
     // ======================= Entry Points ======================= //
 
     function fetch_role(
@@ -82,6 +87,26 @@ interface RBAC {
 
     function disable_permission(bytes32 permission_id) external returns (bool);
 
+    function fetch_role_permissions(
+        bytes32 owner,
+        bytes32 role_id
+    ) external view returns (Permission2Role[] memory);
+
+    function assign_permission_to_role(
+        bytes32 permission_id,
+        bytes32 role_id
+    ) external returns (bool);
+
+    function unassign_permission_to_role(
+        bytes32 permission_id,
+        bytes32 role_id
+    ) external returns (bool);
+
+    function fetch_group(
+        bytes32 owner,
+        bytes32 group_id
+    ) external view returns (Entity memory);
+
     // ======================= Events ======================= //
 
     event RoleAdded(address sender, bytes32 role_id, bytes name);
@@ -109,4 +134,20 @@ interface RBAC {
     event PermissionUpdated(address sender, bytes32 permission_id, bytes name);
 
     event PermissionDisabled(address sender, bytes32 permission_id);
+
+    event FetchedRolePermissions(address sender);
+
+    event PermissionAssigned(
+        address sender,
+        bytes32 permission_id,
+        bytes32 role_id
+    );
+
+    event PermissionUnassignedToRole(
+        address sender,
+        bytes32 permission_id,
+        bytes32 role_id
+    );
+
+    event GroupFetched(address sender);
 }
