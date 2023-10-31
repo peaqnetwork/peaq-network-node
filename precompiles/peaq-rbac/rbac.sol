@@ -70,7 +70,17 @@ interface RBAC {
         bytes32 owner
     ) external returns (EntityAttribute[] memory);
 
-    function add_permission(bytes32 permission_id, bytes memory name) external returns (bool);
+    function add_permission(
+        bytes32 permission_id,
+        bytes memory name
+    ) external returns (bool);
+
+    function update_permission(
+        bytes32 permission_id,
+        bytes memory name
+    ) external returns (bool);
+
+    function disable_permission(bytes32 permission_id) external returns (bool);
 
     // ======================= Events ======================= //
 
@@ -92,7 +102,11 @@ interface RBAC {
 
     event PermissionFetched(address sender);
 
-    event AllPermissionsFetched (address sender);
+    event AllPermissionsFetched(address sender);
 
     event PermissionAdded(address sender, bytes32 permission_id, bytes name);
+
+    event PermissionUpdated(address sender, bytes32 permission_id, bytes name);
+
+    event PermissionDisabled(address sender, bytes32 permission_id);
 }

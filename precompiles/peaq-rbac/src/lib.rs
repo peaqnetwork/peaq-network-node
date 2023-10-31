@@ -49,7 +49,10 @@ pub(crate) const SELECTOR_LOG_FETCH_PERMISSIONS: [u8; 32] =
 	keccak256!("AllPermissionsFetched(address)");
 pub(crate) const SELECTOR_LOG_ADD_PERMISSION: [u8; 32] =
 	keccak256!("PermissionAdded(address,bytes32,bytes)");
-
+pub(crate) const SELECTOR_LOG_UPDATE_PERMISSION: [u8; 32] =
+	keccak256!("PermissionUpdated(address,bytes32,bytes)");
+pub(crate) const SELECTOR_LOG_DISABLE_PERMISSION: [u8; 32] =
+	keccak256!("PermissionDisabled(address,bytes32)");
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
 // represent both.
@@ -393,6 +396,71 @@ where
 				.write::<Address>(Address::from(handle.context().caller))
 				.write::<H256>(permission_id.into())
 				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("update_permission(bytes32,bytes)")]
+	fn update_permission(
+		handle: &mut impl PrecompileHandle,
+		permission_id: H256,
+		name: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let permission_id: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::update_permission {
+				permission_id,
+				name: name.clone().into(),
+			},
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UPDATE_PERMISSION,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(permission_id.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name)
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("disable_permission(bytes32)")]
+	fn disable_permission(
+		handle: &mut impl PrecompileHandle,
+		permission_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let permission_id: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::disable_permission { permission_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_DISABLE_PERMISSION,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(permission_id.into())
 				.build(),
 		);
 		event.record(handle)?;
