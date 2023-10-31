@@ -51,6 +51,7 @@ evm-runtime = { version = "0.40", default-features = false }
 ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
 ethereum-types = { version = "0.14.1", default-features = false }
 flume = "0.10"
+getrandom = { version = "0.2", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.3.1", default-features = false }
 impl-trait-for-tuples = "0.2.2"
