@@ -10,16 +10,14 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 environmental = { workspace = true, default-features = false }
-sp-runtime-interface = { workspace = true, default-features = false }
-
-# Ethereum
+parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
 ethereum-types = { workspace = true, default-features = false }
 evm = { workspace = true, default-features = false, features = [ "with-codec" ] }
 evm-gasometer = { workspace = true, default-features = false }
 evm-runtime = { workspace = true, default-features = false }
+sp-runtime-interface = { workspace = true, default-features = false }
 
 [features]
 default = [ "std" ]

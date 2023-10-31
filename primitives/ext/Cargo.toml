@@ -11,10 +11,7 @@ repository.workspace = true
 
 [dependencies]
 ethereum-types = { workspace = true }
-
-evm-tracing-events = { path = "../rpc/evm-tracing-events", default-features = false }
-
-# Substrate
+evm-tracing-events = { workspace = true, default-features = false }
 parity-scale-codec = { workspace = true }
 sp-externalities = { workspace = true }
 sp-runtime-interface = { workspace = true }

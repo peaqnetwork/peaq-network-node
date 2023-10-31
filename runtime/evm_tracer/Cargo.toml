@@ -10,24 +10,19 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-
-evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", default-features = false, features = [ "evm-tracing" ] }
-peaq-primitives-ext = { path = "../../primitives/ext", default-features = false }
-
-# Substrate
-parity-scale-codec = { workspace = true, default-features = false }
-sp-core = { workspace = true, default-features = false }
-sp-io = { workspace = true, default-features = false }
-sp-runtime = { workspace = true, default-features = false }
-sp-std = { workspace = true, default-features = false }
-
-# Frontier
+fp-evm = { workspace = true, default-features = false }
 ethereum-types = { workspace = true, default-features = false }
 evm = { workspace = true, default-features = false, features = [ "with-codec" ] }
 evm-gasometer = { workspace = true, default-features = false }
 evm-runtime = { workspace = true, default-features = false }
-fp-evm = { workspace = true, default-features = false }
+evm-tracing-events = { workspace = true, default-features = false, features = [ "evm-tracing" ] }
 pallet-evm = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
+peaq-primitives-ext = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
 
 [features]
 default = [ "std" ]

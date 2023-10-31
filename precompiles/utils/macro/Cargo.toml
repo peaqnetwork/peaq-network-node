@@ -25,7 +25,7 @@ syn = { workspace = true, features = [ "extra-traits", "fold", "full", "visit" ]
 macrotest = { workspace = true, default-features = false }
 trybuild = { workspace = true, default-features = false}
 
-precompile-utils = { path = "../", features = [ "testing" ] }
+precompile-utils = { workspace = true, features = [ "testing" ] }
 
 fp-evm = { workspace = true, default-features = false }
 frame-support = { workspace = true, default-features = false }

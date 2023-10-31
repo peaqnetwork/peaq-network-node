@@ -11,28 +11,21 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
-log = { workspace = true, default-features = false }
-num_enum = { workspace = true, default-features = false }
-paste = { workspace = true, default-features = false }
-slices = { workspace = true, default-features = false }
-
-# Peaq
-precompile-utils = { path = "../utils", default-features = false }
-
-# Substrate
-parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
+log = { workspace = true, default-features = false }
+num_enum = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
+pallet-timestamp = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
+paste = { workspace = true, default-features = false }
+peaq-pallet-did = { workspace = true, default-features = false }
+precompile-utils = { workspace = true, default-features = false }
+slices = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
+fp-evm = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
-
-# Frontier
-fp-evm = { workspace = true, default-features = false }
-pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
-peaq-pallet-did = { workspace = true, default-features = false }
-pallet-timestamp = { workspace = true, default-features = false }
-
 
 [features]
 default = [ "std" ]

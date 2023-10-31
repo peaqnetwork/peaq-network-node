@@ -20,8 +20,8 @@ log = { workspace = true, default-features = false }
 orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
-pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
-peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
+pallet-block-reward = { workspace = true, default-features = false }
+peaq-primitives-xcm = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-runtime = { workspace = true, default-features = false }

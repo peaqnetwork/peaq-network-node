@@ -11,8 +11,6 @@ repository.workspace = true
 
 [dependencies]
 ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
-
-# Substrate
 parity-scale-codec = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }

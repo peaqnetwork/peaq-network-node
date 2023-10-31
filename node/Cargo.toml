@@ -119,19 +119,19 @@ zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
 
-peaq-dev-runtime = { path = "../runtime/peaq-dev" }
-peaq-agung-runtime = { path = "../runtime/agung" }
-peaq-krest-runtime = { path = "../runtime/krest" }
-peaq-runtime = { path = "../runtime/peaq" }
-peaq-primitives-ext = { path = "../primitives/ext" }
-peaq-rpc-debug = { path = "../client/rpc/debug" }
-peaq-rpc-primitives-debug = { path = "../primitives/rpc/debug" }
-peaq-rpc-primitives-txpool = { path = "../primitives/rpc/txpool" }
-peaq-rpc-trace = { path = "../client/rpc/trace" }
-peaq-rpc-txpool = { path = "../client/rpc/txpool" }
-pallet-block-reward = { path = "../pallets/block-reward" }
-peaq-primitives-xcm = { path = "../primitives/xcm" }
-runtime-common = { path = "../runtime/common" }
+peaq-dev-runtime = { workspace = true }
+peaq-agung-runtime = { workspace = true }
+peaq-krest-runtime = { workspace = true }
+peaq-runtime = { workspace = true }
+peaq-primitives-ext = { workspace = true }
+peaq-rpc-debug = { workspace = true }
+peaq-rpc-primitives-debug = { workspace = true }
+peaq-rpc-primitives-txpool = { workspace = true }
+peaq-rpc-trace = { workspace = true }
+peaq-rpc-txpool = { workspace = true }
+pallet-block-reward = { workspace = true }
+peaq-primitives-xcm = { workspace = true }
+runtime-common = { workspace = true }
 
 [features]
 default = [

@@ -14,11 +14,9 @@ environmental = { workspace = true, default-features = false }
 ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
 ethereum-types = { workspace = true, default-features = false }
 hex = { workspace = true, optional = true, features = [ "serde" ] }
+parity-scale-codec = { workspace = true, default-features = false }
 serde = { workspace = true, optional = true, features = [ "derive" ] }
 serde_json = { workspace = true, optional = true }
-
-# Substrate
-parity-scale-codec = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
