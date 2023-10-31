@@ -101,21 +101,21 @@ orml-xcm-support = { workspace = true, default-features = false }
 pallet-collective = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 
-evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", optional = true, default-features = false }
-peaq-evm-tracer = { path = "../evm_tracer", optional = true, default-features = false }
-peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug", default-features = false }
-peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-features = false }
+evm-tracing-events = { workspace = true, optional = true, default-features = false }
+peaq-evm-tracer = { workspace = true, optional = true, default-features = false }
+peaq-rpc-primitives-debug = { workspace = true, default-features = false }
+peaq-rpc-primitives-txpool = { workspace = true, default-features = false }
 
 frame-support = { workspace = true, default-features = false }
 
-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
-staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward", default-features = false }
-pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
-peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
-precompile-utils = { path = "../../precompiles/utils", default-features = false }
-pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-features = false }
-pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
-runtime-common = { path = "../common", default-features = false }
+parachain-staking = { workspace = true, default-features = false }
+staking-coefficient-reward = { workspace = true, default-features = false }
+pallet-block-reward = { workspace = true, default-features = false }
+peaq-primitives-xcm = { workspace = true, default-features = false }
+precompile-utils = { workspace = true, default-features = false }
+pallet-evm-precompile-peaq-did = { workspace = true, default-features = false }
+pallet-evm-precompile-peaq-storage = { workspace = true, default-features = false }
+runtime-common = { workspace = true, default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }

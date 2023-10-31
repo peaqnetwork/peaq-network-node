@@ -21,23 +21,19 @@ pallet-authorship = { workspace = true, default-features = false }
 pallet-session = { workspace = true, default-features = false }
 sp-staking = { workspace = true, default-features = false }
 
-
 [dependencies]
+frame-benchmarking = { workspace = true, default-features = false, optional = true }
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
 hex-literal = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, default-features = false }
+parachain-staking = { workspace = true, default-features = false }
 parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
 serde = { workspace = true, default-features = false, optional = true }
-
-frame-support = { workspace = true, default-features = false }
-frame-system = { workspace = true, default-features = false }
-pallet-balances = { workspace = true, default-features = false }
 sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
-parachain-staking = { path = "../parachain-staking", default-features = false }
-
-# benchmarking
-frame-benchmarking = { workspace = true, default-features = false, optional = true }
 
 [features]
 default = ["std"]
@@ -53,6 +49,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-balances/std",
 	"pallet-session/std",
+	"parachain-staking/std",
 	"parity-scale-codec/std",
 	"peaq-frame-ext/std",
 	"scale-info/std",

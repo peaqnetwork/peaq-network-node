@@ -74,7 +74,7 @@ pub mod weights;
 
 pub use crate::{
 	pallet::*,
-	types::{AverageSelector, BeneficiaryPayout, RewardDistributionConfig},
+	types::{AverageSelector, BeneficiaryPayout, BeneficiarySelector, RewardDistributionConfig},
 };
 
 #[macro_export]
