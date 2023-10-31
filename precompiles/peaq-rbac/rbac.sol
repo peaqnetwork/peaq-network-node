@@ -11,7 +11,7 @@ RBAC constant RBAC_CONTRACT = RBAC(PRECOMPILE_ADDR);
 interface RBAC {
     // ======================= Return Structs ======================= //
 
-    struct EntityAttribute {
+    struct Entity {
         bytes32 owner;
         bytes name;
         bool enabled;
@@ -27,12 +27,12 @@ interface RBAC {
     function fetch_role(
         bytes32 owner,
         bytes32 role
-    ) external view returns (EntityAttribute memory);
+    ) external view returns (Entity memory);
 
     function fetch_roles(
         bytes32 owner,
         bytes32 role
-    ) external view returns (EntityAttribute[] memory);
+    ) external view returns (Entity[] memory);
 
     function add_role(
         bytes32 role_id,
@@ -64,11 +64,11 @@ interface RBAC {
     function fetch_permission(
         bytes32 owner,
         bytes32 permission_id
-    ) external returns (EntityAttribute memory);
+    ) external returns (Entity memory);
 
     function fetch_permissions(
         bytes32 owner
-    ) external returns (EntityAttribute[] memory);
+    ) external returns (Entity[] memory);
 
     function add_permission(
         bytes32 permission_id,

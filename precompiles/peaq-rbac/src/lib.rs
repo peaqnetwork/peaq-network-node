@@ -9,50 +9,24 @@ use frame_support::{
 	traits::ConstU32,
 };
 use peaq_pallet_rbac::rbac::{Rbac, Role};
-use precompile_utils::{data::String, prelude::*};
+use precompile_utils::prelude::*;
 use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
 use peaq_pallet_rbac::rbac::Permission;
 
+pub mod structs;
+pub use structs::*;
+
+pub mod selectors;
+pub use selectors::*;
+
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type EntityIdOf<Runtime> = <Runtime as peaq_pallet_rbac::Config>::EntityId;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
 
-#[derive(EvmData)]
-pub struct EntityAttribute {
-	pub id: H256,
-	pub name: UnboundedBytes,
-	pub enabled: bool,
-}
-
-#[derive(EvmData)]
-pub struct Role2User {
-	pub role: H256,
-	pub user: H256,
-}
-
-// Selectors
-pub(crate) const SELECTOR_LOG_ADD_ROLE: [u8; 32] = keccak256!("RoleAdded(address,bytes32,bytes)");
-pub(crate) const SELECTOR_LOG_UPDATE_ROLE: [u8; 32] =
-	keccak256!("RoleUpdated(address,bytes32,bytes)");
-pub(crate) const SELECTOR_LOG_DISABLE_ROLE: [u8; 32] = keccak256!("RoleRemoved(address,bytes32)");
-pub(crate) const SELECTOR_LOG_FETCH_USER_ROLES: [u8; 32] = keccak256!("FetchedUserRoles(address)");
-pub(crate) const SELECTOR_LOG_ASSIGN_ROLE_TO_USER: [u8; 32] =
-	keccak256!("RoleAssignedToUser(address,bytes32,bytes32)");
-pub(crate) const SELECTOR_LOG_UNASSIGNED_ROLE_TO_USER: [u8; 32] =
-	keccak256!("RoleUnassignedToUser(address,bytes32,bytes32)");
-pub(crate) const SELECTOR_LOG_FETCH_PERMISSION: [u8; 32] = keccak256!("PermissionFetched(address)");
-pub(crate) const SELECTOR_LOG_FETCH_PERMISSIONS: [u8; 32] =
-	keccak256!("AllPermissionsFetched(address)");
-pub(crate) const SELECTOR_LOG_ADD_PERMISSION: [u8; 32] =
-	keccak256!("PermissionAdded(address,bytes32,bytes)");
-pub(crate) const SELECTOR_LOG_UPDATE_PERMISSION: [u8; 32] =
-	keccak256!("PermissionUpdated(address,bytes32,bytes)");
-pub(crate) const SELECTOR_LOG_DISABLE_PERMISSION: [u8; 32] =
-	keccak256!("PermissionDisabled(address,bytes32)");
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
 // represent both.
@@ -75,24 +49,20 @@ where
 		handle: &mut impl PrecompileHandle,
 		owner: H256,
 		entity: H256,
-	) -> EvmResult<EntityAttribute> {
+	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
-			Ok(v) =>
-				Ok(EntityAttribute { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 		}
 	}
 
 	#[precompile::public("fetch_roles(bytes32)")]
 	#[precompile::view]
-	fn fetch_roles(
-		handle: &mut impl PrecompileHandle,
-		owner: H256,
-	) -> EvmResult<Vec<EntityAttribute>> {
+	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: H256) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 
@@ -100,12 +70,12 @@ where
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the items")).into()),
 			Ok(v) => Ok(v
 				.iter()
-				.map(|entity| EntityAttribute {
+				.map(|entity| Entity {
 					id: entity.id.into(),
 					name: entity.name.clone().into(),
 					enabled: entity.enabled,
 				})
-				.collect::<Vec<EntityAttribute>>()),
+				.collect::<Vec<Entity>>()),
 		};
 		result
 	}
@@ -310,7 +280,7 @@ where
 		handle: &mut impl PrecompileHandle,
 		owner: H256,
 		permission_id: H256,
-	) -> EvmResult<EntityAttribute> {
+	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 		let permission_id: EntityIdOf<Runtime> =
@@ -319,8 +289,7 @@ where
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
 				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
-				Ok(v) =>
-					Ok(EntityAttribute { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+				Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 			};
 
 		let event = log1(
@@ -340,7 +309,7 @@ where
 	fn fetch_permissions(
 		handle: &mut impl PrecompileHandle,
 		owner: H256,
-	) -> EvmResult<Vec<EntityAttribute>> {
+	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 
@@ -348,12 +317,12 @@ where
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 			Ok(v) => Ok(v
 				.iter()
-				.map(|entity| EntityAttribute {
+				.map(|entity| Entity {
 					id: entity.id.into(),
 					name: entity.name.clone().into(),
 					enabled: entity.enabled,
 				})
-				.collect::<Vec<EntityAttribute>>()),
+				.collect::<Vec<Entity>>()),
 		};
 
 		let event = log1(
