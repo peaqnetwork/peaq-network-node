@@ -1,6 +1,6 @@
 [package]
 name = "peaq-primitives-xcm"
-version = "3.0.0-polkadot-v0.9.38"
+version = "3.0.0-polkadot-v0.9.43"
 authors.workspace = true
 documentation.workspace = true
 edition.workspace = true

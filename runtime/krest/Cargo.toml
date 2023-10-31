@@ -1,6 +1,6 @@
 [package]
 name = "peaq-krest-runtime"
-version = "3.0.0-polkadot-v0.9.38"
+version = "3.0.0-polkadot-v0.9.43"
 description = "A node of the peaq network."
 license = "Unlicense"
 authors.workspace = true
