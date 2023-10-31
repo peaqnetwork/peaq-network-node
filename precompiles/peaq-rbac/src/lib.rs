@@ -14,7 +14,7 @@ use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
-use peaq_pallet_rbac::rbac::Permission;
+use peaq_pallet_rbac::rbac::{Group, Permission};
 
 pub mod structs;
 pub use structs::*;
@@ -435,5 +435,137 @@ where
 		event.record(handle)?;
 
 		Ok(true)
+	}
+
+	#[precompile::public("fetch_role_permissions(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_role_permissions(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		role_id: H256,
+	) -> EvmResult<Vec<Permission2Role>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		let result =
+			match peaq_pallet_rbac::Pallet::<Runtime>::get_role_permissions(&owner, role_id) {
+				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Ok(v) => Ok(v
+					.iter()
+					.map(|entity| Permission2Role {
+						permission: entity.permission.into(),
+						role: entity.role.into(),
+					})
+					.collect::<Vec<Permission2Role>>()),
+			};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_ROLE_PERMISSIONS,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
+	}
+
+	#[precompile::public("assign_permission_to_role(bytes32,bytes32)")]
+	fn assign_permission_to_role(
+		handle: &mut impl PrecompileHandle,
+		permission_id: H256,
+		role_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let permission_id: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::assign_permission_to_role { permission_id, role_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ASSIGN_PERMISSION_TO_ROLE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(permission_id.into())
+				.write::<H256>(role_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("unassign_permission_to_role(bytes32,bytes32)")]
+	fn unassign_permission_to_role(
+		handle: &mut impl PrecompileHandle,
+		permission_id: H256,
+		role_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let permission_id: EntityIdOf<Runtime> =
+			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::unassign_permission_to_role {
+				permission_id,
+				role_id,
+			},
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UNASSIGN_PERMISSION_TO_ROLE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(permission_id.into())
+				.write::<H256>(role_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("fetch_group(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_group(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		group_id: H256,
+	) -> EvmResult<Entity> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled.into() }),
+		};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_FETCH_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
 	}
 }
