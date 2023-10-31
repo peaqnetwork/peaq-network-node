@@ -167,6 +167,7 @@ pub mod pallet {
 		NativeAssetRelated,
 	}
 
+	#[allow(clippy::large_enum_variant)]
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -230,7 +231,7 @@ pub mod pallet {
 
 			// Ensure such an assetId does not exist
 			ensure!(
-				!AssetIdToLocation::<T>::contains_key(&asset_id),
+				!AssetIdToLocation::<T>::contains_key(asset_id),
 				Error::<T>::AssetAlreadyRegistered
 			);
 
@@ -243,7 +244,7 @@ pub mod pallet {
 				Error::<T>::NativeAssetRelated
 			);
 
-			AssetIdToLocation::<T>::insert(&asset_id, asset_location.clone());
+			AssetIdToLocation::<T>::insert(asset_id, asset_location.clone());
 			AssetLocationToId::<T>::insert(&asset_location, asset_id);
 
 			Self::deposit_event(Event::AssetRegistered { asset_location, asset_id });
@@ -304,10 +305,10 @@ pub mod pallet {
 			);
 
 			let previous_asset_location =
-				AssetIdToLocation::<T>::get(&asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;
+				AssetIdToLocation::<T>::get(asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;
 
 			// Insert new asset type info
-			AssetIdToLocation::<T>::insert(&asset_id, new_asset_location.clone());
+			AssetIdToLocation::<T>::insert(asset_id, new_asset_location.clone());
 			AssetLocationToId::<T>::insert(&new_asset_location, asset_id);
 
 			// Remove previous asset type info
@@ -362,9 +363,9 @@ pub mod pallet {
 			ensure!(asset_id != T::NativeAssetId::get(), Error::<T>::NativeAssetRelated);
 
 			let asset_location =
-				AssetIdToLocation::<T>::get(&asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;
+				AssetIdToLocation::<T>::get(asset_id).ok_or(Error::<T>::AssetDoesNotExist)?;
 
-			AssetIdToLocation::<T>::remove(&asset_id);
+			AssetIdToLocation::<T>::remove(asset_id);
 			AssetLocationToId::<T>::remove(&asset_location);
 			AssetLocationUnitsPerSecond::<T>::remove(&asset_location);
 
@@ -382,7 +383,7 @@ where
 	Pallet<T>: XcAssetLocation<T::AssetId>,
 {
 	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<T::AssetId, ()> {
-		let location = location.borrow().clone();
+		let location = *location.borrow();
 		if let Some(asset_id) = Pallet::<T>::get_asset_id(location) {
 			Ok(asset_id)
 		} else {
@@ -391,7 +392,7 @@ where
 	}
 
 	fn reverse_ref(id: impl Borrow<T::AssetId>) -> Result<MultiLocation, ()> {
-		let id = id.borrow().clone();
+		let id = *id.borrow();
 		if let Some(multilocation) = Pallet::<T>::get_xc_asset_location(id) {
 			Ok(multilocation)
 		} else {
