@@ -838,6 +838,7 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 	fn is_precompile(&self, address: H160, remaining_gas: u64) -> IsPrecompileResult {
 		let is_precompile = self.inner.is_precompile(address);
 		if remaining_gas > 0 {
+			// TODO: Implement this properly!
 			IsPrecompileResult::Answer { is_precompile, extra_cost: 0 }
 		} else {
 			IsPrecompileResult::OutOfGas

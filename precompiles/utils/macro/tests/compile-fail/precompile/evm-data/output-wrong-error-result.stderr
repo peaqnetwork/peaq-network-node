@@ -6,8 +6,8 @@ error[E0277]: `?` couldn't convert the error to `PrecompileFailure`
    |
    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
    = help: the following other types implement trait `From<T>`:
+             <PrecompileFailure as From<TryDispatchError>>
              <PrecompileFailure as From<ExitError>>
              <PrecompileFailure as From<RevertReason>>
-             <PrecompileFailure as From<TryDispatchError>>
              <PrecompileFailure as From<precompile_utils::revert::Revert>>
    = note: required for `Result<PrecompileOutput, PrecompileFailure>` to implement `FromResidual<Result<Infallible, String>>`

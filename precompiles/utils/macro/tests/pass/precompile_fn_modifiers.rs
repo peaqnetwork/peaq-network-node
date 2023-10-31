@@ -13,7 +13,7 @@
 
 use {
 	precompile_utils::{EvmResult, prelude::*, testing::PrecompileTesterExt},
-	sp_core::H160
+	sp_core::H160,
 };
 
 pub struct PrecompileSet;
