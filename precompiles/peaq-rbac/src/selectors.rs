@@ -36,4 +36,10 @@ pub const SELECTOR_LOG_ASSIGN_PERMISSION_TO_ROLE: [u8; 32] =
 pub const SELECTOR_LOG_UNASSIGN_PERMISSION_TO_ROLE: [u8; 32] =
 	keccak256!("PermissionUnassignedToRole(address,bytes32,bytes32)");
 
-pub const SELECTOR_FETCH_GROUP: [u8; 32] = keccak256!("GroupFetched(address)");
+pub const SELECTOR_LOG_FETCH_GROUP: [u8; 32] = keccak256!("GroupFetched(address)");
+
+pub const SELECTOR_LOG_ADD_GROUP: [u8; 32] = keccak256!("GroupAdded(address,bytes32,bytes)");
+
+pub const SELECTOR_LOG_UPDATE_GROUP: [u8; 32] = keccak256!("GroupUpdated(address,bytes32,bytes)");
+
+pub const SELECTOR_LOG_DISABLE_GROUP: [u8; 32] = keccak256!("GroupDisabled(address,bytes32)");

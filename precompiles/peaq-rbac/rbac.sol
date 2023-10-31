@@ -107,6 +107,18 @@ interface RBAC {
         bytes32 group_id
     ) external view returns (Entity memory);
 
+    function add_group(
+        bytes32 group_id,
+        bytes memory name
+    ) external returns (bool);
+
+    function update_group(
+        bytes32 group_id,
+        bytes memory name
+    ) external returns (bool);
+
+    function disable_group(bytes32 group_id) external returns (bool);
+
     // ======================= Events ======================= //
 
     event RoleAdded(address sender, bytes32 role_id, bytes name);
@@ -150,4 +162,10 @@ interface RBAC {
     );
 
     event GroupFetched(address sender);
+
+    event GroupAdded(address sender, bytes32 group_id, bytes name);
+
+    event GroupUpdated(address sender, bytes32 group_id, bytes name);
+
+    event GroupDisabled(address sender, bytes32 group_id);
 }

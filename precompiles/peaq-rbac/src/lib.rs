@@ -559,7 +559,7 @@ where
 
 		let event = log1(
 			handle.context().address,
-			SELECTOR_FETCH_GROUP,
+			SELECTOR_LOG_FETCH_GROUP,
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
 				.build(),
@@ -567,5 +567,93 @@ where
 		event.record(handle)?;
 
 		result
+	}
+
+	#[precompile::public("add_group(bytes32,bytes)")]
+	fn add_group(
+		handle: &mut impl PrecompileHandle,
+		group_id: H256,
+		name: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::add_group { group_id, name: name.clone().into() },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ADD_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(group_id.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("update_group(bytes32,bytes)")]
+	fn update_group(
+		handle: &mut impl PrecompileHandle,
+		group_id: H256,
+		name: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::update_group { group_id, name: name.clone().into() },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UPDATE_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(group_id.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("disable_group(bytes32)")]
+	fn disable_group(handle: &mut impl PrecompileHandle, group_id: H256) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::disable_group { group_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UPDATE_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(group_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
 	}
 }
