@@ -1,4 +1,4 @@
-use precompile_utils::{prelude::UnboundedBytes, EvmData};
+use precompile_utils::{prelude::UnboundedBytes, EvmData, data::String};
 use sp_core::H256;
 
 #[derive(EvmData)]
