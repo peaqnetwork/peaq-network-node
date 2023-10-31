@@ -51,7 +51,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 				id: xcm::latest::AssetId::Concrete(asset_location),
 				fun: Fungibility::Fungible(_),
 			} => {
-				if let Some(units_per_second) = T::get_units_per_second(asset_location.clone()) {
+				if let Some(units_per_second) = T::get_units_per_second(asset_location) {
 					let amount = units_per_second.saturating_mul(weight.ref_time() as u128) // TODO: change this to u64?
                         / (WEIGHT_REF_TIME_PER_SECOND as u128);
 					if amount == 0 {
@@ -59,7 +59,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 					}
 
 					let unused = payment
-						.checked_sub((asset_location.clone(), amount).into())
+						.checked_sub((asset_location, amount).into())
 						.map_err(|_| XcmError::TooExpensive)?;
 
 					self.weight = self.weight.saturating_add(weight);
@@ -69,7 +69,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 					// keep total track of consumed asset for the FIRST consumed asset. Others will
 					// just be ignored when refund is concerned.
 					if let Some((old_asset_location, _)) =
-						self.asset_location_and_units_per_second.clone()
+						self.asset_location_and_units_per_second
 					{
 						if old_asset_location == asset_location {
 							self.consumed = self.consumed.saturating_add(amount);
@@ -93,7 +93,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		log::trace!(target: "xcm::weight", "FixedRateOfForeignAsset::refund_weight weight: {:?}", weight);
 
 		if let Some((asset_location, units_per_second)) =
-			self.asset_location_and_units_per_second.clone()
+			self.asset_location_and_units_per_second
 		{
 			let weight = weight.min(self.weight);
 			let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
@@ -115,7 +115,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 
 impl<T: ExecutionPaymentRate, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T, R> {
 	fn drop(&mut self) {
-		if let Some((asset_location, _)) = self.asset_location_and_units_per_second.clone() {
+		if let Some((asset_location, _)) = self.asset_location_and_units_per_second {
 			if self.consumed > 0 {
 				R::take_revenue((asset_location, self.consumed).into());
 			}

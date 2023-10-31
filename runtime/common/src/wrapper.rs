@@ -72,9 +72,9 @@ where
 		} else {
 			let out = MultiCurrencies::can_withdraw(currency_id, who, amount);
 			if WithdrawConsequence::Success == out {
-				return Ok(())
+				Ok(())
 			} else {
-				return Err(DispatchError::Other("Insufficient balance"))
+				Err(DispatchError::Other("Insufficient balance"))
 			}
 		}
 	}
@@ -94,9 +94,9 @@ where
 			// Keep alive setup as true
 			let out = MultiCurrencies::transfer(currency_id, from, to, amount, true);
 			if out.is_ok() {
-				return Ok(())
+				Ok(())
 			} else {
-				return Err(DispatchError::Other("Transfer failed"))
+				Err(DispatchError::Other("Transfer failed"))
 			}
 		}
 	}
@@ -114,9 +114,9 @@ where
 		} else {
 			let out = MultiCurrencies::mint_into(currency_id, who, amount);
 			if out.is_ok() {
-				return Ok(())
+				Ok(())
 			} else {
-				return Err(DispatchError::Other("Deposit failed"))
+				Err(DispatchError::Other("Deposit failed"))
 			}
 		}
 	}
@@ -134,9 +134,9 @@ where
 		} else {
 			let out = MultiCurrencies::burn_from(currency_id, who, amount);
 			if out.is_ok() {
-				return Ok(())
+				Ok(())
 			} else {
-				return Err(DispatchError::Other("Withdraw failed"))
+				Err(DispatchError::Other("Withdraw failed"))
 			}
 		}
 	}
