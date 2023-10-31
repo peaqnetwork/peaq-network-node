@@ -37,8 +37,8 @@ pub enum CurrencyId {
 	/// 0 is balance
 	/// 0 ~ 1FFF_FFFF is the custumoized value
 	/// The first 3 bits are the identifier
-	///	0 is the token
-	///	1 is the LPToken
+	/// 0 is the token
+	/// 1 is the LPToken
 	Token(u32),
 	/// Liquidity Pairs (Pairs of Tokens) within the PEAQ-Parachain.
 	LPToken(u32, u32),
