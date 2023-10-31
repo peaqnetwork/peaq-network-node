@@ -68,8 +68,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 					// need to be able to handle that. Current primitive implementation will just
 					// keep total track of consumed asset for the FIRST consumed asset. Others will
 					// just be ignored when refund is concerned.
-					if let Some((old_asset_location, _)) =
-						self.asset_location_and_units_per_second
+					if let Some((old_asset_location, _)) = self.asset_location_and_units_per_second
 					{
 						if old_asset_location == asset_location {
 							self.consumed = self.consumed.saturating_add(amount);
@@ -92,9 +91,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		log::trace!(target: "xcm::weight", "FixedRateOfForeignAsset::refund_weight weight: {:?}", weight);
 
-		if let Some((asset_location, units_per_second)) =
-			self.asset_location_and_units_per_second
-		{
+		if let Some((asset_location, units_per_second)) = self.asset_location_and_units_per_second {
 			let weight = weight.min(self.weight);
 			let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
 				(WEIGHT_REF_TIME_PER_SECOND as u128);
