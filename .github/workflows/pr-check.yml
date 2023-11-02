@@ -24,7 +24,7 @@ jobs:
           TLCHN=nightly-2023-10-05
           curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHN
           rustup target add wasm32-unknown-unknown --toolchain $TLCHN
-          cargo install cargo-expand --locked --version 1.0.34
+          cargo install cargo-expand --locked --version 1.0.71
 
       - name: Checkout Sources (actions/checkout)
         uses: actions/checkout@v3
