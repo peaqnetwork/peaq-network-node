@@ -200,18 +200,14 @@ pub enum DiscriminantResult<T> {
 	OutOfGas,
 }
 
-impl<T> Into<IsPrecompileResult> for DiscriminantResult<T> {
-	fn into(self) -> IsPrecompileResult {
-		match self {
-			Self::Some(_, extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: true,
-				extra_cost,
-			},
-			Self::None(extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost,
-			},
-			Self::OutOfGas => IsPrecompileResult::OutOfGas,
+impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
+	fn from(val: DiscriminantResult<T>) -> Self {
+		match val {
+			DiscriminantResult::<T>::Some(_, extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
+			DiscriminantResult::<T>::None(extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
+			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
 	}
 }
