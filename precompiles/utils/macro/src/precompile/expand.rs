@@ -361,7 +361,7 @@ impl Precompile {
 		format_ident!("_parse_{}", ident)
 	}
 
-	/// Expands the impl of the Precomile(Set) trait.
+	/// Expands the impl of the PrecompileSet trait.
 	pub fn expand_precompile_impl(&self) -> impl ToTokens {
 		let impl_type = &self.impl_type;
 		let enum_ident = &self.enum_ident;
@@ -382,29 +382,26 @@ impl Precompile {
 						&self,
 						handle: &mut impl PrecompileHandle
 					) -> Option<::precompile_utils::EvmResult<::fp_evm::PrecompileOutput>> {
-						// use ::precompile_utils::precompile_set::DiscriminantResult;
+						use ::precompile_utils::precompile_set::DiscriminantResult;
+						use ::fp_evm::ExitError;
 
-						// let discriminant = <#impl_type>::#discriminant_fn(
-						// 	handle.code_address(),
-						// 	handle.remaining_gas()
-						// );
+						let discriminant = <#impl_type>::#discriminant_fn(
+							handle.code_address()
+							// handle.remaining_gas()
+						);
 
-						// if let DiscriminantResult::Some(_, cost) | DiscriminantResult::None(cost) = discriminant
-						// {
-						// 	let result = handle.record_cost(cost);
-						// 	if let Err(e) = result {
-						// 		return Some(Err(e.into()));
-						// 	}
-						// }
+						if let DiscriminantResult::Some(_, cost) | DiscriminantResult::None(cost) = discriminant {
+							let result = handle.record_cost(cost);
+							if let Err(e) = result {
+								return Some(Err(e.into()));
+							}
+						}
 
-						// let discriminant = match discriminant {
-						// 	DiscriminantResult::Some(d, _) => d,
-						// 	DiscriminantResult::None(cost) => return None,
-						// 	DiscriminantResult::OutOfGas => return Some(Err(ExitError::OutOfGas.into()))
-						// };
-
-						// TODO: Workarround!!
-						let discriminant = (); //Some(Err(::fp_evm::ExitError::OutOfGas.into()));
+						let discriminant = match discriminant {
+							DiscriminantResult::Some(d, _) => d,
+							DiscriminantResult::None(cost) => return None,
+							DiscriminantResult::OutOfGas => return Some(Err(ExitError::OutOfGas.into()))
+						};
 
 						#opt_pre_check
 

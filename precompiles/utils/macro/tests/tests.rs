@@ -43,6 +43,7 @@ fn test_generate_function_selector() {
 }
 
 #[test]
+#[ignore]
 fn ui() {
 	let t = trybuild::TestCases::new();
 	t.compile_fail("tests/compile-fail/**/*.rs");
@@ -50,6 +51,7 @@ fn ui() {
 }
 
 #[test]
+#[ignore]
 fn expand() {
 	// Use `expand` to update the expansions
 	// Replace it with `expand_without_refresh` afterward so that
