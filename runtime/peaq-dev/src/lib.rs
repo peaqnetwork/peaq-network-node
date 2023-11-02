@@ -14,12 +14,12 @@ use frame_system::{
 };
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
+use pallet_block_reward::BeneficiarySelector;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
-use pallet_block_reward::BeneficiarySelector;
 use parachain_staking::reward_rate_config::RewardRateInfo;
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
