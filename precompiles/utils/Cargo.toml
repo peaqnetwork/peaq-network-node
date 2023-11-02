@@ -10,34 +10,26 @@ repository.workspace = true
 affix = { workspace = true }
 derive_more = { workspace = true, optional = true, features = ["display"] }
 environmental = { workspace = true }
+evm = { workspace = true, features = [ "with-codec" ] }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+fp-evm = { workspace = true }
 hex = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 impl-trait-for-tuples = { workspace = true }
 log = { workspace = true }
 num_enum = { workspace = true }
+pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
+parity-scale-codec = { workspace = true }
 paste = { workspace = true }
+precompile-utils-macro = { workspace = true }
 scale-info = { workspace = true, optional = true, features = [ "derive" ] }
 serde = { workspace = true, optional = true }
 sha3 = { workspace = true }
 similar-asserts = { workspace = true, optional = true }
-
-# Moonbeam
-precompile-utils-macro = { path = "macro" }
-
-# Substrate
-frame-support = { workspace = true }
-frame-system = { workspace = true }
-parity-scale-codec = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-std = { workspace = true }
-
-# Frontier
-evm = { workspace = true, features = [ "with-codec" ] }
-fp-evm = { workspace = true }
-pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
-
-# Polkadot / XCM
 xcm = { workspace = true }
 
 [dev-dependencies]

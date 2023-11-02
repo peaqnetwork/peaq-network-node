@@ -10,24 +10,19 @@ readme.workspace = true
 repository.workspace = true
 
 [dependencies]
+ethereum-types = { workspace = true, default-features = true }
+fc-rpc = { workspace = true, default-features = true }
+frame-system = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
 rlp = { workspace = true, default-features = true }
-serde = { workspace = true, default-features = true, features = [ "derive" ] }
-sha3 = { workspace = true, default-features = true }
-
-peaq-rpc-core-txpool = { path = "../../rpc-core/txpool" }
-peaq-rpc-primitives-txpool = { path = "../../../primitives/rpc/txpool" }
-
-# Substrate
-frame-system = { workspace = true, default-features = true }
-sc-transaction-pool = { workspace = true, default-features = true }
-sc-transaction-pool-api = { workspace = true, default-features = true }
+peaq-rpc-core-txpool = { workspace = true }
+peaq-rpc-primitives-txpool = { workspace = true }
 sp-api = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-io = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 sp-std = { workspace = true, default-features = true }
-
-# Frontier
-ethereum-types = { workspace = true, default-features = true }
-fc-rpc = { workspace = true, default-features = true }
+sc-transaction-pool = { workspace = true, default-features = true }
+sc-transaction-pool-api = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true, features = [ "derive" ] }
+sha3 = { workspace = true, default-features = true }

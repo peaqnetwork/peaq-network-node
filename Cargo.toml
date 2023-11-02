@@ -241,11 +241,16 @@ pallet-block-reward = { path = "pallets/block-reward", default-features = false 
 pallet-evm-precompile-peaq-did = { path = "precompiles/peaq-did", default-features = false }
 pallet-evm-precompile-peaq-storage = { path = "precompiles/peaq-storage", default-features = false }
 peaq-agung-runtime = { path = "runtime/agung", default-features = false }
+peaq-client-evm-tracing = { path = "client/evm-tracing", default-features = false }
 peaq-dev-runtime = { path = "runtime/peaq-dev", default-features = false }
 peaq-evm-tracer = { path = "runtime/evm_tracer", default-features = false }
 peaq-krest-runtime = { path = "runtime/krest", default-features = false }
 peaq-primitives-ext = { path = "primitives/ext", default-features = false }
 peaq-primitives-xcm = { path = "primitives/xcm", default-features = false }
+peaq-rpc-core-debug = { path = "client/rpc-core/debug", default-features = false }
+peaq-rpc-core-types = { path = "client/rpc-core/types", default-features = false }
+peaq-rpc-core-trace = { path = "client/rpc-core/trace", default-features = false }
+peaq-rpc-core-txpool = { path = "client/rpc-core/txpool", default-features = false }
 peaq-rpc-debug = { path = "client/rpc/debug", default-features = false }
 peaq-rpc-trace = { path = "client/rpc/trace", default-features = false }
 peaq-rpc-txpool = { path = "client/rpc/txpool", default-features = false }
@@ -253,6 +258,7 @@ peaq-rpc-primitives-debug = { path = "primitives/rpc/debug", default-features = 
 peaq-rpc-primitives-txpool = { path = "primitives/rpc/txpool", default-features = false }
 peaq-runtime = { path = "runtime/peaq", default-features = false }
 precompile-utils = { path = "precompiles/utils", default-features = false }
+precompile-utils-macro = { path = "precompiles/utils/macro", default-features = false }
 runtime-common = { path = "runtime/common", default-features = false }
 staking-coefficient-reward = { path = "pallets/staking-coefficient-reward", default-features = false }
 staking-fixed-percentage-reward = { path = "pallets/staking-fixed-percentage-reward", default-features = false }

@@ -11,12 +11,10 @@ repository.workspace = true
 
 [dependencies]
 ethereum-types = { workspace = true, default-features = true }
+peaq-client-evm-tracing = { workspace = true }
+peaq-rpc-core-types = { workspace = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, default-features = true }
+sp-core = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true, features = ["compat"] }
 jsonrpsee = { workspace = true, default-features = false, features = ["macros", "server"] }
-
-peaq-client-evm-tracing = { path = "../../evm-tracing" }
-peaq-rpc-core-types = { path = "../types" }
-
-sp-core = { workspace = true, default-features = true }
