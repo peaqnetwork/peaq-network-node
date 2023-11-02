@@ -193,6 +193,25 @@ impl PrecompileChecks for Tuple {
 	}
 }
 
+#[derive(Debug, Clone)]
+pub enum DiscriminantResult<T> {
+	Some(T, u64),
+	None(u64),
+	OutOfGas,
+}
+
+impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
+	fn from(val: DiscriminantResult<T>) -> Self {
+		match val {
+			DiscriminantResult::<T>::Some(_, extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
+			DiscriminantResult::<T>::None(extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
+			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
+		}
+	}
+}
+
 /// Precompile can be called using DELEGATECALL/CALLCODE.
 pub struct AcceptDelegateCall;
 
@@ -838,6 +857,7 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 	fn is_precompile(&self, address: H160, remaining_gas: u64) -> IsPrecompileResult {
 		let is_precompile = self.inner.is_precompile(address);
 		if remaining_gas > 0 {
+			// TODO: Implement this properly!
 			IsPrecompileResult::Answer { is_precompile, extra_cost: 0 }
 		} else {
 			IsPrecompileResult::OutOfGas

@@ -1079,19 +1079,32 @@ where
         &self,
         handle: &mut impl PrecompileHandle,
     ) -> Option<::precompile_utils::EvmResult<::fp_evm::PrecompileOutput>> {
-        let discriminant = match <PrecompileSet<
-            Runtime,
-        >>::discriminant(handle.code_address()) {
-            Some(d) => d,
-            None => return None,
+        use ::precompile_utils::precompile_set::DiscriminantResult;
+        use ::fp_evm::ExitError;
+        let discriminant = <PrecompileSet<Runtime>>::discriminant(handle.code_address());
+        if let DiscriminantResult::Some(_, cost) | DiscriminantResult::None(cost)
+            = discriminant {
+            let result = handle.record_cost(cost);
+            if let Err(e) = result {
+                return Some(Err(e.into()));
+            }
+        }
+        let discriminant = match discriminant {
+            DiscriminantResult::Some(d, _) => d,
+            DiscriminantResult::None(cost) => return None,
+            DiscriminantResult::OutOfGas => return Some(Err(ExitError::OutOfGas.into())),
         };
         Some(
             <PrecompileSetCall<Runtime>>::parse_call_data(handle)
                 .and_then(|call| call.execute(discriminant, handle)),
         )
     }
-    fn is_precompile(&self, address: H160) -> bool {
-        <PrecompileSet<Runtime>>::discriminant(address).is_some()
+    fn is_precompile(
+        &self,
+        address: H160,
+        remaining_gas: u64,
+    ) -> ::fp_evm::IsPrecompileResult {
+        <PrecompileSet<Runtime>>::discriminant(address, remaining_gas).is_some()
     }
 }
 #[allow(non_snake_case)]

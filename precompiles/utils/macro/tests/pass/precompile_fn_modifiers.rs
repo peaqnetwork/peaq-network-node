@@ -13,7 +13,7 @@
 
 use {
 	precompile_utils::{EvmResult, prelude::*, testing::PrecompileTesterExt},
-	sp_core::H160
+	sp_core::H160,
 };
 
 pub struct PrecompileSet;
@@ -71,14 +71,14 @@ fn main() {
 		[0u8;20],
 		PrecompileSetCall::view {}
 	).with_static_call(true)
-	.execute_returns_encoded(());
+	.execute_returns(());
 
 	PrecompileSet.prepare_test(
 		[0u8;20],
 		[0u8;20],
 		PrecompileSetCall::payable {}
 	).with_value(1)
-	.execute_returns_encoded(());
+	.execute_returns(());
 
 	PrecompileSet.prepare_test(
 		[0u8;20],

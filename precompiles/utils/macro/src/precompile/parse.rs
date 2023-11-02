@@ -417,7 +417,7 @@ impl Precompile {
 			return Err(syn::Error::new(span, msg))
 		}
 
-		let msg = "The discriminant function must return an Option<_> (no type alias)";
+		let msg = "The discriminant function must return an DiscriminantResult<_> (no type alias)";
 
 		let return_type = match &method.sig.output {
 			syn::ReturnType::Type(_, t) => t.as_ref(),

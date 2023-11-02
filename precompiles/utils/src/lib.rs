@@ -79,6 +79,7 @@ pub mod prelude {
 		handle::{with_precompile_handle, PrecompileHandleExt},
 		logs::{log0, log1, log2, log3, log4, LogExt},
 		modifier::{check_function_modifier, FunctionModifier},
+		precompile_set::DiscriminantResult,
 		revert,
 		revert::{BacktraceExt, InjectBacktrace, MayRevert, Revert, RevertExt, RevertReason},
 		substrate::{RuntimeHelper, TryDispatchError},

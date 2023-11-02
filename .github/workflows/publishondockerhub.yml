@@ -7,13 +7,14 @@ on:
       - 'peaq-dev-v*' # For the peaq-dev's env in the parchain-launch usage
       - 'krest-v*' # For the krest env in the parchain-launch usage
 jobs:
+       
   push_to_registry:
-    name: Push Docker image to Docker Hub
+  
+    name: Build and Push Peaq Docker Image to Docker Hub
     runs-on: ubuntu-20.04
     steps:
       - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
         uses: insightsengineering/disk-space-reclaimer@v1.1.0
-
       - name: Check out the repo
         uses: actions/checkout@v3
 
@@ -41,3 +42,38 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    needs: push_to_registry
+    steps:
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ secrets.DOCKER_REG_PARACHAIN}}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=ref,event=tag
+      - name: Extract Tag
+        id: image-version
+        run: |
+          input_string=${{ steps.meta.outputs.tags}}
+          tag=$(echo "$input_string" | cut -d ':' -f 2)
+          echo "Extracted Tag: $tag"
+          echo "::set-output name=tag::$tag"
+        
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AUTOTEST_HOST }}
+          username: ${{ secrets.AUTOTEST_USERNAME }}
+          key: ${{ secrets.SSH_KEY_AUTOTEST }}
+          port: ${{ secrets.AUTOTEST_SSH_PORT }}
+          script: |
+            cd /home/jay/parachain-launch/yoyo/
+            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose pull
+            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose down -v
+            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
