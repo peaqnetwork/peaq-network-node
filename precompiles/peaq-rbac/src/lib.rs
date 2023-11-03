@@ -54,10 +54,22 @@ where
 		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
-		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
+		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id)
+		{
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
-		}
+		};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_ROLE,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
 	}
 
 	#[precompile::public("fetch_roles(bytes32)")]
@@ -77,6 +89,16 @@ where
 				})
 				.collect::<Vec<Entity>>()),
 		};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_ROLES,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
 		result
 	}
 
@@ -655,5 +677,267 @@ where
 		event.record(handle)?;
 
 		Ok(true)
+	}
+
+	#[precompile::public("assign_role_to_group(bytes32, bytes32)")]
+	fn assign_role_to_group(
+		handle: &mut impl PrecompileHandle,
+		role_id: H256,
+		group_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_group { role_id, group_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ASSIGN_ROLE_TO_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id.into())
+				.write::<H256>(group_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("unassign_role_to_group(bytes32, bytes32)")]
+	fn unassign_role_to_group(
+		handle: &mut impl PrecompileHandle,
+		role_id: H256,
+		group_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_group { role_id, group_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UNASSIGN_ROLE_TO_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(role_id.into())
+				.write::<H256>(group_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("fetch_group_roles(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_group_roles(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		group_id: H256,
+	) -> EvmResult<Vec<Role2Group>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_group_roles(&owner, group_id) {
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Ok(v) => Ok(v
+				.iter()
+				.map(|val| Role2Group { role: val.role.into(), group: val.group.into() })
+				.collect::<Vec<Role2Group>>()),
+		};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_GROUP_ROLES,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
+	}
+
+	#[precompile::public("assign_user_to_group(bytes32,bytes32)")]
+	fn assign_user_to_group(
+		handle: &mut impl PrecompileHandle,
+		user_id: H256,
+		group_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::assign_user_to_group { user_id, group_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ASSIGN_USER_TO_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(user_id.into())
+				.write::<H256>(group_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("unassign_user_to_group(bytes32,bytes32)")]
+	fn unassign_user_to_group(
+		handle: &mut impl PrecompileHandle,
+		user_id: H256,
+		group_id: H256,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let caller_addr: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller_addr).into(),
+			peaq_pallet_rbac::Call::<Runtime>::unassign_user_to_group { user_id, group_id },
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_UNASSIGN_USER_TO_GROUP,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.write::<H256>(user_id.into())
+				.write::<H256>(group_id.into())
+				.build(),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("fetch_user_groups(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_user_groups(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		user_id: H256,
+	) -> EvmResult<Vec<User2Group>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+
+		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_user_groups(&owner, user_id) {
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Ok(v) => Ok(v
+				.iter()
+				.map(|val| User2Group { user: val.user.into(), group: val.group.into() })
+				.collect::<Vec<User2Group>>()),
+		};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_USER_GROUPS,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
+	}
+
+	#[precompile::public("fetch_user_permissions(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_user_permissions(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		user_id: H256,
+	) -> EvmResult<Vec<Entity>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
+
+		let result =
+			match peaq_pallet_rbac::Pallet::<Runtime>::get_user_permissions(&owner, user_id) {
+				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Ok(v) => Ok(v
+					.iter()
+					.map(|val| Entity {
+						id: val.id.into(),
+						name: val.name.clone().into(),
+						enabled: val.enabled.into(),
+					})
+					.collect::<Vec<Entity>>()),
+			};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_USER_GROUPS,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
+	}
+
+	#[precompile::public("fetch_group_permissions(bytes32,bytes32)")]
+	#[precompile::view]
+	fn fetch_group_permissions(
+		handle: &mut impl PrecompileHandle,
+		owner: H256,
+		group_id: H256,
+	) -> EvmResult<Vec<Entity>> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
+
+		let result =
+			match peaq_pallet_rbac::Pallet::<Runtime>::get_group_permissions(&owner, group_id) {
+				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Ok(v) => Ok(v
+					.iter()
+					.map(|val| Entity {
+						id: val.id.into(),
+						name: val.name.clone().into(),
+						enabled: val.enabled.into(),
+					})
+					.collect::<Vec<Entity>>()),
+			};
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_FETCH_GROUP_PERMISSIONS,
+			EvmDataWriter::new()
+				.write::<Address>(Address::from(handle.context().caller))
+				.build(),
+		);
+		event.record(handle)?;
+
+		result
 	}
 }
