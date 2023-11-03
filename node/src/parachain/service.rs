@@ -251,34 +251,6 @@ where
 	Ok(params)
 }
 
-// pub fn overrides_handle<B, C, BE>(client: Arc<C>) -> Arc<OverrideHandle<B>>
-// where
-// 	B: BlockT,
-// 	C: ProvideRuntimeApi<B>,
-// 	C::Api: fp_rpc::EthereumRuntimeRPCApi<B>,
-// 	C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
-// 	BE: Backend<B> + 'static,
-// {
-// 	let mut overrides_map = BTreeMap::new();
-// 	overrides_map.insert(
-// 		EthereumStorageSchema::V1,
-// 		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
-// 		);
-// 	overrides_map.insert(
-// 		EthereumStorageSchema::V2,
-// 		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
-// 		);
-// 	overrides_map.insert(
-// 		EthereumStorageSchema::V3,
-// 		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_>>,
-// 		);
-
-// 	Arc::new(OverrideHandle {
-// 		schemas: overrides_map,
-// 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
-// 	})
-// }
-
 async fn build_relay_chain_interface(
 	polkadot_config: Configuration,
 	parachain_config: &Configuration,

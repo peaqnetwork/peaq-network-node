@@ -2,8 +2,8 @@ use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, Precompiles,
-	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
+	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance};
 use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
@@ -145,7 +145,7 @@ fn configure_genesis(
 		},
 		aura_ext: Default::default(),
 		evm: EVMConfig {
-			accounts: Precompiles::used_addresses()
+			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
 				.map(|addr| {
 					(
 						addr,
