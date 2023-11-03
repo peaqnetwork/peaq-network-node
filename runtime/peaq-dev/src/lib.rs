@@ -93,7 +93,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Balance, CurrencyId, CurrencyIdToEVMAddress, CurrencyIdToZenlinkId, EvmRevertCodeHandler,
+	Balance, AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, EvmRevertCodeHandler,
 	NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -448,8 +448,8 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
 	// [TODO] Should have a way to increase it without doing runtime upgrade
-	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
-		CurrencyId::Token(1),
+	pub PcpcLocalAccepted: Vec<AssetId> = vec![
+		AssetId::Token(1),
 	];
 }
 
@@ -461,10 +461,10 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type MultiCurrency = PeaqMultiCurrencies;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
-	type NativeCurrencyId = GetNativeCurrencyId;
+	type NativeAssetId = GetNativeAssetId;
 	type LocalAcceptedIds = PcpcLocalAccepted;
-	type CurrencyId = CurrencyId;
-	type CurrencyIdToZenlinkId = CurrencyIdToZenlinkId<SelfParaId>;
+	type AssetId = AssetId;
+	type AssetIdToZenlinkId = AssetIdToZenlinkId<SelfParaId>;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -859,7 +859,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = NATIVE_CURRNECY_ID;
+	pub const GetNativeAssetId: AssetId = NATIVE_CURRNECY_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -906,14 +906,14 @@ type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
 	Runtime,
 	Assets,
 	PeaqNativeCurrencyWrapper<Balances>,
-	GetNativeCurrencyId,
+	GetNativeAssetId,
 >;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
 pub type MultiAssets = ZenlinkMultiAssets<
 	ZenlinkProtocol,
 	Balances,
-	LocalAssetAdaptor<PeaqMultiCurrencies, CurrencyId>,
+	LocalAssetAdaptor<PeaqMultiCurrencies, AssetId>,
 >;
 
 impl zenlink_protocol::Config for Runtime {
@@ -1828,7 +1828,7 @@ parameter_types! {
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = CurrencyId;
+	type AssetId = AssetId;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
@@ -1842,7 +1842,7 @@ impl pallet_assets::Config for Runtime {
 	type Extra = ();
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
-	type AssetIdParameter = CurrencyId;
+	type AssetIdParameter = AssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	// #[cfg(feature = "runtime-benchmarks")]
 	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
@@ -1857,12 +1857,12 @@ impl evm_accounts::Config for Runtime {
 }
 
 // Move to primitives
-impl EVMAddressToAssetId<CurrencyId> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<CurrencyId> {
-		CurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+impl EVMAddressToAssetId<AssetId> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<AssetId> {
+		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address)
 	}
 
-	fn asset_id_to_address(asset_id: CurrencyId) -> H160 {
-		CurrencyIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	fn asset_id_to_address(asset_id: AssetId) -> H160 {
+		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
 	}
 }

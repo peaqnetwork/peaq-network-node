@@ -104,7 +104,7 @@ impl pallet_balances::Config for Test {
 type AssetId = u128;
 
 parameter_types! {
-	pub const GetNativeCurrencyId: AssetId = 0;
+	pub const GetNativeAssetId: AssetId = 0;
 	pub SelfReserveLocation: MultiLocation =
 		MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }));
 }
@@ -112,7 +112,7 @@ parameter_types! {
 impl pallet_xc_asset_config::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AssetId = AssetId;
-	type NativeAssetId = GetNativeCurrencyId;
+	type NativeAssetId = GetNativeAssetId;
 	type NativeAssetLocation = SelfReserveLocation;
 	type ManagerOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = crate::weights::SubstrateWeight<Self>;

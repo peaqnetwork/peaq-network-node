@@ -33,40 +33,40 @@ parameter_types! {
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
-pub struct LocalAssetAdaptor<Local, CurrencyId>(PhantomData<(Local, CurrencyId)>);
+pub struct LocalAssetAdaptor<Local, AssetId>(PhantomData<(Local, AssetId)>);
 
-impl<Local, CurrencyId, AccountId> LocalAssetHandler<AccountId>
-	for LocalAssetAdaptor<Local, CurrencyId>
+impl<Local, AssetId, AccountId> LocalAssetHandler<AccountId>
+	for LocalAssetAdaptor<Local, AssetId>
 where
-	Local: MultiCurrency<AccountId, CurrencyId = CurrencyId>,
-	CurrencyId: TryFrom<ZenlinkAssetId>,
+	Local: MultiCurrency<AccountId, CurrencyId = AssetId>,
+	AssetId: TryFrom<ZenlinkAssetId>,
 {
 	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
-		if let Ok(currency_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::free_balance(currency_id, who))
+		if let Ok(asset_id) = asset_id.try_into() {
+			return TryInto::<AssetBalance>::try_into(Local::free_balance(asset_id, who))
 				.unwrap_or_default()
 		}
 		AssetBalance::default()
 	}
 
 	fn local_total_supply(asset_id: ZenlinkAssetId) -> AssetBalance {
-		if let Ok(currency_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::total_issuance(currency_id))
+		if let Ok(asset_id) = asset_id.try_into() {
+			return TryInto::<AssetBalance>::try_into(Local::total_issuance(asset_id))
 				.unwrap_or_default()
 		}
 		AssetBalance::default()
 	}
 
 	fn local_minimum_balance(asset_id: ZenlinkAssetId) -> AssetBalance {
-		if let Ok(currency_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::minimum_balance(currency_id))
+		if let Ok(asset_id) = asset_id.try_into() {
+			return TryInto::<AssetBalance>::try_into(Local::minimum_balance(asset_id))
 				.unwrap_or_default()
 		}
 		AssetBalance::default()
 	}
 
 	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
-		<ZenlinkAssetId as TryInto<CurrencyId>>::try_into(asset_id).is_ok()
+		<ZenlinkAssetId as TryInto<AssetId>>::try_into(asset_id).is_ok()
 	}
 
 	fn local_transfer(
@@ -75,9 +75,9 @@ where
 		target: &AccountId,
 		amount: AssetBalance,
 	) -> DispatchResult {
-		if let Ok(currency_id) = asset_id.try_into() {
+		if let Ok(asset_id) = asset_id.try_into() {
 			Local::transfer(
-				currency_id,
+				asset_id,
 				origin,
 				target,
 				amount
@@ -94,9 +94,9 @@ where
 		origin: &AccountId,
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
-		if let Ok(currency_id) = asset_id.try_into() {
+		if let Ok(asset_id) = asset_id.try_into() {
 			Local::deposit(
-				currency_id,
+				asset_id,
 				origin,
 				amount
 					.try_into()
@@ -114,9 +114,9 @@ where
 		origin: &AccountId,
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
-		if let Ok(currency_id) = asset_id.try_into() {
+		if let Ok(asset_id) = asset_id.try_into() {
 			Local::withdraw(
-				currency_id,
+				asset_id,
 				origin,
 				amount
 					.try_into()

@@ -15,7 +15,7 @@ use sp_runtime::traits::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
-use peaq_primitives_xcm::CurrencyIdExt;
+use peaq_primitives_xcm::AssetIdExt;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
@@ -35,7 +35,7 @@ where
 	C: Currency<T::AccountId>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 	PCPC: PeaqMultiCurrenciesPaymentConvert<AccountId = T::AccountId, Currency = C>,
-	PCPC::CurrencyId: CurrencyIdExt,
+	PCPC::AssetId: AssetIdExt,
 	AssetBalance: From<BalanceOf<C, T>>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
@@ -139,7 +139,7 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 	/// MultiCurrency, should be orml-currencies.
 	type MultiCurrency: MultiCurrency<
 		Self::AccountId,
-		CurrencyId = Self::CurrencyId,
+		CurrencyId = Self::AssetId,
 		Balance = BalanceOfA<Self::Currency, Self::AccountId>,
 	>;
 
@@ -149,22 +149,22 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 	/// Existential deposit.
 	type ExistentialDeposit: Get<BalanceOfA<Self::Currency, Self::AccountId>>;
 
-	/// Local CurrencyId in type of Zenlink's AssetId.
-	type NativeCurrencyId: Get<Self::CurrencyId>;
+	/// Local AssetId in type of Zenlink's AssetId.
+	type NativeAssetId: Get<Self::AssetId>;
 
 	/// List of all accepted CurrencyIDs except for the local ones in type of Zenlink's AssetId.
-	type LocalAcceptedIds: Get<Vec<Self::CurrencyId>>;
+	type LocalAcceptedIds: Get<Vec<Self::AssetId>>;
 
-	type CurrencyId: Parameter + Member + MaybeSerializeDeserialize + Debug + Copy;
+	type AssetId: Parameter + Member + MaybeSerializeDeserialize + Debug + Copy;
 
-	type CurrencyIdToZenlinkId: Convert<Self::CurrencyId, Option<ZenlinkAssetId>>;
+	type AssetIdToZenlinkId: Convert<Self::AssetId, Option<ZenlinkAssetId>>;
 
 	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
 	/// of the choosen currency in dependency of the priority-list and availability of tokens.
 	fn ensure_can_withdraw(
 		who: &Self::AccountId,
 		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
-	) -> Result<Self::CurrencyId, TransactionValidityError> {
+	) -> Result<Self::AssetId, TransactionValidityError> {
 		let (currency_id, option) = Self::check_currencies_n_priorities(who, tx_fee)?;
 
 		if let Some(info) = option {
@@ -185,8 +185,8 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 	fn check_currencies_n_priorities(
 		who: &Self::AccountId,
 		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
-	) -> Result<(Self::CurrencyId, Option<PaymentConvertInfo>), TransactionValidityError> {
-		let native_id = Self::NativeCurrencyId::get();
+	) -> Result<(Self::AssetId, Option<PaymentConvertInfo>), TransactionValidityError> {
+		let native_id = Self::NativeAssetId::get();
 
 		if Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee).is_ok() {
 			Ok((native_id, None))
@@ -194,15 +194,15 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 			// In theory not necessary, but as safety-buffer will add existential deposit.
 			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
 
-			// Prepare ZenlinkAssetId(s) from CurrencyId(s).
-			let native_zen_id = Self::CurrencyIdToZenlinkId::convert(native_id)
+			// Prepare ZenlinkAssetId(s) from AssetId(s).
+			let native_zen_id = Self::AssetIdToZenlinkId::convert(native_id)
 				.ok_or(TransactionValidityError::Invalid(InvalidTransaction::Custom(55)))?;
 
 			let local_ids = Self::LocalAcceptedIds::get();
 
 			// Iterate through all accepted local currencies and check availability.
 			for &local_id in local_ids.iter() {
-				let local_zen_id = Self::CurrencyIdToZenlinkId::convert(local_id)
+				let local_zen_id = Self::AssetIdToZenlinkId::convert(local_id)
 					.ok_or(TransactionValidityError::Invalid(InvalidTransaction::Custom(55)))?;
 				let zen_path = vec![local_zen_id, native_zen_id];
 				let amount_out: AssetBalance = tx_fee.saturated_into();

@@ -12,65 +12,65 @@ use pallet_assets::Config as AssetsConfig;
 use sp_runtime::traits::{CheckedSub, Zero};
 use sp_std::{fmt::Debug, marker::PhantomData};
 
-pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId>(
-	PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId)>,
+pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeAssetId>(
+	PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeAssetId)>,
 );
 
-impl<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId> MultiCurrency<T::AccountId>
-	for PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeCurrencyId>
+impl<T, MultiCurrencies, NativeCurrency, GetNativeAssetId> MultiCurrency<T::AccountId>
+	for PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeAssetId>
 where
 	MultiCurrencies: fungibles::Mutate<T::AccountId>
 		+ fungibles::Inspect<T::AccountId, AssetId = T::AssetId, Balance = T::Balance>
 		+ fungibles::Transfer<T::AccountId>,
 	NativeCurrency: BasicCurrency<T::AccountId, Balance = T::Balance>,
-	GetNativeCurrencyId: Get<T::AssetId>,
+	GetNativeAssetId: Get<T::AssetId>,
 	T: SysConfig + AssetsConfig,
 {
 	type CurrencyId = T::AssetId;
 	type Balance = T::Balance;
 
-	fn minimum_balance(currency_id: Self::CurrencyId) -> Self::Balance {
-		if currency_id == GetNativeCurrencyId::get() {
+	fn minimum_balance(asset_id: Self::CurrencyId) -> Self::Balance {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::minimum_balance()
 		} else {
-			MultiCurrencies::minimum_balance(currency_id)
+			MultiCurrencies::minimum_balance(asset_id)
 		}
 	}
 
-	fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance {
-		if currency_id == GetNativeCurrencyId::get() {
+	fn total_issuance(asset_id: Self::CurrencyId) -> Self::Balance {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::total_issuance()
 		} else {
-			MultiCurrencies::total_issuance(currency_id)
+			MultiCurrencies::total_issuance(asset_id)
 		}
 	}
 
-	fn total_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
-		if currency_id == GetNativeCurrencyId::get() {
+	fn total_balance(asset_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::total_balance(who)
 		} else {
-			MultiCurrencies::balance(currency_id, who)
+			MultiCurrencies::balance(asset_id, who)
 		}
 	}
 
-	fn free_balance(currency_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
-		if currency_id == GetNativeCurrencyId::get() {
+	fn free_balance(asset_id: Self::CurrencyId, who: &T::AccountId) -> Self::Balance {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::free_balance(who)
 		} else {
 			// Keep alive setup as true
-			MultiCurrencies::reducible_balance(currency_id, who, true)
+			MultiCurrencies::reducible_balance(asset_id, who, true)
 		}
 	}
 
 	fn ensure_can_withdraw(
-		currency_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
-		if currency_id == GetNativeCurrencyId::get() {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::ensure_can_withdraw(who, amount)
 		} else {
-			let out = MultiCurrencies::can_withdraw(currency_id, who, amount);
+			let out = MultiCurrencies::can_withdraw(asset_id, who, amount);
 			if WithdrawConsequence::Success == out {
 				Ok(())
 			} else {
@@ -80,7 +80,7 @@ where
 	}
 
 	fn transfer(
-		currency_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
 		from: &T::AccountId,
 		to: &T::AccountId,
 		amount: Self::Balance,
@@ -88,11 +88,11 @@ where
 		if amount.is_zero() || from == to {
 			return Ok(())
 		}
-		if currency_id == GetNativeCurrencyId::get() {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::transfer(from, to, amount)
 		} else {
 			// Keep alive setup as true
-			let out = MultiCurrencies::transfer(currency_id, from, to, amount, true);
+			let out = MultiCurrencies::transfer(asset_id, from, to, amount, true);
 			if out.is_ok() {
 				Ok(())
 			} else {
@@ -102,17 +102,17 @@ where
 	}
 
 	fn deposit(
-		currency_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(())
 		}
-		if currency_id == GetNativeCurrencyId::get() {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::deposit(who, amount)
 		} else {
-			let out = MultiCurrencies::mint_into(currency_id, who, amount);
+			let out = MultiCurrencies::mint_into(asset_id, who, amount);
 			if out.is_ok() {
 				Ok(())
 			} else {
@@ -122,17 +122,17 @@ where
 	}
 
 	fn withdraw(
-		currency_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(())
 		}
-		if currency_id == GetNativeCurrencyId::get() {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::withdraw(who, amount)
 		} else {
-			let out = MultiCurrencies::burn_from(currency_id, who, amount);
+			let out = MultiCurrencies::burn_from(asset_id, who, amount);
 			if out.is_ok() {
 				Ok(())
 			} else {
@@ -141,24 +141,24 @@ where
 		}
 	}
 
-	fn can_slash(currency_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> bool {
-		if currency_id == GetNativeCurrencyId::get() {
+	fn can_slash(asset_id: Self::CurrencyId, who: &T::AccountId, amount: Self::Balance) -> bool {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::can_slash(who, amount)
 		} else {
-			Self::free_balance(currency_id, who) >= amount
+			Self::free_balance(asset_id, who) >= amount
 		}
 	}
 
 	fn slash(
-		currency_id: Self::CurrencyId,
+		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
 	) -> Self::Balance {
-		if currency_id == GetNativeCurrencyId::get() {
+		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::slash(who, amount)
 		} else {
 			// If error happens, will return 0
-			MultiCurrencies::slash(currency_id, who, amount).unwrap_or_else(|_| Zero::zero())
+			MultiCurrencies::slash(asset_id, who, amount).unwrap_or_else(|_| Zero::zero())
 		}
 	}
 }
