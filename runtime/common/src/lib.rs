@@ -35,8 +35,7 @@ parameter_types! {
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
 pub struct LocalAssetAdaptor<Local, AssetId>(PhantomData<(Local, AssetId)>);
 
-impl<Local, AssetId, AccountId> LocalAssetHandler<AccountId>
-	for LocalAssetAdaptor<Local, AssetId>
+impl<Local, AssetId, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local, AssetId>
 where
 	Local: MultiCurrency<AccountId, CurrencyId = AssetId>,
 	AssetId: TryFrom<ZenlinkAssetId>,

@@ -93,7 +93,7 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 
 use peaq_primitives_xcm::{
-	Balance, AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, EvmRevertCodeHandler,
+	AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance, EvmRevertCodeHandler,
 	NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -910,11 +910,8 @@ type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
 >;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets = ZenlinkMultiAssets<
-	ZenlinkProtocol,
-	Balances,
-	LocalAssetAdaptor<PeaqMultiCurrencies, AssetId>,
->;
+pub type MultiAssets =
+	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<PeaqMultiCurrencies, AssetId>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

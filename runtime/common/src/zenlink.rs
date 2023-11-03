@@ -31,9 +31,7 @@ where
 
 		match (asset_id0, asset_id1) {
 			(AssetId::Token(symbol0), AssetId::Token(symbol1)) =>
-				AssetIdToZenlinkId::<T::SelfParaId>::convert(AssetId::LPToken(
-					symbol0, symbol1,
-				)),
+				AssetIdToZenlinkId::<T::SelfParaId>::convert(AssetId::LPToken(symbol0, symbol1)),
 
 			(_, _) => None,
 		}
