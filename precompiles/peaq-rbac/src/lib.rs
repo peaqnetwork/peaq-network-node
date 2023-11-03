@@ -199,7 +199,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_user_roles(bytes32)")]
+	#[precompile::public("fetch_user_roles(bytes32,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_roles(
 		handle: &mut impl PrecompileHandle,

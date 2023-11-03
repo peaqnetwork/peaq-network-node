@@ -27,6 +27,11 @@ interface RBAC {
         bytes32 role;
     }
 
+    struct User2Group {
+        bytes32 user;
+        bytes32 group;
+    }
+
     // ======================= Entry Points ======================= //
 
     function fetch_role(
@@ -119,6 +124,46 @@ interface RBAC {
 
     function disable_group(bytes32 group_id) external returns (bool);
 
+    function assign_role_to_group(
+        bytes32 role_id,
+        bytes32 group_id
+    ) external returns (bool);
+
+    function unassign_role_to_group(
+        bytes32 role_id,
+        bytes32 group_id
+    ) external returns (bool);
+
+    function fetch_group_roles(
+        bytes32 owner,
+        bytes32 group_id
+    ) external view returns (Role2User[] memory);
+
+    function assign_user_to_group(
+        bytes32 user_id,
+        bytes32 group_id
+    ) external returns (bool);
+
+    function unassign_user_to_group(
+        bytes32 user_id,
+        bytes32 group_id
+    ) external returns (bool);
+
+    function fetch_user_groups(
+        bytes32 owner,
+        bytes32 user_id
+    ) external view returns (User2Group[] memory);
+
+    function fetch_user_permissions(
+        bytes32 owner,
+        bytes32 user_id
+    ) external view returns (Entity[] memory);
+
+    function fetch_group_permissions(
+        bytes32 owner,
+        bytes32 group_id
+    ) external view returns (Entity[] memory);
+
     // ======================= Events ======================= //
 
     event RoleAdded(address sender, bytes32 role_id, bytes name);
@@ -168,4 +213,34 @@ interface RBAC {
     event GroupUpdated(address sender, bytes32 group_id, bytes name);
 
     event GroupDisabled(address sender, bytes32 group_id);
+
+    event RoleAssignedToGroup(
+        address sender,
+        bytes32 role_id,
+        bytes32 group_id
+    );
+
+    event RoleUnassignedToGroup(
+        address sender,
+        bytes32 role_id,
+        bytes32 group_id
+    );
+
+    event FetchedGroupRoles(address sender);
+
+    event UserAssignedToGroup(
+        address sender,
+        bytes32 user_id,
+        bytes32 group_id
+    );
+
+    event UserUnassignedToGroup(
+        address sender,
+        bytes32 user_id,
+        bytes32 group_id
+    );
+
+    event FetchedUserGroups(address sender);
+
+    event FetchedUserPermissions(address sender);
 }
