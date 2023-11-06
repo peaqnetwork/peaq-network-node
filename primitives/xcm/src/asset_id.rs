@@ -10,13 +10,6 @@ use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use sp_std::convert::TryFrom;
 
-/// Id used for identifying assets.
-///
-/// AssetId allocation:
-/// [1; 2^32-1]     Custom user assets (permissionless)
-/// [2^32; 2^64-1]  Statemine assets (simple map)
-/// [2^64; 2^128-1] Ecosystem assets
-/// 2^128-1         Relay chain token (KSM)
 #[derive(
 	Encode,
 	Decode,
@@ -32,12 +25,11 @@ use sp_std::convert::TryFrom;
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-// [TODO] Leave 4 or 8 bits
 pub enum AssetId {
 	/// All Polkadot based tokens (SS58-address-style), Relaychain- and Parachain-Tokens.
 	/// 0 is balance
-	/// 0 ~ 1FFF_FFFF is the custumoized value
-	/// The first 3 bits are the identifier
+	/// 0 ~ 0FFF_FFFF is the custumoized value
+	/// The first 4 bits are the identifier
 	/// 0 is the token
 	/// 1 is the LPToken
 	Token(u32),
@@ -46,7 +38,7 @@ pub enum AssetId {
 }
 
 pub const NATIVE_CURRNECY_ID: AssetId = AssetId::Token(0);
-const TOKEN_MASK: u32 = 0b0001_1111_1111_1111_1111_1111_1111_1111;
+const TOKEN_MASK: u32 = 0b0000_1111_1111_1111_1111_1111_1111_1111;
 impl AssetId {
 	pub fn is_token(&self) -> bool {
 		matches!(self, AssetId::Token(_))
@@ -93,10 +85,10 @@ impl TryFrom<AssetId> for u64 {
 
 	fn try_from(asset_id: AssetId) -> Result<Self, Self::Error> {
 		match asset_id {
-			AssetId::Token(symbol) => Ok((symbol as u64) + ((asset_id.type_index() as u64) << 61)),
+			AssetId::Token(symbol) => Ok((symbol as u64) + ((asset_id.type_index() as u64) << 60)),
 			AssetId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) << 32) +
 				((symbol1 & TOKEN_MASK) as u64) +
-				((asset_id.type_index() as u64) << 61)),
+				((asset_id.type_index() as u64) << 60)),
 		}
 	}
 }
@@ -105,7 +97,7 @@ impl TryFrom<u64> for AssetId {
 	type Error = ();
 
 	fn try_from(index: u64) -> Result<Self, Self::Error> {
-		let type_index = (index >> 61) as u8;
+		let type_index = (index >> 60) as u8;
 		match type_index {
 			0 => {
 				let symbol = (index & (TOKEN_MASK as u64)) as u32;
@@ -199,7 +191,7 @@ fn test_u64_to_asset_id() {
 	assert_eq!(asset_id, 2u64.try_into().unwrap());
 
 	let asset_id = AssetId::LPToken(1, 2);
-	assert_eq!(asset_id, 0x2000_0001_0000_0002u64.try_into().unwrap());
+	assert_eq!(asset_id, 0x1000_0001_0000_0002u64.try_into().unwrap());
 }
 
 #[test]
@@ -210,6 +202,6 @@ fn test_asset_id_to_u64() {
 	let idx = 2u64;
 	assert_eq!(idx, <AssetId as TryInto<u64>>::try_into(AssetId::Token(2)).unwrap());
 
-	let idx = 0x2000_0001_0000_0002u64;
+	let idx = 0x1000_0001_0000_0002u64;
 	assert_eq!(idx, <AssetId as TryInto<u64>>::try_into(AssetId::LPToken(1, 2)).unwrap());
 }
