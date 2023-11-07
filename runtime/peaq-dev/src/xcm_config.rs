@@ -19,7 +19,7 @@ use peaq_primitives_xcm::currency::parachain;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{
 	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
-	pallet_currency_location,
+	pallet_currency_location, pallet_currency_addr_location,
 };
 use sp_runtime::traits::{ConstU32, Convert};
 use xcm::{
@@ -131,6 +131,13 @@ parameter_types! {
 		dot_per_second() * 5,
 		0
 	);
+	pub XCUsdcPerSecond: (AssetId, u128, u128) = (
+		pallet_currency_addr_location(
+			parachain::moonbase::ID, parachain::moonbase::EVM_PALLET, parachain::moonbase::XCUSDC_KEY
+		).unwrap().into(),
+		dot_per_second() * 5,
+		0
+	);
 	pub BaseRate: u128 = peaq_per_second();
 }
 
@@ -140,6 +147,7 @@ pub type Trader = (
 	FixedRateOfFungible<AcaPerSecond, ToTreasury>,
 	FixedRateOfFungible<BncPerSecond, ToTreasury>,
 	FixedRateOfFungible<MbaPerSecond, ToTreasury>,
+	FixedRateOfFungible<XCUsdcPerSecond, ToTreasury>,
 );
 
 pub type Barrier = (

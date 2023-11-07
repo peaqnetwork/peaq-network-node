@@ -202,6 +202,7 @@ create_token_symbol! {
 		ACA("Acala", 12) = 128,
 		BNC("Bifrost Native Token", 12) = 129,
 		MBA("Moonbase Alpha Token", 18) = 130, // cannot name it DEV...
+		XCUSDC("xcUSDC.wh", 6) = 131,
 	}
 }
 
@@ -410,5 +411,9 @@ pub mod parachain {
 	pub mod moonbase {
 		pub const ID: u32 = 1000;
 		pub const DEV_PALLET: u8 = 3;
+		pub const EVM_PALLET: u8 = 48;
+		// 0xe5de10c4b744bac6b783faf8d9b9fdff14acc3c9
+		pub const XCUSDC_KEY: [u8; 20] =
+			[229, 222, 16, 196, 183, 68, 186, 198, 183, 131, 250, 248, 217, 185, 253, 255, 20, 172, 195, 201];
 	}
 }
