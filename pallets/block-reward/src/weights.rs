@@ -45,17 +45,17 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: BlockReward RewardDistributionConfigStorage (r:0 w:1)
 	fn set_configuration() -> Weight {
-		Weight::from_parts(11_642_000, 1)
+		Weight::from_parts(11_642_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: BlockReward BlockIssueReward (r:0 w:1)
 	fn set_block_issue_reward() -> Weight {
-		Weight::from_parts(10_850_000, 1)
+		Weight::from_parts(10_850_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	// Storage: BlockReward HardCap (r:0 w:1)
 	fn set_max_currency_supply() -> Weight {
-		Weight::from_parts(10_811_000, 1)
+		Weight::from_parts(10_811_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }

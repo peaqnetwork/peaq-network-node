@@ -38,7 +38,7 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: ParachainStaking RewardRateConfig (r:0 w:1)
 	fn set_reward_rate() -> Weight {
-		Weight::from_parts(12_952_000, 1)
+		Weight::from_parts(12_952_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

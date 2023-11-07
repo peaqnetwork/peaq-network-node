@@ -517,7 +517,7 @@ pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
 		let weight = gas.saturating_mul(WEIGHT_PER_GAS);
-		Weight::from_parts(weight, weight)
+		Weight::from_parts(weight, 0)
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
@@ -531,7 +531,7 @@ parameter_types! {
 		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
-	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, WEIGHT_PER_GAS);
+	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
 }
 
 impl pallet_evm::Config for Runtime {
