@@ -7,11 +7,9 @@ impl ExamplePrecompile {
     fn example(
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<(Address, U256, UnboundedBytes)> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("example")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("example")),
+        )
     }
 }
 #[allow(non_camel_case_types)]
@@ -24,7 +22,7 @@ impl ExamplePrecompileCall {
     pub fn parse_call_data(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::RevertReason;
+        use ::precompile_utils::solidity::revert::RevertReason;
         let input = handle.input();
         let selector = input
             .get(0..4)
@@ -42,9 +40,9 @@ impl ExamplePrecompileCall {
     fn _parse_example(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::example {})
     }
@@ -52,18 +50,17 @@ impl ExamplePrecompileCall {
         self,
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<::fp_evm::PrecompileOutput> {
-        use ::precompile_utils::data::EvmDataWriter;
+        use ::precompile_utils::solidity::codec::Writer;
         use ::fp_evm::{PrecompileOutput, ExitSucceed};
         let output = match self {
             Self::example {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <ExamplePrecompile>::example(handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::__phantom(_, _) => {
                 ::core::panicking::panic_fmt(
                     format_args!("__phantom variant should not be used"),
-                );
+                )
             }
         };
         Ok(PrecompileOutput {
@@ -84,13 +81,13 @@ impl ExamplePrecompileCall {
         &[1412775727u32]
     }
     pub fn encode(self) -> ::sp_std::vec::Vec<u8> {
-        use ::precompile_utils::EvmDataWriter;
+        use ::precompile_utils::solidity::codec::Writer;
         match self {
-            Self::example {} => EvmDataWriter::new_with_selector(1412775727u32).build(),
+            Self::example {} => Writer::new_with_selector(1412775727u32).build(),
             Self::__phantom(_, _) => {
                 ::core::panicking::panic_fmt(
                     format_args!("__phantom variant should not be used"),
-                );
+                )
             }
         }
     }
@@ -109,8 +106,8 @@ impl ::fp_evm::Precompile for ExamplePrecompile {
 }
 #[allow(non_snake_case)]
 pub(crate) fn __ExamplePrecompile_test_solidity_signatures_inner() {
-    use ::precompile_utils::data::EvmData;
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    use ::precompile_utils::solidity::Codec;
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -121,7 +118,7 @@ pub(crate) fn __ExamplePrecompile_test_solidity_signatures_inner() {
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "example",
+                            "example"
                         ),
                     ),
                 );

@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	testing::{decode_revert_message, MockHandle},
-	EvmDataWriter,
+use {
+	crate::{
+		solidity::codec::Writer,
+		testing::{decode_revert_message, MockHandle},
+	},
+	fp_evm::{Context, PrecompileFailure, PrecompileSet},
+	sp_core::{H160, U256},
 };
-use fp_evm::{Context, PrecompileFailure, PrecompileSet};
-use sp_core::{H160, U256};
 
 pub struct PrecompilesModifierTester<P> {
 	precompiles: P,
@@ -30,13 +32,20 @@ impl<P: PrecompileSet> PrecompilesModifierTester<P> {
 	pub fn new(precompiles: P, from: impl Into<H160>, to: impl Into<H160>) -> Self {
 		let to = to.into();
 		let mut handle = MockHandle::new(
-			to,
-			Context { address: to, caller: from.into(), apparent_value: U256::zero() },
+			to.clone(),
+			Context {
+				address: to,
+				caller: from.into(),
+				apparent_value: U256::zero(),
+			},
 		);
 
 		handle.gas_limit = u64::MAX;
 
-		Self { precompiles, handle }
+		Self {
+			precompiles,
+			handle,
+		}
 	}
 
 	fn is_view(&mut self, selector: u32) -> bool {
@@ -44,7 +53,7 @@ impl<P: PrecompileSet> PrecompilesModifierTester<P> {
 		let handle = &mut self.handle;
 		handle.is_static = true;
 		handle.context.apparent_value = U256::zero();
-		handle.input = EvmDataWriter::new_with_selector(selector).build();
+		handle.input = Writer::new_with_selector(selector).build();
 
 		let res = self.precompiles.execute(handle);
 
@@ -53,7 +62,7 @@ impl<P: PrecompileSet> PrecompilesModifierTester<P> {
 				let decoded = decode_revert_message(&output);
 
 				dbg!(decoded) != b"Can't call non-static function in static context"
-			},
+			}
 			Some(_) => true,
 			None => panic!("tried to check view modifier on unknown precompile"),
 		}
@@ -64,7 +73,7 @@ impl<P: PrecompileSet> PrecompilesModifierTester<P> {
 		let handle = &mut self.handle;
 		handle.is_static = false;
 		handle.context.apparent_value = U256::one();
-		handle.input = EvmDataWriter::new_with_selector(selector).build();
+		handle.input = Writer::new_with_selector(selector).build();
 
 		let res = self.precompiles.execute(handle);
 
@@ -73,7 +82,7 @@ impl<P: PrecompileSet> PrecompilesModifierTester<P> {
 				let decoded = decode_revert_message(&output);
 
 				decoded != b"Function is not payable"
-			},
+			}
 			Some(_) => true,
 			None => panic!("tried to check payable modifier on unknown precompile"),
 		}
@@ -81,22 +90,40 @@ impl<P: PrecompileSet> PrecompilesModifierTester<P> {
 
 	pub fn test_view_modifier(&mut self, selectors: &[u32]) {
 		for &s in selectors {
-			assert!(self.is_view(s), "Function doesn't behave like a view function.");
-			assert!(!self.is_payable(s), "Function doesn't behave like a non-payable function.")
+			assert!(
+				self.is_view(s),
+				"Function doesn't behave like a view function."
+			);
+			assert!(
+				!self.is_payable(s),
+				"Function doesn't behave like a non-payable function."
+			)
 		}
 	}
 
 	pub fn test_payable_modifier(&mut self, selectors: &[u32]) {
 		for &s in selectors {
-			assert!(!self.is_view(s), "Function doesn't behave like a non-view function.");
-			assert!(self.is_payable(s), "Function doesn't behave like a payable function.");
+			assert!(
+				!self.is_view(s),
+				"Function doesn't behave like a non-view function."
+			);
+			assert!(
+				self.is_payable(s),
+				"Function doesn't behave like a payable function."
+			);
 		}
 	}
 
 	pub fn test_default_modifier(&mut self, selectors: &[u32]) {
 		for &s in selectors {
-			assert!(!self.is_view(s), "Function doesn't behave like a non-view function.");
-			assert!(!self.is_payable(s), "Function doesn't behave like a non-payable function.");
+			assert!(
+				!self.is_view(s),
+				"Function doesn't behave like a non-view function."
+			);
+			assert!(
+				!self.is_payable(s),
+				"Function doesn't behave like a non-payable function."
+			);
 		}
 	}
 }

@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use precompile_utils::prelude::*;
+// Few mock structs to check the macro.
+struct PrecompileAt<T, U, V = ()>(PhantomData<(T, U, V)>);
+struct AddressU64<const N: u64>;
+struct FooPrecompile<R>(PhantomData<R>);
+struct BarPrecompile<R, S>(PhantomData<(R, S)>);
+struct MockCheck;
 
-#[derive(EvmData)]
-enum Test {
-	One,
-	Two(u8),
-	Three { test: u16 }
-}
-
-fn main() {}
+#[precompile_utils_macro::precompile_name_from_address]
+type Precompiles = (
+	PrecompileAt<AddressU64<1>, FooPrecompile<R>>,
+	PrecompileAt<AddressU64<2>, BarPrecompile<R, S>, (MockCheck, MockCheck)>,
+);

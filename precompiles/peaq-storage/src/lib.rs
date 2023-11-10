@@ -71,17 +71,20 @@ where
 				item_type: item_type.as_bytes().to_vec(),
 				item: item.as_bytes().to_vec(),
 			},
+			// [TODO]
+			0
 		)?;
+		log::error!("add_item after dispatch");
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ITEM_ADDED,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(H256::from_slice(caller.as_ref()))
-				.write::<BoundedBytes<GetBytesLimit>>(item_type)
-				.write::<BoundedBytes<GetBytesLimit>>(item)
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				H256::from_slice(caller.as_ref()),
+				item_type,
+				item,
+			)),
 		);
 		event.record(handle)?;
 
@@ -106,17 +109,19 @@ where
 				item_type: item_type.as_bytes().to_vec(),
 				item: item.as_bytes().to_vec(),
 			},
+			// [TODO]
+			0
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ITEM_UPDATED,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(H256::from_slice(caller.as_ref()))
-				.write::<BoundedBytes<GetBytesLimit>>(item_type)
-				.write::<BoundedBytes<GetBytesLimit>>(item)
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				H256::from_slice(caller.as_ref()),
+				item_type,
+				item,
+			)),
 		);
 		event.record(handle)?;
 

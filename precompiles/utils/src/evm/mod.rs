@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2023 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -14,16 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use core::marker::PhantomData;
-
-pub struct Precompile<R>(PhantomData<R>);
-
-#[precompile_utils_macro::precompile]
-impl<R: Get<u32>> Precompile<R> {
-	#[precompile::public("foo(bytes)")]
-	fn foo(handle: &mut impl PrecompileHandle, arg: BoundedBytes<R>) -> EvmResult {
-		Ok(())
-	}
-}
-
-fn main() {}
+pub mod costs;
+pub mod handle;
+pub mod logs;
