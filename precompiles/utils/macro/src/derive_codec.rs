@@ -23,28 +23,33 @@ use syn::{
 };
 
 pub fn main(input: TokenStream) -> TokenStream {
-	let DeriveInput { ident, mut generics, data, .. } = parse_macro_input!(input as DeriveInput);
+	let DeriveInput {
+		ident,
+		mut generics,
+		data,
+		..
+	} = parse_macro_input!(input as DeriveInput);
 
-	let syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(fields), .. }) = data else {
+	let syn::Data::Struct (syn::DataStruct {fields: syn::Fields::Named(fields), ..}) = data else {
 		return quote_spanned! { ident.span() =>
-			compile_error!("EvmData can only be derived for structs with named fields");
+			compile_error!("Codec can only be derived for structs with named fields");
 		}
 		.into()
 	};
 	let fields = fields.named;
 
-	if fields.is_empty() {
+	if fields.len() == 0 {
 		return quote_spanned! { ident.span() =>
-			compile_error!("EvmData can only be derived for structs with at least one field");
+			compile_error!("Codec can only be derived for structs with at least one field");
 		}
-		.into()
+		.into();
 	}
 
 	if let Some(unamed_field) = fields.iter().find(|f| f.ident.is_none()) {
 		return quote_spanned! { unamed_field.ty.span() =>
-			compile_error!("EvmData can only be derived for structs with named fields");
+			compile_error!("Codec can only be derived for structs with named fields");
 		}
-		.into()
+		.into();
 	}
 
 	let fields_ty: Vec<_> = fields.iter().map(|f| &f.ty).collect();
@@ -52,15 +57,20 @@ pub fn main(input: TokenStream) -> TokenStream {
 		.iter()
 		.map(|f| f.ident.as_ref().expect("None case checked above"))
 		.collect();
-	let fields_name_lit: Vec<_> =
-		fields_ident.iter().map(|i| LitStr::new(&i.to_string(), i.span())).collect();
+	let fields_name_lit: Vec<_> = fields_ident
+		.iter()
+		.map(|i| LitStr::new(&i.to_string(), i.span()))
+		.collect();
 
 	let evm_data_trait_path = {
 		let mut segments = Punctuated::<PathSegment, _>::new();
 		segments.push(Ident::new("precompile_utils", Span::call_site()).into());
-		segments.push(Ident::new("data", Span::call_site()).into());
-		segments.push(Ident::new("EvmData", Span::call_site()).into());
-		Path { leading_colon: Some(Default::default()), segments }
+		segments.push(Ident::new("solidity", Span::call_site()).into());
+		segments.push(Ident::new("Codec", Span::call_site()).into());
+		Path {
+			leading_colon: Some(Default::default()),
+			segments,
+		}
 	};
 	let where_clause = generics.make_where_clause();
 
@@ -89,12 +99,12 @@ pub fn main(input: TokenStream) -> TokenStream {
 
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 	quote! {
-		impl #impl_generics ::precompile_utils::data::EvmData for #ident #ty_generics
+		impl #impl_generics ::precompile_utils::solidity::codec::Codec for #ident #ty_generics
 		#where_clause {
 			fn read(
-				reader: &mut ::precompile_utils::data::EvmDataReader
-			) -> ::precompile_utils::revert::MayRevert<Self> {
-				use ::precompile_utils::revert::BacktraceExt as _;
+				reader: &mut ::precompile_utils::solidity::codec::Reader
+			) -> ::precompile_utils::solidity::revert::MayRevert<Self> {
+				use ::precompile_utils::solidity::revert::BacktraceExt as _;
 				let (#(#fields_ident,)*): (#(#fields_ty,)*) = reader
 					.read()
 					.map_in_tuple_to_field(&[#(#fields_name_lit),*])?;
@@ -103,16 +113,16 @@ pub fn main(input: TokenStream) -> TokenStream {
 				})
 			}
 
-			fn write(writer: &mut ::precompile_utils::data::EvmDataWriter, value: Self) {
-				::precompile_utils::data::EvmData::write(writer, (#(value.#fields_ident,)*));
+			fn write(writer: &mut ::precompile_utils::solidity::codec::Writer, value: Self) {
+				::precompile_utils::solidity::codec::Codec::write(writer, (#(value.#fields_ident,)*));
 			}
 
 			fn has_static_size() -> bool {
 				<(#(#fields_ty,)*)>::has_static_size()
 			}
 
-			fn solidity_type() -> String {
-				<(#(#fields_ty,)*)>::solidity_type()
+			fn signature() -> String {
+				<(#(#fields_ty,)*)>::signature()
 			}
 		}
 	}

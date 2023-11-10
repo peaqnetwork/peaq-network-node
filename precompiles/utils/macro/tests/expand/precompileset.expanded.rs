@@ -14,32 +14,26 @@ where
     /// PrecompileSet discrimiant. Allows to knows if the address maps to an asset id,
     /// and if this is the case which one.
     fn discriminant(address: H160) -> Option<Discriminant> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("discriminant")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("discriminant")),
+        )
     }
     fn total_supply(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<U256> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("total_supply")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("total_supply")),
+        )
     }
     fn balance_of(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
         who: Address,
     ) -> EvmResult<U256> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("balance_of")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("balance_of")),
+        )
     }
     fn allowance(
         asset_id: Discriminant,
@@ -47,11 +41,9 @@ where
         owner: Address,
         spender: Address,
     ) -> EvmResult<U256> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("allowance")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("allowance")),
+        )
     }
     fn approve(
         asset_id: Discriminant,
@@ -59,11 +51,9 @@ where
         spender: Address,
         value: U256,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("approve")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("approve")),
+        )
     }
     fn approve_inner(
         asset_id: Discriminant,
@@ -72,11 +62,9 @@ where
         spender: H160,
         value: U256,
     ) -> EvmResult {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("approve_inner")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("approve_inner")),
+        )
     }
     fn transfer(
         asset_id: Discriminant,
@@ -84,11 +72,9 @@ where
         to: Address,
         value: U256,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("transfer")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("transfer")),
+        )
     }
     fn transfer_from(
         asset_id: Discriminant,
@@ -97,41 +83,33 @@ where
         to: Address,
         value: U256,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("transfer_from")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("transfer_from")),
+        )
     }
     fn name(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<UnboundedBytes> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("name")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("name")),
+        )
     }
     fn symbol(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<UnboundedBytes> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("symbol")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("symbol")),
+        )
     }
     fn decimals(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<u8> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("decimals")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("decimals")),
+        )
     }
     fn mint(
         asset_id: Discriminant,
@@ -139,11 +117,9 @@ where
         to: Address,
         value: U256,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("mint")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("mint")),
+        )
     }
     fn burn(
         asset_id: Discriminant,
@@ -151,66 +127,52 @@ where
         from: Address,
         value: U256,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("burn")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("burn")),
+        )
     }
     fn freeze(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
         account: Address,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("freeze")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("freeze")),
+        )
     }
     fn thaw(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
         account: Address,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("thaw")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("thaw")),
+        )
     }
     fn freeze_asset(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("freeze_asset")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("freeze_asset")),
+        )
     }
     fn thaw_asset(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("thaw_asset")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("thaw_asset")),
+        )
     }
     fn transfer_ownership(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
         owner: Address,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!(
-                    "not yet implemented: {0}", format_args!("transfer_ownership"),
-                ),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("transfer_ownership")),
+        )
     }
     fn set_team(
         asset_id: Discriminant,
@@ -219,11 +181,9 @@ where
         admin: Address,
         freezer: Address,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("set_team")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("set_team")),
+        )
     }
     fn set_metadata(
         asset_id: Discriminant,
@@ -232,21 +192,17 @@ where
         symbol: BoundedString<GetAssetsStringLimit<Runtime>>,
         decimals: u8,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("set_metadata")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("set_metadata")),
+        )
     }
     fn clear_metadata(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<bool> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("clear_metadata")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("clear_metadata")),
+        )
     }
     fn eip2612_permit(
         asset_id: Discriminant,
@@ -259,34 +215,28 @@ where
         r: H256,
         s: H256,
     ) -> EvmResult {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("eip2612_permit")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("eip2612_permit")),
+        )
     }
     fn eip2612_nonces(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
         owner: Address,
     ) -> EvmResult<U256> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!("not yet implemented: {0}", format_args!("eip2612_nonces")),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!("not yet implemented: {0}", format_args!("eip2612_nonces")),
+        )
     }
     fn eip2612_domain_separator(
         asset_id: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> EvmResult<H256> {
-        {
-            ::core::panicking::panic_fmt(
-                format_args!(
-                    "not yet implemented: {0}", format_args!("eip2612_domain_separator"),
-                ),
-            );
-        }
+        ::core::panicking::panic_fmt(
+            format_args!(
+                "not yet implemented: {0}", format_args!("eip2612_domain_separator")
+            ),
+        )
     }
 }
 #[allow(non_camel_case_types)]
@@ -338,7 +288,7 @@ where
     pub fn parse_call_data(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::RevertReason;
+        use ::precompile_utils::solidity::revert::RevertReason;
         let input = handle.input();
         let selector = input
             .get(0..4)
@@ -383,9 +333,9 @@ where
     fn _parse_allowance(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(2usize)?;
@@ -397,9 +347,9 @@ where
     fn _parse_approve(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(2usize)?;
@@ -411,9 +361,9 @@ where
     fn _parse_balance_of(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(1usize)?;
@@ -424,9 +374,9 @@ where
     fn _parse_burn(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(2usize)?;
@@ -438,36 +388,36 @@ where
     fn _parse_clear_metadata(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::clear_metadata {})
     }
     fn _parse_decimals(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::decimals {})
     }
     fn _parse_eip2612_domain_separator(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::View)?;
         Ok(Self::eip2612_domain_separator {})
     }
     fn _parse_eip2612_nonces(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::View)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(1usize)?;
@@ -478,9 +428,9 @@ where
     fn _parse_eip2612_permit(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(7usize)?;
@@ -497,9 +447,9 @@ where
     fn _parse_freeze(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(1usize)?;
@@ -510,18 +460,18 @@ where
     fn _parse_freeze_asset(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::freeze_asset {})
     }
     fn _parse_mint(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(2usize)?;
@@ -533,18 +483,18 @@ where
     fn _parse_name(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::name {})
     }
     fn _parse_set_metadata(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(3usize)?;
@@ -557,9 +507,9 @@ where
     fn _parse_set_team(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(3usize)?;
@@ -572,18 +522,18 @@ where
     fn _parse_symbol(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::symbol {})
     }
     fn _parse_thaw(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(1usize)?;
@@ -594,27 +544,27 @@ where
     fn _parse_thaw_asset(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::thaw_asset {})
     }
     fn _parse_total_supply(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         Ok(Self::total_supply {})
     }
     fn _parse_transfer(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(2usize)?;
@@ -626,9 +576,9 @@ where
     fn _parse_transfer_from(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(3usize)?;
@@ -641,9 +591,9 @@ where
     fn _parse_transfer_ownership(
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<Self> {
-        use ::precompile_utils::revert::InjectBacktrace;
-        use ::precompile_utils::modifier::FunctionModifier;
-        use ::precompile_utils::handle::PrecompileHandleExt;
+        use ::precompile_utils::solidity::revert::InjectBacktrace;
+        use ::precompile_utils::solidity::modifier::FunctionModifier;
+        use ::precompile_utils::evm::handle::PrecompileHandleExt;
         handle.check_function_modifier(FunctionModifier::NonPayable)?;
         let mut input = handle.read_after_selector()?;
         input.expect_arguments(1usize)?;
@@ -656,65 +606,56 @@ where
         discriminant: Discriminant,
         handle: &mut impl PrecompileHandle,
     ) -> ::precompile_utils::EvmResult<::fp_evm::PrecompileOutput> {
-        use ::precompile_utils::data::EvmDataWriter;
+        use ::precompile_utils::solidity::codec::Writer;
         use ::fp_evm::{PrecompileOutput, ExitSucceed};
         let output = match self {
             Self::allowance { owner, spender } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::allowance(discriminant, handle, owner, spender);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::approve { spender, value } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::approve(discriminant, handle, spender, value);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::balance_of { who } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::balance_of(discriminant, handle, who);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::burn { from, value } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::burn(discriminant, handle, from, value);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::clear_metadata {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::clear_metadata(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::decimals {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<Runtime>>::decimals(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::eip2612_domain_separator {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::eip2612_domain_separator(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::eip2612_nonces { owner } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::eip2612_nonces(discriminant, handle, owner);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::eip2612_permit { owner, spender, value, deadline, v, r, s } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::eip2612_permit(
@@ -728,97 +669,84 @@ where
                     r,
                     s,
                 );
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::freeze { account } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::freeze(discriminant, handle, account);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::freeze_asset {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::freeze_asset(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::mint { to, value } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::mint(discriminant, handle, to, value);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::name {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<Runtime>>::name(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::set_metadata { name, symbol, decimals } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::set_metadata(discriminant, handle, name, symbol, decimals);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::set_team { issuer, admin, freezer } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::set_team(discriminant, handle, issuer, admin, freezer);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::symbol {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<Runtime>>::symbol(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::thaw { account } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::thaw(discriminant, handle, account);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::thaw_asset {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<Runtime>>::thaw_asset(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::total_supply {} => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::total_supply(discriminant, handle);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::transfer { to, value } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::transfer(discriminant, handle, to, value);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::transfer_from { from, to, value } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::transfer_from(discriminant, handle, from, to, value);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::transfer_ownership { owner } => {
-                use ::precompile_utils::EvmDataWriter;
                 let output = <PrecompileSet<
                     Runtime,
                 >>::transfer_ownership(discriminant, handle, owner);
-                ::precompile_utils::data::encode_as_function_return_value(output?)
+                ::precompile_utils::solidity::encode_return_value(output?)
             }
             Self::__phantom(_, _) => {
                 ::core::panicking::panic_fmt(
                     format_args!("__phantom variant should not be used"),
-                );
+                )
             }
         };
         Ok(PrecompileOutput {
@@ -958,41 +886,36 @@ where
         &[4076725131u32, 4030008324u32]
     }
     pub fn encode(self) -> ::sp_std::vec::Vec<u8> {
-        use ::precompile_utils::EvmDataWriter;
+        use ::precompile_utils::solidity::codec::Writer;
         match self {
             Self::allowance { owner, spender } => {
-                EvmDataWriter::new_with_selector(3714247998u32)
+                Writer::new_with_selector(3714247998u32)
                     .write(owner)
                     .write(spender)
                     .build()
             }
             Self::approve { spender, value } => {
-                EvmDataWriter::new_with_selector(157198259u32)
+                Writer::new_with_selector(157198259u32)
                     .write(spender)
                     .write(value)
                     .build()
             }
             Self::balance_of { who } => {
-                EvmDataWriter::new_with_selector(1889567281u32).write(who).build()
+                Writer::new_with_selector(1889567281u32).write(who).build()
             }
             Self::burn { from, value } => {
-                EvmDataWriter::new_with_selector(2646777772u32)
-                    .write(from)
-                    .write(value)
-                    .build()
+                Writer::new_with_selector(2646777772u32).write(from).write(value).build()
             }
-            Self::clear_metadata {} => {
-                EvmDataWriter::new_with_selector(4021736498u32).build()
-            }
-            Self::decimals {} => EvmDataWriter::new_with_selector(826074471u32).build(),
+            Self::clear_metadata {} => Writer::new_with_selector(4021736498u32).build(),
+            Self::decimals {} => Writer::new_with_selector(826074471u32).build(),
             Self::eip2612_domain_separator {} => {
-                EvmDataWriter::new_with_selector(910484757u32).build()
+                Writer::new_with_selector(910484757u32).build()
             }
             Self::eip2612_nonces { owner } => {
-                EvmDataWriter::new_with_selector(2127478272u32).write(owner).build()
+                Writer::new_with_selector(2127478272u32).write(owner).build()
             }
             Self::eip2612_permit { owner, spender, value, deadline, v, r, s } => {
-                EvmDataWriter::new_with_selector(3573918927u32)
+                Writer::new_with_selector(3573918927u32)
                     .write(owner)
                     .write(spender)
                     .write(value)
@@ -1003,62 +926,50 @@ where
                     .build()
             }
             Self::freeze { account } => {
-                EvmDataWriter::new_with_selector(2367676207u32).write(account).build()
+                Writer::new_with_selector(2367676207u32).write(account).build()
             }
-            Self::freeze_asset {} => {
-                EvmDataWriter::new_with_selector(3566436177u32).build()
-            }
+            Self::freeze_asset {} => Writer::new_with_selector(3566436177u32).build(),
             Self::mint { to, value } => {
-                EvmDataWriter::new_with_selector(1086394137u32)
-                    .write(to)
-                    .write(value)
-                    .build()
+                Writer::new_with_selector(1086394137u32).write(to).write(value).build()
             }
-            Self::name {} => EvmDataWriter::new_with_selector(117300739u32).build(),
+            Self::name {} => Writer::new_with_selector(117300739u32).build(),
             Self::set_metadata { name, symbol, decimals } => {
-                EvmDataWriter::new_with_selector(936559348u32)
+                Writer::new_with_selector(936559348u32)
                     .write(name)
                     .write(symbol)
                     .write(decimals)
                     .build()
             }
             Self::set_team { issuer, admin, freezer } => {
-                EvmDataWriter::new_with_selector(3352902745u32)
+                Writer::new_with_selector(3352902745u32)
                     .write(issuer)
                     .write(admin)
                     .write(freezer)
                     .build()
             }
-            Self::symbol {} => EvmDataWriter::new_with_selector(2514000705u32).build(),
+            Self::symbol {} => Writer::new_with_selector(2514000705u32).build(),
             Self::thaw { account } => {
-                EvmDataWriter::new_with_selector(1587675670u32).write(account).build()
+                Writer::new_with_selector(1587675670u32).write(account).build()
             }
-            Self::thaw_asset {} => {
-                EvmDataWriter::new_with_selector(1374431959u32).build()
-            }
-            Self::total_supply {} => {
-                EvmDataWriter::new_with_selector(404098525u32).build()
-            }
+            Self::thaw_asset {} => Writer::new_with_selector(1374431959u32).build(),
+            Self::total_supply {} => Writer::new_with_selector(404098525u32).build(),
             Self::transfer { to, value } => {
-                EvmDataWriter::new_with_selector(2835717307u32)
-                    .write(to)
-                    .write(value)
-                    .build()
+                Writer::new_with_selector(2835717307u32).write(to).write(value).build()
             }
             Self::transfer_from { from, to, value } => {
-                EvmDataWriter::new_with_selector(599290589u32)
+                Writer::new_with_selector(599290589u32)
                     .write(from)
                     .write(to)
                     .write(value)
                     .build()
             }
             Self::transfer_ownership { owner } => {
-                EvmDataWriter::new_with_selector(4076725131u32).write(owner).build()
+                Writer::new_with_selector(4076725131u32).write(owner).build()
             }
             Self::__phantom(_, _) => {
                 ::core::panicking::panic_fmt(
                     format_args!("__phantom variant should not be used"),
-                );
+                )
             }
         }
     }
@@ -1079,32 +990,19 @@ where
         &self,
         handle: &mut impl PrecompileHandle,
     ) -> Option<::precompile_utils::EvmResult<::fp_evm::PrecompileOutput>> {
-        use ::precompile_utils::precompile_set::DiscriminantResult;
-        use ::fp_evm::ExitError;
-        let discriminant = <PrecompileSet<Runtime>>::discriminant(handle.code_address());
-        if let DiscriminantResult::Some(_, cost) | DiscriminantResult::None(cost)
-            = discriminant {
-            let result = handle.record_cost(cost);
-            if let Err(e) = result {
-                return Some(Err(e.into()));
-            }
-        }
-        let discriminant = match discriminant {
-            DiscriminantResult::Some(d, _) => d,
-            DiscriminantResult::None(cost) => return None,
-            DiscriminantResult::OutOfGas => return Some(Err(ExitError::OutOfGas.into())),
+        let discriminant = match <PrecompileSet<
+            Runtime,
+        >>::discriminant(handle.code_address()) {
+            Some(d) => d,
+            None => return None,
         };
         Some(
             <PrecompileSetCall<Runtime>>::parse_call_data(handle)
                 .and_then(|call| call.execute(discriminant, handle)),
         )
     }
-    fn is_precompile(
-        &self,
-        address: H160,
-        remaining_gas: u64,
-    ) -> ::fp_evm::IsPrecompileResult {
-        <PrecompileSet<Runtime>>::discriminant(address, remaining_gas).is_some()
+    fn is_precompile(&self, address: H160, gas: u64) -> ::fp_evm::IsPrecompileResult {
+        <PrecompileSet<Runtime>>::discriminant(address, gas).is_some()
     }
 }
 #[allow(non_snake_case)]
@@ -1112,8 +1010,8 @@ pub(crate) fn __PrecompileSet_test_solidity_signatures_inner<Runtime>()
 where
     Runtime: Get<u32>,
 {
-    use ::precompile_utils::data::EvmData;
-    match (&"(address,address)", &<(Address, Address) as EvmData>::solidity_type()) {
+    use ::precompile_utils::solidity::Codec;
+    match (&"(address,address)", &<(Address, Address) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1124,14 +1022,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "allowance",
+                            "allowance"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address,uint256)", &<(Address, U256) as EvmData>::solidity_type()) {
+    match (&"(address,uint256)", &<(Address, U256) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1142,14 +1040,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "approve",
+                            "approve"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address)", &<(Address,) as EvmData>::solidity_type()) {
+    match (&"(address)", &<(Address,) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1160,14 +1058,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "balance_of",
+                            "balance_of"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address,uint256)", &<(Address, U256) as EvmData>::solidity_type()) {
+    match (&"(address,uint256)", &<(Address, U256) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1178,14 +1076,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "burn",
+                            "burn"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1196,14 +1094,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "clear_metadata",
+                            "clear_metadata"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1214,14 +1112,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "decimals",
+                            "decimals"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1232,14 +1130,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "eip2612_domain_separator",
+                            "eip2612_domain_separator"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address)", &<(Address,) as EvmData>::solidity_type()) {
+    match (&"(address)", &<(Address,) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1250,7 +1148,7 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "eip2612_nonces",
+                            "eip2612_nonces"
                         ),
                     ),
                 );
@@ -1259,7 +1157,7 @@ where
     };
     match (
         &"(address,address,uint256,uint256,uint8,bytes32,bytes32)",
-        &<(Address, Address, U256, U256, u8, H256, H256) as EvmData>::solidity_type(),
+        &<(Address, Address, U256, U256, u8, H256, H256) as Codec>::signature(),
     ) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
@@ -1271,14 +1169,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "eip2612_permit",
+                            "eip2612_permit"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address)", &<(Address,) as EvmData>::solidity_type()) {
+    match (&"(address)", &<(Address,) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1289,14 +1187,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "freeze",
+                            "freeze"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1307,14 +1205,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "freeze_asset",
+                            "freeze_asset"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address,uint256)", &<(Address, U256) as EvmData>::solidity_type()) {
+    match (&"(address,uint256)", &<(Address, U256) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1325,14 +1223,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "mint",
+                            "mint"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1343,7 +1241,7 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "name",
+                            "name"
                         ),
                     ),
                 );
@@ -1356,7 +1254,7 @@ where
             BoundedString<GetAssetsStringLimit<Runtime>>,
             BoundedString<GetAssetsStringLimit<Runtime>>,
             u8,
-        ) as EvmData>::solidity_type(),
+        ) as Codec>::signature(),
     ) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
@@ -1368,7 +1266,7 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "set_metadata",
+                            "set_metadata"
                         ),
                     ),
                 );
@@ -1377,7 +1275,7 @@ where
     };
     match (
         &"(address,address,address)",
-        &<(Address, Address, Address) as EvmData>::solidity_type(),
+        &<(Address, Address, Address) as Codec>::signature(),
     ) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
@@ -1389,14 +1287,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "set_team",
+                            "set_team"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1407,14 +1305,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "symbol",
+                            "symbol"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address)", &<(Address,) as EvmData>::solidity_type()) {
+    match (&"(address)", &<(Address,) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1425,14 +1323,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "thaw",
+                            "thaw"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1443,14 +1341,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "thaw_asset",
+                            "thaw_asset"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"()", &<() as EvmData>::solidity_type()) {
+    match (&"()", &<() as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1461,14 +1359,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "total_supply",
+                            "total_supply"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address,uint256)", &<(Address, U256) as EvmData>::solidity_type()) {
+    match (&"(address,uint256)", &<(Address, U256) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1479,7 +1377,7 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "transfer",
+                            "transfer"
                         ),
                     ),
                 );
@@ -1488,7 +1386,7 @@ where
     };
     match (
         &"(address,address,uint256)",
-        &<(Address, Address, U256) as EvmData>::solidity_type(),
+        &<(Address, Address, U256) as Codec>::signature(),
     ) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
@@ -1500,14 +1398,14 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "transfer_from",
+                            "transfer_from"
                         ),
                     ),
                 );
             }
         }
     };
-    match (&"(address)", &<(Address,) as EvmData>::solidity_type()) {
+    match (&"(address)", &<(Address,) as Codec>::signature()) {
         (left_val, right_val) => {
             if !(*left_val == *right_val) {
                 let kind = ::core::panicking::AssertKind::Eq;
@@ -1518,7 +1416,7 @@ where
                     ::core::option::Option::Some(
                         format_args!(
                             "{0} function signature doesn\'t match (left: attribute, right: computed from Rust types)",
-                            "transfer_ownership",
+                            "transfer_ownership"
                         ),
                     ),
                 );

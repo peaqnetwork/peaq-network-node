@@ -14,11 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::testing::PrettyLog;
-use fp_evm::{Context, ExitError, ExitReason, Log, PrecompileHandle, Transfer};
-use sp_core::{H160, H256};
-use sp_std::{borrow::Cow, boxed::Box};
+use {
+	crate::testing::PrettyLog,
+	evm::{ExitRevert, ExitSucceed},
+	fp_evm::{Context, ExitError, ExitReason, Log, PrecompileHandle, Transfer},
+	sp_core::{H160, H256},
+	sp_std::boxed::Box,
+};
 
+#[derive(Debug, Clone)]
 pub struct Subcall {
 	pub address: H160,
 	pub transfer: Option<Transfer>,
@@ -28,11 +32,41 @@ pub struct Subcall {
 	pub context: Context,
 }
 
+#[derive(Debug, Clone)]
 pub struct SubcallOutput {
 	pub reason: ExitReason,
 	pub output: Vec<u8>,
 	pub cost: u64,
 	pub logs: Vec<Log>,
+}
+
+impl SubcallOutput {
+	pub fn revert() -> Self {
+		Self {
+			reason: ExitReason::Revert(ExitRevert::Reverted),
+			output: Vec::new(),
+			cost: 0,
+			logs: Vec::new(),
+		}
+	}
+
+	pub fn succeed() -> Self {
+		Self {
+			reason: ExitReason::Succeed(ExitSucceed::Returned),
+			output: Vec::new(),
+			cost: 0,
+			logs: Vec::new(),
+		}
+	}
+
+	pub fn out_of_gas() -> Self {
+		Self {
+			reason: ExitReason::Error(ExitError::OutOfGas),
+			output: Vec::new(),
+			cost: 0,
+			logs: Vec::new(),
+		}
+	}
 }
 
 pub trait SubcallTrait: FnMut(Subcall) -> SubcallOutput + 'static {}
@@ -81,15 +115,23 @@ impl PrecompileHandle for MockHandle {
 		context: &Context,
 	) -> (ExitReason, Vec<u8>) {
 		if self
-			.record_cost(crate::costs::call_cost(context.apparent_value, &evm::Config::london()))
+			.record_cost(crate::evm::costs::call_cost(
+				context.apparent_value,
+				&evm::Config::london(),
+			))
 			.is_err()
 		{
-			return (ExitReason::Error(ExitError::OutOfGas), vec![])
+			return (ExitReason::Error(ExitError::OutOfGas), vec![]);
 		}
 
 		match &mut self.subcall_handle {
 			Some(handle) => {
-				let SubcallOutput { reason, output, cost, logs } = handle(Subcall {
+				let SubcallOutput {
+					reason,
+					output,
+					cost,
+					logs,
+				} = handle(Subcall {
 					address,
 					transfer,
 					input,
@@ -99,15 +141,16 @@ impl PrecompileHandle for MockHandle {
 				});
 
 				if self.record_cost(cost).is_err() {
-					return (ExitReason::Error(ExitError::OutOfGas), vec![])
+					return (ExitReason::Error(ExitError::OutOfGas), vec![]);
 				}
 
 				for log in logs {
-					self.log(log.address, log.topics, log.data).expect("cannot fail");
+					self.log(log.address, log.topics, log.data)
+						.expect("cannot fail");
 				}
 
 				(reason, output)
-			},
+			}
 			None => panic!("no subcall handle registered"),
 		}
 	}
@@ -122,23 +165,16 @@ impl PrecompileHandle for MockHandle {
 		}
 	}
 
-	fn record_external_cost(
-		&mut self,
-		_ref_time: Option<u64>,
-		_proof_size: Option<u64>,
-		_storage_growth: Option<u64>,
-	) -> Result<(), ExitError> {
-		Err(ExitError::Other(Cow::from("not implemented yet")))
-	}
-
-	fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {}
-
 	fn remaining_gas(&self) -> u64 {
 		self.gas_limit - self.gas_used
 	}
 
 	fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) -> Result<(), ExitError> {
-		self.logs.push(PrettyLog(Log { address, topics, data }));
+		self.logs.push(PrettyLog(Log {
+			address,
+			topics,
+			data,
+		}));
 		Ok(())
 	}
 
@@ -166,4 +202,15 @@ impl PrecompileHandle for MockHandle {
 	fn gas_limit(&self) -> Option<u64> {
 		Some(self.gas_limit)
 	}
+
+	fn record_external_cost(
+		&mut self,
+		_ref_time: Option<u64>,
+		_proof_size: Option<u64>,
+		_storage_growth: Option<u64>,
+	) -> Result<(), ExitError> {
+		Ok(())
+	}
+
+	fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {}
 }

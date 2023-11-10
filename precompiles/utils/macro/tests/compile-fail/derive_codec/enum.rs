@@ -14,16 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use core::marker::PhantomData;
+use precompile_utils::prelude::*;
 
-pub struct Precompile<R>(PhantomData<R>);
-
-#[precompile_utils_macro::precompile]
-impl<R: Get<u32>> Precompile<R> {
-	#[precompile::public("foo(bytes)")]
-	fn foo(handle: &mut impl PrecompileHandle, arg: BoundedBytes<R>) -> EvmResult {
-		Ok(())
-	}
+#[derive(solidity::Codec)]
+enum Test {
+	One,
+	Two(u8),
+	Three { test: u16 }
 }
 
 fn main() {}

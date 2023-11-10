@@ -14,43 +14,72 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{data::EvmDataReader, modifier::FunctionModifier, revert::MayRevert, EvmResult};
-use fp_evm::{Log, PrecompileHandle};
+use {
+	crate::{
+		solidity::{
+			codec::Reader,
+			modifier::FunctionModifier,
+			revert::{MayRevert, RevertReason},
+		},
+		EvmResult,
+	},
+	fp_evm::{Log, PrecompileHandle},
+};
 
 pub trait PrecompileHandleExt: PrecompileHandle {
+	/// Record cost of one DB read manually.
+	/// The max encoded lenght of the data that will be read should be provided.
+	#[must_use]
+	fn record_db_read<Runtime: pallet_evm::Config>(
+		&mut self,
+		data_max_encoded_len: usize,
+	) -> Result<(), evm::ExitError>;
+
 	/// Record cost of a log manually.
 	/// This can be useful to record log costs early when their content have static size.
+	#[must_use]
 	fn record_log_costs_manual(&mut self, topics: usize, data_len: usize) -> EvmResult;
 
 	/// Record cost of logs.
+	#[must_use]
 	fn record_log_costs(&mut self, logs: &[&Log]) -> EvmResult;
 
+	#[must_use]
 	/// Check that a function call is compatible with the context it is
 	/// called into.
 	fn check_function_modifier(&self, modifier: FunctionModifier) -> MayRevert;
 
-	/// Read the selector from the input data.
-	fn read_selector<T>(&self) -> MayRevert<T>
-	where
-		T: num_enum::TryFromPrimitive<Primitive = u32>;
-
+	#[must_use]
 	/// Read the selector from the input data.
 	fn read_u32_selector(&self) -> MayRevert<u32>;
 
+	#[must_use]
 	/// Returns a reader of the input, skipping the selector.
-	fn read_after_selector(&self) -> MayRevert<EvmDataReader>;
+	fn read_after_selector(&self) -> MayRevert<Reader>;
 }
 
 impl<T: PrecompileHandle> PrecompileHandleExt for T {
+	#[must_use]
+	fn record_db_read<Runtime: pallet_evm::Config>(
+		&mut self,
+		data_max_encoded_len: usize,
+	) -> Result<(), evm::ExitError> {
+		self.record_cost(crate::prelude::RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+		// TODO: record ref time when precompile will be benchmarked
+		self.record_external_cost(None, Some(data_max_encoded_len as u64), None)
+	}
+
 	/// Record cost of a log manualy.
 	/// This can be useful to record log costs early when their content have static size.
+	#[must_use]
 	fn record_log_costs_manual(&mut self, topics: usize, data_len: usize) -> EvmResult {
-		self.record_cost(crate::costs::log_costs(topics, data_len)?)?;
+		self.record_cost(crate::evm::costs::log_costs(topics, data_len)?)?;
 
 		Ok(())
 	}
 
 	/// Record cost of logs.
+	#[must_use]
 	fn record_log_costs(&mut self, logs: &[&Log]) -> EvmResult {
 		for log in logs {
 			self.record_log_costs_manual(log.topics.len(), log.data.len())?;
@@ -59,28 +88,28 @@ impl<T: PrecompileHandle> PrecompileHandleExt for T {
 		Ok(())
 	}
 
+	#[must_use]
 	/// Check that a function call is compatible with the context it is
 	/// called into.
 	fn check_function_modifier(&self, modifier: FunctionModifier) -> MayRevert {
-		crate::modifier::check_function_modifier(self.context(), self.is_static(), modifier)
+		crate::solidity::modifier::check_function_modifier(
+			self.context(),
+			self.is_static(),
+			modifier,
+		)
 	}
 
-	/// Read the selector from the input data.
-	fn read_selector<S>(&self) -> MayRevert<S>
-	where
-		S: num_enum::TryFromPrimitive<Primitive = u32>,
-	{
-		EvmDataReader::read_selector(self.input())
-	}
-
+	#[must_use]
 	/// Read the selector from the input data as u32.
 	fn read_u32_selector(&self) -> MayRevert<u32> {
-		EvmDataReader::read_u32_selector(self.input())
+		crate::solidity::codec::selector(self.input())
+			.ok_or(RevertReason::read_out_of_bounds("selector").into())
 	}
 
+	#[must_use]
 	/// Returns a reader of the input, skipping the selector.
-	fn read_after_selector(&self) -> MayRevert<EvmDataReader> {
-		EvmDataReader::new_skip_selector(self.input())
+	fn read_after_selector(&self) -> MayRevert<Reader> {
+		Reader::new_skip_selector(self.input())
 	}
 }
 
@@ -173,13 +202,11 @@ mod tests {
 			_ref_time: Option<u64>,
 			_proof_size: Option<u64>,
 			_storage_growth: Option<u64>,
-		) -> Result<(), evm::ExitError> {
-			unimplemented!()
+		) -> Result<(), fp_evm::ExitError> {
+			Ok(())
 		}
 
-		fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {
-			unimplemented!()
-		}
+		fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {}
 	}
 
 	#[test]
@@ -192,9 +219,9 @@ mod tests {
 		let mut precompile_handle = MockPrecompileHandle;
 
 		assert_eq!(
-			using_precompile_handle(&mut precompile_handle, || with_precompile_handle(|handle| {
-				handle.is_static()
-			})),
+			using_precompile_handle(&mut precompile_handle, || with_precompile_handle(
+				|handle| handle.is_static()
+			)),
 			Some(true)
 		);
 	}

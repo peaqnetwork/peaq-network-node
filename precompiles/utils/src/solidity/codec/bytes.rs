@@ -15,6 +15,8 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
+use alloc::borrow::ToOwned;
+use sp_core::{ConstU32, Get};
 
 type ConstU32Max = ConstU32<{ u32::MAX }>;
 
@@ -25,14 +27,14 @@ pub type UnboundedString = BoundedBytesString<StringKind, ConstU32Max>;
 pub type BoundedString<S> = BoundedBytesString<StringKind, S>;
 
 trait Kind {
-	fn solidity_type() -> String;
+	fn signature() -> String;
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BytesKind;
 
 impl Kind for BytesKind {
-	fn solidity_type() -> String {
+	fn signature() -> String {
 		String::from("bytes")
 	}
 }
@@ -41,7 +43,7 @@ impl Kind for BytesKind {
 pub struct StringKind;
 
 impl Kind for StringKind {
-	fn solidity_type() -> String {
+	fn signature() -> String {
 		String::from("string")
 	}
 }
@@ -55,9 +57,18 @@ pub struct BoundedBytesString<K, S> {
 	_phantom: PhantomData<(K, S)>,
 }
 
+impl<K, S> Default for BoundedBytesString<K, S> {
+	fn default() -> Self {
+		Vec::default().into()
+	}
+}
+
 impl<K: Kind, S: Get<u32>> Clone for BoundedBytesString<K, S> {
 	fn clone(&self) -> Self {
-		Self { data: self.data.clone(), _phantom: PhantomData }
+		Self {
+			data: self.data.clone(),
+			_phantom: PhantomData,
+		}
 	}
 }
 
@@ -79,8 +90,8 @@ impl<K, S: Get<u32>> BoundedBytesString<K, S> {
 	}
 }
 
-impl<K: Kind, S: Get<u32>> EvmData for BoundedBytesString<K, S> {
-	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
+impl<K: Kind, S: Get<u32>> Codec for BoundedBytesString<K, S> {
+	fn read(reader: &mut Reader) -> MayRevert<Self> {
 		let mut inner_reader = reader.read_pointer()?;
 
 		// Read bytes/string size.
@@ -91,7 +102,7 @@ impl<K: Kind, S: Get<u32>> EvmData for BoundedBytesString<K, S> {
 			.map_err(|_| RevertReason::value_is_too_large("length"))?;
 
 		if array_size > S::get() as usize {
-			return Err(RevertReason::value_is_too_large("length").into())
+			return Err(RevertReason::value_is_too_large("length").into());
 		}
 
 		// Get valid range over the bytes data.
@@ -100,14 +111,17 @@ impl<K: Kind, S: Get<u32>> EvmData for BoundedBytesString<K, S> {
 		let data = inner_reader
 			.input
 			.get(range)
-			.ok_or_else(|| RevertReason::read_out_of_bounds(K::solidity_type()))?;
+			.ok_or_else(|| RevertReason::read_out_of_bounds(K::signature()))?;
 
-		let bytes = Self { data: data.to_owned(), _phantom: PhantomData };
+		let bytes = Self {
+			data: data.to_owned(),
+			_phantom: PhantomData,
+		};
 
 		Ok(bytes)
 	}
 
-	fn write(writer: &mut EvmDataWriter, value: Self) {
+	fn write(writer: &mut Writer, value: Self) {
 		let value: Vec<_> = value.into();
 		let length = value.len();
 
@@ -124,7 +138,10 @@ impl<K: Kind, S: Get<u32>> EvmData for BoundedBytesString<K, S> {
 		value.resize(padded_size, 0);
 
 		writer.write_pointer(
-			EvmDataWriter::new().write(U256::from(length)).write_raw_bytes(&value).build(),
+			Writer::new()
+				.write(U256::from(length))
+				.write_raw_bytes(&value)
+				.build(),
 		);
 	}
 
@@ -132,8 +149,8 @@ impl<K: Kind, S: Get<u32>> EvmData for BoundedBytesString<K, S> {
 		false
 	}
 
-	fn solidity_type() -> String {
-		K::solidity_type()
+	fn signature() -> String {
+		K::signature()
 	}
 }
 
@@ -147,25 +164,37 @@ impl<K, S> From<BoundedBytesString<K, S>> for Vec<u8> {
 
 impl<K, S> From<Vec<u8>> for BoundedBytesString<K, S> {
 	fn from(value: Vec<u8>) -> Self {
-		Self { data: value, _phantom: PhantomData }
+		Self {
+			data: value,
+			_phantom: PhantomData,
+		}
 	}
 }
 
 impl<K, S> From<&[u8]> for BoundedBytesString<K, S> {
 	fn from(value: &[u8]) -> Self {
-		Self { data: value.to_vec(), _phantom: PhantomData }
+		Self {
+			data: value.to_vec(),
+			_phantom: PhantomData,
+		}
 	}
 }
 
 impl<K, S, const N: usize> From<[u8; N]> for BoundedBytesString<K, S> {
 	fn from(value: [u8; N]) -> Self {
-		Self { data: value.to_vec(), _phantom: PhantomData }
+		Self {
+			data: value.to_vec(),
+			_phantom: PhantomData,
+		}
 	}
 }
 
 impl<K, S, const N: usize> From<&[u8; N]> for BoundedBytesString<K, S> {
 	fn from(value: &[u8; N]) -> Self {
-		Self { data: value.to_vec(), _phantom: PhantomData }
+		Self {
+			data: value.to_vec(),
+			_phantom: PhantomData,
+		}
 	}
 }
 
@@ -181,12 +210,18 @@ impl<K, S> TryFrom<BoundedBytesString<K, S>> for String {
 
 impl<K, S> From<&str> for BoundedBytesString<K, S> {
 	fn from(value: &str) -> Self {
-		Self { data: value.as_bytes().into(), _phantom: PhantomData }
+		Self {
+			data: value.as_bytes().into(),
+			_phantom: PhantomData,
+		}
 	}
 }
 
 impl<K, S> From<String> for BoundedBytesString<K, S> {
 	fn from(value: String) -> Self {
-		Self { data: value.as_bytes().into(), _phantom: PhantomData }
+		Self {
+			data: value.as_bytes().into(),
+			_phantom: PhantomData,
+		}
 	}
 }
