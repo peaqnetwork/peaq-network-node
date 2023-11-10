@@ -65,10 +65,7 @@ impl<K, S> Default for BoundedBytesString<K, S> {
 
 impl<K: Kind, S: Get<u32>> Clone for BoundedBytesString<K, S> {
 	fn clone(&self) -> Self {
-		Self {
-			data: self.data.clone(),
-			_phantom: PhantomData,
-		}
+		Self { data: self.data.clone(), _phantom: PhantomData }
 	}
 }
 
@@ -102,7 +99,7 @@ impl<K: Kind, S: Get<u32>> Codec for BoundedBytesString<K, S> {
 			.map_err(|_| RevertReason::value_is_too_large("length"))?;
 
 		if array_size > S::get() as usize {
-			return Err(RevertReason::value_is_too_large("length").into());
+			return Err(RevertReason::value_is_too_large("length").into())
 		}
 
 		// Get valid range over the bytes data.
@@ -113,10 +110,7 @@ impl<K: Kind, S: Get<u32>> Codec for BoundedBytesString<K, S> {
 			.get(range)
 			.ok_or_else(|| RevertReason::read_out_of_bounds(K::signature()))?;
 
-		let bytes = Self {
-			data: data.to_owned(),
-			_phantom: PhantomData,
-		};
+		let bytes = Self { data: data.to_owned(), _phantom: PhantomData };
 
 		Ok(bytes)
 	}
@@ -137,12 +131,8 @@ impl<K: Kind, S: Get<u32>> Codec for BoundedBytesString<K, S> {
 		let mut value = value.to_vec();
 		value.resize(padded_size, 0);
 
-		writer.write_pointer(
-			Writer::new()
-				.write(U256::from(length))
-				.write_raw_bytes(&value)
-				.build(),
-		);
+		writer
+			.write_pointer(Writer::new().write(U256::from(length)).write_raw_bytes(&value).build());
 	}
 
 	fn has_static_size() -> bool {
@@ -164,37 +154,25 @@ impl<K, S> From<BoundedBytesString<K, S>> for Vec<u8> {
 
 impl<K, S> From<Vec<u8>> for BoundedBytesString<K, S> {
 	fn from(value: Vec<u8>) -> Self {
-		Self {
-			data: value,
-			_phantom: PhantomData,
-		}
+		Self { data: value, _phantom: PhantomData }
 	}
 }
 
 impl<K, S> From<&[u8]> for BoundedBytesString<K, S> {
 	fn from(value: &[u8]) -> Self {
-		Self {
-			data: value.to_vec(),
-			_phantom: PhantomData,
-		}
+		Self { data: value.to_vec(), _phantom: PhantomData }
 	}
 }
 
 impl<K, S, const N: usize> From<[u8; N]> for BoundedBytesString<K, S> {
 	fn from(value: [u8; N]) -> Self {
-		Self {
-			data: value.to_vec(),
-			_phantom: PhantomData,
-		}
+		Self { data: value.to_vec(), _phantom: PhantomData }
 	}
 }
 
 impl<K, S, const N: usize> From<&[u8; N]> for BoundedBytesString<K, S> {
 	fn from(value: &[u8; N]) -> Self {
-		Self {
-			data: value.to_vec(),
-			_phantom: PhantomData,
-		}
+		Self { data: value.to_vec(), _phantom: PhantomData }
 	}
 }
 
@@ -210,18 +188,12 @@ impl<K, S> TryFrom<BoundedBytesString<K, S>> for String {
 
 impl<K, S> From<&str> for BoundedBytesString<K, S> {
 	fn from(value: &str) -> Self {
-		Self {
-			data: value.as_bytes().into(),
-			_phantom: PhantomData,
-		}
+		Self { data: value.as_bytes().into(), _phantom: PhantomData }
 	}
 }
 
 impl<K, S> From<String> for BoundedBytesString<K, S> {
 	fn from(value: String) -> Self {
-		Self {
-			data: value.as_bytes().into(),
-			_phantom: PhantomData,
-		}
+		Self { data: value.as_bytes().into(), _phantom: PhantomData }
 	}
 }

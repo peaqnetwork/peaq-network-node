@@ -18,17 +18,15 @@
 //! - Substrate call dispatch.
 //! - Substrate DB read and write costs
 
-use {
-	crate::{evm::handle::using_precompile_handle, solidity::revert::revert},
-	core::marker::PhantomData,
-	fp_evm::{ExitError, PrecompileFailure, PrecompileHandle},
-	frame_support::{
-		dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-		pallet_prelude::*,
-		traits::Get,
-	},
-	pallet_evm::GasWeightMapping,
+use crate::{evm::handle::using_precompile_handle, solidity::revert::revert};
+use core::marker::PhantomData;
+use fp_evm::{ExitError, PrecompileFailure, PrecompileHandle};
+use frame_support::{
+	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	pallet_prelude::*,
+	traits::Get,
 };
+use pallet_evm::GasWeightMapping;
 
 /// System account size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
 /// Blake2_128Concat (16) + AccountId (20) + AccountInfo (4 + 12 + AccountData (4* 16)) = 148
@@ -44,9 +42,8 @@ impl From<TryDispatchError> for PrecompileFailure {
 	fn from(f: TryDispatchError) -> PrecompileFailure {
 		match f {
 			TryDispatchError::Evm(e) => PrecompileFailure::Error { exit_status: e },
-			TryDispatchError::Substrate(e) => {
-				revert(alloc::format!("Dispatched call failed with error: {e:?}"))
-			}
+			TryDispatchError::Substrate(e) =>
+				revert(alloc::format!("Dispatched call failed with error: {e:?}")),
 		}
 	}
 }
@@ -71,7 +68,7 @@ where
 		let remaining_gas = handle.remaining_gas();
 		let required_gas = Runtime::GasWeightMapping::weight_to_gas(weight);
 		if required_gas > remaining_gas {
-			return Err(ExitError::OutOfGas);
+			return Err(ExitError::OutOfGas)
 		}
 
 		// Make sure there is enough remaining weight
@@ -115,7 +112,7 @@ where
 		let dispatch_info = call.get_dispatch_info();
 
 		Self::reocrd_external_cost(handle, dispatch_info.weight, storage_growth)
-			.map_err(|e| TryDispatchError::Evm(e))?;
+			.map_err(TryDispatchError::Evm)?;
 
 		// Dispatch call.
 		// It may be possible to not record gas cost if the call returns Pays::No.
@@ -125,12 +122,8 @@ where
 		let post_dispatch_info = using_precompile_handle(handle, || call.dispatch(origin))
 			.map_err(|e| TryDispatchError::Substrate(e.error))?;
 
-		Self::refund_weight_v2_cost(
-			handle,
-			dispatch_info.weight,
-			post_dispatch_info.actual_weight,
-		)
-		.map_err(|e| TryDispatchError::Evm(e))?;
+		Self::refund_weight_v2_cost(handle, dispatch_info.weight, post_dispatch_info.actual_weight)
+			.map_err(TryDispatchError::Evm)?;
 
 		Ok(post_dispatch_info)
 	}

@@ -72,7 +72,7 @@ where
 				item: item.as_bytes().to_vec(),
 			},
 			// [TODO]
-			0
+			0,
 		)?;
 		log::error!("add_item after dispatch");
 
@@ -110,7 +110,7 @@ where
 				item: item.as_bytes().to_vec(),
 			},
 			// [TODO]
-			0
+			0,
 		)?;
 
 		let event = log1(

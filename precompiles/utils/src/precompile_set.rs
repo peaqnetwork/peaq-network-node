@@ -108,18 +108,14 @@ pub enum DiscriminantResult<T> {
 	OutOfGas,
 }
 
-impl<T> Into<IsPrecompileResult> for DiscriminantResult<T> {
-	fn into(self) -> IsPrecompileResult {
-		match self {
-			Self::Some(_, extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: true,
-				extra_cost,
-			},
-			Self::None(extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost,
-			},
-			Self::OutOfGas => IsPrecompileResult::OutOfGas,
+impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
+	fn from(val: DiscriminantResult<T>) -> Self {
+		match val {
+			DiscriminantResult::<T>::Some(_, extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
+			DiscriminantResult::<T>::None(extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
+			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
 	}
 }
@@ -325,19 +321,19 @@ pub fn get_address_type<R: pallet_evm::Config>(
 
 	// 0 => either EOA or precompile without dummy code
 	if code_len == 0 {
-		return Ok(AddressType::EOA);
+		return Ok(AddressType::EOA)
 	}
 
 	// dummy code is 5 bytes long, so any other len means it is a contract.
 	if code_len != 5 {
-		return Ok(AddressType::Contract);
+		return Ok(AddressType::Contract)
 	}
 
 	// check code matches dummy code
 	handle.record_db_read::<R>(code_len as usize)?;
 	let code = pallet_evm::AccountCodes::<R>::get(address);
-	if &code == &[0x60, 0x00, 0x60, 0x00, 0xfd] {
-		return Ok(AddressType::Precompile);
+	if code == [0x60, 0x00, 0x60, 0x00, 0xfd] {
+		return Ok(AddressType::Precompile)
 	}
 
 	Ok(AddressType::Unknown)
@@ -364,7 +360,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Check DELEGATECALL config.
 	let accept_delegate_call = C::accept_delegate_call().unwrap_or(false);
 	if !accept_delegate_call && code_address != handle.context().address {
-		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"));
+		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"))
 	}
 
 	// Extract which selector is called.
@@ -377,16 +373,14 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Is this selector callable from a smart contract?
 	let callable_by_smart_contract =
 		C::callable_by_smart_contract(caller, selector).unwrap_or(false);
-	if !callable_by_smart_contract {
-		if !is_address_eoa_or_precompile::<R>(handle, caller)? {
-			return Err(revert("Function not callable by smart contracts"));
-		}
+	if !callable_by_smart_contract && !is_address_eoa_or_precompile::<R>(handle, caller)? {
+		return Err(revert("Function not callable by smart contracts"))
 	}
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
 	if !callable_by_precompile && is_precompile_or_fail::<R>(caller, handle.remaining_gas())? {
-		return Err(revert("Function not callable by precompiles"));
+		return Err(revert("Function not callable by precompiles"))
 	}
 
 	Ok(())
@@ -395,9 +389,8 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 pub fn is_precompile_or_fail<R: pallet_evm::Config>(address: H160, gas: u64) -> EvmResult<bool> {
 	match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(address, gas) {
 		IsPrecompileResult::Answer { is_precompile, .. } => Ok(is_precompile),
-		IsPrecompileResult::OutOfGas => Err(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		}),
+		IsPrecompileResult::OutOfGas =>
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
 	}
 }
 
@@ -428,11 +421,10 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 			return (
 				evm::ExitReason::Revert(evm::ExitRevert::Reverted),
 				crate::solidity::revert::revert_as_bytes("subcalls disabled for this precompile"),
-			);
+			)
 		}
 
-		self.handle
-			.call(address, transfer, input, target_gas, is_static, context)
+		self.handle.call(address, transfer, input, target_gas, is_static, context)
 	}
 
 	fn record_cost(&mut self, cost: u64) -> Result<(), evm::ExitError> {
@@ -478,8 +470,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		proof_size: Option<u64>,
 		storage_growth: Option<u64>,
 	) -> Result<(), ExitError> {
-		self.handle
-			.record_external_cost(ref_time, proof_size, storage_growth)
+		self.handle.record_external_cost(ref_time, proof_size, storage_growth)
 	}
 
 	fn refund_external_cost(&mut self, ref_time: Option<u64>, proof_size: Option<u64>) {
@@ -540,10 +531,7 @@ where
 {
 	#[inline(always)]
 	fn new() -> Self {
-		Self {
-			current_recursion_level: RefCell::new(0),
-			_phantom: PhantomData,
-		}
+		Self { current_recursion_level: RefCell::new(0), _phantom: PhantomData }
 	}
 
 	#[inline(always)]
@@ -555,12 +543,12 @@ where
 
 		// Check if this is the address of the precompile.
 		if A::get() != code_address {
-			return None;
+			return None
 		}
 
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err));
+			return Some(Err(err))
 		}
 
 		// Check and increase recursion level if needed.
@@ -569,25 +557,20 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(Err(
-							revert("Precompile is called with too high nesting").into()
-						));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
 		// Subcall protection.
 		let allow_subcalls = C::allow_subcalls().unwrap_or(false);
-		let mut handle = RestrictiveHandle {
-			handle,
-			allow_subcalls,
-		};
+		let mut handle = RestrictiveHandle { handle, allow_subcalls };
 
 		let res = P::execute(&mut handle);
 
@@ -596,10 +579,10 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -608,10 +591,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -639,10 +619,7 @@ where
 {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 }
 
@@ -679,11 +656,11 @@ where
 	) -> Option<PrecompileResult> {
 		let code_address = handle.code_address();
 		if !is_precompile_or_fail::<R>(code_address, handle.remaining_gas()).ok()? {
-			return None;
+			return None
 		}
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err));
+			return Some(Err(err))
 		}
 
 		// Check and increase recursion level if needed.
@@ -694,11 +671,11 @@ where
 					let recursion_level = recursion_level_map.entry(code_address).or_insert(0);
 
 					if *recursion_level > max_recursion_level {
-						return Some(Err(revert("Precompile is called with too high nesting")));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -707,10 +684,7 @@ where
 
 		// Subcall protection.
 		let allow_subcalls = C::allow_subcalls().unwrap_or(false);
-		let mut handle = RestrictiveHandle {
-			handle,
-			allow_subcalls,
-		};
+		let mut handle = RestrictiveHandle { handle, allow_subcalls };
 
 		let res = self.precompile_set.execute(&mut handle);
 
@@ -724,7 +698,7 @@ where
 					};
 
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -737,12 +711,9 @@ where
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		if address.as_bytes().starts_with(A::get()) {
-			return self.precompile_set.is_precompile(address, gas);
+			return self.precompile_set.is_precompile(address, gas)
 		}
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -804,10 +775,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -830,10 +798,7 @@ where
 impl<A> IsActivePrecompile for RevertPrecompile<A> {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: true,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 }
 	}
 }
 
@@ -863,10 +828,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -889,10 +851,7 @@ where
 impl<A> IsActivePrecompile for RemovedPrecompileAt<A> {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 }
 
@@ -923,21 +882,17 @@ impl PrecompileSetFragment for Tuple {
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			match self.Tuple.is_precompile(address, gas) {
-				IsPrecompileResult::Answer {
-					is_precompile: true,
-					..
-				} => return IsPrecompileResult::Answer {
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_precompile(address, gas) {
+				return IsPrecompileResult::Answer {
 					is_precompile: true,
 					extra_cost: 0,
-				},
-				_ => {}
+				}
 			};
 		)*);
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -969,21 +924,17 @@ impl IsActivePrecompile for Tuple {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			match self.Tuple.is_active_precompile(address, gas) {
-				IsPrecompileResult::Answer {
-					is_precompile: true,
-					..
-				} => return IsPrecompileResult::Answer {
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_active_precompile(address, gas) {
+				return IsPrecompileResult::Answer {
 					is_precompile: true,
 					extra_cost: 0,
-				},
-				_ => {}
+				}
 			};
 		)*);
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 }
 
@@ -1024,10 +975,7 @@ where
 		if self.range.contains(&address) {
 			self.inner.is_precompile(address, gas)
 		} else {
-			IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost: 0,
-			}
+			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 		}
 	}
 
@@ -1048,10 +996,7 @@ where
 		if self.range.contains(&address) {
 			self.inner.is_active_precompile(address, gas)
 		} else {
-			IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost: 0,
-			}
+			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 		}
 	}
 }
@@ -1078,17 +1023,20 @@ impl<R, P: IsActivePrecompile> IsActivePrecompile for PrecompileSetBuilder<R, P>
 	}
 }
 
+impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P> {
 	/// Create a new instance of the PrecompileSet.
 	pub fn new() -> Self {
-		Self {
-			inner: P::new(),
-			_phantom: PhantomData,
-		}
+		Self { inner: P::new(), _phantom: PhantomData }
 	}
 
-	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's not the same...
-	/// Return the list of addresses contained in this PrecompileSet.
+	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's
+	/// not the same... Return the list of addresses contained in this PrecompileSet.
 	pub fn used_addresses() -> impl Iterator<Item = H160> {
 		Self::new().inner.used_addresses().into_iter()
 		/*

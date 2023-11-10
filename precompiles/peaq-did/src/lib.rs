@@ -7,7 +7,7 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use precompile_utils::{prelude::*};
+use precompile_utils::prelude::*;
 use sp_core::{Decode, H256, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -107,7 +107,7 @@ where
 				valid_for: valid_for_opt,
 			},
 			// [TODO]
-			0
+			0,
 		)?;
 
 		let event = log1(
@@ -155,7 +155,7 @@ where
 				valid_for: valid_for_opt,
 			},
 			// [TODO]
-			0
+			0,
 		)?;
 
 		let event = log1(
@@ -193,7 +193,7 @@ where
 				name: name.as_bytes().to_vec(),
 			},
 			// [TODO]
-			0
+			0,
 		)?;
 
 		let event = log1(

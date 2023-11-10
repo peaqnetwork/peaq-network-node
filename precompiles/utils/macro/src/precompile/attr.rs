@@ -80,23 +80,15 @@ impl syn::parse::Parse for MethodAttr {
 
 			Ok(MethodAttr::Public(span, signature))
 		} else if lookahead.peek(keyword::fallback) {
-			Ok(MethodAttr::Fallback(
-				content.parse::<keyword::fallback>()?.span(),
-			))
+			Ok(MethodAttr::Fallback(content.parse::<keyword::fallback>()?.span()))
 		} else if lookahead.peek(keyword::payable) {
-			Ok(MethodAttr::Payable(
-				content.parse::<keyword::payable>()?.span(),
-			))
+			Ok(MethodAttr::Payable(content.parse::<keyword::payable>()?.span()))
 		} else if lookahead.peek(keyword::view) {
 			Ok(MethodAttr::View(content.parse::<keyword::view>()?.span()))
 		} else if lookahead.peek(keyword::discriminant) {
-			Ok(MethodAttr::Discriminant(
-				content.parse::<keyword::discriminant>()?.span(),
-			))
+			Ok(MethodAttr::Discriminant(content.parse::<keyword::discriminant>()?.span()))
 		} else if lookahead.peek(keyword::pre_check) {
-			Ok(MethodAttr::PreCheck(
-				content.parse::<keyword::pre_check>()?.span(),
-			))
+			Ok(MethodAttr::PreCheck(content.parse::<keyword::pre_check>()?.span()))
 		} else {
 			Err(lookahead.error())
 		}
@@ -120,9 +112,7 @@ impl syn::parse::Parse for ImplAttr {
 		let lookahead = content.lookahead1();
 
 		if lookahead.peek(keyword::precompile_set) {
-			Ok(ImplAttr::PrecompileSet(
-				content.parse::<keyword::precompile_set>()?.span(),
-			))
+			Ok(ImplAttr::PrecompileSet(content.parse::<keyword::precompile_set>()?.span()))
 		} else if lookahead.peek(keyword::test_concrete_types) {
 			let span = content.parse::<keyword::test_concrete_types>()?.span();
 
@@ -130,10 +120,7 @@ impl syn::parse::Parse for ImplAttr {
 			syn::parenthesized!(inner in content);
 			let types = inner.parse_terminated::<_, syn::Token![,]>(syn::Type::parse)?;
 
-			Ok(ImplAttr::TestConcreteTypes(
-				span,
-				types.into_iter().collect(),
-			))
+			Ok(ImplAttr::TestConcreteTypes(span, types.into_iter().collect()))
 		} else {
 			Err(lookahead.error())
 		}
