@@ -18,8 +18,9 @@
 //! final precompile set with security checks. All security checks are enabled by
 //! default and must be disabled explicely throught type annotations.
 
+use crate::{data::String, revert, substrate::RuntimeHelper, EvmResult};
 use fp_evm::{
-	IsPrecompileResult, ExitError, Precompile, PrecompileFailure, PrecompileHandle,
+	ExitError, IsPrecompileResult, Precompile, PrecompileFailure, PrecompileHandle,
 	PrecompileResult, PrecompileSet,
 };
 use frame_support::pallet_prelude::Get;
@@ -29,7 +30,6 @@ use sp_std::{
 	cell::RefCell, collections::btree_map::BTreeMap, marker::PhantomData, ops::RangeInclusive, vec,
 	vec::Vec,
 };
-use crate::{EvmResult, data::String, revert, substrate::RuntimeHelper};
 
 mod sealed {
 	pub trait Sealed {}
@@ -346,7 +346,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
 	if !callable_by_precompile && is_precompile_or_fail::<R>(caller, handle.remaining_gas())? {
-		return Err(revert("Function not callable by precompiles"));
+		return Err(revert("Function not callable by precompiles"))
 	}
 
 	Ok(())
@@ -355,9 +355,8 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 pub fn is_precompile_or_fail<R: pallet_evm::Config>(address: H160, gas: u64) -> EvmResult<bool> {
 	match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(address, gas) {
 		IsPrecompileResult::Answer { is_precompile, .. } => Ok(is_precompile),
-		IsPrecompileResult::OutOfGas => Err(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		}),
+		IsPrecompileResult::OutOfGas =>
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
 	}
 }
 
