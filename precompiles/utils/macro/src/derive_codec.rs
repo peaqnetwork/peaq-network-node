@@ -67,10 +67,7 @@ pub fn main(input: TokenStream) -> TokenStream {
 		segments.push(Ident::new("precompile_utils", Span::call_site()).into());
 		segments.push(Ident::new("solidity", Span::call_site()).into());
 		segments.push(Ident::new("Codec", Span::call_site()).into());
-		Path {
-			leading_colon: Some(Default::default()),
-			segments,
-		}
+		Path { leading_colon: Some(Default::default()), segments }
 	};
 	let where_clause = generics.make_where_clause();
 

@@ -71,7 +71,7 @@ where
 		let remaining_gas = handle.remaining_gas();
 		let required_gas = Runtime::GasWeightMapping::weight_to_gas(weight);
 		if required_gas > remaining_gas {
-			return Err(ExitError::OutOfGas);
+			return Err(ExitError::OutOfGas)
 		}
 
 		// Make sure there is enough remaining weight
@@ -115,7 +115,7 @@ where
 		let dispatch_info = call.get_dispatch_info();
 
 		Self::reocrd_external_cost(handle, dispatch_info.weight, storage_growth)
-			.map_err(|e| TryDispatchError::Evm(e))?;
+			.map_err(TryDispatchError::Evm)?;
 
 		// Dispatch call.
 		// It may be possible to not record gas cost if the call returns Pays::No.
@@ -125,12 +125,8 @@ where
 		let post_dispatch_info = using_precompile_handle(handle, || call.dispatch(origin))
 			.map_err(|e| TryDispatchError::Substrate(e.error))?;
 
-		Self::refund_weight_v2_cost(
-			handle,
-			dispatch_info.weight,
-			post_dispatch_info.actual_weight,
-		)
-		.map_err(|e| TryDispatchError::Evm(e))?;
+		Self::refund_weight_v2_cost(handle, dispatch_info.weight, post_dispatch_info.actual_weight)
+			.map_err(TryDispatchError::Evm)?;
 
 		Ok(post_dispatch_info)
 	}

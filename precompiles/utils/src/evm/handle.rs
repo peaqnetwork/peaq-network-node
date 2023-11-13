@@ -14,22 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use {
-	crate::{
-		solidity::{
-			codec::Reader,
-			modifier::FunctionModifier,
-			revert::{MayRevert, RevertReason},
-		},
-		EvmResult,
+use crate::{
+	solidity::{
+		codec::Reader,
+		modifier::FunctionModifier,
+		revert::{MayRevert, RevertReason},
 	},
-	fp_evm::{Log, PrecompileHandle},
+	EvmResult,
 };
+use fp_evm::{Log, PrecompileHandle};
 
 pub trait PrecompileHandleExt: PrecompileHandle {
 	/// Record cost of one DB read manually.
 	/// The max encoded lenght of the data that will be read should be provided.
-	#[must_use]
 	fn record_db_read<Runtime: pallet_evm::Config>(
 		&mut self,
 		data_max_encoded_len: usize,
@@ -49,7 +46,6 @@ pub trait PrecompileHandleExt: PrecompileHandle {
 	/// called into.
 	fn check_function_modifier(&self, modifier: FunctionModifier) -> MayRevert;
 
-	#[must_use]
 	/// Read the selector from the input data.
 	fn read_u32_selector(&self) -> MayRevert<u32>;
 
@@ -59,7 +55,6 @@ pub trait PrecompileHandleExt: PrecompileHandle {
 }
 
 impl<T: PrecompileHandle> PrecompileHandleExt for T {
-	#[must_use]
 	fn record_db_read<Runtime: pallet_evm::Config>(
 		&mut self,
 		data_max_encoded_len: usize,

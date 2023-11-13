@@ -270,8 +270,15 @@ impl Precompile {
 					.as_ref()
 					.map(|_| quote!(discriminant,));
 
-				let write_output = quote_spanned!(output_span=>
-					::precompile_utils::solidity::encode_return_value(output?)
+			let write_output = quote_spanned!(output_span=>
+				::precompile_utils::solidity::encode_return_value(output?)
+			);
+
+			quote!(
+				let output = <#impl_type>::#variant_ident(
+					#opt_discriminant_arg
+					handle,
+					#(#arguments),*
 				);
 
 				quote!(

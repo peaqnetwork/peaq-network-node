@@ -16,17 +16,15 @@
 
 //! Encoding of XCM types for solidity
 
-use {
-	crate::solidity::{
-		codec::{bytes::*, Codec, Reader, Writer},
-		revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
-	},
-	alloc::string::String,
-	frame_support::{dispatch::Weight, ensure, traits::ConstU32},
-	sp_core::H256,
-	sp_std::vec::Vec,
-	xcm::latest::{Junction, Junctions, MultiLocation, NetworkId},
+use crate::solidity::{
+	codec::{bytes::*, Codec, Reader, Writer},
+	revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
 };
+use alloc::string::String;
+use frame_support::{dispatch::Weight, ensure, traits::ConstU32};
+use sp_core::H256;
+use sp_std::vec::Vec;
+use xcm::latest::{Junction, Junctions, MultiLocation, NetworkId};
 
 pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 
@@ -110,10 +108,7 @@ pub(crate) fn network_id_to_bytes(network_id: Option<NetworkId>) -> Vec<u8> {
 
 // Function to convert bytes to networkId
 pub(crate) fn network_id_from_bytes(encoded_bytes: Vec<u8>) -> MayRevert<Option<NetworkId>> {
-	ensure!(
-		encoded_bytes.len() > 0,
-		RevertReason::custom("Junctions cannot be empty")
-	);
+	ensure!(encoded_bytes.len() > 0, RevertReason::custom("Junctions cannot be empty"));
 	let mut encoded_network_id = Reader::new(&encoded_bytes);
 
 	let network_selector = encoded_network_id

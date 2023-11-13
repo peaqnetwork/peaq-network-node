@@ -291,16 +291,20 @@ impl Precompile {
 		};
 
 		// We insert the collected data in self.
-		if let Some(_) = self.variants_content.insert(
-			method_name.clone(),
-			Variant {
-				arguments,
-				solidity_arguments_type: solidity_arguments_type.unwrap_or(String::from("()")),
-				modifier,
-				selectors,
-				fn_output: output_type.as_ref().clone(),
-			},
-		) {
+		if self
+			.variants_content
+			.insert(
+				method_name.clone(),
+				Variant {
+					arguments,
+					solidity_arguments_type: solidity_arguments_type.unwrap_or(String::from("()")),
+					modifier,
+					selectors,
+					fn_output: output_type.as_ref().clone(),
+				},
+			)
+			.is_some()
+		{
 			let msg = "Duplicate method name";
 			return Err(syn::Error::new(method_name.span(), msg));
 		}
@@ -412,7 +416,7 @@ impl Precompile {
 		if method.sig.inputs.len() != 2 {
 			let msg = "The discriminant function must only take code address (H160) and \
 			remaining gas (u64) as parameters.";
-			return Err(syn::Error::new(span, msg));
+			return Err(syn::Error::new(span, msg))
 		}
 
 		let msg = "The discriminant function must return an DiscriminantResult<_> (no type alias)";
@@ -439,8 +443,13 @@ impl Precompile {
 
 		let return_segment = &return_path.segments[0];
 
+<<<<<<< HEAD
 		if return_segment.ident.to_string() != "DiscriminantResult" {
 			return Err(syn::Error::new(return_segment.ident.span(), msg));
+=======
+		if return_segment.ident != "DiscriminantResult" {
+			return Err(syn::Error::new(return_segment.ident.span(), msg))
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 
 		let result_arguments = match &return_segment.arguments {
@@ -450,7 +459,11 @@ impl Precompile {
 
 		if result_arguments.args.len() != 1 {
 			let msg = "DiscriminantResult type should only have 1 type argument";
+<<<<<<< HEAD
 			return Err(syn::Error::new(result_arguments.args.span(), msg));
+=======
+			return Err(syn::Error::new(result_arguments.args.span(), msg))
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 
 		let discriminant_type: &syn::Type = match &result_arguments.args[0] {
@@ -542,10 +555,17 @@ impl Precompile {
 	/// precompile. Check is skipped if `test_concrete_types` attribute is used.
 	fn check_type_parameter_usage(&self, ty: &syn::Type) -> syn::Result<()> {
 		if self.test_concrete_types.is_some() {
+<<<<<<< HEAD
 			return Ok(());
 		}
 
 		const ERR_MESSAGE: &'static str =
+=======
+			return Ok(())
+		}
+
+		const ERR_MESSAGE: &str =
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 			"impl type parameter is used in functions arguments. Arguments should not have a type
 depending on a type parameter, unless it is a length bound for BoundedBytes,
 BoundedString or alike, which doesn't affect the Solidity type.
@@ -555,6 +575,7 @@ block to provide concrete types that will be used to run the automatically gener
 ensuring the Solidity function signatures are correct.";
 
 		match ty {
+<<<<<<< HEAD
 			syn::Type::Array(syn::TypeArray { elem, .. })
 			| syn::Type::Group(syn::TypeGroup { elem, .. })
 			| syn::Type::Paren(syn::TypeParen { elem, .. })
@@ -566,6 +587,16 @@ ensuring the Solidity function signatures are correct.";
 				path: syn::Path { segments, .. },
 				..
 			}) => {
+=======
+			syn::Type::Array(syn::TypeArray { elem, .. }) |
+			syn::Type::Group(syn::TypeGroup { elem, .. }) |
+			syn::Type::Paren(syn::TypeParen { elem, .. }) |
+			syn::Type::Reference(syn::TypeReference { elem, .. }) |
+			syn::Type::Ptr(syn::TypePtr { elem, .. }) |
+			syn::Type::Slice(syn::TypeSlice { elem, .. }) => self.check_type_parameter_usage(elem)?,
+
+			syn::Type::Path(syn::TypePath { path: syn::Path { segments, .. }, .. }) => {
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 				let impl_params: Vec<_> = self
 					.generics
 					.params
@@ -578,17 +609,27 @@ ensuring the Solidity function signatures are correct.";
 
 				for segment in segments {
 					if impl_params.contains(&&segment.ident) {
+<<<<<<< HEAD
 						return Err(syn::Error::new(segment.ident.span(), ERR_MESSAGE));
+=======
+						return Err(syn::Error::new(segment.ident.span(), ERR_MESSAGE))
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 					}
 
 					if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
 						let types = args.args.iter().filter_map(|arg| match arg {
+<<<<<<< HEAD
 							syn::GenericArgument::Type(ty)
 							| syn::GenericArgument::Binding(syn::Binding { ty, .. }) => Some(ty),
+=======
+							syn::GenericArgument::Type(ty) |
+							syn::GenericArgument::Binding(syn::Binding { ty, .. }) => Some(ty),
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 							_ => None,
 						});
 
 						for ty in types {
+<<<<<<< HEAD
 							self.check_type_parameter_usage(&ty)?;
 						}
 					}
@@ -599,6 +640,17 @@ ensuring the Solidity function signatures are correct.";
 					self.check_type_parameter_usage(ty)?;
 				}
 			}
+=======
+							self.check_type_parameter_usage(ty)?;
+						}
+					}
+				}
+			},
+			syn::Type::Tuple(tuple) =>
+				for ty in tuple.elems.iter() {
+					self.check_type_parameter_usage(ty)?;
+				},
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 			// BareFn => very unlikely this appear as parameter
 			// ImplTrait => will cause other errors, it must be a concrete type
 			// TypeInfer => it must be explicit concrete types since it ends up in enum fields

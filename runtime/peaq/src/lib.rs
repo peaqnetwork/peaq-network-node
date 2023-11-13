@@ -95,14 +95,9 @@ pub use precompiles::PeaqPrecompiles;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
-pub type Precompiles = PeaqPrecompiles<Runtime>;
-// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
 /// Block type as expected by this runtime.
+/// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-// /// A Block signed with a Justification
-// pub type SignedBlock = generic::SignedBlock<Block>;
-// /// BlockId type as expected by this runtime.
-// pub type BlockId = generic::BlockId<Block>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -358,10 +353,10 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type FreezeIdentifier = (); // TODO
-	type MaxHolds = (); // TODO
-	type HoldIdentifier = (); // TODO
-	type MaxFreezes = (); // TODO
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the

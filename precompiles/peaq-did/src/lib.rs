@@ -7,7 +7,7 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use precompile_utils::{prelude::*};
+use precompile_utils::prelude::*;
 use sp_core::{Decode, H256, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -40,7 +40,6 @@ pub struct PeaqDIDPrecompile<Runtime>(PhantomData<Runtime>);
 /// Blake2_128Concat (16) + AccountId (32) + Hash (32) + AccountID (32)
 const PEAQ_DID_KEY_SIZE: u64 = 224;
 
-
 #[derive(Default, Debug, solidity::Codec)]
 pub struct EVMAttribute {
 	name: UnboundedBytes,
@@ -65,7 +64,7 @@ where
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	BlockNumberOf<Runtime>: Into<u32>,
 	sp_core::U256: From<MomentOf<Runtime>>,
-{
+
 	#[precompile::public("read_attribute(bytes32,bytes)")]
 	#[precompile::view]
 	fn read_attribute(
@@ -115,10 +114,9 @@ where
 				valid_for: valid_for_opt,
 			},
 			PEAQ_DID_KEY_SIZE +
-			32 as u64 +
-			name.as_bytes().len() as u64 +
-			value.as_bytes().len() as u64 +
-			4 as u64,
+				32_u64 + name.as_bytes().len() as u64 +
+				value.as_bytes().len() as u64 +
+				4_u64,
 		)?;
 
 		let event = log1(
@@ -165,10 +163,7 @@ where
 				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
-			32 as u64 +
-			name.as_bytes().len() as u64 +
-			value.as_bytes().len() as u64 +
-			4 as u64
+			32_u64 + name.as_bytes().len() as u64 + value.as_bytes().len() as u64 + 4_u64,
 		)?;
 
 		let event = log1(
@@ -205,16 +200,13 @@ where
 				did_account: AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes()),
 				name: name.as_bytes().to_vec(),
 			},
-			0
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_REMOVE_ATTRIBUTE,
-			solidity::encode_event_data((
-				did_account,
-				name,
-			)),
+			solidity::encode_event_data((did_account, name)),
 		);
 		event.record(handle)?;
 

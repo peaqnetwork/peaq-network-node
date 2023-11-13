@@ -108,18 +108,14 @@ pub enum DiscriminantResult<T> {
 	OutOfGas,
 }
 
-impl<T> Into<IsPrecompileResult> for DiscriminantResult<T> {
-	fn into(self) -> IsPrecompileResult {
-		match self {
-			Self::Some(_, extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: true,
-				extra_cost,
-			},
-			Self::None(extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost,
-			},
-			Self::OutOfGas => IsPrecompileResult::OutOfGas,
+impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
+	fn from(val: DiscriminantResult<T>) -> Self {
+		match val {
+			DiscriminantResult::<T>::Some(_, extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
+			DiscriminantResult::<T>::None(extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
+			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
 	}
 }
@@ -325,19 +321,19 @@ pub fn get_address_type<R: pallet_evm::Config>(
 
 	// 0 => either EOA or precompile without dummy code
 	if code_len == 0 {
-		return Ok(AddressType::EOA);
+		return Ok(AddressType::EOA)
 	}
 
 	// dummy code is 5 bytes long, so any other len means it is a contract.
 	if code_len != 5 {
-		return Ok(AddressType::Contract);
+		return Ok(AddressType::Contract)
 	}
 
 	// check code matches dummy code
 	handle.record_db_read::<R>(code_len as usize)?;
 	let code = pallet_evm::AccountCodes::<R>::get(address);
-	if &code == &[0x60, 0x00, 0x60, 0x00, 0xfd] {
-		return Ok(AddressType::Precompile);
+	if code == [0x60, 0x00, 0x60, 0x00, 0xfd] {
+		return Ok(AddressType::Precompile)
 	}
 
 	Ok(AddressType::Unknown)
@@ -377,16 +373,14 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Is this selector callable from a smart contract?
 	let callable_by_smart_contract =
 		C::callable_by_smart_contract(caller, selector).unwrap_or(false);
-	if !callable_by_smart_contract {
-		if !is_address_eoa_or_precompile::<R>(handle, caller)? {
-			return Err(revert("Function not callable by smart contracts"));
-		}
+	if !callable_by_smart_contract && !is_address_eoa_or_precompile::<R>(handle, caller)? {
+		return Err(revert("Function not callable by smart contracts"))
 	}
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
 	if !callable_by_precompile && is_precompile_or_fail::<R>(caller, handle.remaining_gas())? {
-		return Err(revert("Function not callable by precompiles"));
+		return Err(revert("Function not callable by precompiles"))
 	}
 
 	Ok(())
@@ -395,9 +389,8 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 pub fn is_precompile_or_fail<R: pallet_evm::Config>(address: H160, gas: u64) -> EvmResult<bool> {
 	match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(address, gas) {
 		IsPrecompileResult::Answer { is_precompile, .. } => Ok(is_precompile),
-		IsPrecompileResult::OutOfGas => Err(PrecompileFailure::Error {
-			exit_status: ExitError::OutOfGas,
-		}),
+		IsPrecompileResult::OutOfGas =>
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
 	}
 }
 
@@ -428,7 +421,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 			return (
 				evm::ExitReason::Revert(evm::ExitRevert::Reverted),
 				crate::solidity::revert::revert_as_bytes("subcalls disabled for this precompile"),
-			);
+			)
 		}
 
 		self.handle
@@ -478,8 +471,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		proof_size: Option<u64>,
 		storage_growth: Option<u64>,
 	) -> Result<(), ExitError> {
-		self.handle
-			.record_external_cost(ref_time, proof_size, storage_growth)
+		self.handle.record_external_cost(ref_time, proof_size, storage_growth)
 	}
 
 	fn refund_external_cost(&mut self, ref_time: Option<u64>, proof_size: Option<u64>) {
@@ -608,10 +600,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -639,10 +628,14 @@ where
 {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+<<<<<<< HEAD
 		IsPrecompileResult::Answer {
 			is_precompile: address == A::get(),
 			extra_cost: 0,
 		}
+=======
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -679,7 +672,11 @@ where
 	) -> Option<PrecompileResult> {
 		let code_address = handle.code_address();
 		if !is_precompile_or_fail::<R>(code_address, handle.remaining_gas()).ok()? {
+<<<<<<< HEAD
 			return None;
+=======
+			return None
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
@@ -737,12 +734,17 @@ where
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		if address.as_bytes().starts_with(A::get()) {
+<<<<<<< HEAD
 			return self.precompile_set.is_precompile(address, gas);
 		}
 		IsPrecompileResult::Answer {
 			is_precompile: false,
 			extra_cost: 0,
+=======
+			return self.precompile_set.is_precompile(address, gas)
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -804,10 +806,14 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+<<<<<<< HEAD
 		IsPrecompileResult::Answer {
 			is_precompile: address == A::get(),
 			extra_cost: 0,
 		}
+=======
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 
 	#[inline(always)]
@@ -830,10 +836,14 @@ where
 impl<A> IsActivePrecompile for RevertPrecompile<A> {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
+<<<<<<< HEAD
 		IsPrecompileResult::Answer {
 			is_precompile: true,
 			extra_cost: 0,
 		}
+=======
+		IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -863,10 +873,14 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+<<<<<<< HEAD
 		IsPrecompileResult::Answer {
 			is_precompile: address == A::get(),
 			extra_cost: 0,
 		}
+=======
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 
 	#[inline(always)]
@@ -889,10 +903,14 @@ where
 impl<A> IsActivePrecompile for RemovedPrecompileAt<A> {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
+<<<<<<< HEAD
 		IsPrecompileResult::Answer {
 			is_precompile: false,
 			extra_cost: 0,
 		}
+=======
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -923,6 +941,7 @@ impl PrecompileSetFragment for Tuple {
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
+<<<<<<< HEAD
 			match self.Tuple.is_precompile(address, gas) {
 				IsPrecompileResult::Answer {
 					is_precompile: true,
@@ -938,6 +957,19 @@ impl PrecompileSetFragment for Tuple {
 			is_precompile: false,
 			extra_cost: 0,
 		}
+=======
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_precompile(address, gas) {
+				return IsPrecompileResult::Answer {
+					is_precompile: true,
+					extra_cost: 0,
+				}
+			};
+		)*);
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 
 	#[inline(always)]
@@ -969,6 +1001,7 @@ impl IsActivePrecompile for Tuple {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
+<<<<<<< HEAD
 			match self.Tuple.is_active_precompile(address, gas) {
 				IsPrecompileResult::Answer {
 					is_precompile: true,
@@ -984,6 +1017,19 @@ impl IsActivePrecompile for Tuple {
 			is_precompile: false,
 			extra_cost: 0,
 		}
+=======
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_active_precompile(address, gas) {
+				return IsPrecompileResult::Answer {
+					is_precompile: true,
+					extra_cost: 0,
+				}
+			};
+		)*);
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -1024,10 +1070,14 @@ where
 		if self.range.contains(&address) {
 			self.inner.is_precompile(address, gas)
 		} else {
+<<<<<<< HEAD
 			IsPrecompileResult::Answer {
 				is_precompile: false,
 				extra_cost: 0,
 			}
+=======
+			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 	}
 
@@ -1048,10 +1098,14 @@ where
 		if self.range.contains(&address) {
 			self.inner.is_active_precompile(address, gas)
 		} else {
+<<<<<<< HEAD
 			IsPrecompileResult::Answer {
 				is_precompile: false,
 				extra_cost: 0,
 			}
+=======
+			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 	}
 }
@@ -1075,6 +1129,15 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 impl<R, P: IsActivePrecompile> IsActivePrecompile for PrecompileSetBuilder<R, P> {
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		self.inner.is_active_precompile(address, gas)
+<<<<<<< HEAD
+=======
+	}
+}
+
+impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
+	fn default() -> Self {
+		Self::new()
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -1087,8 +1150,13 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P>
 		}
 	}
 
+<<<<<<< HEAD
 	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's not the same...
 	/// Return the list of addresses contained in this PrecompileSet.
+=======
+	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's
+	/// not the same... Return the list of addresses contained in this PrecompileSet.
+>>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	pub fn used_addresses() -> impl Iterator<Item = H160> {
 		Self::new().inner.used_addresses().into_iter()
 		/*
