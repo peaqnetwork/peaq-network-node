@@ -46,63 +46,60 @@ pub(crate) fn network_id_to_bytes(network_id: Option<NetworkId>) -> Vec<u8> {
 		None => {
 			encoded.push(0u8);
 			encoded
-		}
+		},
 		Some(NetworkId::ByGenesis(id)) => {
 			encoded.push(1u8);
 			encoded.append(&mut id.into());
 			encoded
-		}
+		},
 		Some(NetworkId::Polkadot) => {
 			encoded.push(2u8);
 			encoded.push(2u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Kusama) => {
 			encoded.push(3u8);
 			encoded.push(3u8);
 			encoded
-		}
-		Some(NetworkId::ByFork {
-			block_number,
-			block_hash,
-		}) => {
+		},
+		Some(NetworkId::ByFork { block_number, block_hash }) => {
 			encoded.push(4u8);
 			encoded.push(1u8);
 			encoded.append(&mut block_number.to_be_bytes().into());
 			encoded.append(&mut block_hash.into());
 			encoded
-		}
+		},
 		Some(NetworkId::Westend) => {
 			encoded.push(5u8);
 			encoded.push(4u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Rococo) => {
 			encoded.push(6u8);
 			encoded.push(5u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Wococo) => {
 			encoded.push(7u8);
 			encoded.push(6u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Ethereum { chain_id }) => {
 			encoded.push(8u8);
 			encoded.push(7u8);
 			encoded.append(&mut chain_id.to_be_bytes().into());
 			encoded
-		}
+		},
 		Some(NetworkId::BitcoinCore) => {
 			encoded.push(9u8);
 			encoded.push(8u8);
 			encoded
-		}
+		},
 		Some(NetworkId::BitcoinCash) => {
 			encoded.push(10u8);
 			encoded.push(9u8);
 			encoded
-		}
+		},
 	}
 }
 
@@ -139,17 +136,15 @@ pub(crate) fn network_id_from_bytes(encoded_bytes: Vec<u8>) -> MayRevert<Option<
 				block_number: u64::from_be_bytes(block_number),
 				block_hash,
 			}))
-		}
+		},
 		5 => Ok(Some(NetworkId::Westend)),
 		6 => Ok(Some(NetworkId::Rococo)),
 		7 => Ok(Some(NetworkId::Wococo)),
 		8 => {
 			let mut chain_id: [u8; 8] = Default::default();
 			chain_id.copy_from_slice(&encoded_network_id.read_raw_bytes(8)?);
-			Ok(Some(NetworkId::Ethereum {
-				chain_id: u64::from_be_bytes(chain_id),
-			}))
-		}
+			Ok(Some(NetworkId::Ethereum { chain_id: u64::from_be_bytes(chain_id) }))
+		},
 		9 => Ok(Some(NetworkId::BitcoinCore)),
 		10 => Ok(Some(NetworkId::BitcoinCash)),
 		_ => Err(RevertReason::custom("Non-valid Network Id").into()),
@@ -161,10 +156,7 @@ impl Codec for Junction {
 		let junction = reader.read::<BoundedBytes<ConstU32<JUNCTION_SIZE_LIMIT>>>()?;
 		let junction_bytes: Vec<_> = junction.into();
 
-		ensure!(
-			junction_bytes.len() > 0,
-			RevertReason::custom("Junctions cannot be empty")
-		);
+		ensure!(junction_bytes.len() > 0, RevertReason::custom("Junctions cannot be empty"));
 
 		// For simplicity we use an EvmReader here
 		let mut encoded_junction = Reader::new(&junction_bytes);
@@ -182,20 +174,18 @@ impl Codec for Junction {
 				data.copy_from_slice(&encoded_junction.read_raw_bytes(4)?);
 				let para_id = u32::from_be_bytes(data);
 				Ok(Junction::Parachain(para_id))
-			}
+			},
 			1 => {
 				// In the case of Junction::AccountId32, we need 32 additional bytes plus NetworkId
 				let mut account: [u8; 32] = Default::default();
 				account.copy_from_slice(&encoded_junction.read_raw_bytes(32)?);
 
 				let network = encoded_junction.read_till_end()?.to_vec();
-				Ok(Junction::AccountId32 {
-					network: network_id_from_bytes(network)?,
-					id: account,
-				})
-			}
+				Ok(Junction::AccountId32 { network: network_id_from_bytes(network)?, id: account })
+			},
 			2 => {
-				// In the case of Junction::AccountIndex64, we need 8 additional bytes plus NetworkId
+				// In the case of Junction::AccountIndex64, we need 8 additional bytes plus
+				// NetworkId
 				let mut index: [u8; 8] = Default::default();
 				index.copy_from_slice(&encoded_junction.read_raw_bytes(8)?);
 				// Now we read the network
@@ -204,7 +194,7 @@ impl Codec for Junction {
 					network: network_id_from_bytes(network)?,
 					index: u64::from_be_bytes(index),
 				})
-			}
+			},
 			3 => {
 				// In the case of Junction::AccountKey20, we need 20 additional bytes plus NetworkId
 				let mut account: [u8; 20] = Default::default();
@@ -215,16 +205,14 @@ impl Codec for Junction {
 					network: network_id_from_bytes(network)?,
 					key: account,
 				})
-			}
-			4 => Ok(Junction::PalletInstance(
-				encoded_junction.read_raw_bytes(1)?[0],
-			)),
+			},
+			4 => Ok(Junction::PalletInstance(encoded_junction.read_raw_bytes(1)?[0])),
 			5 => {
 				// In the case of Junction::GeneralIndex, we need 16 additional bytes
 				let mut general_index: [u8; 16] = Default::default();
 				general_index.copy_from_slice(&encoded_junction.read_raw_bytes(16)?);
 				Ok(Junction::GeneralIndex(u128::from_be_bytes(general_index)))
-			}
+			},
 			6 => {
 				let length = encoded_junction
 					.read_raw_bytes(1)
@@ -233,7 +221,7 @@ impl Codec for Junction {
 				let data = encoded_junction.read::<H256>().in_field("data")?.into();
 
 				Ok(Junction::GeneralKey { length, data })
-			}
+			},
 			7 => Ok(Junction::OnlyChild),
 			8 => Err(RevertReason::custom("Junction::Plurality not supported yet").into()),
 			9 => {
@@ -243,7 +231,7 @@ impl Codec for Junction {
 				} else {
 					Err(RevertReason::custom("Unknown NetworkId").into())
 				}
-			}
+			},
 			_ => Err(RevertReason::custom("Unknown Junction variant").into()),
 		}
 	}
@@ -255,50 +243,50 @@ impl Codec for Junction {
 				encoded.push(0u8);
 				encoded.append(&mut para_id.to_be_bytes().to_vec());
 				encoded.as_slice().into()
-			}
+			},
 			Junction::AccountId32 { network, id } => {
 				encoded.push(1u8);
 				encoded.append(&mut id.to_vec());
 				encoded.append(&mut network_id_to_bytes(network));
 				encoded.as_slice().into()
-			}
+			},
 			Junction::AccountIndex64 { network, index } => {
 				encoded.push(2u8);
 				encoded.append(&mut index.to_be_bytes().to_vec());
 				encoded.append(&mut network_id_to_bytes(network));
 				encoded.as_slice().into()
-			}
+			},
 			Junction::AccountKey20 { network, key } => {
 				encoded.push(3u8);
 				encoded.append(&mut key.to_vec());
 				encoded.append(&mut network_id_to_bytes(network));
 				encoded.as_slice().into()
-			}
+			},
 			Junction::PalletInstance(intance) => {
 				encoded.push(4u8);
 				encoded.append(&mut intance.to_be_bytes().to_vec());
 				encoded.as_slice().into()
-			}
+			},
 			Junction::GeneralIndex(id) => {
 				encoded.push(5u8);
 				encoded.append(&mut id.to_be_bytes().to_vec());
 				encoded.as_slice().into()
-			}
+			},
 			Junction::GeneralKey { length, data } => {
 				encoded.push(6u8);
 				encoded.push(length);
 				encoded.append(&mut data.into());
 				encoded.as_slice().into()
-			}
+			},
 			Junction::OnlyChild => {
 				encoded.push(7u8);
 				encoded.as_slice().into()
-			}
+			},
 			Junction::GlobalConsensus(network_id) => {
 				encoded.push(9u8);
 				encoded.append(&mut network_id_to_bytes(Some(network_id)));
 				encoded.as_slice().into()
-			}
+			},
 			// TODO: The only missing item here is Junciton::Plurality. This is a complex encoded
 			// type that we need to evaluate how to support
 			_ => unreachable!("Junction::Plurality not supported yet"),
@@ -345,9 +333,7 @@ impl Codec for Junctions {
 // Cannot used derive macro since it is a foreign struct.
 impl Codec for MultiLocation {
 	fn read(reader: &mut Reader) -> MayRevert<Self> {
-		let (parents, interior) = reader
-			.read()
-			.map_in_tuple_to_field(&["parents", "interior"])?;
+		let (parents, interior) = reader.read().map_in_tuple_to_field(&["parents", "interior"])?;
 		Ok(MultiLocation { parents, interior })
 	}
 
@@ -366,9 +352,8 @@ impl Codec for MultiLocation {
 
 impl Codec for Weight {
 	fn read(reader: &mut Reader) -> MayRevert<Self> {
-		let (ref_time, proof_size) = reader
-			.read()
-			.map_in_tuple_to_field(&["ref_time", "proof_size"])?;
+		let (ref_time, proof_size) =
+			reader.read().map_in_tuple_to_field(&["ref_time", "proof_size"])?;
 		Ok(Weight::from_parts(ref_time, proof_size))
 	}
 

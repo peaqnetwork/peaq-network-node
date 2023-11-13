@@ -360,7 +360,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Check DELEGATECALL config.
 	let accept_delegate_call = C::accept_delegate_call().unwrap_or(false);
 	if !accept_delegate_call && code_address != handle.context().address {
-		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"));
+		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"))
 	}
 
 	// Extract which selector is called.
@@ -424,8 +424,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 			)
 		}
 
-		self.handle
-			.call(address, transfer, input, target_gas, is_static, context)
+		self.handle.call(address, transfer, input, target_gas, is_static, context)
 	}
 
 	fn record_cost(&mut self, cost: u64) -> Result<(), evm::ExitError> {
@@ -532,10 +531,7 @@ where
 {
 	#[inline(always)]
 	fn new() -> Self {
-		Self {
-			current_recursion_level: RefCell::new(0),
-			_phantom: PhantomData,
-		}
+		Self { current_recursion_level: RefCell::new(0), _phantom: PhantomData }
 	}
 
 	#[inline(always)]
@@ -547,12 +543,12 @@ where
 
 		// Check if this is the address of the precompile.
 		if A::get() != code_address {
-			return None;
+			return None
 		}
 
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err));
+			return Some(Err(err))
 		}
 
 		// Check and increase recursion level if needed.
@@ -561,25 +557,20 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(Err(
-							revert("Precompile is called with too high nesting").into()
-						));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
 		// Subcall protection.
 		let allow_subcalls = C::allow_subcalls().unwrap_or(false);
-		let mut handle = RestrictiveHandle {
-			handle,
-			allow_subcalls,
-		};
+		let mut handle = RestrictiveHandle { handle, allow_subcalls };
 
 		let res = P::execute(&mut handle);
 
@@ -588,10 +579,10 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
-				Err(_) => return Some(Err(revert("Couldn't check precompile nesting").into())),
+				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
 			}
 		}
 
@@ -628,14 +619,7 @@ where
 {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-<<<<<<< HEAD
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
-=======
 		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -672,15 +656,11 @@ where
 	) -> Option<PrecompileResult> {
 		let code_address = handle.code_address();
 		if !is_precompile_or_fail::<R>(code_address, handle.remaining_gas()).ok()? {
-<<<<<<< HEAD
-			return None;
-=======
 			return None
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err));
+			return Some(Err(err))
 		}
 
 		// Check and increase recursion level if needed.
@@ -691,11 +671,11 @@ where
 					let recursion_level = recursion_level_map.entry(code_address).or_insert(0);
 
 					if *recursion_level > max_recursion_level {
-						return Some(Err(revert("Precompile is called with too high nesting")));
+						return Some(Err(revert("Precompile is called with too high nesting")))
 					}
 
 					*recursion_level += 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -704,10 +684,7 @@ where
 
 		// Subcall protection.
 		let allow_subcalls = C::allow_subcalls().unwrap_or(false);
-		let mut handle = RestrictiveHandle {
-			handle,
-			allow_subcalls,
-		};
+		let mut handle = RestrictiveHandle { handle, allow_subcalls };
 
 		let res = self.precompile_set.execute(&mut handle);
 
@@ -721,7 +698,7 @@ where
 					};
 
 					*recursion_level -= 1;
-				}
+				},
 				// We don't hold the borrow and are in single-threaded code, thus we should
 				// not be able to fail borrowing in nested calls.
 				Err(_) => return Some(Err(revert("Couldn't check precompile nesting"))),
@@ -734,15 +711,7 @@ where
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		if address.as_bytes().starts_with(A::get()) {
-<<<<<<< HEAD
-			return self.precompile_set.is_precompile(address, gas);
-		}
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-=======
 			return self.precompile_set.is_precompile(address, gas)
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
@@ -806,14 +775,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-<<<<<<< HEAD
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
-=======
 		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 
 	#[inline(always)]
@@ -836,14 +798,7 @@ where
 impl<A> IsActivePrecompile for RevertPrecompile<A> {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
-<<<<<<< HEAD
-		IsPrecompileResult::Answer {
-			is_precompile: true,
-			extra_cost: 0,
-		}
-=======
 		IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -873,14 +828,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-<<<<<<< HEAD
-		IsPrecompileResult::Answer {
-			is_precompile: address == A::get(),
-			extra_cost: 0,
-		}
-=======
 		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 
 	#[inline(always)]
@@ -903,14 +851,7 @@ where
 impl<A> IsActivePrecompile for RemovedPrecompileAt<A> {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
-<<<<<<< HEAD
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
-=======
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -941,23 +882,6 @@ impl PrecompileSetFragment for Tuple {
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-<<<<<<< HEAD
-			match self.Tuple.is_precompile(address, gas) {
-				IsPrecompileResult::Answer {
-					is_precompile: true,
-					..
-				} => return IsPrecompileResult::Answer {
-					is_precompile: true,
-					extra_cost: 0,
-				},
-				_ => {}
-			};
-		)*);
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
-=======
 			if let IsPrecompileResult::Answer {
 				is_precompile: true,
 				..
@@ -969,7 +893,6 @@ impl PrecompileSetFragment for Tuple {
 			};
 		)*);
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 
 	#[inline(always)]
@@ -1001,23 +924,6 @@ impl IsActivePrecompile for Tuple {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-<<<<<<< HEAD
-			match self.Tuple.is_active_precompile(address, gas) {
-				IsPrecompileResult::Answer {
-					is_precompile: true,
-					..
-				} => return IsPrecompileResult::Answer {
-					is_precompile: true,
-					extra_cost: 0,
-				},
-				_ => {}
-			};
-		)*);
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
-=======
 			if let IsPrecompileResult::Answer {
 				is_precompile: true,
 				..
@@ -1029,7 +935,6 @@ impl IsActivePrecompile for Tuple {
 			};
 		)*);
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
@@ -1070,14 +975,7 @@ where
 		if self.range.contains(&address) {
 			self.inner.is_precompile(address, gas)
 		} else {
-<<<<<<< HEAD
-			IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost: 0,
-			}
-=======
 			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 	}
 
@@ -1098,14 +996,7 @@ where
 		if self.range.contains(&address) {
 			self.inner.is_active_precompile(address, gas)
 		} else {
-<<<<<<< HEAD
-			IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost: 0,
-			}
-=======
 			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 		}
 	}
 }
@@ -1129,34 +1020,23 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 impl<R, P: IsActivePrecompile> IsActivePrecompile for PrecompileSetBuilder<R, P> {
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		self.inner.is_active_precompile(address, gas)
-<<<<<<< HEAD
-=======
 	}
 }
 
 impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
 	fn default() -> Self {
 		Self::new()
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	}
 }
 
 impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P> {
 	/// Create a new instance of the PrecompileSet.
 	pub fn new() -> Self {
-		Self {
-			inner: P::new(),
-			_phantom: PhantomData,
-		}
+		Self { inner: P::new(), _phantom: PhantomData }
 	}
 
-<<<<<<< HEAD
-	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's not the same...
-	/// Return the list of addresses contained in this PrecompileSet.
-=======
 	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's
 	/// not the same... Return the list of addresses contained in this PrecompileSet.
->>>>>>> feature/1204080823207081_upgrade_polkadot_v0.9.43
 	pub fn used_addresses() -> impl Iterator<Item = H160> {
 		Self::new().inner.used_addresses().into_iter()
 		/*

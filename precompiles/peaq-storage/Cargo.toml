@@ -1,31 +1,33 @@
 [package]
 name = "pallet-evm-precompile-peaq-storage"
+authors = [ "Peaq" ]
 description = "A Precompile Module for Frontier EVM that implements the PEAQ Storage standard."
+edition = "2021"
 version = "0.1.0"
-authors.workspace = true
-documentation.workspace = true
-edition.workspace = true
-homepage.workspace = true
-license-file.workspace = true
-readme.workspace = true
-repository.workspace = true
 
 [dependencies]
-frame-support = { workspace = true, default-features = false }
-frame-system = { workspace = true, default-features = false }
-fp-evm = { workspace = true, default-features = false }
 hex = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
 num_enum = { workspace = true, default-features = false }
-pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
-parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
 paste = { workspace = true, default-features = false }
-peaq-pallet-storage = { workspace = true, default-features = false }
-precompile-utils = { workspace = true, default-features = false }
 slices = { workspace = true, default-features = false }
+
+# Peaq
+precompile-utils = { path = "../utils", default-features = false }
+
+# Substrate
+parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
+
+# Frontier
+fp-evm = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
+peaq-pallet-storage = { workspace = true, default-features = false }
+
 
 [features]
 default = [ "std" ]

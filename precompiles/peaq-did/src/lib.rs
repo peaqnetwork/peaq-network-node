@@ -64,7 +64,7 @@ where
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	BlockNumberOf<Runtime>: Into<u32>,
 	sp_core::U256: From<MomentOf<Runtime>>,
-
+{
 	#[precompile::public("read_attribute(bytes32,bytes)")]
 	#[precompile::view]
 	fn read_attribute(

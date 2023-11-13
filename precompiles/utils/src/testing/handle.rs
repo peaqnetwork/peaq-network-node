@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use {
-	crate::testing::PrettyLog,
-	evm::{ExitRevert, ExitSucceed},
-	fp_evm::{Context, ExitError, ExitReason, Log, PrecompileHandle, Transfer},
-	sp_core::{H160, H256},
-	sp_std::boxed::Box,
-};
+use crate::testing::PrettyLog;
+use evm::{ExitRevert, ExitSucceed};
+use fp_evm::{Context, ExitError, ExitReason, Log, PrecompileHandle, Transfer};
+use sp_core::{H160, H256};
+use sp_std::boxed::Box;
 
 #[derive(Debug, Clone)]
 pub struct Subcall {
@@ -121,17 +119,12 @@ impl PrecompileHandle for MockHandle {
 			))
 			.is_err()
 		{
-			return (ExitReason::Error(ExitError::OutOfGas), vec![]);
+			return (ExitReason::Error(ExitError::OutOfGas), vec![])
 		}
 
 		match &mut self.subcall_handle {
 			Some(handle) => {
-				let SubcallOutput {
-					reason,
-					output,
-					cost,
-					logs,
-				} = handle(Subcall {
+				let SubcallOutput { reason, output, cost, logs } = handle(Subcall {
 					address,
 					transfer,
 					input,
@@ -141,16 +134,15 @@ impl PrecompileHandle for MockHandle {
 				});
 
 				if self.record_cost(cost).is_err() {
-					return (ExitReason::Error(ExitError::OutOfGas), vec![]);
+					return (ExitReason::Error(ExitError::OutOfGas), vec![])
 				}
 
 				for log in logs {
-					self.log(log.address, log.topics, log.data)
-						.expect("cannot fail");
+					self.log(log.address, log.topics, log.data).expect("cannot fail");
 				}
 
 				(reason, output)
-			}
+			},
 			None => panic!("no subcall handle registered"),
 		}
 	}
@@ -170,11 +162,7 @@ impl PrecompileHandle for MockHandle {
 	}
 
 	fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) -> Result<(), ExitError> {
-		self.logs.push(PrettyLog(Log {
-			address,
-			topics,
-			data,
-		}));
+		self.logs.push(PrettyLog(Log { address, topics, data }));
 		Ok(())
 	}
 

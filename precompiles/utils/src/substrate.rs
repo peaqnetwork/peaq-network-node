@@ -18,17 +18,15 @@
 //! - Substrate call dispatch.
 //! - Substrate DB read and write costs
 
-use {
-	crate::{evm::handle::using_precompile_handle, solidity::revert::revert},
-	core::marker::PhantomData,
-	fp_evm::{ExitError, PrecompileFailure, PrecompileHandle},
-	frame_support::{
-		dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-		pallet_prelude::*,
-		traits::Get,
-	},
-	pallet_evm::GasWeightMapping,
+use crate::{evm::handle::using_precompile_handle, solidity::revert::revert};
+use core::marker::PhantomData;
+use fp_evm::{ExitError, PrecompileFailure, PrecompileHandle};
+use frame_support::{
+	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	pallet_prelude::*,
+	traits::Get,
 };
+use pallet_evm::GasWeightMapping;
 
 /// System account size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
 /// Blake2_128Concat (16) + AccountId (20) + AccountInfo (4 + 12 + AccountData (4* 16)) = 148
@@ -44,9 +42,8 @@ impl From<TryDispatchError> for PrecompileFailure {
 	fn from(f: TryDispatchError) -> PrecompileFailure {
 		match f {
 			TryDispatchError::Evm(e) => PrecompileFailure::Error { exit_status: e },
-			TryDispatchError::Substrate(e) => {
-				revert(alloc::format!("Dispatched call failed with error: {e:?}"))
-			}
+			TryDispatchError::Substrate(e) =>
+				revert(alloc::format!("Dispatched call failed with error: {e:?}")),
 		}
 	}
 }
