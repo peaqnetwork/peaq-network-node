@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use pallet_evm::AddressMapping;
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
-use sp_core::{Decode, Encode, MaxEncodedLen, H160, H256};
+use {
+	pallet_evm::AddressMapping,
+	scale_info::TypeInfo,
+	serde::{Deserialize, Serialize},
+	sp_core::{Decode, Encode, MaxEncodedLen, H160, H256},
+};
 
 #[derive(
 	Eq,
@@ -97,6 +99,12 @@ impl AddressMapping<MockAccount> for MockAccount {
 	}
 }
 
+impl sp_runtime::traits::Convert<H160, MockAccount> for MockAccount {
+	fn convert(address: H160) -> MockAccount {
+		address.into()
+	}
+}
+
 #[macro_export]
 macro_rules! mock_account {
 	($name:ident, $convert:expr) => {
@@ -114,14 +122,14 @@ macro_rules! mock_account {
 			}
 		}
 
-		impl From<$name> for H160 {
-			fn from(value: $name) -> H160 {
+		impl From<$name> for sp_core::H160 {
+			fn from(value: $name) -> sp_core::H160 {
 				MockAccount::from(value).into()
 			}
 		}
 
-		impl From<$name> for H256 {
-			fn from(value: $name) -> H256 {
+		impl From<$name> for sp_core::H256 {
+			fn from(value: $name) -> sp_core::H256 {
 				MockAccount::from(value).into()
 			}
 		}
@@ -149,19 +157,22 @@ mock_account!(CryptoCarleth, |_| H160::from(hex_literal::hex!(
 ))
 .into());
 
-mock_account!(AddressInPrefixedSet(u32, u128), |value: AddressInPrefixedSet| {
-	let prefix: u32 = value.0;
-	let index: u128 = value.1;
+mock_account!(
+	AddressInPrefixedSet(u32, u128),
+	|value: AddressInPrefixedSet| {
+		let prefix: u32 = value.0;
+		let index: u128 = value.1;
 
-	let mut buffer = Vec::with_capacity(20); // 160 bits
+		let mut buffer = Vec::with_capacity(20); // 160 bits
 
-	buffer.extend_from_slice(&prefix.to_be_bytes());
-	buffer.extend_from_slice(&index.to_be_bytes());
+		buffer.extend_from_slice(&prefix.to_be_bytes());
+		buffer.extend_from_slice(&index.to_be_bytes());
 
-	assert_eq!(buffer.len(), 20, "address buffer should have len of 20");
+		assert_eq!(buffer.len(), 20, "address buffer should have len of 20");
 
-	H160::from_slice(&buffer).into()
-});
+		H160::from_slice(&buffer).into()
+	}
+);
 
 pub fn alith_secret_key() -> [u8; 32] {
 	hex_literal::hex!("5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133")

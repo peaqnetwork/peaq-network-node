@@ -14,16 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	testing::{decode_revert_message, MockHandle, PrettyLog, SubcallHandle, SubcallTrait},
-	EvmData, EvmDataWriter,
+use {
+	crate::{
+		solidity::codec::Codec,
+		testing::{decode_revert_message, MockHandle, PrettyLog, SubcallHandle, SubcallTrait},
+	},
+	fp_evm::{
+		Context, ExitError, ExitSucceed, Log, PrecompileFailure, PrecompileOutput,
+		PrecompileResult, PrecompileSet,
+	},
+	sp_core::{H160, U256},
+	sp_std::boxed::Box,
 };
-use fp_evm::{
-	Context, ExitError, ExitSucceed, Log, PrecompileFailure, PrecompileOutput, PrecompileResult,
-	PrecompileSet,
-};
-use sp_core::{H160, U256};
-use sp_std::boxed::Box;
 
 #[must_use]
 pub struct PrecompilesTester<'p, P> {
@@ -47,8 +49,12 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	) -> Self {
 		let to = to.into();
 		let mut handle = MockHandle::new(
-			to,
-			Context { address: to, caller: from.into(), apparent_value: U256::zero() },
+			to.clone(),
+			Context {
+				address: to,
+				caller: from.into(),
+				apparent_value: U256::zero(),
+			},
 		);
 
 		handle.input = data;
@@ -98,7 +104,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 
 	pub fn expect_log(mut self, log: Log) -> Self {
 		self.expected_logs = Some({
-			let mut logs = self.expected_logs.unwrap_or_default();
+			let mut logs = self.expected_logs.unwrap_or_else(Vec::new);
 			logs.push(PrettyLog(log));
 			logs
 		});
@@ -131,8 +137,8 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 		res
 	}
 
-	/// Execute the precompile set and expect some precompile to have been executed, regardless of
-	/// the result.
+	/// Execute the precompile set and expect some precompile to have been executed, regardless of the
+	/// result.
 	pub fn execute_some(mut self) {
 		let res = self.execute();
 		assert!(res.is_some());
@@ -147,7 +153,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	}
 
 	/// Execute the precompile set and check it returns provided output.
-	pub fn execute_returns(mut self, output: Vec<u8>) {
+	pub fn execute_returns_raw(mut self, output: Vec<u8>) {
 		let res = self.execute();
 
 		match res {
@@ -157,13 +163,16 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 					"Revert message (bytes): {:?}",
 					sp_core::hexdisplay::HexDisplay::from(&decoded)
 				);
-				eprintln!("Revert message (string): {:?}", core::str::from_utf8(decoded).ok());
+				eprintln!(
+					"Revert message (string): {:?}",
+					core::str::from_utf8(decoded).ok()
+				);
 				panic!("Shouldn't have reverted");
-			},
+			}
 			Some(Ok(PrecompileOutput {
 				exit_status: ExitSucceed::Returned,
 				output: execution_output,
-			})) =>
+			})) => {
 				if execution_output != output {
 					eprintln!(
 						"Output (bytes): {:?}",
@@ -174,7 +183,8 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 						core::str::from_utf8(&execution_output).ok()
 					);
 					panic!("Output doesn't match");
-				},
+				}
+			}
 			other => panic!("Unexpected result: {:?}", other),
 		}
 
@@ -182,8 +192,8 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	}
 
 	/// Execute the precompile set and check it returns provided Solidity encoded output.
-	pub fn execute_returns_encoded(self, output: impl EvmData) {
-		self.execute_returns(EvmDataWriter::new().write(output).build())
+	pub fn execute_returns(self, output: impl Codec) {
+		self.execute_returns_raw(crate::solidity::encode_return_value(output))
 	}
 
 	/// Execute the precompile set and check if it reverts.
@@ -199,10 +209,13 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 						"Revert message (bytes): {:?}",
 						sp_core::hexdisplay::HexDisplay::from(&decoded)
 					);
-					eprintln!("Revert message (string): {:?}", core::str::from_utf8(decoded).ok());
+					eprintln!(
+						"Revert message (string): {:?}",
+						core::str::from_utf8(decoded).ok()
+					);
 					panic!("Revert reason doesn't match !");
 				}
-			},
+			}
 			other => panic!("Didn't revert, instead returned {:?}", other),
 		}
 
@@ -212,7 +225,10 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 	/// Execute the precompile set and check it returns provided output.
 	pub fn execute_error(mut self, error: ExitError) {
 		let res = self.execute();
-		assert_eq!(res, Some(Err(PrecompileFailure::Error { exit_status: error })));
+		assert_eq!(
+			res,
+			Some(Err(PrecompileFailure::Error { exit_status: error }))
+		);
 		self.assert_optionals();
 	}
 }

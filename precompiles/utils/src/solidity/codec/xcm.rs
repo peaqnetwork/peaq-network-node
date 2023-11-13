@@ -16,19 +16,22 @@
 
 //! Encoding of XCM types for solidity
 
-use crate::{
-	data::{BoundedBytes, EvmData, EvmDataReader, EvmDataWriter, UnboundedBytes},
-	revert::{InjectBacktrace, MayRevert, RevertReason},
+use {
+	crate::solidity::{
+		codec::{bytes::*, Codec, Reader, Writer},
+		revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
+	},
+	alloc::string::String,
+	frame_support::{dispatch::Weight, ensure, traits::ConstU32},
+	sp_core::H256,
+	sp_std::vec::Vec,
+	xcm::latest::{Junction, Junctions, MultiLocation, NetworkId},
 };
-use alloc::string::String;
-use frame_support::{ensure, traits::ConstU32};
-use sp_std::vec::Vec;
-use xcm::latest::{Junction, Junctions, MultiLocation, NetworkId};
 
 pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 
 // Function to convert network id to bytes
-// We don't implement EVMData here as these bytes will be appended only
+// We don't implement solidity::Codec here as these bytes will be appended only
 // to certain Junction variants
 // Each NetworkId variant is represented as bytes
 // The first byte represents the enum variant to be used.
@@ -41,71 +44,77 @@ pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 
 pub(crate) fn network_id_to_bytes(network_id: Option<NetworkId>) -> Vec<u8> {
 	let mut encoded: Vec<u8> = Vec::new();
-	match network_id {
+	match network_id.clone() {
 		None => {
 			encoded.push(0u8);
 			encoded
-		},
+		}
 		Some(NetworkId::ByGenesis(id)) => {
 			encoded.push(1u8);
 			encoded.append(&mut id.into());
 			encoded
-		},
+		}
 		Some(NetworkId::Polkadot) => {
 			encoded.push(2u8);
 			encoded.push(2u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Kusama) => {
 			encoded.push(3u8);
 			encoded.push(3u8);
 			encoded
-		},
-		Some(NetworkId::ByFork { block_number, block_hash }) => {
+		}
+		Some(NetworkId::ByFork {
+			block_number,
+			block_hash,
+		}) => {
 			encoded.push(4u8);
 			encoded.push(1u8);
 			encoded.append(&mut block_number.to_be_bytes().into());
 			encoded.append(&mut block_hash.into());
 			encoded
-		},
+		}
 		Some(NetworkId::Westend) => {
 			encoded.push(5u8);
 			encoded.push(4u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Rococo) => {
 			encoded.push(6u8);
 			encoded.push(5u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Wococo) => {
 			encoded.push(7u8);
 			encoded.push(6u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Ethereum { chain_id }) => {
 			encoded.push(8u8);
 			encoded.push(7u8);
 			encoded.append(&mut chain_id.to_be_bytes().into());
 			encoded
-		},
+		}
 		Some(NetworkId::BitcoinCore) => {
 			encoded.push(9u8);
 			encoded.push(8u8);
 			encoded
-		},
+		}
 		Some(NetworkId::BitcoinCash) => {
 			encoded.push(10u8);
 			encoded.push(9u8);
 			encoded
-		},
+		}
 	}
 }
 
 // Function to convert bytes to networkId
 pub(crate) fn network_id_from_bytes(encoded_bytes: Vec<u8>) -> MayRevert<Option<NetworkId>> {
-	ensure!(!encoded_bytes.is_empty(), RevertReason::custom("Junctions cannot be empty"));
-	let mut encoded_network_id = EvmDataReader::new(&encoded_bytes);
+	ensure!(
+		encoded_bytes.len() > 0,
+		RevertReason::custom("Junctions cannot be empty")
+	);
+	let mut encoded_network_id = Reader::new(&encoded_bytes);
 
 	let network_selector = encoded_network_id
 		.read_raw_bytes(1)
@@ -127,38 +136,43 @@ pub(crate) fn network_id_from_bytes(encoded_bytes: Vec<u8>) -> MayRevert<Option<
 		3 => Ok(Some(NetworkId::Kusama)),
 		4 => {
 			let mut block_number: [u8; 8] = Default::default();
-			block_number.copy_from_slice(encoded_network_id.read_raw_bytes(8)?);
+			block_number.copy_from_slice(&encoded_network_id.read_raw_bytes(8)?);
 
 			let mut block_hash: [u8; 32] = Default::default();
-			block_hash.copy_from_slice(encoded_network_id.read_raw_bytes(32)?);
+			block_hash.copy_from_slice(&encoded_network_id.read_raw_bytes(32)?);
 			Ok(Some(NetworkId::ByFork {
 				block_number: u64::from_be_bytes(block_number),
 				block_hash,
 			}))
-		},
+		}
 		5 => Ok(Some(NetworkId::Westend)),
 		6 => Ok(Some(NetworkId::Rococo)),
 		7 => Ok(Some(NetworkId::Wococo)),
 		8 => {
 			let mut chain_id: [u8; 8] = Default::default();
-			chain_id.copy_from_slice(encoded_network_id.read_raw_bytes(8)?);
-			Ok(Some(NetworkId::Ethereum { chain_id: u64::from_be_bytes(chain_id) }))
-		},
+			chain_id.copy_from_slice(&encoded_network_id.read_raw_bytes(8)?);
+			Ok(Some(NetworkId::Ethereum {
+				chain_id: u64::from_be_bytes(chain_id),
+			}))
+		}
 		9 => Ok(Some(NetworkId::BitcoinCore)),
 		10 => Ok(Some(NetworkId::BitcoinCash)),
 		_ => Err(RevertReason::custom("Non-valid Network Id").into()),
 	}
 }
 
-impl EvmData for Junction {
-	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
+impl Codec for Junction {
+	fn read(reader: &mut Reader) -> MayRevert<Self> {
 		let junction = reader.read::<BoundedBytes<ConstU32<JUNCTION_SIZE_LIMIT>>>()?;
 		let junction_bytes: Vec<_> = junction.into();
 
-		ensure!(!junction_bytes.is_empty(), RevertReason::custom("Junctions cannot be empty"));
+		ensure!(
+			junction_bytes.len() > 0,
+			RevertReason::custom("Junctions cannot be empty")
+		);
 
 		// For simplicity we use an EvmReader here
-		let mut encoded_junction = EvmDataReader::new(&junction_bytes);
+		let mut encoded_junction = Reader::new(&junction_bytes);
 
 		// We take the first byte
 		let enum_selector = encoded_junction
@@ -170,61 +184,61 @@ impl EvmData for Junction {
 			0 => {
 				// In the case of Junction::Parachain, we need 4 additional bytes
 				let mut data: [u8; 4] = Default::default();
-				data.copy_from_slice(encoded_junction.read_raw_bytes(4)?);
+				data.copy_from_slice(&encoded_junction.read_raw_bytes(4)?);
 				let para_id = u32::from_be_bytes(data);
 				Ok(Junction::Parachain(para_id))
-			},
+			}
 			1 => {
 				// In the case of Junction::AccountId32, we need 32 additional bytes plus NetworkId
 				let mut account: [u8; 32] = Default::default();
-				account.copy_from_slice(encoded_junction.read_raw_bytes(32)?);
+				account.copy_from_slice(&encoded_junction.read_raw_bytes(32)?);
 
 				let network = encoded_junction.read_till_end()?.to_vec();
-				Ok(Junction::AccountId32 { network: network_id_from_bytes(network)?, id: account })
-			},
+				Ok(Junction::AccountId32 {
+					network: network_id_from_bytes(network)?,
+					id: account,
+				})
+			}
 			2 => {
-				// In the case of Junction::AccountIndex64, we need 8 additional bytes plus
-				// NetworkId
+				// In the case of Junction::AccountIndex64, we need 8 additional bytes plus NetworkId
 				let mut index: [u8; 8] = Default::default();
-				index.copy_from_slice(encoded_junction.read_raw_bytes(8)?);
+				index.copy_from_slice(&encoded_junction.read_raw_bytes(8)?);
 				// Now we read the network
 				let network = encoded_junction.read_till_end()?.to_vec();
 				Ok(Junction::AccountIndex64 {
 					network: network_id_from_bytes(network)?,
 					index: u64::from_be_bytes(index),
 				})
-			},
+			}
 			3 => {
 				// In the case of Junction::AccountKey20, we need 20 additional bytes plus NetworkId
 				let mut account: [u8; 20] = Default::default();
-				account.copy_from_slice(encoded_junction.read_raw_bytes(20)?);
+				account.copy_from_slice(&encoded_junction.read_raw_bytes(20)?);
 
 				let network = encoded_junction.read_till_end()?.to_vec();
 				Ok(Junction::AccountKey20 {
 					network: network_id_from_bytes(network)?,
 					key: account,
 				})
-			},
-			4 => Ok(Junction::PalletInstance(encoded_junction.read_raw_bytes(1)?[0])),
+			}
+			4 => Ok(Junction::PalletInstance(
+				encoded_junction.read_raw_bytes(1)?[0],
+			)),
 			5 => {
 				// In the case of Junction::GeneralIndex, we need 16 additional bytes
 				let mut general_index: [u8; 16] = Default::default();
-				general_index.copy_from_slice(encoded_junction.read_raw_bytes(16)?);
+				general_index.copy_from_slice(&encoded_junction.read_raw_bytes(16)?);
 				Ok(Junction::GeneralIndex(u128::from_be_bytes(general_index)))
-			},
+			}
 			6 => {
-				let mut length: [u8; 1] = Default::default();
-				length.copy_from_slice(
-					encoded_junction
-						.read_raw_bytes(1)
-						.map_err(|_| RevertReason::read_out_of_bounds("General Key length"))?,
-				);
+				let length = encoded_junction
+					.read_raw_bytes(1)
+					.map_err(|_| RevertReason::read_out_of_bounds("General Key length"))?[0];
 
-				let mut data: [u8; 32] = Default::default();
-				data.copy_from_slice(encoded_junction.read_till_end()?);
+				let data = encoded_junction.read::<H256>().in_field("data")?.into();
 
-				Ok(Junction::GeneralKey { length: u8::from_be_bytes(length), data })
-			},
+				Ok(Junction::GeneralKey { length, data })
+			}
 			7 => Ok(Junction::OnlyChild),
 			8 => Err(RevertReason::custom("Junction::Plurality not supported yet").into()),
 			9 => {
@@ -234,80 +248,80 @@ impl EvmData for Junction {
 				} else {
 					Err(RevertReason::custom("Unknown NetworkId").into())
 				}
-			},
+			}
 			_ => Err(RevertReason::custom("Unknown Junction variant").into()),
 		}
 	}
 
-	fn write(writer: &mut EvmDataWriter, value: Self) {
+	fn write(writer: &mut Writer, value: Self) {
 		let mut encoded: Vec<u8> = Vec::new();
 		let encoded_bytes: UnboundedBytes = match value {
 			Junction::Parachain(para_id) => {
 				encoded.push(0u8);
 				encoded.append(&mut para_id.to_be_bytes().to_vec());
 				encoded.as_slice().into()
-			},
+			}
 			Junction::AccountId32 { network, id } => {
 				encoded.push(1u8);
 				encoded.append(&mut id.to_vec());
 				encoded.append(&mut network_id_to_bytes(network));
 				encoded.as_slice().into()
-			},
+			}
 			Junction::AccountIndex64 { network, index } => {
 				encoded.push(2u8);
 				encoded.append(&mut index.to_be_bytes().to_vec());
 				encoded.append(&mut network_id_to_bytes(network));
 				encoded.as_slice().into()
-			},
+			}
 			Junction::AccountKey20 { network, key } => {
 				encoded.push(3u8);
 				encoded.append(&mut key.to_vec());
 				encoded.append(&mut network_id_to_bytes(network));
 				encoded.as_slice().into()
-			},
+			}
 			Junction::PalletInstance(intance) => {
 				encoded.push(4u8);
 				encoded.append(&mut intance.to_be_bytes().to_vec());
 				encoded.as_slice().into()
-			},
+			}
 			Junction::GeneralIndex(id) => {
 				encoded.push(5u8);
 				encoded.append(&mut id.to_be_bytes().to_vec());
 				encoded.as_slice().into()
-			},
+			}
 			Junction::GeneralKey { length, data } => {
 				encoded.push(6u8);
 				encoded.push(length);
 				encoded.append(&mut data.into());
 				encoded.as_slice().into()
-			},
+			}
 			Junction::OnlyChild => {
 				encoded.push(7u8);
 				encoded.as_slice().into()
-			},
+			}
 			Junction::GlobalConsensus(network_id) => {
 				encoded.push(9u8);
 				encoded.append(&mut network_id_to_bytes(Some(network_id)));
 				encoded.as_slice().into()
-			},
+			}
 			// TODO: The only missing item here is Junciton::Plurality. This is a complex encoded
 			// type that we need to evaluate how to support
 			_ => unreachable!("Junction::Plurality not supported yet"),
 		};
-		EvmData::write(writer, encoded_bytes);
+		Codec::write(writer, encoded_bytes);
 	}
 
 	fn has_static_size() -> bool {
 		false
 	}
 
-	fn solidity_type() -> String {
-		UnboundedBytes::solidity_type()
+	fn signature() -> String {
+		UnboundedBytes::signature()
 	}
 }
 
-impl EvmData for Junctions {
-	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
+impl Codec for Junctions {
+	fn read(reader: &mut Reader) -> MayRevert<Self> {
 		let junctions_bytes: Vec<Junction> = reader.read()?;
 		let mut junctions = Junctions::Here;
 		for item in junctions_bytes {
@@ -319,37 +333,59 @@ impl EvmData for Junctions {
 		Ok(junctions)
 	}
 
-	fn write(writer: &mut EvmDataWriter, value: Self) {
-		let encoded: Vec<Junction> = value.into_iter().collect();
-		EvmData::write(writer, encoded);
+	fn write(writer: &mut Writer, value: Self) {
+		let encoded: Vec<Junction> = value.iter().map(|junction| junction.clone()).collect();
+		Codec::write(writer, encoded);
 	}
 
 	fn has_static_size() -> bool {
 		false
 	}
 
-	fn solidity_type() -> String {
-		Vec::<Junction>::solidity_type()
+	fn signature() -> String {
+		Vec::<Junction>::signature()
 	}
 }
 
 // Cannot used derive macro since it is a foreign struct.
-impl EvmData for MultiLocation {
-	fn read(reader: &mut EvmDataReader) -> MayRevert<Self> {
-		use crate::revert::BacktraceExt;
-		let (parents, interior) = reader.read().map_in_tuple_to_field(&["parents", "interior"])?;
+impl Codec for MultiLocation {
+	fn read(reader: &mut Reader) -> MayRevert<Self> {
+		let (parents, interior) = reader
+			.read()
+			.map_in_tuple_to_field(&["parents", "interior"])?;
 		Ok(MultiLocation { parents, interior })
 	}
 
-	fn write(writer: &mut EvmDataWriter, value: Self) {
-		EvmData::write(writer, (value.parents, value.interior));
+	fn write(writer: &mut Writer, value: Self) {
+		Codec::write(writer, (value.parents, value.interior));
 	}
 
 	fn has_static_size() -> bool {
 		<(u8, Junctions)>::has_static_size()
 	}
 
-	fn solidity_type() -> String {
-		<(u8, Junctions)>::solidity_type()
+	fn signature() -> String {
+		<(u8, Junctions)>::signature()
+	}
+}
+
+impl Codec for Weight {
+	fn read(reader: &mut Reader) -> MayRevert<Self> {
+		let (ref_time, proof_size) = reader
+			.read()
+			.map_in_tuple_to_field(&["ref_time", "proof_size"])?;
+		Ok(Weight::from_parts(ref_time, proof_size))
+	}
+
+	fn write(writer: &mut Writer, value: Self) {
+		Codec::write(writer, (value.ref_time(), value.proof_size()));
+	}
+
+	fn has_static_size() -> bool {
+		<(u64, u64)>::has_static_size()
+	}
+
+	fn signature() -> String {
+		<(u64, u64)>::signature()
 	}
 }
