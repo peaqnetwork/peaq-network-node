@@ -93,7 +93,7 @@ jobs:
           repo: peaq-network-qa
           github_token: ${{ secrets.TOKEN_FOR_AUTOTEST }}
           workflow_file_name: main.yml
-          ref: test/1205859619866294_add-test-stage-in-peaqnode-deployment
+          ref: Parachain-Connection
           trigger_workflow: true
           wait_workflow: true
       # - name: Checkout code from specific branch
