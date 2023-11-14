@@ -16185,7 +16185,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v0.9.43#4dcad16a53f0b78e43b582750cd7f9ac75abfedc"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v0.9.43#66a823cd666971f60c260db61de22814c7d7a106"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -16208,7 +16208,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol-rpc"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v0.9.43#4dcad16a53f0b78e43b582750cd7f9ac75abfedc"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v0.9.43#66a823cd666971f60c260db61de22814c7d7a106"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -16223,7 +16223,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol-runtime-api"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v0.9.43#4dcad16a53f0b78e43b582750cd7f9ac75abfedc"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v0.9.43#66a823cd666971f60c260db61de22814c7d7a106"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
