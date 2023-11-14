@@ -36,12 +36,11 @@ interface RBAC {
 
     function fetch_role(
         bytes32 owner,
-        bytes32 role
+        bytes32 entity
     ) external view returns (Entity memory);
 
     function fetch_roles(
-        bytes32 owner,
-        bytes32 role
+        bytes32 owner
     ) external view returns (Entity[] memory);
 
     function add_role(
