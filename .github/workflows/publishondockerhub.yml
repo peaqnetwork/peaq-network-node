@@ -77,3 +77,30 @@ jobs:
             sudo TAG=${{ steps.image-version.outputs.tag }} docker compose pull
             sudo TAG=${{ steps.image-version.outputs.tag }} docker compose down -v
             sudo TAG=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
+  test:
+    name: Run Autotest
+    runs-on: ubuntu-20.04
+    needs: deploy
+    steps:
+      - name: Wait for Block Generation
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '180s'
+      - name: Run Test
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: peaqnetwork
+          repo: peaq-network-qa
+          github_token: ${{ secrets.TOKEN_FOR_AUTOTEST }}
+          workflow_file_name: main.yml
+          ref: Parachain-Connection
+          trigger_workflow: true
+          wait_workflow: true
+      # - name: Checkout code from specific branch
+      #   uses: actions/checkout@v2
+      #   with:
+      #     repository: peaqnetwork/peaq-network-qa
+      #     token: ${{ secrets.TOKEN_FOR_AUTOTEST }}
+      #     ref:  test/1205859619866294_add-test-stage-in-peaqnode-deployment
+      # - name: Run AutoTest
+      #   uses: https://github.com/peaqnetwork/peaq-network-qa/blob/test/1205859619866294_add-test-stage-in-peaqnode-deployment/.github/workflows/RunTest.yml 
