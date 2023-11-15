@@ -177,11 +177,10 @@ fn collator_reward_per_block_only_collator() {
 		.execute_with(|| {
 			let state = StakePallet::candidate_pool(1).unwrap();
 			// Avoid keep live error
-			assert_ok!(Balances::set_balance(
+			assert_ok!(Balances::force_set_balance(
 				RawOrigin::Root.into(),
 				StakePallet::account_id(),
 				1000,
-				0
 			));
 
 			let (_reads, _writes, reward) =
@@ -208,11 +207,10 @@ fn collator_reward_per_block_with_delegator() {
 		.execute_with(|| {
 			let state = StakePallet::candidate_pool(1).unwrap();
 			// Avoid keep live error
-			assert_ok!(Balances::set_balance(
+			assert_ok!(Balances::force_set_balance(
 				RawOrigin::Root.into(),
 				StakePallet::account_id(),
 				1000,
-				0
 			));
 
 			let (_reads, _writes, reward) =

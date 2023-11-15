@@ -61,16 +61,16 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 
 		if delegator_sum == T::CurrencyBalance::from(0u128) {
 			(
-				Weight::from_ref_time(1_u64),
-				Weight::from_ref_time(1_u64),
+				Weight::from_parts(1, 0),
+				Weight::from_parts(1, 0),
 				Reward { owner: stake.id.clone(), amount: issue_number },
 			)
 		} else {
 			let collator_reward =
 				R::get_reward_rate_config().compute_collator_reward::<T>(issue_number);
 			(
-				Weight::from_ref_time(1_u64),
-				Weight::from_ref_time(1_u64),
+				Weight::from_parts(1, 0),
+				Weight::from_parts(1, 0),
 				Reward { owner: stake.id.clone(), amount: collator_reward },
 			)
 		}
@@ -98,8 +98,8 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 			.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 
 		(
-			Weight::from_ref_time(1_u64 + 4_u64),
-			Weight::from_ref_time(inner.len() as u64),
+			Weight::from_parts(1_u64 + 4_u64, 0),
+			Weight::from_parts(inner.len() as u64, 0),
 			inner.try_into().expect("Did not extend vec q.e.d."),
 		)
 	}

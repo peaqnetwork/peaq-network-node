@@ -1,7 +1,7 @@
 use sc_chain_spec::ChainSpecExtension;
 use serde::{Deserialize, Serialize};
 
-use crate::primitives::Block;
+use peaq_primitives_xcm::Block;
 
 /// Shell to Aura consensus upgrades.
 mod shell_upgrade;

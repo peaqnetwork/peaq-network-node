@@ -1,6 +1,5 @@
 [package]
 name = "precompile-utils"
-authors = [ "PureStake" ]
 description = "Utils to write EVM precompiles."
 edition = "2021"
 version = "0.1.0"
@@ -29,6 +28,7 @@ frame-system = { workspace = true }
 parity-scale-codec = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
+sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
 # Frontier
@@ -37,10 +37,11 @@ fp-evm = { workspace = true }
 pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
 
 # Polkadot / XCM
-xcm = { workspace = true }
+xcm = { workspace = true, optional = true }
 
 [dev-dependencies]
 hex-literal = { workspace = true }
+xcm = { workspace = true }
 
 [features]
 default = [ "std" ]
@@ -55,4 +56,5 @@ std = [
 	"sp-io/std",
 	"sp-std/std",
 ]
+codec-xcm = [ "xcm" ]
 testing = [ "derive_more", "hex-literal", "scale-info", "serde", "similar-asserts", "std" ]

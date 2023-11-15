@@ -1,16 +1,14 @@
-///! Special [`ParachainConsensus`] implementation that waits for the upgrade from
-///! shell to a parachain runtime that implements Aura.
+//! Special [`ParachainConsensus`] implementation that waits for the upgrade from shell to a
+//! parachain runtime that implements Aura.
 use cumulus_client_consensus_common::{ParachainCandidate, ParachainConsensus};
 use cumulus_primitives_core::relay_chain::{Hash as PHash, PersistedValidationData};
 use futures::lock::Mutex;
+use peaq_primitives_xcm::*;
 use sc_consensus::{import_queue::Verifier as VerifierT, BlockImportParams};
 use sp_api::ApiExt;
-use sp_consensus::CacheKeyId;
 use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
-use sp_runtime::{generic::BlockId, traits::Header as HeaderT};
+use sp_runtime::traits::Header as HeaderT;
 use std::sync::Arc;
-
-use crate::primitives::*;
 
 pub enum BuildOnAccess<R> {
 	Uninitialized(Option<Box<dyn FnOnce() -> R + Send + Sync>>),
@@ -58,11 +56,11 @@ where
 		relay_parent: PHash,
 		validation_data: &PersistedValidationData,
 	) -> Option<ParachainCandidate<Block>> {
-		let block_id = BlockId::hash(parent.hash());
+		let block_id = parent.hash();
 		if self
 			.client
 			.runtime_api()
-			.has_api::<dyn AuraApi<Block, AuraId>>(&block_id)
+			.has_api::<dyn AuraApi<Block, AuraId>>(block_id)
 			.unwrap_or(false)
 		{
 			self.aura_consensus
@@ -96,13 +94,13 @@ where
 	async fn verify(
 		&mut self,
 		block_import: BlockImportParams<Block, ()>,
-	) -> Result<(BlockImportParams<Block, ()>, Option<Vec<(CacheKeyId, Vec<u8>)>>), String> {
-		let block_id = BlockId::hash(*block_import.header.parent_hash());
+	) -> Result<BlockImportParams<Block, ()>, String> {
+		let block_hash = *block_import.header.parent_hash();
 
 		if self
 			.client
 			.runtime_api()
-			.has_api::<dyn AuraApi<Block, AuraId>>(&block_id)
+			.has_api::<dyn AuraApi<Block, AuraId>>(block_hash)
 			.unwrap_or(false)
 		{
 			self.aura_verifier.get_mut().verify(block_import).await

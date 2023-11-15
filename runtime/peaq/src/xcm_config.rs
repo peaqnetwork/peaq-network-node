@@ -9,13 +9,13 @@ use sp_core::bounded::BoundedVec;
 use sp_runtime::traits::{ConstU32, Convert};
 use sp_std::prelude::*;
 
-use codec::{Decode, Encode};
 use frame_support::{
 	dispatch::Weight,
 	parameter_types,
 	traits::{Everything, Nothing},
 };
 use frame_system::EnsureRoot;
+use parity_scale_codec::{Decode, Encode};
 
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
 use orml_xcm_support::{
@@ -229,6 +229,10 @@ impl pallet_xcm::Config for Runtime {
 	type WeightInfo = crate::weights::pallet_xcm::WeightInfo<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDestBench;
+
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type MaxRemoteLockConsumers = ConstU32<0>;
+	type RemoteLockConsumerIdentifier = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -255,7 +259,7 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BaseXcmWeight: XcmWeight = XcmWeight::from_parts(100_000_000, 100_000_000);
+	pub const BaseXcmWeight: XcmWeight = XcmWeight::from_parts(100_000_000, 0);
 	pub const MaxAssetsForTransfer: usize = 2;
 }
 

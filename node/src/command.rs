@@ -1,30 +1,28 @@
+use cumulus_client_cli::generate_genesis_block;
+use cumulus_primitives_core::ParaId;
+#[cfg(feature = "frame-benchmarking-cli")]
+use frame_benchmarking_cli::BenchmarkCmd;
+use log::info;
+use parity_scale_codec::Encode;
+use peaq_primitives_xcm::*;
+use sc_cli::{
+	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
+	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
+};
+use sc_service::{
+	config::{BasePath, PrometheusConfig},
+	DatabaseSource, PartialComponents,
+};
+use sp_core::hexdisplay::HexDisplay;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+use std::io::Write;
+
 use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
 	parachain::service::{self, agung, dev, frontier_database_dir, krest, peaq, start_node},
-	primitives::Block,
 };
-
-#[cfg(feature = "frame-benchmarking-cli")]
-use frame_benchmarking_cli::BenchmarkCmd;
-use sc_cli::{ChainSpec, Result, RuntimeVersion, SubstrateCli};
-use sc_service::{DatabaseSource, PartialComponents};
-use sp_runtime::traits::Block as BlockT;
-
-// Parachain
-use codec::Encode;
-use cumulus_client_cli::generate_genesis_block;
-use cumulus_primitives_core::ParaId;
-use log::info;
-use sc_cli::{
-	CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams,
-	SharedParams,
-};
-use sc_service::config::{BasePath, PrometheusConfig};
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::AccountIdConversion;
-use std::{io::Write, net::SocketAddr};
 
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;
@@ -482,7 +480,7 @@ pub fn run() -> sc_cli::Result<()> {
 				let id = ParaId::from(cli.run.parachain_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
+					AccountIdConversion::<polkadot_primitives::v4::AccountId>::into_account_truncating(&id);
 
 				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
 				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
@@ -525,12 +523,8 @@ impl DefaultConfigurationValues for RelayChainCli {
 		30334
 	}
 
-	fn rpc_ws_listen_port() -> u16 {
+	fn rpc_listen_port() -> u16 {
 		9945
-	}
-
-	fn rpc_http_listen_port() -> u16 {
-		9934
 	}
 
 	fn prometheus_listen_port() -> u16 {
@@ -560,18 +554,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 			.shared_params()
 			.base_path()?
 			.or_else(|| self.base_path.clone().map(Into::into)))
-	}
-
-	fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-		self.base.base.rpc_http(default_listen_port)
-	}
-
-	fn rpc_ipc(&self) -> Result<Option<String>> {
-		self.base.base.rpc_ipc()
-	}
-
-	fn rpc_ws(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-		self.base.base.rpc_ws(default_listen_port)
 	}
 
 	fn prometheus_config(
@@ -611,10 +593,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {
 		self.base.base.rpc_methods()
-	}
-
-	fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
-		self.base.base.rpc_ws_max_connections()
 	}
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
