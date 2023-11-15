@@ -26,6 +26,7 @@ sp-std = { workspace = true, default-features = false }
 default = ["std"]
 std = [
 	"parity-scale-codec/std",
+	"log/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",

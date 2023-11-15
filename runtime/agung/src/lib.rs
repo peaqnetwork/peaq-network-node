@@ -86,7 +86,6 @@ pub use frame_support::{
 	ConsensusEngineId, PalletId, StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
-
 pub use pallet_timestamp::Call as TimestampCall;
 pub use peaq_pallet_did;
 pub use peaq_pallet_rbac;
