@@ -395,13 +395,7 @@ pub(crate) fn roll_to(n: BlockNumber, issue_number: Balance, authors: &Vec<Optio
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
 		}
-<<<<<<< HEAD
 		finish_block_start_next();
-=======
-		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
->>>>>>> parachain_dev
 	}
 }
 
