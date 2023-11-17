@@ -171,8 +171,6 @@ interface RBAC {
 
     event RoleRemoved(address sender, bytes32 role_id);
 
-    event FetchedUserRoles(address sender);
-
     event RoleAssignedToUser(address sender, bytes32 role_id, bytes32 user_id);
 
     event RoleUnassignedToUser(
@@ -181,17 +179,11 @@ interface RBAC {
         bytes32 user_id
     );
 
-    event PermissionFetched(address sender);
-
-    event AllPermissionsFetched(address sender);
-
     event PermissionAdded(address sender, bytes32 permission_id, bytes name);
 
     event PermissionUpdated(address sender, bytes32 permission_id, bytes name);
 
     event PermissionDisabled(address sender, bytes32 permission_id);
-
-    event FetchedRolePermissions(address sender);
 
     event PermissionAssigned(
         address sender,
@@ -204,8 +196,6 @@ interface RBAC {
         bytes32 permission_id,
         bytes32 role_id
     );
-
-    event GroupFetched(address sender);
 
     event GroupAdded(address sender, bytes32 group_id, bytes name);
 
@@ -225,8 +215,6 @@ interface RBAC {
         bytes32 group_id
     );
 
-    event FetchedGroupRoles(address sender);
-
     event UserAssignedToGroup(
         address sender,
         bytes32 user_id,
@@ -238,8 +226,4 @@ interface RBAC {
         bytes32 user_id,
         bytes32 group_id
     );
-
-    event FetchedUserGroups(address sender);
-
-    event FetchedUserPermissions(address sender);
 }

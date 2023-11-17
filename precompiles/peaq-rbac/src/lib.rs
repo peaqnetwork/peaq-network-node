@@ -60,15 +60,6 @@ where
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 		};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_ROLE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -89,15 +80,6 @@ where
 				})
 				.collect::<Vec<Entity>>()),
 		};
-
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_ROLES,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
 
 		result
 	}
@@ -220,15 +202,6 @@ where
 					.collect::<Vec<Role2User>>()),
 			};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_USER_ROLES,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -314,15 +287,6 @@ where
 				Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 			};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_PERMISSION,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -346,15 +310,6 @@ where
 				})
 				.collect::<Vec<Entity>>()),
 		};
-
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_PERMISSIONS,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
 
 		result
 	}
@@ -482,15 +437,6 @@ where
 					.collect::<Vec<Permission2Role>>()),
 			};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_ROLE_PERMISSIONS,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -578,15 +524,6 @@ where
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled.into() }),
 		};
-
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
 
 		result
 	}
@@ -762,15 +699,6 @@ where
 				.collect::<Vec<Role2Group>>()),
 		};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_GROUP_ROLES,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -857,15 +785,6 @@ where
 				.collect::<Vec<User2Group>>()),
 		};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_USER_GROUPS,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -893,15 +812,6 @@ where
 					.collect::<Vec<Entity>>()),
 			};
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_USER_GROUPS,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
-
 		result
 	}
 
@@ -928,15 +838,6 @@ where
 					})
 					.collect::<Vec<Entity>>()),
 			};
-
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_FETCH_GROUP_PERMISSIONS,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.build(),
-		);
-		event.record(handle)?;
 
 		result
 	}
