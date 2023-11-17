@@ -54,13 +54,10 @@ where
 		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
-		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id)
-		{
+		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
-		};
-
-		result
+		}
 	}
 
 	#[precompile::public("fetch_roles(bytes32)")]
@@ -281,13 +278,10 @@ where
 		let permission_id: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
 
-		let result =
-			match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
-				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
-				Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
-			};
-
-		result
+		match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
+			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+		}
 	}
 
 	#[precompile::public("fetch_permissions(bytes32,bytes32)")]
@@ -520,12 +514,10 @@ where
 		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
-		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
+		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled.into() }),
-		};
-
-		result
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+		}
 	}
 
 	#[precompile::public("add_group(bytes32,bytes)")]
@@ -551,7 +543,7 @@ where
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
 				.write::<H256>(group_id.into())
-				.write::<BoundedBytes<GetBytesLimit>>(name.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name)
 				.build(),
 		);
 		event.record(handle)?;
@@ -582,7 +574,7 @@ where
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
 				.write::<H256>(group_id.into())
-				.write::<BoundedBytes<GetBytesLimit>>(name.into())
+				.write::<BoundedBytes<GetBytesLimit>>(name)
 				.build(),
 		);
 		event.record(handle)?;
@@ -807,7 +799,7 @@ where
 					.map(|val| Entity {
 						id: val.id.into(),
 						name: val.name.clone().into(),
-						enabled: val.enabled.into(),
+						enabled: val.enabled,
 					})
 					.collect::<Vec<Entity>>()),
 			};
@@ -834,7 +826,7 @@ where
 					.map(|val| Entity {
 						id: val.id.into(),
 						name: val.name.clone().into(),
-						enabled: val.enabled.into(),
+						enabled: val.enabled,
 					})
 					.collect::<Vec<Entity>>()),
 			};
