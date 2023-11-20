@@ -9,7 +9,7 @@ version = "0.1.0"
 
 [dependencies]
 environmental = { workspace = true, default-features = false }
-codec = { package = "parity-scale-codec", workspace = true }
+parity-scale-codec = { workspace = true }
 sp-runtime-interface = { workspace = true, default-features = false }
 
 # Ethereum
@@ -22,7 +22,7 @@ evm-runtime = { workspace = true, default-features = false }
 [features]
 default = [ "std" ]
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"environmental/std",
 	"ethereum-types/std",
 	"ethereum/std",

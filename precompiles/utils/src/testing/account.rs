@@ -97,6 +97,12 @@ impl AddressMapping<MockAccount> for MockAccount {
 	}
 }
 
+impl sp_runtime::traits::Convert<H160, MockAccount> for MockAccount {
+	fn convert(address: H160) -> MockAccount {
+		address.into()
+	}
+}
+
 #[macro_export]
 macro_rules! mock_account {
 	($name:ident, $convert:expr) => {
@@ -114,14 +120,14 @@ macro_rules! mock_account {
 			}
 		}
 
-		impl From<$name> for H160 {
-			fn from(value: $name) -> H160 {
+		impl From<$name> for sp_core::H160 {
+			fn from(value: $name) -> sp_core::H160 {
 				MockAccount::from(value).into()
 			}
 		}
 
-		impl From<$name> for H256 {
-			fn from(value: $name) -> H256 {
+		impl From<$name> for sp_core::H256 {
+			fn from(value: $name) -> sp_core::H256 {
 				MockAccount::from(value).into()
 			}
 		}

@@ -16,7 +16,7 @@
 
 //! Provide checks related to function modifiers (view/payable).
 
-use crate::revert::{MayRevert, RevertReason};
+use crate::solidity::revert::{MayRevert, RevertReason};
 use fp_evm::Context;
 use sp_core::U256;
 
@@ -34,7 +34,6 @@ pub enum FunctionModifier {
 
 /// Check that a function call is compatible with the context it is
 /// called into.
-// #[must_use] not necessary due to return type has already #[must_use]
 pub fn check_function_modifier(
 	context: &Context,
 	is_static: bool,

@@ -1,12 +1,12 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
-	staking, AccountId, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig,
-	EthereumConfig, GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig,
-	ParachainStakingConfig, PeaqMorConfig, Precompiles, Signature,
-	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
+	GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig, ParachainStakingConfig,
+	PeaqMorConfig, PeaqPrecompiles, Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
-use peaq_primitives_xcm::Balance;
+use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -162,7 +162,7 @@ fn configure_genesis(
 		},
 		aura_ext: Default::default(),
 		evm: EVMConfig {
-			accounts: Precompiles::used_addresses()
+			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
 				.map(|addr| {
 					(
 						addr,

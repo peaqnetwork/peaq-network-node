@@ -273,6 +273,7 @@ impl Precompile {
 				_ => return Err(syn::Error::new(input.pat.span(), msg)),
 			};
 			let ty = input.ty.as_ref().clone();
+			self.check_type_parameter_usage(&ty)?;
 
 			arguments.push(Argument { ident, ty })
 		}
@@ -294,8 +295,7 @@ impl Precompile {
 				method_name.clone(),
 				Variant {
 					arguments,
-					solidity_arguments_type: solidity_arguments_type
-						.unwrap_or_else(|| String::from("()")),
+					solidity_arguments_type: solidity_arguments_type.unwrap_or(String::from("()")),
 					modifier,
 					selectors,
 					fn_output: output_type.as_ref().clone(),
@@ -411,13 +411,13 @@ impl Precompile {
 
 		let span = method.sig.span();
 
-		if method.sig.inputs.len() != 1 {
-			let msg = "The discriminant function must only take the code address (H160) as \
-			parameter.";
+		if method.sig.inputs.len() != 2 {
+			let msg = "The discriminant function must only take code address (H160) and \
+			remaining gas (u64) as parameters.";
 			return Err(syn::Error::new(span, msg))
 		}
 
-		let msg = "The discriminant function must return an Option<_> (no type alias)";
+		let msg = "The discriminant function must return an DiscriminantResult<_> (no type alias)";
 
 		let return_type = match &method.sig.output {
 			syn::ReturnType::Type(_, t) => t.as_ref(),
@@ -441,23 +441,23 @@ impl Precompile {
 
 		let return_segment = &return_path.segments[0];
 
-		if return_segment.ident != "Option" {
+		if return_segment.ident != "DiscriminantResult" {
 			return Err(syn::Error::new(return_segment.ident.span(), msg))
 		}
 
-		let option_arguments = match &return_segment.arguments {
+		let result_arguments = match &return_segment.arguments {
 			syn::PathArguments::AngleBracketed(args) => args,
 			_ => return Err(syn::Error::new(return_segment.ident.span(), msg)),
 		};
 
-		if option_arguments.args.len() != 1 {
-			let msg = "Option type should only have 1 type argument";
-			return Err(syn::Error::new(option_arguments.args.span(), msg))
+		if result_arguments.args.len() != 1 {
+			let msg = "DiscriminantResult type should only have 1 type argument";
+			return Err(syn::Error::new(result_arguments.args.span(), msg))
 		}
 
-		let discriminant_type: &syn::Type = match &option_arguments.args[0] {
+		let discriminant_type: &syn::Type = match &result_arguments.args[0] {
 			syn::GenericArgument::Type(t) => t,
-			_ => return Err(syn::Error::new(option_arguments.args.span(), msg)),
+			_ => return Err(syn::Error::new(result_arguments.args.span(), msg)),
 		};
 
 		self.try_register_discriminant_type(discriminant_type)?;
@@ -535,6 +535,74 @@ impl Precompile {
 		}
 
 		Ok(selector)
+	}
+
+	/// Check that the provided type doesn't depend on one of the type parameters of the
+	/// precompile. Check is skipped if `test_concrete_types` attribute is used.
+	fn check_type_parameter_usage(&self, ty: &syn::Type) -> syn::Result<()> {
+		if self.test_concrete_types.is_some() {
+			return Ok(())
+		}
+
+		const ERR_MESSAGE: &str =
+			"impl type parameter is used in functions arguments. Arguments should not have a type
+depending on a type parameter, unless it is a length bound for BoundedBytes,
+BoundedString or alike, which doesn't affect the Solidity type.
+
+In that case, you must add a #[precompile::test_concrete_types(...)] attribute on the impl
+block to provide concrete types that will be used to run the automatically generated tests
+ensuring the Solidity function signatures are correct.";
+
+		match ty {
+			syn::Type::Array(syn::TypeArray { elem, .. }) |
+			syn::Type::Group(syn::TypeGroup { elem, .. }) |
+			syn::Type::Paren(syn::TypeParen { elem, .. }) |
+			syn::Type::Reference(syn::TypeReference { elem, .. }) |
+			syn::Type::Ptr(syn::TypePtr { elem, .. }) |
+			syn::Type::Slice(syn::TypeSlice { elem, .. }) => self.check_type_parameter_usage(elem)?,
+
+			syn::Type::Path(syn::TypePath { path: syn::Path { segments, .. }, .. }) => {
+				let impl_params: Vec<_> = self
+					.generics
+					.params
+					.iter()
+					.filter_map(|param| match param {
+						syn::GenericParam::Type(syn::TypeParam { ident, .. }) => Some(ident),
+						_ => None,
+					})
+					.collect();
+
+				for segment in segments {
+					if impl_params.contains(&&segment.ident) {
+						return Err(syn::Error::new(segment.ident.span(), ERR_MESSAGE))
+					}
+
+					if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
+						let types = args.args.iter().filter_map(|arg| match arg {
+							syn::GenericArgument::Type(ty) |
+							syn::GenericArgument::Binding(syn::Binding { ty, .. }) => Some(ty),
+							_ => None,
+						});
+
+						for ty in types {
+							self.check_type_parameter_usage(ty)?;
+						}
+					}
+				}
+			},
+			syn::Type::Tuple(tuple) =>
+				for ty in tuple.elems.iter() {
+					self.check_type_parameter_usage(ty)?;
+				},
+			// BareFn => very unlikely this appear as parameter
+			// ImplTrait => will cause other errors, it must be a concrete type
+			// TypeInfer => it must be explicit concrete types since it ends up in enum fields
+			// Macro => Cannot check easily
+			// Never => Function will not be callable.
+			ty => println!("Skipping type parameter check for non supported kind of type: {ty:?}"),
+		}
+
+		Ok(())
 	}
 }
 

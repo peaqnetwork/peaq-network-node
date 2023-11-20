@@ -6,12 +6,17 @@ use frame_support::{
 		Get, Imbalance, WithdrawReasons,
 	},
 };
+use frame_support::traits::tokens::Preservation;
+use frame_support::traits::tokens::Fortitude;
+use frame_support::traits::tokens::Precision;
 use frame_system::Config as SysConfig;
 use orml_traits::{BasicCurrency, MultiCurrency};
 use pallet_assets::Config as AssetsConfig;
 use sp_runtime::traits::{CheckedSub, Zero};
 use sp_std::{fmt::Debug, marker::PhantomData};
 
+// [TODO] Because in polkadot 0.9.43, they are remove the fungibles::Transfer in AssetPallet;
+// So we need to use the introduce a way to call the PalletAsset to call the related func.
 pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeAssetId>(
 	PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeAssetId)>,
 );
@@ -21,10 +26,12 @@ impl<T, MultiCurrencies, NativeCurrency, GetNativeAssetId> MultiCurrency<T::Acco
 where
 	MultiCurrencies: fungibles::Mutate<T::AccountId>
 		+ fungibles::Inspect<T::AccountId, AssetId = T::AssetId, Balance = T::Balance>
-		+ fungibles::Transfer<T::AccountId>,
+		+ fungibles::Mutate<T::AccountId>
+		+ fungibles::Balanced<T::AccountId>,
 	NativeCurrency: BasicCurrency<T::AccountId, Balance = T::Balance>,
 	GetNativeAssetId: Get<T::AssetId>,
 	T: SysConfig + AssetsConfig,
+	T::AssetId: Debug + Clone + PartialEq + Eq + Copy,
 {
 	type CurrencyId = T::AssetId;
 	type Balance = T::Balance;
@@ -58,7 +65,7 @@ where
 			NativeCurrency::free_balance(who)
 		} else {
 			// Keep alive setup as true
-			MultiCurrencies::reducible_balance(asset_id, who, true)
+			MultiCurrencies::reducible_balance(asset_id, who, Preservation::Preserve, Fortitude::Polite)
 		}
 	}
 
@@ -92,7 +99,7 @@ where
 			NativeCurrency::transfer(from, to, amount)
 		} else {
 			// Keep alive setup as true
-			let out = MultiCurrencies::transfer(asset_id, from, to, amount, true);
+			let out = MultiCurrencies::transfer(asset_id, from, to, amount, Preservation::Preserve);
 			if out.is_ok() {
 				Ok(())
 			} else {
@@ -132,7 +139,7 @@ where
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::withdraw(who, amount)
 		} else {
-			let out = MultiCurrencies::burn_from(asset_id, who, amount);
+			let out = MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite);
 			if out.is_ok() {
 				Ok(())
 			} else {
@@ -157,8 +164,9 @@ where
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::slash(who, amount)
 		} else {
+			// We cannot slash the token because it didn't implemnt that...
 			// If error happens, will return 0
-			MultiCurrencies::slash(asset_id, who, amount).unwrap_or_else(|_| Zero::zero())
+			MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite).unwrap_or(Zero::zero())
 		}
 	}
 }

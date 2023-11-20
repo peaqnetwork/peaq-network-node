@@ -34,6 +34,8 @@ use frame_support::{
 	},
 	transactional,
 };
+use frame_support::traits::tokens::Preservation;
+use frame_support::traits::tokens::Fortitude;
 use frame_system::{ensure_signed, pallet_prelude::*};
 use pallet_evm::AddressMapping as PalletEVMAddressMapping;
 use parity_scale_codec::Encode;
@@ -161,8 +163,10 @@ pub mod module {
 
 			let account_id = T::OriginAddressMapping::into_account_id(eth_address);
 			if frame_system::Pallet::<T>::account_exists(&account_id) {
+				// [TODO] Ned to check, if the account have the locked tokens, then we shouldn't
+				// allow users to do the linking.
 				// merge balance from `evm padded address` to `origin`
-				let amount = T::Currency::reducible_balance(&account_id, false);
+				let amount = T::Currency::reducible_balance(&account_id, Preservation::Preserve, Fortitude::Polite);
 				T::Currency::transfer(&account_id, &who, amount, ExistenceRequirement::AllowDeath)?;
 			}
 

@@ -3,6 +3,7 @@ use pallet_assets::AssetsCallback;
 use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
 use sp_core::U256;
 use sp_std::marker::PhantomData;
+use frame_support::ensure;
 
 /// Evm Address.
 pub type EvmAddress = sp_core::H160;
@@ -21,16 +22,16 @@ where
 	A: EVMAddressToAssetId<AssetId>,
 	R: pallet_evm::Config,
 {
-	fn created(id: &AssetId, _: &AccountId) {
+	fn created(id: &AssetId, _: &AccountId) -> Result<(), ()> {
 		let address = A::asset_id_to_address(*id);
-		// In case of collision, we need to cancel the asset creation.
-		// However, in this asset version, we cannot return Err
-		// ensure!(!pallet_evm::AccountCodes::<R>::contains_key(&address), ());
+		ensure!(!pallet_evm::AccountCodes::<R>::contains_key(&address), ());
 		pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
+		Ok(())
 	}
 
-	fn destroyed(id: &AssetId) {
+	fn destroyed(id: &AssetId) -> Result<(), ()> {
 		let address = A::asset_id_to_address(*id);
 		pallet_evm::AccountCodes::<R>::remove(address);
+		Ok(())
 	}
 }

@@ -35,10 +35,12 @@
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
 use frame_support::assert_ok;
 use std::str::from_utf8;
+use sp_runtime::traits::Zero;
 
 use crate::{mock::*, *};
 
-use precompile_utils::{prelude::LogsBuilder, testing::*, EvmDataWriter};
+use precompile_utils::testing::*;
+// use precompile_utils::{prelude::LogsBuilder, testing::*, EvmDataWriter};
 use sha3::{Digest, Keccak256};
 
 fn precompiles() -> Erc20AssetsPrecompileSet<Runtime> {
@@ -81,18 +83,18 @@ fn no_selector_exists_but_length_is_right() {
 
 #[test]
 fn selectors() {
-	assert_eq!(Action::BalanceOf as u32, 0x70a08231);
-	assert_eq!(Action::TotalSupply as u32, 0x18160ddd);
-	assert_eq!(Action::Approve as u32, 0x095ea7b3);
-	assert_eq!(Action::Allowance as u32, 0xdd62ed3e);
-	assert_eq!(Action::Transfer as u32, 0xa9059cbb);
-	assert_eq!(Action::TransferFrom as u32, 0x23b872dd);
-	assert_eq!(Action::Name as u32, 0x06fdde03);
-	assert_eq!(Action::Symbol as u32, 0x95d89b41);
-	assert_eq!(Action::Decimals as u32, 0x313ce567);
-	assert_eq!(Action::MinimumBalance as u32, 0xb9d1d49b);
-	assert_eq!(Action::Mint as u32, 0x40c10f19);
-	assert_eq!(Action::Burn as u32, 0x9dc29fac);
+	assert!(PCall::balance_of_selectors().contains(&0x70a08231));
+	assert!(PCall::total_supply_selectors().contains(&0x18160ddd));
+	assert!(PCall::approve_selectors().contains(&0x095ea7b3));
+	assert!(PCall::allowance_selectors().contains(&0xdd62ed3e));
+	assert!(PCall::transfer_selectors().contains(&0xa9059cbb));
+	assert!(PCall::transfer_from_selectors().contains(&0x23b872dd));
+	assert!(PCall::name_selectors().contains(&0x06fdde03));
+	assert!(PCall::symbol_selectors().contains(&0x95d89b41));
+	assert!(PCall::decimals_selectors().contains(&0x313ce567));
+	assert!(PCall::minimum_balance_selectors().contains(&0xb9d1d49b));
+	assert!(PCall::mint_selectors().contains(&0x40c10f19));
+	assert!(PCall::burn_selectors().contains(&0x9dc29fac));
 
 	assert_eq!(
 		crate::SELECTOR_LOG_TRANSFER,
@@ -104,6 +106,39 @@ fn selectors() {
 		&Keccak256::digest(b"Approval(address,address,uint256)")[..]
 	);
 }
+
+#[test]
+fn modifiers() {
+	ExtBuilder::default()
+		.with_balances(vec![(Account::Alice.into(), 1000)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(Assets::force_create(
+				RuntimeOrigin::root(),
+				0u128,
+				Account::Alice.into(),
+				true,
+				1
+			));
+			let mut tester =
+				PrecompilesModifierTester::new(precompiles(), Account::Alice, Account::AssetId(0u128));
+
+			tester.test_view_modifier(PCall::balance_of_selectors());
+			tester.test_view_modifier(PCall::total_supply_selectors());
+			tester.test_default_modifier(PCall::approve_selectors());
+			tester.test_view_modifier(PCall::allowance_selectors());
+			tester.test_default_modifier(PCall::transfer_selectors());
+			tester.test_default_modifier(PCall::transfer_from_selectors());
+			tester.test_view_modifier(PCall::name_selectors());
+			tester.test_view_modifier(PCall::symbol_selectors());
+			tester.test_view_modifier(PCall::decimals_selectors());
+			tester.test_view_modifier(PCall::minimum_balance_selectors());
+
+			tester.test_default_modifier(PCall::mint_selectors());
+			tester.test_default_modifier(PCall::burn_selectors());
+		});
+}
+
 
 #[test]
 fn get_total_supply() {
@@ -129,15 +164,14 @@ fn get_total_supply() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::TotalSupply).build(),
+					PCall::total_supply {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(1000u64)).build());
+				.execute_returns(U256::from(1000u64));
 		});
 }
-
-#[test]
+ #[test]
 fn get_balances_known_user() {
 	ExtBuilder::default()
 		.with_balances(vec![(Account::Alice, 1000)])
@@ -161,13 +195,13 @@ fn get_balances_known_user() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Alice.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Alice.into())
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(1000u64)).build());
+				.execute_returns(U256::from(1000u64));
 		});
 }
 
@@ -189,13 +223,13 @@ fn get_balances_unknown_user() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Bob.into())
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(0u64)).build());
+				.execute_returns(U256::from(0u64));
 		});
 }
 
@@ -223,18 +257,18 @@ fn approve() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(500))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(500),
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					Account::Alice,
 					Account::Bob,
-					EvmDataWriter::new().write(U256::from(500)).build(),
+					solidity::encode_event_data(U256::from(500)),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 		});
 }
 
@@ -262,31 +296,31 @@ fn approve_saturating() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::MAX)
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::MAX,
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					Account::Alice,
 					Account::Bob,
-					EvmDataWriter::new().write(U256::MAX).build(),
+					solidity::encode_event_data(U256::MAX),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Allowance)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::allowance {
+						owner: Address(Account::Alice.into()),
+						spender: Address(Account::Bob.into()),
+					},
 				)
 				.expect_cost(0u64)
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(u128::MAX)).build());
+				.execute_returns(U256::from(u128::MAX));
 		});
 }
 
@@ -314,10 +348,10 @@ fn check_allowance_existing() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(500))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(500),
+					},
 				)
 				.execute_some();
 
@@ -325,14 +359,14 @@ fn check_allowance_existing() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Allowance)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::allowance {
+						owner: Address(Account::Alice.into()),
+						spender: Address(Account::Bob.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(500u64)).build());
+				.execute_returns(U256::from(500u64));
 		});
 }
 
@@ -354,14 +388,14 @@ fn check_allowance_not_existing() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Allowance)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::allowance {
+						owner: Address(Account::Alice.into()),
+						spender: Address(Account::Bob.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(0u64)).build());
+				.execute_returns(U256::from(0u64));
 		});
 }
 
@@ -389,42 +423,42 @@ fn transfer() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Transfer)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(400))
-						.build(),
+					PCall::transfer {
+						to: Address(Account::Bob.into()),
+						amount: U256::from(400),
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
 					Account::Alice,
 					Account::Bob,
-					EvmDataWriter::new().write(U256::from(400)).build(),
+					solidity::encode_event_data(U256::from(400)),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
 					Account::Bob,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Bob.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(400)).build());
+				.execute_returns(U256::from(400));
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Alice.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Alice.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(600)).build());
+				.execute_returns(U256::from(600));
 		});
 }
 
@@ -452,10 +486,10 @@ fn transfer_not_enough_founds() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Transfer)
-						.write(Address(Account::Charlie.into()))
-						.write(U256::from(50))
-						.build(),
+					PCall::transfer {
+						to: Address(Account::Charlie.into()),
+						amount: U256::from(50),
+					},
 				)
 				.execute_reverts(|output| {
 					from_utf8(&output)
@@ -490,10 +524,10 @@ fn transfer_from() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(500))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(500),
+					},
 				)
 				.execute_some();
 
@@ -501,10 +535,10 @@ fn transfer_from() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(500))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(500),
+					},
 				)
 				.execute_some();
 
@@ -512,55 +546,55 @@ fn transfer_from() {
 				.prepare_test(
 					Account::Bob, // Bob is the one sending transferFrom!
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::TransferFrom)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Charlie.into()))
-						.write(U256::from(400))
-						.build(),
+					PCall::transfer_from {
+						from: Address(Account::Alice.into()),
+						to: Address(Account::Charlie.into()),
+						amount: U256::from(400),
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
 					Account::Alice,
 					Account::Charlie,
-					EvmDataWriter::new().write(U256::from(400)).build(),
+					solidity::encode_event_data(U256::from(400)),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Alice.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Alice.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(600)).build());
+				.execute_returns(U256::from(600));
 
 			precompiles()
 				.prepare_test(
 					Account::Bob,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Bob.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(0)).build());
+				.execute_returns(U256::from(0));
 
 			precompiles()
 				.prepare_test(
 					Account::Charlie,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Charlie.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Charlie.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(400)).build());
+				.execute_returns(U256::from(400));
 		});
 }
 
@@ -589,18 +623,18 @@ fn transfer_from_non_incremental_approval() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(500))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(500),
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					Account::Alice,
 					Account::Bob,
-					EvmDataWriter::new().write(U256::from(500)).build(),
+					solidity::encode_event_data(U256::from(500)),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 
 			// We then approve 300. Non-incremental, so this is
 			// the approved new value
@@ -610,29 +644,29 @@ fn transfer_from_non_incremental_approval() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(300))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(300),
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					Account::Alice,
 					Account::Bob,
-					EvmDataWriter::new().write(U256::from(300)).build(),
+					solidity::encode_event_data(U256::from(300)),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 
 			// This should fail, as now the new approved quantity is 300
 			precompiles()
 				.prepare_test(
 					Account::Bob, // Bob is the one sending transferFrom!
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::TransferFrom)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(500))
-						.build(),
+					PCall::transfer_from {
+						from: Address(Account::Alice.into()),
+						to: Address(Account::Bob.into()),
+						amount: U256::from(500),
+					},
 				)
 				.execute_reverts(|output| {
 					output ==
@@ -666,10 +700,10 @@ fn transfer_from_above_allowance() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Approve)
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(300))
-						.build(),
+					PCall::approve {
+						spender: Address(Account::Bob.into()),
+						amount: U256::from(300),
+					},
 				)
 				.execute_some();
 
@@ -677,11 +711,11 @@ fn transfer_from_above_allowance() {
 				.prepare_test(
 					Account::Bob, // Bob is the one sending transferFrom!
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::TransferFrom)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(400))
-						.build(),
+					PCall::transfer_from {
+						from: Address(Account::Alice.into()),
+						to: Address(Account::Bob.into()),
+						amount: U256::from(400),
+					},
 				)
 				.execute_reverts(|output| {
 					output ==
@@ -715,43 +749,43 @@ fn transfer_from_self() {
 				.prepare_test(
 					Account::Alice, // Alice sending transferFrom herself, no need for allowance.
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::TransferFrom)
-						.write(Address(Account::Alice.into()))
-						.write(Address(Account::Bob.into()))
-						.write(U256::from(400))
-						.build(),
+					PCall::transfer_from {
+						from: Address(Account::Alice.into()),
+						to: Address(Account::Bob.into()),
+						amount: U256::from(400),
+					},
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
 					Account::Alice,
 					Account::Bob,
-					EvmDataWriter::new().write(U256::from(400)).build(),
+					solidity::encode_event_data(U256::from(400)),
 				))
-				.execute_returns(EvmDataWriter::new().write(true).build());
+				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Alice.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Alice.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(600)).build());
+				.execute_returns(U256::from(600));
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::BalanceOf)
-						.write(Address(Account::Bob.into()))
-						.build(),
+					PCall::balance_of {
+						owner: Address(Account::Bob.into()),
+					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(U256::from(400)).build());
+				.execute_returns(U256::from(400));
 		});
 }
 
@@ -781,31 +815,31 @@ fn get_metadata() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Name).build(),
+					PCall::name {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write::<Bytes>("TestToken".into()).build());
+				.execute_returns(UnboundedBytes::from("TestToken"));
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Symbol).build(),
+					PCall::symbol {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write::<Bytes>("Test".into()).build());
+				.execute_returns(UnboundedBytes::from("Test"));
 
 			precompiles()
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					EvmDataWriter::new_with_selector(Action::Decimals).build(),
+					PCall::decimals {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(12u8).build());
+				.execute_returns(12u8);
 		});
 }
 
@@ -825,11 +859,11 @@ fn minimum_balance_is_right() {
 			.prepare_test(
 				Account::Alice,
 				Account::AssetId(0u128),
-				EvmDataWriter::new_with_selector(Action::MinimumBalance).build(),
+				PCall::minimum_balance {},
 			)
 			.expect_cost(0) // TODO: Test db read/write costs
 			.expect_no_logs()
-			.execute_returns(EvmDataWriter::new().write(expected_min_balance).build());
+			.execute_returns(expected_min_balance);
 	});
 }
 
@@ -854,13 +888,18 @@ fn mint_is_ok() {
 			.prepare_test(
 				Account::Alice,
 				Account::AssetId(asset_id),
-				EvmDataWriter::new_with_selector(Action::Mint)
-					.write(Address(Account::Bob.into()))
-					.write(U256::from(mint_amount))
-					.build(),
+				PCall::mint {
+					to: Address(Account::Bob.into()),
+					amount: U256::from(mint_amount),
+				},
 			)
-			.expect_no_logs()
-			.execute_returns(EvmDataWriter::new().write(true).build());
+			.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				SELECTOR_LOG_TRANSFER,
+				H160::zero(),
+				Account::Bob,
+				solidity::encode_event_data(U256::from(mint_amount)),
+			))
+			.execute_returns(true);
 
 		// Ensure Bob's asset balance was increased
 		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), mint_amount);
@@ -883,10 +922,10 @@ fn mint_non_admin_is_not_ok() {
 			.prepare_test(
 				Account::Bob,
 				Account::AssetId(asset_id),
-				EvmDataWriter::new_with_selector(Action::Mint)
-					.write(Address(Account::Bob.into()))
-					.write(U256::from(42))
-					.build(),
+				PCall::mint {
+					to: Address(Account::Bob.into()),
+					amount: U256::from(42),
+				},
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
@@ -921,13 +960,18 @@ fn burn_is_ok() {
 			.prepare_test(
 				Account::Alice,
 				Account::AssetId(asset_id),
-				EvmDataWriter::new_with_selector(Action::Burn)
-					.write(Address(Account::Bob.into()))
-					.write(U256::from(burn_amount))
-					.build(),
+				PCall::burn {
+					who: Address(Account::Bob.into()),
+					amount: U256::from(burn_amount),
+				},
 			)
-			.expect_no_logs()
-			.execute_returns(EvmDataWriter::new().write(true).build());
+			.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				SELECTOR_LOG_TRANSFER,
+				Account::Bob,
+				H160::zero(),
+				solidity::encode_event_data(U256::from(burn_amount)),
+			))
+			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
 		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), init_amount - burn_amount);
@@ -956,10 +1000,10 @@ fn burn_non_admin_is_not_ok() {
 			.prepare_test(
 				Account::Bob,
 				Account::AssetId(asset_id),
-				EvmDataWriter::new_with_selector(Action::Burn)
-					.write(Address(Account::Bob.into()))
-					.write(U256::from(42))
-					.build(),
+				PCall::burn {
+					who: Address(Account::Bob.into()),
+					amount: U256::from(42),
+				},
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));

@@ -107,7 +107,7 @@ impl<
 		match Matcher::matches_fungibles(&revenue) {
 			Ok((asset_id, amount)) =>
 				if amount > Zero::zero() {
-					if let Err(error) = Assets::mint_into(asset_id, &FeeDestination::get(), amount)
+					if let Err(error) = Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
 					{
 						log::error!(
 							target: "xcm::weight",
@@ -319,6 +319,10 @@ impl pallet_xcm::Config for Runtime {
 	type WeightInfo = crate::weights::pallet_xcm::WeightInfo<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDestBench;
+
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type MaxRemoteLockConsumers = ConstU32<0>;
+	type RemoteLockConsumerIdentifier = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

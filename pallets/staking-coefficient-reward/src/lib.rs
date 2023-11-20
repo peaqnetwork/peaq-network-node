@@ -39,7 +39,6 @@ pub mod pallet {
 
 	/// Pallet for staking coefficient reward calculation.
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -145,8 +144,8 @@ pub mod pallet {
 				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
 					let percentage = Perquintill::from_rational(coefficient_collator, denominator);
 					return (
-						Weight::from_ref_time(1_u64),
-						Weight::from_ref_time(1_u64),
+						Weight::from_parts(1_u64, 0),
+						Weight::from_parts(1_u64, 0),
 						Reward { owner: stake.id.clone(), amount: percentage * issue_number },
 					)
 				}
@@ -157,8 +156,8 @@ pub mod pallet {
 				stake.stake
 			);
 			(
-				Weight::from_ref_time(1_u64),
-				Weight::from_ref_time(1_u64),
+				Weight::from_parts(1_u64, 0),
+				Weight::from_parts(1_u64, 0),
 				Reward { owner: stake.id.clone(), amount: issue_number },
 			)
 		}
@@ -192,8 +191,8 @@ pub mod pallet {
 						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 
 					return (
-						Weight::from_ref_time(1_u64 + 4_u64),
-						Weight::from_ref_time(inner.len() as u64),
+						Weight::from_parts(1_u64 + 4_u64, 0),
+						Weight::from_parts(inner.len() as u64, 0),
 						inner.try_into().expect("Did not extend vec q.e.d."),
 					)
 				}
@@ -204,8 +203,8 @@ pub mod pallet {
 				stake.stake
 			);
 			(
-				Weight::from_ref_time(1_u64),
-				Weight::from_ref_time(1_u64),
+				Weight::from_parts(1, 0),
+				Weight::from_parts(1, 0),
 				BoundedVec::<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>::default(),
 			)
 		}

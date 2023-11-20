@@ -37,7 +37,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(test, feature(assert_matches))]
 
-use fp_evm::{PrecompileHandle, PrecompileOutput};
+use fp_evm::{ExitError, PrecompileHandle};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
@@ -48,36 +48,45 @@ use frame_support::{
 		OriginTrait,
 	},
 };
-use pallet_evm::{AddressMapping, PrecompileSet};
+use pallet_evm::{AddressMapping};
+use precompile_utils::prelude::UnboundedBytes;
+use precompile_utils::evm::logs::LogsBuilder;
+use precompile_utils::prelude::InjectBacktrace;
+use precompile_utils::prelude::DiscriminantResult;
+use precompile_utils::prelude::PrecompileHandleExt;
+use precompile_utils::prelude::MayRevert;
+use precompile_utils::prelude::RevertReason;
 use precompile_utils::{
-	handle::PrecompileHandleExt,
-	prelude::{Address, BoundedBytes, FunctionModifier, LogExt, LogsBuilder, RuntimeHelper},
+	// handle::PrecompileHandleExt,
+	prelude::{Address,
+		// FunctionModifier,
+		LogExt,
+		// LogsBuilder,
+		RuntimeHelper},
 };
+use precompile_utils::solidity;
 use precompile_utils::{
 	keccak256,
-	succeed,
+	// succeed,
 	// Address,
 	//Bytes,
-	EvmData,
-	EvmDataWriter,
+	// EvmData,
+	// EvmDataWriter,
 	EvmResult,
+	// DiscriminantResult,
 	//FunctionModifier,
 	// LogExt,
 	// LogsBuilder,
 	// PrecompileHandleExt,
 	// RuntimeHelper,
 };
-use sp_runtime::traits::{Bounded, Zero};
+use sp_runtime::traits::{Bounded};
 
-use frame_support::traits::ConstU32;
 use sp_core::{H160, U256};
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	marker::PhantomData,
 };
-
-type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
-type Bytes = BoundedBytes<GetBytesLimit>;
 
 #[cfg(test)]
 mod mock;
@@ -95,23 +104,6 @@ pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<I
 
 /// Alias for the Asset Id type for the provided Runtime and Instance.
 pub type AssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
-
-#[precompile_utils::generate_function_selector]
-#[derive(Debug, PartialEq)]
-pub enum Action {
-	TotalSupply = "totalSupply()",
-	BalanceOf = "balanceOf(address)",
-	Allowance = "allowance(address,address)",
-	Transfer = "transfer(address,uint256)",
-	Approve = "approve(address,uint256)",
-	TransferFrom = "transferFrom(address,address,uint256)",
-	Name = "name()",
-	Symbol = "symbol()",
-	Decimals = "decimals()",
-	MinimumBalance = "minimumBalance()",
-	Mint = "mint(address,uint256)",
-	Burn = "burn(address,uint256)",
-}
 
 /// This trait ensure we can convert EVM address to AssetIds
 /// We will require Runtime to have this trait implemented
@@ -153,80 +145,8 @@ impl<Runtime, Instance> Default for Erc20AssetsPrecompileSet<Runtime, Instance> 
 	}
 }
 
-impl<Runtime, Instance> PrecompileSet for Erc20AssetsPrecompileSet<Runtime, Instance>
-where
-	Instance: 'static,
-	Runtime: pallet_assets::Config<Instance> + pallet_evm::Config + frame_system::Config,
-	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
-	Runtime::RuntimeCall: From<pallet_assets::Call<Runtime, Instance>>,
-	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
-	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + EvmData,
-	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
-	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
-{
-	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<EvmResult<PrecompileOutput>> {
-		let address = handle.code_address();
-
-		if let Some(asset_id) = Runtime::address_to_asset_id(address) {
-			// We check maybe_total_supply. This function returns Some if the asset exists,
-			// which is all we care about at this point
-			if pallet_assets::Pallet::<Runtime, Instance>::maybe_total_supply(asset_id).is_some() {
-				let result = {
-					let selector = match handle.read_selector() {
-						Ok(selector) => selector,
-						Err(e) => return Some(Err(e.into())),
-					};
-
-					if let Err(err) = handle.check_function_modifier(match selector {
-						Action::Approve |
-						Action::Transfer |
-						Action::TransferFrom |
-						Action::Mint |
-						Action::Burn => FunctionModifier::NonPayable,
-						_ => FunctionModifier::View,
-					}) {
-						return Some(Err(err.into()))
-					}
-
-					match selector {
-						// XC20
-						Action::TotalSupply => Self::total_supply(asset_id, handle),
-						Action::BalanceOf => Self::balance_of(asset_id, handle),
-						Action::Allowance => Self::allowance(asset_id, handle),
-						Action::Approve => Self::approve(asset_id, handle),
-						Action::Transfer => Self::transfer(asset_id, handle),
-						Action::TransferFrom => Self::transfer_from(asset_id, handle),
-						Action::Name => Self::name(asset_id, handle),
-						Action::Symbol => Self::symbol(asset_id, handle),
-						Action::Decimals => Self::decimals(asset_id, handle),
-						// XC20+
-						Action::MinimumBalance => Self::minimum_balance(asset_id, handle),
-						Action::Mint => Self::mint(asset_id, handle),
-						Action::Burn => Self::burn(asset_id, handle),
-					}
-				};
-				return Some(result)
-			}
-		}
-		None
-	}
-
-	fn is_precompile(&self, address: H160) -> bool {
-		if let Some(asset_id) = Runtime::address_to_asset_id(address) {
-			// If the assetId has non-zero supply
-			// "total_supply" returns both 0 if the assetId does not exist or if the supply is 0
-			// The assumption I am making here is that a 0 supply asset is not interesting from
-			// the perspective of the precompiles. Once pallet-assets has more publicly accesible
-			// storage we can use another function for this, like check_asset_existence.
-			// The other options is to check the asset existence in pallet-asset-manager, but
-			// this makes the precompiles dependent on such a pallet, which is not ideal
-			!pallet_assets::Pallet::<Runtime, Instance>::total_supply(asset_id).is_zero()
-		} else {
-			false
-		}
-	}
-}
-
+#[precompile_utils::precompile]
+#[precompile::precompile_set]
 impl<Runtime, Instance> Erc20AssetsPrecompileSet<Runtime, Instance>
 where
 	Instance: 'static,
@@ -234,33 +154,54 @@ where
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	Runtime::RuntimeCall: From<pallet_assets::Call<Runtime, Instance>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
-	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + EvmData,
+	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
 {
+	/// PrecompileSet discriminant. Allows to knows if the address maps to an asset id,
+	/// and if this is the case which one.
+	#[precompile::discriminant]
+	fn discriminant(address: H160, gas: u64) -> DiscriminantResult<AssetIdOf<Runtime, Instance>> {
+		let extra_cost = RuntimeHelper::<Runtime>::db_read_gas_cost();
+		if gas < extra_cost {
+			return DiscriminantResult::OutOfGas;
+		}
+
+		let asset_id = match Runtime::address_to_asset_id(address) {
+			Some(asset_id) => asset_id,
+			None => return DiscriminantResult::None(extra_cost),
+		};
+
+		if pallet_assets::Pallet::<Runtime, Instance>::maybe_total_supply(asset_id.clone())
+			.is_some()
+		{
+			DiscriminantResult::Some(asset_id, extra_cost)
+		} else {
+			DiscriminantResult::None(extra_cost)
+		}
+	}
+
+	#[precompile::public("totalSupply()")]
+	#[precompile::view]
 	fn total_supply(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+	) -> EvmResult<U256> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		// Fetch info.
-		let amount: U256 =
-			pallet_assets::Pallet::<Runtime, Instance>::total_issuance(asset_id).into();
-
-		Ok(succeed(EvmDataWriter::new().write(amount).build()))
+		Ok(pallet_assets::Pallet::<Runtime, Instance>::total_issuance(asset_id).into())
 	}
 
+	#[precompile::public("balanceOf(address)")]
+	#[precompile::view]
 	fn balance_of(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+		owner: Address,
+	) -> EvmResult<U256> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(1)?;
-
-		let owner: H160 = input.read::<Address>()?.into();
+		let owner: H160 = owner.into();
 
 		// Fetch info.
 		let amount: U256 = {
@@ -268,20 +209,21 @@ where
 			pallet_assets::Pallet::<Runtime, Instance>::balance(asset_id, &owner).into()
 		};
 
-		Ok(succeed(EvmDataWriter::new().write(amount).build()))
+		Ok(amount)
 	}
 
+	#[precompile::public("allowance(address,address)")]
+	#[precompile::view]
 	fn allowance(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+		owner: Address,
+		spender: Address,
+	) -> EvmResult<U256> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(2)?;
-
-		let owner: H160 = input.read::<Address>()?.into();
-		let spender: H160 = input.read::<Address>()?.into();
+		let owner: H160 = owner.into();
+		let spender: H160 = spender.into();
 
 		// Fetch info.
 		let amount: U256 = {
@@ -292,20 +234,20 @@ where
 			pallet_assets::Pallet::<Runtime, Instance>::allowance(asset_id, &owner, &spender).into()
 		};
 
-		Ok(succeed(EvmDataWriter::new().write(amount).build()))
+		// Build output.
+		Ok(amount)
 	}
 
+	#[precompile::public("approve(address,uint256)")]
 	fn approve(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+		spender: Address,
+		amount: U256,
+	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(2)?;
-
-		let spender: H160 = input.read::<Address>()?.into();
-		let amount: U256 = input.read()?;
+		let spender: H160 = spender.into();
 
 		{
 			let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -318,16 +260,18 @@ where
 			handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
 			// If previous approval exists, we need to clean it
-			if pallet_assets::Pallet::<Runtime, Instance>::allowance(asset_id, &origin, &spender) !=
+			if pallet_assets::Pallet::<Runtime, Instance>::allowance(asset_id.clone(), &origin, &spender) !=
 				0u32.into()
 			{
 				RuntimeHelper::<Runtime>::try_dispatch(
 					handle,
 					Some(origin.clone()).into(),
 					pallet_assets::Call::<Runtime, Instance>::cancel_approval {
-						id: asset_id.into(),
+						id: asset_id.clone().into(),
 						delegate: Runtime::Lookup::unlookup(spender.clone()),
 					},
+					// [TODO] ??
+					0,
 				)?;
 			}
 			// Dispatch call (if enough gas).
@@ -339,6 +283,7 @@ where
 					delegate: Runtime::Lookup::unlookup(spender),
 					amount,
 				},
+				0,
 			)?;
 		}
 
@@ -347,24 +292,24 @@ where
 				SELECTOR_LOG_APPROVAL,
 				handle.context().caller,
 				spender,
-				EvmDataWriter::new().write(amount).build(),
+				solidity::encode_event_data(amount),
 			)
 			.record(handle)?;
 
-		Ok(succeed(EvmDataWriter::new().write(true).build()))
+		Ok(true)
 	}
 
+	#[precompile::public("transfer(address,uint256)")]
 	fn transfer(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+		to: Address,
+		amount: U256,
+	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(2)?;
-
-		let to: H160 = input.read::<Address>()?.into();
-		let amount = input.read::<BalanceOf<Runtime, Instance>>()?;
+		let to: H160 = to.into();
+		let amount = Self::u256_to_amount(amount).in_field("value")?;
 
 		// Build call with origin.
 		{
@@ -380,6 +325,8 @@ where
 					target: Runtime::Lookup::unlookup(to),
 					amount,
 				},
+				// [TODO]....
+				0,
 			)?;
 		}
 
@@ -388,25 +335,26 @@ where
 				SELECTOR_LOG_TRANSFER,
 				handle.context().caller,
 				to,
-				EvmDataWriter::new().write(amount).build(),
+			solidity::encode_event_data(amount),
 			)
 			.record(handle)?;
 
-		Ok(succeed(EvmDataWriter::new().write(true).build()))
+		Ok(true)
 	}
 
+	#[precompile::public("transferFrom(address,address,uint256)")]
 	fn transfer_from(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+		from: Address,
+		to: Address,
+		amount: U256,
+	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(3)?;
-
-		let from: H160 = input.read::<Address>()?.into();
-		let to: H160 = input.read::<Address>()?.into();
-		let amount = input.read::<BalanceOf<Runtime, Instance>>()?;
+		let from: H160 = from.into();
+		let to: H160 = to.into();
+		let amount = Self::u256_to_amount(amount).in_field("value")?;
 
 		{
 			let caller: Runtime::AccountId =
@@ -426,6 +374,8 @@ where
 						destination: Runtime::Lookup::unlookup(to),
 						amount,
 					},
+					// [TODO]
+					0,
 				)?;
 			} else {
 				// Dispatch call (if enough gas).
@@ -437,86 +387,94 @@ where
 						target: Runtime::Lookup::unlookup(to),
 						amount,
 					},
+					// [TODO]
+					0,
 				)?;
 			}
 		}
 
 		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, from, to, EvmDataWriter::new().write(amount).build())
-			.record(handle)?;
+			.log3(
+				SELECTOR_LOG_TRANSFER,
+				from,
+				to,
+				solidity::encode_event_data(amount),
+		)
+		.record(handle)?;
 
-		Ok(succeed(EvmDataWriter::new().write(true).build()))
+		// Build output.
+		Ok(true)
 	}
 
+	#[precompile::public("name()")]
+	#[precompile::view]
 	fn name(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+	) -> EvmResult<UnboundedBytes> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		Ok(succeed(
-			EvmDataWriter::new()
-				.write::<Bytes>(
-					pallet_assets::Pallet::<Runtime, Instance>::name(asset_id).as_slice().into(),
-				)
-				.build(),
-		))
+		let name = pallet_assets::Pallet::<Runtime, Instance>::name(asset_id)
+			.as_slice()
+			.into();
+
+		Ok(name)
 	}
 
+	#[precompile::public("symbol()")]
+	#[precompile::view]
 	fn symbol(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+	) -> EvmResult<UnboundedBytes> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		// Build output.
-		Ok(succeed(
-			EvmDataWriter::new()
-				.write::<Bytes>(
-					pallet_assets::Pallet::<Runtime, Instance>::symbol(asset_id).as_slice().into(),
-				)
-				.build(),
-		))
+		let symbol = pallet_assets::Pallet::<Runtime, Instance>::symbol(asset_id)
+			.as_slice()
+			.into();
+
+		Ok(symbol)
 	}
 
+	#[precompile::public("decimals()")]
+	#[precompile::view]
 	fn decimals(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+	) -> EvmResult<u8> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		// Build output.
-		Ok(succeed(
-			EvmDataWriter::new()
-				.write::<u8>(pallet_assets::Pallet::<Runtime, Instance>::decimals(asset_id))
-				.build(),
+		Ok(pallet_assets::Pallet::<Runtime, Instance>::decimals(
+			asset_id,
 		))
 	}
 
+	#[precompile::public("minimumBalance()")]
+	#[precompile::view]
 	fn minimum_balance(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
+	) -> EvmResult<U256> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let min_balance: U256 =
-			pallet_assets::Pallet::<Runtime, Instance>::minimum_balance(asset_id).into();
-
-		Ok(succeed(EvmDataWriter::new().write(min_balance).build()))
+		Ok(pallet_assets::Pallet::<Runtime, Instance>::minimum_balance(asset_id).into())
 	}
 
+
+	#[precompile::public("mint(address,uint256)")]
 	fn mint(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(2)?;
+		to: Address,
+		amount: U256,
+	) -> EvmResult<bool> {
+		handle.record_log_costs_manual(3, 32)?;
 
-		let beneficiary: H160 = input.read::<Address>()?.into();
-		let amount = input.read::<BalanceOf<Runtime, Instance>>()?;
+		let addr: H160 = to.into();
+		let amount = Self::u256_to_amount(amount).in_field("value")?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let beneficiary = Runtime::AddressMapping::into_account_id(beneficiary);
+		let beneficiary = Runtime::AddressMapping::into_account_id(addr);
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -527,23 +485,37 @@ where
 				beneficiary: Runtime::Lookup::unlookup(beneficiary),
 				amount,
 			},
+			// [TODO]
+			0,
 		)?;
 
-		Ok(succeed(EvmDataWriter::new().write(true).build()))
+
+		LogsBuilder::new(handle.context().address)
+			.log3(
+				SELECTOR_LOG_TRANSFER,
+				H160::default(),
+				addr,
+				solidity::encode_event_data(amount),
+			)
+			.record(handle)?;
+
+		Ok(true)
 	}
 
+	#[precompile::public("burn(address,uint256)")]
 	fn burn(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-	) -> EvmResult<PrecompileOutput> {
-		let mut input = handle.read_after_selector()?;
-		input.expect_arguments(2)?;
+		who: Address,
+		amount: U256,
+	) -> EvmResult<bool> {
+		handle.record_log_costs_manual(3, 32)?;
 
-		let who: H160 = input.read::<Address>()?.into();
-		let amount = input.read::<BalanceOf<Runtime, Instance>>()?;
+		let addr: H160 = who.into();
+		let amount = Self::u256_to_amount(amount).in_field("value")?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let who = Runtime::AddressMapping::into_account_id(who);
+		let who = Runtime::AddressMapping::into_account_id(addr);
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -554,8 +526,24 @@ where
 				who: Runtime::Lookup::unlookup(who),
 				amount,
 			},
+			0,
 		)?;
 
-		Ok(succeed(EvmDataWriter::new().write(true).build()))
+		LogsBuilder::new(handle.context().address)
+			.log3(
+				SELECTOR_LOG_TRANSFER,
+				addr,
+				H160::default(),
+			solidity::encode_event_data(amount),
+			)
+			.record(handle)?;
+
+		Ok(true)
+	}
+
+	fn u256_to_amount(value: U256) -> MayRevert<BalanceOf<Runtime, Instance>> {
+		value
+			.try_into()
+			.map_err(|_| RevertReason::value_is_too_large("balance type").into())
 	}
 }

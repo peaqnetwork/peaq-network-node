@@ -209,7 +209,6 @@ pub mod pallet {
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -234,7 +233,7 @@ pub mod pallet {
 		/// constrain it to `From<u64>`.
 		/// Note: Definition taken from pallet_gilt
 		type CurrencyBalance: sp_runtime::traits::AtLeast32BitUnsigned
-			+ codec::FullCodec
+			+ parity_scale_codec::FullCodec
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ sp_std::fmt::Debug
@@ -2625,8 +2624,8 @@ pub mod pallet {
 		// }
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_ref_time(0_u64);
-			let mut writes = Weight::from_ref_time(0_u64);
+			let mut reads = Weight::from_parts(0, 1);
+			let mut writes = Weight::from_parts(0, 1);
 
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
@@ -2687,12 +2686,10 @@ pub mod pallet {
 
 	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
 		/// 1. A new session starts.
-		/// 2. In hook new_session: Read the current top n candidates from the
-		///    TopCandidates and assign this set to author blocks for the next
-		///    session.
-		/// 3. AuRa queries the authorities from the session pallet for
-		///    this session and picks authors on round-robin-basis from list of
-		///    authorities.
+		/// 2. In hook new_session: Read the current top n candidates from the TopCandidates and
+		///    assign this set to author blocks for the next session.
+		/// 3. AuRa queries the authorities from the session pallet for this session and picks
+		///    authors on round-robin-basis from list of authorities.
 		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
 			log::debug!(
 				"assembling new collators for new session {} at #{:?}",
