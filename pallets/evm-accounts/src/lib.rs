@@ -41,10 +41,13 @@ use pallet_evm::AddressMapping as PalletEVMAddressMapping;
 use parity_scale_codec::Encode;
 use precompile_utils::prelude::keccak256;
 
-use peaq_primitives_xcm::{evm::EvmAddress, to_bytes};
+use peaq_primitives_xcm::{evm::EvmAddress, to_bytes, AccountIndex};
 use sp_core::{crypto::AccountId32, H160, H256};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
-use sp_runtime::traits::{Convert, Zero};
+use sp_runtime::{
+	traits::{Convert, LookupError, StaticLookup, Zero, BlakeTwo256},
+	MultiAddress,
+};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 mod convert_impl;
@@ -136,6 +139,9 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+        /// [TODO] eth_address should change name to evm_address
+
+
 		/// Claim account mapping between Substrate accounts and EVM accounts.
 		/// Ensure eth_address has not been mapped.
 		///
@@ -161,12 +167,14 @@ pub mod module {
 				.ok_or(Error::<T>::BadSignature)?;
 			ensure!(eth_address == address, Error::<T>::InvalidSignature);
 
+			// check if the evm padded address already exists
 			let account_id = T::OriginAddressMapping::into_account_id(eth_address);
 			if frame_system::Pallet::<T>::account_exists(&account_id) {
 				// [TODO] Ned to check, if the account have the locked tokens, then we shouldn't
 				// allow users to do the linking.
 				// merge balance from `evm padded address` to `origin`
-				let amount = T::Currency::reducible_balance(&account_id, Preservation::Preserve, Fortitude::Polite);
+				// Sould transfer all...
+				let amount = T::Currency::reducible_balance(&account_id, Preservation::Expendable, Fortitude::Polite);
 				T::Currency::transfer(&account_id, &who, amount, ExistenceRequirement::AllowDeath)?;
 			}
 
@@ -177,6 +185,35 @@ pub mod module {
 
 			Ok(())
 		}
+
+        /// Claim account mapping between Substrate accounts and a generated EVM
+        /// address based off of those accounts.
+        /// Ensure eth_address has not been mapped
+        #[pallet::call_index(1)]
+        #[pallet::weight(T::WeightInfo::claim_default_account())]
+        pub fn claim_default_account(origin: OriginFor<T>) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+			// ensure account_id and eth_address has not been mapped
+			ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
+            // get the default evm address
+            let eth_address = <Self as EVMAddressMapping<T::AccountId>>::get_detault_evm_address(&who);
+            // make sure default address is not already mapped, this should not
+            // happen but for sanity check.
+            ensure!(
+                    !Accounts::<T>::contains_key(&eth_address),
+                    Error::<T>::EthAddressHasMapped
+                   );
+
+            // [TODO] Should transfer tokens? or not?
+            // Self::charge_storage_fee(&account_id)?;
+
+            // create double mappings for the pair with default evm address
+            Accounts::<T>::insert(&eth_address, &who);
+            EvmAddresses::<T>::insert(&who, &eth_address);
+
+			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address: eth_address });
+            Ok(())
+        }
 	}
 }
 
@@ -242,6 +279,17 @@ impl<T: Config> Pallet<T> {
 		); // genesis block hash
 		keccak_256(domain_seperator_msg.as_slice())
 	}
+
+/*
+ *     fn do_claim_default_evm_address(who: T::AccountId) -> Result<EvmAddress, DispatchError> {
+ *         // ensure account_id has not been mapped
+ *         ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
+ *
+ *         let eth_address = T::EVMAddressMapping::get_or_create_evm_address(&who);
+ *
+ *         Ok(eth_address)
+ *     }
+ */
 }
 
 fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
@@ -252,37 +300,51 @@ fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
 
 impl<T: Config> PalletEVMAddressMapping<T::AccountId> for Pallet<T>
 where
-	T::AccountId: IsType<AccountId32>,
 	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
 {
 	fn into_account_id(address: EvmAddress) -> T::AccountId {
-		EVMAddressToAccountId::<T>::convert(address)
+        Self::get_account_id_or_default(&address)
 	}
 }
 
 impl<T: Config> EVMAddressMapping<T::AccountId> for Pallet<T>
 where
-	T::AccountId: IsType<AccountId32>,
 	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
 {
+	// [TODO] BlakeTwo256 should be the generic hasher
 	// Returns the AccountId used to generate the given EvmAddress.
-	fn get_account_id(address: &EvmAddress) -> T::AccountId {
-		Self::into_account_id(*address)
+	fn get_account_id_or_default(address: &EvmAddress) -> T::AccountId {
+		UnifyAddressMapper::<T, BlakeTwo256>::to_set_account_id(&address).unwrap_or_else(|| {
+			// If no mapping exists, return the default AccountId
+			UnifyAddressMapper::<T, BlakeTwo256>::to_default_account_id(&address)
+		})
 	}
+
+    fn get_detault_account_id(address: &EvmAddress) -> T::AccountId {
+        UnifyAddressMapper::<T, BlakeTwo256>::to_default_account_id(&address)
+    }
 
 	// Returns the EvmAddress associated with a given AccountId or the
 	// underlying EvmAddress of the AccountId.
 	// Returns None if there is no EvmAddress associated with the AccountId
 	// and there is no underlying EvmAddress in the AccountId.
-	fn get_evm_address(account_id: &T::AccountId) -> Option<EvmAddress> {
-		AccountIdToEVMAddress::<T>::convert(account_id.clone())
+    // For testing
+	fn get_evm_address_or_default(account_id: &T::AccountId) -> EvmAddress {
+		UnifyAddressMapper::<T, BlakeTwo256>::to_set_evm_address(&account_id).unwrap_or_else(|| {
+            // If no mapping exists, return the default EvmAddress
+            UnifyAddressMapper::<T, BlakeTwo256>::to_default_evm_address(&account_id)
+        })
 	}
+
+    fn get_detault_evm_address(account_id: &T::AccountId) -> EvmAddress {
+        UnifyAddressMapper::<T, BlakeTwo256>::to_default_evm_address(&account_id)
+    }
 
 	// Returns true if a given AccountId is associated with a given EvmAddress
 	// and false if is not.
 	// Note: we don't check whether the default EvmAddress of the AccountId is linked or not
 	fn is_linked(account_id: &T::AccountId, evm: &EvmAddress) -> bool {
-		Self::get_evm_address(account_id).as_ref() == Some(evm)
+		UnifyAddressMapper::<T, BlakeTwo256>::to_set_evm_address(&account_id).as_ref() == Some(evm)
 	}
 }
 
@@ -297,22 +359,20 @@ impl<T: Config> OnKilledAccount<T::AccountId> for CallKillEVMLinkAccount<T> {
 	}
 }
 
-/*
- * // TODO, Need to survey
- * // I guess it is related to the address unification, but let us survey it later
- * impl<T: Config> StaticLookup for Pallet<T> {
- *     type Source = MultiAddress<T::AccountId, AccountIndex>;
- *     type Target = T::AccountId;
- *
- *     fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
- *         match a {
- *             MultiAddress::Address20(i) =>
- * Ok(T::AddressMapping::get_account_id(&EvmAddress::from_slice(&i))),             _ =>
- * Err(LookupError),         }
- *     }
- *
- *     fn unlookup(a: Self::Target) -> Self::Source {
- *         MultiAddress::Id(a)
- *     }
- * }
- */
+impl<T: Config> StaticLookup for Pallet<T>
+{
+	type Source = MultiAddress<T::AccountId, AccountIndex>;
+	type Target = T::AccountId;
+
+	fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
+		match a {
+			MultiAddress::Address20(i) => Ok(
+				<Self as PalletEVMAddressMapping<T::AccountId>>::into_account_id(EvmAddress::from_slice(&i))),
+			_ => Err(LookupError),
+		}
+	}
+
+	fn unlookup(a: Self::Target) -> Self::Source {
+		MultiAddress::Id(a)
+	}
+}

@@ -1,37 +1,46 @@
 use crate::{Accounts, Config, EvmAddresses};
-use frame_support::pallet_prelude::IsType;
 use pallet_evm::AddressMapping as PalletEVMAddressMapping;
 use peaq_primitives_xcm::EvmAddress;
 use sp_core::crypto::AccountId32;
+use crate::H160;
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
+use parity_scale_codec::Encode;
+use sp_core::{Hasher, H256};
 
-// For avoid the convert fail, we have to setup the AccountId32 direct
-pub struct EVMAddressToAccountId<T>(PhantomData<T>);
 
-impl<T: Config> Convert<EvmAddress, T::AccountId> for EVMAddressToAccountId<T>
-where
-	T::AccountId: IsType<AccountId32>,
-	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
-{
-	fn convert(address: EvmAddress) -> T::AccountId {
-		if let Some(acc) = Accounts::<T>::get(address) {
-			acc
-		} else {
-			T::OriginAddressMapping::into_account_id(address)
-		}
-	}
+pub trait UnifyAddressMapping<AccountId> {
+	fn to_set_account_id(evm: &EvmAddress) -> Option<AccountId>;
+	fn to_default_account_id(evm_address: &EvmAddress) -> AccountId;
+
+	fn to_set_evm_address(account_id: &AccountId) -> Option<EvmAddress>;
+	fn to_default_evm_address(account_id: &AccountId) -> EvmAddress;
 }
 
-pub struct AccountIdToEVMAddress<T>(PhantomData<T>);
+pub struct UnifyAddressMapper<T, H>(PhantomData<(T, H)>);
 
-impl<T: Config> Convert<T::AccountId, Option<EvmAddress>> for AccountIdToEVMAddress<T>
+impl<T, H> UnifyAddressMapping<T::AccountId> for UnifyAddressMapper<T, H>
 where
-	T::AccountId: IsType<AccountId32>,
+	T: Config,
 	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
+	H: Hasher<Out = H256>
 {
-	fn convert(account_id: T::AccountId) -> Option<EvmAddress> {
-		// Return the EvmAddress if a mapping to account_id exists
+	/// Returns the AccountId used go generate the given EvmAddress.
+	fn to_set_account_id(evm_address: &EvmAddress) -> Option<T::AccountId> {
+		Accounts::<T>::get(evm_address)
+	}
+
+	fn to_default_account_id(evm_address: &EvmAddress) -> T::AccountId {
+		T::OriginAddressMapping::into_account_id(*evm_address)
+	}
+
+	fn to_set_evm_address(account_id: &T::AccountId) -> Option<EvmAddress> {
 		EvmAddresses::<T>::get(account_id)
 	}
+
+	fn to_default_evm_address(account_id: &T::AccountId) -> EvmAddress {
+		let payload = (b"evm:", account_id);
+		H160::from_slice(&payload.using_encoded(H::hash)[0..20])
+	}
 }
+
