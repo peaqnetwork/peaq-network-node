@@ -48,6 +48,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "log/std",
+	"pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
     "pallet-block-reward/std",
