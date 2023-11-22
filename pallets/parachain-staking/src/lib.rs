@@ -1608,7 +1608,7 @@ pub mod pallet {
 			// Try to update reward-registers, but do not force it! In case of a leaving delegator,
 			// there is no collator or delegator to be found, but its rewards might still be
 			// available.
-			if let Some(_) = Self::candidate_pool(&target) {
+			if Self::candidate_pool(&target).is_some() {
 				Self::update_collator_rewards(&target)?;
 			} else if Self::is_delegator(&target) {
 				Self::update_delegator_rewards(&target)?;
@@ -2332,9 +2332,9 @@ pub mod pallet {
 		/// A medium wrapped update-the-collator-rewards function, e.g. in test cases or
 		/// claim_rewards extrinsic.
 		pub fn update_collator_rewards(collator: &T::AccountId) -> DispatchResult {
-			let state = CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
+			let state = CandidatePool::<T>::get(collator).ok_or(Error::<T>::CandidateNotFound)?;
 			// increment rewards and update number of rewarded blocks
-			Self::do_inc_collator_reward(&collator, state.stake);
+			Self::do_inc_collator_reward(collator, state.stake);
 			Ok(())
 		}
 
@@ -2342,10 +2342,10 @@ pub mod pallet {
 		/// claim_rewards extrinsic.
 		pub fn update_delegator_rewards(delegator: &T::AccountId) -> DispatchResult {
 			let delegation =
-				DelegatorState::<T>::get(&delegator).ok_or(Error::<T>::DelegatorNotFound)?;
+				DelegatorState::<T>::get(delegator).ok_or(Error::<T>::DelegatorNotFound)?;
 			let collator = delegation.owner;
 			// increment rewards and update number of rewarded blocks
-			Self::do_inc_delegator_reward(&delegator, delegation.amount, &collator);
+			Self::do_inc_delegator_reward(delegator, delegation.amount, &collator);
 			Ok(())
 		}
 
@@ -2353,13 +2353,13 @@ pub mod pallet {
 		/// account. Will be used in claim_rewards and leave_delegators.
 		pub fn transfer_rewards(target: &T::AccountId) -> DispatchResult {
 			// reset rewards
-			let rewards = Rewards::<T>::take(&target);
+			let rewards = Rewards::<T>::take(target);
 			ensure!(!rewards.is_zero(), Error::<T>::RewardsNotFound);
 
 			// Transfer from pallet's pot to collator's/delegator's account.
 			T::Currency::transfer(
 				&Self::account_id(),
-				&target,
+				target,
 				rewards,
 				ExistenceRequirement::AllowDeath,
 			)?;
