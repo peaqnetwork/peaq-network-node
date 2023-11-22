@@ -3770,11 +3770,11 @@ fn rewards_flow_and_register_working() {
 
 			// toll to block 8, everybody claim rewards, check it
 			roll_to(9, issue_number, &authors);
-			let _ = StakePallet::increment_collator_rewards(RuntimeOrigin::signed(1));
-			let _ = StakePallet::increment_collator_rewards(RuntimeOrigin::signed(2));
-			let _ = StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(3));
-			let _ = StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(4));
-			let _ = StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(5));
+			let _ = StakePallet::update_collator_rewards(&1);
+			let _ = StakePallet::update_collator_rewards(&2);
+			let _ = StakePallet::update_delegator_rewards(&3);
+			let _ = StakePallet::update_delegator_rewards(&4);
+			let _ = StakePallet::update_delegator_rewards(&5);
 			assert_eq!(StakePallet::rewards(&1), 4 * c_rewards);
 			assert_eq!(StakePallet::rewards(&2), 3 * c_rewards);
 			assert_eq!(StakePallet::rewards(&3), 4 * d_rewards1_1);
@@ -3813,7 +3813,7 @@ fn test_varying_delegators() {
 				)
 				.unwrap();
 
-				StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(2)).unwrap();
+				StakePallet::update_delegator_rewards(&2).unwrap();
 				StakePallet::claim_rewards(RuntimeOrigin::signed(2)).unwrap();
 			}
 			// start a downramping delegator process (delegators are frequently leaving)
@@ -3824,7 +3824,7 @@ fn test_varying_delegators() {
 				StakePallet::leave_delegators(RuntimeOrigin::signed(acc)).unwrap();
 				StakePallet::claim_rewards(RuntimeOrigin::signed(acc)).unwrap();
 
-				StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(2)).unwrap();
+				StakePallet::update_delegator_rewards(&2).unwrap();
 				StakePallet::claim_rewards(RuntimeOrigin::signed(2)).unwrap();
 			}
 			roll_to(8 as BlockNumber, DEFAULT_ISSUE, &authors);

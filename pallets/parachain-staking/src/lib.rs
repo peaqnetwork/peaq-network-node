@@ -134,7 +134,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, Get, Imbalance, LockIdentifier,
+			Currency, EstimateNextSessionRotation, ExistenceRequirement, Get, LockIdentifier,
 			LockableCurrency, OnUnbalanced, ReservableCurrency, StorageVersion, WithdrawReasons,
 		},
 		weights::Weight,
@@ -1395,7 +1395,6 @@ pub mod pallet {
 			Self::delegator_leaves_collator(acc.clone(), collator)?;
 
 			// *** No Fail beyond this point ***
-
 			DelegatorState::<T>::remove(&acc);
 
 			Self::deposit_event(Event::DelegatorLeft(acc, delegator.amount));
@@ -1606,55 +1605,57 @@ pub mod pallet {
 		pub fn claim_rewards(origin: OriginFor<T>) -> DispatchResult {
 			let target = ensure_signed(origin)?;
 
-			// reset rewards
-			let rewards = Rewards::<T>::take(&target);
-			ensure!(!rewards.is_zero(), Error::<T>::RewardsNotFound);
+			// Try to update reward-registers, but do not force it! In case of a leaving delegator,
+			// there is no collator or delegator to be found, but its rewards might still be
+			// available.
+			if let Some(_) = Self::candidate_pool(&target) {
+				Self::update_collator_rewards(&target)?;
+			} else if Self::is_delegator(&target) {
+				Self::update_delegator_rewards(&target)?;
+			}
 
-			// mint into target
-			let rewards = T::Currency::deposit_into_existing(&target, rewards)?;
-
-			Self::deposit_event(Event::Rewarded(target, rewards.peek()));
-
-			Ok(())
-		}
-
-		/// Actively increment the rewards of a collator.
-		///
-		/// The same effect is triggered by changing the stake or leaving the
-		/// network.
-		///
-		/// The dispatch origin must be a collator.
-		#[pallet::call_index(18)]
-		#[pallet::weight(<T as Config>::WeightInfo::increment_collator_rewards())]
-		pub fn increment_collator_rewards(origin: OriginFor<T>) -> DispatchResult {
-			let collator = ensure_signed(origin)?;
-			let state = CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
-
-			// increment rewards and update number of rewarded blocks
-			Self::do_inc_collator_reward(&collator, state.stake);
+			Self::transfer_rewards(&target)?;
 
 			Ok(())
 		}
 
-		/// Actively increment the rewards of a delegator.
-		///
-		/// The same effect is triggered by changing the stake or revoking
-		/// delegations.
-		///
-		/// The dispatch origin must be a delegator.
-		#[pallet::call_index(19)]
-		#[pallet::weight(<T as Config>::WeightInfo::increment_delegator_rewards())]
-		pub fn increment_delegator_rewards(origin: OriginFor<T>) -> DispatchResult {
-			let delegator = ensure_signed(origin)?;
-			let delegation =
-				DelegatorState::<T>::get(&delegator).ok_or(Error::<T>::DelegatorNotFound)?;
-			let collator = delegation.owner;
+		///// Actively increment the rewards of a collator.
+		/////
+		///// The same effect is triggered by changing the stake or leaving the
+		///// network.
+		/////
+		///// The dispatch origin must be a collator.
+		//#[pallet::call_index(18)]
+		//#[pallet::weight(<T as Config>::WeightInfo::increment_collator_rewards())]
+		//pub fn increment_collator_rewards(origin: OriginFor<T>) -> DispatchResult {
+		//	let collator = ensure_signed(origin)?;
+		//	let state = CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
 
-			// increment rewards and update number of rewarded blocks
-			Self::do_inc_delegator_reward(&delegator, delegation.amount, &collator);
+		//	// increment rewards and update number of rewarded blocks
+		//	Self::do_inc_collator_reward(&collator, state.stake);
 
-			Ok(())
-		}
+		//	Ok(())
+		//}
+
+		///// Actively increment the rewards of a delegator.
+		/////
+		///// The same effect is triggered by changing the stake or revoking
+		///// delegations.
+		/////
+		///// The dispatch origin must be a delegator.
+		//#[pallet::call_index(19)]
+		//#[pallet::weight(<T as Config>::WeightInfo::increment_delegator_rewards())]
+		//pub fn increment_delegator_rewards(origin: OriginFor<T>) -> DispatchResult {
+		//	let delegator = ensure_signed(origin)?;
+		//	let delegation =
+		//		DelegatorState::<T>::get(&delegator).ok_or(Error::<T>::DelegatorNotFound)?;
+		//	let collator = delegation.owner;
+
+		//	// increment rewards and update number of rewarded blocks
+		//	Self::do_inc_delegator_reward(&delegator, delegation.amount, &collator);
+
+		//	Ok(())
+		//}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -2189,13 +2190,6 @@ pub mod pallet {
 			Ok(unstaking_len)
 		}
 
-		// /// Process the coinbase rewards for the production of a new block.
-		// fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
-		// 	if let Ok(_success) = T::Currency::transfer(pot, who, reward,
-		// ExistenceRequirement::KeepAlive) { 		Self::deposit_event(Event::Rewarded(who.clone(),
-		// reward)); 	}
-		// }
-
 		/// Checks whether a delegator can still delegate in this round, e.g.,
 		/// if they have not delegated MaxDelegationsPerRound many times
 		/// already in this round.
@@ -2302,13 +2296,11 @@ pub mod pallet {
 			});
 			let unclaimed_blocks = count_authored.saturating_sub(count_rewarded);
 			// Note: At Peaq, we don't mint on top, we "take" it from the Pot
-			let (withdrawel, _) = T::Currency::slash(
-				&Self::account_id(),
-				Self::calc_block_rewards_collator(&state, unclaimed_blocks.into()),
-			);
-
 			Rewards::<T>::mutate(acc, |reward| {
-				*reward = reward.saturating_add(withdrawel.peek());
+				*reward = reward.saturating_add(Self::calc_block_rewards_collator(
+					&state,
+					unclaimed_blocks.into(),
+				));
 			});
 		}
 
@@ -2328,14 +2320,52 @@ pub mod pallet {
 			let unclaimed_blocks = count_authored.saturating_sub(count_rewarded);
 			let state = Self::candidate_pool(col).unwrap();
 			// Note: At Peaq, we don't mint on top, we "take" it from the Pot
-			let (withdrawel, _) = T::Currency::slash(
-				&Self::account_id(),
-				Self::calc_block_rewards_delegator(stake, &state, unclaimed_blocks.into()),
-			);
-
 			Rewards::<T>::mutate(acc, |reward| {
-				*reward = reward.saturating_add(withdrawel.peek());
+				*reward = reward.saturating_add(Self::calc_block_rewards_delegator(
+					stake,
+					&state,
+					unclaimed_blocks.into(),
+				));
 			});
+		}
+
+		/// A medium wrapped update-the-collator-rewards function, e.g. in test cases or
+		/// claim_rewards extrinsic.
+		pub fn update_collator_rewards(collator: &T::AccountId) -> DispatchResult {
+			let state = CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
+			// increment rewards and update number of rewarded blocks
+			Self::do_inc_collator_reward(&collator, state.stake);
+			Ok(())
+		}
+
+		/// A medium wrapped update-the-delegator-rewards function, e.g. in test cases or
+		/// claim_rewards extrinsic.
+		pub fn update_delegator_rewards(delegator: &T::AccountId) -> DispatchResult {
+			let delegation =
+				DelegatorState::<T>::get(&delegator).ok_or(Error::<T>::DelegatorNotFound)?;
+			let collator = delegation.owner;
+			// increment rewards and update number of rewarded blocks
+			Self::do_inc_delegator_reward(&delegator, delegation.amount, &collator);
+			Ok(())
+		}
+
+		/// Executes the transfer of rewards from internal pot to the collator's or delegator's
+		/// account. Will be used in claim_rewards and leave_delegators.
+		pub fn transfer_rewards(target: &T::AccountId) -> DispatchResult {
+			// reset rewards
+			let rewards = Rewards::<T>::take(&target);
+			ensure!(!rewards.is_zero(), Error::<T>::RewardsNotFound);
+
+			// Transfer from pallet's pot to collator's/delegator's account.
+			T::Currency::transfer(
+				&Self::account_id(),
+				&target,
+				rewards,
+				ExistenceRequirement::AllowDeath,
+			)?;
+			Self::deposit_event(Event::Rewarded(target.clone(), rewards));
+
+			Ok(())
 		}
 
 		/// Transforms the given PotId into an AccountId
@@ -2470,9 +2500,7 @@ pub mod pallet {
 		}
 
 		fn on_nonzero_unbalanced(imbalance: NegativeImbalanceOf<T>) {
-			let pot = T::PotId::get().into_account_truncating();
-			// let amount = imbalance.peek();
-			T::Currency::resolve_creating(&pot, imbalance);
+			T::Currency::resolve_creating(&Self::account_id(), imbalance);
 		}
 	}
 
