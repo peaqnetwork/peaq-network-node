@@ -342,11 +342,9 @@ fn claim_all_rewards() {
 	// let candidates = StakePallet::top_candidates();
 	// for i in 0..candidates.len() {
 	for c_stake in StakePallet::top_candidates().into_iter() {
-		let _ = StakePallet::increment_collator_rewards(RuntimeOrigin::signed(c_stake.owner));
 		let _ = StakePallet::claim_rewards(RuntimeOrigin::signed(c_stake.owner));
 		let candidate = StakePallet::candidate_pool(c_stake.owner).unwrap();
 		for d_stake in candidate.delegators.into_iter() {
-			let _ = StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(d_stake.owner));
 			let _ = StakePallet::claim_rewards(RuntimeOrigin::signed(d_stake.owner));
 		}
 	}
@@ -374,8 +372,6 @@ pub(crate) fn roll_to_claim_every_reward(
 		simulate_issuance(issue_number);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			StakePallet::note_author(*author);
-			// author has to increment rewards before claiming
-			assert_ok!(StakePallet::increment_collator_rewards(RuntimeOrigin::signed(*author)));
 			// author claims rewards
 			assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(*author)));
 
@@ -383,10 +379,6 @@ pub(crate) fn roll_to_claim_every_reward(
 			let col_state =
 				StakePallet::candidate_pool(author).expect("Block author must be candidate");
 			for delegation in col_state.delegators {
-				// delegator has to increment rewards before claiming
-				assert_ok!(StakePallet::increment_delegator_rewards(RuntimeOrigin::signed(
-					delegation.owner
-				)));
 				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
 				// delegators such that the claiming would throw
 				assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(delegation.owner)));

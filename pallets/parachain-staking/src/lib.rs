@@ -1587,15 +1587,6 @@ pub mod pallet {
 
 		/// Claim block authoring rewards for the target address.
 		///
-		/// Requires `Rewards` to be set beforehand, which can by triggered by
-		/// any of the following options
-		/// * Calling increment_{collator, delegator}_rewards (active)
-		/// * Altering your stake (active)
-		/// * Leaving the network as a collator (active)
-		/// * Revoking a delegation as a delegator (active)
-		/// * Being a delegator whose collator left the network, altered their stake or incremented
-		///   rewards (passive)
-		///
 		/// The dispatch origin can be any signed one, e.g., anyone can claim
 		/// for anyone.
 		///
@@ -1618,44 +1609,6 @@ pub mod pallet {
 
 			Ok(())
 		}
-
-		///// Actively increment the rewards of a collator.
-		/////
-		///// The same effect is triggered by changing the stake or leaving the
-		///// network.
-		/////
-		///// The dispatch origin must be a collator.
-		//#[pallet::call_index(18)]
-		//#[pallet::weight(<T as Config>::WeightInfo::increment_collator_rewards())]
-		//pub fn increment_collator_rewards(origin: OriginFor<T>) -> DispatchResult {
-		//	let collator = ensure_signed(origin)?;
-		//	let state = CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
-
-		//	// increment rewards and update number of rewarded blocks
-		//	Self::do_inc_collator_reward(&collator, state.stake);
-
-		//	Ok(())
-		//}
-
-		///// Actively increment the rewards of a delegator.
-		/////
-		///// The same effect is triggered by changing the stake or revoking
-		///// delegations.
-		/////
-		///// The dispatch origin must be a delegator.
-		//#[pallet::call_index(19)]
-		//#[pallet::weight(<T as Config>::WeightInfo::increment_delegator_rewards())]
-		//pub fn increment_delegator_rewards(origin: OriginFor<T>) -> DispatchResult {
-		//	let delegator = ensure_signed(origin)?;
-		//	let delegation =
-		//		DelegatorState::<T>::get(&delegator).ok_or(Error::<T>::DelegatorNotFound)?;
-		//	let collator = delegation.owner;
-
-		//	// increment rewards and update number of rewarded blocks
-		//	Self::do_inc_delegator_reward(&delegator, delegation.amount, &collator);
-
-		//	Ok(())
-		//}
 	}
 
 	impl<T: Config> Pallet<T> {
