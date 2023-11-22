@@ -2,13 +2,11 @@ use frame_support::{
 	ensure,
 	pallet_prelude::{DispatchError, DispatchResult},
 	traits::{
-		fungibles, tokens::WithdrawConsequence, Currency as PalletCurrency, ExistenceRequirement,
-		Get, Imbalance, WithdrawReasons,
+		fungibles,
+		tokens::{Fortitude, Precision, Preservation, WithdrawConsequence},
+		Currency as PalletCurrency, ExistenceRequirement, Get, Imbalance, WithdrawReasons,
 	},
 };
-use frame_support::traits::tokens::Preservation;
-use frame_support::traits::tokens::Fortitude;
-use frame_support::traits::tokens::Precision;
 use frame_system::Config as SysConfig;
 use orml_traits::{BasicCurrency, MultiCurrency};
 use pallet_assets::Config as AssetsConfig;
@@ -65,7 +63,12 @@ where
 			NativeCurrency::free_balance(who)
 		} else {
 			// Keep alive setup as true
-			MultiCurrencies::reducible_balance(asset_id, who, Preservation::Preserve, Fortitude::Polite)
+			MultiCurrencies::reducible_balance(
+				asset_id,
+				who,
+				Preservation::Preserve,
+				Fortitude::Polite,
+			)
 		}
 	}
 
@@ -139,7 +142,13 @@ where
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::withdraw(who, amount)
 		} else {
-			let out = MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite);
+			let out = MultiCurrencies::burn_from(
+				asset_id,
+				who,
+				amount,
+				Precision::Exact,
+				Fortitude::Polite,
+			);
 			if out.is_ok() {
 				Ok(())
 			} else {
@@ -166,7 +175,8 @@ where
 		} else {
 			// We cannot slash the token because it didn't implemnt that...
 			// If error happens, will return 0
-			MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite).unwrap_or(Zero::zero())
+			MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite)
+				.unwrap_or(Zero::zero())
 		}
 	}
 }

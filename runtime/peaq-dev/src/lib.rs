@@ -13,6 +13,7 @@ use frame_system::{
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
 
+use evm_accounts::CallKillEVMLinkAccount;
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
@@ -35,15 +36,13 @@ use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use runtime_common::*;
 use smallvec::smallvec;
-use evm_accounts::CallKillEVMLinkAccount;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
-use sp_runtime::traits::Convert;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
 	},
 	transaction_validity::{
@@ -94,9 +93,8 @@ pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 use peaq_primitives_xcm::{
-	AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance, EvmRevertCodeHandler,
-	NATIVE_CURRNECY_ID,
-    RbacEntityId, Header, Nonce, Moment, Address,
+	Address, AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance, EvmRevertCodeHandler,
+	Header, Moment, Nonce, RbacEntityId, NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;

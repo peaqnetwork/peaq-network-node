@@ -1,9 +1,9 @@
 use crate::{AccountId, AssetId};
+use frame_support::ensure;
 use pallet_assets::AssetsCallback;
 use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
 use sp_core::U256;
 use sp_std::marker::PhantomData;
-use frame_support::ensure;
 
 /// Evm Address.
 pub type EvmAddress = sp_core::H160;

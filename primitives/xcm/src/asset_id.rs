@@ -1,6 +1,6 @@
 use crate::EvmAddress;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::traits::Get;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

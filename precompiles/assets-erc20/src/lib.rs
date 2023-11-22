@@ -48,23 +48,22 @@ use frame_support::{
 		OriginTrait,
 	},
 };
-use pallet_evm::{AddressMapping};
-use precompile_utils::prelude::UnboundedBytes;
-use precompile_utils::evm::logs::LogsBuilder;
-use precompile_utils::prelude::InjectBacktrace;
-use precompile_utils::prelude::DiscriminantResult;
-use precompile_utils::prelude::PrecompileHandleExt;
-use precompile_utils::prelude::MayRevert;
-use precompile_utils::prelude::RevertReason;
-use precompile_utils::{
-	// handle::PrecompileHandleExt,
-	prelude::{Address,
-		// FunctionModifier,
-		LogExt,
-		// LogsBuilder,
-		RuntimeHelper},
+use pallet_evm::AddressMapping;
+use precompile_utils::prelude::{
+	Address,
+	// FunctionModifier,
+	LogExt,
+	// LogsBuilder,
+	RuntimeHelper,
 };
-use precompile_utils::solidity;
+use precompile_utils::{
+	evm::logs::LogsBuilder,
+	prelude::{
+		DiscriminantResult, InjectBacktrace, MayRevert, PrecompileHandleExt, RevertReason,
+		UnboundedBytes,
+	},
+	solidity,
+};
 use precompile_utils::{
 	keccak256,
 	// succeed,
@@ -80,7 +79,7 @@ use precompile_utils::{
 	// PrecompileHandleExt,
 	// RuntimeHelper,
 };
-use sp_runtime::traits::{Bounded};
+use sp_runtime::traits::Bounded;
 
 use sp_core::{H160, U256};
 use sp_std::{
@@ -164,7 +163,7 @@ where
 	fn discriminant(address: H160, gas: u64) -> DiscriminantResult<AssetIdOf<Runtime, Instance>> {
 		let extra_cost = RuntimeHelper::<Runtime>::db_read_gas_cost();
 		if gas < extra_cost {
-			return DiscriminantResult::OutOfGas;
+			return DiscriminantResult::OutOfGas
 		}
 
 		let asset_id = match Runtime::address_to_asset_id(address) {
@@ -260,8 +259,11 @@ where
 			handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
 			// If previous approval exists, we need to clean it
-			if pallet_assets::Pallet::<Runtime, Instance>::allowance(asset_id.clone(), &origin, &spender) !=
-				0u32.into()
+			if pallet_assets::Pallet::<Runtime, Instance>::allowance(
+				asset_id.clone(),
+				&origin,
+				&spender,
+			) != 0u32.into()
 			{
 				RuntimeHelper::<Runtime>::try_dispatch(
 					handle,
@@ -335,7 +337,7 @@ where
 				SELECTOR_LOG_TRANSFER,
 				handle.context().caller,
 				to,
-			solidity::encode_event_data(amount),
+				solidity::encode_event_data(amount),
 			)
 			.record(handle)?;
 
@@ -394,13 +396,8 @@ where
 		}
 
 		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_TRANSFER,
-				from,
-				to,
-				solidity::encode_event_data(amount),
-		)
-		.record(handle)?;
+			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(amount))
+			.record(handle)?;
 
 		// Build output.
 		Ok(true)
@@ -414,9 +411,7 @@ where
 	) -> EvmResult<UnboundedBytes> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let name = pallet_assets::Pallet::<Runtime, Instance>::name(asset_id)
-			.as_slice()
-			.into();
+		let name = pallet_assets::Pallet::<Runtime, Instance>::name(asset_id).as_slice().into();
 
 		Ok(name)
 	}
@@ -429,9 +424,7 @@ where
 	) -> EvmResult<UnboundedBytes> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let symbol = pallet_assets::Pallet::<Runtime, Instance>::symbol(asset_id)
-			.as_slice()
-			.into();
+		let symbol = pallet_assets::Pallet::<Runtime, Instance>::symbol(asset_id).as_slice().into();
 
 		Ok(symbol)
 	}
@@ -444,9 +437,7 @@ where
 	) -> EvmResult<u8> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		Ok(pallet_assets::Pallet::<Runtime, Instance>::decimals(
-			asset_id,
-		))
+		Ok(pallet_assets::Pallet::<Runtime, Instance>::decimals(asset_id))
 	}
 
 	#[precompile::public("minimumBalance()")]
@@ -459,7 +450,6 @@ where
 
 		Ok(pallet_assets::Pallet::<Runtime, Instance>::minimum_balance(asset_id).into())
 	}
-
 
 	#[precompile::public("mint(address,uint256)")]
 	fn mint(
@@ -489,14 +479,8 @@ where
 			0,
 		)?;
 
-
 		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_TRANSFER,
-				H160::default(),
-				addr,
-				solidity::encode_event_data(amount),
-			)
+			.log3(SELECTOR_LOG_TRANSFER, H160::default(), addr, solidity::encode_event_data(amount))
 			.record(handle)?;
 
 		Ok(true)
@@ -530,12 +514,7 @@ where
 		)?;
 
 		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_TRANSFER,
-				addr,
-				H160::default(),
-			solidity::encode_event_data(amount),
-			)
+			.log3(SELECTOR_LOG_TRANSFER, addr, H160::default(), solidity::encode_event_data(amount))
 			.record(handle)?;
 
 		Ok(true)

@@ -34,8 +34,8 @@
 // You should have received a copy of the GNU General Public License
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
 use frame_support::assert_ok;
-use std::str::from_utf8;
 use sp_runtime::traits::Zero;
+use std::str::from_utf8;
 
 use crate::{mock::*, *};
 
@@ -120,8 +120,11 @@ fn modifiers() {
 				true,
 				1
 			));
-			let mut tester =
-				PrecompilesModifierTester::new(precompiles(), Account::Alice, Account::AssetId(0u128));
+			let mut tester = PrecompilesModifierTester::new(
+				precompiles(),
+				Account::Alice,
+				Account::AssetId(0u128),
+			);
 
 			tester.test_view_modifier(PCall::balance_of_selectors());
 			tester.test_view_modifier(PCall::total_supply_selectors());
@@ -138,7 +141,6 @@ fn modifiers() {
 			tester.test_default_modifier(PCall::burn_selectors());
 		});
 }
-
 
 #[test]
 fn get_total_supply() {
@@ -161,17 +163,13 @@ fn get_total_supply() {
 			));
 
 			precompiles()
-				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::total_supply {},
-				)
+				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::total_supply {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(U256::from(1000u64));
 		});
 }
- #[test]
+#[test]
 fn get_balances_known_user() {
 	ExtBuilder::default()
 		.with_balances(vec![(Account::Alice, 1000)])
@@ -195,9 +193,7 @@ fn get_balances_known_user() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Alice.into())
-					},
+					PCall::balance_of { owner: Address(Account::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -223,9 +219,7 @@ fn get_balances_unknown_user() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Bob.into())
-					},
+					PCall::balance_of { owner: Address(Account::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -296,10 +290,7 @@ fn approve_saturating() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::approve {
-						spender: Address(Account::Bob.into()),
-						amount: U256::MAX,
-					},
+					PCall::approve { spender: Address(Account::Bob.into()), amount: U256::MAX },
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
@@ -423,10 +414,7 @@ fn transfer() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::transfer {
-						to: Address(Account::Bob.into()),
-						amount: U256::from(400),
-					},
+					PCall::transfer { to: Address(Account::Bob.into()), amount: U256::from(400) },
 				)
 				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
@@ -440,9 +428,7 @@ fn transfer() {
 				.prepare_test(
 					Account::Bob,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Bob.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -452,9 +438,7 @@ fn transfer() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Alice.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -564,9 +548,7 @@ fn transfer_from() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Alice.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -576,9 +558,7 @@ fn transfer_from() {
 				.prepare_test(
 					Account::Bob,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Bob.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -588,9 +568,7 @@ fn transfer_from() {
 				.prepare_test(
 					Account::Charlie,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Charlie.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Charlie.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -767,9 +745,7 @@ fn transfer_from_self() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Alice.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -779,9 +755,7 @@ fn transfer_from_self() {
 				.prepare_test(
 					Account::Alice,
 					Account::AssetId(0u128),
-					PCall::balance_of {
-						owner: Address(Account::Bob.into()),
-					},
+					PCall::balance_of { owner: Address(Account::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -812,31 +786,19 @@ fn get_metadata() {
 			));
 
 			precompiles()
-				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::name {},
-				)
+				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::name {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(UnboundedBytes::from("TestToken"));
 
 			precompiles()
-				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::symbol {},
-				)
+				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::symbol {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(UnboundedBytes::from("Test"));
 
 			precompiles()
-				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::decimals {},
-				)
+				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::decimals {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(12u8);
@@ -856,11 +818,7 @@ fn minimum_balance_is_right() {
 		));
 
 		precompiles()
-			.prepare_test(
-				Account::Alice,
-				Account::AssetId(0u128),
-				PCall::minimum_balance {},
-			)
+			.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::minimum_balance {})
 			.expect_cost(0) // TODO: Test db read/write costs
 			.expect_no_logs()
 			.execute_returns(expected_min_balance);
@@ -888,10 +846,7 @@ fn mint_is_ok() {
 			.prepare_test(
 				Account::Alice,
 				Account::AssetId(asset_id),
-				PCall::mint {
-					to: Address(Account::Bob.into()),
-					amount: U256::from(mint_amount),
-				},
+				PCall::mint { to: Address(Account::Bob.into()), amount: U256::from(mint_amount) },
 			)
 			.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 				SELECTOR_LOG_TRANSFER,
@@ -922,10 +877,7 @@ fn mint_non_admin_is_not_ok() {
 			.prepare_test(
 				Account::Bob,
 				Account::AssetId(asset_id),
-				PCall::mint {
-					to: Address(Account::Bob.into()),
-					amount: U256::from(42),
-				},
+				PCall::mint { to: Address(Account::Bob.into()), amount: U256::from(42) },
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
@@ -960,10 +912,7 @@ fn burn_is_ok() {
 			.prepare_test(
 				Account::Alice,
 				Account::AssetId(asset_id),
-				PCall::burn {
-					who: Address(Account::Bob.into()),
-					amount: U256::from(burn_amount),
-				},
+				PCall::burn { who: Address(Account::Bob.into()), amount: U256::from(burn_amount) },
 			)
 			.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
 				SELECTOR_LOG_TRANSFER,
@@ -1000,10 +949,7 @@ fn burn_non_admin_is_not_ok() {
 			.prepare_test(
 				Account::Bob,
 				Account::AssetId(asset_id),
-				PCall::burn {
-					who: Address(Account::Bob.into()),
-					amount: U256::from(42),
-				},
+				PCall::burn { who: Address(Account::Bob.into()), amount: U256::from(42) },
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));

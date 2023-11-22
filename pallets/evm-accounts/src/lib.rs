@@ -30,12 +30,13 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{
-		fungible, fungible::Inspect, Currency, ExistenceRequirement, IsType, OnKilledAccount,
+		fungible,
+		fungible::Inspect,
+		tokens::{Fortitude, Preservation},
+		Currency, ExistenceRequirement, IsType, OnKilledAccount,
 	},
 	transactional,
 };
-use frame_support::traits::tokens::Preservation;
-use frame_support::traits::tokens::Fortitude;
 use frame_system::{ensure_signed, pallet_prelude::*};
 use pallet_evm::AddressMapping as PalletEVMAddressMapping;
 use parity_scale_codec::Encode;
@@ -45,7 +46,7 @@ use peaq_primitives_xcm::{evm::EvmAddress, to_bytes, AccountIndex};
 use sp_core::{crypto::AccountId32, H160, H256};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::{
-	traits::{Convert, LookupError, StaticLookup, Zero, BlakeTwo256},
+	traits::{BlakeTwo256, Convert, LookupError, StaticLookup, Zero},
 	MultiAddress,
 };
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -139,8 +140,7 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-        /// [TODO] eth_address should change name to evm_address
-
+		/// [TODO] eth_address should change name to evm_address
 
 		/// Claim account mapping between Substrate accounts and EVM accounts.
 		/// Ensure eth_address has not been mapped.
@@ -174,7 +174,11 @@ pub mod module {
 				// allow users to do the linking.
 				// merge balance from `evm padded address` to `origin`
 				// Sould transfer all...
-				let amount = T::Currency::reducible_balance(&account_id, Preservation::Expendable, Fortitude::Polite);
+				let amount = T::Currency::reducible_balance(
+					&account_id,
+					Preservation::Expendable,
+					Fortitude::Polite,
+				);
 				T::Currency::transfer(&account_id, &who, amount, ExistenceRequirement::AllowDeath)?;
 			}
 
@@ -186,34 +190,32 @@ pub mod module {
 			Ok(())
 		}
 
-        /// Claim account mapping between Substrate accounts and a generated EVM
-        /// address based off of those accounts.
-        /// Ensure eth_address has not been mapped
-        #[pallet::call_index(1)]
-        #[pallet::weight(T::WeightInfo::claim_default_account())]
-        pub fn claim_default_account(origin: OriginFor<T>) -> DispatchResult {
-            let who = ensure_signed(origin)?;
+		/// Claim account mapping between Substrate accounts and a generated EVM
+		/// address based off of those accounts.
+		/// Ensure eth_address has not been mapped
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::WeightInfo::claim_default_account())]
+		pub fn claim_default_account(origin: OriginFor<T>) -> DispatchResult {
+			let who = ensure_signed(origin)?;
 			// ensure account_id and eth_address has not been mapped
 			ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
-            // get the default evm address
-            let eth_address = <Self as EVMAddressMapping<T::AccountId>>::get_detault_evm_address(&who);
-            // make sure default address is not already mapped, this should not
-            // happen but for sanity check.
-            ensure!(
-                    !Accounts::<T>::contains_key(&eth_address),
-                    Error::<T>::EthAddressHasMapped
-                   );
+			// get the default evm address
+			let eth_address =
+				<Self as EVMAddressMapping<T::AccountId>>::get_detault_evm_address(&who);
+			// make sure default address is not already mapped, this should not
+			// happen but for sanity check.
+			ensure!(!Accounts::<T>::contains_key(&eth_address), Error::<T>::EthAddressHasMapped);
 
-            // [TODO] Should transfer tokens? or not?
-            // Self::charge_storage_fee(&account_id)?;
+			// [TODO] Should transfer tokens? or not?
+			// Self::charge_storage_fee(&account_id)?;
 
-            // create double mappings for the pair with default evm address
-            Accounts::<T>::insert(&eth_address, &who);
-            EvmAddresses::<T>::insert(&who, &eth_address);
+			// create double mappings for the pair with default evm address
+			Accounts::<T>::insert(&eth_address, &who);
+			EvmAddresses::<T>::insert(&who, &eth_address);
 
 			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address: eth_address });
-            Ok(())
-        }
+			Ok(())
+		}
 	}
 }
 
@@ -280,16 +282,16 @@ impl<T: Config> Pallet<T> {
 		keccak_256(domain_seperator_msg.as_slice())
 	}
 
-/*
- *     fn do_claim_default_evm_address(who: T::AccountId) -> Result<EvmAddress, DispatchError> {
- *         // ensure account_id has not been mapped
- *         ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
- *
- *         let eth_address = T::EVMAddressMapping::get_or_create_evm_address(&who);
- *
- *         Ok(eth_address)
- *     }
- */
+	/*
+	 *     fn do_claim_default_evm_address(who: T::AccountId) -> Result<EvmAddress,
+	 * DispatchError> {         // ensure account_id has not been mapped
+	 *         ensure!(!EvmAddresses::<T>::contains_key(&who), Error::<T>::AccountIdHasMapped);
+	 *
+	 *         let eth_address = T::EVMAddressMapping::get_or_create_evm_address(&who);
+	 *
+	 *         Ok(eth_address)
+	 *     }
+	 */
 }
 
 fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
@@ -303,7 +305,7 @@ where
 	T::OriginAddressMapping: PalletEVMAddressMapping<T::AccountId>,
 {
 	fn into_account_id(address: EvmAddress) -> T::AccountId {
-        Self::get_account_id_or_default(&address)
+		Self::get_account_id_or_default(&address)
 	}
 }
 
@@ -320,25 +322,25 @@ where
 		})
 	}
 
-    fn get_detault_account_id(address: &EvmAddress) -> T::AccountId {
-        UnifyAddressMapper::<T, BlakeTwo256>::to_default_account_id(&address)
-    }
+	fn get_detault_account_id(address: &EvmAddress) -> T::AccountId {
+		UnifyAddressMapper::<T, BlakeTwo256>::to_default_account_id(&address)
+	}
 
 	// Returns the EvmAddress associated with a given AccountId or the
 	// underlying EvmAddress of the AccountId.
 	// Returns None if there is no EvmAddress associated with the AccountId
 	// and there is no underlying EvmAddress in the AccountId.
-    // For testing
+	// For testing
 	fn get_evm_address_or_default(account_id: &T::AccountId) -> EvmAddress {
 		UnifyAddressMapper::<T, BlakeTwo256>::to_set_evm_address(&account_id).unwrap_or_else(|| {
-            // If no mapping exists, return the default EvmAddress
-            UnifyAddressMapper::<T, BlakeTwo256>::to_default_evm_address(&account_id)
-        })
+			// If no mapping exists, return the default EvmAddress
+			UnifyAddressMapper::<T, BlakeTwo256>::to_default_evm_address(&account_id)
+		})
 	}
 
-    fn get_detault_evm_address(account_id: &T::AccountId) -> EvmAddress {
-        UnifyAddressMapper::<T, BlakeTwo256>::to_default_evm_address(&account_id)
-    }
+	fn get_detault_evm_address(account_id: &T::AccountId) -> EvmAddress {
+		UnifyAddressMapper::<T, BlakeTwo256>::to_default_evm_address(&account_id)
+	}
 
 	// Returns true if a given AccountId is associated with a given EvmAddress
 	// and false if is not.
@@ -359,15 +361,16 @@ impl<T: Config> OnKilledAccount<T::AccountId> for CallKillEVMLinkAccount<T> {
 	}
 }
 
-impl<T: Config> StaticLookup for Pallet<T>
-{
+impl<T: Config> StaticLookup for Pallet<T> {
 	type Source = MultiAddress<T::AccountId, AccountIndex>;
 	type Target = T::AccountId;
 
 	fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
 		match a {
-			MultiAddress::Address20(i) => Ok(
-				<Self as PalletEVMAddressMapping<T::AccountId>>::into_account_id(EvmAddress::from_slice(&i))),
+			MultiAddress::Address20(i) =>
+				Ok(<Self as PalletEVMAddressMapping<T::AccountId>>::into_account_id(
+					EvmAddress::from_slice(&i),
+				)),
 			_ => Err(LookupError),
 		}
 	}

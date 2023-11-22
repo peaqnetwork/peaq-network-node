@@ -9,7 +9,7 @@ pub trait EVMAddressMapping<AccountId> {
 
 	fn get_evm_address_or_default(account_id: &AccountId) -> EvmAddress;
 
-    fn get_detault_evm_address(account_id: &AccountId) -> EvmAddress;
+	fn get_detault_evm_address(account_id: &AccountId) -> EvmAddress;
 	/// Returns true if a given AccountId is associated with a given EvmAddress
 	/// and false if is not.
 	fn is_linked(account_id: &AccountId, evm: &EvmAddress) -> bool;

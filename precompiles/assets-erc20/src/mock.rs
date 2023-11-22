@@ -224,7 +224,6 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 }
 
-
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block Storage Limit in bytes. Set to 40KB.
 const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
