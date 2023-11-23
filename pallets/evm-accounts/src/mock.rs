@@ -25,7 +25,7 @@ use frame_support::{
 	construct_runtime,
 	traits::{ConstU128, ConstU64, Everything},
 };
-use orml_traits::parameter_type_with_key;
+
 use pallet_evm::HashedAddressMapping;
 use peaq_primitives_xcm::Balance;
 use sp_core::{crypto::AccountId32, H256};
@@ -81,6 +81,11 @@ impl pallet_balances::Config for Runtime {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
+
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 impl Config for Runtime {

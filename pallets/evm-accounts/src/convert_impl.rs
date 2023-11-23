@@ -2,8 +2,8 @@ use crate::{Accounts, Config, EvmAddresses, H160};
 use pallet_evm::AddressMapping as PalletEVMAddressMapping;
 use parity_scale_codec::Encode;
 use peaq_primitives_xcm::EvmAddress;
-use sp_core::{crypto::AccountId32, Hasher, H256};
-use sp_runtime::traits::Convert;
+use sp_core::{Hasher, H256};
+
 use sp_std::marker::PhantomData;
 
 pub trait UnifyAddressMapping<AccountId> {

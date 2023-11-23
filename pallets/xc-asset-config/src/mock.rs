@@ -19,7 +19,7 @@
 use crate::{self as pallet_xc_asset_config};
 use xcm::latest::prelude::{Junction::GeneralKey, MultiLocation, X1};
 
-use frame_support::{construct_runtime, parameter_types, traits::ConstU32, weights::Weight};
+use frame_support::{construct_runtime, parameter_types, weights::Weight};
 use sp_core::H256;
 
 use frame_system::EnsureRoot;
@@ -99,6 +99,11 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 type AssetId = u128;

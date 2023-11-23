@@ -96,7 +96,7 @@ fn evm_get_account_id() {
 		let evm_account = EvmAccountsModule::eth_address(&alice());
 		let evm_account_to_default =
 			{ HashedAddressMapping::<BlakeTwo256>::into_account_id(evm_account) };
-		assert_eq!(EvmAccountsModule::get_account_id(&evm_account), evm_account_to_default);
+		assert_eq!(EvmAccountsModule::get_account_id_or_default(&evm_account), evm_account_to_default);
 
 		assert_ok!(EvmAccountsModule::claim_account(
 			RuntimeOrigin::signed(ALICE),
@@ -104,8 +104,8 @@ fn evm_get_account_id() {
 			EvmAccountsModule::eth_sign(&alice(), &ALICE)
 		));
 
-		assert_eq!(EvmAccountsModule::get_account_id(&evm_account), ALICE);
-		assert_eq!(EvmAccountsModule::get_evm_address(&ALICE).unwrap(), evm_account);
+		assert_eq!(EvmAccountsModule::get_account_id_or_default(&evm_account), ALICE);
+		assert_eq!(EvmAccountsModule::get_evm_address_or_default(&ALICE), evm_account);
 
 		// We don't check whether the evm account is linked to the default account
 		// assert!(EvmAccountsModule::is_linked(&evm_account_to_default, &evm_account));

@@ -18,9 +18,8 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::upper_case_acronyms)]
 
-use parity_scale_codec::{Decode, Encode};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
+
+
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},

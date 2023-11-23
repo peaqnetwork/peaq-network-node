@@ -43,10 +43,10 @@ use parity_scale_codec::Encode;
 use precompile_utils::prelude::keccak256;
 
 use peaq_primitives_xcm::{evm::EvmAddress, to_bytes, AccountIndex};
-use sp_core::{crypto::AccountId32, H160, H256};
+use sp_core::{H160, H256};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::{
-	traits::{BlakeTwo256, Convert, LookupError, StaticLookup, Zero},
+	traits::{BlakeTwo256, LookupError, StaticLookup, Zero},
 	MultiAddress,
 };
 use sp_std::{marker::PhantomData, vec::Vec};

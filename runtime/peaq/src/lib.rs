@@ -14,8 +14,8 @@ use frame_system::{
 };
 
 use evm_accounts::CallKillEVMLinkAccount;
-use orml_currencies::BasicCurrencyAdapter;
-use orml_traits::parameter_type_with_key;
+
+
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
@@ -34,7 +34,7 @@ use peaq_pallet_rbac::{
 };
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use runtime_common::*;
+
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -54,7 +54,6 @@ use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use xcm::latest::prelude::*;
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 mod weights;
@@ -130,14 +129,9 @@ pub type AccountId = peaq_primitives_xcm::AccountId;
 /// never know...
 // type AccountIndex = peaq_primitives_xcm::AccountIndex;
 
-/// Index of a transaction in the chain.
-type Index = peaq_primitives_xcm::Nonce;
-
 /// A hash of some data used by the chain.
 type Hash = peaq_primitives_xcm::Hash;
 
-/// The ID of an entity (RBAC)
-type EntityId = [u8; 32];
 /// Block type as expected by this runtime.
 /// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
