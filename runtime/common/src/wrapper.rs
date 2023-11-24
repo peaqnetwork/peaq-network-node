@@ -13,8 +13,6 @@ use pallet_assets::Config as AssetsConfig;
 use sp_runtime::traits::{CheckedSub, Zero};
 use sp_std::{fmt::Debug, marker::PhantomData};
 
-// [TODO] Because in polkadot 0.9.43, they are remove the fungibles::Transfer in AssetPallet;
-// So we need to use the introduce a way to call the PalletAsset to call the related func.
 pub struct PeaqMultiCurrenciesWrapper<T, MultiCurrencies, NativeCurrency, GetNativeAssetId>(
 	PhantomData<(T, MultiCurrencies, NativeCurrency, GetNativeAssetId)>,
 );

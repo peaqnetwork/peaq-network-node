@@ -79,15 +79,5 @@ pub mod prelude {
 		alloc::string::String,
 		pallet_evm::{PrecompileHandle, PrecompileOutput},
 		precompile_utils_macro::{keccak256, precompile},
-		// [TODO]
-		/*
-		 * handle::{with_precompile_handle},
-		 * evm::logs::{LogsBuilder},
-		 * modifier::{check_function_modifier, FunctionModifier},
-		 * succeed, EvmResult,
-		 * alloc::string::String,
-		 * pallet_evm::{PrecompileHandle, PrecompileOutput},
-		 * precompile_utils_macro::{keccak256, precompile},
-		 */
 	};
 }

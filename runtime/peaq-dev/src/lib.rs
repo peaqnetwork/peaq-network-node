@@ -715,11 +715,6 @@ impl pallet_authorship::Config for Runtime {
 	type EventHandler = ParachainStaking;
 }
 
-parameter_types! {
-	pub const SessionPeriod: BlockNumber = MINUTES;
-	pub const SessionOffset: BlockNumber = 0;
-}
-
 impl pallet_session::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
@@ -1958,8 +1953,6 @@ impl evm_accounts::Config for Runtime {
 	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
 }
 
-// [TODO] ?
-// Move to primitives
 impl EVMAddressToAssetId<AssetId> for Runtime {
 	fn address_to_asset_id(address: H160) -> Option<AssetId> {
 		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address)
