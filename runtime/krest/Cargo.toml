@@ -67,8 +67,8 @@ fp-rpc = { workspace = true, default-features = false }
 fp-self-contained = { workspace = true, default-features = false }
 pallet-base-fee = { workspace = true, default-features = false }
 pallet-dynamic-fee = { workspace = true, default-features = false }
-pallet-ethereum = { workspace = true, default-features = false }
-pallet-evm = { workspace = true, default-features = false }
+pallet-ethereum = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
+pallet-evm = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
 pallet-evm-precompile-blake2 = { workspace = true, default-features = false }
 pallet-evm-precompile-bn128 = { workspace = true, default-features = false }
 pallet-evm-precompile-dispatch = { workspace = true, default-features = false }

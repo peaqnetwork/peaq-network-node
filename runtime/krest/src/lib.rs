@@ -17,6 +17,7 @@ use evm_accounts::CallKillEVMLinkAccount;
 
 
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use pallet_ethereum::PostLogContent;
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
@@ -70,6 +71,7 @@ pub use frame_support::{
 		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
 		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
 		OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
+		OnFinalize,
 	},
 	weights::{
 		constants::{
@@ -188,6 +190,14 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+}
+
+/// Charge fee for stored bytes and items as part of `pallet-contracts`.
+///
+/// The slight difference to general `deposit` function is because there is fixed bound on how large the DB
+/// key can grow so it doesn't make sense to have as high deposit per item as in the general approach.
+const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
+    items as Balance * 40 * CENTS + (bytes as Balance) * MILLICENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
@@ -321,8 +331,9 @@ impl pallet_aura::Config for Runtime {
 
 // For ink
 parameter_types! {
-	pub const DepositPerItem: Balance = deposit(1, 0);
-	pub const DepositPerByte: Balance = deposit(0, 1);
+	pub const DepositPerItem: Balance = contracts_deposit(1, 0);
+	pub const DepositPerByte: Balance = contracts_deposit(0, 1);
+	pub const DefaultDepositLimit: Balance = contracts_deposit(16, 16 * 1024);
 	pub const MaxValueSize: u32 = 16 * 1024;
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO * RuntimeBlockWeights::get().max_block;
@@ -357,7 +368,7 @@ impl pallet_contracts::Config for Runtime {
 
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 	type UnsafeUnstableInterface = ConstBool<false>;
-	type DefaultDepositLimit = (); // TODO
+	type DefaultDepositLimit = DefaultDepositLimit;
 }
 
 parameter_types! {
@@ -583,6 +594,19 @@ parameter_types! {
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
+
+    /// The amount of gas per pov. A ratio of 4 if we convert ref_time to gas and we compare
+    /// it with the pov_size for a block. E.g.
+    /// ceil(
+    ///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
+    /// )
+    pub const GasLimitPovSizeRatio: u64 = 4;
+	/// In moonbeam, they setup as 366 and follow below formula:
+    /// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
+    /// (15_000_000 / 40kb)
+	/// However, let us setup the value as 1 for now because we also has the did/storage bridge
+	/// [TODO] Need to check
+    pub GasLimitStorageGrowthRatio: u64 = 1;
 }
 
 impl pallet_evm::Config for Runtime {
@@ -603,17 +627,21 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
-	type GasLimitPovSizeRatio = (); // TODO
-	type GasLimitStorageGrowthRatio = (); // TODO
+	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
+	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
 }
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
-	type PostLogContent = (); // TODO
-	type ExtraDataLength = (); // TODO
+	type PostLogContent = PostBlockAndTxnHashes;
+	type ExtraDataLength = ConstU32<30>;
 }
 
 frame_support::parameter_types! {
@@ -1083,12 +1111,12 @@ impl_runtime_apis! {
 			OpaqueMetadata::new(Runtime::metadata().into())
 		}
 
-		fn metadata_at_version(_version: u32) -> Option<OpaqueMetadata> {
-			None // TODO
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
 		}
 
 		fn metadata_versions() -> Vec<u32> {
-			Vec::new() // TODO
+			Runtime::metadata_versions()
 		}
 	}
 
@@ -1464,10 +1492,18 @@ impl_runtime_apis! {
 		fn gas_limit_multiplier_support() {}
 
 		fn pending_block(
-			_xts: Vec<<Block as BlockT>::Extrinsic>,
+			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> (Option<ethereum::BlockV2>, Option<Vec<TransactionStatus>>) {
-			(None, None) // TODO
-		}
+            for ext in xts.into_iter() {
+                let _ = Executive::apply_extrinsic(ext);
+            }
+
+            Ethereum::on_finalize(System::block_number() + 1);
+
+            (
+                pallet_ethereum::CurrentBlock::<Runtime>::get(),
+                pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
+            )		}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
