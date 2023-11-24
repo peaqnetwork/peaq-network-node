@@ -416,7 +416,7 @@ impl pallet_sudo::Config for Runtime {
 impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Time = pallet_timestamp::Pallet<Runtime>;
-	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
 }
 
 /// Config the utility in pallets/utility
@@ -761,7 +761,7 @@ impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_block_reward::weights::WeightInfo<Runtime>;
 }
 
 pub struct BeneficiaryPayout();
@@ -840,13 +840,13 @@ impl orml_unknown_tokens::Config for Runtime {
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EntityId = RbacEntityId;
-	type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
 }
 
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
 }
 
 // Zenlink-DEX Parameter definitions
@@ -1708,7 +1708,7 @@ impl_runtime_apis! {
 impl peaq_pallet_transaction::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type WeightInfo = peaq_pallet_transaction::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_transaction::weights::WeightInfo<Runtime>;
 }
 
 parameter_types! {
