@@ -8,7 +8,10 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use peaq_pallet_rbac::rbac::{Rbac, Role};
+use peaq_pallet_rbac::{
+	error::{RbacError, RbacErrorType},
+	rbac::{Rbac, Role},
+};
 use precompile_utils::prelude::*;
 use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -26,6 +29,21 @@ type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type EntityIdOf<Runtime> = <Runtime as peaq_pallet_rbac::Config>::EntityId;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
+
+pub fn err2str(error: &RbacError) -> &str {
+	match error {
+		RbacError { typ: RbacErrorType::EntityAlreadyExist, .. } => "RbacError.EntityAlreadyExists",
+		RbacError { typ: RbacErrorType::EntityDoesNotExist, .. } => "RbacError.EntityDoesNotExist",
+		RbacError { typ: RbacErrorType::EntityAuthorizationFailed, .. } =>
+			"RbacError.EntityAuthorizationFailed",
+		RbacError { typ: RbacErrorType::EntityDisabled, .. } => "RbacError.EntityDisabled",
+		RbacError { typ: RbacErrorType::AssignmentAlreadyExist, .. } =>
+			"RbacError.AssignmentAlreadyExist",
+		RbacError { typ: RbacErrorType::AssignmentDoesNotExist, .. } =>
+			"RbacError.AssignmentDoesNotExist",
+		RbacError { typ: RbacErrorType::NameExceedMaxChar, .. } => "RbacError.NameExceedMaxChar",
+	}
+}
 
 // Precompule struct
 // NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
@@ -55,7 +73,7 @@ where
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 		}
 	}
@@ -67,7 +85,7 @@ where
 		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_roles(&owner_account) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the items")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(v
 				.iter()
 				.map(|entity| Entity {
@@ -192,7 +210,7 @@ where
 
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_user_roles(&owner_addr, user_id_addr) {
-				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 				Ok(v) => Ok(v
 					.iter()
 					.map(|val| Role2User { role: val.role.into(), user: val.user.into() })
@@ -279,7 +297,7 @@ where
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 		}
 	}
@@ -294,7 +312,7 @@ where
 		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_permissions(&owner) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(v
 				.iter()
 				.map(|entity| Entity {
@@ -421,7 +439,7 @@ where
 
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_role_permissions(&owner, role_id) {
-				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 				Ok(v) => Ok(v
 					.iter()
 					.map(|entity| Permission2Role {
@@ -515,7 +533,7 @@ where
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
 		}
 	}
@@ -684,7 +702,7 @@ where
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_group_roles(&owner, group_id) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(v
 				.iter()
 				.map(|val| Role2Group { role: val.role.into(), group: val.group.into() })
@@ -770,7 +788,7 @@ where
 		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_user_groups(&owner, user_id) {
-			Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 			Ok(v) => Ok(v
 				.iter()
 				.map(|val| User2Group { user: val.user.into(), group: val.group.into() })
@@ -793,7 +811,7 @@ where
 
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_user_permissions(&owner, user_id) {
-				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 				Ok(v) => Ok(v
 					.iter()
 					.map(|val| Entity {
@@ -820,7 +838,7 @@ where
 
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_group_permissions(&owner, group_id) {
-				Err(_e) => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
+				Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
 				Ok(v) => Ok(v
 					.iter()
 					.map(|val| Entity {
