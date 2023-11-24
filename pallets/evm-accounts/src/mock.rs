@@ -142,7 +142,7 @@ pub fn bob() -> libsecp256k1::SecretKey {
 }
 
 pub fn bob_account_id() -> AccountId {
-	let address = EvmAccountsModule::eth_address(&bob());
+	let address = EvmAccountsModule::evm_address(&bob());
 	let mut data = [0u8; 32];
 	data[0..4].copy_from_slice(b"evm:");
 	data[4..24].copy_from_slice(&address[..]);
