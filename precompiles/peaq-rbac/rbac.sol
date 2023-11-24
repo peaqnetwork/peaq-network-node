@@ -221,7 +221,7 @@ interface RBAC {
         bytes32 group_id
     );
 
-    event UserUnassignedToGroup(
+    event UserUnAssignedToGroup(
         address sender,
         bytes32 user_id,
         bytes32 group_id
