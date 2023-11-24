@@ -154,8 +154,8 @@ pub mod reward_config_calc;
 pub mod reward_rate;
 mod set;
 pub mod types;
-pub mod weights;
 pub mod weightinfo;
+pub mod weights;
 
 pub use pallet::*;
 pub use weightinfo::WeightInfo;
@@ -180,15 +180,13 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, Convert, One, SaturatedConversion, Saturating,
-			StaticLookup, Zero,
+			AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, Convert, One,
+			SaturatedConversion, Saturating, StaticLookup, Zero,
 		},
 		Permill,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::{
-		prelude::*, convert::TryInto, fmt::Debug,
-	};
+	use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
 
 	use crate::{
 		reward_config_calc::CollatorDelegatorBlockRewardCalculator,
@@ -197,7 +195,7 @@ pub mod pallet {
 			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
 			ReplacedDelegator, RoundInfo, Stake, StakeOf, TotalStake,
 		},
-		weightinfo::WeightInfo
+		weightinfo::WeightInfo,
 	};
 
 	/// Kilt-specific lock for staking rewards.
@@ -513,7 +511,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> frame_support::weights::Weight {
-			let mut post_weight = <T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
+			let mut post_weight =
+				<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
 			let mut round = <Round<T>>::get();
 
 			// check for round update
@@ -525,7 +524,8 @@ pub mod pallet {
 				<Round<T>>::put(round);
 
 				Self::deposit_event(Event::NewRound(round.first, round.current));
-				post_weight = <T as crate::pallet::Config>::WeightInfo::on_initialize_round_update();
+				post_weight =
+					<T as crate::pallet::Config>::WeightInfo::on_initialize_round_update();
 			}
 			post_weight
 		}
@@ -1907,7 +1907,8 @@ pub mod pallet {
 
 			let unstaking_len = Self::do_unlock(&target)?;
 
-			Ok(Some(<T as crate::pallet::Config>::WeightInfo::unlock_unstaked(unstaking_len)).into())
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::unlock_unstaked(unstaking_len))
+				.into())
 		}
 	}
 

@@ -1,15 +1,15 @@
 //! Storage migrations for the parachain-staking  pallet.
 
+use crate::{
+	pallet::{Config, Pallet},
+	reward_rate::RewardRateInfo,
+};
 use frame_support::{
 	dispatch::GetStorageVersion,
 	pallet_prelude::{StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,
-};
-use crate::{
-	reward_rate::RewardRateInfo,
-	pallet::{Config, Pallet},
 };
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(7);

@@ -59,8 +59,8 @@ pub use migrations::StorageReleases;
 pub mod types;
 pub use types::*;
 
-pub mod weights;
 pub mod weightinfo;
+pub mod weights;
 pub use weightinfo::WeightInfo;
 
 #[macro_export]
