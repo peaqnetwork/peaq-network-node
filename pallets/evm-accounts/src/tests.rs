@@ -96,7 +96,10 @@ fn evm_get_account_id() {
 		let evm_account = EvmAccountsModule::eth_address(&alice());
 		let evm_account_to_default =
 			{ HashedAddressMapping::<BlakeTwo256>::into_account_id(evm_account) };
-		assert_eq!(EvmAccountsModule::get_account_id_or_default(&evm_account), evm_account_to_default);
+		assert_eq!(
+			EvmAccountsModule::get_account_id_or_default(&evm_account),
+			evm_account_to_default
+		);
 
 		assert_ok!(EvmAccountsModule::claim_account(
 			RuntimeOrigin::signed(ALICE),

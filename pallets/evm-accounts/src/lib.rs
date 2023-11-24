@@ -29,10 +29,7 @@
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{
-		fungible,
-		Currency, IsType, OnKilledAccount,
-	},
+	traits::{fungible, Currency, IsType, OnKilledAccount},
 	transactional,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
@@ -181,14 +178,14 @@ pub mod module {
 			 *         Preservation::Expendable,
 			 *         Fortitude::Polite,
 			 *     );
-			 *     T::Currency::transfer(&ori_account_id, &who, amount, ExistenceRequirement::AllowDeath)?;
-			 * }
+			 *     T::Currency::transfer(&ori_account_id, &who, amount,
+			 * ExistenceRequirement::AllowDeath)?; }
 			 */
 
 			Accounts::<T>::insert(evm_address, &who);
 			EvmAddresses::<T>::insert(&who, evm_address);
 
-			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address: evm_address });
+			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address });
 
 			Ok(())
 		}
@@ -219,7 +216,7 @@ pub mod module {
 			Accounts::<T>::insert(&evm_address, &who);
 			EvmAddresses::<T>::insert(&who, &evm_address);
 
-			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address: evm_address });
+			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address });
 			Ok(())
 		}
 	}

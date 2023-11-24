@@ -15,9 +15,7 @@ use frame_system::{
 
 use evm_accounts::CallKillEVMLinkAccount;
 
-
-use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_ethereum::PostLogContent;
+use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
@@ -45,7 +43,7 @@ use sp_runtime::{
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
-        UniqueSaturatedInto,
+		UniqueSaturatedInto,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -71,8 +69,7 @@ pub use frame_support::{
 	traits::{
 		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
 		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
-		OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
-		OnFinalize,
+		OnFinalize, OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
 		constants::{
@@ -197,10 +194,11 @@ const fn deposit(items: u32, bytes: u32) -> Balance {
 
 /// Charge fee for stored bytes and items as part of `pallet-contracts`.
 ///
-/// The slight difference to general `deposit` function is because there is fixed bound on how large the DB
-/// key can grow so it doesn't make sense to have as high deposit per item as in the general approach.
+/// The slight difference to general `deposit` function is because there is fixed bound on how large
+/// the DB key can grow so it doesn't make sense to have as high deposit per item as in the general
+/// approach.
 const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
-    items as Balance * 40 * CENTS + (bytes as Balance) * MILLICENTS
+	items as Balance * 40 * CENTS + (bytes as Balance) * MILLICENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
@@ -597,18 +595,18 @@ parameter_types! {
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
-    /// The amount of gas per pov. A ratio of 4 if we convert ref_time to gas and we compare
-    /// it with the pov_size for a block. E.g.
-    /// ceil(
-    ///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
-    /// )
-    pub const GasLimitPovSizeRatio: u64 = 4;
+	/// The amount of gas per pov. A ratio of 4 if we convert ref_time to gas and we compare
+	/// it with the pov_size for a block. E.g.
+	/// ceil(
+	///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
+	/// )
+	pub const GasLimitPovSizeRatio: u64 = 4;
 	/// In moonbeam, they setup as 366 and follow below formula:
-    /// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
-    /// (15_000_000 / 40kb)
+	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
+	/// (15_000_000 / 40kb)
 	/// However, let us setup the value as 1 for now because we also has the did/storage bridge
 	/// [TODO] Need to check
-    pub GasLimitStorageGrowthRatio: u64 = 1;
+	pub GasLimitStorageGrowthRatio: u64 = 1;
 }
 
 impl pallet_evm::Config for Runtime {
@@ -636,7 +634,7 @@ impl pallet_evm::Config for Runtime {
 }
 
 parameter_types! {
-    pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
+	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
 }
 
 impl pallet_ethereum::Config for Runtime {
@@ -1411,40 +1409,40 @@ impl_runtime_apis! {
 			let is_transactional = false;
 			let validate = true;
 
-            // Estimated encoded transaction size must be based on the heaviest transaction
-            // type (EIP1559Transaction) to be compatible with all transaction types.
-            let mut estimated_transaction_len = data.len() +
-                // pallet ethereum index: 1
-                // transact call index: 1
-                // Transaction enum variant: 1
-                // chain_id 8 bytes
-                // nonce: 32
-                // max_priority_fee_per_gas: 32
-                // max_fee_per_gas: 32
-                // gas_limit: 32
-                // action: 21 (enum varianrt + call address)
-                // value: 32
-                // access_list: 1 (empty vec size)
-                // 65 bytes signature
-                258;
+			// Estimated encoded transaction size must be based on the heaviest transaction
+			// type (EIP1559Transaction) to be compatible with all transaction types.
+			let mut estimated_transaction_len = data.len() +
+				// pallet ethereum index: 1
+				// transact call index: 1
+				// Transaction enum variant: 1
+				// chain_id 8 bytes
+				// nonce: 32
+				// max_priority_fee_per_gas: 32
+				// max_fee_per_gas: 32
+				// gas_limit: 32
+				// action: 21 (enum varianrt + call address)
+				// value: 32
+				// access_list: 1 (empty vec size)
+				// 65 bytes signature
+				258;
 
-            if access_list.is_some() {
-                estimated_transaction_len += access_list.encoded_size();
-            }
+			if access_list.is_some() {
+				estimated_transaction_len += access_list.encoded_size();
+			}
 
-            let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
-            let without_base_extrinsic_weight = true;
+			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+			let without_base_extrinsic_weight = true;
 
-            let (weight_limit, proof_size_base_cost) =
-                match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
-                    gas_limit,
-                    without_base_extrinsic_weight
-                ) {
-                    weight_limit if weight_limit.proof_size() > 0 => {
-                        (Some(weight_limit), Some(estimated_transaction_len as u64))
-                    }
-                    _ => (None, None),
-                };
+			let (weight_limit, proof_size_base_cost) =
+				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+					gas_limit,
+					without_base_extrinsic_weight
+				) {
+					weight_limit if weight_limit.proof_size() > 0 => {
+						(Some(weight_limit), Some(estimated_transaction_len as u64))
+					}
+					_ => (None, None),
+				};
 
 			<Runtime as pallet_evm::Config>::Runner::call(
 				from,
@@ -1458,8 +1456,8 @@ impl_runtime_apis! {
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-                weight_limit,
-                proof_size_base_cost,
+				weight_limit,
+				proof_size_base_cost,
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1485,57 +1483,57 @@ impl_runtime_apis! {
 			let is_transactional = false;
 			let validate = true;
 
-            // Reused approach from Moonbeam since Frontier implementation doesn't support this
-            let mut estimated_transaction_len = data.len() +
-                // from: 20
-                // value: 32
-                // gas_limit: 32
-                // nonce: 32
-                // 1 byte transaction action variant
-                // chain id 8 bytes
-                // 65 bytes signature
-                190;
-            if max_fee_per_gas.is_some() {
-                estimated_transaction_len += 32;
-            }
-            if max_priority_fee_per_gas.is_some() {
-                estimated_transaction_len += 32;
-            }
-            if access_list.is_some() {
-                estimated_transaction_len += access_list.encoded_size();
-            }
+			// Reused approach from Moonbeam since Frontier implementation doesn't support this
+			let mut estimated_transaction_len = data.len() +
+				// from: 20
+				// value: 32
+				// gas_limit: 32
+				// nonce: 32
+				// 1 byte transaction action variant
+				// chain id 8 bytes
+				// 65 bytes signature
+				190;
+			if max_fee_per_gas.is_some() {
+				estimated_transaction_len += 32;
+			}
+			if max_priority_fee_per_gas.is_some() {
+				estimated_transaction_len += 32;
+			}
+			if access_list.is_some() {
+				estimated_transaction_len += access_list.encoded_size();
+			}
 
-            let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
-            let without_base_extrinsic_weight = true;
+			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+			let without_base_extrinsic_weight = true;
 
-            let (weight_limit, proof_size_base_cost) =
-                match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
-                    gas_limit,
-                    without_base_extrinsic_weight
-                ) {
-                    weight_limit if weight_limit.proof_size() > 0 => {
-                        (Some(weight_limit), Some(estimated_transaction_len as u64))
-                    }
-                    _ => (None, None),
-                };
+			let (weight_limit, proof_size_base_cost) =
+				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+					gas_limit,
+					without_base_extrinsic_weight
+				) {
+					weight_limit if weight_limit.proof_size() > 0 => {
+						(Some(weight_limit), Some(estimated_transaction_len as u64))
+					}
+					_ => (None, None),
+				};
 
 			#[allow(clippy::or_fun_call)] // suggestion not helpful here
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
-                gas_limit.unique_saturated_into(),
+				gas_limit.unique_saturated_into(),
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-                weight_limit,
-                proof_size_base_cost,
+				weight_limit,
+				proof_size_base_cost,
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
-        }
+		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
 			pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
@@ -1579,16 +1577,16 @@ impl_runtime_apis! {
 		fn pending_block(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> (Option<ethereum::BlockV2>, Option<Vec<TransactionStatus>>) {
-            for ext in xts.into_iter() {
-                let _ = Executive::apply_extrinsic(ext);
-            }
+			for ext in xts.into_iter() {
+				let _ = Executive::apply_extrinsic(ext);
+			}
 
-            Ethereum::on_finalize(System::block_number() + 1);
+			Ethereum::on_finalize(System::block_number() + 1);
 
-            (
-                pallet_ethereum::CurrentBlock::<Runtime>::get(),
-                pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
-            )
+			(
+				pallet_ethereum::CurrentBlock::<Runtime>::get(),
+				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
+			)
 		}
 	}
 
