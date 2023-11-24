@@ -60,7 +60,8 @@ pub mod types;
 pub use types::*;
 
 pub mod weights;
-pub use weights::WeightInfo;
+pub mod weightinfo;
+pub use weightinfo::WeightInfo;
 
 #[macro_export]
 macro_rules! log {
