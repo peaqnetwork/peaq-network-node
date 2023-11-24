@@ -45,6 +45,7 @@ use sp_runtime::{
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
+        UniqueSaturatedInto,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -1396,20 +1397,56 @@ impl_runtime_apis! {
 			};
 			let is_transactional = false;
 			let validate = true;
+
+            // Estimated encoded transaction size must be based on the heaviest transaction
+            // type (EIP1559Transaction) to be compatible with all transaction types.
+            let mut estimated_transaction_len = data.len() +
+                // pallet ethereum index: 1
+                // transact call index: 1
+                // Transaction enum variant: 1
+                // chain_id 8 bytes
+                // nonce: 32
+                // max_priority_fee_per_gas: 32
+                // max_fee_per_gas: 32
+                // gas_limit: 32
+                // action: 21 (enum varianrt + call address)
+                // value: 32
+                // access_list: 1 (empty vec size)
+                // 65 bytes signature
+                258;
+
+            if access_list.is_some() {
+                estimated_transaction_len += access_list.encoded_size();
+            }
+
+            let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+            let without_base_extrinsic_weight = true;
+
+            let (weight_limit, proof_size_base_cost) =
+                match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+                    gas_limit,
+                    without_base_extrinsic_weight
+                ) {
+                    weight_limit if weight_limit.proof_size() > 0 => {
+                        (Some(weight_limit), Some(estimated_transaction_len as u64))
+                    }
+                    _ => (None, None),
+                };
+
 			<Runtime as pallet_evm::Config>::Runner::call(
 				from,
 				to,
 				data,
 				value,
-				gas_limit.low_u64(),
+				gas_limit.unique_saturated_into(),
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				None, // TODO Option<hidden_include::dispatch::Weight>
-				None, // Option<u64>
+                weight_limit,
+                proof_size_base_cost,
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1434,20 +1471,55 @@ impl_runtime_apis! {
 			};
 			let is_transactional = false;
 			let validate = true;
+
+            // Reused approach from Moonbeam since Frontier implementation doesn't support this
+            let mut estimated_transaction_len = data.len() +
+                // from: 20
+                // value: 32
+                // gas_limit: 32
+                // nonce: 32
+                // 1 byte transaction action variant
+                // chain id 8 bytes
+                // 65 bytes signature
+                190;
+            if max_fee_per_gas.is_some() {
+                estimated_transaction_len += 32;
+            }
+            if max_priority_fee_per_gas.is_some() {
+                estimated_transaction_len += 32;
+            }
+            if access_list.is_some() {
+                estimated_transaction_len += access_list.encoded_size();
+            }
+
+            let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+            let without_base_extrinsic_weight = true;
+
+            let (weight_limit, proof_size_base_cost) =
+                match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+                    gas_limit,
+                    without_base_extrinsic_weight
+                ) {
+                    weight_limit if weight_limit.proof_size() > 0 => {
+                        (Some(weight_limit), Some(estimated_transaction_len as u64))
+                    }
+                    _ => (None, None),
+                };
+
 			#[allow(clippy::or_fun_call)] // suggestion not helpful here
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
-				gas_limit.low_u64(),
+                gas_limit.unique_saturated_into(),
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				None, // TODO Option<hidden_include::dispatch::Weight>
-				None, // TODO Option<u64>
+                weight_limit,
+                proof_size_base_cost,
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
