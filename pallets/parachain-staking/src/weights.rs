@@ -44,37 +44,10 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
-/// Weight functions needed for parachain_staking.
-pub trait WeightInfo {
-	fn on_initialize_no_action() -> Weight;
-	fn on_initialize_round_update() -> Weight;
-	fn on_initialize_new_year() -> Weight;
-	fn force_new_round() -> Weight;
-	fn set_reward_rate() -> Weight;
-	fn set_max_selected_candidates(n: u32, m: u32, ) -> Weight;
-	fn set_blocks_per_round() -> Weight;
-	fn force_remove_candidate(n: u32, m: u32, ) -> Weight;
-	fn join_candidates(n: u32, m: u32, ) -> Weight;
-	fn init_leave_candidates(n: u32, m: u32, ) -> Weight;
-	fn cancel_leave_candidates(n: u32, m: u32, ) -> Weight;
-	fn execute_leave_candidates(n: u32, m: u32, ) -> Weight;
-	fn candidate_stake_more(n: u32, m: u32, u: u32, ) -> Weight;
-	fn candidate_stake_less(n: u32, m: u32, ) -> Weight;
-	fn join_delegators(n: u32, m: u32, ) -> Weight;
-	fn delegator_stake_more(n: u32, m: u32, u: u32, ) -> Weight;
-	fn delegator_stake_less(n: u32, m: u32, ) -> Weight;
-	fn revoke_delegation(n: u32, m: u32, ) -> Weight;
-	fn leave_delegators(n: u32, m: u32, ) -> Weight;
-	fn unlock_unstaked(u: u32, ) -> Weight;
-	fn set_max_candidate_stake() -> Weight;
-	fn increment_delegator_rewards() -> Weight;
-	fn increment_collator_rewards() -> Weight;
-	fn claim_rewards() -> Weight;
-}
-
 /// Weights for parachain_staking using the Substrate node and recommended hardware.
-pub struct SubstrateWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+pub struct WeightInfo<T>(PhantomData<T>);
+
+impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn on_initialize_no_action() -> Weight {
 		Weight::from_parts(3_525_000_u64, 0)
@@ -371,7 +344,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 }
 
 // For backwards compatibility and tests
-impl WeightInfo for () {
+impl crate::WeightInfo for () {
 	// Storage: ParachainStaking Round (r:1 w:0)
 	fn on_initialize_no_action() -> Weight {
 		Weight::from_parts(3_525_000_u64, 0)
