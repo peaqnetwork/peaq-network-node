@@ -204,7 +204,7 @@ pub mod module {
 				<Self as EVMAddressMapping<T::AccountId>>::get_detault_evm_address(&who);
 			// make sure default address is not already mapped, this should not
 			// happen but for sanity check.
-			ensure!(!Accounts::<T>::contains_key(&evm_address), Error::<T>::EthAddressHasMapped);
+			ensure!(!Accounts::<T>::contains_key(evm_address), Error::<T>::EthAddressHasMapped);
 
 			// TODO, we don't allow users to use the non-empty account to do the linking.
 			let ori_account_id = T::OriginAddressMapping::into_account_id(evm_address);
@@ -213,8 +213,8 @@ pub mod module {
 				Error::<T>::NonEmptyAccounts
 			);
 			// create double mappings for the pair with default evm address
-			Accounts::<T>::insert(&evm_address, &who);
-			EvmAddresses::<T>::insert(&who, &evm_address);
+			Accounts::<T>::insert(evm_address, &who);
+			EvmAddresses::<T>::insert(&who, evm_address);
 
 			Self::deposit_event(Event::ClaimAccount { account_id: who, evm_address });
 			Ok(())
@@ -318,14 +318,14 @@ where
 {
 	// Returns the AccountId used to generate the given EvmAddress.
 	fn get_account_id_or_default(address: &EvmAddress) -> T::AccountId {
-		UnifyAddressMapper::<T>::to_set_account_id(&address).unwrap_or_else(|| {
+		UnifyAddressMapper::<T>::to_set_account_id(address).unwrap_or_else(|| {
 			// If no mapping exists, return the default AccountId
-			UnifyAddressMapper::<T>::to_default_account_id(&address)
+			UnifyAddressMapper::<T>::to_default_account_id(address)
 		})
 	}
 
 	fn get_detault_account_id(address: &EvmAddress) -> T::AccountId {
-		UnifyAddressMapper::<T>::to_default_account_id(&address)
+		UnifyAddressMapper::<T>::to_default_account_id(address)
 	}
 
 	// Returns the EvmAddress associated with a given AccountId or the
@@ -336,19 +336,19 @@ where
 	fn get_evm_address_or_default(account_id: &T::AccountId) -> EvmAddress {
 		UnifyAddressMapper::<T>::to_set_evm_address(&account_id).unwrap_or_else(|| {
 			// If no mapping exists, return the default EvmAddress
-			UnifyAddressMapper::<T>::to_default_evm_address(&account_id)
+			UnifyAddressMapper::<T>::to_default_evm_address(account_id)
 		})
 	}
 
 	fn get_detault_evm_address(account_id: &T::AccountId) -> EvmAddress {
-		UnifyAddressMapper::<T>::to_default_evm_address(&account_id)
+		UnifyAddressMapper::<T>::to_default_evm_address(account_id)
 	}
 
 	// Returns true if a given AccountId is associated with a given EvmAddress
 	// and false if is not.
 	// Note: we don't check whether the default EvmAddress of the AccountId is linked or not
 	fn is_linked(account_id: &T::AccountId, evm: &EvmAddress) -> bool {
-		UnifyAddressMapper::<T>::to_set_evm_address(&account_id).as_ref() == Some(evm)
+		UnifyAddressMapper::<T>::to_set_evm_address(account_id).as_ref() == Some(evm)
 	}
 }
 

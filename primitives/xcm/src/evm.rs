@@ -24,7 +24,7 @@ where
 {
 	fn created(id: &AssetId, _: &AccountId) -> Result<(), ()> {
 		let address = A::asset_id_to_address(*id);
-		ensure!(!pallet_evm::AccountCodes::<R>::contains_key(&address), ());
+		ensure!(!pallet_evm::AccountCodes::<R>::contains_key(address), ());
 		pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
 		Ok(())
 	}
