@@ -334,7 +334,7 @@ where
 	// and there is no underlying EvmAddress in the AccountId.
 	// For testing
 	fn get_evm_address_or_default(account_id: &T::AccountId) -> EvmAddress {
-		UnifyAddressMapper::<T>::to_set_evm_address(&account_id).unwrap_or_else(|| {
+		UnifyAddressMapper::<T>::to_set_evm_address(account_id).unwrap_or_else(|| {
 			// If no mapping exists, return the default EvmAddress
 			UnifyAddressMapper::<T>::to_default_evm_address(account_id)
 		})
