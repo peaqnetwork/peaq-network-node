@@ -6,9 +6,7 @@ use frame_support::weights::Weight;
 pub trait WeightInfo {
 	fn on_initialize_no_action() -> Weight;
 	fn on_initialize_round_update() -> Weight;
-	fn on_initialize_new_year() -> Weight;
 	fn force_new_round() -> Weight;
-	fn set_reward_rate() -> Weight;
 	fn set_max_selected_candidates(n: u32, m: u32) -> Weight;
 	fn set_blocks_per_round() -> Weight;
 	fn force_remove_candidate(n: u32, m: u32) -> Weight;
@@ -25,7 +23,4 @@ pub trait WeightInfo {
 	fn leave_delegators(n: u32, m: u32) -> Weight;
 	fn unlock_unstaked(u: u32) -> Weight;
 	fn set_max_candidate_stake() -> Weight;
-	fn increment_delegator_rewards() -> Weight;
-	fn increment_collator_rewards() -> Weight;
-	fn claim_rewards() -> Weight;
 }
