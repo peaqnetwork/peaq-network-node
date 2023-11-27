@@ -49,17 +49,11 @@ use frame_support::{
 	},
 };
 use pallet_evm::AddressMapping;
-use precompile_utils::prelude::{
-	Address,
-	LogExt,
-	RuntimeHelper,
-	SYSTEM_ACCOUNT_SIZE,
-};
 use precompile_utils::{
 	evm::logs::LogsBuilder,
 	prelude::{
-		DiscriminantResult, InjectBacktrace, MayRevert, PrecompileHandleExt, RevertReason,
-		UnboundedBytes,
+		Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
+		RevertReason, RuntimeHelper, UnboundedBytes, SYSTEM_ACCOUNT_SIZE,
 	},
 	solidity,
 };
