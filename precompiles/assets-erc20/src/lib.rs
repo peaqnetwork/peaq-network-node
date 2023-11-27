@@ -51,10 +51,9 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::{
 	Address,
-	// FunctionModifier,
 	LogExt,
-	// LogsBuilder,
 	RuntimeHelper,
+	SYSTEM_ACCOUNT_SIZE,
 };
 use precompile_utils::{
 	evm::logs::LogsBuilder,
@@ -255,8 +254,9 @@ where
 			let amount: BalanceOf<Runtime, Instance> =
 				amount.try_into().unwrap_or_else(|_| Bounded::max_value());
 
-			// Allowance read
-			handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
+			// Storage item: Approvals:
+			// Blake2_128(16) + AssetId(16) + (2 * Blake2_128(16) + AccountId(20)) + Approval(32)
+			handle.record_db_read::<Runtime>(136)?;
 
 			// If previous approval exists, we need to clean it
 			if pallet_assets::Pallet::<Runtime, Instance>::allowance(
@@ -272,7 +272,6 @@ where
 						id: asset_id.clone().into(),
 						delegate: Runtime::Lookup::unlookup(spender.clone()),
 					},
-					// [TODO] ??
 					0,
 				)?;
 			}
@@ -327,8 +326,7 @@ where
 					target: Runtime::Lookup::unlookup(to),
 					amount,
 				},
-				// [TODO]....
-				0,
+				SYSTEM_ACCOUNT_SIZE,
 			)?;
 		}
 
@@ -376,8 +374,7 @@ where
 						destination: Runtime::Lookup::unlookup(to),
 						amount,
 					},
-					// [TODO]
-					0,
+					SYSTEM_ACCOUNT_SIZE,
 				)?;
 			} else {
 				// Dispatch call (if enough gas).
@@ -389,8 +386,7 @@ where
 						target: Runtime::Lookup::unlookup(to),
 						amount,
 					},
-					// [TODO]
-					0,
+					SYSTEM_ACCOUNT_SIZE,
 				)?;
 			}
 		}
@@ -475,8 +471,7 @@ where
 				beneficiary: Runtime::Lookup::unlookup(beneficiary),
 				amount,
 			},
-			// [TODO]
-			0,
+			SYSTEM_ACCOUNT_SIZE,
 		)?;
 
 		LogsBuilder::new(handle.context().address)
