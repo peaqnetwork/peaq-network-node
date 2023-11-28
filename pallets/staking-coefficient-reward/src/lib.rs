@@ -5,15 +5,16 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
-pub mod default_weights;
+pub mod weights;
 mod migrations;
+pub mod weightinfo;
 
 #[cfg(test)]
 pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-pub use crate::{default_weights::WeightInfo, pallet::*};
+pub use crate::{weightinfo::WeightInfo, pallet::*};
 use frame_support::pallet;
 use sp_runtime::traits::{CheckedAdd, CheckedMul};
 

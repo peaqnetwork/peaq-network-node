@@ -720,13 +720,13 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
-	type WeightInfo = ();
+	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
 	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 }
 
 impl staking_coefficient_reward::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
+	type WeightInfo = staking_coefficient_reward::weights::WeightInfo<Runtime>;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
