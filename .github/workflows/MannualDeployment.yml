@@ -1,9 +1,6 @@
 name: Run Mannual Deployment
-on:
-  push:
-      branches:
-        - 'ci/1205782676034164_mannual-deployment-flow'
-#on: workflow_dispatch 
+
+on: workflow_dispatch 
 
 jobs:
           
