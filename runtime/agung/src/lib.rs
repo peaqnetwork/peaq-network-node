@@ -6,8 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use address_unification::CallKillEVMLinkAccount;
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -277,7 +277,8 @@ impl frame_system::Config for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = (AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, AddressUnification);
+	type Lookup =
+		(AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, AddressUnification);
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Nonce;
 	/// The index type for blocks.
