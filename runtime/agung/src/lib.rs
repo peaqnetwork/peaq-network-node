@@ -7,7 +7,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-use evm_accounts::CallKillEVMLinkAccount;
+use address_unification::CallKillEVMLinkAccount;
 use fp_rpc::TransactionStatus;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -277,7 +277,7 @@ impl frame_system::Config for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = (AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, EVMAccounts);
+	type Lookup = (AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, AddressUnification);
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Nonce;
 	/// The index type for blocks.
@@ -614,7 +614,7 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = EVMAccounts;
+	type AddressMapping = AddressUnification;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -963,7 +963,7 @@ construct_runtime!(
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
 		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
-		EVMAccounts: evm_accounts::{Pallet, Call, Storage, Event<T>} = 41,
+		AddressUnification: address_unification::{Pallet, Call, Storage, Event<T>} = 41,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1024,7 +1024,7 @@ mod benches {
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
 		[xc_asset_config, XCAssetConfig]
-		[evm_accounts, EVMAccounts]
+		[address_unification, AddressUnification]
 	);
 }
 
@@ -1925,12 +1925,12 @@ impl pallet_assets::Config for Runtime {
 	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
 }
 
-impl evm_accounts::Config for Runtime {
+impl address_unification::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type ChainId = EvmChainId;
-	type WeightInfo = evm_accounts::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = address_unification::weights::SubstrateWeight<Runtime>;
 }
 
 impl EVMAddressToAssetId<AssetId> for Runtime {

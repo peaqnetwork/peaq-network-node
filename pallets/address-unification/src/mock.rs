@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! Mocks for the evm-accounts module.
+//! Mocks for the address-unification module.
 
 #![cfg(test)]
 
@@ -41,7 +41,7 @@ pub type BlockNumber = u64;
 pub const ALICE: AccountId = AccountId32::new([0u8; 32]);
 pub const BOB: AccountId = AccountId32::new([1u8; 32]);
 
-mod evm_accounts {
+mod address_unification {
 	pub use super::super::*;
 }
 impl frame_system::Config for Runtime {
@@ -106,7 +106,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		EvmAccountsModule: evm_accounts::{Pallet, Call, Storage, Event<T>},
+		AddressUnificationModule: address_unification::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 );
@@ -142,7 +142,7 @@ pub fn bob() -> libsecp256k1::SecretKey {
 }
 
 pub fn bob_account_id() -> AccountId {
-	let address = EvmAccountsModule::evm_address(&bob());
+	let address = AddressUnificationModule::evm_address(&bob());
 	let mut data = [0u8; 32];
 	data[0..4].copy_from_slice(b"evm:");
 	data[4..24].copy_from_slice(&address[..]);

@@ -1,5 +1,5 @@
 [package]
-name = "evm-accounts"
+name = "address-unification"
 version = "2.18.0"
 edition = "2021"
 

@@ -119,7 +119,7 @@ pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-
 pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
-evm-accounts = { path = "../../pallets/evm-accounts", default-features = false }
+address-unification = { path = "../../pallets/address-unification", default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
@@ -146,7 +146,7 @@ runtime-benchmarks = [
 	"pallet-block-reward/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
 	"xc-asset-config/runtime-benchmarks",
-	"evm-accounts/runtime-benchmarks",
+	"address-unification/runtime-benchmarks",
 
 	"pallet-ethereum/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
@@ -258,7 +258,7 @@ std = [
 	"zenlink-protocol/std",
 	"zenlink-protocol-runtime-api/std",
 	"xc-asset-config/std",
-	"evm-accounts/std",
+	"address-unification/std",
 
 	# Customized
 	"peaq-primitives-xcm/std",
@@ -331,7 +331,7 @@ try-runtime = [
 	"parachain-staking/try-runtime",
 	"parachain-info/try-runtime",
 	"xc-asset-config/try-runtime",
-	"evm-accounts/try-runtime",
+	"address-unification/try-runtime",
 
 	"staking-coefficient-reward/try-runtime",
 
