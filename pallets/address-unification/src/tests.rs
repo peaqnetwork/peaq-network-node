@@ -23,8 +23,8 @@
 use super::*;
 use frame_support::{assert_noop, assert_ok};
 use mock::{
-	alice, bob, AddressUnificationModule, ExtBuilder, Runtime, RuntimeEvent, RuntimeOrigin, System, ALICE,
-	BOB,
+	alice, bob, AddressUnificationModule, ExtBuilder, Runtime, RuntimeEvent, RuntimeOrigin, System,
+	ALICE, BOB,
 };
 use pallet_evm::HashedAddressMapping;
 use sp_runtime::traits::BlakeTwo256;
@@ -37,10 +37,12 @@ fn claim_account_work() {
 			AddressUnificationModule::evm_address(&alice()),
 			AddressUnificationModule::eth_sign(&alice(), &ALICE)
 		));
-		System::assert_last_event(RuntimeEvent::AddressUnificationModule(crate::Event::ClaimAccount {
-			account_id: ALICE,
-			evm_address: AddressUnificationModule::evm_address(&alice()),
-		}));
+		System::assert_last_event(RuntimeEvent::AddressUnificationModule(
+			crate::Event::ClaimAccount {
+				account_id: ALICE,
+				evm_address: AddressUnificationModule::evm_address(&alice()),
+			},
+		));
 		assert!(
 			Accounts::<Runtime>::contains_key(AddressUnificationModule::evm_address(&alice())) &&
 				EvmAddresses::<Runtime>::contains_key(ALICE)
