@@ -3,7 +3,7 @@
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{self as reward_calculator, weights::SubstrateWeight};
+use crate::{self as reward_calculator, weights::WeightInfo};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
