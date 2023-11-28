@@ -1003,7 +1003,7 @@ mod benches {
 		[peaq_pallet_did, PeaqDid]
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
-		[peaq_pallet_mor, PeaqStorage]
+		[peaq_pallet_mor, PeaqMor]
 		[pallet_xcm, PolkadotXcm]
 	);
 }
