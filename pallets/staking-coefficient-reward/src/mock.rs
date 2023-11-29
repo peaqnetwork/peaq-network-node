@@ -3,7 +3,7 @@
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{self as reward_calculator, default_weights::SubstrateWeight};
+use crate::{self as reward_calculator, weights::WeightInfo};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
@@ -135,7 +135,7 @@ parameter_types! {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = SubstrateWeight<Test>;
+	type WeightInfo = WeightInfo<Test>;
 }
 
 impl parachain_staking::Config for Test {

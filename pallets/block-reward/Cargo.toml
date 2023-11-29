@@ -1,6 +1,6 @@
 [package]
 name = "pallet-block-reward"
-version = "2.1.0"
+version = "2.2.0"
 authors = ["Stake  Technologies <devops@stake.co.jp>"]
 edition = "2021"
 license = "Apache-2.0"

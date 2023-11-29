@@ -149,7 +149,6 @@ runtime-benchmarks = [
 	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
-
 try-runtime = [
 	"peaq-agung-runtime/try-runtime",
 	"peaq-dev-runtime/try-runtime",
