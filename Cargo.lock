@@ -6590,7 +6590,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core",
- "sp-debug-derive",
  "sp-runtime",
  "sp-std",
 ]
@@ -8047,7 +8046,6 @@ dependencies = [
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
- "sp-debug-derive",
  "sp-inherents",
  "sp-io",
  "sp-offchain",

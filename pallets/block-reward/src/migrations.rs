@@ -8,7 +8,7 @@ use sp_runtime::traits::Zero;
 // This value is used by the `on_runtime_upgrade` logic to determine whether we run storage
 // migration logic. This internal storage version is independent to branch/crate versions.
 #[derive(
-	Encode, Decode, Default, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen,
+	Encode, Decode, Clone, Copy, Default, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen,
 )]
 pub enum ObsoleteStorageReleases {
 	V2_0_0,
@@ -46,7 +46,7 @@ mod v2 {
 				// Deprecated the ObsoletRelease because ther are some wrong settings.. Therefore,
 				// try to use another checking
 				if HardCap::<T>::exists() {
-					log!(error, "Migrating block_reward to Releases::V2_1_0");
+					log!(info, "Migrating block_reward to Releases::V2_1_0");
 					let storage = HardCap::<T>::get();
 					if !storage.is_zero() {
 						MaxCurrencySupply::<T>::put(storage);
