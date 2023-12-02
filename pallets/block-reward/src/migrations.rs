@@ -24,19 +24,19 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 mod v2 {
 	use super::*;
 
-	 #[storage_alias]
-	 type VersionStorage<T: Config> = StorageValue<Pallet<T>, ObsoleteStorageReleases, ValueQuery>;
+	#[storage_alias]
+	type VersionStorage<T: Config> = StorageValue<Pallet<T>, ObsoleteStorageReleases, ValueQuery>;
 
-	 #[storage_alias]
-	 type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
+	#[storage_alias]
+	type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
 
 	/// Migration implementation that renames storage HardCap into MaxCurrencySupply
 	pub struct MigrateToV2x<T>(sp_std::marker::PhantomData<T>);
 
 	impl<T: Config> MigrateToV2x<T> {
 		pub fn on_runtime_upgrade() -> Weight {
-            let mut weight_writes = 0;
-            let mut weight_reads = 2;
+			let mut weight_writes = 0;
+			let mut weight_reads = 2;
 
 			let current = Pallet::<T>::current_storage_version();
 			let onchain_version = Pallet::<T>::on_chain_storage_version();
