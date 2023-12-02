@@ -29,9 +29,6 @@ mod v2 {
 
 	 #[storage_alias]
 	 type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
-	 #[storage_alias]
-	 type RewardDistributionConfigStorageV0<T: Config> =
-	 	StorageValue<Pallet<T>, RewardDistributionConfigV0, ValueQuery>;
 
 	/// Migration implementation that renames storage HardCap into MaxCurrencySupply
 	pub struct MigrateToV2x<T>(sp_std::marker::PhantomData<T>);
@@ -59,27 +56,8 @@ mod v2 {
 					weight_reads += 1;
 					weight_writes += 2
 				}
-
-				if RewardDistributionConfigStorageV0::<T>::exists() {
-					log!(info, "Migrating block_reward to Releases::V2_2_0");
-
-					let storage: RewardDistributionConfigV0 =
-						RewardDistributionConfigStorageV0::<T>::get();
-					log!(info, "Migrating block_reward to Releases::V2_2_0, storage: {:?}", storage);
-					RewardDistributionConfigStorage::<T>::put(RewardDistributionConfig {
-						treasury_percent: storage.treasury_percent,
-						dapps_percent: storage.dapps_percent,
-						collators_percent: storage.collators_percent,
-						lp_percent: storage.lp_percent,
-						machines_percent: storage.machines_percent,
-						parachain_lease_fund_percent: storage.machines_subsidization_percent,
-					});
-					log!(info, "Migrating block_reward to Releases::V2_2_0, storage: {:?}", RewardDistributionConfigStorage::<T>::get());
-					RewardDistributionConfigStorageV0::<T>::kill();
-					log!(info, "Releases::V2_2_0 Migrating Done.");
-					weight_reads += 1;
-					weight_writes += 2
-				}
+				// Ignore the RewardDistributionConfigStorageV0 directly because it will
+				// automatically chain
 				VersionStorage::<T>::kill();
 				current.put::<Pallet<T>>();
 				log!(info, "Migrating to {:?} Done.", current);
