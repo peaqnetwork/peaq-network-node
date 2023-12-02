@@ -11,6 +11,7 @@ description = "FRAME pallet for managing block reward issuance & distribution"
 [dependencies]
 parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
+sp-debug-derive = { workspace = true, default-features = false, features = ["force-debug"] }
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
@@ -34,6 +35,7 @@ std = [
 	"pallet-timestamp/std",
 	"scale-info/std",
 	"serde",
+	"sp-debug-derive/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
