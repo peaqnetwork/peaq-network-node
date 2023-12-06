@@ -626,7 +626,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("assign_role_to_group(bytes32, bytes32)")]
+	#[precompile::public("assign_role_to_group(bytes32,bytes32)")]
 	fn assign_role_to_group(
 		handle: &mut impl PrecompileHandle,
 		role_id: H256,
@@ -658,7 +658,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("unassign_role_to_group(bytes32, bytes32)")]
+	#[precompile::public("unassign_role_to_group(bytes32,bytes32)")]
 	fn unassign_role_to_group(
 		handle: &mut impl PrecompileHandle,
 		role_id: H256,
