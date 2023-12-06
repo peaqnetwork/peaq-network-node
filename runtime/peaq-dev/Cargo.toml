@@ -116,7 +116,6 @@ pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-
 pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 peaq-pallet-mor = { workspace = true, default-features = false }
-# sp-debug-derive = { workspace = true, default-features = false, features = ["force-debug"] }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
@@ -198,7 +197,6 @@ std = [
 	"pallet-treasury/std",
 	"pallet-collective/std",
 	"pallet-vesting/std",
-	# "sp-debug-derive/std",
 
 	# ETH support
 	"sp-io/std",
