@@ -80,7 +80,7 @@ pub struct BlockscoutCall {
 	pub trace_address: Vec<u32>,
 	/// Number of children calls.
 	/// Not needed for Blockscout, but needed for `crate::block`
-	/// types that are build from this type.
+	/// types that are built from this type.
 	#[serde(skip)]
 	pub subtraces: u32,
 	/// Sends funds to the (payable) function
