@@ -185,7 +185,7 @@ impl Listener {
 				}
 			},
 			RuntimeEvent::StepResult { result, return_value } => {
-				// StepResult is expected to be emited after a step (in a context).
+				// StepResult is expected to be emitted after a step (in a context).
 				// Only case StepResult will occur without a Step before is in a transfer
 				// transaction to a non-contract address. However it will not contain any
 				// steps and return an empty trace, so we can ignore this edge case.
