@@ -154,7 +154,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// the DB key can grow so it doesn't make sense to have as high deposit per item as in the general
 /// approach.
 const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 40 * MILLICENTS + (bytes as Balance) * 1 * MILLICENTS
+	items as Balance * 40 * MILLICENTS + (bytes as Balance) * MILLICENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
