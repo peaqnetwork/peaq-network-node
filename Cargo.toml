@@ -214,7 +214,7 @@ zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-D
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
 peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev" }
 peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch ="dev", default-features = false }
-peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "fix/1206020480964643_try-runtime-v0.9.43", default-features = false }
+peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "dev", default-features = false }
 peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "dev", default-features = false }
 peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "dev" }
 peaq-pallet-rbac-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "dev", default-features = false }

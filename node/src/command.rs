@@ -430,7 +430,8 @@ pub fn run() -> sc_cli::Result<()> {
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err("TryRuntime will not be supported anymore by the \
             peaq-node. Instead please use the provided CLI tool by Substrate! Have a look at crate \
-            `try-runtime-cli`.".into()),
+            `try-runtime-cli`."
+			.into()),
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(_)) => Ok(()),
 		None => {

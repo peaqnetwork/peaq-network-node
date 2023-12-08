@@ -8357,11 +8357,12 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=fix/1206020480964643_try-runtime-v0.9.43#7979831eb050d8aa8c3a86b61d4b48f43a999b12"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#43401a3dcb4a7a270899034efd66633e27f7bd8f"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
  "parity-scale-codec",
  "peaq-pallet-did",
  "scale-info",

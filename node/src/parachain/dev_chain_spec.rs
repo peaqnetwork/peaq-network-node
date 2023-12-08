@@ -192,7 +192,6 @@ fn configure_genesis(
 				machine_usage_fee_max: 3 * DOLLARS,
 				track_n_block_rewards: 200,
 			},
-			initial_avg: Perbill::from_percent(1) * DOLLARS,
 		},
 	}
 }
