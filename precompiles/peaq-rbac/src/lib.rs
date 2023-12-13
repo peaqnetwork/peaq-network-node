@@ -615,7 +615,7 @@ where
 
 		let event = log1(
 			handle.context().address,
-			SELECTOR_LOG_UPDATE_GROUP,
+			SELECTOR_LOG_DISABLE_GROUP,
 			EvmDataWriter::new()
 				.write::<Address>(Address::from(handle.context().caller))
 				.write::<H256>(group_id.into())
