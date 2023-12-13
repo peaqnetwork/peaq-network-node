@@ -118,16 +118,13 @@ where
 				role_id: role_id_addr,
 				name: name.as_bytes().to_vec(),
 			},
+			0,
 		)?;
-
+		
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ADD_ROLE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id)
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id, name)),
 		);
 		event.record(handle)?;
 
@@ -153,16 +150,13 @@ where
 				role_id: role_id_addr,
 				name: name.as_bytes().to_vec(),
 			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UPDATE_ROLE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id)
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id, name)),
 		);
 		event.record(handle)?;
 
@@ -181,15 +175,13 @@ where
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::disable_role { role_id: role_id_addr },
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_DISABLE_ROLE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id)
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id)),
 		);
 		event.record(handle)?;
 
