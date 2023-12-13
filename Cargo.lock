@@ -1482,7 +1482,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "clap 4.4.11",
  "parity-scale-codec",
@@ -1497,7 +1497,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -1520,7 +1520,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-client-collator",
@@ -1558,7 +1558,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
@@ -1584,7 +1584,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-proposer"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1599,7 +1599,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-relay-chain"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
@@ -1622,7 +1622,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1645,7 +1645,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1669,7 +1669,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -1704,7 +1704,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1720,7 +1720,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1737,7 +1737,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "bytes",
  "cumulus-pallet-parachain-system-proc-macro",
@@ -1766,7 +1766,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
@@ -1777,7 +1777,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1793,7 +1793,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "frame-benchmarking",
@@ -1814,7 +1814,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -1831,7 +1831,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1854,7 +1854,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "futures 0.3.29",
@@ -1867,7 +1867,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1885,7 +1885,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1910,7 +1910,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1928,7 +1928,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "array-bytes 6.2.0",
  "async-trait",
@@ -1966,7 +1966,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1996,7 +1996,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec",
@@ -7658,7 +7658,7 @@ dependencies = [
 [[package]]
 name = "parachain-info"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#683535a9042322ae08a67277d22cbfc55eedc686"
+source = "git+https://github.com/peaqnetwork/cumulus?branch=peaq-polkadot-v0.9.43#8357fe57ab011a02918cc114432e0fbad0bf64ae"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
