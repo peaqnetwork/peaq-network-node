@@ -54,10 +54,12 @@ mod tests;
 pub mod migrations;
 pub mod types;
 pub mod weights;
+pub mod weightinfo;
 
 pub use crate::{
 	pallet::*,
 	types::{AverageSelector, BeneficiaryPayout, BeneficiarySelector, RewardDistributionConfig},
+	weightinfo::WeightInfo
 };
 
 #[macro_export]
@@ -75,10 +77,8 @@ pub mod pallet {
 
 	use super::*;
 
-	use migrations::StorageReleases;
 	use peaq_frame_ext::averaging::*;
 	use types::*;
-	use weights::WeightInfo;
 
 	use frame_support::{
 		pallet_prelude::*,
@@ -114,12 +114,8 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Weight information for extrinsics in this pallet.
-		type WeightInfo: WeightInfo;
+		type WeightInfo: crate::weightinfo::WeightInfo;
 	}
-
-	#[pallet::storage]
-	#[pallet::getter(fn storage_releases)]
-	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn reward_config)]

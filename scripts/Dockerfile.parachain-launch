@@ -1,9 +1,9 @@
-FROM ubuntu:20.04
+FROM manjarolinux/base
 
 WORKDIR /opt/network
 ADD target/release/peaq-node /usr/local/bin
 
-RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq-node peaq-node && \
+RUN useradd -m -u 1001 -U -s /bin/sh -d /peaq-node peaq-node && \
 	mkdir -p /chain-data /peaq-node/.local/share/peaq-node && \
 	chown -R peaq-node:peaq-node /chain-data && \
 	ln -s /chain-data /peaq-node/.local/share/peaq-node && \

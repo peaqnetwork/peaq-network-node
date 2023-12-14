@@ -178,7 +178,7 @@ impl stake::Config for Test {
 	type MinDelegatorStake = MinDelegatorStake;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
-	type WeightInfo = ();
+	type WeightInfo = crate::weights::WeightInfo<Test>;
 }
 
 // Only for test, because the test enviroment is multi-threaded, so we need to use thread_local

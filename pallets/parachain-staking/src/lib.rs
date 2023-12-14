@@ -110,7 +110,6 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
-pub mod default_weights;
 
 #[cfg(test)]
 pub(crate) mod mock;
@@ -122,8 +121,13 @@ mod migrations;
 pub mod reward_rate_config;
 mod set;
 pub mod types;
+pub mod weightinfo;
+pub mod weights;
 
-pub use pallet::*;
+pub use crate::{
+	pallet::*,
+	weightinfo::WeightInfo,
+};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -147,21 +151,21 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedAdd, CheckedMul, Convert, One, SaturatedConversion,
-			Saturating, StaticLookup, Zero,
+			AccountIdConversion, CheckedAdd, CheckedMul, Convert, One,
+			SaturatedConversion, Saturating, StaticLookup, Zero,
 		},
 		Permill,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::{fmt::Debug, prelude::*};
+	use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
 
 	use crate::{
-		default_weights::WeightInfo,
 		reward_rate_config::{
-			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo
 		},
 		set::OrderedSet,
 		types::*,
+		weightinfo::WeightInfo,
 	};
 
 	/// Kilt-specific lock for staking rewards.
@@ -1569,7 +1573,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, Locks
 		/// - Kills: Unstaking & Locks if no balance is locked anymore
 		/// # </weight>
-		#[pallet::call_index(16)]
+		#[pallet::call_index(18)]
 		#[pallet::weight(<T as Config>::WeightInfo::unlock_unstaked(
 			T::MaxUnstakeRequests::get().saturated_into::<u32>()
 		))]

@@ -2,7 +2,7 @@
 authors = ["Jay pan <pan@eotlabs.io>"]
 description = "Fix percentage for collators and delegaators on the parachain staking pallet."
 name = "staking-coefficient-reward"
-version = "0.0.1"
+version = "0.1.0"
 documentation.workspace = true
 edition.workspace = true
 homepage.workspace = true

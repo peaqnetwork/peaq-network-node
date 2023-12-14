@@ -44,6 +44,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for TestRuntime {
@@ -68,7 +69,7 @@ impl frame_system::Config for TestRuntime {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
@@ -151,7 +152,7 @@ impl pallet_block_reward::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
-	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<TestRuntime>;
+	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
 }
 
 pub struct ExternalityBuilder();
