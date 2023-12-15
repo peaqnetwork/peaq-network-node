@@ -26,7 +26,10 @@ use frame_support::{
 	PalletId,
 };
 use pallet_authorship::EventHandler;
-use peaq_frame_ext::mockups::avg_currency as average;
+use peaq_frame_ext::{
+	averaging::AvgChangedNotifier,
+	mockups::avg_currency as average
+};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_runtime::{
 	impl_opaque_keys,
@@ -236,7 +239,13 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub struct AvgChangeNotifier;
+impl AvgChangedNotifier for AvgChangeNotifier {
+	fn notify_clients() {}
+}
+
 impl average::Config for Test {
+	type AvgChangedNotifier = AvgChangeNotifier;
 	type Currency = Balances;
 }
 

@@ -144,7 +144,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use pallet_balances::{BalanceLock, Locks};
 	use pallet_session::ShouldEndSession;
-	use peaq_frame_ext::averaging::ProvidesAverageFor;
+	use peaq_frame_ext::averaging::{OnAverageChange, ProvidesAverageFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
@@ -2465,6 +2465,12 @@ pub mod pallet {
 
 		pub fn average_block_reward() -> BalanceOf<T> {
 			T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get())
+		}
+	}
+
+	impl<T: Config> OnAverageChange for Pallet<T> {
+		fn on_change() {
+			// TODO
 		}
 	}
 }
