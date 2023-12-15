@@ -120,7 +120,7 @@ where
 			},
 			0,
 		)?;
-		
+
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ADD_ROLE,
@@ -221,23 +221,21 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
-		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_user { role_id, user_id },
+			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_user {
+				role_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+				user_id: EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ASSIGN_ROLE_TO_USER,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id.into())
-				.write::<H256>(user_id.into())
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id)),
 		);
 		event.record(handle)?;
 
@@ -253,23 +251,21 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
-		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_user { role_id, user_id },
+			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_user {
+				role_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+				user_id: EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UNASSIGNED_ROLE_TO_USER,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id.into())
-				.write::<H256>(user_id.into())
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id)),
 		);
 		event.record(handle)?;
 
@@ -327,26 +323,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let permission_id: EntityIdOf<Runtime> =
-			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::add_permission {
-				permission_id,
+				permission_id: EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes()),
 				name: name.clone().into(),
 			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ADD_PERMISSION,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(permission_id.into())
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				permission_id,
+				name,
+			)),
 		);
 		event.record(handle)?;
 
@@ -372,16 +367,17 @@ where
 				permission_id,
 				name: name.clone().into(),
 			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UPDATE_PERMISSION,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(permission_id.into())
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				H256::from(permission_id),
+				name,
+			)),
 		);
 		event.record(handle)?;
 
@@ -396,22 +392,20 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let permission_id: EntityIdOf<Runtime> =
-			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::disable_permission { permission_id },
+			peaq_pallet_rbac::Call::<Runtime>::disable_permission {
+				permission_id: EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_DISABLE_PERMISSION,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(permission_id.into())
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), permission_id)),
 		);
 		event.record(handle)?;
 
@@ -453,24 +447,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let permission_id: EntityIdOf<Runtime> =
-			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
-		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::assign_permission_to_role { permission_id, role_id },
+			peaq_pallet_rbac::Call::<Runtime>::assign_permission_to_role {
+				permission_id: EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes()),
+				role_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ASSIGN_PERMISSION_TO_ROLE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(permission_id.into())
-				.write::<H256>(role_id.into())
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				permission_id,
+				role_id,
+			)),
 		);
 		event.record(handle)?;
 
@@ -486,27 +481,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let permission_id: EntityIdOf<Runtime> =
-			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
-		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::unassign_permission_to_role {
-				permission_id,
-				role_id,
+				permission_id: EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes()),
+				role_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
 			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UNASSIGN_PERMISSION_TO_ROLE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(permission_id.into())
-				.write::<H256>(role_id.into())
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				permission_id,
+				role_id,
+			)),
 		);
 		event.record(handle)?;
 
@@ -539,22 +532,21 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::add_group { group_id, name: name.clone().into() },
+			peaq_pallet_rbac::Call::<Runtime>::add_group {
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+				name: name.clone().into(),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ADD_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(group_id.into())
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), group_id, name)),
 		);
 		event.record(handle)?;
 
@@ -570,22 +562,21 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::update_group { group_id, name: name.clone().into() },
+			peaq_pallet_rbac::Call::<Runtime>::update_group {
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+				name: name.clone().into(),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UPDATE_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(group_id.into())
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), group_id, name)),
 		);
 		event.record(handle)?;
 
@@ -597,21 +588,20 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::disable_group { group_id },
+			peaq_pallet_rbac::Call::<Runtime>::disable_group {
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_DISABLE_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(group_id.into())
-				.build(),
+			solidity::encode_event_data((Address::from(handle.context().caller), group_id)),
 		);
 		event.record(handle)?;
 
@@ -627,23 +617,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
-		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_group { role_id, group_id },
+			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_group {
+				role_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+				group_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ASSIGN_ROLE_TO_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id.into())
-				.write::<H256>(group_id.into())
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				role_id,
+				group_id,
+			)),
 		);
 		event.record(handle)?;
 
@@ -659,23 +651,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
-		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_group { role_id, group_id },
+			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_group {
+				role_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+				group_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UNASSIGN_ROLE_TO_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(role_id.into())
-				.write::<H256>(group_id.into())
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				role_id,
+				group_id,
+			)),
 		);
 		event.record(handle)?;
 
@@ -713,23 +707,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::assign_user_to_group { user_id, group_id },
+			peaq_pallet_rbac::Call::<Runtime>::assign_user_to_group {
+				user_id: EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes()),
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ASSIGN_USER_TO_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(user_id.into())
-				.write::<H256>(group_id.into())
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				user_id,
+				group_id,
+			)),
 		);
 		event.record(handle)?;
 
@@ -745,23 +741,25 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
-		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::unassign_user_to_group { user_id, group_id },
+			peaq_pallet_rbac::Call::<Runtime>::unassign_user_to_group {
+				user_id: EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes()),
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
+			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UNASSIGN_USER_TO_GROUP,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(user_id.into())
-				.write::<H256>(group_id.into())
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				user_id,
+				group_id,
+			)),
 		);
 		event.record(handle)?;
 

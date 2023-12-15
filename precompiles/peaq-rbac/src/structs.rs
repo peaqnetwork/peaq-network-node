@@ -1,4 +1,4 @@
-use precompile_utils::{prelude::UnboundedBytes, solidity::Codec};
+use precompile_utils::{prelude::{UnboundedBytes, String}, solidity::Codec};
 use sp_core::H256;
 
 #[derive(Default, Debug, Codec)]
