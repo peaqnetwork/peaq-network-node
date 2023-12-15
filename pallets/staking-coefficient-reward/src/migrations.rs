@@ -8,7 +8,7 @@ use frame_support::{
 	weights::Weight,
 };
 
-use super::{Config, Pallet, DEFAULT_COEFFICIENT};
+use super::{Config, Pallet, DEFAULT_COEFFICIENT, STORAGE_VERSION};
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 

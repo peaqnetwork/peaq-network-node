@@ -2,11 +2,6 @@
 
 #![allow(clippy::from_over_into)]
 
-<<<<<<< HEAD
-=======
-use super::*;
-use crate::{self as reward_calculator, weights::WeightInfo};
->>>>>>> dev
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnInitialize, OnUnbalanced},
@@ -26,7 +21,7 @@ use sp_runtime::{
 use sp_std::fmt::Debug;
 
 use super::*;
-use crate::{self as reward_calculator, default_weights::SubstrateWeight};
+use crate::{self as reward_calculator, weights::WeightInfo};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;

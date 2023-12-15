@@ -1,6 +1,3 @@
-KONFLIKT (Inhalt): Merge-Konflikt in pallets/parachain-staking/src/lib.rs
-KONFLIKT (Inhalt): Merge-Konflikt in pallets/parachain-staking/src/migrations.rs
-KONFLIKT (Inhalt): Merge-Konflikt in pallets/parachain-staking/src/mock.rs
 KONFLIKT (Inhalt): Merge-Konflikt in pallets/staking-coefficient-reward/src/lib.rs
 KONFLIKT (Inhalt): Merge-Konflikt in pallets/staking-coefficient-reward/src/mock.rs
 

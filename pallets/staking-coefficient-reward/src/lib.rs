@@ -14,13 +14,7 @@ pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-<<<<<<< HEAD
-pub use crate::{default_weights::WeightInfo, pallet::*};
-=======
 pub use crate::{pallet::*, weightinfo::WeightInfo};
-use frame_support::pallet;
-use sp_runtime::traits::{CheckedAdd, CheckedMul};
->>>>>>> dev
 
 const DEFAULT_COEFFICIENT: u8 = 8;
 
