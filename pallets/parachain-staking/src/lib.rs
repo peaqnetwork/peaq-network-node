@@ -124,10 +124,7 @@ pub mod types;
 pub mod weightinfo;
 pub mod weights;
 
-pub use crate::{
-	pallet::*,
-	weightinfo::WeightInfo,
-};
+pub use crate::{pallet::*, weightinfo::WeightInfo};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -151,8 +148,8 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedAdd, CheckedMul, Convert, One,
-			SaturatedConversion, Saturating, StaticLookup, Zero,
+			AccountIdConversion, CheckedAdd, CheckedMul, Convert, One, SaturatedConversion,
+			Saturating, StaticLookup, Zero,
 		},
 		Permill,
 	};
@@ -161,7 +158,7 @@ pub mod pallet {
 
 	use crate::{
 		reward_rate_config::{
-			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
 		},
 		set::OrderedSet,
 		types::*,

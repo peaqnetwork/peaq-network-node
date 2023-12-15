@@ -53,13 +53,13 @@ mod tests;
 
 pub mod migrations;
 pub mod types;
-pub mod weights;
 pub mod weightinfo;
+pub mod weights;
 
 pub use crate::{
 	pallet::*,
 	types::{AverageSelector, BeneficiaryPayout, BeneficiarySelector, RewardDistributionConfig},
-	weightinfo::WeightInfo
+	weightinfo::WeightInfo,
 };
 
 #[macro_export]
