@@ -22,6 +22,7 @@ use pallet_evm::{
 };
 use parachain_staking::reward_rate_config::RewardRateInfo;
 use parity_scale_codec::Encode;
+use peaq_frame_ext::averaging::{AvgChangedNotifier, OnAverageChange};
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_rbac::{
 	error::RbacError,
@@ -744,7 +745,16 @@ impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
 	}
 }
 
+pub struct BlRewChangedNotifier;
+impl AvgChangedNotifier for BlRewChangedNotifier {
+	fn notify_clients() {
+		<ParachainStaking as OnAverageChange>::on_change();
+		// ...
+	}
+}
+
 impl pallet_block_reward::Config for Runtime {
+	type AvgChangedNotifier = BlRewChangedNotifier;
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
 	type RuntimeEvent = RuntimeEvent;
