@@ -23,9 +23,19 @@ use sp_runtime::traits::BlakeTwo256;
 // use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
 
 use sc_service::TaskManager;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{traits::Block as BlockT, BoundedVec, Permill};
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
+
+use rmrk_traits::{
+	primitives::{CollectionId, NftId, PartId},
+	BaseInfo, CollectionInfo, NftInfo, PartType, PropertyInfo, ResourceInfo, Theme, ThemeProperty,
+};
+use runtime_common::{
+	CollectionSymbolLimit, KeyLimit, MaxCollectionsEquippablePerPart, MaxPropertiesPerTheme,
+	PartsLimit, UniquesStringLimit, ValueLimit,
+};
+
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use crate::primitives::*;
@@ -104,6 +114,27 @@ where
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
+	C::Api: pallet_rmrk_rpc_runtime_api::RmrkApi<
+		Block,
+		AccountId,
+		CollectionInfo<
+			BoundedVec<u8, UniquesStringLimit>,
+			BoundedVec<u8, CollectionSymbolLimit>,
+			AccountId,
+		>,
+		NftInfo<AccountId, Permill, BoundedVec<u8, UniquesStringLimit>, CollectionId, NftId>,
+		ResourceInfo<BoundedVec<u8, UniquesStringLimit>, BoundedVec<PartId, PartsLimit>>,
+		PropertyInfo<BoundedVec<u8, KeyLimit>, BoundedVec<u8, ValueLimit>>,
+		BaseInfo<AccountId, BoundedVec<u8, UniquesStringLimit>>,
+		PartType<
+			BoundedVec<u8, UniquesStringLimit>,
+			BoundedVec<CollectionId, MaxCollectionsEquippablePerPart>,
+		>,
+		Theme<
+			BoundedVec<u8, UniquesStringLimit>,
+			BoundedVec<ThemeProperty<BoundedVec<u8, UniquesStringLimit>>, MaxPropertiesPerTheme>,
+		>,
+	>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -113,6 +144,7 @@ where
 		Eth, EthApiServer, EthFilter, EthFilterApiServer, EthPubSub, EthPubSubApiServer, Net,
 		NetApiServer, Web3, Web3ApiServer,
 	};
+	use pallet_rmrk_rpc::{Rmrk, RmrkApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
 	use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
@@ -198,6 +230,7 @@ where
 		.into_rpc(),
 	)?;
 
+	io.merge(Rmrk::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;

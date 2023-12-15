@@ -129,6 +129,10 @@ zenlink-protocol-rpc = { workspace = true, default-features = true }
 zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
+pallet-rmrk-rpc = { workspace = true, default-features = true  }
+pallet-rmrk-rpc-runtime-api = { workspace = true, default-features = true }
+rmrk-traits = { workspace = true, default-features = true }
+
 
 [features]
 default = [

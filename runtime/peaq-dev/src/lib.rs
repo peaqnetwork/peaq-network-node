@@ -51,7 +51,7 @@ pub use frame_support::{
 	traits::{
 		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
 		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
-		Randomness, StorageInfo, WithdrawReasons,AsEnsureOriginWithArg,
+		Randomness, StorageInfo, WithdrawReasons,AsEnsureOriginWithArg,tokens::nonfungibles::*
 	},
 	weights::{
 		constants::{
@@ -88,6 +88,18 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+
+// rmrk
+use pallet_rmrk_core::{CollectionInfoOf, InstanceInfoOf, PropertyInfoOf, ResourceInfoOf};
+use pallet_rmrk_equip::{BaseInfoOf, BoundedThemeOf, PartTypeOf};
+use rmrk_traits::{
+	primitives::{BaseId, CollectionId, NftId, ResourceId},
+	NftChild,
+};
+
+use sp_std::collections::btree_set::BTreeSet;
+use frame_support::BoundedVec;
+use sp_runtime::DispatchError;
 
 pub use peaq_primitives_xcm::*;
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -316,6 +328,8 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
+
+// rmrk
 pub const RMRK: Balance = 1;
 
 parameter_types! {
@@ -348,6 +362,19 @@ impl pallet_rmrk_core::Config for Runtime{
 }
 
 parameter_types! {
+	pub const MinimumOfferAmount: Balance = DOLLARS / 10_000;
+}
+
+impl pallet_rmrk_equip::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MaxPropertiesPerTheme = MaxPropertiesPerTheme;
+	type MaxCollectionsEquippablePerPart = MaxCollectionsEquippablePerPart;
+	type WeightInfo = pallet_rmrk_equip::weights::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = RmrkBenchmark;
+}
+
+parameter_types! {
 	pub const CollectionDeposit: Balance = 10_000 * RMRK; // 1 UNIT deposit to create asset class
 	pub const ItemDeposit: Balance = 100 * RMRK; // 1/100 UNIT deposit to create asset instance
 	pub const KeyLimit: u32 = 32;	// Max 32 bytes per key
@@ -356,6 +383,8 @@ parameter_types! {
 	pub const AttributeDepositBase: Balance = 100 * RMRK;
 	pub const DepositPerBytes: Balance = 10 * RMRK;
 	pub const UniquesStringLimit: u32 = 32;
+	pub const MaxPropertiesPerTheme: u32 = 100;
+	pub const MaxCollectionsEquippablePerPart: u32 = 100;
 }
 
 impl pallet_uniques::Config for Runtime {
@@ -1004,6 +1033,25 @@ impl zenlink_protocol::Config for Runtime {
 	type WeightInfo = ();
 }
 
+fn option_filter_keys_to_set<StringLimit: frame_support::traits::Get<u32>>(
+	filter_keys: Option<Vec<pallet_rmrk_rpc_runtime_api::PropertyKey>>,
+) -> pallet_rmrk_rpc_runtime_api::Result<Option<BTreeSet<BoundedVec<u8, StringLimit>>>> {
+	match filter_keys {
+		Some(filter_keys) => {
+			let tree = filter_keys
+				.into_iter()
+				.map(|filter_keys| -> pallet_rmrk_rpc_runtime_api::Result<BoundedVec<u8, StringLimit>> {
+					filter_keys
+						.try_into()
+						.map_err(|_| DispatchError::Other("Can't read filter key"))
+				})
+				.collect::<pallet_rmrk_rpc_runtime_api::Result<BTreeSet<_>>>()?;
+			Ok(Some(tree))
+		},
+		None => Ok(None),
+	}
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1025,13 +1073,14 @@ construct_runtime!(
 
 		// rmrk core pallet
 		RmrkCore: pallet_rmrk_core::{Pallet, Call, Storage, Event<T>} = 11,
-		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 12,
+		RmrkEquip: pallet_rmrk_equip::{Pallet, Call, Event<T>, Storage} = 12,
+		Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>} = 13,
 
 		// EVM
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 13,
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 14,
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 15,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 16,
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 14,
+		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 15,
+		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 16,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 17,
 
 		// Parachain
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
@@ -1825,7 +1874,174 @@ impl_runtime_apis! {
 			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
-}
+
+	// rmrk core
+	impl pallet_rmrk_rpc_runtime_api::RmrkApi<
+		Block,
+		AccountId,
+		CollectionInfoOf<Runtime>,
+		InstanceInfoOf<Runtime>,
+		ResourceInfoOf<Runtime>,
+		PropertyInfoOf<Runtime>,
+		BaseInfoOf<Runtime>,
+		PartTypeOf<Runtime>,
+		BoundedThemeOf<Runtime>
+	> for Runtime
+	{
+		fn collection_by_id(id: CollectionId) -> pallet_rmrk_rpc_runtime_api::Result<Option<CollectionInfoOf<Runtime>>> {
+			Ok(RmrkCore::collections(id))
+		}
+
+		fn nft_by_id(collection_id: CollectionId, nft_id: NftId) -> pallet_rmrk_rpc_runtime_api::Result<Option<InstanceInfoOf<Runtime>>> {
+			Ok(RmrkCore::nfts(collection_id, nft_id))
+		}
+
+		fn account_tokens(account_id: AccountId, collection_id: CollectionId) -> pallet_rmrk_rpc_runtime_api::Result<Vec<NftId>> {
+			Ok(Uniques::owned_in_collection(&collection_id, &account_id).collect())
+		}
+
+		fn nft_children(collection_id: CollectionId, nft_id: NftId) -> pallet_rmrk_rpc_runtime_api::Result<Vec<NftChild<CollectionId, NftId>>> {
+			let children = RmrkCore::iterate_nft_children(collection_id, nft_id).collect();
+
+			Ok(children)
+		}
+
+		fn nfts_owned_by(
+			account_id: AccountId,
+			start_index: Option<u32>,
+			count: Option<u32>
+		) -> pallet_rmrk_rpc_runtime_api::Result<Vec<(CollectionId, NftId, InstanceInfoOf<Runtime>)>> {
+			let mut collections: Vec<CollectionId> = RmrkCore::iterate_collections().collect();
+			collections.sort();
+
+			let start_index = start_index.unwrap_or_default();
+			let limit = count.unwrap_or(collections.len().saturating_sub(start_index as usize) as u32);
+
+			let mut stored_collections = 0;
+			let mut nfts = vec![];
+
+			for collection_id in collections {
+				// The nft ids owned by the `account_id` from the collection.
+				let owned_nfts: Vec<NftId> = Uniques::owned_in_collection(&collection_id, &account_id).collect();
+
+				// check if the user owns any nfts from the collection.
+				if !owned_nfts.is_empty() {
+					stored_collections += 1;
+					if stored_collections <= start_index {
+						continue;
+					}
+					if stored_collections - start_index > limit {
+						break;
+					}
+				}
+
+				// Get more information about the nfts.
+				owned_nfts.into_iter().for_each(|nft_id| {
+					if let Some(nft_info) = RmrkCore::nfts(collection_id, nft_id) {
+						nfts.push((collection_id, nft_id, nft_info));
+					}
+				});
+			}
+
+			Ok(nfts)
+		}
+
+		fn properties_of_nfts_owned_by(
+			account_id: AccountId,
+			start_index: Option<u32>,
+			count: Option<u32>
+		) -> pallet_rmrk_rpc_runtime_api::Result<Vec<(CollectionId, NftId, Vec<PropertyInfoOf<Runtime>>)>>
+		{
+			let mut collections: Vec<CollectionId> = RmrkCore::iterate_collections().collect();
+			collections.sort();
+
+			let start_index = start_index.unwrap_or_default();
+			let limit = count.unwrap_or(collections.len().saturating_sub(start_index as usize) as u32);
+
+			let mut stored_collections = 0;
+			let mut props_of_nfts = vec![];
+
+			for collection_id in collections {
+				// The nft ids owned by the `account_id` from the collection.
+				let owned_nfts: Vec<NftId> = Uniques::owned_in_collection(&collection_id, &account_id).collect();
+
+				// check if the user owns any nfts from the collection.
+				if !owned_nfts.is_empty() {
+					stored_collections += 1;
+					if stored_collections <= start_index {
+						continue;
+					}
+					if stored_collections - start_index > limit {
+						break;
+					}
+				}
+
+				// Get the properties for each of these NFTs.
+				owned_nfts.into_iter().for_each(|nft_id| {
+					let nft_props: Vec<PropertyInfoOf<Runtime>> = RmrkCore::query_properties(collection_id, Some(nft_id), None).collect();
+					props_of_nfts.push((collection_id, nft_id, nft_props));
+				});
+			};
+
+			Ok(props_of_nfts)
+		}
+
+		fn collection_properties(
+			collection_id: CollectionId,
+			filter_keys: Option<Vec<pallet_rmrk_rpc_runtime_api::PropertyKey>>
+		) -> pallet_rmrk_rpc_runtime_api::Result<Vec<PropertyInfoOf<Runtime>>> {
+			let nft_id = None;
+
+			let filter_keys = option_filter_keys_to_set::<<Self as pallet_uniques::Config>::KeyLimit>(
+				filter_keys
+			)?;
+
+			Ok(RmrkCore::query_properties(collection_id, nft_id, filter_keys).collect())
+		}
+
+		fn nft_properties(
+			collection_id: CollectionId,
+			nft_id: NftId,
+			filter_keys: Option<Vec<pallet_rmrk_rpc_runtime_api::PropertyKey>>
+		) -> pallet_rmrk_rpc_runtime_api::Result<Vec<PropertyInfoOf<Runtime>>> {
+			let filter_keys = option_filter_keys_to_set::<<Self as pallet_uniques::Config>::KeyLimit>(
+				filter_keys
+			)?;
+
+			Ok(RmrkCore::query_properties(collection_id, Some(nft_id), filter_keys).collect())
+		}
+
+		fn nft_resources(collection_id: CollectionId, nft_id: NftId) -> pallet_rmrk_rpc_runtime_api::Result<Vec<ResourceInfoOf<Runtime>>> {
+			Ok(RmrkCore::iterate_resources(collection_id, nft_id).collect())
+		}
+
+		fn nft_resource_priority(collection_id: CollectionId, nft_id: NftId, resource_id: ResourceId) -> pallet_rmrk_rpc_runtime_api::Result<Option<u32>> {
+			let priority = RmrkCore::priorities((collection_id, nft_id, resource_id));
+
+			Ok(priority)
+		}
+
+		// not required for now rmrk-equip
+		fn base(base_id: BaseId) -> pallet_rmrk_rpc_runtime_api::Result<Option<BaseInfoOf<Runtime>>> {
+			Ok(Default::default())
+		}
+
+		fn base_parts(base_id: BaseId) -> pallet_rmrk_rpc_runtime_api::Result<Vec<PartTypeOf<Runtime>>> {
+			Ok(Default::default())
+		}
+
+		fn theme_names(base_id: BaseId) -> pallet_rmrk_rpc_runtime_api::Result<Vec<pallet_rmrk_rpc_runtime_api::ThemeName>> {
+			Ok(Default::default())
+		}
+		fn theme(
+			base_id: BaseId,
+			theme_name: pallet_rmrk_rpc_runtime_api::ThemeName,
+			filter_keys: Option<Vec<pallet_rmrk_rpc_runtime_api::PropertyKey>>
+		) -> pallet_rmrk_rpc_runtime_api::Result<Option<BoundedThemeOf<Runtime>>> {
+			Ok(Default::default())
+		}
+	}
+}   
 
 impl peaq_pallet_transaction::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

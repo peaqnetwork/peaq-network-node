@@ -122,6 +122,12 @@ zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 frame-try-runtime ={ workspace=true, default-features = false, optional = true}
 log = {workspace = true, default-features = false}
 
+pallet-rmrk-core = { workspace = true, default-features = false }
+pallet-uniques = { workspace = true, default-features = false }
+pallet-rmrk-rpc-runtime-api = { workspace = true, default-features = false }
+rmrk-traits = { workspace = true, default-features = false }
+pallet-rmrk-equip = { workspace = true, default-features = false }
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -256,6 +262,13 @@ std = [
 
 	# TryRuntime
 	"frame-try-runtime/std",
+
+	# rmrk
+	"pallet-rmrk-core/std",
+	"pallet-uniques/std",
+	"pallet-rmrk-rpc-runtime-api/std",
+	"rmrk-traits/std",
+	"pallet-rmrk-equip/std",
 ]
 
 # Must be enabled for tracing runtimes only

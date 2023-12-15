@@ -7064,6 +7064,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-rmrk-equip"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/rmrk-substrate.git?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-rmrk-core",
+ "pallet-uniques",
+ "parity-scale-codec",
+ "rmrk-traits",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-rmrk-rpc"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/rmrk-substrate.git?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
+dependencies = [
+ "jsonrpsee",
+ "pallet-rmrk-rpc-runtime-api",
+ "parity-scale-codec",
+ "rmrk-traits",
+ "sc-client-api",
+ "sc-rpc",
+ "scale-info",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-rmrk-rpc-runtime-api"
+version = "0.0.1"
+source = "git+https://github.com/peaqnetwork/rmrk-substrate.git?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
+dependencies = [
+ "parity-scale-codec",
+ "rmrk-traits",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.38#31e5dde4719a85a2923f2a6c14bde5f8c6aab121"
@@ -7750,6 +7801,8 @@ dependencies = [
  "pallet-multisig",
  "pallet-randomness-collective-flip",
  "pallet-rmrk-core",
+ "pallet-rmrk-equip",
+ "pallet-rmrk-rpc-runtime-api",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
@@ -7780,6 +7833,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "rmrk-traits",
  "runtime-common",
  "scale-info",
  "sha3 0.9.1",
@@ -7877,12 +7931,16 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-multisig",
  "pallet-randomness-collective-flip",
+ "pallet-rmrk-core",
+ "pallet-rmrk-equip",
+ "pallet-rmrk-rpc-runtime-api",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
@@ -7905,6 +7963,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "rmrk-traits",
  "runtime-common",
  "scale-info",
  "sha3 0.9.1",
@@ -7976,6 +8035,8 @@ dependencies = [
  "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-rmrk-rpc",
+ "pallet-rmrk-rpc-runtime-api",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
  "peaq-agung-runtime",
@@ -7996,6 +8057,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
+ "rmrk-traits",
  "runtime-common",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -8468,12 +8530,16 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-multisig",
  "pallet-randomness-collective-flip",
+ "pallet-rmrk-core",
+ "pallet-rmrk-equip",
+ "pallet-rmrk-rpc-runtime-api",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-uniques",
  "pallet-utility",
  "pallet-vesting",
  "pallet-xcm",
@@ -8496,6 +8562,7 @@ dependencies = [
  "polkadot-runtime-common",
  "precompile-utils",
  "rlp",
+ "rmrk-traits",
  "runtime-common",
  "scale-info",
  "sha3 0.9.1",
@@ -10546,6 +10613,7 @@ name = "rmrk-traits"
 version = "0.0.1"
 source = "git+https://github.com/peaqnetwork/rmrk-substrate.git?branch=peaq-polkadot-v0.9.38#48c116f11cb187b03b510b2e2dcdb0a3447f0298"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-balances",

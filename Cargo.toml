@@ -222,5 +222,8 @@ frame-try-runtime = { git = "https://github.com/peaqnetwork/substrate", branch =
 try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38"}
 
 pallet-rmrk-core = { git = "https://github.com/peaqnetwork/rmrk-substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
-
+pallet-rmrk-rpc-runtime-api = { git = "https://github.com/peaqnetwork/rmrk-substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false  }
 pallet-uniques = { git = "https://github.com/peaqnetwork/substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+rmrk-traits = { git = "https://github.com/peaqnetwork/rmrk-substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+pallet-rmrk-equip = { git = "https://github.com/peaqnetwork/rmrk-substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }
+pallet-rmrk-rpc = { git = "https://github.com/peaqnetwork/rmrk-substrate.git", branch = "peaq-polkadot-v0.9.38", default-features = false }

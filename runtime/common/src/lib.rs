@@ -44,6 +44,36 @@ parameter_types! {
 	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
+pub const RMRK: Balance = 1;
+parameter_types! {
+	pub ClassBondAmount: Balance = 100;
+	pub MaxMetadataLength: u32 = 256;
+	pub const ResourceSymbolLimit: u32 = 10;
+	pub const PartsLimit: u32 = 50;
+	pub const MaxPriorities: u32 = 3;
+	pub const PropertiesLimit: u32 = 15;
+	pub const NestingBudget: u32 = 3;
+	pub const CollectionSymbolLimit: u32 = 100;
+	pub const MaxResourcesOnMint: u32 = 3;
+}
+
+parameter_types! {
+	pub const MinimumOfferAmount: Balance = DOLLARS / 10_000;
+}
+
+parameter_types! {
+	pub const CollectionDeposit: Balance = 10_000 * RMRK; // 1 UNIT deposit to create asset class
+	pub const ItemDeposit: Balance = 100 * RMRK; // 1/100 UNIT deposit to create asset instance
+	pub const KeyLimit: u32 = 32;	// Max 32 bytes per key
+	pub const ValueLimit: u32 = 64;	// Max 64 bytes per value
+	pub const UniquesMetadataDepositBase: Balance = 1000 * RMRK;
+	pub const AttributeDepositBase: Balance = 100 * RMRK;
+	pub const DepositPerBytes: Balance = 10 * RMRK;
+	pub const UniquesStringLimit: u32 = 32;
+	pub const MaxPropertiesPerTheme: u32 = 100;
+	pub const MaxCollectionsEquippablePerPart: u32 = 100;
+}
+
 pub struct CurrencyHooks<T, DustAccount>(PhantomData<T>, DustAccount);
 
 impl<T, DustAccount> MutationHooks<T::AccountId, T::CurrencyId, T::Balance>
