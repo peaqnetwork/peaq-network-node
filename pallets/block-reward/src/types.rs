@@ -188,14 +188,18 @@ where
 		DiscreteAverage { avg, accu: Balance::zero(), n_period, cnt: 0u32 }
 	}
 
-	/// Updates the average-value for a balance, shall be called each block.
-	pub fn update(&mut self, next: &Balance) {
+	/// Updates the average-value for a balance, shall be called each block. Return value indicates
+	/// whether the average value has been updated or not.
+	pub fn update(&mut self, next: &Balance) -> bool {
 		self.accu += *next;
 		self.cnt += 1u32;
 		if self.cnt == self.n_period {
 			self.avg = Perbill::from_rational(1u32, self.n_period) * self.accu;
 			self.accu = Balance::zero();
 			self.cnt = 0u32;
+			true
+		} else {
+			false
 		}
 	}
 }

@@ -1,5 +1,6 @@
 use crate::{
 	self as pallet_block_reward,
+	AvgChangedNotifier,
 	types::{AverageSelector, NegativeImbalanceOf},
 };
 
@@ -148,10 +149,16 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 	}
 }
 
+pub struct BlockRewardUN;
+impl AvgChangedNotifier for BlockRewardUN {
+	fn notify_clients() {}
+}
+
 impl pallet_block_reward::Config for TestRuntime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
+	type AvgChangedNotifier = BlockRewardUN;
 	type BeneficiaryPayout = BeneficiaryPayout;
+	type Currency = Balances;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
 }
 

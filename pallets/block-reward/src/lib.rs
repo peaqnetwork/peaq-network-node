@@ -56,6 +56,9 @@ pub mod types;
 pub mod weightinfo;
 pub mod weights;
 
+pub use peaq_frame_ext::averaging::{
+	AvgChangedNotifier, ProvidesAverage, ProvidesAverages, ProvidesAverageFor, ProvidesAveragesFor,
+};
 pub use crate::{
 	pallet::*,
 	types::{AverageSelector, BeneficiaryPayout, BeneficiarySelector, RewardDistributionConfig},
@@ -77,9 +80,6 @@ pub mod pallet {
 
 	use super::*;
 
-	use peaq_frame_ext::averaging::*;
-	use types::*;
-
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced, StorageVersion},
@@ -92,8 +92,7 @@ pub mod pallet {
 		traits::{Saturating, Zero},
 		Perbill,
 	};
-
-	use crate::types::NegativeImbalanceOf;
+	use crate::types::{BalanceOf, DiscAvg, NegativeImbalanceOf};
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
@@ -104,11 +103,14 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// The currency trait.
-		type Currency: Currency<Self::AccountId>;
+		/// Notifies all active clients about an update of the average block reward.
+		type AvgChangedNotifier: AvgChangedNotifier;
 
 		/// Used to payout rewards.
 		type BeneficiaryPayout: BeneficiaryPayout<NegativeImbalanceOf<Self>>;
+
+		/// The currency trait.
+		type Currency: Currency<Self::AccountId>;
 
 		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -377,6 +379,10 @@ pub mod pallet {
 			T::BeneficiaryPayout::machines(machines_imbalance);
 			T::BeneficiaryPayout::parachain_lease_fund(parachain_lease_fund_balance);
 
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(1, 0),
+				DispatchClass::Mandatory,
+			);
 			Self::deposit_event(Event::<T>::BlockRewardsDistributed(amount));
 		}
 
@@ -395,12 +401,22 @@ pub mod pallet {
 
 		/// Updates the storages for average-block-rewards
 		fn update_average_block_reward(reward: BalanceOf<T>) {
-			Hours12BlockReward::<T>::mutate(|r| r.update(&reward));
-			DailyBlockReward::<T>::mutate(|r| r.update(&reward));
-			WeeklyBlockReward::<T>::mutate(|r| r.update(&reward));
+			let avg_sel = Self::average_selector();
+			let check_noticing = |s: AverageSelector, u: bool| {
+				if avg_sel == s && u {
+					T::AvgChangedNotifier::notify_clients();
+				}
+			};
+
+			Hours12BlockReward::<T>::mutate(|r|
+				check_noticing(AverageSelector::DiAvg12Hours, r.update(&reward)));
+			DailyBlockReward::<T>::mutate(|r|
+				check_noticing(AverageSelector::DiAvgDaily, r.update(&reward)));
+			WeeklyBlockReward::<T>::mutate(|r|
+				check_noticing(AverageSelector::DiAvgWeekly, r.update(&reward)));
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(3, 3),
+				T::DbWeight::get().reads_writes(4, 3),
 				DispatchClass::Mandatory,
 			);
 		}
