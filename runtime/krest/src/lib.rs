@@ -702,34 +702,38 @@ pub mod staking {
 			pub const MaxUnstakeRequests: u32 = 10;
 			/// Recipient-selector for block-reward pallet (average-provider)
 			pub const AvgProviderParachainStaking: BeneficiarySelector = BeneficiarySelector::Collators;
+			/// Number of blocks per day
+			pub const BlocksPerDay: u32 = 7200;
+			/// Maximum number of updates of rewards per block
+			pub const MaxUpdatesPerDay: u32 = 25;
 	}
 }
 
 impl parachain_staking::Config for Runtime {
-	type PotId = PotStakeId;
-	type RuntimeEvent = RuntimeEvent;
+	type AvgBlockRewardProvider = BlockReward;
+	type AvgBlockRewardRecipient = staking::AvgProviderParachainStaking;
+	type AvgRecipientSelector = BeneficiarySelector;
+	type BlocksPerDay = staking::BlocksPerDay;
+	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 	type Currency = Balances;
 	type CurrencyBalance = Balance;
-
-	type MinBlocksPerRound = staking::MinBlocksPerRound;
 	type DefaultBlocksPerRound = staking::DefaultBlocksPerRound;
-	type StakeDuration = staking::StakeDuration;
 	type ExitQueueDelay = staking::ExitQueueDelay;
-	type MinCollators = staking::MinCollators;
-	type MinRequiredCollators = staking::MinRequiredCollators;
 	type MaxDelegationsPerRound = staking::MaxDelegationsPerRound;
 	type MaxDelegatorsPerCollator = staking::MaxDelegatorsPerCollator;
+	type MaxTopCandidates = staking::MaxCollatorCandidates;
+	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
+	type MaxUpdatesPerBlock = staking::MaxUpdatesPerDay;
+	type MinBlocksPerRound = staking::MinBlocksPerRound;
+	type MinCollators = staking::MinCollators;
 	type MinCollatorStake = staking::MinCollatorStake;
 	type MinCollatorCandidateStake = staking::MinCollatorStake;
-	type MaxTopCandidates = staking::MaxCollatorCandidates;
 	type MinDelegatorStake = staking::MinDelegatorStake;
-	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
-	type AvgBlockRewardProvider = BlockReward;
-	type AvgRecipientSelector = BeneficiarySelector;
-	type AvgBlockRewardRecipient = staking::AvgProviderParachainStaking;
-
+	type MinRequiredCollators = staking::MinRequiredCollators;
+	type PotId = PotStakeId;
+	type RuntimeEvent = RuntimeEvent;
+	type StakeDuration = staking::StakeDuration;
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
-	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 }
 
 impl staking_coefficient_reward::Config for Runtime {

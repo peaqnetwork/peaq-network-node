@@ -31,7 +31,7 @@ mod upgrade {
 	impl<T: Config> Migrate<T> {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
-			let weight_reads = 0;
+			let weight_reads = 1;
 
 			let onchain_storage_version = Pallet::<T>::current_storage_version();
 

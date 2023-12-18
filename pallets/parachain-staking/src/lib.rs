@@ -129,7 +129,7 @@ pub use crate::{pallet::*, weightinfo::WeightInfo};
 #[frame_support::pallet]
 pub mod pallet {
 
-	use core::marker::PhantomData;
+	use core::{cmp::min, marker::PhantomData};
 	use frame_support::{
 		assert_ok,
 		pallet_prelude::*,
@@ -181,9 +181,28 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + pallet_balances::Config + pallet_session::Config
 	{
-		/// Overarching event type
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		/// Const which actually selects this pallet as recipient.
+		#[pallet::constant]
+		type AvgBlockRewardRecipient: Get<Self::AvgRecipientSelector>;
+
+		/// The provider for the average-block-reward.
+		type AvgBlockRewardProvider: ProvidesAverageFor<
+			Self::CurrencyBalance,
+			Self::AvgRecipientSelector,
+		>;
+
+		/// The recipient-selector-datatype for ProvidesAverageFor.
+		type AvgRecipientSelector: Parameter;
+
 		// FIXME: Remove Currency and CurrencyBalance types. Problem: Need to restrict
+		/// Calculates the reward rates for collators and their delegators.
+		type BlockRewardCalculator: CollatorDelegatorBlockRewardCalculator<Self>
+			+ RewardRateConfigTrait;
+
+		/// Number of blocks per day constant for internal calculations.
+		#[pallet::constant]
+		type BlocksPerDay: Get<u32>;
+
 		// pallet_balances::Config::Balance with From<u64> for usage with Perquintill
 		// multiplication
 		/// The currency type
@@ -212,45 +231,38 @@ pub mod pallet {
 			+ CheckedAdd
 			+ MaxEncodedLen;
 
-		/// The provider for the average-block-reward.
-		type AvgBlockRewardProvider: ProvidesAverageFor<
-			Self::CurrencyBalance,
-			Self::AvgRecipientSelector,
-		>;
-
-		/// The recipient-selector-datatype for ProvidesAverageFor.
-		type AvgRecipientSelector: Parameter;
-
-		/// Const which actually selects this pallet as recipient.
-		#[pallet::constant]
-		type AvgBlockRewardRecipient: Get<Self::AvgRecipientSelector>;
-
-		/// Calculates the reward rates for collators and their delegators.
-		type BlockRewardCalculator: CollatorDelegatorBlockRewardCalculator<Self>
-			+ RewardRateConfigTrait;
-
-		/// Minimum number of blocks validation rounds can last.
-		#[pallet::constant]
-		type MinBlocksPerRound: Get<Self::BlockNumber>;
-
 		/// Default number of blocks validation rounds last, as set in the
 		/// genesis configuration.
 		#[pallet::constant]
 		type DefaultBlocksPerRound: Get<Self::BlockNumber>;
-		/// Number of blocks for which unstaked balance will still be locked
-		/// before it can be unlocked by actively calling the extrinsic
-		/// `unlock_unstaked`.
-		#[pallet::constant]
-		type StakeDuration: Get<Self::BlockNumber>;
+
 		/// Number of rounds a collator has to stay active after submitting a
 		/// request to leave the set of collator candidates.
 		#[pallet::constant]
 		type ExitQueueDelay: Get<u32>;
 
+		/// Minimum number of blocks validation rounds can last.
+		#[pallet::constant]
+		type MinBlocksPerRound: Get<Self::BlockNumber>;
+
 		/// Minimum number of collators selected from the set of candidates at
 		/// every validation round.
 		#[pallet::constant]
 		type MinCollators: Get<u32>;
+
+		/// Minimum stake required for any account to be added to the set of
+		/// candidates.
+		#[pallet::constant]
+		type MinCollatorCandidateStake: Get<BalanceOf<Self>>;
+
+		/// Minimum stake required for any account to be elected as validator
+		/// for a round.
+		#[pallet::constant]
+		type MinCollatorStake: Get<BalanceOf<Self>>;
+
+		/// Minimum stake required for any account to become a delegator.
+		#[pallet::constant]
+		type MinDelegatorStake: Get<BalanceOf<Self>>;
 
 		/// Minimum number of collators which cannot leave the network if there
 		/// are no others.
@@ -273,20 +285,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxTopCandidates: Get<u32> + Debug + PartialEq;
 
-		/// Minimum stake required for any account to be elected as validator
-		/// for a round.
-		#[pallet::constant]
-		type MinCollatorStake: Get<BalanceOf<Self>>;
-
-		/// Minimum stake required for any account to be added to the set of
-		/// candidates.
-		#[pallet::constant]
-		type MinCollatorCandidateStake: Get<BalanceOf<Self>>;
-
-		/// Minimum stake required for any account to become a delegator.
-		#[pallet::constant]
-		type MinDelegatorStake: Get<BalanceOf<Self>>;
-
 		/// Max number of concurrent active unstaking requests before
 		/// unlocking.
 		///
@@ -300,9 +298,22 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxUnstakeRequests: Get<u32>;
 
+		/// Max number of reward registers to be updated per block.
+		#[pallet::constant]
+		type MaxUpdatesPerBlock: Get<u32>;
+
 		/// Account Identifier from which the internal Pot is generated.
 		#[pallet::constant]
 		type PotId: Get<PalletId>;
+
+		/// Overarching event type
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// Number of blocks for which unstaked balance will still be locked
+		/// before it can be unlocked by actively calling the extrinsic
+		/// `unlock_unstaked`.
+		#[pallet::constant]
+		type StakeDuration: Get<Self::BlockNumber>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -605,6 +616,10 @@ pub mod pallet {
 	#[pallet::getter(fn new_round_forced)]
 	pub(crate) type ForceNewRound<T: Config> = StorageValue<_, bool, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn updating_status)]
+	pub(crate) type UpdatingStatus<T: Config> = StorageValue<_, RewardUpdateStatus, ValueQuery>;
+
 	pub type GenesisStaker<T> = Vec<(
 		<T as frame_system::Config>::AccountId,
 		Option<<T as frame_system::Config>::AccountId>,
@@ -677,7 +692,12 @@ pub mod pallet {
 				Self::deposit_event(Event::NewRound(round.first, round.current));
 				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
 			}
+
 			post_weight
+		}
+
+		fn on_idle(_n: T::BlockNumber, _remaining_weight: Weight) -> Weight {
+			Self::update_reward_registers()
 		}
 
 		fn on_runtime_upgrade() -> Weight {
@@ -2325,6 +2345,75 @@ pub mod pallet {
 		/// Transforms the given PotId into an AccountId
 		pub fn account_id() -> T::AccountId {
 			T::PotId::get().into_account_truncating()
+		}
+
+		fn update_reward_registers() -> Weight {
+			let mut reads = 2;
+			let mut writes = 0;
+			let mut n_updates = 0u32;
+			let mut done = false;
+
+			let mut state = UpdatingStatus::<T>::get();
+
+			let get_opt_update_rate = |state: &RewardUpdateStatus, n: u32| -> (u32, bool) {
+				let max_updates = T::MaxUpdatesPerBlock::get();
+				let max_collators = T::MaxTopCandidates::get();
+				let max_del_p_col = T::MaxDelegatorsPerCollator::get();
+				let bl_per_day = T::BlocksPerDay::get();
+
+				let n_total = max_collators * (max_del_p_col + 1);
+				let n_opt = min(n_total / bl_per_day + 1, max_updates);
+
+				if state.counter + n_opt > n {
+					(n - state.counter, true)
+				} else {
+					(n_opt, false)
+				}
+			};
+
+			if !state.collators_done {
+				let collators = TopCandidates::<T>::get().into_bounded_vec();
+				let n_collators = collators.len() as u32;
+				(n_updates, done) = get_opt_update_rate(&state, n_collators);
+
+				for idx in state.counter..state.counter + n_updates {
+					let _ = Self::update_collator_rewards(&collators[idx as usize].owner);
+				}
+
+				reads += 1;
+			} else if !state.delegators_done {
+				let delegators = DelegatorState::<T>::iter_keys();
+				let n_delegators = DelegatorState::<T>::iter_keys().count() as u32;
+				(n_updates, done) = get_opt_update_rate(&state, n_delegators);
+
+				let mut delegators = delegators.skip(state.counter as usize);
+				for _ in 0..n_updates {
+					if let Some(account) = delegators.next() {
+						let _ = Self::update_delegator_rewards(&account);
+					} else {
+						log::warn!("ParachainStaking::update_reward_register() iteration error");
+						break
+					}
+				}
+
+				reads += 2;
+			}
+
+			if n_updates > 0 {
+				if done {
+					state.counter = 0;
+					if state.collators_done {
+						state.delegators_done = true;
+					} else {
+						state.collators_done = true;
+					}
+				} else {
+					state.counter += n_updates;
+				}
+				UpdatingStatus::<T>::put(state);
+				writes += 1;
+			}
+			T::DbWeight::get().reads_writes(reads, writes)
 		}
 	}
 

@@ -1,7 +1,7 @@
 use crate::{
 	self as pallet_block_reward,
-	AvgChangedNotifier,
 	types::{AverageSelector, NegativeImbalanceOf},
+	AvgChangedNotifier,
 };
 
 use frame_support::{

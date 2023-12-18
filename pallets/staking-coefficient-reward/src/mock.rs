@@ -10,7 +10,7 @@ use frame_support::{
 };
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake};
-use peaq_frame_ext::mockups::avg_currency as average;
+use peaq_frame_ext::{averaging::AvgChangedNotifier, mockups::avg_currency as average};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_runtime::{
 	impl_opaque_keys,
@@ -117,23 +117,23 @@ impl pallet_authorship::Config for Test {
 }
 
 parameter_types! {
-	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MinBlocksPerRound: BlockNumber = 3;
-	pub const StakeDuration: u32 = 2;
+	pub const AvgProviderParachainStaking: average::AverageSelector = average::AverageSelector::Whatever;
+	pub const BlocksPerDay: u32 = 7200;
 	pub const ExitQueueDelay: u32 = 2;
+	pub const MinBlocksPerRound: BlockNumber = 3;
 	pub const DefaultBlocksPerRound: BlockNumber = BLOCKS_PER_ROUND;
-	pub const MinCollators: u32 = 2;
 	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxDelegatorsPerCollator: u32 = 4;
-	#[derive(Debug, PartialEq, Eq)]
-	pub const MinCollatorStake: Balance = 10;
+	pub const MaxUnstakeRequests: u32 = 6;
+	pub const MaxUpdatesPerBlock: u32 = 25;
+	pub const MinCollators: u32 = 2;
 	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxCollatorCandidates: u32 = 10;
+	#[derive(Debug, PartialEq, Eq)]
+	pub const MinCollatorStake: Balance = 10;
 	pub const MinDelegatorStake: Balance = 5;
-	pub const MaxUnstakeRequests: u32 = 6;
-	// pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
-	// pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
-	pub const AvgProviderParachainStaking: average::AverageSelector = average::AverageSelector::Whatever;
+	pub const PotId: PalletId = PalletId(*b"PotStake");
+	pub const StakeDuration: u32 = 2;
 }
 
 impl Config for Test {
@@ -142,28 +142,30 @@ impl Config for Test {
 }
 
 impl parachain_staking::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
 	type AvgBlockRewardProvider = Average;
 	type AvgBlockRewardRecipient = AvgProviderParachainStaking;
 	type AvgRecipientSelector = average::AverageSelector;
-	type MinBlocksPerRound = MinBlocksPerRound;
+	type BlockRewardCalculator = RewardCalculatorPallet;
+	type BlocksPerDay = BlocksPerDay;
+	type Currency = Balances;
+	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
 	type DefaultBlocksPerRound = DefaultBlocksPerRound;
-	type StakeDuration = StakeDuration;
 	type ExitQueueDelay = ExitQueueDelay;
-	type MinCollators = MinCollators;
-	type MinRequiredCollators = MinCollators;
 	type MaxDelegationsPerRound = MaxDelegatorsPerCollator;
 	type MaxDelegatorsPerCollator = MaxDelegatorsPerCollator;
+	type MaxTopCandidates = MaxCollatorCandidates;
+	type MaxUnstakeRequests = MaxUnstakeRequests;
+	type MaxUpdatesPerBlock = MaxUpdatesPerBlock;
+	type MinBlocksPerRound = MinBlocksPerRound;
+	type MinCollators = MinCollators;
 	type MinCollatorStake = MinCollatorStake;
 	type MinCollatorCandidateStake = MinCollatorStake;
-	type MaxTopCandidates = MaxCollatorCandidates;
 	type MinDelegatorStake = MinDelegatorStake;
-	type MaxUnstakeRequests = MaxUnstakeRequests;
+	type MinRequiredCollators = MinCollators;
 	type PotId = PotId;
+	type RuntimeEvent = RuntimeEvent;
+	type StakeDuration = StakeDuration;
 	type WeightInfo = ();
-	type BlockRewardCalculator = RewardCalculatorPallet;
 }
 
 impl_opaque_keys! {
@@ -199,7 +201,13 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+pub struct AvgChangeNotifier;
+impl AvgChangedNotifier for AvgChangeNotifier {
+	fn notify_clients() {}
+}
+
 impl average::Config for Test {
+	type AvgChangedNotifier = AvgChangeNotifier;
 	type Currency = Balances;
 }
 

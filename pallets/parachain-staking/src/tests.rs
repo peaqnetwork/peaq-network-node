@@ -945,7 +945,9 @@ fn multiple_delegations() {
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(11), 2, 11));
 			// 11 should be initiated with the same rewarded counter as the authored counter
 			// by their collator 2
-			assert_eq!(StakePallet::blocks_rewarded(2), StakePallet::blocks_authored(11));
+			// Note: The following assert_eq is originally from KILT, but since we automatically
+			// 		 update reward registers, this cannot be tested here.
+			// assert_eq!(StakePallet::blocks_rewarded(2), StakePallet::blocks_authored(11));
 
 			assert!(StakePallet::delegator_state(9).is_none());
 			assert_eq!(StakePallet::unstaking(9).get(&23), Some(&10u128));

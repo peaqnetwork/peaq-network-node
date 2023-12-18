@@ -331,6 +331,19 @@ pub struct DelegationCounter {
 	pub counter: u32,
 }
 
+/// Updating-status of reward registers from all collators and delegators. Since they shall be get
+/// updated once a period of time (e.g. once a day), this will be done iteratively and over multiple
+/// blocks.
+#[derive(Default, Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
+pub struct RewardUpdateStatus {
+	/// Flag indicates that all collator's reward registers have been updated.
+	pub collators_done: bool,
+	/// Flag indicates that all delegator's reward registers have been updated.
+	pub delegators_done: bool,
+	/// Counter for current update round (collators or delegators).
+	pub counter: u32,
+}
+
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;

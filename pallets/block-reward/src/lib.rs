@@ -56,13 +56,13 @@ pub mod types;
 pub mod weightinfo;
 pub mod weights;
 
-pub use peaq_frame_ext::averaging::{
-	AvgChangedNotifier, ProvidesAverage, ProvidesAverages, ProvidesAverageFor, ProvidesAveragesFor,
-};
 pub use crate::{
 	pallet::*,
 	types::{AverageSelector, BeneficiaryPayout, BeneficiarySelector, RewardDistributionConfig},
 	weightinfo::WeightInfo,
+};
+pub use peaq_frame_ext::averaging::{
+	AvgChangedNotifier, ProvidesAverage, ProvidesAverageFor, ProvidesAverages, ProvidesAveragesFor,
 };
 
 #[macro_export]
@@ -80,6 +80,7 @@ pub mod pallet {
 
 	use super::*;
 
+	use crate::types::{BalanceOf, DiscAvg, NegativeImbalanceOf};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, Imbalance, OnTimestampSet, OnUnbalanced, StorageVersion},
@@ -92,7 +93,6 @@ pub mod pallet {
 		traits::{Saturating, Zero},
 		Perbill,
 	};
-	use crate::types::{BalanceOf, DiscAvg, NegativeImbalanceOf};
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
@@ -408,12 +408,15 @@ pub mod pallet {
 				}
 			};
 
-			Hours12BlockReward::<T>::mutate(|r|
-				check_noticing(AverageSelector::DiAvg12Hours, r.update(&reward)));
-			DailyBlockReward::<T>::mutate(|r|
-				check_noticing(AverageSelector::DiAvgDaily, r.update(&reward)));
-			WeeklyBlockReward::<T>::mutate(|r|
-				check_noticing(AverageSelector::DiAvgWeekly, r.update(&reward)));
+			Hours12BlockReward::<T>::mutate(|r| {
+				check_noticing(AverageSelector::DiAvg12Hours, r.update(&reward))
+			});
+			DailyBlockReward::<T>::mutate(|r| {
+				check_noticing(AverageSelector::DiAvgDaily, r.update(&reward))
+			});
+			WeeklyBlockReward::<T>::mutate(|r| {
+				check_noticing(AverageSelector::DiAvgWeekly, r.update(&reward))
+			});
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
 				T::DbWeight::get().reads_writes(4, 3),
