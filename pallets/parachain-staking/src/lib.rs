@@ -2347,8 +2347,16 @@ pub mod pallet {
 			T::PotId::get().into_account_truncating()
 		}
 
+		pub fn reward_rate_config() -> RewardRateInfo {
+			T::BlockRewardCalculator::get_reward_rate_config()
+		}
+
+		pub fn average_block_reward() -> BalanceOf<T> {
+			T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get())
+		}
+
 		fn update_reward_registers() -> Weight {
-			let mut reads = 2;
+			let mut reads = 1;
 			let mut writes = 0;
 			let mut n_updates = 0u32;
 			let mut done = false;
@@ -2362,29 +2370,29 @@ pub mod pallet {
 				let bl_per_day = T::BlocksPerDay::get();
 
 				let n_total = max_collators * (max_del_p_col + 1);
-				let n_opt = min(n_total / bl_per_day + 1, max_updates);
-
+				let mut n_opt = min(n_total / bl_per_day + 2, max_updates);
 				if state.counter + n_opt > n {
-					(n - state.counter, true)
-				} else {
-					(n_opt, false)
+					n_opt = n - state.counter;
 				}
+				let done = state.counter + n_opt == n;
+
+				(n_opt, done)
 			};
 
-			if !state.collators_done {
+			if state.updating_collators {
 				let collators = TopCandidates::<T>::get().into_bounded_vec();
 				let n_collators = collators.len() as u32;
 				(n_updates, done) = get_opt_update_rate(&state, n_collators);
+				reads += 1;
 
-				for idx in state.counter..state.counter + n_updates {
+				for idx in state.counter..(state.counter + n_updates) {
 					let _ = Self::update_collator_rewards(&collators[idx as usize].owner);
 				}
-
-				reads += 1;
-			} else if !state.delegators_done {
+			} else if state.updating_delegators {
 				let delegators = DelegatorState::<T>::iter_keys();
 				let n_delegators = DelegatorState::<T>::iter_keys().count() as u32;
 				(n_updates, done) = get_opt_update_rate(&state, n_delegators);
+				reads += 2;
 
 				let mut delegators = delegators.skip(state.counter as usize);
 				for _ in 0..n_updates {
@@ -2395,17 +2403,15 @@ pub mod pallet {
 						break
 					}
 				}
-
-				reads += 2;
 			}
 
 			if n_updates > 0 {
 				if done {
 					state.counter = 0;
-					if state.collators_done {
-						state.delegators_done = true;
+					if state.updating_collators {
+						state.updating_collators = false;
 					} else {
-						state.collators_done = true;
+						state.updating_delegators = false;
 					}
 				} else {
 					state.counter += n_updates;
@@ -2547,19 +2553,13 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Pallet<T> {
-		pub fn reward_rate_config() -> RewardRateInfo {
-			T::BlockRewardCalculator::get_reward_rate_config()
-		}
-
-		pub fn average_block_reward() -> BalanceOf<T> {
-			T::AvgBlockRewardProvider::get_average_for(T::AvgBlockRewardRecipient::get())
-		}
-	}
-
 	impl<T: Config> OnAverageChange for Pallet<T> {
 		fn on_change() {
-			// TODO
+			UpdatingStatus::<T>::mutate(|state: &mut RewardUpdateStatus| {
+				state.updating_collators = true;
+				state.updating_delegators = true;
+				state.counter = 0;
+			});
 		}
 	}
 }

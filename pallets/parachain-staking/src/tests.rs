@@ -36,8 +36,8 @@ use crate::{
 	},
 	set::OrderedSet,
 	types::{
-		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
-		StakeOf, TotalStake,
+		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RewardUpdateStatus,
+		RoundInfo, Stake, StakeOf, TotalStake,
 	},
 	CandidatePool, Config, Error, Event as StakeEvent, STAKING_ID,
 };
@@ -3924,7 +3924,6 @@ fn collator_reward_per_block_with_delegator() {
 		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
 		.with_collators(vec![(1, 500)])
 		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
-		// .with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
@@ -3968,5 +3967,162 @@ fn collator_reward_per_block_with_delegator() {
 				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_float(4. / 10.));
 			assert_eq!(reward1, d_1_rewards);
 			assert_eq!(reward2, d_2_rewards);
+		});
+}
+
+#[test]
+fn reward_updating_mechanism() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000), (4, 1000), (5, 1000), (6, 1000)])
+		.with_collators(vec![(1, 500), (2, 500)])
+		.with_delegators(vec![(3, 1, 500), (4, 1, 500), (5, 2, 500), (6, 2, 500)])
+		.build()
+		.execute_with(|| {
+			let mut authors = vec![None];
+			for _ in 0..8 {
+				authors.push(Some(1u64));
+				authors.push(Some(2u64));
+			}
+			let reward_rate = StakePallet::reward_rate_config();
+			let avg_bl_reward = StakePallet::average_block_reward();
+			let c_rewards: BalanceOf<Test> = reward_rate
+				.compute_collator_reward::<Test>(avg_bl_reward, Perquintill::from_percent(100));
+			let d_rewards: BalanceOf<Test> = reward_rate
+				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_percent(50));
+
+			let roll_to = |n: u64| roll_to(n, DEFAULT_ISSUE, &authors);
+
+			// Initial state should not have changed so far, because no on_change() notification.
+			roll_to(2);
+			assert_eq!(StakePallet::rewards(1), 0);
+			assert_eq!(StakePallet::rewards(2), 0);
+			assert_eq!(StakePallet::rewards(3), 0);
+			assert_eq!(StakePallet::rewards(4), 0);
+			assert_eq!(StakePallet::rewards(5), 0);
+			assert_eq!(StakePallet::rewards(6), 0);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: false,
+					counter: 0
+				}
+			);
+
+			// Now we assume, that averages have become updated.
+			Average::notify_clients();
+
+			roll_to(3);
+			assert_eq!(StakePallet::rewards(1), c_rewards);
+			assert_eq!(StakePallet::rewards(2), c_rewards);
+			assert_eq!(StakePallet::rewards(3), 0);
+			assert_eq!(StakePallet::rewards(4), 0);
+			assert_eq!(StakePallet::rewards(5), 0);
+			assert_eq!(StakePallet::rewards(6), 0);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: true,
+					counter: 0
+				}
+			);
+
+			roll_to(4);
+			assert_eq!(StakePallet::rewards(1), c_rewards);
+			assert_eq!(StakePallet::rewards(2), c_rewards);
+			assert_eq!(StakePallet::rewards(5), d_rewards);
+			assert_eq!(StakePallet::rewards(6), d_rewards);
+			assert_eq!(StakePallet::rewards(3), 0);
+			assert_eq!(StakePallet::rewards(4), 0);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: true,
+					counter: 2
+				}
+			);
+
+			roll_to(5);
+			assert_eq!(StakePallet::rewards(1), c_rewards);
+			assert_eq!(StakePallet::rewards(2), c_rewards);
+			assert_eq!(StakePallet::rewards(3), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(4), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(5), d_rewards);
+			assert_eq!(StakePallet::rewards(6), d_rewards);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: false,
+					counter: 0
+				}
+			);
+
+			roll_to(6);
+			assert_eq!(StakePallet::rewards(1), c_rewards);
+			assert_eq!(StakePallet::rewards(2), c_rewards);
+			assert_eq!(StakePallet::rewards(3), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(4), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(5), d_rewards);
+			assert_eq!(StakePallet::rewards(6), d_rewards);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: false,
+					counter: 0
+				}
+			);
+			Average::notify_clients();
+
+			roll_to(7);
+			assert_eq!(StakePallet::rewards(1), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(2), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(3), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(4), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(5), d_rewards);
+			assert_eq!(StakePallet::rewards(6), d_rewards);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: true,
+					counter: 0
+				}
+			);
+
+			roll_to(8);
+			assert_eq!(StakePallet::rewards(1), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(2), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(3), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(4), 2 * d_rewards);
+			assert_eq!(StakePallet::rewards(5), 3 * d_rewards);
+			assert_eq!(StakePallet::rewards(6), 3 * d_rewards);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: true,
+					counter: 2
+				}
+			);
+
+			roll_to(9);
+			assert_eq!(StakePallet::rewards(1), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(2), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(3), 4 * d_rewards);
+			assert_eq!(StakePallet::rewards(4), 4 * d_rewards);
+			assert_eq!(StakePallet::rewards(5), 3 * d_rewards);
+			assert_eq!(StakePallet::rewards(6), 3 * d_rewards);
+			assert_eq!(
+				StakePallet::updating_status(),
+				RewardUpdateStatus {
+					updating_collators: false,
+					updating_delegators: false,
+					counter: 0
+				}
+			);
 		});
 }

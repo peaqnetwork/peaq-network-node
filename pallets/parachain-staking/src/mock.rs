@@ -26,7 +26,10 @@ use frame_support::{
 	PalletId,
 };
 use pallet_authorship::EventHandler;
-use peaq_frame_ext::{averaging::AvgChangedNotifier, mockups::avg_currency as average};
+use peaq_frame_ext::{
+	averaging::{AvgChangedNotifier, OnAverageChange},
+	mockups::avg_currency as average,
+};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_runtime::{
 	impl_opaque_keys,
@@ -146,7 +149,7 @@ parameter_types! {
 	#[derive(Debug, Eq, PartialEq)]
 	pub const MaxCollatorCandidates: u32 = 10;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const MaxUpdatesPerBlock: u32 = 25;
+	pub const MaxUpdatesPerBlock: u32 = 2;
 	pub const MinBlocksPerRound: BlockNumber = 3;
 	pub const MinCollators: u32 = 2;
 	pub const MinCollatorStake: Balance = 10;
@@ -240,7 +243,9 @@ impl pallet_timestamp::Config for Test {
 
 pub struct AvgChangeNotifier;
 impl AvgChangedNotifier for AvgChangeNotifier {
-	fn notify_clients() {}
+	fn notify_clients() {
+		<StakePallet as OnAverageChange>::on_change();
+	}
 }
 
 impl average::Config for Test {
@@ -453,6 +458,7 @@ pub(crate) fn events() -> Vec<stake::Event<Test>> {
 }
 
 fn finish_block_start_next() {
+	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 	System::set_block_number(System::block_number() + 1);
 	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
@@ -497,5 +503,4 @@ pub(crate) fn simulate_issuance(issue_number: Balance) {
 	let issued = Balances::issue(issue_number);
 	Average::update(issued.peek(), |x| x);
 	StakePallet::on_unbalanced(issued);
-	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
 }

@@ -337,9 +337,9 @@ pub struct DelegationCounter {
 #[derive(Default, Clone, Encode, Decode, Eq, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
 pub struct RewardUpdateStatus {
 	/// Flag indicates that all collator's reward registers have been updated.
-	pub collators_done: bool,
+	pub updating_collators: bool,
 	/// Flag indicates that all delegator's reward registers have been updated.
-	pub delegators_done: bool,
+	pub updating_delegators: bool,
 	/// Counter for current update round (collators or delegators).
 	pub counter: u32,
 }
