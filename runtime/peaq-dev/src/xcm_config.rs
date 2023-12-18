@@ -135,7 +135,7 @@ parameter_types! {
 		pallet_currency_addr_location(
 			parachain::moonbase::ID, parachain::moonbase::EVM_PALLET, parachain::moonbase::XCUSDC_KEY
 		).unwrap().into(),
-		dot_per_second() * 5,
+		1,
 		0
 	);
 	pub BaseRate: u128 = peaq_per_second();
