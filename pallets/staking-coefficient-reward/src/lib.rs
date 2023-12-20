@@ -36,7 +36,7 @@ pub mod pallet {
 	use sp_std::convert::TryInto;
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
+	pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 	/// Pallet for staking coefficient reward calculation.
 	#[pallet::pallet]

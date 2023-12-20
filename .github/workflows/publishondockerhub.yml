@@ -2,7 +2,7 @@ name: Build and Publish
 on:
   push:
     branches:
-      - 'parachain_dev'
+      - 'dev'
     tags:
       - 'peaq-dev-v*' # For the peaq-dev's env in the parchain-launch usage
       - 'krest-v*' # For the krest env in the parchain-launch usage
