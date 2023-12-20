@@ -995,6 +995,10 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_dmp_queue::migration::Migration<Runtime>,
 		cumulus_pallet_xcmp_queue::migration::Migration<Runtime>,
+		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckingAccount>,
+		pallet_contracts::Migration<Runtime>,
+		orml_unknown_tokens::Migration<Runtime>,
+		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
 	),
 >;
 
