@@ -448,7 +448,9 @@ parameter_types! {
 	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
 }
 
+#[cfg(feature = "try-runtime")]
 use sp_runtime::TryRuntimeError;
+
 const COUNCIL_OLD_PREFIX: &str = "Instance1Collective";
 /// Migrate from `Instance1Collective` to the new pallet prefix `Council`
 pub struct CouncilStoragePrefixMigration;
