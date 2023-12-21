@@ -124,7 +124,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 9,
+	spec_version: 10,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -438,6 +438,31 @@ parameter_types! {
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
+}
+
+#[cfg(feature = "try-runtime")]
+use sp_runtime::TryRuntimeError;
+
+const COUNCIL_OLD_PREFIX: &str = "Instance1Collective";
+/// Migrate from `Instance1Collective` to the new pallet prefix `Council`
+pub struct CouncilStoragePrefixMigration;
+
+impl frame_support::traits::OnRuntimeUpgrade for CouncilStoragePrefixMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_collective::migrations::v4::migrate::<Runtime, Council, _>(COUNCIL_OLD_PREFIX)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<Vec<u8>, TryRuntimeError> {
+		pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		Ok(Vec::new())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade(_: Vec<u8>) -> Result<(), TryRuntimeError> {
+		pallet_collective::migrations::v4::post_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		Ok(())
+	}
 }
 
 type CouncilCollective = pallet_collective::Instance1;
@@ -995,6 +1020,12 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_dmp_queue::migration::Migration<Runtime>,
 		cumulus_pallet_xcmp_queue::migration::Migration<Runtime>,
+		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckingAccount>,
+		pallet_contracts::Migration<Runtime>,
+		orml_unknown_tokens::Migration<Runtime>,
+		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
+		pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
+		CouncilStoragePrefixMigration,
 	),
 >;
 
