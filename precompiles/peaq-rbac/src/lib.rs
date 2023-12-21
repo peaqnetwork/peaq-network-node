@@ -118,7 +118,7 @@ where
 				role_id: role_id_addr,
 				name: name.as_bytes().to_vec(),
 			},
-			0,
+			role_id.as_bytes().len() as u64 + name.as_bytes().len() as u64,
 		)?;
 
 		let event = log1(
