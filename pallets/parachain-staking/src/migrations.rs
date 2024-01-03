@@ -1,15 +1,15 @@
 //! Storage migrations for the parachain-staking  pallet.
 
-use crate::{
-	pallet::{Config, Pallet},
-	reward_rate::RewardRateInfo,
-};
 use frame_support::{
-	dispatch::GetStorageVersion,
-	pallet_prelude::{StorageVersion, ValueQuery},
+	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,
+};
+
+use crate::{
+	pallet::{Config, Pallet},
+	reward_rate_config::RewardRateInfo,
 };
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
@@ -32,7 +32,9 @@ mod upgrade {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
 			let weight_reads = 0;
-			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
+
+			let onchain_storage_version = Pallet::<T>::current_storage_version();
+
 			if onchain_storage_version.eq(&CURRENT_STORAGE_VERSION) {
 				TARGET_STORAGE_VERSION.put::<Pallet<T>>();
 				log::error!("Migrating parchain_staking to V8");
@@ -42,6 +44,7 @@ mod upgrade {
 				log::error!("V8 Migrating Done.");
 				weight_writes += 2;
 			}
+
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
 	}

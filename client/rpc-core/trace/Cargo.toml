@@ -1,18 +1,19 @@
 [package]
 name = "peaq-rpc-core-trace"
-authors = ['peaq network <https://github.com/peaqnetwork>']
-edition = "2021"
-homepage = 'https://peaq.network/'
 license = "GPL-3.0-only"
-repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
+ethereum-types = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true, features = ["compat"] }
 jsonrpsee = { workspace = true, default-features = false, features = ["macros", "server"] }
-peaq-client-evm-tracing = { path = "../../evm-tracing" }
-peaq-rpc-core-types = { path = "../types" }
-
-ethereum-types = { workspace = true, default-features = true }
+peaq-client-evm-tracing = { workspace = true }
+peaq-rpc-core-types = { workspace = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, default-features = true }

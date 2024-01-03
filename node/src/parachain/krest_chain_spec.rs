@@ -1,5 +1,5 @@
-use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
+use pallet_block_reward::types::AverageSelector;
 use peaq_krest_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
@@ -11,7 +11,10 @@ use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
-use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
+use crate::parachain::{
+	dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed},
+	Extensions,
+};
 
 use sp_core::sr25519;
 
@@ -136,6 +139,7 @@ fn configure_genesis(
 			},
 			block_issue_reward: 380_517_503_805 * NANOCENTS,
 			max_currency_supply: 400_000_000 * DOLLARS,
+			average_selector: AverageSelector::DiAvgDaily,
 		},
 		vesting: Default::default(),
 		aura: Default::default(),

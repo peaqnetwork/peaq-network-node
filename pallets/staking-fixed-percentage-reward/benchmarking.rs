@@ -21,7 +21,7 @@
 use crate::*;
 use frame_benchmarking::v1::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
-use parachain_staking::reward_rate::RewardRateInfo;
+use parachain_staking::reward_rate_config::RewardRateInfo;
 use sp_runtime::Perquintill;
 
 benchmarks! {

@@ -1,4 +1,7 @@
-use crate::{self as pallet_block_reward, NegativeImbalanceOf};
+use crate::{
+	self as pallet_block_reward,
+	types::{AverageSelector, NegativeImbalanceOf},
+};
 
 use frame_support::{
 	construct_runtime, parameter_types,
@@ -8,9 +11,8 @@ use frame_support::{
 	PalletId,
 };
 
-use sp_core::H256;
 use sp_runtime::{
-	testing::Header,
+	testing::{Header, H256},
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
 };
 
@@ -42,6 +44,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
+	pub const SS58Prefix: u8 = 42;
 }
 
 impl frame_system::Config for TestRuntime {
@@ -66,7 +69,7 @@ impl frame_system::Config for TestRuntime {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
@@ -152,10 +155,18 @@ impl pallet_block_reward::Config for TestRuntime {
 	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
 }
 
-pub struct ExternalityBuilder;
+pub struct ExternalityBuilder();
 
 impl ExternalityBuilder {
 	pub fn build() -> TestExternalities {
+		ExternalityBuilder::build_internal(BLOCK_REWARD, MAX_CURRENCY_SUPPLY)
+	}
+
+	pub fn build_set_reward(issue_number: Balance, hard_cap: Balance) -> TestExternalities {
+		ExternalityBuilder::build_internal(issue_number, hard_cap)
+	}
+
+	fn build_internal(issue: Balance, hardcap: Balance) -> TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<TestRuntime>().unwrap();
 
@@ -167,8 +178,9 @@ impl ExternalityBuilder {
 		.ok();
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
-			block_issue_reward: BLOCK_REWARD,
-			max_currency_supply: MAX_CURRENCY_SUPPLY,
+			block_issue_reward: issue,
+			max_currency_supply: hardcap,
+			average_selector: AverageSelector::DiAvg12Hours,
 		}
 		.assimilate_storage(&mut storage)
 		.ok();

@@ -64,4 +64,9 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	// Storage: BlockReward HardCap (r:0 w:1)
+	fn set_averaging_function_selector() -> Weight {
+		Weight::from_parts(10_811_000, 0)
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
 }

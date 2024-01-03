@@ -152,6 +152,7 @@ fn configure_genesis(
 			},
 			block_issue_reward: DOLLARS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,
+			average_selector: Default::default(),
 		},
 
 		vesting: peaq_dev_runtime::VestingConfig { vesting: vec![] },

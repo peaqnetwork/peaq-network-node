@@ -1,23 +1,23 @@
 [package]
 name = "evm-tracing-events"
-authors = ['peaq network <https://github.com/peaqnetwork>']
-edition = "2021"
-homepage = 'https://peaq.network/'
 license = "GPL-3.0-only"
-repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.1.0"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+homepage.workspace = true
+readme.workspace = true
+repository.workspace = true
 
 [dependencies]
 environmental = { workspace = true, default-features = false }
-parity-scale-codec = { workspace = true }
-sp-runtime-interface = { workspace = true, default-features = false }
-
-# Ethereum
+parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
 ethereum-types = { workspace = true, default-features = false }
 evm = { workspace = true, default-features = false, features = [ "with-codec" ] }
 evm-gasometer = { workspace = true, default-features = false }
 evm-runtime = { workspace = true, default-features = false }
+sp-runtime-interface = { workspace = true, default-features = false }
 
 [features]
 default = [ "std" ]

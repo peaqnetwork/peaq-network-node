@@ -2,25 +2,26 @@
 
 #![allow(clippy::from_over_into)]
 
-use super::*;
-use crate::{self as reward_calculator, default_weights::SubstrateWeight};
 use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
+	assert_ok, construct_runtime, parameter_types,
+	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnIdle, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
 use pallet_authorship::EventHandler;
-use parachain_staking::{self as stake, reward_rate::RewardRateInfo};
+use parachain_staking::{self as stake, reward_rate_config::RewardRateInfo};
+use peaq_frame_ext::mockups::avg_currency as average;
 use sp_consensus_aura::sr25519::AuthorityId;
-use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
-	testing::{Header, UintAuthorityId},
+	testing::{Header, UintAuthorityId, H256},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill, Perquintill,
 };
 use sp_std::fmt::Debug;
+
+use super::*;
+use crate::{self as reward_calculator, default_weights::SubstrateWeight};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -46,6 +47,7 @@ construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		Aura: pallet_aura::{Pallet, Storage},
 		RewardCalculatorPallet: reward_calculator::{Pallet, Call, Storage, Event<T>},
+		Average: average::{Pallet, Config<T>, Storage},
 	}
 );
 
@@ -124,13 +126,14 @@ parameter_types! {
 	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxDelegatorsPerCollator: u32 = 4;
 	#[derive(Debug, PartialEq, Eq)]
-	pub const MaxCollatorsPerDelegator: u32 = 4;
 	pub const MinCollatorStake: Balance = 10;
 	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxCollatorCandidates: u32 = 10;
 	pub const MinDelegatorStake: Balance = 5;
-	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
+	// pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
+	// pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
+	pub const AvgProviderParachainStaking: average::AverageSelector = average::AverageSelector::Whatever;
 }
 
 impl Config for Test {
@@ -142,6 +145,9 @@ impl parachain_staking::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
+	type AvgBlockRewardProvider = Average;
+	type AvgBlockRewardRecipient = AvgProviderParachainStaking;
+	type AvgRecipientSelector = average::AverageSelector;
 	type MinBlocksPerRound = MinBlocksPerRound;
 	type DefaultBlocksPerRound = DefaultBlocksPerRound;
 	type StakeDuration = StakeDuration;
@@ -150,12 +156,10 @@ impl parachain_staking::Config for Test {
 	type MinRequiredCollators = MinCollators;
 	type MaxDelegationsPerRound = MaxDelegatorsPerCollator;
 	type MaxDelegatorsPerCollator = MaxDelegatorsPerCollator;
-	type MaxCollatorsPerDelegator = MaxCollatorsPerDelegator;
 	type MinCollatorStake = MinCollatorStake;
 	type MinCollatorCandidateStake = MinCollatorStake;
 	type MaxTopCandidates = MaxCollatorCandidates;
 	type MinDelegatorStake = MinDelegatorStake;
-	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
@@ -193,6 +197,10 @@ impl pallet_timestamp::Config for Test {
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
+}
+
+impl average::Config for Test {
+	type Currency = Balances;
 }
 
 pub(crate) struct ExtBuilder {
@@ -310,17 +318,72 @@ impl ExtBuilder {
 	}
 }
 
-pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
+/// Another roll-to-and-claim-rewards test method, to make sure, this claim-algorithm is
+/// working fine.
+pub(crate) fn roll_to_then_claim_rewards(
+	n: BlockNumber,
+	issue_number: Balance,
+	authors: &Vec<Option<AccountId>>,
+) {
 	while System::block_number() < n {
+		simulate_issuance(issue_number);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			Balances::make_free_balance_be(
-				&StakePallet::account_id(),
-				1000 + Balances::minimum_balance(),
-			);
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+		if System::block_number() == n - 1 {
+			claim_all_rewards();
+		}
+		finish_block_start_next();
+	}
+}
+
+/// Method executes the claim-rewards of all collators and delegators for test purposes.
+fn claim_all_rewards() {
+	// let candidates = StakePallet::top_candidates();
+	// for i in 0..candidates.len() {
+	for c_stake in StakePallet::top_candidates().into_iter() {
+		let _ = StakePallet::claim_rewards(RuntimeOrigin::signed(c_stake.owner));
+		let candidate = StakePallet::candidate_pool(c_stake.owner).unwrap();
+		for d_stake in candidate.delegators.into_iter() {
+			let _ = StakePallet::claim_rewards(RuntimeOrigin::signed(d_stake.owner));
+		}
+	}
+}
+
+pub(crate) fn simulate_issuance(issue_number: Balance) {
+	let issued = Balances::issue(issue_number);
+	Average::update(issued.peek(), |x| x);
+	StakePallet::on_unbalanced(issued);
+	<AllPalletsWithSystem as OnIdle<u64>>::on_idle(System::block_number(), Weight::zero());
+}
+
+fn finish_block_start_next() {
+	<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
+	System::set_block_number(System::block_number() + 1);
+	<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
+}
+
+pub(crate) fn roll_to_claim_every_reward(
+	n: BlockNumber,
+	issue_number: Balance,
+	authors: &Vec<Option<AccountId>>,
+) {
+	while System::block_number() < n {
+		simulate_issuance(issue_number);
+		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
+			StakePallet::note_author(*author);
+			// author claims rewards
+			assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(*author)));
+
+			// claim rewards for delegators
+			let col_state =
+				StakePallet::candidate_pool(author).expect("Block author must be candidate");
+			for delegation in col_state.delegators {
+				// NOTE: cannot use assert_ok! as we sometimes expect zero rewards for
+				// delegators such that the claiming would throw
+				assert_ok!(StakePallet::claim_rewards(RuntimeOrigin::signed(delegation.owner)));
+			}
+		}
+		finish_block_start_next();
 	}
 }

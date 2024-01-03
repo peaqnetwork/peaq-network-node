@@ -523,6 +523,16 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	/// Copied and pasted from above... TODO
+	fn claim_rewards() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 20_509_000 picoseconds.
+		Weight::from_parts(20_860_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
 
 // For backwards compatibility and tests
@@ -1010,6 +1020,16 @@ impl crate::WeightInfo for () {
 	/// Storage: ParachainStaking MaxCollatorCandidateStake (r:0 w:1)
 	/// Proof: ParachainStaking MaxCollatorCandidateStake (max_values: Some(1), max_size: Some(16), added: 511, mode: MaxEncodedLen)
 	fn set_max_candidate_stake() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 20_509_000 picoseconds.
+		Weight::from_parts(20_860_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Copied and pasted from method above... TODO
+	fn claim_rewards() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`

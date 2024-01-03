@@ -1,3 +1,12 @@
+[workspace.package]
+authors = ["EoTLabs <info@eotlabs.io>"]
+documentation = "https://docs.peaq.io"
+edition = "2021"
+homepage = "https://peaq.io/"
+license-file = "LICENSE"
+readme = "README.md"
+repository = "https://github.com/peaqnetwork/peaq-network-node"
+
 [workspace]
 members = [
     "node",
@@ -42,6 +51,7 @@ evm-runtime = { version = "0.40", default-features = false }
 ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
 ethereum-types = { version = "0.14.1", default-features = false }
 flume = "0.10"
+getrandom = { version = "0.2", default-features = false, features = ["js"] }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.3.1", default-features = false }
 impl-trait-for-tuples = "0.2.2"
@@ -210,10 +220,11 @@ zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", 
 zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
 zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
 
-# Peaq's own developments
+# Peaq's own developments / Individual adapted and imported pallets
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
 peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev" }
-peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch ="dev", default-features = false }
+peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
+peaq-frame-ext = { git = "https://github.com/peaqnetwork/peaq-frame-ext.git", branch = "dev", default-features = false }
 peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "dev", default-features = false }
 peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "dev", default-features = false }
 peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "dev" }
@@ -222,3 +233,33 @@ peaq-pallet-storage = { git = "https://github.com/peaqnetwork/peaq-storage-palle
 peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "dev", default-features = false }
 peaq-pallet-storage-runtime-api = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "dev", default-features = false }
 peaq-pallet-transaction = { git = "https://github.com/peaqnetwork/peaq-pallet-transaction.git", branch = "dev", default-features = false }
+
+# Folder internal crates
+evm-tracing-events = { path = "primitives/rpc/evm-tracing-events", default-features = false }
+parachain-staking = { path = "pallets/parachain-staking", default-features = false }
+pallet-block-reward = { path = "pallets/block-reward", default-features = false }
+pallet-evm-precompile-peaq-did = { path = "precompiles/peaq-did", default-features = false }
+pallet-evm-precompile-peaq-storage = { path = "precompiles/peaq-storage", default-features = false }
+peaq-agung-runtime = { path = "runtime/agung", default-features = false }
+peaq-client-evm-tracing = { path = "client/evm-tracing", default-features = false }
+peaq-dev-runtime = { path = "runtime/peaq-dev", default-features = false }
+peaq-evm-tracer = { path = "runtime/evm_tracer", default-features = false }
+peaq-krest-runtime = { path = "runtime/krest", default-features = false }
+peaq-primitives-ext = { path = "primitives/ext", default-features = false }
+peaq-primitives-xcm = { path = "primitives/xcm", default-features = false }
+peaq-rpc-core-debug = { path = "client/rpc-core/debug", default-features = false }
+peaq-rpc-core-types = { path = "client/rpc-core/types", default-features = false }
+peaq-rpc-core-trace = { path = "client/rpc-core/trace", default-features = false }
+peaq-rpc-core-txpool = { path = "client/rpc-core/txpool", default-features = false }
+peaq-rpc-debug = { path = "client/rpc/debug", default-features = false }
+peaq-rpc-trace = { path = "client/rpc/trace", default-features = false }
+peaq-rpc-txpool = { path = "client/rpc/txpool", default-features = false }
+peaq-rpc-primitives-debug = { path = "primitives/rpc/debug", default-features = false }
+peaq-rpc-primitives-txpool = { path = "primitives/rpc/txpool", default-features = false }
+peaq-runtime = { path = "runtime/peaq", default-features = false }
+precompile-utils = { path = "precompiles/utils", default-features = false }
+precompile-utils-macro = { path = "precompiles/utils/macro", default-features = false }
+runtime-common = { path = "runtime/common", default-features = false }
+staking-coefficient-reward = { path = "pallets/staking-coefficient-reward", default-features = false }
+staking-fixed-percentage-reward = { path = "pallets/staking-fixed-percentage-reward", default-features = false }
+

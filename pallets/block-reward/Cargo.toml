@@ -16,9 +16,9 @@ frame-system = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false, optional = true }
+peaq-frame-ext = { workspace = true, default-features = false }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
 serde = { workspace = true, default-features = false, optional = true }
-sp-core = { workspace = true, default-features = false, optional = true }
 sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 
@@ -30,11 +30,12 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
+	"log/std",
 	"pallet-balances/std",
 	"pallet-timestamp/std",
+	"peaq-frame-ext/std",
 	"scale-info/std",
 	"serde",
-	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

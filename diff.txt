@@ -1,0 +1,3 @@
+KONFLIKT (Inhalt): Merge-Konflikt in pallets/staking-coefficient-reward/src/lib.rs
+KONFLIKT (Inhalt): Merge-Konflikt in pallets/staking-coefficient-reward/src/mock.rs
+

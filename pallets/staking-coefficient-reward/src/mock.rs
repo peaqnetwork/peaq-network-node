@@ -2,25 +2,26 @@
 
 #![allow(clippy::from_over_into)]
 
-use super::*;
-use crate::{self as reward_calculator, weights::WeightInfo};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{Currency, GenesisBuild, Imbalance, OnFinalize, OnInitialize, OnUnbalanced},
 	weights::Weight,
 	PalletId,
 };
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake};
+use peaq_frame_ext::mockups::avg_currency as average;
 use sp_consensus_aura::sr25519::AuthorityId;
-use sp_core::H256;
 use sp_runtime::{
 	impl_opaque_keys,
-	testing::{Header, UintAuthorityId},
+	testing::{Header, UintAuthorityId, H256},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill,
 };
 use sp_std::fmt::Debug;
+
+use super::*;
+use crate::{self as reward_calculator, weights::WeightInfo};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -46,6 +47,7 @@ construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
 		Aura: pallet_aura::{Pallet, Storage},
 		RewardCalculatorPallet: reward_calculator::{Pallet, Call, Storage, Event<T>},
+		Average: average::{Pallet, Config<T>, Storage},
 	}
 );
 
@@ -124,13 +126,14 @@ parameter_types! {
 	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxDelegatorsPerCollator: u32 = 4;
 	#[derive(Debug, PartialEq, Eq)]
-	pub const MaxCollatorsPerDelegator: u32 = 4;
 	pub const MinCollatorStake: Balance = 10;
 	#[derive(Debug, PartialEq, Eq)]
 	pub const MaxCollatorCandidates: u32 = 10;
 	pub const MinDelegatorStake: Balance = 5;
-	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
+	// pub const NetworkRewardRate: Perquintill = Perquintill::from_percent(10);
+	// pub const NetworkRewardStart: BlockNumber = 5 * 5 * 60 * 24 * 36525 / 100;
+	pub const AvgProviderParachainStaking: average::AverageSelector = average::AverageSelector::Whatever;
 }
 
 impl Config for Test {
@@ -142,6 +145,9 @@ impl parachain_staking::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CurrencyBalance = <Self as pallet_balances::Config>::Balance;
+	type AvgBlockRewardProvider = Average;
+	type AvgBlockRewardRecipient = AvgProviderParachainStaking;
+	type AvgRecipientSelector = average::AverageSelector;
 	type MinBlocksPerRound = MinBlocksPerRound;
 	type DefaultBlocksPerRound = DefaultBlocksPerRound;
 	type StakeDuration = StakeDuration;
@@ -150,12 +156,10 @@ impl parachain_staking::Config for Test {
 	type MinRequiredCollators = MinCollators;
 	type MaxDelegationsPerRound = MaxDelegatorsPerCollator;
 	type MaxDelegatorsPerCollator = MaxDelegatorsPerCollator;
-	type MaxCollatorsPerDelegator = MaxCollatorsPerDelegator;
 	type MinCollatorStake = MinCollatorStake;
 	type MinCollatorCandidateStake = MinCollatorStake;
 	type MaxTopCandidates = MaxCollatorCandidates;
 	type MinDelegatorStake = MinDelegatorStake;
-	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
@@ -193,6 +197,10 @@ impl pallet_timestamp::Config for Test {
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
+}
+
+impl average::Config for Test {
+	type Currency = Balances;
 }
 
 pub(crate) struct ExtBuilder {
@@ -312,8 +320,11 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 	left.max(right) - left.min(right) <= err
 }
 
-pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
+pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>, issue_number: Balance) {
 	while System::block_number() < n {
+		let issued = Balances::issue(issue_number);
+		Average::update(issued.peek(), |x| x);
+		StakePallet::on_unbalanced(issued);
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			Balances::make_free_balance_be(
 				&StakePallet::account_id(),

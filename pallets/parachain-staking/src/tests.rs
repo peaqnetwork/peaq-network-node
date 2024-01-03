@@ -18,13 +18,6 @@
 
 //! Unit testing
 
-use std::{convert::TryInto, iter};
-
-use crate::{
-	mock::MockRewardConfig,
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-};
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
@@ -33,21 +26,68 @@ use frame_system::RawOrigin;
 use pallet_balances::{BalanceLock, Error as BalancesError, Reasons};
 use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversion};
+use std::{convert::TryInto, iter};
 
 use crate::{
-	mock::{
-		almost_equal, events, last_event, roll_to, AccountId, Balance, Balances, BlockNumber,
-		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
-		BLOCKS_PER_ROUND, DECIMALS,
+	mock::*,
+	reward_rate_config::{
+		CollatorDelegatorBlockRewardCalculator, DefaultRewardCalculator, RewardRateConfigTrait,
+		RewardRateInfo,
 	},
-	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 	set::OrderedSet,
 	types::{
-		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
-		Stake, StakeOf, TotalStake,
+		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, RoundInfo, Stake,
+		StakeOf, TotalStake,
 	},
-	CandidatePool, Config, Error, Event, STAKING_ID,
+	CandidatePool, Config, Error, Event as StakeEvent, STAKING_ID,
 };
+
+/// Method calculates the reward rate for a collator in dependency of given paramters
+// #[allow(dead_code)]
+fn calc_collator_rewards(avg_reward: &Balance, reward_cfg: &RewardRateInfo) -> Balance {
+	reward_cfg.collator_rate * *avg_reward
+}
+
+#[allow(dead_code)]
+fn calc_collator_rewards_coeff(
+	avg_reward: Balance,
+	col_stake: Balance,
+	del_sum_stake: Balance,
+	coeff: u8,
+) -> Balance {
+	// (TotalRewards*CollatorStake*CollatorCoefficient)/(CollatorStake*CollatorCoefficient +
+	// DelegatorStake)
+	let coeff = coeff as Balance;
+	let denom = col_stake * coeff;
+	let divisor = col_stake * coeff + del_sum_stake;
+	let factor = Perquintill::from_rational(denom, divisor);
+	factor * avg_reward
+}
+
+/// Method calculates the reward rate for a collator in dependency of given paramters
+// #[allow(dead_code)]
+fn calc_delegator_rewards(
+	avg_reward: &Balance,
+	stake_rate: &Perquintill,
+	reward_cfg: &RewardRateInfo,
+) -> Balance {
+	reward_cfg.delegator_rate * *stake_rate * *avg_reward
+}
+
+#[allow(dead_code)]
+fn calc_delegator_rewards_coeff(
+	avg_reward: Balance,
+	col_stake: Balance,
+	del_stake: Balance,
+	del_sum_stake: Balance,
+	coeff: u8,
+) -> Balance {
+	// (TotalRewards*DelegatorStake)/(CollatorStake*CollatorCoefficient + DelegatorStake)
+	let coeff = coeff as Balance;
+	let divisor = col_stake * coeff + del_sum_stake;
+	let factor = Perquintill::from_rational(del_stake, divisor);
+	factor * avg_reward
+}
 
 #[test]
 fn should_select_collators_genesis_session() {
@@ -303,11 +343,8 @@ fn join_collator_candidates() {
 			assert!(System::events().is_empty());
 
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 5));
-			assert_ok!(StakePallet::join_candidates(RuntimeOrigin::signed(7), 10u128,));
-			assert_eq!(
-				last_event(),
-				MetaEvent::StakePallet(Event::JoinedCollatorCandidates(7, 10u128))
-			);
+			assert_ok!(StakePallet::join_candidates(RuntimeOrigin::signed(7), 10u128));
+			assert_eq!(last_event(), StakeEvent::JoinedCollatorCandidates(7, 10u128));
 
 			// MaxCollatorCandidateStake
 			assert_noop!(
@@ -322,10 +359,7 @@ fn join_collator_candidates() {
 
 			assert_eq!(
 				last_event(),
-				MetaEvent::StakePallet(Event::JoinedCollatorCandidates(
-					10,
-					StakePallet::max_candidate_stake(),
-				))
+				StakeEvent::JoinedCollatorCandidates(10, StakePallet::max_candidate_stake())
 			);
 		});
 }
@@ -343,11 +377,14 @@ fn collator_exit_executes_after_delay() {
 			(7, 100),
 			(8, 9),
 			(9, 4),
+			(10, 10),
 		])
 		.with_collators(vec![(1, 500), (2, 200), (7, 100)])
 		.with_delegators(vec![(3, 1, 100), (4, 1, 100), (5, 2, 100), (6, 2, 100)])
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			assert_eq!(CandidatePool::<Test>::count(), 3);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -359,43 +396,43 @@ fn collator_exit_executes_after_delay() {
 				TotalStake { collators: 800, delegators: 400 }
 			);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 7]);
-			roll_to(4, vec![]);
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_noop!(
 				StakePallet::init_leave_candidates(RuntimeOrigin::signed(3)),
 				Error::<Test>::CandidateNotFound
 			);
 
-			roll_to(11, vec![]);
+			roll_to(11, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(2)));
 			// Still three, candidate didn't leave yet
 			assert_eq!(CandidatePool::<Test>::count(), 3);
 			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(3), 2, 10),
+				StakePallet::join_delegators(RuntimeOrigin::signed(10), 2, 10),
 				Error::<Test>::CannotDelegateIfLeaving
 			);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 7]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(2, 2, 4)));
+			assert_eq!(last_event(), StakeEvent::CollatorScheduledExit(2, 2, 4));
 			let info = StakePallet::candidate_pool(&2).unwrap();
 			assert_eq!(info.status, CandidateStatus::Leaving(4));
 
-			roll_to(21, vec![]);
+			roll_to(21, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(2), 2));
 			assert_eq!(CandidatePool::<Test>::count(), 2);
 
 			// we must exclude leaving collators from rewards while
 			// holding them retroactively accountable for previous faults
 			// (within the last T::StakeDuration blocks)
-			roll_to(25, vec![]);
+			roll_to(25, DEFAULT_ISSUE, &authors);
 			let expected = vec![
-				Event::MaxSelectedCandidatesSet(2, 5),
-				Event::NewRound(5, 1),
-				Event::NewRound(10, 2),
-				Event::LeftTopCandidates(2),
-				Event::CollatorScheduledExit(2, 2, 4),
-				Event::NewRound(15, 3),
-				Event::NewRound(20, 4),
-				Event::CandidateLeft(2, 400),
-				Event::NewRound(25, 5),
+				StakeEvent::MaxSelectedCandidatesSet(2, 5),
+				StakeEvent::NewRound(5, 1),
+				StakeEvent::NewRound(10, 2),
+				StakeEvent::LeftTopCandidates(2),
+				StakeEvent::CollatorScheduledExit(2, 2, 4),
+				StakeEvent::NewRound(15, 3),
+				StakeEvent::NewRound(20, 4),
+				StakeEvent::CandidateLeft(2, 400),
+				StakeEvent::NewRound(25, 5),
 			];
 			assert_eq!(events(), expected);
 		});
@@ -418,6 +455,8 @@ fn collator_selection_chooses_top_candidates() {
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -428,44 +467,42 @@ fn collator_selection_chooses_top_candidates() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 400, delegators: 0 }
 			);
-			roll_to(8, vec![]);
+			roll_to(8, DEFAULT_ISSUE, &authors);
 			// should choose top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			let expected = vec![Event::MaxSelectedCandidatesSet(2, 5), Event::NewRound(5, 1)];
+			let expected =
+				vec![StakeEvent::MaxSelectedCandidatesSet(2, 5), StakeEvent::NewRound(5, 1)];
 			assert_eq!(events(), expected);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(6)));
-			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5],);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(1, 6, 3)));
+			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
+			assert_eq!(last_event(), StakeEvent::CollatorScheduledExit(1, 6, 3));
 
-			roll_to(15, vec![]);
+			roll_to(15, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(6), 6));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
 
-			roll_to(21, vec![]);
+			roll_to(21, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::join_candidates(RuntimeOrigin::signed(6), 69u128));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 6]);
-			assert_eq!(
-				last_event(),
-				MetaEvent::StakePallet(Event::JoinedCollatorCandidates(6, 69u128))
-			);
+			assert_eq!(last_event(), StakeEvent::JoinedCollatorCandidates(6, 69u128));
 
-			roll_to(27, vec![]);
+			roll_to(27, DEFAULT_ISSUE, &authors);
 			// should choose top MaxSelectedCandidates (5), in order
 			let expected = vec![
-				Event::MaxSelectedCandidatesSet(2, 5),
-				Event::NewRound(5, 1),
-				Event::LeftTopCandidates(6),
-				Event::CollatorScheduledExit(1, 6, 3),
+				StakeEvent::MaxSelectedCandidatesSet(2, 5),
+				StakeEvent::NewRound(5, 1),
+				StakeEvent::LeftTopCandidates(6),
+				StakeEvent::CollatorScheduledExit(1, 6, 3),
 				// TotalCollatorStake is updated once candidate 6 left in
 				// `execute_delayed_collator_exits`
-				Event::NewRound(10, 2),
-				Event::NewRound(15, 3),
-				Event::CandidateLeft(6, 50),
-				Event::NewRound(20, 4),
+				StakeEvent::NewRound(10, 2),
+				StakeEvent::NewRound(15, 3),
+				StakeEvent::CandidateLeft(6, 50),
+				StakeEvent::NewRound(20, 4),
 				// 5 had staked 60 which was exceeded by 69 of 6
-				Event::EnteredTopCandidates(6),
-				Event::JoinedCollatorCandidates(6, 69),
-				Event::NewRound(25, 5),
+				StakeEvent::EnteredTopCandidates(6),
+				StakeEvent::JoinedCollatorCandidates(6, 69),
+				StakeEvent::NewRound(25, 5),
 			];
 			assert_eq!(events(), expected);
 		});
@@ -489,62 +526,65 @@ fn exit_queue_with_events() {
 		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			assert_eq!(CandidatePool::<Test>::count(), 6);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 5));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
 
-			roll_to(8, vec![]);
+			roll_to(8, DEFAULT_ISSUE, &authors);
 			// should choose top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			let mut expected = vec![Event::MaxSelectedCandidatesSet(2, 5), Event::NewRound(5, 1)];
+			let mut expected =
+				vec![StakeEvent::MaxSelectedCandidatesSet(2, 5), StakeEvent::NewRound(5, 1)];
 			assert_eq!(events(), expected);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(6)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(1, 6, 3)));
+			assert_eq!(last_event(), StakeEvent::CollatorScheduledExit(1, 6, 3));
 
-			roll_to(11, vec![]);
+			roll_to(11, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(5)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(2, 5, 4)));
+			assert_eq!(last_event(), StakeEvent::CollatorScheduledExit(2, 5, 4));
 
 			assert_eq!(CandidatePool::<Test>::count(), 6, "No collators have left yet.");
-			roll_to(16, vec![]);
+			roll_to(16, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(6), 6));
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(4)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(3, 4, 5)));
+			assert_eq!(last_event(), StakeEvent::CollatorScheduledExit(3, 4, 5));
 			assert_noop!(
 				StakePallet::init_leave_candidates(RuntimeOrigin::signed(4)),
 				Error::<Test>::AlreadyLeaving
 			);
 
 			assert_eq!(CandidatePool::<Test>::count(), 5, "Collator #5 left.");
-			roll_to(20, vec![]);
+			roll_to(20, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(5), 5));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3]);
 			assert_eq!(CandidatePool::<Test>::count(), 4, "Two out of six collators left.");
 
-			roll_to(26, vec![]);
+			roll_to(26, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(4), 4));
 			assert_eq!(CandidatePool::<Test>::count(), 3, "Three out of six collators left.");
 
-			roll_to(30, vec![]);
+			roll_to(30, DEFAULT_ISSUE, &authors);
 			let mut new_events = vec![
-				Event::LeftTopCandidates(6),
-				Event::CollatorScheduledExit(1, 6, 3),
-				Event::NewRound(10, 2),
-				Event::LeftTopCandidates(5),
-				Event::CollatorScheduledExit(2, 5, 4),
-				Event::NewRound(15, 3),
-				Event::CandidateLeft(6, 50),
-				Event::LeftTopCandidates(4),
-				Event::CollatorScheduledExit(3, 4, 5),
-				Event::NewRound(20, 4),
-				Event::CandidateLeft(5, 60),
-				Event::NewRound(25, 5),
-				Event::CandidateLeft(4, 70),
-				Event::NewRound(30, 6),
+				StakeEvent::LeftTopCandidates(6),
+				StakeEvent::CollatorScheduledExit(1, 6, 3),
+				StakeEvent::NewRound(10, 2),
+				StakeEvent::LeftTopCandidates(5),
+				StakeEvent::CollatorScheduledExit(2, 5, 4),
+				StakeEvent::NewRound(15, 3),
+				StakeEvent::CandidateLeft(6, 50),
+				StakeEvent::LeftTopCandidates(4),
+				StakeEvent::CollatorScheduledExit(3, 4, 5),
+				StakeEvent::NewRound(20, 4),
+				StakeEvent::CandidateLeft(5, 60),
+				StakeEvent::NewRound(25, 5),
+				StakeEvent::CandidateLeft(4, 70),
+				StakeEvent::NewRound(30, 6),
 			];
 			expected.append(&mut new_events);
 			assert_eq!(events(), expected);
@@ -586,6 +626,8 @@ fn execute_leave_candidates_with_delay() {
 		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			assert_eq!(CandidatePool::<Test>::count(), 10);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -597,7 +639,7 @@ fn execute_leave_candidates_with_delay() {
 				TotalStake { collators: 300, delegators: 500 }
 			);
 
-			roll_to(5, vec![]);
+			roll_to(5, DEFAULT_ISSUE, &authors);
 			// should choose top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![2, 1, 10, 9, 8]);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(10)));
@@ -670,39 +712,19 @@ fn execute_leave_candidates_with_delay() {
 			}
 			assert_eq!(
 				StakePallet::delegator_state(11),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 1, amount: 110 }].try_into().unwrap()
-					),
-					total: 110
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 1, amount: 110 })
 			);
 			assert_eq!(
 				StakePallet::delegator_state(12),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 1, amount: 120 }].try_into().unwrap()
-					),
-					total: 120
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 1, amount: 120 })
 			);
 			assert_eq!(
 				StakePallet::delegator_state(13),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 2, amount: 130 }].try_into().unwrap()
-					),
-					total: 130
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 2, amount: 130 })
 			);
 			assert_eq!(
 				StakePallet::delegator_state(14),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 2, amount: 140 }].try_into().unwrap()
-					),
-					total: 140
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 2, amount: 140 })
 			);
 			for delegator in 11u64..=14u64 {
 				assert!(StakePallet::is_delegator(&delegator));
@@ -710,7 +732,7 @@ fn execute_leave_candidates_with_delay() {
 			}
 
 			// exits cannot be executed yet but in the next round
-			roll_to(10, vec![]);
+			roll_to(10, DEFAULT_ISSUE, &authors);
 			assert_eq!(StakePallet::total_collator_stake(), total_stake);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![4, 3]);
 			for owner in vec![1, 2, 5, 6, 7, 8, 9, 10].iter() {
@@ -777,39 +799,19 @@ fn execute_leave_candidates_with_delay() {
 			}
 			assert_eq!(
 				StakePallet::delegator_state(11),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 1, amount: 110 }].try_into().unwrap()
-					),
-					total: 110
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 1, amount: 110 })
 			);
 			assert_eq!(
 				StakePallet::delegator_state(12),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 1, amount: 120 }].try_into().unwrap()
-					),
-					total: 120
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 1, amount: 120 })
 			);
 			assert_eq!(
 				StakePallet::delegator_state(13),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 2, amount: 130 }].try_into().unwrap()
-					),
-					total: 130
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 2, amount: 130 })
 			);
 			assert_eq!(
 				StakePallet::delegator_state(14),
-				Some(Delegator::<AccountId, Balance, <Test as Config>::MaxCollatorsPerDelegator> {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 2, amount: 140 }].try_into().unwrap()
-					),
-					total: 140
-				})
+				Some(Delegator::<AccountId, Balance> { owner: 2, amount: 140 })
 			);
 			for delegator in 11u64..=14u64 {
 				assert!(StakePallet::is_delegator(&delegator));
@@ -817,7 +819,7 @@ fn execute_leave_candidates_with_delay() {
 			}
 
 			// first five exits are executed
-			roll_to(15, vec![]);
+			roll_to(15, DEFAULT_ISSUE, &authors);
 			assert_eq!(StakePallet::total_collator_stake(), total_stake);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![4, 3]);
 			for collator in vec![1u64, 2u64, 5u64, 6u64, 7u64].iter() {
@@ -838,7 +840,7 @@ fn execute_leave_candidates_with_delay() {
 			}
 
 			// last 3 exits are executed
-			roll_to(20, vec![]);
+			roll_to(20, DEFAULT_ISSUE, &authors);
 			for collator in 8u64..=10u64 {
 				assert_ok!(StakePallet::execute_leave_candidates(
 					RuntimeOrigin::signed(collator),
@@ -868,6 +870,14 @@ fn multiple_delegations() {
 			(10, 100),
 			(11, 100),
 			(12, 100),
+			// new
+			(13, 100),
+			(14, 100),
+			(15, 100),
+			(16, 100),
+			(17, 100),
+			(18, 100),
+			(99, 1),
 		])
 		.with_collators(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 10)])
 		.with_delegators(vec![(6, 1, 10), (7, 1, 10), (8, 2, 10), (9, 2, 10), (10, 1, 10)])
@@ -875,58 +885,68 @@ fn multiple_delegations() {
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 5));
-			roll_to(8, vec![]);
+			roll_to(
+				8,
+				DEFAULT_ISSUE,
+				&vec![Some(1), Some(2), Some(3), Some(4), Some(5), Some(1), Some(2), Some(3)],
+			);
 			// chooses top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			let mut expected = vec![Event::MaxSelectedCandidatesSet(2, 5), Event::NewRound(5, 1)];
+			let mut expected =
+				vec![StakeEvent::MaxSelectedCandidatesSet(2, 5), StakeEvent::NewRound(5, 1)];
 			assert_eq!(events(), expected);
 			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 1, 10),
-				Error::<Test>::AlreadyDelegatedCollator,
-			);
-			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 2),
+				StakePallet::join_delegators(RuntimeOrigin::signed(13), 2, 2),
 				Error::<Test>::DelegationBelowMin,
 			);
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 10));
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 4, 10));
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 3, 10));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(13), 2, 10));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(14), 4, 10));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(15), 3, 10));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 4, 3, 5]);
 			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 5, 10),
-				Error::<Test>::MaxCollatorsPerDelegatorExceeded,
+				StakePallet::join_delegators(RuntimeOrigin::signed(6), 5, 10),
+				Error::<Test>::AlreadyDelegating,
 			);
 
-			roll_to(16, vec![]);
+			roll_to(
+				16,
+				DEFAULT_ISSUE,
+				&vec![Some(1), Some(2), Some(3), Some(4), Some(5), Some(1), Some(2), Some(3)],
+			);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 4, 3, 5]);
 			let mut new = vec![
-				Event::Delegation(6, 10, 2, 50),
-				Event::Delegation(6, 10, 4, 30),
-				Event::Delegation(6, 10, 3, 30),
-				Event::NewRound(10, 2),
-				Event::NewRound(15, 3),
+				StakeEvent::Delegation(13, 10, 2, 50),
+				StakeEvent::Delegation(14, 10, 4, 30),
+				StakeEvent::Delegation(15, 10, 3, 30),
+				StakeEvent::NewRound(10, 2),
+				StakeEvent::NewRound(15, 3),
 			];
 			expected.append(&mut new);
 			assert_eq!(events(), expected);
 
-			roll_to(21, vec![]);
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(7), 2, 80));
+			roll_to(21, DEFAULT_ISSUE, &vec![Some(1), Some(2), Some(3), Some(4), Some(5)]);
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(16), 2, 80));
 			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(7), 3, 11),
+				StakePallet::join_delegators(RuntimeOrigin::signed(99), 3, 11),
 				BalancesError::<Test>::InsufficientBalance
 			);
 			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(10), 2, 10),
+				StakePallet::join_delegators(RuntimeOrigin::signed(17), 2, 10),
 				Error::<Test>::TooManyDelegators
 			);
-			// kick 6
-			assert!(StakePallet::unstaking(6).is_empty());
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(10), 2, 11));
-			assert!(StakePallet::delegator_state(6).is_some());
-			assert_eq!(StakePallet::unstaking(6).get(&23), Some(&10u128));
-			// kick 9
+			// kick 13 by staking 1 more (11 > 10)
+			assert!(StakePallet::unstaking(13).is_empty());
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(17), 2, 11));
+			assert!(StakePallet::delegator_state(13).is_none());
+			assert_eq!(StakePallet::unstaking(13).get(&23), Some(&10u128));
+			// kick 9 by staking 1 more (11 > 10)
 			assert!(StakePallet::unstaking(9).is_empty());
+			assert!(StakePallet::rewards(9).is_zero());
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(11), 2, 11));
+			// 11 should be initiated with the same rewarded counter as the authored counter
+			// by their collator 2
+			assert_eq!(StakePallet::blocks_rewarded(2), StakePallet::blocks_authored(11));
+
 			assert!(StakePallet::delegator_state(9).is_none());
 			assert_eq!(StakePallet::unstaking(9).get(&23), Some(&10u128));
 			assert!(!StakePallet::candidate_pool(2)
@@ -934,90 +954,90 @@ fn multiple_delegations() {
 				.delegators
 				.contains(&StakeOf::<Test> { owner: 9, amount: 10 }));
 
-			roll_to(26, vec![]);
+			roll_to(26, DEFAULT_ISSUE, &vec![Some(1), Some(2), Some(3), Some(4), Some(5)]);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![2, 1, 4, 3, 5]);
 			let mut new2 = vec![
-				Event::NewRound(20, 4),
-				Event::Delegation(7, 80, 2, 130),
-				Event::DelegationReplaced(10, 11, 6, 10, 2, 131),
-				Event::Delegation(10, 11, 2, 131),
-				Event::DelegationReplaced(11, 11, 9, 10, 2, 132),
-				Event::Delegation(11, 11, 2, 132),
-				Event::NewRound(25, 5),
+				StakeEvent::NewRound(20, 4),
+				StakeEvent::Delegation(16, 80, 2, 130),
+				StakeEvent::DelegationReplaced(17, 11, 13, 10, 2, 131),
+				StakeEvent::Delegation(17, 11, 2, 131),
+				StakeEvent::DelegationReplaced(11, 11, 9, 10, 2, 132),
+				StakeEvent::Delegation(11, 11, 2, 132),
+				StakeEvent::NewRound(25, 5),
 			];
 			expected.append(&mut new2);
 			assert_eq!(events(), expected);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(2)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 4, 3, 5]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(5, 2, 7)));
+			assert_eq!(last_event(), StakeEvent::CollatorScheduledExit(5, 2, 7));
 
-			roll_to(31, vec![]);
+			roll_to(31, DEFAULT_ISSUE, &vec![Some(1), Some(2), Some(3), Some(4), Some(5)]);
 			let mut new3 = vec![
-				Event::LeftTopCandidates(2),
-				Event::CollatorScheduledExit(5, 2, 7),
-				Event::NewRound(30, 6),
+				StakeEvent::LeftTopCandidates(2),
+				StakeEvent::CollatorScheduledExit(5, 2, 7),
+				StakeEvent::NewRound(30, 6),
 			];
 			expected.append(&mut new3);
 			assert_eq!(events(), expected);
 
 			// test join_delegator errors
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(8), 1, 10));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(18), 1, 10));
 			assert_noop!(
 				StakePallet::join_delegators(RuntimeOrigin::signed(12), 1, 10),
 				Error::<Test>::TooManyDelegators
 			);
-			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(12), 1, 10),
-				Error::<Test>::NotYetDelegating
-			);
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(12), 1, 11));
 
 			// verify that delegations are removed after collator leaves, not before
-			assert_eq!(StakePallet::delegator_state(7).unwrap().total, 90);
-			assert_eq!(StakePallet::delegator_state(7).unwrap().delegations.len(), 2usize);
-			assert_eq!(StakePallet::delegator_state(11).unwrap().total, 11);
-			assert_eq!(StakePallet::delegator_state(11).unwrap().delegations.len(), 1usize);
-			// 6 already has 10 in
-			assert_eq!(Balances::usable_balance(&7), 10);
-			assert_eq!(Balances::usable_balance(&11), 89);
-			assert_eq!(Balances::free_balance(&7), 100);
-			assert_eq!(Balances::free_balance(&11), 100);
+			assert!(StakePallet::candidate_pool(2)
+				.unwrap()
+				.delegators
+				.contains(&StakeOf::<Test> { owner: 8, amount: 10 }));
+			assert!(StakePallet::candidate_pool(2)
+				.unwrap()
+				.delegators
+				.contains(&StakeOf::<Test> { owner: 17, amount: 11 }));
+			assert_eq!(StakePallet::delegator_state(8).unwrap().amount, 10);
+			assert_eq!(StakePallet::delegator_state(17).unwrap().amount, 11);
+			assert_eq!(Balances::usable_balance(&8), 90);
+			assert_eq!(Balances::usable_balance(&17), 89);
+			assert_eq!(Balances::free_balance(&8), 100);
+			assert_eq!(Balances::free_balance(&17), 100);
 
-			roll_to(35, vec![]);
+			roll_to(35, DEFAULT_ISSUE, &vec![Some(1), Some(2), Some(3), Some(4)]);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(2), 2));
-			let mut unbonding_7: BoundedBTreeMap<
+			let mut unbonding_8: BoundedBTreeMap<
 				BlockNumber,
 				BalanceOf<Test>,
 				<Test as Config>::MaxUnstakeRequests,
 			> = BoundedBTreeMap::new();
 			assert_ok!(
-				unbonding_7.try_insert(35u64 + <Test as Config>::StakeDuration::get() as u64, 80)
+				unbonding_8.try_insert(35u64 + <Test as Config>::StakeDuration::get() as u64, 10)
 			);
-			assert_eq!(StakePallet::unstaking(7), unbonding_7);
-			let mut unbonding_11: BoundedBTreeMap<
+			assert_eq!(StakePallet::unstaking(8), unbonding_8);
+			let mut unbonding_17: BoundedBTreeMap<
 				BlockNumber,
 				BalanceOf<Test>,
 				<Test as Config>::MaxUnstakeRequests,
 			> = BoundedBTreeMap::new();
 			assert_ok!(
-				unbonding_11.try_insert(35u64 + <Test as Config>::StakeDuration::get() as u64, 11)
+				unbonding_17.try_insert(35u64 + <Test as Config>::StakeDuration::get() as u64, 11)
 			);
-			assert_eq!(StakePallet::unstaking(11), unbonding_11);
+			assert_eq!(StakePallet::unstaking(17), unbonding_17);
 
-			roll_to(37, vec![]);
-			assert_eq!(StakePallet::delegator_state(7).unwrap().total, 10);
-			assert!(StakePallet::delegator_state(11).is_none());
-			assert_eq!(StakePallet::delegator_state(7).unwrap().delegations.len(), 1usize);
-			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(7), 7));
-			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(11), 11));
+			roll_to(37, DEFAULT_ISSUE, &vec![Some(1), Some(2)]);
+			assert!(StakePallet::delegator_state(8).is_none());
+			assert!(StakePallet::delegator_state(17).is_none());
+			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(8), 8));
+			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(17), 17));
 			assert_noop!(
 				StakePallet::unlock_unstaked(RuntimeOrigin::signed(12), 12),
 				Error::<Test>::UnstakingIsEmpty
 			);
-			assert_eq!(Balances::usable_balance(&11), 100);
-			assert_eq!(Balances::usable_balance(&7), 90);
-			assert_eq!(Balances::free_balance(&11), 100);
-			assert_eq!(Balances::free_balance(&7), 100);
+			assert_eq!(Balances::usable_balance(&17), 100);
+			assert_eq!(Balances::usable_balance(&8), 100);
+			assert_eq!(Balances::free_balance(&17), 100);
+			assert_eq!(Balances::free_balance(&8), 100);
 		});
 }
 
@@ -1058,13 +1078,13 @@ fn should_update_total_stake() {
 			);
 
 			old_stake = StakePallet::total_collator_stake();
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 1, 50));
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 50));
 			assert_noop!(
-				StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 1, 0),
+				StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 0),
 				Error::<Test>::ValStakeZero
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 1, 0),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 0),
 				Error::<Test>::ValStakeZero
 			);
 			assert_eq!(
@@ -1073,7 +1093,7 @@ fn should_update_total_stake() {
 			);
 
 			old_stake = StakePallet::total_collator_stake();
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 1, 50));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 50));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { delegators: old_stake.delegators - 50, ..old_stake }
@@ -1087,23 +1107,16 @@ fn should_update_total_stake() {
 			);
 
 			old_stake = StakePallet::total_collator_stake();
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(11), 2, 150));
-			assert_eq!(
-				StakePallet::total_collator_stake(),
-				TotalStake { delegators: old_stake.delegators + 150, ..old_stake }
-			);
-
-			old_stake = StakePallet::total_collator_stake();
-			assert_eq!(StakePallet::delegator_state(11).unwrap().total, 350);
+			assert_eq!(StakePallet::delegator_state(11).unwrap().amount, 200);
 			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(11)));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
-				TotalStake { delegators: old_stake.delegators - 350, ..old_stake }
+				TotalStake { delegators: old_stake.delegators - 200, ..old_stake }
 			);
 
 			let old_stake = StakePallet::total_collator_stake();
-			assert_eq!(StakePallet::delegator_state(8).unwrap().total, 10);
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(8), 2));
+			assert_eq!(StakePallet::delegator_state(8).unwrap().amount, 10);
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(8)));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { delegators: old_stake.delegators - 10, ..old_stake }
@@ -1130,7 +1143,7 @@ fn should_update_total_stake() {
 			assert_eq!(StakePallet::total_collator_stake(), old_stake);
 
 			// shouldn't change total stake when 2 leaves
-			roll_to(10, vec![]);
+			roll_to(10, DEFAULT_ISSUE, &vec![]);
 			assert_eq!(StakePallet::total_collator_stake(), old_stake);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(2), 2));
 			assert_eq!(StakePallet::total_collator_stake(), old_stake);
@@ -1158,17 +1171,15 @@ fn collators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
-			roll_to(4, vec![]);
+			let authors = vec![];
+
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_noop!(
 				StakePallet::candidate_stake_more(RuntimeOrigin::signed(6), 50),
 				Error::<Test>::CandidateNotFound
 			);
 			assert_noop!(
 				StakePallet::candidate_stake_less(RuntimeOrigin::signed(6), 50),
-				Error::<Test>::CandidateNotFound
-			);
-			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 50, 10),
 				Error::<Test>::CandidateNotFound
 			);
 			assert_ok!(StakePallet::candidate_stake_more(RuntimeOrigin::signed(1), 50));
@@ -1190,7 +1201,7 @@ fn collators_bond() {
 				Error::<Test>::CannotStakeIfLeaving
 			);
 
-			roll_to(30, vec![]);
+			roll_to(30, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(1), 1));
 			assert_noop!(
 				StakePallet::candidate_stake_more(RuntimeOrigin::signed(1), 40),
@@ -1249,65 +1260,47 @@ fn delegators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
-			roll_to(4, vec![]);
+			let authors = vec![];
+
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_noop!(
 				StakePallet::join_delegators(RuntimeOrigin::signed(6), 2, 50),
 				Error::<Test>::AlreadyDelegating
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_more(RuntimeOrigin::signed(1), 2, 50),
+				StakePallet::delegator_stake_more(RuntimeOrigin::signed(1), 50),
 				Error::<Test>::DelegatorNotFound
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(1), 2, 50),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(1), 50),
 				Error::<Test>::DelegatorNotFound
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 2, 50),
-				Error::<Test>::DelegationNotFound
-			);
-			assert_noop!(
-				StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 6, 50),
-				Error::<Test>::CandidateNotFound
-			);
-			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 6, 50),
-				Error::<Test>::CandidateNotFound
-			);
-			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 11),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 11),
 				Error::<Test>::Underflow
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 8),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 8),
 				Error::<Test>::DelegationBelowMin
 			);
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 10));
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 6),
-				Error::<Test>::NomStakeBelowMin
-			);
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 1, 10));
-			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 2, 5),
-				Error::<Test>::DelegationNotFound
-			);
-			assert_noop!(
-				StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 1, 81),
+				StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 81),
 				BalancesError::<Test>::InsufficientBalance
 			);
 			assert_noop!(
 				StakePallet::join_delegators(RuntimeOrigin::signed(10), 1, 4),
-				Error::<Test>::NomStakeBelowMin
+				Error::<Test>::DelegationBelowMin
 			);
 
-			roll_to(9, vec![]);
+			roll_to(9, DEFAULT_ISSUE, &authors);
 			assert_eq!(Balances::usable_balance(&6), 80);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(1)));
 			assert!(StakePallet::candidate_pool(1)
 				.unwrap()
 				.can_exit(1 + <Test as Config>::ExitQueueDelay::get()));
 
-			roll_to(31, vec![]);
+			roll_to(31, DEFAULT_ISSUE, &authors);
 			assert!(StakePallet::is_delegator(&6));
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(1), 1));
 			assert!(!StakePallet::is_delegator(&6));
@@ -1317,55 +1310,27 @@ fn delegators_bond() {
 }
 
 #[test]
-fn revoke_delegation_or_leave_delegators() {
+fn should_leave_delegators() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(1, 100),
-			(2, 100),
-			(3, 100),
-			(4, 100),
-			(5, 100),
-			(6, 100),
-			(7, 100),
-			(8, 100),
-			(9, 100),
-			(10, 100),
-		])
-		.with_collators(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 10)])
-		.with_delegators(vec![(6, 1, 10), (7, 1, 10), (8, 2, 10), (9, 2, 10), (10, 1, 10)])
-		.set_blocks_per_round(5)
+		.with_balances(vec![(1, 100), (2, 100)])
+		.with_collators(vec![(1, 100)])
+		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
-			roll_to(4, vec![]);
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
+			assert!(StakePallet::delegator_state(2).is_none());
+			assert!(!StakePallet::candidate_pool(1)
+				.unwrap()
+				.delegators
+				.contains(&StakeOf::<Test> { owner: 2, amount: 100 }));
 			assert_noop!(
-				StakePallet::revoke_delegation(RuntimeOrigin::signed(1), 2),
+				StakePallet::leave_delegators(RuntimeOrigin::signed(2)),
 				Error::<Test>::DelegatorNotFound
-			);
-			assert_noop!(
-				StakePallet::revoke_delegation(RuntimeOrigin::signed(6), 2),
-				Error::<Test>::DelegationNotFound
 			);
 			assert_noop!(
 				StakePallet::leave_delegators(RuntimeOrigin::signed(1)),
 				Error::<Test>::DelegatorNotFound
 			);
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 3));
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 3, 3));
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(6), 1));
-			// cannot revoke delegation because would leave remaining total below
-			// MinDelegatorStake
-			assert_noop!(
-				StakePallet::revoke_delegation(RuntimeOrigin::signed(6), 2),
-				Error::<Test>::NomStakeBelowMin
-			);
-			assert_noop!(
-				StakePallet::revoke_delegation(RuntimeOrigin::signed(6), 3),
-				Error::<Test>::NomStakeBelowMin
-			);
-			// can revoke both remaining by calling leave delegators
-			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(6)));
-			// this leads to 8 leaving set of delegators
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(8), 2));
 		});
 }
 
@@ -1387,24 +1352,26 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
-			roll_to(5, vec![]);
-			let init = vec![Event::NewRound(5, 1)];
+			let authors = vec![];
+
+			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			roll_to(5, DEFAULT_ISSUE, &authors);
+			let init = vec![StakeEvent::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 			assert_noop!(
 				StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 1),
 				Error::<Test>::CannotSetBelowMin
 			);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
+			assert_eq!(last_event(), StakeEvent::BlocksPerRoundSet(1, 5, 5, 3));
 
 			// reward_rate config should be untouched after per_block update
 			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			// last round startet at 5 but we are already at 9, so we expect 9 to be the new
 			// round
-			roll_to(8, vec![]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::NewRound(8, 2)));
+			roll_to(8, DEFAULT_ISSUE, &authors);
+			assert_eq!(last_event(), StakeEvent::NewRound(8, 2));
 		});
 
 	// if duration of current round is less than new bpr, round waits until new bpr
@@ -1417,25 +1384,27 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
+			let authors = vec![];
+
+			assert_eq!(reward_rate, StakePallet::reward_rate_config());
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
-			roll_to(6, vec![]);
+			roll_to(6, DEFAULT_ISSUE, &authors);
 			// chooses top MaxSelectedCandidates (5), in order
-			let init = vec![Event::NewRound(5, 1)];
+			let init = vec![StakeEvent::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
+			assert_eq!(last_event(), StakeEvent::BlocksPerRoundSet(1, 5, 5, 3));
 
 			// reward_rate config should be untouched after per_block update
 			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			// there should not be a new event
-			roll_to(7, vec![]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
+			roll_to(7, DEFAULT_ISSUE, &authors);
+			assert_eq!(last_event(), StakeEvent::BlocksPerRoundSet(1, 5, 5, 3));
 
-			roll_to(8, vec![]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::NewRound(8, 2)));
+			roll_to(8, DEFAULT_ISSUE, &authors);
+			assert_eq!(last_event(), StakeEvent::NewRound(8, 2));
 		});
 
 	// round_immediately_jumps_if_current_duration_exceeds_new_blocks_per_round
@@ -1447,28 +1416,42 @@ fn round_transitions() {
 		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
-			roll_to(7, vec![]);
+			assert_eq!(reward_rate, StakePallet::reward_rate_config());
+			roll_to(7, DEFAULT_ISSUE, &authors);
 			// chooses top MaxSelectedCandidates (5), in order
-			let init = vec![Event::NewRound(5, 1)];
+			let init = vec![StakeEvent::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 
 			// reward_rate config should be untouched after per_block update
 			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
-			roll_to(8, vec![]);
+			assert_eq!(
+				StakePallet::reward_rate_config(),
+				RewardRateInfo::new(
+					Perquintill::from_percent(col_rate),
+					Perquintill::from_percent(del_rate),
+				)
+			);
+			assert_eq!(last_event(), StakeEvent::BlocksPerRoundSet(1, 5, 5, 3));
+			roll_to(8, DEFAULT_ISSUE, &authors);
 
 			// last round startet at 5, so we expect 8 to be the new round
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::NewRound(8, 2)));
+			assert_eq!(last_event(), StakeEvent::NewRound(8, 2));
 		});
 }
 
 #[test]
 fn coinbase_rewards_few_blocks_detailed_check() {
+	// let mut helper = ExtHelper::new(
+	// 	Balance::from(1000u128),
+	// 	vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)],
+	// );
+
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 40_000_000 * DECIMALS),
@@ -1483,33 +1466,33 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
+			let issue_number = Balance::from(1000u128);
+
+			let reward_info = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
 			// compute rewards
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
-
-			let c_total_rewards = c_rewards + d_rewards;
-			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2. / 3.));
-			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1. / 3.));
+			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 16u128);
+			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
+			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
+			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
 				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
-			let user_1 = Balances::usable_balance(&1);
-			let user_2 = Balances::usable_balance(&2);
-			let user_3 = Balances::usable_balance(&3);
-			let user_4 = Balances::usable_balance(&4);
-			let user_5 = Balances::usable_balance(&5);
+			let user_1 = (40_000_000 - 8_000_000) * DECIMALS;
+			let user_2 = (40_000_000 - 8_000_000) * DECIMALS;
+			let user_3 = (40_000_000 - 32_000_000) * DECIMALS;
+			let user_4 = (20_000_000 - 16_000_000) * DECIMALS;
+			let user_5 = (20_000_000 - 16_000_000) * DECIMALS;
 
+			// check free balances are correct
 			assert_eq!(Balances::usable_balance(&1), user_1);
 			assert_eq!(Balances::usable_balance(&2), user_2);
 			assert_eq!(Balances::usable_balance(&3), user_3);
@@ -1517,46 +1500,51 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 1st block
-			roll_to(2, authors.clone());
+			roll_to_claim_every_reward(2, issue_number, &authors);
+			// helper.roll_to_claim_every_reward(2, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + d_2_rewards);
+			assert_eq!(Balances::usable_balance(&3), user_3 + d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + d_rewards1_2);
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 2nd block
-			roll_to(3, authors.clone());
+			roll_to_claim_every_reward(3, issue_number, &authors);
+			// helper.roll_to_claim_every_reward(3, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 2 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 2 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 2 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(&3), user_3 + 2 * d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + 2 * d_rewards1_2);
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 1 is block author for 3rd block
-			roll_to(4, authors.clone());
+			roll_to_claim_every_reward(4, issue_number, &authors);
+			// helper.roll_to_claim_every_reward(4, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_rewards1_2);
 			assert_eq!(Balances::usable_balance(&5), user_5);
 
 			// 2 is block author for 4th block
-			roll_to(5, authors.clone());
+			roll_to_claim_every_reward(5, issue_number, &authors);
+			// helper.roll_to_claim_every_reward(5, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
 			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
+			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_rewards1_2);
+			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards2_1);
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(5)));
 
 			// 2 is block author for 5th block
-			roll_to(6, authors);
+			roll_to_claim_every_reward(6, issue_number, &authors);
+			// helper.roll_to_claim_every_reward(6, None);
 			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards + c_total_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(&2), user_2 + 2 * c_rewards);
+			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_rewards1_2);
 			// should not receive rewards due to revoked delegation
-			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
+			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards2_1);
 		});
 }
 
@@ -1567,14 +1555,14 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		.with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 10_000_000 * DECIMALS)])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		// .with_inflation(10, 15, 40, 15, 5)
 		.build()
 		.execute_with(|| {
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			let authors: Vec<Option<AccountId>> = (1u64..100u64).map(|_| Some(1u64)).collect();
 			assert_eq!(Balances::usable_balance(&1), Balance::zero());
 			assert_eq!(Balances::usable_balance(&2), Balance::zero());
-			roll_to(100, authors);
+			roll_to_claim_every_reward(100, DEFAULT_ISSUE, &authors);
 			assert!(Balances::usable_balance(&1) > Balance::zero());
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(2), 2));
 			assert_eq!(Balances::usable_balance(&2), 10_000_000 * DECIMALS);
@@ -1588,24 +1576,26 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS), (3, 1, 10_000_000 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		// .with_inflation(10, 15, 40, 15, 5)
 		.build()
 		.execute_with(|| {
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(3), 1));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(3)));
 			let authors: Vec<Option<AccountId>> = (1u64..100u64).map(|_| Some(1u64)).collect();
 			assert_eq!(Balances::usable_balance(&1), Balance::zero());
 			assert_eq!(Balances::usable_balance(&2), Balance::zero());
 			assert_eq!(Balances::usable_balance(&3), Balance::zero());
-			roll_to(100, authors);
+			roll_to_claim_every_reward(100, DEFAULT_ISSUE, &authors);
 			assert!(Balances::usable_balance(&1) > Balance::zero());
 			assert!(Balances::usable_balance(&2) > Balance::zero());
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(3), 3));
 			assert_eq!(Balances::usable_balance(&3), 10_000_000 * DECIMALS);
 		});
 }
+
 #[test]
 fn coinbase_rewards_many_blocks_simple_check() {
 	let num_of_years: Perquintill = Perquintill::from_perthousand(2);
+	let issue_number = 80_000_000;
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 40_000_000 * DECIMALS),
@@ -1623,8 +1613,9 @@ fn coinbase_rewards_many_blocks_simple_check() {
 		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
+			let d_stake_rate = Perquintill::from_percent(100);
 
+			let reward_rate = StakePallet::reward_rate_config();
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
@@ -1634,44 +1625,31 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			// set round robin authoring
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
-			roll_to(end_block, authors);
 
+			roll_to_claim_every_reward(end_block, issue_number, &authors);
 			let rewards_1 = Balances::free_balance(&1).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_2 = Balances::free_balance(&2).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_3 = Balances::free_balance(&3).saturating_sub(40_000_000 * DECIMALS);
 			let rewards_4 = Balances::free_balance(&4).saturating_sub(20_000_000 * DECIMALS);
 			let rewards_5 = Balances::free_balance(&5).saturating_sub(20_000_000 * DECIMALS);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+
+			// calculate expected rewards after these years
+			let avg_bl_reward = StakePallet::average_block_reward();
+			let c_rewards = calc_collator_rewards(&avg_bl_reward, &reward_rate);
+			let d_rewards = calc_delegator_rewards(&avg_bl_reward, &d_stake_rate, &reward_rate);
 			let expected_collator_rewards = end_block as u128 * c_rewards;
 			let expected_delegator_rewards = end_block as u128 * d_rewards;
 
-			// collator rewards should be about the same
+			// collators rewards should be about the same
 			assert!(almost_equal(rewards_1, rewards_2, Perbill::from_perthousand(1)));
-			assert!(
-				almost_equal(
-					rewards_1,
-					c_rewards * end_block as u128 / 2,
-					Perbill::from_perthousand(1)
-				),
-				"left {:?}, right {:?}",
-				rewards_1,
-				c_rewards * end_block as u128 / 2,
-			);
 
 			// delegator rewards should be about the same
 			assert!(
 				almost_equal(rewards_3 + rewards_4, rewards_5, Perbill::from_perthousand(1)),
 				"left {:?}, right {:?}",
-				rewards_3 + rewards_4,
-				rewards_5
+				rewards_3,
+				rewards_4 + rewards_5
 			);
-			assert!(almost_equal(
-				rewards_5,
-				d_rewards * end_block as u128 / 2,
-				Perbill::from_perthousand(1)
-			));
 
 			// check rewards in total
 			assert!(
@@ -1732,14 +1710,15 @@ fn should_not_reward_delegators_below_min_stake() {
 			<crate::CandidatePool<Test>>::insert(&1u64, state);
 
 			let authors: Vec<Option<AccountId>> =
-				vec![Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
+				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
 			assert_eq!(Balances::usable_balance(&1), Balance::zero());
 			assert_eq!(Balances::usable_balance(&2), Balance::zero());
 			assert_eq!(Balances::usable_balance(&3), Balance::zero());
 			assert_eq!(Balances::usable_balance(&4), 5);
 
 			// should only reward 1
-			roll_to(4, authors);
+			// roll_to_claim_every_reward(4, DEFAULT_ISSUE, &authors);
+			roll_to_then_claim_rewards(4, DEFAULT_ISSUE, &authors);
 			assert!(Balances::usable_balance(&1) > Balance::zero());
 			assert_eq!(Balances::usable_balance(&4), 5);
 			assert_eq!(Balances::usable_balance(&2), Balance::zero());
@@ -2099,7 +2078,9 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			let authors = vec![];
+
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			let mut unstaking: BoundedBTreeMap<
 				BlockNumber,
 				BalanceOf<Test>,
@@ -2115,9 +2096,9 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// join delegators and revoke again --> consume unstaking at block 3
-			roll_to(2, vec![]);
+			roll_to(2, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100));
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			unstaking.remove(&3);
 			assert_ok!(unstaking.try_insert(4, 100));
 			assert_eq!(StakePallet::unstaking(2), unstaking);
@@ -2128,7 +2109,7 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// should reduce unlocking but not unlock anything
-			roll_to(3, vec![]);
+			roll_to(3, DEFAULT_ISSUE, &authors);
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
@@ -2136,7 +2117,7 @@ fn unlock_unstaked() {
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
-			roll_to(4, vec![]);
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			unstaking.remove(&4);
 			assert_eq!(Balances::locks(2), vec![lock]);
 			// shouldn't be able to unlock anything
@@ -2156,7 +2137,9 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			let authors = vec![];
+
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			let mut unstaking: BoundedBTreeMap<
 				BlockNumber,
 				BalanceOf<Test>,
@@ -2172,9 +2155,9 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// join delegators and revoke again
-			roll_to(2, vec![]);
+			roll_to(2, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100));
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			unstaking.remove(&3);
 			assert_ok!(unstaking.try_insert(4, 100));
 			lock.amount = 100;
@@ -2185,7 +2168,7 @@ fn unlock_unstaked() {
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
-			roll_to(3, vec![]);
+			roll_to(3, DEFAULT_ISSUE, &authors);
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
@@ -2194,7 +2177,7 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// unlock unstaked, remove lock, empty unlocking
-			roll_to(4, vec![]);
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			unstaking.remove(&4);
 			assert_eq!(Balances::locks(2), vec![lock]);
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(2), 2));
@@ -2215,7 +2198,9 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			let authors = vec![];
+
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			let mut unstaking: BoundedBTreeMap<
 				BlockNumber,
 				BalanceOf<Test>,
@@ -2231,9 +2216,9 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// join delegators and revoke again
-			roll_to(2, vec![]);
+			roll_to(2, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 10));
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			assert_ok!(unstaking.try_insert(3, 90));
 			assert_ok!(unstaking.try_insert(4, 10));
 			assert_eq!(StakePallet::unstaking(2), unstaking);
@@ -2244,7 +2229,7 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// should reduce unlocking but not unlock anything
-			roll_to(3, vec![]);
+			roll_to(3, DEFAULT_ISSUE, &authors);
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 			// should be able to unlock 90 of 100 from unstaking
@@ -2254,7 +2239,7 @@ fn unlock_unstaked() {
 			assert_eq!(StakePallet::unstaking(2), unstaking);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
-			roll_to(4, vec![]);
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_eq!(Balances::locks(2), vec![lock]);
 			// should be able to unlock 10 of remaining 10
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(2), 2));
@@ -2276,6 +2261,8 @@ fn unlock_unstaked() {
 		.with_delegators(vec![(2, 1, 200)])
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			// should be able to decrease more often than MaxUnstakeRequests because it's
 			// the same block and thus unstaking is increased at block 3 instead of having
 			// multiple entries for the same block
@@ -2285,12 +2272,12 @@ fn unlock_unstaked() {
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10),);
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10),);
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10),);
 			let mut unstaking: BoundedBTreeMap<
 				BlockNumber,
 				BalanceOf<Test>,
@@ -2310,9 +2297,9 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(1), vec![lock.clone()]);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
-			roll_to(2, vec![]);
+			roll_to(2, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10),);
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10),);
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10),);
 			assert_ok!(unstaking.try_insert(4, 10));
 			assert_eq!(Balances::locks(1), vec![lock.clone()]);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
@@ -2326,9 +2313,9 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(1), vec![lock.clone()]);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
-			roll_to(3, vec![]);
+			roll_to(3, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10),);
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10),);
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10),);
 			assert_ok!(unstaking.try_insert(5, 10));
 			assert_ok!(unstaking.try_insert(5, 10));
 			assert_eq!(Balances::locks(1), vec![lock.clone()]);
@@ -2346,15 +2333,15 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
 			// reach MaxUnstakeRequests
-			roll_to(4, vec![]);
+			roll_to(4, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			roll_to(5, vec![]);
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			roll_to(5, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
-			roll_to(6, vec![]);
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
+			roll_to(6, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10));
 			assert_ok!(unstaking.try_insert(6, 10));
 			assert_ok!(unstaking.try_insert(7, 10));
 			assert_ok!(unstaking.try_insert(8, 10));
@@ -2363,13 +2350,13 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(1), vec![lock.clone()]);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 
-			roll_to(7, vec![]);
+			roll_to(7, DEFAULT_ISSUE, &authors);
 			assert_noop!(
 				StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10),
 				Error::<Test>::NoMoreUnstaking
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 10),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 10),
 				Error::<Test>::NoMoreUnstaking
 			);
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(1), 1));
@@ -2384,10 +2371,10 @@ fn unlock_unstaked() {
 			assert_eq!(Balances::locks(1), vec![lock.clone()]);
 			assert_eq!(Balances::locks(2), vec![lock.clone()]);
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 40));
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, 40));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 40));
 			assert_ok!(unstaking.try_insert(9, 40));
 			assert_ok!(StakePallet::candidate_stake_more(RuntimeOrigin::signed(1), 30));
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(2), 1, 30));
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(2), 30));
 			unstaking.remove(&8);
 			assert_ok!(unstaking.try_insert(9, 20));
 			assert_eq!(StakePallet::unstaking(1), unstaking);
@@ -2433,6 +2420,7 @@ fn kick_candidate_with_full_unstaking() {
 			assert_ok!(StakePallet::join_candidates(RuntimeOrigin::signed(3), 100));
 		});
 }
+
 #[test]
 fn kick_delegator_with_full_unstaking() {
 	ExtBuilder::default()
@@ -2446,14 +2434,14 @@ fn kick_delegator_with_full_unstaking() {
 			// Fill unstake requests
 			for block in 1u64..1u64.saturating_add(max_unstake_reqs as u64) {
 				System::set_block_number(block);
-				assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(5), 1, 1));
+				assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(5), 1));
 			}
 			assert_eq!(StakePallet::unstaking(5).into_inner().len(), max_unstake_reqs);
 
 			// Additional unstake should fail
 			System::set_block_number(100);
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(5), 1, 1),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(5), 1),
 				Error::<Test>::NoMoreUnstaking
 			);
 
@@ -2481,6 +2469,8 @@ fn candidate_leaves() {
 		.with_delegators(vec![(12, 1, 100), (13, 1, 10)])
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			assert_eq!(
 				StakePallet::top_candidates().into_iter().map(|s| s.owner).collect::<Vec<u64>>(),
 				vec![1, 2]
@@ -2512,11 +2502,11 @@ fn candidate_leaves() {
 				Error::<Test>::CannotDelegateIfLeaving
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_more(RuntimeOrigin::signed(12), 1, 1),
+				StakePallet::delegator_stake_more(RuntimeOrigin::signed(12), 1),
 				Error::<Test>::CannotDelegateIfLeaving
 			);
 			assert_noop!(
-				StakePallet::delegator_stake_less(RuntimeOrigin::signed(12), 1, 1),
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(12), 1),
 				Error::<Test>::CannotDelegateIfLeaving
 			);
 			assert_noop!(
@@ -2537,7 +2527,7 @@ fn candidate_leaves() {
 			assert!(StakePallet::candidate_pool(1).unwrap().can_exit(3));
 
 			// next rounds starts, cannot leave yet
-			roll_to(5, vec![]);
+			roll_to(5, DEFAULT_ISSUE, &authors);
 			assert_noop!(
 				StakePallet::execute_leave_candidates(RuntimeOrigin::signed(2), 2),
 				Error::<Test>::NotLeaving
@@ -2583,7 +2573,7 @@ fn candidate_leaves() {
 
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(1)));
 
-			roll_to(15, vec![]);
+			roll_to(15, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(13), 1));
 			let mut unstaking: BoundedBTreeMap<
 				BlockNumber,
@@ -2595,14 +2585,14 @@ fn candidate_leaves() {
 			assert_eq!(StakePallet::unstaking(12), unstaking);
 
 			// cannot unlock yet
-			roll_to(16, vec![]);
+			roll_to(16, DEFAULT_ISSUE, &authors);
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(4), 1));
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(4), 12));
 			assert_eq!(StakePallet::unstaking(1), unstaking);
 			assert_eq!(StakePallet::unstaking(12), unstaking);
 
 			// can unlock now
-			roll_to(17, vec![]);
+			roll_to(17, DEFAULT_ISSUE, &authors);
 			unstaking.remove(&17);
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(4), 1));
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(4), 12));
@@ -2610,6 +2600,91 @@ fn candidate_leaves() {
 			assert_eq!(StakePallet::unstaking(12), unstaking);
 		});
 }
+
+// Note: At Peaq this test is currently not possible due to minting of fixed amount
+// 		 of tokens instead of having a configurable inflation rate.
+// #[test]
+// fn adjust_reward_rates() {
+// 	ExtBuilder::default()
+// 		.with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 90_000_000 * DECIMALS)])
+// 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
+// 		.with_delegators(vec![(2, 1, 40_000_000 * DECIMALS)])
+// 		.with_inflation(10, 10, 40, 8, 5)
+// 		.build()
+// 		.execute_with(|| {
+// 			let inflation_0 = StakePallet::inflation_config();
+// 			let num_of_years = 3 * <Test as Config>::BLOCKS_PER_YEAR;
+// 			// 1 authors every block
+// 			let authors: Vec<Option<AccountId>> = (0u64..=num_of_years).map(|_| Some(1u64)).collect();
+
+// 			// reward once in first year
+// 			roll_to_claim_every_reward(2, &authors);
+// 			let c_rewards_0 = Balances::free_balance(&1).saturating_sub(10_000_000 * DECIMALS);
+// 			let d_rewards_0 = Balances::free_balance(&2).saturating_sub(90_000_000 * DECIMALS);
+// 			assert!(!c_rewards_0.is_zero());
+// 			assert!(!d_rewards_0.is_zero());
+
+// 			// finish first year
+// 			System::set_block_number(<Test as Config>::BLOCKS_PER_YEAR);
+// 			roll_to_claim_every_reward(<Test as Config>::BLOCKS_PER_YEAR + 1, vec![]);
+// 			// reward reduction should not happen automatically anymore
+// 			assert_eq!(StakePallet::last_reward_reduction(), 0u64);
+// 			assert_ok!(StakePallet::execute_scheduled_reward_change(RuntimeOrigin::signed(1)));
+// 			assert_eq!(StakePallet::last_reward_reduction(), 1u64);
+// 			let inflation_1 = InflationInfo::new(
+// 				<Test as Config>::BLOCKS_PER_YEAR,
+// 				inflation_0.collator.max_rate,
+// 				Perquintill::from_parts(98000000000000000),
+// 				inflation_0.delegator.max_rate,
+// 				Perquintill::from_percent(6),
+// 			);
+// 			assert_eq!(StakePallet::inflation_config(), inflation_1);
+// 			// reward once in 2nd year
+// 			roll_to_claim_every_reward(<Test as Config>::BLOCKS_PER_YEAR + 2, &authors);
+// 			let c_rewards_1 = Balances::free_balance(&1)
+// 				.saturating_sub(10_000_000 * DECIMALS)
+// 				.saturating_sub(c_rewards_0);
+// 			let d_rewards_1 = Balances::free_balance(&2)
+// 				.saturating_sub(90_000_000 * DECIMALS)
+// 				.saturating_sub(d_rewards_0);
+// 			assert!(
+// 				c_rewards_0 > c_rewards_1,
+// 				"left {:?}, right {:?}",
+// 				c_rewards_0,
+// 				c_rewards_1
+// 			);
+// 			assert!(d_rewards_0 > d_rewards_1);
+
+// 			// finish 2nd year
+// 			System::set_block_number(2 * <Test as Config>::BLOCKS_PER_YEAR);
+// 			roll_to_claim_every_reward(2 * <Test as Config>::BLOCKS_PER_YEAR + 1, vec![]);
+// 			// reward reduction should not happen automatically anymore
+// 			assert_eq!(StakePallet::last_reward_reduction(), 1u64);
+// 			assert_ok!(StakePallet::execute_scheduled_reward_change(RuntimeOrigin::signed(1)));
+// 			assert_eq!(StakePallet::last_reward_reduction(), 2u64);
+// 			let inflation_2 = InflationInfo::new(
+// 				<Test as Config>::BLOCKS_PER_YEAR,
+// 				inflation_0.collator.max_rate,
+// 				Perquintill::from_parts(96040000000000000),
+// 				inflation_0.delegator.max_rate,
+// 				Perquintill::zero(),
+// 			);
+// 			assert_eq!(StakePallet::inflation_config(), inflation_2);
+// 			// reward once in 3rd year
+// 			roll_to_claim_every_reward(2 * <Test as Config>::BLOCKS_PER_YEAR + 2, authors);
+// 			let c_rewards_2 = Balances::free_balance(&1)
+// 				.saturating_sub(10_000_000 * DECIMALS)
+// 				.saturating_sub(c_rewards_0)
+// 				.saturating_sub(c_rewards_1);
+// 			assert!(c_rewards_1 > c_rewards_2);
+// 			// should be zero because we set reward rate to zero
+// 			let d_rewards_2 = Balances::free_balance(&2)
+// 				.saturating_sub(90_000_000 * DECIMALS)
+// 				.saturating_sub(d_rewards_0)
+// 				.saturating_sub(d_rewards_1);
+// 			assert!(d_rewards_2.is_zero());
+// 		});
+// }
 
 #[test]
 fn increase_max_candidate_stake() {
@@ -2626,10 +2701,7 @@ fn increase_max_candidate_stake() {
 			);
 
 			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), max_stake + 1));
-			assert_eq!(
-				last_event(),
-				MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(max_stake + 1))
-			);
+			assert_eq!(last_event(), StakeEvent::MaxCandidateStakeChanged(max_stake + 1));
 			assert_eq!(StakePallet::max_candidate_stake(), max_stake + 1);
 			assert_ok!(StakePallet::candidate_stake_more(RuntimeOrigin::signed(1), 1));
 			assert_noop!(
@@ -2663,7 +2735,7 @@ fn decrease_max_candidate_stake() {
 
 			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 50));
 			assert_eq!(StakePallet::max_candidate_stake(), 50);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(50)));
+			assert_eq!(last_event(), StakeEvent::MaxCandidateStakeChanged(50));
 
 			// check collator states, nothing changed
 			assert_eq!(
@@ -2702,51 +2774,40 @@ fn decrease_max_candidate_stake() {
 #[test]
 fn exceed_delegations_per_round() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
-		.with_collators(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100)])
-		.with_delegators(vec![(6, 1, 10)])
+		.with_balances(vec![(1, 100), (2, 100)])
+		.with_collators(vec![(1, 100)])
+		.with_delegators(vec![(2, 1, 100)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 10));
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 3, 10));
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 4, 10));
-			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 5, 10),
-				Error::<Test>::MaxCollatorsPerDelegatorExceeded
-			);
-
-			// revoke delegation to allow one more collator for this delegator
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(6), 4));
+			// leave and re-join to set counter to 2 (= MaxDelegationsPerRound)
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
 			// reached max delegations in this round
 			assert_noop!(
-				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 5, 10),
-				Error::<Test>::DelegationsPerRoundExceeded
-			);
-
-			// revoke all delegations in the same round
-			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(6)));
-			assert_noop!(
-				StakePallet::join_delegators(RuntimeOrigin::signed(6), 1, 10),
+				StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100),
 				Error::<Test>::DelegationsPerRoundExceeded
 			);
 
 			// roll to next round to clear DelegationCounter
-			roll_to(5, vec![]);
-			assert_eq!(StakePallet::last_delegation(6), DelegationCounter { round: 0, counter: 4 });
-			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(6), 1, 10),);
-			assert_eq!(StakePallet::last_delegation(6), DelegationCounter { round: 1, counter: 1 });
-			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(6)));
-			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(6), 1, 10),);
-			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(6)));
-			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(6), 1, 10),);
-			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(6)));
-			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(6), 1, 10),);
-			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(6)));
-			assert_eq!(StakePallet::last_delegation(6), DelegationCounter { round: 1, counter: 4 });
+			roll_to(5, DEFAULT_ISSUE, &vec![]);
+			assert_eq!(StakePallet::last_delegation(2), DelegationCounter { round: 0, counter: 2 });
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100));
+			// counter should be reset because the round changed
+			assert_eq!(StakePallet::last_delegation(2), DelegationCounter { round: 1, counter: 1 });
+			// leave and re-join to set counter to 2 (= MaxDelegationsPerRound))
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100));
 			assert_noop!(
-				StakePallet::join_delegators(RuntimeOrigin::signed(6), 1, 10),
+				StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100),
+				Error::<Test>::AlreadyDelegating
+			);
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(2)));
+			assert_noop!(
+				StakePallet::join_delegators(RuntimeOrigin::signed(2), 1, 100),
 				Error::<Test>::DelegationsPerRoundExceeded
 			);
+			assert_eq!(StakePallet::last_delegation(2), DelegationCounter { round: 1, counter: 2 });
 		});
 }
 
@@ -2758,8 +2819,10 @@ fn force_remove_candidate() {
 		.with_delegators(vec![(4, 1, 50), (5, 1, 50)])
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			assert_eq!(CandidatePool::<Test>::count(), 3);
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(4), 2, 50));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(6), 2, 50));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
 			assert!(StakePallet::unstaking(1).get(&3).is_none());
 			assert!(StakePallet::unstaking(2).get(&3).is_none());
@@ -2779,23 +2842,15 @@ fn force_remove_candidate() {
 				TotalStake { collators: 200, delegators: 50 }
 			);
 			assert_eq!(Session::disabled_validators(), vec![0]);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorRemoved(1, 200)));
+			assert_eq!(last_event(), StakeEvent::CollatorRemoved(1, 200));
 			assert!(
 				!StakePallet::top_candidates().contains(&StakeOf::<Test> { owner: 1, amount: 100 })
 			);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![2, 3]);
 			assert_eq!(CandidatePool::<Test>::count(), 2);
 			assert!(StakePallet::candidate_pool(1).is_none());
+			assert!(StakePallet::delegator_state(4).is_none());
 			assert!(StakePallet::delegator_state(5).is_none());
-			assert_eq!(
-				StakePallet::delegator_state(4),
-				Some(Delegator {
-					delegations: OrderedSet::from(
-						vec![StakeOf::<Test> { owner: 2, amount: 50 }].try_into().unwrap()
-					),
-					total: 50
-				})
-			);
 			assert_eq!(StakePallet::unstaking(1).get(&3), Some(&100));
 			assert_eq!(StakePallet::unstaking(4).get(&3), Some(&50));
 			assert_eq!(StakePallet::unstaking(5).get(&3), Some(&50));
@@ -2810,13 +2865,13 @@ fn force_remove_candidate() {
 			);
 
 			// session 1: expect 1 to still be in validator set but as disabled
-			roll_to(5, vec![]);
+			roll_to(5, DEFAULT_ISSUE, &authors);
 			assert_eq!(Session::current_index(), 1);
 			assert_eq!(Session::validators(), vec![1, 2]);
 			assert_eq!(Session::disabled_validators(), vec![0]);
 
 			// session 2: expect validator set to have changed
-			roll_to(10, vec![]);
+			roll_to(10, DEFAULT_ISSUE, &authors);
 			assert_eq!(Session::validators(), vec![2, 3]);
 			assert!(Session::disabled_validators().is_empty());
 		});
@@ -2963,7 +3018,7 @@ fn prioritize_collators() {
 			);
 
 			// 7 decreases delegation
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 5, 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 10));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![5, 3]);
 			assert_eq!(
 				StakePallet::top_candidates(),
@@ -2979,7 +3034,7 @@ fn prioritize_collators() {
 					.unwrap()
 				)
 			);
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(7), 5));
+			assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(7)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![3, 5]);
 			assert_eq!(
 				StakePallet::top_candidates(),
@@ -3009,9 +3064,11 @@ fn prioritize_delegators() {
 			(5, 1000),
 			(6, 1000),
 			(7, 1000),
+			(8, 1000),
+			(9, 1000),
 		])
 		.with_collators(vec![(1, 100), (2, 100), (3, 100)])
-		.with_delegators(vec![(5, 1, 100), (4, 2, 100), (7, 2, 100), (6, 2, 100)])
+		.with_delegators(vec![(4, 2, 100), (7, 2, 100), (6, 2, 100)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![2, 1]);
@@ -3027,7 +3084,7 @@ fn prioritize_delegators() {
 					.unwrap()
 				)
 			);
-			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(5), 2, 110));
+			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(5), 2, 110));
 			assert_eq!(
 				StakePallet::candidate_pool(2).unwrap().delegators,
 				OrderedSet::from_sorted_set(
@@ -3041,20 +3098,9 @@ fn prioritize_delegators() {
 					.unwrap()
 				)
 			);
-			assert_eq!(
-				StakePallet::delegator_state(5).unwrap().delegations,
-				OrderedSet::from_sorted_set(
-					vec![
-						StakeOf::<Test> { owner: 2, amount: 110 },
-						StakeOf::<Test> { owner: 1, amount: 100 }
-					]
-					.try_into()
-					.unwrap()
-				)
-			);
 
 			// delegate_less
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(5), 2, 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(5), 10));
 			assert_eq!(
 				StakePallet::candidate_pool(2).unwrap().delegators,
 				OrderedSet::from_sorted_set(
@@ -3068,20 +3114,9 @@ fn prioritize_delegators() {
 					.unwrap()
 				)
 			);
-			assert_eq!(
-				StakePallet::delegator_state(5).unwrap().delegations,
-				OrderedSet::from_sorted_set(
-					vec![
-						StakeOf::<Test> { owner: 2, amount: 100 },
-						StakeOf::<Test> { owner: 1, amount: 100 }
-					]
-					.try_into()
-					.unwrap()
-				)
-			);
 
 			// delegate_more
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 2, 10));
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(6), 10));
 			assert_eq!(
 				StakePallet::candidate_pool(2).unwrap().delegators,
 				OrderedSet::from_sorted_set(
@@ -3095,7 +3130,7 @@ fn prioritize_delegators() {
 					.unwrap()
 				)
 			);
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 2, 10));
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(7), 10));
 			assert_eq!(
 				StakePallet::candidate_pool(2).unwrap().delegators,
 				OrderedSet::from_sorted_set(
@@ -3115,6 +3150,7 @@ fn prioritize_delegators() {
 #[test]
 fn authorities_per_round() {
 	let stake = 100 * DECIMALS;
+	let issue_number = 4 * stake;
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, stake),
@@ -3136,12 +3172,14 @@ fn authorities_per_round() {
 			// reward 1 once per round
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
+			// let inflation = StakePallet::inflation_config();
+			let reward_rate = StakePallet::reward_rate_config();
 
 			// roll to last block of round 0
-			roll_to(4, authors.clone());
-			let reward_0 = reward_rate.compute_collator_reward::<Test>(1000) +
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+			roll_to_claim_every_reward(4, issue_number, &authors);
+			// let reward_0 = inflation.collator.reward_rate.per_block * stake * 2;
+			// let reward_0 = reward_rate.compute_collator_reward::<Test>(issue_number) * 2;
+			let reward_0 = calc_collator_rewards(&issue_number, &reward_rate);
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));
@@ -3149,18 +3187,27 @@ fn authorities_per_round() {
 			// roll to last block of round 1
 			// should still multiply with 2 because the Authority set was chosen at start of
 			// round 1
-			roll_to(9, authors.clone());
-			assert_eq!(Balances::free_balance(1), stake + reward_0 * 2);
+			roll_to_claim_every_reward(9, issue_number, &authors);
+			// let reward_1 = inflation.collator.reward_rate.per_block * stake * 2;
+			let reward_1 = calc_collator_rewards(&issue_number, &reward_rate);
+			assert_eq!(Balances::free_balance(1), stake + reward_0 + reward_1);
 
 			// roll to last block of round 2
 			// should multiply with 4 because there are only 4 candidates
-			roll_to(14, authors.clone());
-			assert_eq!(Balances::free_balance(1), stake + reward_0 * 3);
+			roll_to_claim_every_reward(14, issue_number, &authors);
+			// let reward_2 = inflation.collator.reward_rate.per_block * stake * 4;
+			let reward_2 = calc_collator_rewards(&issue_number, &reward_rate);
+			assert_eq!(Balances::free_balance(1), stake + reward_0 + reward_1 + reward_2);
 
 			// roll to last block of round 3
 			// should multiply with 4 because there are only 4 candidates
-			roll_to(19, authors);
-			assert_eq!(Balances::free_balance(1), stake + reward_0 * 4);
+			roll_to_claim_every_reward(19, issue_number, &authors);
+			// let reward_3 = inflation.collator.reward_rate.per_block * stake * 4;
+			let reward_3 = calc_collator_rewards(&issue_number, &reward_rate);
+			assert_eq!(
+				Balances::free_balance(1),
+				stake + reward_0 + reward_1 + reward_2 + reward_3
+			);
 		});
 }
 
@@ -3171,6 +3218,8 @@ fn force_new_round() {
 		.with_collators(vec![(1, 100), (2, 100), (3, 100), (4, 100)])
 		.build()
 		.execute_with(|| {
+			let authors = vec![];
+
 			let mut round = RoundInfo { current: 0, first: 0, length: 5 };
 			assert_eq!(StakePallet::round(), round);
 			assert_eq!(Session::validators(), vec![1, 2]);
@@ -3185,14 +3234,14 @@ fn force_new_round() {
 			assert!(StakePallet::new_round_forced());
 
 			// force new round should become active by starting next block
-			roll_to(2, vec![]);
+			roll_to(2, DEFAULT_ISSUE, &authors);
 			round = RoundInfo { current: 1, first: 2, length: 5 };
 			assert_eq!(Session::current_index(), 1);
 			assert_eq!(Session::validators(), vec![1, 2]);
 			assert!(!StakePallet::new_round_forced());
 
 			// roll to next block in same round 1
-			roll_to(3, vec![]);
+			roll_to(3, DEFAULT_ISSUE, &authors);
 			assert_eq!(Session::current_index(), 1);
 			assert_eq!(StakePallet::round(), round);
 			// assert_eq!(Session::validators(), vec![3, 1]);
@@ -3201,7 +3250,7 @@ fn force_new_round() {
 			assert_ok!(StakePallet::join_delegators(RuntimeOrigin::signed(6), 4, 100));
 
 			// end session 2 naturally
-			roll_to(7, vec![]);
+			roll_to(7, DEFAULT_ISSUE, &authors);
 			round = RoundInfo { current: 2, first: 7, length: 5 };
 			assert_eq!(StakePallet::round(), round);
 			assert_eq!(Session::current_index(), 2);
@@ -3217,7 +3266,7 @@ fn force_new_round() {
 			assert!(StakePallet::new_round_forced());
 
 			// force new round should become active by starting next block
-			roll_to(8, vec![]);
+			roll_to(8, DEFAULT_ISSUE, &authors);
 			round = RoundInfo { current: 3, first: 8, length: 5 };
 			assert_eq!(Session::current_index(), 3);
 			assert_eq!(StakePallet::round(), round);
@@ -3265,6 +3314,164 @@ fn replace_lowest_delegator() {
 		})
 }
 
+// Note: This test is related about the minting of tokens, but at Peaq this is done
+// 		 by the block-reward pallet, so no execution of this test.
+// #[test]
+// fn network_reward_multiple_blocks() {
+// 	let max_stake: Balance = 160_000_000 * DECIMALS;
+// 	let issue_number: Balance = 1000 * DECIMALS;
+// 	let collators: Vec<(AccountId, Balance)> = (1u64..=<Test as
+// Config>::MinCollators::get().saturating_add(1).into()) 		.map(|acc_id| (acc_id, max_stake))
+// 		.collect();
+
+// 	ExtBuilder::default()
+// 		.with_balances(collators.clone())
+// 		.with_collators(collators)
+// 		.build()
+// 		.execute_with(|| {
+// 			assert_eq!(max_stake, StakePallet::max_candidate_stake());
+// 			let total_collator_stake = max_stake.saturating_mul(<Test as
+// Config>::MinCollators::get().into()); 			assert_eq!(total_collator_stake,
+// StakePallet::total_collator_stake().collators); 			assert!(Balances::free_balance(&
+// StakePallet::account_id()).is_zero()); 			let total_issuance = <Test as
+// Config>::Currency::total_issuance();
+
+// 			// total issuance should not increase when not noting authors because we haven't
+// 			// reached NetworkRewardStart yet
+// 			roll_to(10, vec![None], issue_number);
+// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
+// 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
+
+// 			// set current block to one block before NetworkRewardStart
+// 			let network_reward_start = <Test as Config>::NetworkRewardStart::get();
+// 			System::set_block_number(network_reward_start.saturating_sub(1));
+
+// 			// network rewards should only appear 1 block after start
+// 			roll_to(network_reward_start, vec![None], issue_number);
+// 			assert!(Balances::free_balance(&StakePallet::account_id()).is_zero());
+// 			assert_eq!(total_issuance, <Test as Config>::Currency::total_issuance());
+
+// 			// should mint to treasury now
+// 			roll_to(network_reward_start + 1, vec![None], issue_number);
+// 			let network_reward = Balances::free_balance(&StakePallet::account_id());
+// 			assert!(!network_reward.is_zero());
+// 			assert_eq!(
+// 				total_issuance + network_reward,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+// 			let inflation_config = StakePallet::inflation_config();
+// 			let col_rewards = inflation_config.collator.reward_rate.per_block * total_collator_stake;
+// 			assert_eq!(network_reward, <Test as Config>::NetworkRewardRate::get() * col_rewards);
+
+// 			// should mint exactly the same amount
+// 			roll_to(network_reward_start + 2, vec![None], issue_number);
+// 			assert_eq!(2 * network_reward, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(
+// 				total_issuance + 2 * network_reward,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+
+// 			// should mint exactly the same amount in each block
+// 			roll_to(network_reward_start + 100, vec![None], issue_number);
+// 			assert_eq!(100 * network_reward, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(
+// 				total_issuance + 100 * network_reward,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+
+// 			// should mint the same amount even if a collator exits because reward is only
+// 			// based on MaxCollatorCandidateStake and MaxSelectedCandidates
+// 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(1)));
+// 			roll_to(network_reward_start + 101, vec![None], issue_number);
+// 			assert_eq!(101 * network_reward, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(
+// 				total_issuance + 101 * network_reward,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+// 		});
+// }
+
+// #[test]
+// fn network_reward_increase_max_candidate_stake() {
+// 	let max_stake: Balance = 160_000_000 * DECIMALS;
+// 	let collators: Vec<(AccountId, Balance)> = (1u64..=<Test as Config>::MinCollators::get().into())
+// 		.map(|acc_id| (acc_id, max_stake))
+// 		.collect();
+
+// 	ExtBuilder::default()
+// 		.with_balances(collators.clone())
+// 		.with_collators(collators)
+// 		.build()
+// 		.execute_with(|| {
+// 			let network_reward_start = <Test as Config>::NetworkRewardStart::get();
+// 			let total_issuance = <Test as Config>::Currency::total_issuance();
+// 			System::set_block_number(network_reward_start);
+
+// 			// should mint to treasury now
+// 			roll_to(network_reward_start + 1, vec![None]);
+// 			let reward_before = Balances::free_balance(&StakePallet::account_id());
+// 			assert!(!reward_before.is_zero());
+// 			assert_eq!(
+// 				total_issuance + reward_before,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+
+// 			// double max stake
+// 			let max_stake_doubled = 320_000_000 * DECIMALS;
+// 			let reward_after = 2 * reward_before;
+// 			assert_ok!(StakePallet::set_max_candidate_stake(
+// 				Origin::root(),
+// 				max_stake_doubled
+// 			));
+// 			roll_to(network_reward_start + 2, vec![None]);
+// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(
+// 				reward_before + reward_after + total_issuance,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+// 		});
+// }
+
+// #[test]
+// fn network_reward_increase_max_collator_count() {
+// 	let max_stake: Balance = 160_000_000 * DECIMALS;
+// 	let collators: Vec<(AccountId, Balance)> = (1u64..=<Test as Config>::MinCollators::get().into())
+// 		.map(|acc_id| (acc_id, max_stake))
+// 		.collect();
+
+// 	ExtBuilder::default()
+// 		.with_balances(collators.clone())
+// 		.with_collators(collators)
+// 		.build()
+// 		.execute_with(|| {
+// 			let network_reward_start = <Test as Config>::NetworkRewardStart::get();
+// 			let total_issuance = <Test as Config>::Currency::total_issuance();
+// 			System::set_block_number(network_reward_start);
+
+// 			// should mint to treasury now
+// 			roll_to(network_reward_start + 1, vec![None]);
+// 			let reward_before = Balances::free_balance(&StakePallet::account_id());
+// 			assert!(!reward_before.is_zero());
+// 			assert_eq!(
+// 				total_issuance + reward_before,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+
+// 			// tripple number of max collators
+// 			let reward_after = 3 * reward_before;
+// 			assert_ok!(StakePallet::set_max_selected_candidates(
+// 				Origin::root(),
+// 				<Test as Config>::MinCollators::get() * 3
+// 			));
+// 			roll_to(network_reward_start + 2, vec![None]);
+// 			assert_eq!(reward_before + reward_after, Balances::free_balance(&StakePallet::account_id()));
+// 			assert_eq!(
+// 				reward_before + reward_after + total_issuance,
+// 				<Test as Config>::Currency::total_issuance()
+// 			);
+// 		});
+// }
+
 #[test]
 fn update_total_stake_collators_stay() {
 	ExtBuilder::default()
@@ -3287,12 +3494,12 @@ fn update_total_stake_collators_stay() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 155, delegators: 150 }
 			);
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(3), 1, 10));
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(3), 10));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 155, delegators: 160 }
 			);
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(4), 2, 5));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(4), 5));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 155, delegators: 155 }
@@ -3329,10 +3536,10 @@ fn update_total_stake_displace_collators() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 50, delegators: 105 }
 			);
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(8), 4, 45));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(8), 45));
 
 			// 3 is pushed out by delegator staking less
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 3, 45));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(7), 45));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 30, delegators: 100 }
@@ -3404,7 +3611,7 @@ fn update_total_stake_no_collator_changes() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 70, delegators: 110 }
 			);
-			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(5), 1, 10));
+			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(5), 10));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 70, delegators: 110 }
@@ -3414,11 +3621,78 @@ fn update_total_stake_no_collator_changes() {
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 70, delegators: 110 }
 			);
-			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 2, 10));
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 10));
 			assert_eq!(
 				StakePallet::total_collator_stake(),
 				TotalStake { collators: 70, delegators: 110 }
 			);
+		});
+}
+
+#[test]
+fn coinbase_rewards_some_blocks_multiple_claims() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 40_000_000 * DECIMALS),
+			(2, 40_000_000 * DECIMALS),
+			(3, 40_000_000 * DECIMALS),
+			(4, 20_000_000 * DECIMALS),
+			(5, 20_000_000 * DECIMALS),
+		])
+		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_delegators(vec![
+			(3, 1, 32_000_000 * DECIMALS),
+			(4, 1, 16_000_000 * DECIMALS),
+			(5, 2, 16_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let issue_number = Balance::from(1000u128);
+
+			let reward_info = StakePallet::reward_rate_config();
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
+
+			// compute rewards
+			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 16u128);
+			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
+			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
+			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
+
+			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(2u64),
+				Some(2u64),
+				Some(1u64),
+				Some(2u64),
+			];
+			let user_1 = (40_000_000 - 8_000_000) * DECIMALS;
+			let user_2 = (40_000_000 - 8_000_000) * DECIMALS;
+			let user_3 = (40_000_000 - 32_000_000) * DECIMALS;
+			let user_4 = (20_000_000 - 16_000_000) * DECIMALS;
+			let user_5 = (20_000_000 - 16_000_000) * DECIMALS;
+
+			// check free balances are correct
+			assert_eq!(Balances::usable_balance(&1), user_1);
+			assert_eq!(Balances::usable_balance(&2), user_2);
+			assert_eq!(Balances::usable_balance(&3), user_3);
+			assert_eq!(Balances::usable_balance(&4), user_4);
+			assert_eq!(Balances::usable_balance(&5), user_5);
+
+			// toll to block 8, everybody claim rewards, check it
+			roll_to_then_claim_rewards(8, issue_number, &authors);
+			assert_eq!(Balances::usable_balance(&1), user_1 + 4 * c_rewards);
+			assert_eq!(Balances::usable_balance(&2), user_2 + 3 * c_rewards);
+			assert_eq!(Balances::usable_balance(&3), user_3 + 4 * d_rewards1_1);
+			assert_eq!(Balances::usable_balance(&4), user_4 + 4 * d_rewards1_2);
+			assert_eq!(Balances::usable_balance(&5), user_5 + 3 * d_rewards2_1);
 		});
 }
 
@@ -3432,7 +3706,7 @@ fn collator_reward_per_block_only_collator() {
 		.execute_with(|| {
 			assert!(System::events().is_empty());
 
-			let state = CandidatePool::<Test>::get(1).unwrap();
+			let avg_bl_reward = StakePallet::average_block_reward();
 			// Avoid keep live error
 			assert_ok!(Balances::force_set_balance(
 				RawOrigin::Root.into(),
@@ -3440,33 +3714,221 @@ fn collator_reward_per_block_only_collator() {
 				1000,
 			));
 
-			let (_reads, _writes, reward) =
+			let reward =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					&state, 100,
+					avg_bl_reward,
+					500,
+					0,
 				);
-			assert_eq!(reward, Reward { owner: 1, amount: 100 });
+			assert_eq!(reward, Perquintill::from_percent(30) * avg_bl_reward);
+		});
+}
+
+#[test]
+fn rewards_flow_and_register_working() {
+	let issue_number = 1000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 40_000_000 * DECIMALS),
+			(2, 40_000_000 * DECIMALS),
+			(3, 40_000_000 * DECIMALS),
+			(4, 20_000_000 * DECIMALS),
+			(5, 20_000_000 * DECIMALS),
+		])
+		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_delegators(vec![
+			(3, 1, 32_000_000 * DECIMALS),
+			(4, 1, 16_000_000 * DECIMALS),
+			(5, 2, 16_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let reward_info = StakePallet::reward_rate_config();
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
+
+			// compute rewards
+			let c_rewards = calc_collator_rewards(&issue_number, &reward_info);
+			let st_rate_d1_1 = Perquintill::from_rational(32u128, 48u128);
+			let st_rate_d1_2 = Perquintill::from_rational(16u128, 48u128);
+			let st_rate_d2_1 = Perquintill::from_rational(16u128, 16u128);
+			let d_rewards1_1 = calc_delegator_rewards(&issue_number, &st_rate_d1_1, &reward_info);
+			let d_rewards1_2 = calc_delegator_rewards(&issue_number, &st_rate_d1_2, &reward_info);
+			let d_rewards2_1 = calc_delegator_rewards(&issue_number, &st_rate_d2_1, &reward_info);
+
+			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(2u64),
+				Some(2u64),
+				Some(1u64),
+				Some(2u64),
+			];
+
+			// toll to block 8, everybody claim rewards, check it
+			roll_to(9, issue_number, &authors);
+			let _ = StakePallet::update_collator_rewards(&1);
+			let _ = StakePallet::update_collator_rewards(&2);
+			let _ = StakePallet::update_delegator_rewards(&3);
+			let _ = StakePallet::update_delegator_rewards(&4);
+			let _ = StakePallet::update_delegator_rewards(&5);
+			assert_eq!(StakePallet::rewards(&1), 4 * c_rewards);
+			assert_eq!(StakePallet::rewards(&2), 3 * c_rewards);
+			assert_eq!(StakePallet::rewards(&3), 4 * d_rewards1_1);
+			assert_eq!(StakePallet::rewards(&4), 4 * d_rewards1_2);
+			assert_eq!(StakePallet::rewards(&5), 3 * d_rewards2_1);
+		});
+}
+
+#[test]
+fn test_varying_delegators() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 10_000_000 * DECIMALS),
+			(2, 10_000_000 * DECIMALS),
+			(3, 10_000_000 * DECIMALS),
+			(4, 10_000_000 * DECIMALS),
+			(5, 10_000_000 * DECIMALS),
+		])
+		.with_collators(vec![(1, 5_000_000 * DECIMALS)])
+		.with_delegators(vec![(2, 1, 5_000_000 * DECIMALS)])
+		.build()
+		.execute_with(|| {
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS);
+
+			let authors = vec![Some(1u64); 8];
+
+			// start a upramping delegator process (delegators are frequently joining)
+			for i in 2..4 {
+				roll_to(BlockNumber::from(i as u64), DEFAULT_ISSUE, &authors);
+
+				StakePallet::join_delegators(
+					RuntimeOrigin::signed(i + 1u64),
+					1,
+					5_000_000 * DECIMALS,
+				)
+				.unwrap();
+
+				StakePallet::update_delegator_rewards(&2).unwrap();
+				StakePallet::claim_rewards(RuntimeOrigin::signed(2)).unwrap();
+			}
+			// start a downramping delegator process (delegators are frequently leaving)
+			for (i, b) in (5..7).enumerate() {
+				roll_to(BlockNumber::from(b as u64), DEFAULT_ISSUE, &authors);
+
+				let acc = (i + 3) as u64;
+				StakePallet::leave_delegators(RuntimeOrigin::signed(acc)).unwrap();
+				StakePallet::claim_rewards(RuntimeOrigin::signed(acc)).unwrap();
+
+				StakePallet::update_delegator_rewards(&2).unwrap();
+				StakePallet::claim_rewards(RuntimeOrigin::signed(2)).unwrap();
+			}
+			roll_to(8 as BlockNumber, DEFAULT_ISSUE, &authors);
+
+			// check total issuance
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 7 * DEFAULT_ISSUE);
+		});
+}
+
+#[test]
+fn test_only_leaving_delegators() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 10_000_000 * DECIMALS),
+			(2, 10_000_000 * DECIMALS),
+			(3, 10_000_000 * DECIMALS),
+			(4, 10_000_000 * DECIMALS),
+			(5, 10_000_000 * DECIMALS),
+		])
+		.with_collators(vec![(1, 5_000_000 * DECIMALS)])
+		.with_delegators(vec![
+			(2, 1, 5_000_000 * DECIMALS),
+			(3, 1, 5_000_000 * DECIMALS),
+			(4, 1, 5_000_000 * DECIMALS),
+			(5, 1, 5_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS);
+
+			let col_acc = vec![Some(1u64); 6];
+
+			// start a upramping delegator process (delegators are frequently joining)
+			for i in 2..5 {
+				roll_to(i, DEFAULT_ISSUE, &col_acc);
+
+				let acc = i as u64;
+				StakePallet::leave_delegators(RuntimeOrigin::signed(acc)).unwrap();
+				StakePallet::claim_rewards(RuntimeOrigin::signed(acc)).unwrap();
+			}
+			roll_to(5, DEFAULT_ISSUE, &col_acc);
+
+			// check total issuance
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 50_000_000 * DECIMALS + 4 * DEFAULT_ISSUE);
+		});
+}
+
+#[test]
+fn test_all_leaving_at_once() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 10_000_000 * DECIMALS),
+			(2, 10_000_000 * DECIMALS),
+			(3, 10_000_000 * DECIMALS),
+			(4, 10_000_000 * DECIMALS),
+			(5, 10_000_000 * DECIMALS),
+			(6, 15_000_000 * DECIMALS),
+			(7, 15_000_000 * DECIMALS),
+		])
+		.with_collators(vec![
+			(1, 5_000_000 * DECIMALS),
+			(6, 10_000_000 * DECIMALS),
+			(7, 10_000_000 * DECIMALS),
+		])
+		.with_delegators(vec![
+			(2, 1, 5_000_000 * DECIMALS),
+			(3, 1, 5_000_000 * DECIMALS),
+			(4, 1, 5_000_000 * DECIMALS),
+			(5, 1, 5_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let authors = vec![None, Some(1u64), Some(6u64), Some(7u64)];
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 80_000_000 * DECIMALS);
+
+			// roll to second block, let group-1 leave completely
+			roll_to(2, DEFAULT_ISSUE, &authors);
+			StakePallet::leave_delegators(RuntimeOrigin::signed(2)).unwrap();
+			StakePallet::leave_delegators(RuntimeOrigin::signed(3)).unwrap();
+			StakePallet::leave_delegators(RuntimeOrigin::signed(4)).unwrap();
+			StakePallet::leave_delegators(RuntimeOrigin::signed(5)).unwrap();
+			StakePallet::init_leave_candidates(RuntimeOrigin::signed(1)).unwrap();
+			// roll to next blocks to finish all actions for sure
+			roll_to(4, DEFAULT_ISSUE, &authors);
 		});
 }
 
 #[test]
 fn collator_reward_per_block_with_delegator() {
-	let col_rate = 30;
-	let del_rate = 70;
-	let reward_rate = RewardRateInfo::new(
-		Perquintill::from_percent(col_rate),
-		Perquintill::from_percent(del_rate),
-	);
-
 	ExtBuilder::default()
 		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
 		.with_collators(vec![(1, 500)])
 		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
-		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
+		// .with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
 
-			let state = CandidatePool::<Test>::get(1).unwrap();
+			let reward_rate = StakePallet::reward_rate_config();
+			let avg_bl_reward = StakePallet::average_block_reward();
 			// Avoid keep live error
 			assert_ok!(Balances::force_set_balance(
 				RawOrigin::Root.into(),
@@ -3474,22 +3936,35 @@ fn collator_reward_per_block_with_delegator() {
 				1000,
 			));
 
-			let (_reads, _writes, reward) =
+			let reward =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					&state, 100,
+					avg_bl_reward,
+					500,
+					1000,
 				);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
-			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
+			let c_rewards: BalanceOf<Test> = reward_rate
+				.compute_collator_reward::<Test>(avg_bl_reward, Perquintill::from_percent(100));
+			assert_eq!(reward, c_rewards);
 
-			let (_reards, _writes, reward_vec) =
+			let reward1 =
 				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					&state, 100,
+					avg_bl_reward,
+					500,
+					600,
+					1000,
+				);
+			let reward2 =
+				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
+					avg_bl_reward,
+					500,
+					400,
+					1000,
 				);
 			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
+				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_float(6. / 10.));
 			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
-			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
-			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
+				.compute_delegator_reward::<Test>(avg_bl_reward, Perquintill::from_float(4. / 10.));
+			assert_eq!(reward1, d_1_rewards);
+			assert_eq!(reward2, d_2_rewards);
 		});
 }

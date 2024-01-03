@@ -1,5 +1,5 @@
 // KILT Blockchain – https://botlabs.org
-// Copyright (C) 2019-2022 BOTLabs GmbH
+// Copyright (C) 2019-2023 BOTLabs GmbH
 
 // The KILT Blockchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,14 +20,13 @@ use frame_support::{traits::Get, BoundedVec, DefaultNoBound, RuntimeDebug};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, SaturatedConversion};
+#[cfg(feature = "std")]
+use sp_std::prelude::*;
 use sp_std::{
 	cmp::Ordering,
 	convert::TryInto,
 	ops::{Index, Range, RangeFull},
 };
-
-#[cfg(feature = "std")]
-use sp_std::prelude::*;
 
 /// An ordered set backed by `BoundedVec`.
 #[derive(
@@ -294,13 +293,13 @@ mod tests {
 	use super::*;
 
 	parameter_types! {
-		#[derive(PartialEq, Eq, RuntimeDebug)]
+		#[derive(Eq, PartialEq, RuntimeDebug)]
 		pub const Zero: u32 = 0;
-		#[derive(PartialEq, Eq, RuntimeDebug)]
+		#[derive(Eq, PartialEq, RuntimeDebug)]
 		pub const One: u32 = 1;
-		#[derive(PartialEq, Eq, RuntimeDebug)]
+		#[derive(Eq, PartialEq, RuntimeDebug)]
 		pub const Eight: u32 = 8;
-		#[derive(PartialEq, Eq, RuntimeDebug, Clone)]
+		#[derive(Eq, PartialEq, RuntimeDebug, Clone)]
 		pub const Five: u32 = 5;
 	}
 

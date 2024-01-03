@@ -14,12 +14,13 @@ use frame_system::{
 };
 use orml_currencies::BasicCurrencyAdapter;
 use orml_traits::parameter_type_with_key;
+use pallet_block_reward::BeneficiarySelector;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
-use parachain_staking::reward_rate::RewardRateInfo;
+use parachain_staking::reward_rate_config::RewardRateInfo;
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_rbac::{
@@ -557,8 +558,7 @@ pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PE
 pub struct PeaqGasWeightMapping;
 impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		let weight = gas.saturating_mul(WEIGHT_PER_GAS);
-		Weight::from_parts(weight, 0)
+		Weight::from_parts(gas.saturating_mul(WEIGHT_PER_GAS), 0)
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
@@ -734,6 +734,8 @@ pub mod staking {
 			pub const MaxCollatorCandidates: u32 = 16;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
+			/// Recipient-selector for block-reward pallet (average-provider)
+			pub const AvgProviderParachainStaking: BeneficiarySelector = BeneficiarySelector::Collators;
 	}
 }
 
@@ -751,13 +753,14 @@ impl parachain_staking::Config for Runtime {
 	type MinRequiredCollators = staking::MinRequiredCollators;
 	type MaxDelegationsPerRound = staking::MaxDelegationsPerRound;
 	type MaxDelegatorsPerCollator = staking::MaxDelegatorsPerCollator;
-	type MaxCollatorsPerDelegator = staking::MaxCollatorsPerDelegator;
 	type MinCollatorStake = staking::MinCollatorStake;
 	type MinCollatorCandidateStake = staking::MinCollatorStake;
 	type MaxTopCandidates = staking::MaxCollatorCandidates;
-	type MinDelegation = staking::MinDelegatorStake;
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
+	type AvgBlockRewardProvider = BlockReward;
+	type AvgRecipientSelector = BeneficiarySelector;
+	type AvgBlockRewardRecipient = staking::AvgProviderParachainStaking;
 
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
 	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
@@ -767,26 +770,6 @@ impl staking_coefficient_reward::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = staking_coefficient_reward::weights::WeightInfo<Runtime>;
 }
-
-/// Implements the adapters for depositing unbalanced tokens on pots
-/// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
-macro_rules! impl_to_pot_adapter {
-	($name:ident, $pot:ident, $negbal:ident) => {
-		pub struct $name;
-		impl OnUnbalanced<$negbal> for $name {
-			fn on_unbalanced(amount: $negbal) {
-				Self::on_nonzero_unbalanced(amount);
-			}
-
-			fn on_nonzero_unbalanced(amount: $negbal) {
-				let pot = $pot::get().into_account_truncating();
-				Balances::resolve_creating(&pot, amount);
-			}
-		}
-	};
-}
-
-impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
 
 pub struct ToTreasuryPot;
 impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
@@ -810,7 +793,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	}
 
 	fn collators(reward: NegativeImbalance) {
-		ToStakingPot::on_unbalanced(reward);
+		ParachainStaking::on_unbalanced(reward);
 	}
 
 	fn dapps_staking(_reward: NegativeImbalance) {}

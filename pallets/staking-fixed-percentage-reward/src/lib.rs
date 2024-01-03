@@ -20,14 +20,15 @@ use frame_support::pallet;
 pub mod pallet {
 	use super::*;
 	use parachain_staking::{
-		reward_config_calc::{CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait},
-		reward_rate::RewardRateInfo,
-		types::{BalanceOf, Candidate, Reward},
+		reward_rate_config::{
+			CollatorDelegatorBlockRewardCalculator, RewardRateConfigTrait, RewardRateInfo,
+		},
+		types::BalanceOf,
 	};
 
-	use frame_support::{pallet_prelude::*, traits::StorageVersion, BoundedVec};
+	use frame_support::{pallet_prelude::*, traits::StorageVersion};
 	use frame_system::pallet_prelude::*;
-	use parachain_staking::reward_config_calc::DefaultRewardCalculator;
+	use parachain_staking::reward_rate_config::DefaultRewardCalculator;
 	use sp_runtime::Perquintill;
 	use sp_std::prelude::*;
 
@@ -85,13 +86,6 @@ pub mod pallet {
 		pub reward_rate_config: RewardRateInfo,
 	}
 
-	// #[cfg(feature = "std")]
-	// impl Default for GenesisConfig {
-	// 	fn default() -> Self {
-	// 		Self { reward_rate_config: Default::default() }
-	// 	}
-	// }
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
@@ -139,21 +133,29 @@ pub mod pallet {
 
 	impl<T: Config> CollatorDelegatorBlockRewardCalculator<T> for Pallet<T> {
 		fn collator_reward_per_block(
-			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
-			issue_number: BalanceOf<T>,
-		) -> (Weight, Weight, Reward<T::AccountId, BalanceOf<T>>) {
-			DefaultRewardCalculator::<T, Self>::collator_reward_per_block(stake, issue_number)
+			avg_bl_reward: BalanceOf<T>,
+			col_stake: BalanceOf<T>,
+			del_sum_stake: BalanceOf<T>,
+		) -> BalanceOf<T> {
+			DefaultRewardCalculator::<T, Self>::collator_reward_per_block(
+				avg_bl_reward,
+				col_stake,
+				del_sum_stake,
+			)
 		}
 
 		fn delegator_reward_per_block(
-			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
-			issue_number: BalanceOf<T>,
-		) -> (
-			Weight,
-			Weight,
-			BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator>,
-		) {
-			DefaultRewardCalculator::<T, Self>::delegator_reward_per_block(stake, issue_number)
+			avg_bl_reward: BalanceOf<T>,
+			col_stake: BalanceOf<T>,
+			del_stake: BalanceOf<T>,
+			del_sum_stake: BalanceOf<T>,
+		) -> BalanceOf<T> {
+			DefaultRewardCalculator::<T, Self>::delegator_reward_per_block(
+				avg_bl_reward,
+				col_stake,
+				del_stake,
+				del_sum_stake,
+			)
 		}
 	}
 
@@ -161,8 +163,9 @@ pub mod pallet {
 		fn get_reward_rate_config() -> RewardRateInfo {
 			Self::reward_rate_config()
 		}
+
 		fn set_reward_rate_config(reward_rate: RewardRateInfo) {
-			<RewardRateConfig<T>>::put(reward_rate);
+			RewardRateConfig::<T>::put(reward_rate);
 		}
 	}
 }
