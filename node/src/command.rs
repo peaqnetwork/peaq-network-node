@@ -127,8 +127,10 @@ impl SubstrateCli for Cli {
 			"krest-local" => Box::new(parachain::krest_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
-			// [TODO] Need to change
-			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec(self.run.parachain_id)?),
+			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec()?),
+			"peaq-local" => Box::new(parachain::peaq_chain_spec::get_chain_spec_local_testnet(
+				self.run.parachain_id,
+			)?),
 			path => {
 				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
