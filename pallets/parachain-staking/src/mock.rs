@@ -19,12 +19,6 @@
 
 #![allow(clippy::from_over_into)]
 
-use super::*;
-use crate::{
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-	{self as stake},
-};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
@@ -41,6 +35,13 @@ use sp_runtime::{
 	Perbill, Perquintill,
 };
 use sp_std::{cell::RefCell, fmt::Debug};
+
+use super::*;
+use crate::{
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate::RewardRateInfo,
+	{self as stake},
+};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -172,7 +173,7 @@ impl Config for Test {
 	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
-	type WeightInfo = ();
+	type WeightInfo = crate::weights::WeightInfo<Test>;
 	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
 }
 

@@ -5,15 +5,16 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
-pub mod default_weights;
 mod migrations;
+pub mod weightinfo;
+pub mod weights;
 
 #[cfg(test)]
 pub(crate) mod mock;
 #[cfg(test)]
 pub(crate) mod tests;
 
-pub use crate::{default_weights::WeightInfo, pallet::*};
+pub use crate::{pallet::*, weightinfo::WeightInfo};
 use frame_support::pallet;
 use sp_runtime::traits::{CheckedAdd, CheckedMul};
 
@@ -35,7 +36,7 @@ pub mod pallet {
 	use sp_std::convert::TryInto;
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
+	pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 	/// Pallet for staking coefficient reward calculation.
 	#[pallet::pallet]

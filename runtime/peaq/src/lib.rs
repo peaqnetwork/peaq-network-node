@@ -186,10 +186,6 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
-}
-
 /// Charge fee for stored bytes and items as part of `pallet-contracts`.
 ///
 /// The slight difference to general `deposit` function is because there is fixed bound on how large
@@ -475,7 +471,7 @@ impl pallet_sudo::Config for Runtime {
 impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Time = pallet_timestamp::Pallet<Runtime>;
-	type WeightInfo = peaq_pallet_did::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
 }
 
 /// Config the utility in pallets/utility
@@ -491,6 +487,31 @@ parameter_types! {
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 	pub MaxProposalWeight: Weight = Perbill::from_percent(50) * RuntimeBlockWeights::get().max_block;
+}
+
+#[cfg(feature = "try-runtime")]
+use sp_runtime::TryRuntimeError;
+
+const COUNCIL_OLD_PREFIX: &str = "Instance1Collective";
+/// Migrate from `Instance1Collective` to the new pallet prefix `Council`
+pub struct CouncilStoragePrefixMigration;
+
+impl frame_support::traits::OnRuntimeUpgrade for CouncilStoragePrefixMigration {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		pallet_collective::migrations::v4::migrate::<Runtime, Council, _>(COUNCIL_OLD_PREFIX)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<Vec<u8>, TryRuntimeError> {
+		pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		Ok(Vec::new())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade(_: Vec<u8>) -> Result<(), TryRuntimeError> {
+		pallet_collective::migrations::v4::post_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		Ok(())
+	}
 }
 
 type CouncilCollective = pallet_collective::Instance1;
@@ -791,13 +812,13 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
-	type WeightInfo = ();
+	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
 	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
 }
 
 impl staking_coefficient_reward::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = staking_coefficient_reward::default_weights::SubstrateWeight<Runtime>;
+	type WeightInfo = staking_coefficient_reward::weights::WeightInfo<Runtime>;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
@@ -832,7 +853,7 @@ impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_block_reward::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_block_reward::weights::WeightInfo<Runtime>;
 }
 
 pub struct BeneficiaryPayout();
@@ -881,13 +902,13 @@ parameter_types! {
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EntityId = RbacEntityId;
-	type WeightInfo = peaq_pallet_rbac::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
 }
 
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = peaq_pallet_storage::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
 }
 
 // Zenlink-DEX Parameter definitions
@@ -986,6 +1007,11 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
+type EventRecord = frame_system::EventRecord<
+	<Runtime as frame_system::Config>::RuntimeEvent,
+	<Runtime as frame_system::Config>::Hash,
+>;
+
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
@@ -999,6 +1025,16 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	(
+		cumulus_pallet_dmp_queue::migration::Migration<Runtime>,
+		cumulus_pallet_xcmp_queue::migration::Migration<Runtime>,
+		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::DummyCheckingAccount>,
+		pallet_contracts::Migration<Runtime>,
+		orml_unknown_tokens::Migration<Runtime>,
+		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
+		pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
+		CouncilStoragePrefixMigration,
+	),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1609,6 +1645,71 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_contracts::ContractsApi<Block, AccountId, Balance, BlockNumber, Hash, EventRecord> for Runtime {
+		fn call(
+			origin: AccountId,
+			dest: AccountId,
+			value: Balance,
+			gas_limit: Option<Weight>,
+			storage_deposit_limit: Option<Balance>,
+			input_data: Vec<u8>,
+		) -> pallet_contracts_primitives::ContractExecResult<Balance, EventRecord> {
+			let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
+			Contracts::bare_call(
+				origin,
+				dest,
+				value,
+				gas_limit,
+				storage_deposit_limit,
+				input_data,
+				pallet_contracts::DebugInfo::UnsafeDebug,
+				pallet_contracts::CollectEvents::UnsafeCollect,
+				pallet_contracts::Determinism::Enforced,
+			)
+		}
+
+		fn instantiate(
+			origin: AccountId,
+			value: Balance,
+			gas_limit: Option<Weight>,
+			storage_deposit_limit: Option<Balance>,
+			code: pallet_contracts_primitives::Code<Hash>,
+			data: Vec<u8>,
+			salt: Vec<u8>,
+		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, Balance, EventRecord> {
+			let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
+			Contracts::bare_instantiate(
+				origin,
+				value,
+				gas_limit,
+				storage_deposit_limit,
+				code,
+				data,
+				salt,
+				pallet_contracts::DebugInfo::UnsafeDebug,
+				pallet_contracts::CollectEvents::UnsafeCollect,
+			)
+		}
+
+		fn upload_code(
+			origin: AccountId,
+			code: Vec<u8>,
+			storage_deposit_limit: Option<Balance>,
+			determinism: pallet_contracts::Determinism,
+		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
+		{
+			Contracts::bare_upload_code(origin, code, storage_deposit_limit, determinism)
+		}
+
+		fn get_storage(
+			address: AccountId,
+			key: Vec<u8>,
+		) -> pallet_contracts_primitives::GetStorageResult {
+			Contracts::get_storage(address, key)
+		}
+	}
+
+
 	impl peaq_pallet_did_runtime_api::PeaqDIDApi<Block, AccountId, BlockNumber, Moment> for Runtime {
 		fn read(did_account: AccountId, name: Vec<u8>) -> Option<
 			DidAttribute<BlockNumber, Moment>> {
@@ -1829,7 +1930,7 @@ impl_runtime_apis! {
 impl peaq_pallet_transaction::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type WeightInfo = peaq_pallet_transaction::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = peaq_pallet_transaction::weights::WeightInfo<Runtime>;
 }
 
 parameter_types! {
