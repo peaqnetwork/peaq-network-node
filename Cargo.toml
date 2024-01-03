@@ -119,10 +119,8 @@ pallet-evm-precompile-simple = { git = "https://github.com/peaqnetwork/frontier"
 
 # Open-Runtime-Module-Library
 orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
-orml-tokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 orml-traits = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 orml-xtokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
-orml-unknown-tokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 orml-xcm-support = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 
 # Polkadot

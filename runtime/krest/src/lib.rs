@@ -195,6 +195,10 @@ const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 40 * MILLICENTS + (bytes as Balance) * MILLICENTS
 }
 
+const fn deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+}
+
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -1028,9 +1032,11 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_dmp_queue::migration::Migration<Runtime>,
 		cumulus_pallet_xcmp_queue::migration::Migration<Runtime>,
-		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::DummyCheckingAccount>,
+		pallet_balances::migration::MigrateToTrackInactive<
+			Runtime,
+			xcm_config::DummyCheckingAccount,
+		>,
 		pallet_contracts::Migration<Runtime>,
-		orml_unknown_tokens::Migration<Runtime>,
 		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
 		pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
 		CouncilStoragePrefixMigration,
