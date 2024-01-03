@@ -1,12 +1,12 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
+use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
 	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use peaq_primitives_xcm::{AccountId, Balance};
-use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
+use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
@@ -82,7 +82,11 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		// Properties
 		Some(properties),
 		// Extensions
-		Extensions { bad_blocks: Default::default(), relay_chain: "polkadot-local".into(), para_id },
+		Extensions {
+			bad_blocks: Default::default(),
+			relay_chain: "polkadot-local".into(),
+			para_id,
+		},
 	))
 }
 
@@ -163,9 +167,7 @@ fn configure_genesis(
 		ethereum: EthereumConfig {},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
-		polkadot_xcm: peaq_runtime::PolkadotXcmConfig {
-			safe_xcm_version: Some(SAFE_XCM_VERSION),
-		},
+		polkadot_xcm: peaq_runtime::PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),

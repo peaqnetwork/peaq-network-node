@@ -54,9 +54,7 @@ use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets,
-};
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 pub mod constants;
 mod precompiles;
