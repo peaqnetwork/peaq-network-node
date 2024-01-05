@@ -386,7 +386,7 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
 	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
-		CurrencyId::Token(TokenSymbol::DOT),
+		CurrencyId::Token(TokenSymbol::ROC),
 		CurrencyId::Token(TokenSymbol::BNC),
 	];
 }
