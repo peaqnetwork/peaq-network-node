@@ -24,7 +24,12 @@ mod tests {
 	use frame_support::traits::Everything;
 	use frame_support::{construct_runtime, parameter_types, weights::Weight};
 	use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-	use precompile_utils::{precompile_set::*, revert, testing::*, EvmDataWriter, EvmResult};
+	use precompile_utils::{
+		precompile_set::*,
+		solidity::{codec::Writer, revert::revert},
+		testing::*,
+		EvmResult,
+	};
 	use sp_core::H160;
 	use sp_core::{H256, U256};
 	use sp_runtime::{
@@ -46,7 +51,7 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-			Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+			Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 			Evm: pallet_evm::{Pallet, Call, Storage, Event<T>},
 			Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		}
@@ -54,7 +59,7 @@ mod tests {
 
 	parameter_types! {
 		pub const BlockHashCount: u32 = 250;
-		pub const MaximumBlockWeight: Weight = Weight::from_ref_time(1024);
+		pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 1);
 		pub const MaximumBlockLength: u32 = 2 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::one();
 		pub const SS58Prefix: u8 = 42;
@@ -87,7 +92,7 @@ mod tests {
 		type MaxConsumers = frame_support::traits::ConstU32<16>;
 	}
 	parameter_types! {
-		pub const ExistentialDeposit: u128 = 1;
+		pub const ExistentialDeposit: u128 = 0;
 	}
 	impl pallet_balances::Config for Runtime {
 		type MaxReserves = ();
@@ -99,6 +104,10 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountStore = System;
 		type WeightInfo = ();
+		type HoldIdentifier = ();
+		type FreezeIdentifier = ();
+		type MaxHolds = ();
+		type MaxFreezes = ();
 	}
 
 	#[derive(Debug, Clone)]
@@ -113,7 +122,7 @@ mod tests {
 				handle.code_address(),
 				None,
 				// calls subcallLayer2()
-				EvmDataWriter::new_with_selector(0x0b93381bu32).build(),
+				Writer::new_with_selector(0x0b93381bu32).build(),
 				None,
 				false,
 				&Context {
@@ -138,6 +147,69 @@ mod tests {
 		}
 	}
 
+	struct MockPrecompileHandle;
+	impl PrecompileHandle for MockPrecompileHandle {
+		fn call(
+			&mut self,
+			_: sp_core::H160,
+			_: Option<evm::Transfer>,
+			_: Vec<u8>,
+			_: Option<u64>,
+			_: bool,
+			_: &evm::Context,
+		) -> (evm::ExitReason, Vec<u8>) {
+			unimplemented!()
+		}
+
+		fn record_cost(&mut self, _: u64) -> Result<(), evm::ExitError> {
+			Ok(())
+		}
+
+		fn remaining_gas(&self) -> u64 {
+			unimplemented!()
+		}
+
+		fn log(
+			&mut self,
+			_: sp_core::H160,
+			_: Vec<sp_core::H256>,
+			_: Vec<u8>,
+		) -> Result<(), evm::ExitError> {
+			unimplemented!()
+		}
+
+		fn code_address(&self) -> sp_core::H160 {
+			unimplemented!()
+		}
+
+		fn input(&self) -> &[u8] {
+			unimplemented!()
+		}
+
+		fn context(&self) -> &evm::Context {
+			unimplemented!()
+		}
+
+		fn is_static(&self) -> bool {
+			true
+		}
+
+		fn gas_limit(&self) -> Option<u64> {
+			unimplemented!()
+		}
+
+		fn record_external_cost(
+			&mut self,
+			_ref_time: Option<u64>,
+			_proof_size: Option<u64>,
+			_storage_growth: Option<u64>,
+		) -> Result<(), fp_evm::ExitError> {
+			Ok(())
+		}
+
+		fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {}
+	}
+
 	pub type Precompiles<R> = PrecompileSetBuilder<
 		R,
 		(
@@ -150,10 +222,22 @@ mod tests {
 
 	pub type PCall = MockPrecompileCall;
 
+	const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
+	/// Block storage limit in bytes. Set to 40 KB.
+	const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
+
 	parameter_types! {
-		pub BlockGasLimit: U256 = U256::max_value();
+		pub BlockGasLimit: U256 = U256::from(u64::MAX);
 		pub PrecompilesValue: Precompiles<Runtime> = Precompiles::new();
-		pub const WeightPerGas: Weight = Weight::from_ref_time(1);
+		pub const WeightPerGas: Weight = Weight::from_parts(1, 0);
+		pub GasLimitPovSizeRatio: u64 = {
+			let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
+			block_gas_limit.saturating_div(MAX_POV_SIZE)
+		};
+		pub GasLimitStorageGrowthRatio: u64 = {
+			let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
+			block_gas_limit.saturating_div(BLOCK_STORAGE_LIMIT)
+		};
 	}
 
 	impl pallet_evm::Config for Runtime {
@@ -173,6 +257,11 @@ mod tests {
 		type BlockGasLimit = BlockGasLimit;
 		type BlockHashMapping = pallet_evm::SubstrateBlockHashMapping<Self>;
 		type FindAuthor = ();
+		type OnCreate = ();
+		type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
+		type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+		type Timestamp = Timestamp;
+		type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 	}
 
 	parameter_types! {
@@ -219,7 +308,7 @@ mod tests {
 			precompiles()
 				.prepare_test(Alice, H160::from_low_u64_be(1), PCall::success {})
 				.with_subcall_handle(|Subcall { .. }| panic!("there should be no subcall"))
-				.execute_returns_encoded(())
+				.execute_returns(())
 		})
 	}
 
@@ -273,7 +362,7 @@ mod tests {
 			precompiles()
 				.prepare_test(Alice, H160::from_low_u64_be(2), PCall::success {})
 				.with_subcall_handle(|Subcall { .. }| panic!("there should be no subcall"))
-				.execute_returns_encoded(())
+				.execute_returns(())
 		})
 	}
 
@@ -287,7 +376,7 @@ mod tests {
 					PCall::success {},
 				)
 				.with_subcall_handle(|Subcall { .. }| panic!("there should be no subcall"))
-				.execute_returns_encoded(())
+				.execute_returns(())
 		})
 	}
 
@@ -301,16 +390,70 @@ mod tests {
 					.prepare_test(Alice, H160::from_low_u64_be(4), PCall::subcall {})
 					.with_subcall_handle(move |Subcall { .. }| {
 						*subcall_occured.borrow_mut() = true;
-						SubcallOutput {
-							reason: ExitReason::Succeed(evm::ExitSucceed::Returned),
-							output: vec![],
-							cost: 0,
-							logs: vec![],
-						}
+						SubcallOutput::succeed()
 					})
-					.execute_returns_encoded(());
+					.execute_returns(());
 			}
 			assert!(*subcall_occured.borrow());
+		})
+	}
+
+	#[test]
+	fn get_address_type_works_for_eoa() {
+		ExtBuilder::default().build().execute_with(|| {
+			let addr = H160::repeat_byte(0x1d);
+			assert_eq!(
+				AddressType::EOA,
+				get_address_type::<Runtime>(&mut MockPrecompileHandle, addr).expect("OOG")
+			);
+		})
+	}
+
+	#[test]
+	fn get_address_type_works_for_precompile() {
+		ExtBuilder::default().build().execute_with(|| {
+			let addr = H160::repeat_byte(0x1d);
+			pallet_evm::AccountCodes::<Runtime>::insert(addr, vec![0x60, 0x00, 0x60, 0x00, 0xfd]);
+			assert_eq!(
+				AddressType::Precompile,
+				get_address_type::<Runtime>(&mut MockPrecompileHandle, addr).expect("OOG")
+			);
+		})
+	}
+
+	#[test]
+	fn get_address_type_works_for_smart_contract() {
+		ExtBuilder::default().build().execute_with(|| {
+			let addr = H160::repeat_byte(0x1d);
+
+			// length > 5
+			pallet_evm::AccountCodes::<Runtime>::insert(
+				addr,
+				vec![0x60, 0x00, 0x60, 0x00, 0xfd, 0xff, 0xff],
+			);
+			assert_eq!(
+				AddressType::Contract,
+				get_address_type::<Runtime>(&mut MockPrecompileHandle, addr).expect("OOG")
+			);
+
+			// length < 5
+			pallet_evm::AccountCodes::<Runtime>::insert(addr, vec![0x60, 0x00, 0x60]);
+			assert_eq!(
+				AddressType::Contract,
+				get_address_type::<Runtime>(&mut MockPrecompileHandle, addr).expect("OOG")
+			);
+		})
+	}
+
+	#[test]
+	fn get_address_type_works_for_unknown() {
+		ExtBuilder::default().build().execute_with(|| {
+			let addr = H160::repeat_byte(0x1d);
+			pallet_evm::AccountCodes::<Runtime>::insert(addr, vec![0x11, 0x00, 0x60, 0x00, 0xfd]);
+			assert_eq!(
+				AddressType::Unknown,
+				get_address_type::<Runtime>(&mut MockPrecompileHandle, addr).expect("OOG")
+			);
 		})
 	}
 }

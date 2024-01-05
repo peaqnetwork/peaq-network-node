@@ -89,6 +89,6 @@ impl LogExt for Log {
 	}
 
 	fn compute_cost(&self) -> EvmResult<u64> {
-		crate::costs::log_costs(self.topics.len(), self.data.len())
+		crate::evm::costs::log_costs(self.topics.len(), self.data.len())
 	}
 }

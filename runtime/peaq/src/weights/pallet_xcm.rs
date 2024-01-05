@@ -276,6 +276,14 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9))
 			.saturating_add(T::DbWeight::get().writes(4))
 	}
+
+	fn force_suspension() -> Weight {
+		// Copied from above TODO
+		Weight::from_parts(34_890_000, 0)
+			.saturating_add(Weight::from_parts(0, 15231))
+			.saturating_add(T::DbWeight::get().reads(9))
+			.saturating_add(T::DbWeight::get().writes(4))
+	}
 }
 
 #[cfg(test)]

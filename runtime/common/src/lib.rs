@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-use codec::{Decode, Encode};
 use cumulus_pallet_parachain_system::Config as ParaSysConfig;
 use cumulus_primitives_core::ParaId;
 use frame_support::{
@@ -12,6 +11,7 @@ use frame_support::{
 use frame_system::Config as SysConfig;
 use orml_traits::{currency::MutationHooks, MultiCurrency};
 use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
+use parity_scale_codec::{Decode, Encode};
 use sp_core::bounded::BoundedVec;
 use sp_runtime::{
 	traits::{
@@ -22,14 +22,9 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
-	LocalAssetHandler,
-};
+use zenlink_protocol::{AssetBalance, Config as ZenProtConfig, ExportZenlink, LocalAssetHandler};
 
-use peaq_primitives_xcm::{
-	currency::parachain, AccountId, Balance, CurrencyId, TokenInfo, TokenSymbol,
-};
+pub use peaq_primitives_xcm::*;
 
 
 // Contracts price units.

@@ -56,7 +56,7 @@ pub fn main(_: TokenStream, input: TokenStream) -> TokenStream {
 		.into()
 	} else {
 		quote_spanned! {
-			ty.span() => compile_error("Expected tuple");
+			ty.span() => compile_error!("Expected tuple");
 		}
 		.into()
 	}

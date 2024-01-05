@@ -143,7 +143,6 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
-pub mod default_weights;
 
 #[cfg(test)]
 pub(crate) mod mock;
@@ -155,19 +154,16 @@ pub mod reward_config_calc;
 pub mod reward_rate;
 mod set;
 pub mod types;
+pub mod weightinfo;
+pub mod weights;
 
-use core::marker::PhantomData;
-use frame_support::pallet;
+pub use pallet::*;
+pub use weightinfo::WeightInfo;
 
-pub use crate::{default_weights::WeightInfo, pallet::*};
-use reward_config_calc::CollatorDelegatorBlockRewardCalculator;
-use sp_runtime::traits::{CheckedAdd, CheckedMul};
-use types::ReplacedDelegator;
-
-#[pallet]
+#[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 
+	use core::marker::PhantomData;
 	use frame_support::{
 		assert_ok,
 		pallet_prelude::*,
@@ -184,22 +180,23 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedSub, Convert, One, SaturatedConversion, Saturating,
-			StaticLookup, Zero,
+			AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, Convert, One,
+			SaturatedConversion, Saturating, StaticLookup, Zero,
 		},
 		Permill,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::prelude::*;
+	use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
 
 	use crate::{
+		reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 		set::OrderedSet,
 		types::{
 			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
-			RoundInfo, Stake, StakeOf, TotalStake,
+			ReplacedDelegator, RoundInfo, Stake, StakeOf, TotalStake,
 		},
+		weightinfo::WeightInfo,
 	};
-	use sp_std::{convert::TryInto, fmt::Debug};
 
 	/// Kilt-specific lock for staking rewards.
 	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
@@ -209,7 +206,6 @@ pub mod pallet {
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -234,7 +230,7 @@ pub mod pallet {
 		/// constrain it to `From<u64>`.
 		/// Note: Definition taken from pallet_gilt
 		type CurrencyBalance: sp_runtime::traits::AtLeast32BitUnsigned
-			+ codec::FullCodec
+			+ parity_scale_codec::FullCodec
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ sp_std::fmt::Debug
@@ -515,7 +511,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> frame_support::weights::Weight {
-			let mut post_weight = <T as Config>::WeightInfo::on_initialize_no_action();
+			let mut post_weight =
+				<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
 			let mut round = <Round<T>>::get();
 
 			// check for round update
@@ -527,13 +524,14 @@ pub mod pallet {
 				<Round<T>>::put(round);
 
 				Self::deposit_event(Event::NewRound(round.first, round.current));
-				post_weight = <T as Config>::WeightInfo::on_initialize_round_update();
+				post_weight =
+					<T as crate::pallet::Config>::WeightInfo::on_initialize_round_update();
 			}
 			post_weight
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			migrations::on_runtime_upgrade::<T>()
+			crate::migrations::on_runtime_upgrade::<T>()
 		}
 	}
 
@@ -706,7 +704,7 @@ pub mod pallet {
 		/// - Writes: ForceNewRound
 		/// # </weight>
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::force_new_round())]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::force_new_round())]
 		pub fn force_new_round(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -744,7 +742,7 @@ pub mod pallet {
 		/// - Writes: MaxSelectedCandidates
 		/// # </weight>
 		#[pallet::call_index(2)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_max_selected_candidates(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_max_selected_candidates(
 			*new,
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -796,7 +794,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::MaxSelectedCandidatesSet(old, new));
 
-			Ok(Some(<T as pallet::Config>::WeightInfo::set_max_selected_candidates(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::set_max_selected_candidates(
 				// SAFETY: we ensured that end > start further above.
 				end - start,
 				num_delegators,
@@ -822,7 +820,7 @@ pub mod pallet {
 		/// - Writes: Round
 		/// # </weight>
 		#[pallet::call_index(3)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_blocks_per_round())]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_blocks_per_round())]
 		pub fn set_blocks_per_round(origin: OriginFor<T>, new: T::BlockNumber) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(new >= T::MinBlocksPerRound::get(), Error::<T>::CannotSetBelowMin);
@@ -855,7 +853,7 @@ pub mod pallet {
 		/// - Writes: Round
 		/// # </weight>
 		#[pallet::call_index(4)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_max_candidate_stake())]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_max_candidate_stake())]
 		pub fn set_max_candidate_stake(origin: OriginFor<T>, new: BalanceOf<T>) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(new >= T::MinCollatorCandidateStake::get(), Error::<T>::CannotSetBelowMin);
@@ -895,7 +893,7 @@ pub mod pallet {
 		///   candidate
 		/// # </weight>
 		#[pallet::call_index(5)]
-		#[pallet::weight(<T as Config>::WeightInfo::force_remove_candidate(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::force_remove_candidate(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -932,7 +930,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::CollatorRemoved(collator, total_amount));
 
-			Ok(Some(<T as Config>::WeightInfo::force_remove_candidate(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::force_remove_candidate(
 				num_collators,
 				num_delegators,
 			))
@@ -966,7 +964,7 @@ pub mod pallet {
 		/// - Writes: Locks, TotalCollatorStake, CandidatePool, TopCandidates,
 		/// # </weight>
 		#[pallet::call_index(6)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join_candidates(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::join_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1003,7 +1001,7 @@ pub mod pallet {
 			CandidatePool::<T>::insert(&sender, candidate);
 
 			Self::deposit_event(Event::JoinedCollatorCandidates(sender, stake));
-			Ok(Some(<T as pallet::Config>::WeightInfo::join_candidates(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::join_candidates(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1047,7 +1045,7 @@ pub mod pallet {
 		/// - Writes: CandidatePool, TopCandidates, TotalCollatorStake
 		/// # </weight>
 		#[pallet::call_index(7)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::init_leave_candidates(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::init_leave_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxTopCandidates::get().saturating_mul(T::MaxDelegatorsPerCollator::get())
 		))]
@@ -1083,7 +1081,7 @@ pub mod pallet {
 			CandidatePool::<T>::insert(&collator, state);
 
 			Self::deposit_event(Event::CollatorScheduledExit(now, collator, when));
-			Ok(Some(<T as pallet::Config>::WeightInfo::init_leave_candidates(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::init_leave_candidates(
 				num_collators,
 				num_delegators,
 			))
@@ -1115,7 +1113,7 @@ pub mod pallet {
 		/// - Kills: CandidatePool, DelegatorState
 		/// # </weight>
 		#[pallet::call_index(8)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::execute_leave_candidates(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::execute_leave_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
 		))]
@@ -1138,7 +1136,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::CandidateLeft(collator, total_amount));
 
-			Ok(Some(<T as pallet::Config>::WeightInfo::execute_leave_candidates(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::execute_leave_candidates(
 				T::MaxTopCandidates::get(),
 				num_delegators,
 			))
@@ -1162,7 +1160,7 @@ pub mod pallet {
 		/// - Writes: TotalCollatorStake, CandidatePool, TopCandidates
 		/// # </weight>
 		#[pallet::call_index(9)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::cancel_leave_candidates(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::cancel_leave_candidates(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
 		))]
@@ -1191,7 +1189,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::CollatorCanceledExit(candidate));
 
-			Ok(Some(<T as pallet::Config>::WeightInfo::cancel_leave_candidates(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::cancel_leave_candidates(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1221,7 +1219,7 @@ pub mod pallet {
 		/// - Writes: Locks, TotalCollatorStake, CandidatePool, TopCandidates
 		/// # </weight>
 		#[pallet::call_index(10)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::candidate_stake_more(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::candidate_stake_more(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
 			T::MaxUnstakeRequests::get().saturated_into::<u32>()
@@ -1264,7 +1262,7 @@ pub mod pallet {
 			CandidatePool::<T>::insert(&collator, state);
 
 			Self::deposit_event(Event::CollatorStakedMore(collator, before_stake, after_stake));
-			Ok(Some(<T as pallet::Config>::WeightInfo::candidate_stake_more(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::candidate_stake_more(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 				unstaking_len,
@@ -1297,7 +1295,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, CandidatePool, TotalCollatorStake
 		/// # </weight>
 		#[pallet::call_index(11)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::candidate_stake_less(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::candidate_stake_less(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1336,7 +1334,7 @@ pub mod pallet {
 			CandidatePool::<T>::insert(&collator, state);
 
 			Self::deposit_event(Event::CollatorStakedLess(collator, before_stake, after));
-			Ok(Some(<T as pallet::Config>::WeightInfo::candidate_stake_less(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::candidate_stake_less(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1375,7 +1373,7 @@ pub mod pallet {
 		/// - Writes: Locks, CandidatePool, DelegatorState, TotalCollatorStake, LastDelegation
 		/// # </weight>
 		#[pallet::call_index(12)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join_delegators(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::join_delegators(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1473,7 +1471,7 @@ pub mod pallet {
 			Self::update_kicked_delegator_storage(maybe_kicked_delegator);
 
 			Self::deposit_event(Event::Delegation(acc, amount, collator, new_total));
-			Ok(Some(<T as pallet::Config>::WeightInfo::join_delegators(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::join_delegators(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1523,7 +1521,7 @@ pub mod pallet {
 		// NOTE: We can't benchmark this extrinsic until we have increased
 		// `MaxCollatorsPerDelegator` by at least 1, thus we use the closest weight we can get.
 		#[pallet::call_index(13)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::join_delegators(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::join_delegators(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1621,7 +1619,7 @@ pub mod pallet {
 			Self::update_kicked_delegator_storage(maybe_kicked_delegator);
 
 			Self::deposit_event(Event::Delegation(acc, amount, collator, new_total));
-			Ok(Some(<T as pallet::Config>::WeightInfo::join_delegators(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::join_delegators(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1651,7 +1649,7 @@ pub mod pallet {
 		/// - Kills: DelegatorState
 		/// # </weight>
 		#[pallet::call_index(14)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::leave_delegators(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::leave_delegators(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1668,7 +1666,7 @@ pub mod pallet {
 			DelegatorState::<T>::remove(&acc);
 
 			Self::deposit_event(Event::DelegatorLeft(acc, delegator.total));
-			Ok(Some(<T as pallet::Config>::WeightInfo::leave_delegators(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::leave_delegators(
 				num_delegations,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1697,7 +1695,7 @@ pub mod pallet {
 		/// - Kills: DelegatorState if the delegator has not delegated to another collator
 		/// # </weight>
 		#[pallet::call_index(15)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::revoke_delegation(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::revoke_delegation(
 			T::MaxCollatorsPerDelegator::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1712,7 +1710,7 @@ pub mod pallet {
 
 			let num_delegations = Self::delegator_revokes_collator(delegator, collator)?;
 
-			Ok(Some(<T as pallet::Config>::WeightInfo::revoke_delegation(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::revoke_delegation(
 				num_delegations,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1736,7 +1734,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, Locks, DelegatorState, CandidatePool, TotalCollatorStake
 		/// # </weight>
 		#[pallet::call_index(16)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::delegator_stake_more(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::delegator_stake_more(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get(),
 			T::MaxUnstakeRequests::get().saturated_into::<u32>())
@@ -1791,7 +1789,7 @@ pub mod pallet {
 				before_total,
 				after,
 			));
-			Ok(Some(<T as pallet::Config>::WeightInfo::delegator_stake_more(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::delegator_stake_more(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 				unstaking_len,
@@ -1823,7 +1821,7 @@ pub mod pallet {
 		/// - Writes: Unstaking, DelegatorState, CandidatePool, TotalCollatorStake
 		/// # </weight>
 		#[pallet::call_index(17)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::delegator_stake_less(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::delegator_stake_less(
 			T::MaxTopCandidates::get(),
 			T::MaxDelegatorsPerCollator::get()
 		))]
@@ -1879,7 +1877,7 @@ pub mod pallet {
 				before_total,
 				after,
 			));
-			Ok(Some(<T as pallet::Config>::WeightInfo::delegator_stake_less(
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::delegator_stake_less(
 				n,
 				T::MaxDelegatorsPerCollator::get(),
 			))
@@ -1897,7 +1895,7 @@ pub mod pallet {
 		/// - Kills: Unstaking & Locks if no balance is locked anymore
 		/// # </weight>
 		#[pallet::call_index(18)]
-		#[pallet::weight(<T as pallet::Config>::WeightInfo::unlock_unstaked(
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::unlock_unstaked(
 			T::MaxUnstakeRequests::get().saturated_into::<u32>()
 		))]
 		pub fn unlock_unstaked(
@@ -1909,7 +1907,8 @@ pub mod pallet {
 
 			let unstaking_len = Self::do_unlock(&target)?;
 
-			Ok(Some(<T as pallet::Config>::WeightInfo::unlock_unstaked(unstaking_len)).into())
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::unlock_unstaked(unstaking_len))
+				.into())
 		}
 	}
 
@@ -2625,8 +2624,8 @@ pub mod pallet {
 		// }
 
 		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_ref_time(0_u64);
-			let mut writes = Weight::from_ref_time(0_u64);
+			let mut reads = Weight::from_parts(0, 1);
+			let mut writes = Weight::from_parts(0, 1);
 
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
@@ -2687,12 +2686,10 @@ pub mod pallet {
 
 	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
 		/// 1. A new session starts.
-		/// 2. In hook new_session: Read the current top n candidates from the
-		///    TopCandidates and assign this set to author blocks for the next
-		///    session.
-		/// 3. AuRa queries the authorities from the session pallet for
-		///    this session and picks authors on round-robin-basis from list of
-		///    authorities.
+		/// 2. In hook new_session: Read the current top n candidates from the TopCandidates and
+		///    assign this set to author blocks for the next session.
+		/// 3. AuRa queries the authorities from the session pallet for this session and picks
+		///    authors on round-robin-basis from list of authorities.
 		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
 			log::debug!(
 				"assembling new collators for new session {} at #{:?}",

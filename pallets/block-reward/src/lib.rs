@@ -32,24 +32,7 @@
 //! ## Usage
 //!
 //! 1. Pallet should be set as a handler of `OnTimestampSet`.
-//! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait. For
-//!     example:
-//!     ```ignore
-//!     pub struct BeneficiaryPayout();
-//!     impl BeneficiaryPayout<NegativeImbalanceOf<T>> for BeneficiaryPayout {
-//!         fn treasury(reward: NegativeImbalanceOf<T>) {
-//!             Balances::resolve_creating(&TREASURY_POT.into_account(), reward);
-//!         }
-//!
-//!         fn collators(reward: NegativeImbalanceOf<T>) {
-//!             Balances::resolve_creating(&COLLATOR_POT.into_account(), reward);
-//!         }
-//!
-//!         fn dapps_staking(reward: NegativeImbalanceOf<T>) {
-//!             DappsStaking::rewards(reward);
-//!         }
-//!     }
-//!     ```
+//! 2. `BeneficiaryPayout` handler should be defined as an impl of `BeneficiaryPayout` trait.
 //! 3. Set `RewardAmount` to desired block reward value in the genesis configuration.
 //! 4. Set `MaxCurrencySupply` to limit maximum currency supply in the genesis configuration.
 
@@ -63,7 +46,7 @@ use frame_support::{
 };
 use frame_system::{ensure_root, pallet_prelude::*};
 
-#[cfg(any(feature = "runtime-benchmarks"))]
+#[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 #[cfg(test)]
 mod mock;
@@ -71,13 +54,13 @@ mod mock;
 mod tests;
 
 pub mod migrations;
-pub use migrations::StorageReleases;
 
 pub mod types;
 pub use types::*;
 
+pub mod weightinfo;
 pub mod weights;
-pub use weights::WeightInfo;
+pub use weightinfo::WeightInfo;
 
 #[macro_export]
 macro_rules! log {
@@ -94,7 +77,10 @@ pub mod pallet {
 
 	use super::*;
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
@@ -111,10 +97,6 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
-
-	#[pallet::storage]
-	#[pallet::getter(fn storage_version)]
-	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn reward_config)]

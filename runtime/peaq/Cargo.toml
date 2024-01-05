@@ -1,6 +1,6 @@
 [package]
 name = "peaq-runtime"
-version = "3.0.0-polkadot-v0.9.38"
+version = "3.0.0-polkadot-v0.9.43"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -14,10 +14,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
 git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.38"
+branch = "peaq-polkadot-v0.9.43"
 
 [dependencies]
-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
 sha3 = { workspace = true, default-features = false, optional = true  }
@@ -29,7 +29,7 @@ frame-system-rpc-runtime-api = { workspace = true, default-features = false }
 hex-literal = { workspace = true, default-features = false, optional = true  }
 pallet-aura = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
-pallet-randomness-collective-flip = { workspace = true, default-features = false }
+pallet-insecure-randomness-collective-flip = { workspace = true, default-features = false }
 pallet-sudo = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
@@ -121,6 +121,7 @@ zenlink-protocol-runtime-api = { workspace = true, default-features = false }
 
 frame-try-runtime ={ workspace=true, default-features = false, optional = true}
 log = {workspace = true, default-features = false}
+ethereum = {workspace = true, default-features = false}
 
 [features]
 default = ["std", "aura"]
@@ -154,7 +155,7 @@ runtime-benchmarks = [
 ]
 
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"scale-info/std",
 	"frame-executive/std",
 	"frame-support/std",
@@ -162,7 +163,7 @@ std = [
 	"frame-system/std",
 	"pallet-aura/std",
 	"pallet-balances/std",
-	"pallet-randomness-collective-flip/std",
+	"pallet-insecure-randomness-collective-flip/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -281,7 +282,7 @@ try-runtime = [
 
 	"pallet-aura/try-runtime",
 	"pallet-balances/try-runtime",
-	"pallet-randomness-collective-flip/try-runtime",
+	"pallet-insecure-randomness-collective-flip/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-evm/try-runtime",

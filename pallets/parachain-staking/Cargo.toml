@@ -3,7 +3,7 @@ authors = ["KILT <info@kilt.io>"]
 description = "Parachain parachain-staking pallet for collator delegation and selection as well as reward distribution"
 edition = "2021"
 name = "parachain-staking"
-version = "1.6.2"
+version = "1.7.0"
 
 [dev-dependencies]
 pallet-aura = { workspace = true, default-features = false }
@@ -15,7 +15,7 @@ sp-io = { workspace = true, default-features = false }
 [dependencies]
 hex-literal = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
-codec = { package = "parity-scale-codec", workspace = true, default-features = false, features = ["derive"] }
+parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
 serde = { workspace = true, default-features = false, optional = true }
 
@@ -42,10 +42,11 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "log/std",
+  "pallet-aura/std",
   "pallet-authorship/std",
   "pallet-balances/std",
   "pallet-session/std",
-  "codec/std",
+  "parity-scale-codec/std",
   "scale-info/std",
   "serde",
   "sp-runtime/std",

@@ -1,6 +1,6 @@
 [package]
 name = "peaq-primitives-xcm"
-version = "3.0.0-polkadot-v0.9.38"
+version = "3.0.0-polkadot-v0.9.43"
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = 'https://peaq.network/'
 edition = "2021"
@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 bstringify = { workspace = true }
 serde = { workspace = true }
-codec = { package = "parity-scale-codec", workspace = true }
+parity-scale-codec = { workspace = true }
 num_enum = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
@@ -24,7 +24,7 @@ zenlink-protocol = { workspace = true }
 default = ["std"]
 std = [
 	"scale-info/std",
-	"codec/std",
+	"parity-scale-codec/std",
 	"num_enum/std",
 	"sp-runtime/std",
 	"sp-core/std",

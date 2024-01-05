@@ -35,6 +35,9 @@ mod upgrade {
 					CoefficientConfig::<T>::put(DEFAULT_COEFFICIENT);
 					weight_writes += 1;
 				}
+				// Update because last time, we are missing the storage version
+				STORAGE_VERSION.put::<Pallet<T>>();
+
 				weight_reads += 1;
 			}
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)

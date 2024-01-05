@@ -14,23 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Provide utils assemble precompiles and precompilesets into a
+//! Provide utils to assemble precompiles and precompilesets into a
 //! final precompile set with security checks. All security checks are enabled by
 //! default and must be disabled explicely throught type annotations.
 
-use crate::{data::String, revert, substrate::RuntimeHelper};
-use fp_evm::{Precompile, PrecompileHandle, PrecompileResult, PrecompileSet};
+use crate::{
+	evm::handle::PrecompileHandleExt,
+	solidity::{codec::String, revert::revert},
+	EvmResult,
+};
+use fp_evm::{
+	ExitError, IsPrecompileResult, Precompile, PrecompileFailure, PrecompileHandle,
+	PrecompileResult, PrecompileSet,
+};
 use frame_support::pallet_prelude::Get;
 use impl_trait_for_tuples::impl_for_tuples;
+// use pallet_evm::AddressMapping;
 use sp_core::{H160, H256};
 use sp_std::{
 	cell::RefCell, collections::btree_map::BTreeMap, marker::PhantomData, ops::RangeInclusive, vec,
 	vec::Vec,
 };
-
-mod sealed {
-	pub trait Sealed {}
-}
 
 /// Trait representing checks that can be made on a precompile call.
 /// Types implementing this trait are made to be chained in a tuple.
@@ -94,6 +98,25 @@ pub trait PrecompileChecks {
 	/// Summarize the checks when being called by a precompile.
 	fn callable_by_precompile_summary() -> Option<String> {
 		None
+	}
+}
+
+#[derive(Debug, Clone)]
+pub enum DiscriminantResult<T> {
+	Some(T, u64),
+	None(u64),
+	OutOfGas,
+}
+
+impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
+	fn from(val: DiscriminantResult<T>) -> Self {
+		match val {
+			DiscriminantResult::<T>::Some(_, extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
+			DiscriminantResult::<T>::None(extra_cost) =>
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
+			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
+		}
 	}
 }
 
@@ -272,29 +295,65 @@ impl<T: SelectorFilter> PrecompileChecks for CallableByPrecompile<T> {
 	}
 }
 
-fn is_address_eoa_or_precompile<R: pallet_evm::Config>(address: H160) -> bool {
-	let code_len = pallet_evm::AccountCodes::<R>::decode_len(address).unwrap_or(0);
+/// The type of EVM address.
+#[derive(PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub enum AddressType {
+	/// The code stored at the address is less than 5 bytes, but not well known.
+	Unknown,
+	/// No code is stored at the address, therefore is EOA.
+	EOA,
+	/// The 5-byte magic constant for a precompile is stored at the address.
+	Precompile,
+	/// The code is greater than 5-bytes, potentially a Smart Contract.
+	Contract,
+}
+
+/// Retrieves the type of address demarcated by `AddressType`.
+pub fn get_address_type<R: pallet_evm::Config>(
+	handle: &mut impl PrecompileHandle,
+	address: H160,
+) -> Result<AddressType, ExitError> {
+	// AccountCodesMetadata:
+	// Blake2128(16) + H160(20) + CodeMetadata(40)
+	handle.record_db_read::<R>(76)?;
+	let code_len = pallet_evm::Pallet::<R>::account_code_metadata(address).size;
 
 	// 0 => either EOA or precompile without dummy code
 	if code_len == 0 {
-		return true
+		return Ok(AddressType::EOA)
 	}
 
 	// dummy code is 5 bytes long, so any other len means it is a contract.
 	if code_len != 5 {
-		return false
+		return Ok(AddressType::Contract)
 	}
 
 	// check code matches dummy code
+	handle.record_db_read::<R>(code_len as usize)?;
 	let code = pallet_evm::AccountCodes::<R>::get(address);
-	code == [0x60, 0x00, 0x60, 0x00, 0xfd]
+	if code == [0x60, 0x00, 0x60, 0x00, 0xfd] {
+		return Ok(AddressType::Precompile)
+	}
+
+	Ok(AddressType::Unknown)
+}
+
+fn is_address_eoa_or_precompile<R: pallet_evm::Config>(
+	handle: &mut impl PrecompileHandle,
+	address: H160,
+) -> Result<bool, ExitError> {
+	match get_address_type::<R>(handle, address)? {
+		AddressType::EOA | AddressType::Precompile => Ok(true),
+		_ => Ok(false),
+	}
 }
 
 /// Common checks for precompile and precompile sets.
 /// Don't contain recursion check as precompile sets have recursion check for each member.
 fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	handle: &mut impl PrecompileHandle,
-) -> Result<(), fp_evm::PrecompileFailure> {
+) -> EvmResult<()> {
 	let code_address = handle.code_address();
 	let caller = handle.context().caller;
 
@@ -314,22 +373,25 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Is this selector callable from a smart contract?
 	let callable_by_smart_contract =
 		C::callable_by_smart_contract(caller, selector).unwrap_or(false);
-	if !callable_by_smart_contract {
-		handle.record_cost(RuntimeHelper::<R>::db_read_gas_cost())?;
-		if !is_address_eoa_or_precompile::<R>(caller) {
-			return Err(revert("Function not callable by smart contracts"))
-		}
+	if !callable_by_smart_contract && !is_address_eoa_or_precompile::<R>(handle, caller)? {
+		return Err(revert("Function not callable by smart contracts"))
 	}
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
-	if !callable_by_precompile &&
-		<R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(caller)
-	{
+	if !callable_by_precompile && is_precompile_or_fail::<R>(caller, handle.remaining_gas())? {
 		return Err(revert("Function not callable by precompiles"))
 	}
 
 	Ok(())
+}
+
+pub fn is_precompile_or_fail<R: pallet_evm::Config>(address: H160, gas: u64) -> EvmResult<bool> {
+	match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(address, gas) {
+		IsPrecompileResult::Answer { is_precompile, .. } => Ok(is_precompile),
+		IsPrecompileResult::OutOfGas =>
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
+	}
 }
 
 pub struct AddressU64<const N: u64>;
@@ -358,7 +420,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 		if !self.allow_subcalls {
 			return (
 				evm::ExitReason::Revert(evm::ExitRevert::Reverted),
-				crate::encoded_revert("subcalls disabled for this precompile"),
+				crate::solidity::revert::revert_as_bytes("subcalls disabled for this precompile"),
 			)
 		}
 
@@ -401,6 +463,29 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 	fn gas_limit(&self) -> Option<u64> {
 		self.handle.gas_limit()
 	}
+
+	fn record_external_cost(
+		&mut self,
+		ref_time: Option<u64>,
+		proof_size: Option<u64>,
+		storage_growth: Option<u64>,
+	) -> Result<(), ExitError> {
+		self.handle.record_external_cost(ref_time, proof_size, storage_growth)
+	}
+
+	fn refund_external_cost(&mut self, ref_time: Option<u64>, proof_size: Option<u64>) {
+		self.handle.refund_external_cost(ref_time, proof_size)
+	}
+}
+
+/// Allows to know if a precompile is active or not.
+/// This allows to detect deactivated precompile, that are still considered precompiles by
+/// the EVM but that will always revert when called.
+pub trait IsActivePrecompile {
+	/// Is the provided address an active precompile, a precompile that has
+	/// not be deactivated. Note that a deactivated precompile is still considered a precompile
+	/// for the EVM, but it will always revert when called.
+	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult;
 }
 
 // INDIVIDUAL PRECOMPILE(SET)
@@ -419,7 +504,7 @@ pub trait PrecompileSetFragment {
 	) -> Option<PrecompileResult>;
 
 	/// Is the provided address a precompile in this fragment?
-	fn is_precompile(&self, address: H160) -> bool;
+	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult;
 
 	/// Return the list of addresses covered by this fragment.
 	fn used_addresses(&self) -> Vec<H160>;
@@ -505,8 +590,8 @@ where
 	}
 
 	#[inline(always)]
-	fn is_precompile(&self, address: H160) -> bool {
-		address == A::get()
+	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -525,6 +610,16 @@ where
 			callable_by_precompile: C::callable_by_precompile_summary()
 				.unwrap_or_else(|| "Not callable".into()),
 		}]
+	}
+}
+
+impl<A, P, C> IsActivePrecompile for PrecompileAt<A, P, C>
+where
+	A: Get<H160>,
+{
+	#[inline(always)]
+	fn is_active_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 }
 
@@ -560,11 +655,9 @@ where
 		handle: &mut impl PrecompileHandle,
 	) -> Option<PrecompileResult> {
 		let code_address = handle.code_address();
-
-		if !self.is_precompile(code_address) {
+		if !is_precompile_or_fail::<R>(code_address, handle.remaining_gas()).ok()? {
 			return None
 		}
-
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
 			return Some(Err(err))
@@ -616,8 +709,11 @@ where
 	}
 
 	#[inline(always)]
-	fn is_precompile(&self, address: H160) -> bool {
-		address.as_bytes().starts_with(A::get()) && self.precompile_set.is_precompile(address)
+	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+		if address.as_bytes().starts_with(A::get()) {
+			return self.precompile_set.is_precompile(address, gas)
+		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -639,6 +735,16 @@ where
 			callable_by_precompile: C::callable_by_precompile_summary()
 				.unwrap_or_else(|| "Not callable".into()),
 		}]
+	}
+}
+
+impl<A, P, C> IsActivePrecompile for PrecompileSetStartingWith<A, P, C>
+where
+	Self: PrecompileSetFragment,
+{
+	#[inline(always)]
+	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+		self.is_precompile(address, gas)
 	}
 }
 
@@ -668,8 +774,8 @@ where
 	}
 
 	#[inline(always)]
-	fn is_precompile(&self, address: H160) -> bool {
-		address == A::get()
+	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -686,6 +792,66 @@ where
 			callable_by_smart_contract: "Reverts in all cases".into(),
 			callable_by_precompile: "Reverts in all cases".into(),
 		}]
+	}
+}
+
+impl<A> IsActivePrecompile for RevertPrecompile<A> {
+	#[inline(always)]
+	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 }
+	}
+}
+
+/// A precompile that was removed from a precompile set.
+/// Still considered a precompile but is inactive and always revert.
+pub struct RemovedPrecompileAt<A>(PhantomData<A>);
+impl<A> PrecompileSetFragment for RemovedPrecompileAt<A>
+where
+	A: Get<H160>,
+{
+	#[inline(always)]
+	fn new() -> Self {
+		Self(PhantomData)
+	}
+
+	#[inline(always)]
+	fn execute<R: pallet_evm::Config>(
+		&self,
+		handle: &mut impl PrecompileHandle,
+	) -> Option<PrecompileResult> {
+		if A::get() == handle.code_address() {
+			Some(Err(revert("Removed precompile")))
+		} else {
+			None
+		}
+	}
+
+	#[inline(always)]
+	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer { is_precompile: address == A::get(), extra_cost: 0 }
+	}
+
+	#[inline(always)]
+	fn used_addresses(&self) -> Vec<H160> {
+		vec![A::get()]
+	}
+
+	fn summarize_checks(&self) -> Vec<PrecompileCheckSummary> {
+		vec![PrecompileCheckSummary {
+			name: None,
+			precompile_kind: PrecompileKind::Single(A::get()),
+			recursion_limit: Some(0),
+			accept_delegate_call: true,
+			callable_by_smart_contract: "Reverts in all cases".into(),
+			callable_by_precompile: "Reverts in all cases".into(),
+		}]
+	}
+}
+
+impl<A> IsActivePrecompile for RemovedPrecompileAt<A> {
+	#[inline(always)]
+	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 }
 
@@ -714,14 +880,19 @@ impl PrecompileSetFragment for Tuple {
 	}
 
 	#[inline(always)]
-	fn is_precompile(&self, address: H160) -> bool {
+	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			if self.Tuple.is_precompile(address) {
-				return true;
-			}
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_precompile(address, gas) {
+				return IsPrecompileResult::Answer {
+					is_precompile: true,
+					extra_cost: 0,
+				}
+			};
 		)*);
-
-		false
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -745,6 +916,25 @@ impl PrecompileSetFragment for Tuple {
 		)*);
 
 		checks
+	}
+}
+
+#[impl_for_tuples(1, 100)]
+impl IsActivePrecompile for Tuple {
+	#[inline(always)]
+	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+		for_tuples!(#(
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_active_precompile(address, gas) {
+				return IsPrecompileResult::Answer {
+					is_precompile: true,
+					extra_cost: 0,
+				}
+			};
+		)*);
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 }
 
@@ -781,11 +971,11 @@ where
 		}
 	}
 
-	fn is_precompile(&self, address: H160) -> bool {
+	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		if self.range.contains(&address) {
-			self.inner.is_precompile(address)
+			self.inner.is_precompile(address, gas)
 		} else {
-			false
+			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 		}
 	}
 
@@ -795,6 +985,19 @@ where
 
 	fn summarize_checks(&self) -> Vec<PrecompileCheckSummary> {
 		self.inner.summarize_checks()
+	}
+}
+
+impl<S, E, P> IsActivePrecompile for PrecompilesInRangeInclusive<(S, E), P>
+where
+	P: IsActivePrecompile,
+{
+	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+		if self.range.contains(&address) {
+			self.inner.is_active_precompile(address, gas)
+		} else {
+			IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+		}
 	}
 }
 
@@ -809,8 +1012,20 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 		self.inner.execute::<R>(handle)
 	}
 
-	fn is_precompile(&self, address: H160) -> bool {
-		self.inner.is_precompile(address)
+	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+		self.inner.is_precompile(address, gas)
+	}
+}
+
+impl<R, P: IsActivePrecompile> IsActivePrecompile for PrecompileSetBuilder<R, P> {
+	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+		self.inner.is_active_precompile(address, gas)
+	}
+}
+
+impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 
@@ -820,18 +1035,20 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P>
 		Self { inner: P::new(), _phantom: PhantomData }
 	}
 
-	/// Return the list of addresses contained in this PrecompileSet.
+	/// Note: In peaq, we are use H256 as the AccountID, but eth address is H160, therefore, it's
+	/// not the same... Return the list of addresses contained in this PrecompileSet.
 	pub fn used_addresses() -> impl Iterator<Item = H160> {
 		Self::new().inner.used_addresses().into_iter()
+		/*
+		 * Self::new()
+		 *     .inner
+		 *     .used_addresses()
+		 *     .into_iter()
+		 *     .map(|x| R::AddressMapping::into_account_id(x))
+		 */
 	}
 
 	pub fn summarize_checks(&self) -> Vec<PrecompileCheckSummary> {
 		self.inner.summarize_checks()
-	}
-}
-
-impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
-	fn default() -> Self {
-		Self::new()
 	}
 }

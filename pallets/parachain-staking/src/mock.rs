@@ -19,12 +19,6 @@
 
 #![allow(clippy::from_over_into)]
 
-use super::*;
-use crate::{
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-	{self as stake},
-};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
@@ -41,6 +35,13 @@ use sp_runtime::{
 	Perbill, Perquintill,
 };
 use sp_std::{cell::RefCell, fmt::Debug};
+
+use super::*;
+use crate::{
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate::RewardRateInfo,
+	{self as stake},
+};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -59,18 +60,18 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Storage},
-		StakePallet: stake::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Aura: pallet_aura::{Pallet, Storage},
+		System: frame_system,
+		Balances: pallet_balances,
+		Aura: pallet_aura,
+		Session: pallet_session,
+		Authorship: pallet_authorship,
+		StakePallet: stake,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = Weight::from_ref_time(1024);
+	pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 0);
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 	pub const SS58Prefix: u8 = 42;
@@ -116,6 +117,10 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 impl pallet_aura::Config for Test {
@@ -168,7 +173,7 @@ impl Config for Test {
 	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
-	type WeightInfo = ();
+	type WeightInfo = crate::weights::WeightInfo<Test>;
 	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
 }
 
@@ -355,11 +360,9 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 			);
 			StakePallet::note_author(*author);
 		}
-		<AllPalletsReversedWithSystemFirst as OnFinalize<u64>>::on_finalize(System::block_number());
+		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		<AllPalletsReversedWithSystemFirst as OnInitialize<u64>>::on_initialize(
-			System::block_number(),
-		);
+		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
 }
 

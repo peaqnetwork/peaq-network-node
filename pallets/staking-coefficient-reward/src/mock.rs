@@ -3,7 +3,7 @@
 #![allow(clippy::from_over_into)]
 
 use super::*;
-use crate::{self as reward_calculator, default_weights::SubstrateWeight};
+use crate::{self as reward_calculator, weights::WeightInfo};
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, GenesisBuild, OnFinalize, OnInitialize},
@@ -51,7 +51,7 @@ construct_runtime!(
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = Weight::from_ref_time(1024);
+	pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 0);
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 	pub const SS58Prefix: u8 = 42;
@@ -97,6 +97,10 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type HoldIdentifier = ();
+	type MaxFreezes = ();
 }
 
 impl pallet_aura::Config for Test {
@@ -131,7 +135,7 @@ parameter_types! {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = SubstrateWeight<Test>;
+	type WeightInfo = WeightInfo<Test>;
 }
 
 impl parachain_staking::Config for Test {

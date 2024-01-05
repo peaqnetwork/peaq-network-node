@@ -7,7 +7,7 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use precompile_utils::{data::String, prelude::*};
+use precompile_utils::prelude::*;
 use sp_core::{Decode, H256, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -33,7 +33,14 @@ pub(crate) const SELECTOR_LOG_REMOVE_ATTRIBUTE: [u8; 32] =
 
 pub struct PeaqDIDPrecompile<Runtime>(PhantomData<Runtime>);
 
-#[derive(EvmData)]
+/// Just a rough estimation
+/// Attribute size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
+/// Blake2_128Concat (16) + Hash (32) + Attribute Data
+/// Onwer size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
+/// Blake2_128Concat (16) + AccountId (32) + Hash (32) + AccountID (32)
+const PEAQ_DID_KEY_SIZE: u64 = 224;
+
+#[derive(Default, Debug, solidity::Codec)]
 pub struct EVMAttribute {
 	name: UnboundedBytes,
 	value: UnboundedBytes,
@@ -106,18 +113,22 @@ where
 				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
+			PEAQ_DID_KEY_SIZE +
+				32_u64 + name.as_bytes().len() as u64 +
+				value.as_bytes().len() as u64 +
+				4_u64,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ADD_ATTRIBUTE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(did_account)
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.write::<BoundedBytes<GetBytesLimit>>(value)
-				.write::<u32>(valid_for)
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				did_account,
+				name,
+				value,
+				valid_for,
+			)),
 		);
 		event.record(handle)?;
 
@@ -152,18 +163,19 @@ where
 				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
+			32_u64 + name.as_bytes().len() as u64 + value.as_bytes().len() as u64 + 4_u64,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UPDATE_ATTRIBUTE,
-			EvmDataWriter::new()
-				.write::<Address>(Address::from(handle.context().caller))
-				.write::<H256>(did_account)
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.write::<BoundedBytes<GetBytesLimit>>(value)
-				.write::<u32>(valid_for)
-				.build(),
+			solidity::encode_event_data((
+				Address::from(handle.context().caller),
+				did_account,
+				name,
+				value,
+				valid_for,
+			)),
 		);
 		event.record(handle)?;
 
@@ -188,15 +200,13 @@ where
 				did_account: AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes()),
 				name: name.as_bytes().to_vec(),
 			},
+			0,
 		)?;
 
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_REMOVE_ATTRIBUTE,
-			EvmDataWriter::new()
-				.write::<H256>(did_account)
-				.write::<BoundedBytes<GetBytesLimit>>(name)
-				.build(),
+			solidity::encode_event_data((did_account, name)),
 		);
 		event.record(handle)?;
 
