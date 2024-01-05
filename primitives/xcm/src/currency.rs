@@ -401,11 +401,11 @@ impl<T> GenerateLpAssetId<ZenlinkAssetId> for PeaqZenlinkLpGenerate<T> {
 pub mod parachain {
 	pub mod acala {
 		// Randomly choose one
-		pub const ID: u32 = 1111;
+		pub const ID: u32 = 3000;
 		pub const ACA_KEY: &[u8] = &[0, 0];
 	}
 	pub mod bifrost {
-		pub const ID: u32 = 3000;
+		pub const ID: u32 = 4000;
 		pub const BNC_KEY: &[u8] = &[0, 1];
 	}
 	pub mod moonbase {
@@ -413,7 +413,9 @@ pub mod parachain {
 		pub const DEV_PALLET: u8 = 3;
 		pub const EVM_PALLET: u8 = 48;
 		// 0xe5de10c4b744bac6b783faf8d9b9fdff14acc3c9
-		pub const XCUSDC_KEY: [u8; 20] =
-			[229, 222, 16, 196, 183, 68, 186, 198, 183, 131, 250, 248, 217, 185, 253, 255, 20, 172, 195, 201];
+		pub const XCUSDC_KEY: [u8; 20] = [
+			229, 222, 16, 196, 183, 68, 186, 198, 183, 131, 250, 248, 217, 185, 253, 255, 20, 172,
+			195, 201,
+		];
 	}
 }

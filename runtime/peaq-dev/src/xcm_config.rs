@@ -18,8 +18,8 @@ use pallet_xcm::XcmPassthrough;
 use peaq_primitives_xcm::currency::parachain;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{
-	local_currency_location, native_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
-	pallet_currency_location, pallet_currency_addr_location,
+	local_currency_location, native_currency_location, pallet_currency_addr_location,
+	pallet_currency_location, AccountIdToMultiLocation, CurrencyIdConvert,
 };
 use sp_runtime::traits::{ConstU32, Convert};
 use xcm::{

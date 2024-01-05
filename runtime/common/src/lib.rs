@@ -26,7 +26,6 @@ use zenlink_protocol::{AssetBalance, Config as ZenProtConfig, ExportZenlink, Loc
 
 pub use peaq_primitives_xcm::*;
 
-
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;
 pub const NANOCENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 9);
@@ -181,10 +180,8 @@ where
 				parachain::bifrost::ID,
 				parachain::bifrost::BNC_KEY.to_vec(),
 			),
-			Token(MBA) => pallet_currency_location(
-				parachain::moonbase::ID,
-				parachain::moonbase::DEV_PALLET,
-			),
+			Token(MBA) =>
+				pallet_currency_location(parachain::moonbase::ID, parachain::moonbase::DEV_PALLET),
 			Token(XCUSDC) => pallet_currency_addr_location(
 				parachain::moonbase::ID,
 				parachain::moonbase::EVM_PALLET,
@@ -215,30 +212,30 @@ where
 					_ => None,
 				}
 			},
-			MultiLocation {
-				parents: 1,
-				interior: X2(Parachain(id), PalletInstance(pallet)),
-			} => {
+			MultiLocation { parents: 1, interior: X2(Parachain(id), PalletInstance(pallet)) } =>
 				match id {
 					parachain::moonbase::ID => match pallet {
 						parachain::moonbase::DEV_PALLET => Some(Token(MBA)),
 						_ => None,
 					},
 					_ => None,
-				}
-			},
+				},
 			MultiLocation {
 				parents: 1,
-				interior: X3(Parachain(id), PalletInstance(pallet), Junction::AccountKey20 {
-					network: None,
-					key,
-				})
+				interior:
+					X3(
+						Parachain(id),
+						PalletInstance(pallet),
+						Junction::AccountKey20 { network: None, key },
+					),
 			} => {
 				log::error!("location: {:?}", location);
 				match (id, pallet, key) {
-					(parachain::moonbase::ID,
-					 parachain::moonbase::EVM_PALLET,
-					 parachain::moonbase::XCUSDC_KEY) => Some(Token(XCUSDC)),
+					(
+						parachain::moonbase::ID,
+						parachain::moonbase::EVM_PALLET,
+						parachain::moonbase::XCUSDC_KEY,
+					) => Some(Token(XCUSDC)),
 					_ => None,
 				}
 			},
@@ -309,19 +306,21 @@ pub fn native_currency_location(para_id: u32, key: Vec<u8>) -> Option<MultiLocat
 }
 
 pub fn pallet_currency_location(para_id: u32, pallet: u8) -> Option<MultiLocation> {
-	Some(MultiLocation::new(
-		1,
-		X2(Parachain(para_id), PalletInstance(pallet)),
-	))
+	Some(MultiLocation::new(1, X2(Parachain(para_id), PalletInstance(pallet))))
 }
 
-pub fn pallet_currency_addr_location(para_id: u32, pallet: u8, addr: [u8; 20]) -> Option<MultiLocation> {
+pub fn pallet_currency_addr_location(
+	para_id: u32,
+	pallet: u8,
+	addr: [u8; 20],
+) -> Option<MultiLocation> {
 	Some(MultiLocation::new(
 		1,
-		X3(Parachain(para_id), PalletInstance(pallet), Junction::AccountKey20 {
-			network: None,
-			key: addr,
-		}),
+		X3(
+			Parachain(para_id),
+			PalletInstance(pallet),
+			Junction::AccountKey20 { network: None, key: addr },
+		),
 	))
 }
 
