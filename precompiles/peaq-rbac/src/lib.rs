@@ -622,8 +622,8 @@ where
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::assign_role_to_group {
-				role_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
-				group_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+				role_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
 			},
 			0,
 		)?;
@@ -656,8 +656,8 @@ where
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::unassign_role_to_group {
-				role_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
-				group_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+				role_id: EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes()),
+				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
 			},
 			0,
 		)?;
