@@ -235,7 +235,7 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ASSIGN_ROLE_TO_USER,
-			solidity::encode_event_data((Address::from(handle.context().caller), role_id)),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id, user_id)),
 		);
 		event.record(handle)?;
 
@@ -265,7 +265,7 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_UNASSIGNED_ROLE_TO_USER,
-			solidity::encode_event_data((Address::from(handle.context().caller), role_id)),
+			solidity::encode_event_data((Address::from(handle.context().caller), role_id, user_id)),
 		);
 		event.record(handle)?;
 
