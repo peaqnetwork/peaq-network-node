@@ -163,7 +163,7 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v0.0.9 \
+docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v0.0.10 \
 RPC_ENDPOINT="https://rpcpc1-qa.agung.peaq.network" \
 --parachain-id 2000 \
 --chain ./node/src/chain-specs/peaq-dev-raw.json \
@@ -209,7 +209,7 @@ for peaq-network-node from the git repository
 
 #### PEAQ-Dev env
 ```bash
-git clone --branch peaq-dev-v0.0.9 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch peaq-dev-v0.0.10 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 #### Krest env

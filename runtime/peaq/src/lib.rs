@@ -54,9 +54,7 @@ use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, MultiAssetsHandler, PairInfo, PairLpGenerate, ZenlinkMultiAssets,
-};
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 pub mod constants;
 mod precompiles;
@@ -124,7 +122,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 1,
+	spec_version: 2,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -823,7 +821,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::PEAQ;
+	pub const GetNativeCurrencyId: CurrencyId = PEAQ;
 }
 
 impl orml_currencies::Config for Runtime {
@@ -914,7 +912,7 @@ impl zenlink_protocol::Config for Runtime {
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
-	type LpGenerate = PairLpGenerate<Self>;
+	type LpGenerate = PeaqZenlinkLpGenerate<Self>;
 	type TargetChains = ZenlinkRegistedParaChains;
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
@@ -1605,7 +1603,6 @@ impl_runtime_apis! {
 			Contracts::get_storage(address, key)
 		}
 	}
-
 
 	impl peaq_pallet_did_runtime_api::PeaqDIDApi<Block, AccountId, BlockNumber, Moment> for Runtime {
 		fn read(did_account: AccountId, name: Vec<u8>) -> Option<
