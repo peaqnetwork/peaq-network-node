@@ -182,20 +182,20 @@ RPC_ENDPOINT="https://rpcpc1-qa.agung.peaq.network" \
 #### Krest env
 
  ```bash
-docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v0.0.4 \
+docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v0.0.5 \
 --parachain-id 2241 \
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
 --port 30333 \
---ws-port 9944 \
---ws-external --rpc-cors=all \
+--rpc-port 9944 \
+--rpc-cors=all \
 --execution wasm \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
 --port 30343 \
 --sync warp \
---ws-port 9977
+--rpc-port 9977
  ```
 
 Once you run this command, wait for a few second. Now the peaq parachian should be running in the docker container that is connected to relaychain running in PEAQ dev environament.
@@ -214,7 +214,7 @@ git clone --branch peaq-dev-v0.0.10 https://github.com/peaqnetwork/peaq-network-
 
 #### Krest env
 ```bash
-git clone --branch krest-v0.0.4 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch krest-v0.0.5 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 2. CD into the peaq-network-node directory:
@@ -261,15 +261,15 @@ The folder .local is needed because that is where data such as session keys are 
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
 --port 30333 \
---ws-port 9944 \
+--rpc-port 9944 \
 --execution wasm \
 -- \
 --execution wasm \
 --chain ./node/src/chain-specs/kusama.json \
 --port 30343 \
---pruning=16 --unsafe-pruning \
+--pruning=16 \
 --sync warp \
---ws-port 9977
+--rpc-port 9977
 ```
 
 This command will first compile your code (if it is not already compiled), and then start a peaq-network-node parachain. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated.
