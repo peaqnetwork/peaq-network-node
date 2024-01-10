@@ -94,10 +94,8 @@ cumulus-pallet-xcm = { workspace = true, default-features = false }
 cumulus-pallet-xcmp-queue = { workspace = true, default-features = false }
 cumulus-pallet-dmp-queue = { workspace = true, default-features = false }
 orml-currencies = { workspace = true, default-features = false }
-orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 orml-xtokens = { workspace = true, default-features = false }
-orml-unknown-tokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }
 pallet-collective = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
@@ -253,7 +251,6 @@ std = [
 	"cumulus-pallet-xcm/std",
 	"cumulus-pallet-xcmp-queue/std",
 	"orml-currencies/std",
-	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-xtokens/std",
 	"zenlink-protocol/std",
@@ -320,9 +317,7 @@ try-runtime = [
 	"pallet-assets/try-runtime",
 
 	"orml-currencies/try-runtime",
-	"orml-tokens/try-runtime",
 	"orml-xtokens/try-runtime",
-	"orml-unknown-tokens/try-runtime",
 
 	"peaq-pallet-did/try-runtime",
 	"peaq-pallet-transaction/try-runtime",

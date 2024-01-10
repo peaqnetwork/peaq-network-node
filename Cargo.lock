@@ -6351,20 +6351,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-unknown-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.43#2c52f203a266e729189dffa81b41e1c59d81c010"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-xcm-support",
- "parity-scale-codec",
- "scale-info",
- "sp-std",
- "xcm",
-]
-
-[[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
 source = "git+https://github.com/peaqnetwork/open-runtime-module-library?branch=peaq-polkadot-v0.9.43#2c52f203a266e729189dffa81b41e1c59d81c010"
@@ -7925,9 +7911,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "log",
  "orml-currencies",
- "orml-tokens",
  "orml-traits",
- "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
@@ -8050,9 +8034,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "log",
  "orml-currencies",
- "orml-tokens",
  "orml-traits",
- "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
@@ -8181,9 +8163,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "log",
  "orml-currencies",
- "orml-tokens",
  "orml-traits",
- "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
@@ -8788,9 +8768,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "log",
  "orml-currencies",
- "orml-tokens",
  "orml-traits",
- "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-assets",
@@ -11183,7 +11161,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "orml-tokens",
  "orml-traits",
  "pallet-assets",
  "pallet-block-reward",

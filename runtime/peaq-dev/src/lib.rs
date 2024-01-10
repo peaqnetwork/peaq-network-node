@@ -164,7 +164,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 10,
+	spec_version: 11,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -197,13 +197,8 @@ const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 40 * MILLICENTS + (bytes as Balance) * MILLICENTS
 }
 
-/// Charge fee for stored bytes and items as part of `pallet-contracts`.
-///
-/// The slight difference to general `deposit` function is because there is fixed bound on how large
-/// the DB key can grow so it doesn't make sense to have as high deposit per item as in the general
-/// approach.
-const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 40 * CENTS + (bytes as Balance) * MILLICENTS
+const fn deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
@@ -1057,7 +1052,6 @@ pub type Executive = frame_executive::Executive<
 		cumulus_pallet_xcmp_queue::migration::Migration<Runtime>,
 		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::DummyCheckingAccount>,
 		pallet_contracts::Migration<Runtime>,
-		orml_unknown_tokens::Migration<Runtime>,
 		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
 		pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
 		CouncilStoragePrefixMigration,

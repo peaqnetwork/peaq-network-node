@@ -15,7 +15,6 @@ cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
-orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
 pallet-assets = { workspace = true, default-features = false }
@@ -41,7 +40,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
-	"orml-tokens/std",
 	"orml-traits/std",
 	"pallet-transaction-payment/std",
 	"pallet-assets/std",
