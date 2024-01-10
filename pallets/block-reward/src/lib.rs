@@ -54,13 +54,13 @@ mod mock;
 mod tests;
 
 pub mod migrations;
-pub use migrations::StorageReleases;
 
 pub mod types;
 pub use types::*;
 
+pub mod weightinfo;
 pub mod weights;
-pub use weights::WeightInfo;
+pub use weightinfo::WeightInfo;
 
 #[macro_export]
 macro_rules! log {
@@ -77,7 +77,10 @@ pub mod pallet {
 
 	use super::*;
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
@@ -94,10 +97,6 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
-
-	#[pallet::storage]
-	#[pallet::getter(fn storage_version)]
-	pub(super) type VersionStorage<T: Config> = StorageValue<_, StorageReleases, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn reward_config)]

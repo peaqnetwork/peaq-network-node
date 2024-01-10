@@ -377,6 +377,10 @@ impl<AbsoluteLocation: Get<MultiLocation>> Reserve
 	}
 }
 
+parameter_types! {
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::parachain_id().into())));
+}
+
 impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
