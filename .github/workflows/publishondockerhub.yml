@@ -6,10 +6,11 @@ on:
     tags:
       - 'peaq-dev-v*' # For the peaq-dev's env in the parchain-launch usage
       - 'krest-v*' # For the krest env in the parchain-launch usage
+      - 'peaq-v*'
 jobs:
-       
+
   push_to_registry:
-  
+
     name: Build and Push Peaq Docker Image to Docker Hub
     runs-on: ubuntu-20.04
     steps:
@@ -42,7 +43,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      
+
   deploy:
     name: Deploy
     runs-on: ubuntu-20.04
@@ -64,7 +65,7 @@ jobs:
           tag=$(echo "$input_string" | cut -d ':' -f 2)
           echo "Extracted Tag: $tag"
           echo "::set-output name=tag::$tag"
-        
+
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -103,4 +104,4 @@ jobs:
       #     token: ${{ secrets.TOKEN_FOR_AUTOTEST }}
       #     ref:  test/1205859619866294_add-test-stage-in-peaqnode-deployment
       # - name: Run AutoTest
-      #   uses: https://github.com/peaqnetwork/peaq-network-qa/blob/test/1205859619866294_add-test-stage-in-peaqnode-deployment/.github/workflows/RunTest.yml 
+      #   uses: https://github.com/peaqnetwork/peaq-network-qa/blob/test/1205859619866294_add-test-stage-in-peaqnode-deployment/.github/workflows/RunTest.yml
