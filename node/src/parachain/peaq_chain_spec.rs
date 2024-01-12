@@ -168,7 +168,6 @@ fn configure_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_runtime::PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
-		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
 	}

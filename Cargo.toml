@@ -7,7 +7,8 @@ members = [
     "precompiles/utils",
     "precompiles/utils/macro",
 	"precompiles/peaq-did",
-	"precompiles/peaq-storage"
+	"precompiles/peaq-storage",
+	"precompiles/assets-erc20"
 ]
 resolver = "2"
 
@@ -118,10 +119,8 @@ pallet-evm-precompile-simple = { git = "https://github.com/peaqnetwork/frontier"
 
 # Open-Runtime-Module-Library
 orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
-orml-tokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 orml-traits = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 orml-xtokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
-orml-unknown-tokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 orml-xcm-support = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-v0.9.43", default-features = false }
 
 # Polkadot
@@ -165,6 +164,7 @@ sp-version = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 pallet-contracts = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 pallet-contracts-primitives = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 pallet-multisig = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
+pallet-assets = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 pallet-utility = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 pallet-treasury = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 pallet-vesting = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
@@ -205,10 +205,9 @@ sp-staking = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 frame-try-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43"}
 
-# Zenlink-DEX-Module
-zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
-zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
-zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
+zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
+zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
+zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
 
 # Peaq's own developments
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }

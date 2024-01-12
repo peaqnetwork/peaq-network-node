@@ -165,7 +165,6 @@ fn configure_genesis(
 		polkadot_xcm: peaq_krest_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
-		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
 	}
