@@ -1,21 +1,6 @@
-# Substrate Node Template
-
-[![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://docs.substrate.io/playground/) [![Matrix](https://img.shields.io/matrix/substrate-technical:matrix.org)](https://matrix.to/#/#substrate-technical:matrix.org)
-
-A fresh FRAME-based [Substrate](https://www.substrate.io/) node, ready for hacking :rocket:
+# Peaq-network-node
 
 ## Getting Started
-
-Follow the steps below to get started with the Node Template, or get it up and running right from
-your browser in just a few clicks using
-the [Substrate Playground](https://docs.substrate.io/playground/) :hammer_and_wrench:
-
-### Using Nix
-
-Install [nix](https://nixos.org/) and optionally [direnv](https://github.com/direnv/direnv) and
-[lorri](https://github.com/target/lorri) for a fully plug and play experience for setting up the
-development environment. To get all the correct dependencies activate direnv `direnv allow` and
-lorri `lorri shell`.
 
 ### Rust Setup
 
@@ -198,6 +183,24 @@ docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain
 --rpc-port 9977
  ```
 
+#### Peaq env
+
+ ```bash
+docker run -v peaq-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-v0.0.2 \
+--parachain-id 3338 \
+--chain ./node/src/chain-specs/peaq-raw.json \
+--base-path chain-data \
+--port 30333 \
+--rpc-port 9944 \
+--rpc-cors=all \
+--execution wasm \
+-- \
+--execution wasm \
+--port 30343 \
+--sync warp \
+--rpc-port 9977
+ ```
+
 Once you run this command, wait for a few second. Now the peaq parachian should be running in the docker container that is connected to relaychain running in PEAQ dev environament.
 
 ### Run on your local machine with Docker commands
@@ -215,6 +218,11 @@ git clone --branch peaq-dev-v0.0.10 https://github.com/peaqnetwork/peaq-network-
 #### Krest env
 ```bash
 git clone --branch krest-v0.0.5 https://github.com/peaqnetwork/peaq-network-node.git
+```
+
+#### Peaq env
+```bash
+git clone --branch peaq-v0.0.2 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 2. CD into the peaq-network-node directory:
@@ -271,6 +279,23 @@ The folder .local is needed because that is where data such as session keys are 
 --sync warp \
 --rpc-port 9977
 ```
+
+```bash
+# Peaq env
+./scripts/docker_run.sh \
+./target/release/peaq-node \
+--parachain-id 3338 \
+--chain ./node/src/chain-specs/peaq-raw.json \
+--base-path chain-data \
+--port 30333 \
+--rpc-port 9944 \
+--execution wasm \
+-- \
+--execution wasm \
+--port 30343 \
+--pruning=16 \
+--sync warp \
+--rpc-port 9977
 
 This command will first compile your code (if it is not already compiled), and then start a peaq-network-node parachain. The node running on your local machine will take sometime to sync up. Make sure that the parachain blocks are generated.
 
