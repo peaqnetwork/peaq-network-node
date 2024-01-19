@@ -8,7 +8,8 @@ members = [
     "precompiles/utils/macro",
 	"precompiles/peaq-did",
 	"precompiles/peaq-storage",
-	"precompiles/assets-erc20"
+	"precompiles/assets-erc20",
+	"precompiles/xtokens",
 ]
 resolver = "2"
 
@@ -57,6 +58,7 @@ prettyplease = "0.1.18"
 proc-macro2 = "1.0"
 quote = "1.0"
 rlp = { version = "0.5", default-features = false }
+rustc-hex = { version = "2.0.1", default-features = false }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
 sha3 = { version = "0.9.1", default-features = false }
 serde_json = { version = "1.0" }
