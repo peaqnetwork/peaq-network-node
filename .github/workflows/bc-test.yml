@@ -1,0 +1,41 @@
+name: PR Testing with peaq-bc-test suite
+# This workflow is triggered on dev branch when a pull request is closed on it
+on:
+    pull_request:
+        branches:
+            - dev
+        types:
+            - closed
+
+# This worklow is triggered on dev branch when Build and Publish workflow is completed
+# indicating that a new deployment is available on Autotest
+# TODO test this out later somehow
+# on:
+#     workflow_run:
+#       workflows: [Build and Publish]
+#       types: [completed]
+
+jobs:
+    bc-test:
+        # NOTE: Python3 comes preinstalled in ubuntu, so no need to install it
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Clone peaq-bc-repo
+              uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+              with:
+                depth: 1
+                branch: main
+                owner: peaqnetwork
+                repository: peaq-bc-test
+
+            - name: Install dependencies for peaq-bc-test
+              run: |
+                cd peaq-bc-test
+                python3 -m pip install --upgrade pip
+                pip install -r requirements.txt
+# Use github secrets to pass autotest URI as env variable to run tests
+            - name: Run peaq-bc-test
+              run: |
+                cd peaq-bc-test
+                echo "AUTOTEST_WS_URL='${{ secrets.AUTOTEST_HOST }}'" | python3 -m pytest -v
