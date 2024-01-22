@@ -1,19 +1,11 @@
-name: PR Testing with peaq-bc-test suite
-# This workflow is triggered on dev branch when a pull request is closed on it
+name: Peaq BC Test
+# This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
 on:
-    pull_request:
-        branches:
-            - dev
-        types:
-            - closed
     workflow_dispatch:
-# This worklow is triggered on dev branch when Build and Publish workflow is completed
-# indicating that a new deployment is available on Autotest
-# TODO test this out later somehow
-#   workflow_run:
-#       workflows: [Build and Publish]
-#       types: [completed]
-#       branches: [dev]
+    workflow_run:
+      workflows: [Build and Publish]
+      types: [completed]
+      branches: [dev]
 
 jobs:
     bc-test:
