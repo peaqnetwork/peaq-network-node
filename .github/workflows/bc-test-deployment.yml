@@ -6,14 +6,14 @@ on:
             - dev
         types:
             - closed
-
+    workflow_dispatch:
 # This worklow is triggered on dev branch when Build and Publish workflow is completed
 # indicating that a new deployment is available on Autotest
 # TODO test this out later somehow
-# on:
-#     workflow_run:
+#   workflow_run:
 #       workflows: [Build and Publish]
 #       types: [completed]
+#       branches: [dev]
 
 jobs:
     bc-test:
