@@ -30,4 +30,4 @@ jobs:
             - name: Run peaq-bc-test
               run: |
                 cd peaq-bc-test
-                echo "AUTOTEST_URI='${{ secrets.AUTOTEST_HOST }}'" | python3 -m pytest -v
+                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v tests
