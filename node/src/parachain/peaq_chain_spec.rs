@@ -7,12 +7,13 @@ use peaq_runtime::{
 	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
-use sc_service::{config::MultiaddrWithPeerId, ChainType, Properties};
+use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
-use hex_literal::hex;
-use std::str::FromStr;
+use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
+
+use sp_core::sr25519;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
@@ -24,7 +25,11 @@ fn session_keys(aura: AuraId) -> peaq_runtime::opaque::SessionKeys {
 	peaq_runtime::opaque::SessionKeys { aura }
 }
 
-pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
+pub fn get_chain_spec() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../chain-specs/peaq-raw.json")[..])
+}
+
+pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
@@ -33,79 +38,41 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::from_genesis(
 		"peaq-network",
-		"peaq",
-		ChainType::Live,
+		"peaq-local",
+		ChainType::Local,
 		move || {
 			configure_genesis(
 				wasm_binary,
 				// stakers
-				vec![
-					(
-						AccountId::try_from(
-							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
-						).unwrap(),
-						None,
-						2 * staking::MinCollatorStake::get(),
-					), (
-						AccountId::try_from(
-							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
-						).unwrap(),
-						None,
-						2 * staking::MinCollatorStake::get(),
-					), (
-						AccountId::try_from(
-							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
-						).unwrap(),
-						None,
-						2 * staking::MinCollatorStake::get(),
-					)
-				],
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					None,
+					2 * staking::MinCollatorStake::get(),
+				)],
 				// Initial PoA authorities
-				vec![
-					(
-						AccountId::try_from(
-							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
-						).unwrap(),
-						AuraId::try_from(
-							&hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529") as &[u8]
-						).unwrap()
-					),
-					(
-						AccountId::try_from(
-							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
-						).unwrap(),
-						AuraId::try_from(
-							&hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c") as &[u8]
-						).unwrap()
-					),
-					(
-						AccountId::try_from(
-							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
-						).unwrap(),
-						AuraId::try_from(
-							&hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35") as &[u8]
-						).unwrap()
-					)
-				],
+				vec![authority_keys_from_seed("Alice")],
 				// Sudo account
-				hex!("1abe30e893092c35149a5ec8c97eacec5de7ec2ec8b88952f2a349a23e3af24d").into(),
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
 				vec![
-					hex!("4ac0ce21b77a91f361be6ac5b72a4e61c20eb90a5eb99a962cd1288d9e62b529").into(),
-					hex!("d2906b26d5502690fcc4f2a60930d9a6543373051b5c0da6ba2025008e57b23c").into(),
-					hex!("82040ef2f4c23c6d9102415c964c853c3b249019539ae9ed6d84386780701b35").into(),
-					//Sudo
-					hex!("1abe30e893092c35149a5ec8c97eacec5de7ec2ec8b88952f2a349a23e3af24d").into(),
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
 				para_id.into(),
 			)
 		},
 		// Bootnodes
-		vec![
-			MultiaddrWithPeerId::from_str("/dns/cn1.peaq.network/tcp/30333/p2p/12D3KooWQheXJh77TG5gbKRFFbry4R7gPbrnGUrKPy3PYebxk9Gp").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/cn2.peaq.network/tcp/30333/p2p/12D3KooWKQodemj3LcLTVKMfqtJQ3NsgaoeKh7VZRiGF6HS8pnVy").unwrap(),
-			MultiaddrWithPeerId::from_str("/dns/cn3.peaq.network/tcp/30333/p2p/12D3KooWMNEzHLaY7xkMA6B1u3YEEJFCzKGcmPcZf7egSR2hii7M").unwrap(),
-		],
+		vec![],
 		// Telemetry
 		None,
 		// Protocol ID
@@ -117,7 +84,7 @@ pub fn get_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
 		// Extensions
 		Extensions {
 			bad_blocks: Default::default(),
-			relay_chain: "polkadot".into(),
+			relay_chain: "polkadot-local".into(),
 			para_id,
 		},
 	))
@@ -145,8 +112,9 @@ fn configure_genesis(
 		},
 		parachain_info: ParachainInfoConfig { parachain_id },
 		balances: BalancesConfig {
+			// Configure endowed accounts with initial balance of 1 << 78.
 			// Configure endowed accounts with initial balance of 1 << 62.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 62)).collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
 		session: peaq_runtime::SessionConfig {
 			keys: initial_authorities
@@ -174,7 +142,7 @@ fn configure_genesis(
 			block_issue_reward: 7_909_867 * MILLICENTS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,
 		},
-		vesting: peaq_runtime::VestingConfig { vesting: vec![] },
+		vesting: Default::default(),
 		aura: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
@@ -200,7 +168,6 @@ fn configure_genesis(
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_runtime::PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
-		tokens: Default::default(),
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
 	}

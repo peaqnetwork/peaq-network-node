@@ -1,0 +1,51 @@
+[package]
+name = "xc-asset-config"
+version = "1.3.0"
+edition = "2021"
+
+[dependencies]
+log = { workspace = true }
+serde = { workspace = true, optional = true }
+
+# Substrate
+frame-support = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false }
+scale-info = { workspace = true, default-features = false }
+sp-io = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+
+# Polkadot
+xcm = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
+
+# Benchmarks
+frame-benchmarking = { workspace = true, optional = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true, default-features = false }
+pallet-timestamp = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"frame-support/std",
+	"frame-system/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"serde",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"xcm/std",
+	"xcm-executor/std",
+	"pallet-balances/std",
+	"frame-benchmarking?/std",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+]
+try-runtime = ["frame-support/try-runtime"]

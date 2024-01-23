@@ -10,11 +10,12 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess,
+	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
-use orml_currencies::BasicCurrencyAdapter;
-use orml_traits::parameter_type_with_key;
-use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
+
+use address_unification::CallKillEVMLinkAccount;
+
+use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
@@ -31,9 +32,8 @@ use peaq_pallet_rbac::{
 	},
 };
 use peaq_pallet_storage::traits::Storage;
-use peaq_rpc_primitives_txpool::TxPoolResponse;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use runtime_common::*;
+
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -41,8 +41,9 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
+		UniqueSaturatedInto,
 	},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
@@ -53,13 +54,8 @@ use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use xcm::latest::prelude::*;
-use zenlink_protocol::{
-	AssetBalance, MultiAssetsHandler, PairInfo, PairLpGenerate, ZenlinkMultiAssets,
-};
+use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
-pub mod constants;
-mod precompiles;
 mod weights;
 pub mod xcm_config;
 
@@ -71,9 +67,9 @@ pub use frame_support::{
 	dispatch::{DispatchClass, GetDispatchInfo},
 	parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse, EnsureOrigin,
-		ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing, OnUnbalanced,
-		Randomness, StorageInfo, WithdrawReasons,
+		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
+		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
+		OnFinalize, OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
 	},
 	weights::{
 		constants::{
@@ -84,15 +80,57 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, PalletId, StorageValue,
 };
+
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
+
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+
+mod precompiles;
+pub use precompiles::PeaqPrecompiles;
+pub type Precompiles = PeaqPrecompiles<Runtime>;
+
+use peaq_primitives_xcm::{
+	Address, AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance, EvmRevertCodeHandler,
+	Header, Moment, Nonce, RbacEntityId, NATIVE_CURRNECY_ID,
+};
+use peaq_rpc_primitives_txpool::TxPoolResponse;
+use zenlink_protocol::AssetId as ZenlinkAssetId;
+
 pub use peaq_pallet_did;
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
-pub use precompiles::PeaqPrecompiles;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
+
+// For Zenlink-DEX-Module
+use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+
+pub use precompiles::EVMAssetPrefix;
+
+use runtime_common::{
+	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
+	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
+	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
+	MILLICENTS,
+};
+
+/// An index to a block.
+type BlockNumber = peaq_primitives_xcm::BlockNumber;
+
+/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+pub type Signature = peaq_primitives_xcm::Signature;
+
+/// Some way of identifying an account on the chain. We intentionally make it equivalent
+/// to the public key of our transaction signing scheme.
+pub type AccountId = peaq_primitives_xcm::AccountId;
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+/// never know...
+// type AccountIndex = peaq_primitives_xcm::AccountIndex;
+
+/// A hash of some data used by the chain.
+type Hash = peaq_primitives_xcm::Hash;
 
 /// Block type as expected by this runtime.
 /// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
@@ -157,6 +195,10 @@ const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 40 * MILLICENTS + (bytes as Balance) * MILLICENTS
 }
 
+const fn deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+}
+
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -210,7 +252,15 @@ parameter_types! {
 pub struct BaseFilter;
 impl Contains<RuntimeCall> for BaseFilter {
 	fn contains(call: &RuntimeCall) -> bool {
-		!matches!(call, RuntimeCall::ZenlinkProtocol(_m))
+		match call {
+			// Filter permission-less assets creation/destroying.
+			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
+			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) => id.is_allow_to_create(),
+			// These modules are not allowed to be called by transactions:
+			// To leave collator just shutdown it, next session funds will be released
+			// Other modules should works:
+			_ => true,
+		}
 	}
 }
 
@@ -227,7 +277,8 @@ impl frame_system::Config for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type RuntimeCall = RuntimeCall;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>;
+	type Lookup =
+		(AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, AddressUnification);
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Nonce;
 	/// The index type for blocks.
@@ -255,7 +306,7 @@ impl frame_system::Config for Runtime {
 	/// What to do if a new account is created.
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
+	type OnKilledAccount = (CallKillEVMLinkAccount<Runtime>,);
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
@@ -385,26 +436,30 @@ impl WeightToFeePolynomial for WeightToFee {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
-	pub PcpcLocalAccepted: Vec<CurrencyId> = vec![
-		CurrencyId::Token(TokenSymbol::KSM),
+	// [TODO] Should have a way to increase it without doing runtime upgrade
+	pub PcpcLocalAccepted: Vec<AssetId> = vec![
+		AssetId::Token(1),
 	];
 }
 
 pub struct PeaqCPC;
 
-impl PeaqCurrencyPaymentConvert for PeaqCPC {
+impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type AccountId = AccountId;
 	type Currency = Balances;
-	type MultiCurrency = Currencies;
+	type MultiCurrency = PeaqMultiCurrencies;
 	type DexOperator = ZenlinkProtocol;
 	type ExistentialDeposit = ExistentialDeposit;
-	type NativeCurrencyId = GetNativeCurrencyId;
+	type NativeAssetId = GetNativeAssetId;
 	type LocalAcceptedIds = PcpcLocalAccepted;
+	type AssetId = AssetId;
+	type AssetIdToZenlinkId = AssetIdToZenlinkId<SelfParaId>;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = PeaqCurrencyAdapter<Balances, BlockReward, PeaqCPC>;
+	type OnChargeTransaction =
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -564,6 +619,19 @@ parameter_types! {
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
+
+	/// The amount of gas per pov. A ratio of 4 if we convert ref_time to gas and we compare
+	/// it with the pov_size for a block. E.g.
+	/// ceil(
+	///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
+	/// )
+	pub const GasLimitPovSizeRatio: u64 = 4;
+	/// In moonbeam, they setup as 366 and follow below formula:
+	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
+	/// (15_000_000 / 40kb)
+	/// However, let us setup the value as 1 for now because we also has the did/storage bridge
+	/// [TODO] Need to check
+	pub GasLimitStorageGrowthRatio: u64 = 1;
 }
 
 impl pallet_evm::Config for Runtime {
@@ -573,28 +641,32 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = AddressUnification;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = PeaqPrecompiles<Self>;
+	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
-	type GasLimitPovSizeRatio = (); // TODO
-	type GasLimitStorageGrowthRatio = (); // TODO
+	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
+	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
 }
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
-	type PostLogContent = (); // TODO
-	type ExtraDataLength = (); // TODO
+	type PostLogContent = PostBlockAndTxnHashes;
+	type ExtraDataLength = ConstU32<30>;
 }
 
 frame_support::parameter_types! {
@@ -655,6 +727,7 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
+	pub const AssetAdminId: PalletId = PalletId(*b"AssetAdm");
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
 }
@@ -662,11 +735,6 @@ parameter_types! {
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type EventHandler = ParachainStaking;
-}
-
-parameter_types! {
-	pub const SessionPeriod: BlockNumber = HOURS;
-	pub const SessionOffset: BlockNumber = 0;
 }
 
 impl pallet_session::Config for Runtime {
@@ -813,14 +881,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeCurrencyId: CurrencyId = currency::KRST;
-}
-
-impl orml_currencies::Config for Runtime {
-	type MultiCurrency = Tokens;
-	type NativeCurrency = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
-	type GetNativeCurrencyId = GetNativeCurrencyId;
-	type WeightInfo = ();
+	pub const GetNativeAssetId: AssetId = NATIVE_CURRNECY_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -837,33 +898,10 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
-		ExistentialDeposit::get()
-	};
-}
-
 parameter_types! {
+	pub PeaqAssetAdm: AccountId = AssetAdminId::get().into_account_truncating();
 	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
 	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
-}
-
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type CurrencyHooks = CurrencyHooks<Runtime, PeaqTreasuryAccount>;
-}
-
-impl orml_unknown_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 }
 
 impl peaq_pallet_rbac::Config for Runtime {
@@ -883,29 +921,26 @@ parameter_types! {
 	pub SelfParaId: u32 = ParachainInfo::parachain_id().into();
 
 	pub const ZenlinkDexPalletId: PalletId = PalletId(*b"zenlkpro");
-
-	pub ZenlinkRegistedParaChains: Vec<(MultiLocation, u128)> = vec![
-		// Krest local and live, 0.01 BNC
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(2000))), 10_000_000_000),
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(3000))), 10_000_000_000),
-
-		// Zenlink local 1 for test
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(200))), 1_000_000),
-		// Zenlink local 2 for test
-		(MultiLocation::new(1, Junctions::X1(Junction::Parachain(300))), 1_000_000),
-	];
 }
 
+type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
+	Runtime,
+	Assets,
+	PeaqNativeCurrencyWrapper<Balances>,
+	GetNativeAssetId,
+>;
+
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets = ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<Currencies>>;
+pub type MultiAssets =
+	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<PeaqMultiCurrencies, AssetId>>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MultiAssetsHandler = MultiAssets;
 	type PalletId = ZenlinkDexPalletId;
 	type AssetId = ZenlinkAssetId;
-	type LpGenerate = PairLpGenerate<Self>;
-	type TargetChains = ZenlinkRegistedParaChains;
+	type LpGenerate = PeaqAssetZenlinkLpGenerate<Self, Assets, ExistentialDeposit, PeaqAssetAdm>;
+	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
 }
@@ -926,8 +961,8 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
 		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
-		Treasury: pallet_treasury  = 9,
-		Council: pallet_collective::<Instance1>=10,
+		Treasury: pallet_treasury = 9,
+		Council: pallet_collective::<Instance1> = 10,
 
 		// EVM
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
@@ -950,11 +985,11 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
-		Currencies: orml_currencies::{Pallet, Call} = 34,
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>} = 35,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 37,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
+		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
+		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
+		AddressUnification: address_unification::{Pallet, Call, Storage, Event<T>} = 41,
 
 		Vesting: pallet_vesting = 50,
 
@@ -998,9 +1033,11 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_dmp_queue::migration::Migration<Runtime>,
 		cumulus_pallet_xcmp_queue::migration::Migration<Runtime>,
-		pallet_balances::migration::MigrateToTrackInactive<Runtime, xcm_config::CheckingAccount>,
+		pallet_balances::migration::MigrateToTrackInactive<
+			Runtime,
+			xcm_config::DummyCheckingAccount,
+		>,
 		pallet_contracts::Migration<Runtime>,
-		orml_unknown_tokens::Migration<Runtime>,
 		pallet_xcm::migration::v1::MigrateToV1<Runtime>,
 		pallet_multisig::migrations::v1::MigrateToV1<Runtime>,
 		CouncilStoragePrefixMigration,
@@ -1028,6 +1065,9 @@ mod benches {
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
 		[pallet_xcm, PolkadotXcm]
+		[pallet_assets, Assets]
+		[xc_asset_config, XCAssetConfig]
+		[address_unification, AddressUnification]
 	);
 }
 
@@ -1108,12 +1148,12 @@ impl_runtime_apis! {
 			OpaqueMetadata::new(Runtime::metadata().into())
 		}
 
-		fn metadata_at_version(_version: u32) -> Option<OpaqueMetadata> {
-			None // TODO
+		fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+			Runtime::metadata_at_version(version)
 		}
 
 		fn metadata_versions() -> Vec<u32> {
-			Vec::new() // TODO
+			Runtime::metadata_versions()
 		}
 	}
 
@@ -1393,20 +1433,56 @@ impl_runtime_apis! {
 			};
 			let is_transactional = false;
 			let validate = true;
+
+			// Estimated encoded transaction size must be based on the heaviest transaction
+			// type (EIP1559Transaction) to be compatible with all transaction types.
+			let mut estimated_transaction_len = data.len() +
+				// pallet ethereum index: 1
+				// transact call index: 1
+				// Transaction enum variant: 1
+				// chain_id 8 bytes
+				// nonce: 32
+				// max_priority_fee_per_gas: 32
+				// max_fee_per_gas: 32
+				// gas_limit: 32
+				// action: 21 (enum varianrt + call address)
+				// value: 32
+				// access_list: 1 (empty vec size)
+				// 65 bytes signature
+				258;
+
+			if access_list.is_some() {
+				estimated_transaction_len += access_list.encoded_size();
+			}
+
+			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+			let without_base_extrinsic_weight = true;
+
+			let (weight_limit, proof_size_base_cost) =
+				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+					gas_limit,
+					without_base_extrinsic_weight
+				) {
+					weight_limit if weight_limit.proof_size() > 0 => {
+						(Some(weight_limit), Some(estimated_transaction_len as u64))
+					}
+					_ => (None, None),
+				};
+
 			<Runtime as pallet_evm::Config>::Runner::call(
 				from,
 				to,
 				data,
 				value,
-				gas_limit.low_u64(),
+				gas_limit.unique_saturated_into(),
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				None, // TODO Option<hidden_include::dispatch::Weight>
-				None, // Option<u64>
+				weight_limit,
+				proof_size_base_cost,
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1431,20 +1507,55 @@ impl_runtime_apis! {
 			};
 			let is_transactional = false;
 			let validate = true;
+
+			// Reused approach from Moonbeam since Frontier implementation doesn't support this
+			let mut estimated_transaction_len = data.len() +
+				// from: 20
+				// value: 32
+				// gas_limit: 32
+				// nonce: 32
+				// 1 byte transaction action variant
+				// chain id 8 bytes
+				// 65 bytes signature
+				190;
+			if max_fee_per_gas.is_some() {
+				estimated_transaction_len += 32;
+			}
+			if max_priority_fee_per_gas.is_some() {
+				estimated_transaction_len += 32;
+			}
+			if access_list.is_some() {
+				estimated_transaction_len += access_list.encoded_size();
+			}
+
+			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+			let without_base_extrinsic_weight = true;
+
+			let (weight_limit, proof_size_base_cost) =
+				match <Runtime as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+					gas_limit,
+					without_base_extrinsic_weight
+				) {
+					weight_limit if weight_limit.proof_size() > 0 => {
+						(Some(weight_limit), Some(estimated_transaction_len as u64))
+					}
+					_ => (None, None),
+				};
+
 			#[allow(clippy::or_fun_call)] // suggestion not helpful here
 			<Runtime as pallet_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
-				gas_limit.low_u64(),
+				gas_limit.unique_saturated_into(),
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
 				is_transactional,
 				validate,
-				None, // TODO Option<hidden_include::dispatch::Weight>
-				None, // Option<u64>
+				weight_limit,
+				proof_size_base_cost,
 				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1489,10 +1600,18 @@ impl_runtime_apis! {
 		fn gas_limit_multiplier_support() {}
 
 		fn pending_block(
-			_xts: Vec<<Block as BlockT>::Extrinsic>,
+			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> (Option<ethereum::BlockV2>, Option<Vec<TransactionStatus>>) {
-			(None, None) // TODO
-		}
+			for ext in xts.into_iter() {
+				let _ = Executive::apply_extrinsic(ext);
+			}
+
+			Ethereum::on_finalize(System::block_number() + 1);
+
+			(
+				pallet_ethereum::CurrentBlock::<Runtime>::get(),
+				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
+			)		}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
@@ -1877,4 +1996,56 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+}
+
+parameter_types! {
+	pub const AssetDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetsStringLimit: u32 = 50;
+	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+	pub const MetadataDepositBase: Balance = deposit(1, 68);
+	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
+	pub const AssetAccountDeposit: Balance = deposit(1, 18);
+}
+
+impl pallet_assets::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = AssetId;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type AssetDeposit = AssetDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type AssetAccountDeposit = AssetAccountDeposit;
+	type ApprovalDeposit = AssetExistentialDeposit;
+	type StringLimit = AssetsStringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type WeightInfo = ();
+	type RemoveItemsLimit = ConstU32<1000>;
+	type AssetIdParameter = AssetId;
+	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+	// #[cfg(feature = "runtime-benchmarks")]
+	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
+}
+
+impl address_unification::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type ChainId = EvmChainId;
+	type WeightInfo = address_unification::weights::SubstrateWeight<Runtime>;
+}
+
+impl EVMAddressToAssetId<AssetId> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<AssetId> {
+		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+	}
+
+	fn asset_id_to_address(asset_id: AssetId) -> H160 {
+		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	}
 }

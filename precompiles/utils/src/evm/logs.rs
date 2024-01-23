@@ -92,3 +92,73 @@ impl LogExt for Log {
 		crate::evm::costs::log_costs(self.topics.len(), self.data.len())
 	}
 }
+
+/// Builder for PrecompileOutput.
+#[derive(Clone, Debug)]
+pub struct LogsBuilder {
+	address: H160,
+}
+
+impl LogsBuilder {
+	/// Create a new builder with no logs.
+	/// Takes the address of the precompile (usually `context.address`).
+	pub fn new(address: H160) -> Self {
+		Self { address }
+	}
+
+	/// Create a 0-topic log.
+	#[must_use]
+	pub fn log0(&self, data: impl Into<Vec<u8>>) -> Log {
+		Log { address: self.address, topics: vec![], data: data.into() }
+	}
+
+	/// Create a 1-topic log.
+	#[must_use]
+	pub fn log1(&self, topic0: impl Into<H256>, data: impl Into<Vec<u8>>) -> Log {
+		Log { address: self.address, topics: vec![topic0.into()], data: data.into() }
+	}
+
+	/// Create a 2-topics log.
+	#[must_use]
+	pub fn log2(
+		&self,
+		topic0: impl Into<H256>,
+		topic1: impl Into<H256>,
+		data: impl Into<Vec<u8>>,
+	) -> Log {
+		Log { address: self.address, topics: vec![topic0.into(), topic1.into()], data: data.into() }
+	}
+
+	/// Create a 3-topics log.
+	#[must_use]
+	pub fn log3(
+		&self,
+		topic0: impl Into<H256>,
+		topic1: impl Into<H256>,
+		topic2: impl Into<H256>,
+		data: impl Into<Vec<u8>>,
+	) -> Log {
+		Log {
+			address: self.address,
+			topics: vec![topic0.into(), topic1.into(), topic2.into()],
+			data: data.into(),
+		}
+	}
+
+	/// Create a 4-topics log.
+	#[must_use]
+	pub fn log4(
+		&self,
+		topic0: impl Into<H256>,
+		topic1: impl Into<H256>,
+		topic2: impl Into<H256>,
+		topic3: impl Into<H256>,
+		data: impl Into<Vec<u8>>,
+	) -> Log {
+		Log {
+			address: self.address,
+			topics: vec![topic0.into(), topic1.into(), topic2.into(), topic3.into()],
+			data: data.into(),
+		}
+	}
+}

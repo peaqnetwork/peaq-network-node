@@ -15,9 +15,9 @@ cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 frame-support = { workspace = true, default-features = false }
 frame-system = { workspace = true, default-features = false }
 log = { workspace = true, default-features = false }
-orml-tokens = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
+pallet-assets = { workspace = true, default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 scale-info = { workspace = true, default-features = false }
@@ -26,6 +26,9 @@ sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
+xcm-executor = { workspace = true, default-features = false }
+xcm-builder = { workspace = true, default-features = false }
+xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 
 
 [features]
@@ -37,9 +40,9 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
-	"orml-tokens/std",
 	"orml-traits/std",
 	"pallet-transaction-payment/std",
+	"pallet-assets/std",
 	"pallet-block-reward/std",
 	"peaq-primitives-xcm/std",
 	"scale-info/std",
@@ -47,5 +50,8 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"xcm/std",
+    "xcm-executor/std",
+	"xcm-builder/std",
 	"zenlink-protocol/std",
+	"xc-asset-config/std",
 ]
