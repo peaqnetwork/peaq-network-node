@@ -290,7 +290,7 @@ where
 		}
 	}
 
-	#[precompile::public("fetch_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetch_permissions(bytes32)")]
 	#[precompile::view]
 	fn fetch_permissions(
 		handle: &mut impl PrecompileHandle,
