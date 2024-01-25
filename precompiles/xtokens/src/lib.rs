@@ -24,6 +24,7 @@ use frame_support::{
 	traits::Get,
 };
 use pallet_evm::AddressMapping;
+use pallet_evm_precompile_assets_erc20::{AssetIdOf, EVMAddressToAssetId};
 use precompile_utils::prelude::*;
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
@@ -38,8 +39,6 @@ use xcm::{
 	latest::{AssetId, Fungibility, MultiAsset, MultiAssets, MultiLocation, WeightLimit},
 	VersionedMultiAsset, VersionedMultiAssets, VersionedMultiLocation,
 };
-use pallet_evm_precompile_assets_erc20::{EVMAddressToAssetId};
-use pallet_evm_precompile_assets_erc20::AssetIdOf;
 
 #[cfg(test)]
 mod mock;
@@ -71,14 +70,17 @@ pub struct XtokensPrecompile<Runtime>(PhantomData<Runtime>);
 #[precompile::test_concrete_types(mock::Runtime)]
 impl<Runtime> XtokensPrecompile<Runtime>
 where
-	Runtime: orml_xtokens::Config + pallet_evm::Config + frame_system::Config + pallet_assets::pallet::Config,
+	Runtime: orml_xtokens::Config
+		+ pallet_evm::Config
+		+ frame_system::Config
+		+ pallet_assets::pallet::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	Runtime::RuntimeCall: From<orml_xtokens::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	XBalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime>>,
-    <Runtime as orml_xtokens::Config>::CurrencyId:
-        From<<Runtime as pallet_assets::Config>::AssetId>,
+	<Runtime as orml_xtokens::Config>::CurrencyId:
+		From<<Runtime as pallet_assets::Config>::AssetId>,
 {
 	#[precompile::public("transfer(address,uint256,(uint8,bytes[]),uint64)")]
 	fn transfer(
@@ -91,8 +93,8 @@ where
 		let to_address: H160 = currency_address.into();
 
 		let asset_id = Runtime::address_to_asset_id(to_address).ok_or(
-				RevertReason::custom("Cannot convert into currency id").in_field("currencyAddress"),
-			)?;
+			RevertReason::custom("Cannot convert into currency id").in_field("currencyAddress"),
+		)?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let amount = amount
@@ -135,8 +137,8 @@ where
 		let to_address: H160 = currency_address.into();
 
 		let asset_id = Runtime::address_to_asset_id(to_address).ok_or(
-				RevertReason::custom("Cannot convert into currency id").in_field("currencyAddress"),
-			)?;
+			RevertReason::custom("Cannot convert into currency id").in_field("currencyAddress"),
+		)?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
@@ -294,11 +296,12 @@ where
 
 				Ok((
 					Runtime::address_to_asset_id(address_as_h160)
-					.ok_or(
-						RevertReason::custom("Cannot convert into currency id")
-							.in_array(index)
-							.in_field("currencies"),
-					)?.into(),
+						.ok_or(
+							RevertReason::custom("Cannot convert into currency id")
+								.in_array(index)
+								.in_field("currencies"),
+						)?
+						.into(),
 					amount,
 				))
 			})
@@ -397,10 +400,7 @@ pub struct Currency {
 
 impl From<(Address, U256)> for Currency {
 	fn from(tuple: (Address, U256)) -> Self {
-		Currency {
-			address: tuple.0,
-			amount: tuple.1,
-		}
+		Currency { address: tuple.0, amount: tuple.1 }
 	}
 }
 
@@ -412,9 +412,6 @@ pub struct EvmMultiAsset {
 
 impl From<(MultiLocation, U256)> for EvmMultiAsset {
 	fn from(tuple: (MultiLocation, U256)) -> Self {
-		EvmMultiAsset {
-			location: tuple.0,
-			amount: tuple.1,
-		}
+		EvmMultiAsset { location: tuple.0, amount: tuple.1 }
 	}
 }

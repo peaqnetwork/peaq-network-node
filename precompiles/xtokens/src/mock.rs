@@ -16,73 +16,175 @@
 
 //! Test utilities
 use super::*;
-use frame_support::traits::{
-	ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait, PalletInfo as PalletInfoTrait,
+
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{
+		AsEnsureOriginWithArg, ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait,
+		PalletInfo as PalletInfoTrait,
+	},
+	weights::Weight,
 };
-use frame_support::{construct_runtime, parameter_types, weights::Weight};
+use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use parity_scale_codec::{Decode, Encode};
-use precompile_utils::{
-	mock_account,
-	precompile_set::*,
-	testing::{AddressInPrefixedSet, MockAccount},
-};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use precompile_utils::precompile_set::*;
 use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_io;
-use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
-use sp_runtime::BuildStorage;
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+};
 use xcm::latest::{prelude::*, Error as XcmError};
 use xcm_builder::{AllowUnpaidExecutionFrom, FixedWeightBounds, IsConcrete};
-use xcm_executor::{
-	traits::{TransactAsset, WeightTrader},
-	Assets, XcmExecutor,
-};
+use xcm_executor::{traits::TransactAsset, Assets as XCMAssets, XcmExecutor};
 
-pub type AccountId = MockAccount;
-pub type Balance = u128;
+pub type AccountId = Account;
 pub type AssetId = u128;
+pub type Balance = u128;
+pub type BlockNumber = u64;
+pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
+pub type Block = frame_system::mocking::MockBlock<Runtime>;
+pub type CurrencyId = u128;
 
-type Block = frame_system::mocking::MockBlockU32<Runtime>;
+/// Multilocations for assetId
+const PARENT: MultiLocation = MultiLocation::parent();
+const PARACHAIN: MultiLocation =
+	MultiLocation { parents: 1, interior: Junctions::X1(Parachain(10)) };
+const GENERAL_INDEX: MultiLocation =
+	MultiLocation { parents: 1, interior: Junctions::X2(Parachain(10), GeneralIndex(20)) };
+const LOCAL_ASSET: MultiLocation =
+	MultiLocation { parents: 0, interior: Junctions::X1(GeneralIndex(20)) };
 
-// Configure a mock runtime to test the pallet.
-construct_runtime!(
-	pub enum Runtime	{
-		System: frame_system,
-		Balances: pallet_balances,
-		Evm: pallet_evm,
-		Timestamp: pallet_timestamp,
-		Xtokens: orml_xtokens,
-		PolkadotXcm: pallet_xcm,
+/// A simple account type.
+#[derive(
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Clone,
+	Encode,
+	Decode,
+	Debug,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+	derive_more::Display,
+	TypeInfo,
+)]
+pub enum Account {
+	Alice,
+	Bob,
+	Charlie,
+	Bogus,
+	AssetId(AssetId),
+}
+
+impl Default for Account {
+	fn default() -> Self {
+		Self::Bogus
 	}
-);
+}
 
-mock_account!(AssetAccount(u128), |v: AssetAccount| AddressInPrefixedSet(
-	0xffffffff, v.0
-)
-.into());
-mock_account!(SelfReserveAccount, |_| MockAccount::from_u64(2));
+impl From<Account> for H160 {
+	fn from(x: Account) -> H160 {
+		match x {
+			Account::Alice => H160::repeat_byte(0xAA),
+			Account::Bob => H160::repeat_byte(0xBB),
+			Account::Charlie => H160::repeat_byte(0xCC),
+			Account::AssetId(asset_id) => {
+				let mut data = [0u8; 20];
+				let id_as_bytes = asset_id.to_be_bytes();
+				data[0..4].copy_from_slice(&[255u8; 4]);
+				data[4..20].copy_from_slice(&id_as_bytes);
+				H160::from_slice(&data)
+			},
+			Account::Bogus => Default::default(),
+		}
+	}
+}
 
-parameter_types! {
-	pub ParachainId: cumulus_primitives_core::ParaId = 100.into();
+impl AddressMapping<Account> for Account {
+	fn into_account_id(h160_account: H160) -> Account {
+		match h160_account {
+			a if a == H160::repeat_byte(0xAA) => Self::Alice,
+			a if a == H160::repeat_byte(0xBB) => Self::Bob,
+			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
+			_ => {
+				let mut data = [0u8; 16];
+				let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
+				if prefix_part == &[255u8; 4] {
+					data.copy_from_slice(id_part);
+
+					return Self::AssetId(u128::from_be_bytes(data))
+				}
+				Self::Bogus
+			},
+		}
+	}
+}
+
+impl From<H160> for Account {
+	fn from(x: H160) -> Account {
+		Account::into_account_id(x)
+	}
+}
+
+impl From<Account> for [u8; 32] {
+	fn from(value: Account) -> [u8; 32] {
+		match value {
+			Account::Alice => [0xAA; 32],
+			Account::Bob => [0xBB; 32],
+			Account::Charlie => [0xCC; 32],
+			_ => Default::default(),
+		}
+	}
+}
+pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
+
+// Implement the trait, where we convert AccountId to AssetID
+impl EVMAddressToAssetId<AssetId> for Runtime {
+	/// The way to convert an account to assetId is by ensuring that the prefix is 0XFFFFFFFF
+	/// and by taking the lowest 128 bits as the assetId
+	fn address_to_asset_id(address: H160) -> Option<AssetId> {
+		let mut data = [0u8; 16];
+		let address_bytes: [u8; 20] = address.into();
+		if ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
+			data.copy_from_slice(&address_bytes[4..20]);
+			Some(u128::from_be_bytes(data))
+		} else {
+			None
+		}
+	}
+
+	fn asset_id_to_address(asset_id: AssetId) -> H160 {
+		let mut data = [0u8; 20];
+		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
+		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
+		H160::from(data)
+	}
 }
 
 parameter_types! {
-	pub const BlockHashCount: u32 = 250;
+	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
+
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Nonce = u64;
-	type Block = Block;
+	type Index = u64;
+	type BlockNumber = BlockNumber;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -97,9 +199,22 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
+
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 0;
+	pub const MinimumPeriod: u64 = 5;
 }
+
+impl pallet_timestamp::Config for Runtime {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const ExistentialDeposit: u128 = 1;
+}
+
 impl pallet_balances::Config for Runtime {
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
@@ -110,35 +225,25 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type RuntimeHoldReason = ();
+	type HoldIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
 }
 
-// These parameters dont matter much as this will only be called by root with the forced arguments
-// No deposit is substracted with those methods
-parameter_types! {
-	pub const AssetDeposit: Balance = 0;
-	pub const ApprovalDeposit: Balance = 0;
-	pub const AssetsStringLimit: u32 = 50;
-	pub const MetadataDepositBase: Balance = 0;
-	pub const MetadataDepositPerByte: Balance = 0;
-}
-
 pub type Precompiles<R> =
 	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<1>, XtokensPrecompile<R>>,)>;
-
-pub type PCall = XtokensPrecompileCall<Runtime>;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block storage limit in bytes. Set to 40 KB.
 const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
+pub type PCall = XtokensPrecompileCall<Runtime>;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
 	pub PrecompilesValue: Precompiles<Runtime> = Precompiles::new();
-	pub const WeightPerGas: Weight = Weight::from_parts(1, 0);
+
+	pub WeightPerGas: Weight = Weight::from_parts(1, 0);
 	pub GasLimitPovSizeRatio: u64 = {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
 		block_gas_limit.saturating_div(MAX_POV_SIZE)
@@ -173,15 +278,38 @@ impl pallet_evm::Config for Runtime {
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }
 
+// These parameters dont matter much as this will only be called by root with the forced arguments
+// No deposit is substracted with those methods
 parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
+	pub const AssetDeposit: Balance = 0;
+	pub const AssetAccountDeposit: Balance = 0;
+	pub const ApprovalDeposit: Balance = 0;
+	pub const AssetsStringLimit: u32 = 50;
+	pub const MetadataDepositBase: Balance = 0;
+	pub const MetadataDepositPerByte: Balance = 0;
 }
-impl pallet_timestamp::Config for Runtime {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+
+impl pallet_assets::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = AssetId;
+	type Currency = Balances;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type AssetDeposit = AssetDeposit;
+	type AssetAccountDeposit = AssetAccountDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type ApprovalDeposit = ApprovalDeposit;
+	type StringLimit = AssetsStringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+	type RemoveItemsLimit = ConstU32<0>;
+	type AssetIdParameter = AssetId;
+	type CallbackHandle = ();
 }
+
 pub struct ConvertOriginToLocal;
 impl<Origin: OriginTrait> EnsureOrigin<Origin> for ConvertOriginToLocal {
 	type Success = MultiLocation;
@@ -224,24 +352,8 @@ impl TransactAsset for DummyAssetTransactor {
 		_what: &MultiAsset,
 		_who: &MultiLocation,
 		_maybe_context: Option<&XcmContext>,
-	) -> Result<Assets, XcmError> {
-		Ok(Assets::default())
-	}
-}
-
-pub struct DummyWeightTrader;
-impl WeightTrader for DummyWeightTrader {
-	fn new() -> Self {
-		DummyWeightTrader
-	}
-
-	fn buy_weight(
-		&mut self,
-		_weight: Weight,
-		_payment: Assets,
-		_context: &XcmContext,
-	) -> Result<Assets, XcmError> {
-		Ok(Assets::default())
+	) -> Result<XCMAssets, XcmError> {
+		Ok(XCMAssets::default())
 	}
 }
 
@@ -293,7 +405,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
-	type Trader = DummyWeightTrader;
+	type Trader = ();
 	type ResponseHandler = ();
 	type SubscriptionService = ();
 	type AssetTrap = ();
@@ -307,26 +419,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
-	type Aliasers = Nothing;
-}
-
-#[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
-pub enum CurrencyId {
-	SelfReserve,
-	OtherReserve(AssetId),
-}
-
-// Implement the trait, where we convert AccountId to AssetID
-impl AccountIdToCurrencyId<AccountId, CurrencyId> for Runtime {
-	/// The way to convert an account to assetId is by ensuring that the prefix is 0XFFFFFFFF
-	/// and by taking the lowest 128 bits as the assetId
-	fn account_to_currency_id(account: AccountId) -> Option<CurrencyId> {
-		match account {
-			a if a.has_prefix_u32(0xffffffff) => Some(CurrencyId::OtherReserve(a.without_prefix())),
-			a if a == AccountId::from(SelfReserveAccount) => Some(CurrencyId::SelfReserve),
-			_ => None,
-		}
-	}
+	//	type Aliasers = Nothing;
 }
 
 pub struct CurrencyIdToMultiLocation;
@@ -334,37 +427,26 @@ pub struct CurrencyIdToMultiLocation;
 impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdToMultiLocation {
 	fn convert(currency: CurrencyId) -> Option<MultiLocation> {
 		match currency {
-			CurrencyId::SelfReserve => {
-				let multi: MultiLocation = SelfReserve::get();
-				Some(multi)
-			}
-			// To distinguish between relay and others, specially for reserve asset
-			CurrencyId::OtherReserve(asset) => {
-				if asset == 0 {
-					Some(MultiLocation::parent())
-				} else {
-					Some(MultiLocation::new(
-						1,
-						Junctions::X2(Parachain(2), GeneralIndex(asset)),
-					))
-				}
-			}
+			0u128 => Some(SelfReserve::get()),
+			1u128 => Some(PARENT),
+			2u128 => Some(PARACHAIN),
+			3u128 => Some(GENERAL_INDEX),
+			4u128 => Some(LOCAL_ASSET),
+			_ => None,
 		}
 	}
 }
 
+/// Convert `AccountId` to `MultiLocation`.
 pub struct AccountIdToMultiLocation;
 impl sp_runtime::traits::Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
-		let as_h160: H160 = account.into();
-		MultiLocation::new(
-			1,
-			Junctions::X1(AccountKey20 {
-				network: None,
-				key: as_h160.as_fixed_bytes().clone(),
-			}),
-		)
+		X1(AccountId32 { network: None, id: account.into() }).into()
 	}
+}
+
+parameter_types! {
+	pub ParachainId: cumulus_primitives_core::ParaId = 100.into();
 }
 
 parameter_types! {
@@ -411,6 +493,23 @@ impl orml_xtokens::Config for Runtime {
 	type ReserveProvider = AbsoluteReserveProvider;
 }
 
+// Configure a mock runtime to test the pallet.
+construct_runtime!(
+	pub enum Runtime where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system,
+		Balances: pallet_balances,
+		Assets: pallet_assets,
+		Evm: pallet_evm,
+		Timestamp: pallet_timestamp,
+		PolkadotXcm: pallet_xcm,
+		Xtokens: orml_xtokens,
+	}
+);
+
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
@@ -427,16 +526,15 @@ impl ExtBuilder {
 		self.balances = balances;
 		self
 	}
+
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::<Runtime>::default()
-			.build_storage()
+		let mut t = frame_system::GenesisConfig::default()
+			.build_storage::<Runtime>()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
+			.expect("Pallet balances storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
@@ -445,8 +543,5 @@ impl ExtBuilder {
 }
 
 pub(crate) fn events() -> Vec<RuntimeEvent> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.collect::<Vec<_>>()
+	System::events().into_iter().map(|r| r.event).collect::<Vec<_>>()
 }

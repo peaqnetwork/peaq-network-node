@@ -33,27 +33,27 @@ xcm = { workspace = true, default-features = false }
 
 [dev-dependencies]
 derive_more = { workspace = true }
-serde = { workspace = true, default-features = false }
-sha3 = { workspace = true, default-features = false }
+serde = { workspace = true }
+sha3 = { workspace = true }
 
 # Peaq
-precompile-utils = { path = "../utils", default-features = false, features = [ "testing" ] }
+precompile-utils = { path = "../utils", features = [ "testing" ] }
 
 # Substrate
-pallet-balances = { workspace = true, default-features = false, features = [ "std" ] }
-pallet-timestamp = { workspace = true, default-features = false }
-parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ] }
-scale-info = { workspace = true, default-features = false, features = [ "derive" ] }
-sp-io = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, features = [ "std" ] }
+pallet-timestamp = { workspace = true }
+parity-scale-codec = { workspace = true, features = [ "max-encoded-len" ] }
+scale-info = { workspace = true, features = [ "derive" ] }
+sp-io = { workspace = true }
 
 # Cumulus
-cumulus-primitives-core = { workspace = true, default-features = false }
+cumulus-primitives-core = { workspace = true }
 
 # Polkadot
-orml-traits = { workspace = true, default-features = false }
-pallet-xcm = { workspace = true, default-features = false }
-xcm-builder = { workspace = true, default-features = false }
-xcm-executor = { workspace = true, default-features = false }
+orml-traits = { workspace = true }
+pallet-xcm = { workspace = true }
+xcm-builder = { workspace = true, features = ["std"] }
+xcm-executor = { workspace = true }
 
 [features]
 default = [ "std" ]
