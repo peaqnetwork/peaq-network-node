@@ -1,5 +1,6 @@
 use frame_support::parameter_types;
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
+use pallet_evm_precompile_xtokens::XtokensPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_modexp::Modexp;
@@ -58,6 +59,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 					AddressU64<2049>,
 					PeaqStoragePrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
+				>,
+				PrecompileAt<
+					AddressU64<2050>,
+					XtokensPrecompile<R>,
+					(SubcallWithMaxNesting<1>, AcceptDelegateCall, CallableByContract),
 				>,
 			),
 		>,
