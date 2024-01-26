@@ -34,10 +34,11 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            sudo docker rmi ${{ secrets.DOCKER_REG_PARACHAIN}}:${{ steps.image-version.outputs.tag }}
-            sudo docker pull ${{ secrets.DOCKER_REG_PARACHAIN}}:${{ steps.image-version.outputs.tag }} 
-            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose pull
-            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose down -v
+            export TAG=dev
+            sudo docker rmi ${{ secrets.DOCKER_REG_PARACHAIN}}:dev
+            sudo docker pull ${{ secrets.DOCKER_REG_PARACHAIN}}:dev 
+            sudo TAG=dev docker compose pull
+            sudo TAG=dev docker compose down -v
 
-            sudo TAG=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
+            sudo TAG=dev docker compose up -d --build --remove-orphans
  
