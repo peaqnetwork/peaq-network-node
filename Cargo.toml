@@ -10,6 +10,7 @@ members = [
 	"precompiles/peaq-storage",
 	"precompiles/assets-erc20",
 	"precompiles/xtokens",
+	"precompiles/xcm-utils",
 ]
 resolver = "2"
 

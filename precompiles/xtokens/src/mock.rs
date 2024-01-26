@@ -419,7 +419,6 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
-	//	type Aliasers = Nothing;
 }
 
 pub struct CurrencyIdToMultiLocation;

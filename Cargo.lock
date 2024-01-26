@@ -7002,6 +7002,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-xcm-utils"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "num_enum 0.5.11",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
 name = "pallet-evm-precompile-xtokens"
 version = "0.1.0"
 dependencies = [
