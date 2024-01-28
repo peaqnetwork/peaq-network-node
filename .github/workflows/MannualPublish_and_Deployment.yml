@@ -1,4 +1,4 @@
-name: Trigger Workflow
+name: Trigger Manually Build and Deploy
 
 on:
   push:
@@ -15,6 +15,7 @@ jobs:
       with:
         owner: $GITHUB_REPOSITORY_OWNER
         repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
         workflow_file_name: publishOnDHR.yml
         ref: dev
         trigger_workflow: true
@@ -29,6 +30,7 @@ jobs:
       with:
         owner: $GITHUB_REPOSITORY_OWNER
         repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
         workflow_file_name: trigger-deployment.yml
         ref: dev
         trigger_workflow: true
@@ -43,6 +45,7 @@ jobs:
       with:
         owner: $GITHUB_REPOSITORY_OWNER
         repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
         workflow_file_name: trigger-autotest.yml
         ref: dev
         trigger_workflow: true
