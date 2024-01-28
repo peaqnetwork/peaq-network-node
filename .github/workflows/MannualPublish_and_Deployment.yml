@@ -16,6 +16,8 @@ jobs:
       uses: actions/workflow-dispatch@v2
       with:
         workflow: ./.github/workflows/publishondhr.yml
+        repo:  ${{ github.repository_owner }}/${{ github.event.repository.name }}
+        token: ${{ secrets.GHACTION }}
   trigger-deploy:
     name: Deploy
     runs-on: ubuntu-20.04
@@ -25,6 +27,8 @@ jobs:
       uses: actions/workflow-dispatch@v2
       with:
         workflow: ./.github/workflows/trigger-deployment.yml
+        repo:  ${{ github.repository_owner }}/${{ github.event.repository.name }}
+        token: ${{ secrets.GHACTION }}
   trigger-autotest:
     name: Autotest
     runs-on: ubuntu-20.04
