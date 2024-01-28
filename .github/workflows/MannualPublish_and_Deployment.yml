@@ -15,7 +15,7 @@ jobs:
     - name: Trigger Build Docker Image workflow
       uses: actions/workflow-dispatch@v2
       with:
-        workflow: ./.github/workflows/publishondhr.yml
+        workflow: ./.github/workflows/publishondhr.yml@6dcd304e5fa65049df40b58b21fff9165cb21cd2
         repo:  ${{ github.repository_owner }}/${{ github.event.repository.name }}
         token: ${{ secrets.GHACTION }}
   trigger-deploy:
@@ -26,7 +26,7 @@ jobs:
     - name: Trigger Deployment workflow
       uses: actions/workflow-dispatch@v2
       with:
-        workflow: ./.github/workflows/trigger-deployment.yml
+        workflow: ./.github/workflows/trigger-deployment.yml@10badec32e293bf0b1cb0e4979540fd2f36ac0db
         repo:  ${{ github.repository_owner }}/${{ github.event.repository.name }}
         token: ${{ secrets.GHACTION }}
   trigger-autotest:
