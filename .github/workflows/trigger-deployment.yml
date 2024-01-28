@@ -1,11 +1,15 @@
-name: Run Mannual Deployment
+name: Deploy
 
-on: workflow_dispatch 
-
+on:
+  workflow_dispatch:
+  # workflow_run:
+  #   workflows: ["Trigger Workflow"]
+  #   types:
+  #     - completed
+runs-on: ubuntu-20.04
 jobs:
-          
   deploy:
-    name: Deploy
+    name: deployment
     runs-on: ubuntu-20.04
     steps:
       - name: Extract metadata (tags, labels) for Docker
@@ -24,7 +28,7 @@ jobs:
           tag=$(echo "$input_string" | cut -d ':' -f 2)
           echo "Extracted Tag: $tag"
           echo "::set-output name=tag::$tag"
-        
+
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -40,4 +44,3 @@ jobs:
             sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose pull
             sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose down -v
             sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
- 
