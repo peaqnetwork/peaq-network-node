@@ -11,30 +11,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Trigger Build Docker Image workflow
-      uses: convictional/trigger-workflow-and-wait@v1.6.1
-      with:
-        owner: ${{ github.repository_owner }}
-        repo: ${{ github.event.repository.name }}
-        github_token: ${{ secrets.GHACTION }}
-        workflow_file_name: publishOnDHR.yml
-        ref: dev
-        trigger_workflow: true
-        wait_workflow: true
+      uses: ./.github/workflows/publishOnDHR.yml
   trigger-deploy:
     name: Deploy
     runs-on: ubuntu-20.04
     needs: trigger-build_and_publish
     steps:
     - name: Trigger Deployment workflow
-      uses: convictional/trigger-workflow-and-wait@v1.6.1
-      with:
-        owner: ${{ github.repository_owner }}
-        repo: ${{ github.event.repository.name }}
-        github_token: ${{ secrets.GHACTION }}
-        workflow_file_name: trigger-deployment.yml
-        ref: dev
-        trigger_workflow: true
-        wait_workflow: true
+      uses: ./.github/workflows/trigger-deployment.yml
   trigger-autotest:
     name: Autotest
     runs-on: ubuntu-20.04

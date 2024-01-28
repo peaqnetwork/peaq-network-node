@@ -2,7 +2,7 @@ FROM docker.io/paritytech/ci-linux:production as builder
 
 WORKDIR /node
 COPY . .
-RUN cargo build --release
+#RUN cargo build --release
 
 FROM docker.io/library/ubuntu:22.04
 
