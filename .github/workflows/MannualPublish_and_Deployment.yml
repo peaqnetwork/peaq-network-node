@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - ci/1206449610772777_auto-deployment-fix
-runs-on: ubuntu-20.04
+
 jobs:
   trigger-build_and_publish:
     name: Build and Publish Docker image
@@ -17,6 +17,7 @@ jobs:
   trigger-deploy:
     name: Deploy
     runs-on: ubuntu-20.04
+    needs: trigger-build_and_publish
     steps:
     - name: Trigger Deployment workflow
       uses: actions/workflow-dispatch@v2
@@ -25,6 +26,7 @@ jobs:
   trigger-autotest:
     name: Autotest
     runs-on: ubuntu-20.04
+    needs: trigger-deploy
     steps:
     - name: Trigger Autotest workflow
       uses: actions/workflow-dispatch@v2
