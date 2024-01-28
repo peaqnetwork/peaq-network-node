@@ -54,8 +54,8 @@ type GetXcmSizeLimit = ConstU32<XCM_SIZE_LIMIT>;
 
 #[cfg(test)]
 mod mock;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 #[derive(Debug)]
 pub struct AllExceptXcmExecute<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConfig)>);

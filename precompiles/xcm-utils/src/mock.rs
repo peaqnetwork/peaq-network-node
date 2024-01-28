@@ -37,6 +37,7 @@ use sp_runtime::traits::{BlakeTwo256, IdentityLookup,
 use sp_runtime::{
 	testing::Header,
 };
+use xcm_executor::traits::Convert;
 use xcm_builder::SignedToAccountId32;
 use sp_runtime::BuildStorage;
 use sp_std::borrow::Borrow;
@@ -57,7 +58,6 @@ use serde::Serialize;
 use serde::Deserialize;
 use scale_info::TypeInfo;
 
-// [TODO]
 pub type AccountId = Account;
 pub type Balance = u128;
 pub type BlockNumber = u64;
@@ -86,6 +86,8 @@ pub enum Account {
 	Bob,
 	Charlie,
 	Bogus,
+	SelfReserve,
+	ParentAccount,
 }
 
 impl Default for Account {
@@ -100,6 +102,8 @@ impl From<Account> for H160 {
 			Account::Alice => H160::repeat_byte(0xAA),
 			Account::Bob => H160::repeat_byte(0xBB),
 			Account::Charlie => H160::repeat_byte(0xCC),
+			Account::SelfReserve => H160::repeat_byte(0xDD),
+			Account::ParentAccount => H160::repeat_byte(0xEE),
 			Account::Bogus => Default::default(),
 		}
 	}
@@ -111,6 +115,8 @@ impl AddressMapping<Account> for Account {
 			a if a == H160::repeat_byte(0xAA) => Self::Alice,
 			a if a == H160::repeat_byte(0xBB) => Self::Bob,
 			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
+			a if a == H160::repeat_byte(0xDD) => Self::SelfReserve,
+			a if a == H160::repeat_byte(0xEE) => Self::ParentAccount,
 			_ => {
 				Self::Bogus
 			},
@@ -124,14 +130,28 @@ impl From<H160> for Account {
 	}
 }
 
-
 impl From<Account> for [u8; 32] {
 	fn from(value: Account) -> [u8; 32] {
 		match value {
 			Account::Alice => [0xAA; 32],
 			Account::Bob => [0xBB; 32],
 			Account::Charlie => [0xCC; 32],
+			Account::SelfReserve => [0xDD; 32],
+			Account::ParentAccount => [0xEE; 32],
 			_ => Default::default(),
+		}
+	}
+}
+
+impl From<[u8; 32]> for Account {
+	fn from(value: [u8; 32]) -> Account {
+		match value {
+			a if a == [0xAA; 32] => Account::Alice,
+			a if a == [0xBB; 32] => Account::Bob,
+			a if a == [0xCC; 32] => Account::Charlie,
+			a if a == [0xDD; 32] => Account::SelfReserve,
+			a if a == [0xEE; 32] => Account::ParentAccount,
+			_ => Account::Bogus,
 		}
 	}
 }
@@ -151,10 +171,9 @@ construct_runtime!(
 	}
 );
 
-/*
- * mock_account!(SelfReserveAccount, |_| MockAccount::from_u64(2));
- * mock_account!(ParentAccount, |_| MockAccount::from_u64(3));
- * // use simple encoding for parachain accounts.
+// mock_account!(SelfReserveAccount, |_| Account::SelfReserve);
+// mock_account!(ParentAccount, |_| MockAccount::from_u64(3));
+ /* // use simple encoding for parachain accounts.
  * mock_account!(
  *     SiblingParachainAccount(u32),
  *     |v: SiblingParachainAccount| { AddressInPrefixedSet(0xffffffff, v.0 as u128).into() }
@@ -163,31 +182,29 @@ construct_runtime!(
  */
 use frame_system::RawOrigin as SystemRawOrigin;
 use xcm::latest::Junction;
-/*
- * pub struct MockAccountToAccountKey20<Origin, AccountId>(PhantomData<(Origin, AccountId)>);
- *
- * impl<Origin: OriginTrait + Clone, AccountId: Into<H160>> TryConvert<Origin, MultiLocation>
- *     for MockAccountToAccountKey20<Origin, AccountId>
- * where
- *     Origin::PalletsOrigin: From<SystemRawOrigin<AccountId>>
- *         + TryInto<SystemRawOrigin<AccountId>, Error = Origin::PalletsOrigin>,
- * {
- *     fn try_convert(o: Origin) -> Result<MultiLocation, Origin> {
- *         o.try_with_caller(|caller| match caller.try_into() {
- *             Ok(SystemRawOrigin::Signed(who)) => {
- *                 let account_h160: H160 = who.into();
- *                 Ok(Junction::AccountKey20 {
- *                     network: None,
- *                     key: account_h160.into(),
- *                 }
- *                 .into())
- *             }
- *             Ok(other) => Err(other.into()),
- *             Err(other) => Err(other),
- *         })
- *     }
- * }
- */
+pub struct MockAccountToAccountKey20<Origin, AccountId>(PhantomData<(Origin, AccountId)>);
+
+impl<Origin: OriginTrait + Clone, AccountId: Into<H160>> Convert<Origin, MultiLocation>
+	for MockAccountToAccountKey20<Origin, AccountId>
+where
+	Origin::PalletsOrigin: From<SystemRawOrigin<AccountId>>
+		+ TryInto<SystemRawOrigin<AccountId>, Error = Origin::PalletsOrigin>,
+{
+	fn convert(o: Origin) -> Result<MultiLocation, Origin> {
+		o.try_with_caller(|caller| match caller.try_into() {
+			Ok(SystemRawOrigin::Signed(who)) => {
+				let account_h160: H160 = who.into();
+				Ok(Junction::AccountKey20 {
+					network: None,
+					key: account_h160.into(),
+				}
+				.into())
+			}
+			Ok(other) => Err(other.into()),
+			Err(other) => Err(other),
+		})
+	}
+}
 
 /*
  * pub struct MockParentMultilocationToAccountConverter;
@@ -197,12 +214,33 @@ use xcm::latest::Junction;
  *             MultiLocation {
  *                 parents: 1,
  *                 interior: Here,
- *             } => Some(ParentAccount.into()),
+ *             } => Some(Account::ParentAccount.into()),
  *             _ => None,
  *         }
  *     }
  * }
- *
+ */
+pub struct MockParentMultilocationToAccountConverter<AccountId>(PhantomData<AccountId>);
+impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone + std::convert::From<mock::Account> + std::cmp::PartialEq<mock::Account>>
+	Convert<MultiLocation, AccountId> for MockParentMultilocationToAccountConverter<AccountId>
+{
+	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
+		let key = match location {
+			MultiLocation { parents: 1, interior: Here } => Account::ParentAccount,
+			_ => return Err(location),
+		};
+		Ok(key.into())
+	}
+
+	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
+		if who != Account::ParentAccount {
+			return Err(who);
+		}
+		Ok(MultiLocation { parents: 1, interior: Here })
+	}
+}
+
+ /*
  * pub struct MockParachainMultilocationToAccountConverter;
  * impl ConvertLocation<AccountId> for MockParachainMultilocationToAccountConverter {
  *     fn convert_location(location: &MultiLocation) -> Option<AccountId> {
@@ -215,13 +253,12 @@ use xcm::latest::Junction;
  *         }
  *     }
  * }
- *
- * pub type LocationToAccountId = (
- *     MockParachainMultilocationToAccountConverter,
- *     MockParentMultilocationToAccountConverter,
- *     xcm_builder::AccountKey20Aliases<LocalNetworkId, AccountId>,
- * );
  */
+ pub type LocationToAccountId = (
+	// MockParachainMultilocationToAccountConverter,
+	MockParentMultilocationToAccountConverter<AccountId>,
+	xcm_builder::AccountId32Aliases<LocalNetworkId, AccountId>,
+);
 
 pub struct AccountIdToMultiLocation;
 impl sp_runtime::traits::Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
@@ -278,7 +315,7 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 0;
+	pub const ExistentialDeposit: u128 = 1;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -305,6 +342,7 @@ parameter_types! {
 parameter_types! {
 	pub MatcherLocation: MultiLocation = MultiLocation::here();
 }
+// pub type LocalOriginToLocation = MockAccountToAccountKey20<RuntimeOrigin, AccountId>;
 pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, AnyNetwork>;
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -515,20 +553,18 @@ parameter_types! {
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-/*
- * pub type XcmOriginToTransactDispatchOrigin = (
- *     // Sovereign account converter; this attempts to derive an `AccountId` from the origin location
- *     // using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
- *     // foreign chains who want to have a local sovereign account on this chain which they control.
- *     SovereignSignedViaLocation<LocationToAccountId, RuntimeOrigin>,
- * );
- */
+pub type XcmOriginToTransactDispatchOrigin = (
+	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
+	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
+	// foreign chains who want to have a local sovereign account on this chain which they control.
+	SovereignSignedViaLocation<LocationToAccountId, RuntimeOrigin>,
+);
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = TestSendXcm;
 	type AssetTransactor = DummyAssetTransactor;
-	type OriginConverter = ();
+	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = ();
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;

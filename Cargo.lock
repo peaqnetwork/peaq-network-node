@@ -7007,9 +7007,11 @@ version = "0.1.0"
 dependencies = [
  "cumulus-primitives-core",
  "derive_more",
+ "env_logger 0.9.3",
  "fp-evm",
  "frame-support",
  "frame-system",
+ "log",
  "num_enum 0.5.11",
  "orml-traits",
  "pallet-balances",

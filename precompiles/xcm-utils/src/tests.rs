@@ -15,8 +15,12 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::mock::{
-	sent_xcm, AccountId, Balances, ExtBuilder, PCall, ParentAccount, Precompiles, PrecompilesValue,
-	Runtime, SiblingParachainAccount, System,
+	sent_xcm, AccountId, Balances, ExtBuilder, PCall,
+	// ParentAccount,
+	Precompiles, PrecompilesValue,
+	Runtime,
+	//SiblingParachainAccount,
+	System, Account as MockAccount
 };
 use frame_support::{traits::PalletInfo, weights::Weight};
 use parity_scale_codec::Encode;
@@ -30,7 +34,9 @@ fn precompiles() -> Precompiles<Runtime> {
 
 #[test]
 fn test_selector_enum() {
-	assert!(PCall::multilocation_to_address_selectors().contains(&0x343b3e00));
+	/*
+	 * assert!(PCall::multilocation_to_address_selectors().contains(&0x343b3e00));
+	 */
 	assert!(PCall::weight_message_selectors().contains(&0x25d54154));
 	assert!(PCall::get_units_per_second_selectors().contains(&0x3f0f65db));
 }
@@ -40,48 +46,54 @@ fn modifiers() {
 	ExtBuilder::default().build().execute_with(|| {
 		let mut tester = PrecompilesModifierTester::new(precompiles(), Alice, Precompile1);
 
-		tester.test_view_modifier(PCall::multilocation_to_address_selectors());
+		/*
+		 * tester.test_view_modifier(PCall::multilocation_to_address_selectors());
+		 */
 		tester.test_view_modifier(PCall::weight_message_selectors());
 		tester.test_view_modifier(PCall::get_units_per_second_selectors());
 	});
 }
 
-#[test]
-fn test_get_account_parent() {
-	ExtBuilder::default().build().execute_with(|| {
-		let input = PCall::multilocation_to_address {
-			multilocation: MultiLocation::parent(),
-		};
+/*
+ * #[test]
+ * fn test_get_account_parent() {
+ *     ExtBuilder::default().build().execute_with(|| {
+ *         let input = PCall::multilocation_to_address {
+ *             multilocation: MultiLocation::parent(),
+ *         };
+ *
+ *         let expected_address: H160 = ParentAccount.into();
+ *
+ *         precompiles()
+ *             .prepare_test(Alice, Precompile1, input)
+ *             .expect_cost(1)
+ *             .expect_no_logs()
+ *             .execute_returns(Address(expected_address));
+ *     });
+ * }
+ */
 
-		let expected_address: H160 = ParentAccount.into();
-
-		precompiles()
-			.prepare_test(Alice, Precompile1, input)
-			.expect_cost(1)
-			.expect_no_logs()
-			.execute_returns(Address(expected_address));
-	});
-}
-
-#[test]
-fn test_get_account_sibling() {
-	ExtBuilder::default().build().execute_with(|| {
-		let input = PCall::multilocation_to_address {
-			multilocation: MultiLocation {
-				parents: 1,
-				interior: Junctions::X1(Junction::Parachain(2000u32)),
-			},
-		};
-
-		let expected_address: H160 = SiblingParachainAccount(2000u32).into();
-
-		precompiles()
-			.prepare_test(Alice, Precompile1, input)
-			.expect_cost(1)
-			.expect_no_logs()
-			.execute_returns(Address(expected_address));
-	});
-}
+/*
+ * #[test]
+ * fn test_get_account_sibling() {
+ *     ExtBuilder::default().build().execute_with(|| {
+ *         let input = PCall::multilocation_to_address {
+ *             multilocation: MultiLocation {
+ *                 parents: 1,
+ *                 interior: Junctions::X1(Junction::Parachain(2000u32)),
+ *             },
+ *         };
+ *
+ *         let expected_address: H160 = SiblingParachainAccount(2000u32).into();
+ *
+ *         precompiles()
+ *             .prepare_test(Alice, Precompile1, input)
+ *             .expect_cost(1)
+ *             .expect_no_logs()
+ *             .execute_returns(Address(expected_address));
+ *     });
+ * }
+ */
 
 #[test]
 fn test_weight_message() {
@@ -167,8 +179,10 @@ fn test_executor_send() {
 
 #[test]
 fn test_executor_transact() {
+	let _ = env_logger::try_init();
+
 	ExtBuilder::default()
-		.with_balances(vec![(CryptoAlith.into(), 1000000000)])
+		.with_balances(vec![(MockAccount::Alice.into(), 1000000000)])
 		.build()
 		.execute_with(|| {
 			let mut encoded: Vec<u8> = Vec::new();
@@ -179,10 +193,11 @@ fn test_executor_transact() {
 
 			// Then call bytes
 			let mut call_bytes = pallet_balances::Call::<Runtime>::transfer {
-				dest: CryptoBaltathar.into(),
+				dest: MockAccount::Bob.into(),
 				value: 100u32.into(),
 			}
 			.encode();
+
 			encoded.append(&mut call_bytes);
 			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
@@ -190,20 +205,19 @@ fn test_executor_transact() {
 				call: encoded.into(),
 			}]))
 			.encode();
-
 			let input = PCall::xcm_execute {
 				message: xcm_to_execute.into(),
 				weight: 2_000_000_000u64,
 			};
 
 			precompiles()
-				.prepare_test(CryptoAlith, Precompile1, input)
+				.prepare_test(Alice, Precompile1, input)
 				.expect_cost(1100001001)
 				.expect_no_logs()
 				.execute_returns(());
 
 			// Transact executed
-			let baltathar_account: AccountId = CryptoBaltathar.into();
+			let baltathar_account: AccountId = MockAccount::Bob.into();
 			assert_eq!(System::account(baltathar_account).data.free, 100);
 		});
 }
@@ -219,7 +233,7 @@ fn test_send_clear_origin() {
 		};
 
 		precompiles()
-			.prepare_test(CryptoAlith, Precompile1, input)
+			.prepare_test(Alice, Precompile1, input)
 			// Only the cost of TestWeightInfo
 			.expect_cost(100000000)
 			.expect_no_logs()
@@ -236,8 +250,8 @@ fn test_send_clear_origin() {
 fn execute_fails_if_called_by_smart_contract() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(CryptoAlith.into(), 1000),
-			(CryptoBaltathar.into(), 1000),
+			(MockAccount::Alice.into(), 1000),
+			(MockAccount::Bob.into(), 1000),
 		])
 		.build()
 		.execute_with(|| {

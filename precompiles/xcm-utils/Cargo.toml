@@ -6,6 +6,7 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
+log = { workspace = true, default-features = false }
 num_enum = { workspace = true, default-features = false }
 
 # Peaq
@@ -31,6 +32,7 @@ xcm = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 
 [dev-dependencies]
+env_logger = "0.9"
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
