@@ -13,22 +13,30 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@v3
     - name: Trigger Build Docker Image workflow
-      uses: actions/workflow-dispatch@v2
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        workflow: ./.github/workflows/publishondhr.yml@6dcd304e5fa65049df40b58b21fff9165cb21cd2
-        repo:  ${{ github.repository_owner }}/${{ github.event.repository.name }}
-        token: ${{ secrets.GHACTION }}
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
+        workflow_file_name: publishondhr.yml
+        ref: $${{ github.ref_name }}
+        trigger_workflow: true
+        wait_workflow: true
   trigger-deploy:
     name: Deploy
     runs-on: ubuntu-20.04
     needs: trigger-build_and_publish
     steps:
     - name: Trigger Deployment workflow
-      uses: actions/workflow-dispatch@v2
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        workflow: ./.github/workflows/trigger-deployment.yml@10badec32e293bf0b1cb0e4979540fd2f36ac0db
-        repo:  ${{ github.repository_owner }}/${{ github.event.repository.name }}
-        token: ${{ secrets.GHACTION }}
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
+        workflow_file_name: trigger-deployment.yml
+        ref: $${{ github.ref_name }}
+        trigger_workflow: true
+        wait_workflow: true
   trigger-autotest:
     name: Autotest
     runs-on: ubuntu-20.04
