@@ -34,11 +34,10 @@ jobs:
           port: ${{ secrets.AUTOTEST_SSH_PORT }}
           script: |
             cd /home/jay/parachain-launch/yoyo/
-            export peaqnode_latest=dev
-          
-            sudo peaqnode_latest=dev docker compose pull
-            sudo peaqnode_latest=dev docker compose down -v
-            sudo docker rmi ${{ secrets.DOCKER_REG_PARACHAIN}}:dev
-            sudo docker pull ${{ secrets.DOCKER_REG_PARACHAIN}}:dev 
-            sudo peaqnode_latest=dev docker compose up -d --build --remove-orphans
+            echo ${{ steps.image-version.outputs.tag }}
+            sudo docker rmi ${{ secrets.DOCKER_REG_PARACHAIN}}:${{ steps.image-version.outputs.tag }}
+            sudo docker pull ${{ secrets.DOCKER_REG_PARACHAIN}}:${{ steps.image-version.outputs.tag }}
+            sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose pull
+            sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose down -v
+            sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
  
