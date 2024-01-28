@@ -1,9 +1,7 @@
 name: Trigger Manually Build and Deploy
-
+#test 
 on:
-  push:
-    branches:
-      - ci/1206449610772777_auto-deployment-fix
+  workflow_dispatch:
 
 jobs:
   trigger-build_and_publish:
