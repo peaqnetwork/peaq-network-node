@@ -11,26 +11,42 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Trigger Build Docker Image workflow
-      uses: actions/workflow-dispatch@v2
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        workflow: publishOnDHR.yml
+        owner: $GITHUB_REPOSITORY_OWNER
+        repo: ${{ github.event.repository.name }}
+        workflow_file_name: publishOnDHR.yml
+        ref: dev
+        trigger_workflow: true
+        wait_workflow: true
   trigger-deploy:
     name: Deploy
     runs-on: ubuntu-20.04
     needs: trigger-build_and_publish
     steps:
     - name: Trigger Deployment workflow
-      uses: actions/workflow-dispatch@v2
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        workflow: trigger-deployment.yml
+        owner: $GITHUB_REPOSITORY_OWNER
+        repo: ${{ github.event.repository.name }}
+        workflow_file_name: trigger-deployment.yml
+        ref: dev
+        trigger_workflow: true
+        wait_workflow: true
   trigger-autotest:
     name: Autotest
     runs-on: ubuntu-20.04
     needs: trigger-deploy
     steps:
     - name: Trigger Autotest workflow
-      uses: actions/workflow-dispatch@v2
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        workflow: trigger-autotest.yml
+        owner: $GITHUB_REPOSITORY_OWNER
+        repo: ${{ github.event.repository.name }}
+        workflow_file_name: trigger-autotest.yml
+        ref: dev
+        trigger_workflow: true
+        wait_workflow: true
+  
 
   
