@@ -2,11 +2,6 @@ name: Build Docker Image
 
 on:
   workflow_dispatch:
-  # workflow_run:
-  #   workflows: ["Trigger Workflow"]
-  #   types:
-  #     - completed
-
 jobs:
   push_to_registry:
     runs-on: ubuntu-20.04

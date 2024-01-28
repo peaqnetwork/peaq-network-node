@@ -1,11 +1,7 @@
 name: Autotest
 
 on:
-  workflow_dispatch:
-  # workflow_run:
-  #   workflows: ["Trigger Workflow"]
-  #   types:
-  #     - completed
+  workflow_call:
 jobs:
   Test:
     name: Run Autotest
