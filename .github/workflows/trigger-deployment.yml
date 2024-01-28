@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  # workflow_run:
+  #   workflows: ["Trigger Workflow"]
+  #   types:
+  #     - completed
+runs-on: ubuntu-20.04
+jobs:
+  deploy:
+    name: deployment
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ secrets.DOCKER_REG_PARACHAIN}}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=ref,event=tag
+      - name: Extract Tag
+        id: image-version
+        run: |
+          input_string=${{ steps.meta.outputs.tags}}
+          tag=$(echo "$input_string" | cut -d ':' -f 2)
+          echo "Extracted Tag: $tag"
+          echo "::set-output name=tag::$tag"
+
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AUTOTEST_HOST }}
+          username: ${{ secrets.AUTOTEST_USERNAME }}
+          key: ${{ secrets.SSH_KEY_AUTOTEST }}
+          port: ${{ secrets.AUTOTEST_SSH_PORT }}
+          script: |
+            cd /home/jay/parachain-launch/yoyo/
+            echo ${{ steps.image-version.outputs.tag }}
+            sudo docker rmi ${{ secrets.DOCKER_REG_PARACHAIN}}:${{ steps.image-version.outputs.tag }}
+            sudo docker pull ${{ secrets.DOCKER_REG_PARACHAIN}}:${{ steps.image-version.outputs.tag }}
+            sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose pull
+            sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose down -v
+            sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
