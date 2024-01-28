@@ -13,7 +13,7 @@ jobs:
     - name: Trigger Build Docker Image workflow
       uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        owner: $GITHUB_REPOSITORY_OWNER
+        owner: ${{ github.repository_owner }}
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
         workflow_file_name: publishOnDHR.yml
@@ -28,7 +28,7 @@ jobs:
     - name: Trigger Deployment workflow
       uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        owner: $GITHUB_REPOSITORY_OWNER
+        owner: ${{ github.repository_owner }}
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
         workflow_file_name: trigger-deployment.yml
@@ -43,7 +43,7 @@ jobs:
     - name: Trigger Autotest workflow
       uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-        owner: $GITHUB_REPOSITORY_OWNER
+        owner: ${{ github.repository_owner }}
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
         workflow_file_name: trigger-autotest.yml
