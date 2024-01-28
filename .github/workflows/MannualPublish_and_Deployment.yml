@@ -13,14 +13,18 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@v3
     - name: Trigger Build Docker Image workflow
-      uses: ./.github/workflows/publishOnDHR.yml
+      uses: actions/workflow-dispatch@v2
+      with:
+        workflow: ./.github/workflows/publishondhr.yml
   trigger-deploy:
     name: Deploy
     runs-on: ubuntu-20.04
     needs: trigger-build_and_publish
     steps:
     - name: Trigger Deployment workflow
-      uses: ./.github/workflows/trigger-deployment.yml
+      uses: actions/workflow-dispatch@v2
+      with:
+        workflow: ./.github/workflows/trigger-deployment.yml
   trigger-autotest:
     name: Autotest
     runs-on: ubuntu-20.04
