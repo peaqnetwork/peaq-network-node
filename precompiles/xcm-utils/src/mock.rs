@@ -22,41 +22,33 @@ use frame_support::{
 	weights::{RuntimeDbWeight, Weight},
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
-use precompile_utils::{
-	mock_account,
-	precompile_set::*,
-	testing::{AddressInPrefixedSet,
-	// MockAccount
-	},
-};
+use parity_scale_codec::Encode;
+use precompile_utils::precompile_set::*;
+use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
 use sp_core::{H256, U256};
 use sp_io;
-use sp_runtime::traits::{BlakeTwo256, IdentityLookup,
+use sp_runtime::testing::Header;
+use sp_runtime::traits::{
+	BlakeTwo256,
+	IdentityLookup,
 	// TryConvert
 };
-use sp_runtime::{
-	testing::Header,
+use xcm::latest::Error as XcmError;
+use xcm_builder::{
+	AllowUnpaidExecutionFrom, FixedWeightBounds, IsConcrete, SignedToAccountId32,
+	SovereignSignedViaLocation,
 };
 use xcm_executor::traits::Convert;
-use xcm_builder::SignedToAccountId32;
-use sp_runtime::BuildStorage;
-use sp_std::borrow::Borrow;
-use xcm::latest::Error as XcmError;
-use xcm_builder::AllowUnpaidExecutionFrom;
-use xcm_builder::FixedWeightBounds;
-use xcm_builder::IsConcrete;
-use xcm_builder::SovereignSignedViaLocation;
 use xcm_executor::{
 	traits::{
-	// ConvertLocation,
-	TransactAsset, WeightTrader},
+		// ConvertLocation,
+		TransactAsset,
+		WeightTrader,
+	},
 	Assets,
 };
 use Junctions::Here;
-use parity_scale_codec::Encode;
-use serde::Serialize;
-use serde::Deserialize;
-use scale_info::TypeInfo;
 
 pub type AccountId = Account;
 pub type Balance = u128;
@@ -117,9 +109,7 @@ impl AddressMapping<Account> for Account {
 			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
 			a if a == H160::repeat_byte(0xDD) => Self::SelfReserve,
 			a if a == H160::repeat_byte(0xEE) => Self::ParentAccount,
-			_ => {
-				Self::Bogus
-			},
+			_ => Self::Bogus,
 		}
 	}
 }
@@ -171,58 +161,14 @@ construct_runtime!(
 	}
 );
 
-// mock_account!(SelfReserveAccount, |_| Account::SelfReserve);
-// mock_account!(ParentAccount, |_| MockAccount::from_u64(3));
- /* // use simple encoding for parachain accounts.
- * mock_account!(
- *     SiblingParachainAccount(u32),
- *     |v: SiblingParachainAccount| { AddressInPrefixedSet(0xffffffff, v.0 as u128).into() }
- * );
- *
- */
-use frame_system::RawOrigin as SystemRawOrigin;
-use xcm::latest::Junction;
-pub struct MockAccountToAccountKey20<Origin, AccountId>(PhantomData<(Origin, AccountId)>);
-
-impl<Origin: OriginTrait + Clone, AccountId: Into<H160>> Convert<Origin, MultiLocation>
-	for MockAccountToAccountKey20<Origin, AccountId>
-where
-	Origin::PalletsOrigin: From<SystemRawOrigin<AccountId>>
-		+ TryInto<SystemRawOrigin<AccountId>, Error = Origin::PalletsOrigin>,
-{
-	fn convert(o: Origin) -> Result<MultiLocation, Origin> {
-		o.try_with_caller(|caller| match caller.try_into() {
-			Ok(SystemRawOrigin::Signed(who)) => {
-				let account_h160: H160 = who.into();
-				Ok(Junction::AccountKey20 {
-					network: None,
-					key: account_h160.into(),
-				}
-				.into())
-			}
-			Ok(other) => Err(other.into()),
-			Err(other) => Err(other),
-		})
-	}
-}
-
-/*
- * pub struct MockParentMultilocationToAccountConverter;
- * impl ConvertLocation<AccountId> for MockParentMultilocationToAccountConverter {
- *     fn convert_location(location: &MultiLocation) -> Option<AccountId> {
- *         match location {
- *             MultiLocation {
- *                 parents: 1,
- *                 interior: Here,
- *             } => Some(Account::ParentAccount.into()),
- *             _ => None,
- *         }
- *     }
- * }
- */
 pub struct MockParentMultilocationToAccountConverter<AccountId>(PhantomData<AccountId>);
-impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone + std::convert::From<mock::Account> + std::cmp::PartialEq<mock::Account>>
-	Convert<MultiLocation, AccountId> for MockParentMultilocationToAccountConverter<AccountId>
+impl<
+		AccountId: From<[u8; 32]>
+			+ Into<[u8; 32]>
+			+ Clone
+			+ std::convert::From<mock::Account>
+			+ std::cmp::PartialEq<mock::Account>,
+	> Convert<MultiLocation, AccountId> for MockParentMultilocationToAccountConverter<AccountId>
 {
 	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
 		let key = match location {
@@ -234,13 +180,13 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone + std::convert::From<moc
 
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
 		if who != Account::ParentAccount {
-			return Err(who);
+			return Err(who)
 		}
 		Ok(MultiLocation { parents: 1, interior: Here })
 	}
 }
 
- /*
+/*
  * pub struct MockParachainMultilocationToAccountConverter;
  * impl ConvertLocation<AccountId> for MockParachainMultilocationToAccountConverter {
  *     fn convert_location(location: &MultiLocation) -> Option<AccountId> {
@@ -254,7 +200,7 @@ impl<AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone + std::convert::From<moc
  *     }
  * }
  */
- pub type LocationToAccountId = (
+pub type LocationToAccountId = (
 	// MockParachainMultilocationToAccountConverter,
 	MockParentMultilocationToAccountConverter<AccountId>,
 	xcm_builder::AccountId32Aliases<LocalNetworkId, AccountId>,
@@ -266,10 +212,7 @@ impl sp_runtime::traits::Convert<AccountId, MultiLocation> for AccountIdToMultiL
 		let as_h160: H160 = account.into();
 		MultiLocation::new(
 			0,
-			Junctions::X1(AccountKey20 {
-				network: None,
-				key: as_h160.as_fixed_bytes().clone(),
-			}),
+			Junctions::X1(AccountKey20 { network: None, key: as_h160.as_fixed_bytes().clone() }),
 		)
 	}
 }
@@ -299,7 +242,7 @@ impl frame_system::Config for Runtime {
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
+	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -342,7 +285,6 @@ parameter_types! {
 parameter_types! {
 	pub MatcherLocation: MultiLocation = MultiLocation::here();
 }
-// pub type LocalOriginToLocation = MockAccountToAccountKey20<RuntimeOrigin, AccountId>;
 pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, AnyNetwork>;
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -483,8 +425,7 @@ impl SendXcm for TestSendXcm {
 		message: &mut Option<opaque::Xcm>,
 	) -> SendResult<Self::Ticket> {
 		SENT_XCM.with(|q| {
-			q.borrow_mut()
-				.push((destination.clone().unwrap(), message.clone().unwrap()))
+			q.borrow_mut().push((destination.clone().unwrap(), message.clone().unwrap()))
 		});
 		Ok(((), MultiAssets::new()))
 	}
@@ -515,16 +456,10 @@ impl WeightTrader for DummyWeightTrader {
 		DummyWeightTrader
 	}
 
-	fn buy_weight(
-		&mut self,
-		weight: Weight,
-		payment: Assets,
-	) -> Result<Assets, XcmError> {
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
 		let asset_to_charge: MultiAsset =
 			(MultiLocation::parent(), weight.ref_time() as u128).into();
-		let unused = payment
-			.checked_sub(asset_to_charge)
-			.map_err(|_| XcmError::TooExpensive)?;
+		let unused = payment.checked_sub(asset_to_charge).map_err(|_| XcmError::TooExpensive)?;
 
 		Ok(unused)
 	}
@@ -533,7 +468,7 @@ impl WeightTrader for DummyWeightTrader {
 parameter_types! {
 	pub const BaseXcmWeight: Weight = Weight::from_parts(1000u64, 0u64);
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
-    pub const AnyNetwork: Option<NetworkId> = None;
+	pub const AnyNetwork: Option<NetworkId> = None;
 
 	pub SelfLocation: MultiLocation =
 		MultiLocation::new(1, Junctions::X1(Parachain(ParachainId::get().into())));
@@ -608,11 +543,9 @@ impl ExtBuilder {
 			.build_storage::<Runtime>()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
+			.expect("Pallet balances storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

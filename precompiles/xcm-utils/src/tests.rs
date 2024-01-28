@@ -15,16 +15,22 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::mock::{
-	sent_xcm, AccountId, Balances, ExtBuilder, PCall,
+	sent_xcm,
+	Account as MockAccount,
+	AccountId,
+	Balances,
+	ExtBuilder,
+	PCall,
 	// ParentAccount,
-	Precompiles, PrecompilesValue,
+	Precompiles,
+	PrecompilesValue,
 	Runtime,
 	//SiblingParachainAccount,
-	System, Account as MockAccount
+	System,
 };
 use frame_support::{traits::PalletInfo, weights::Weight};
 use parity_scale_codec::Encode;
-use precompile_utils::{prelude::*, testing::*};
+use precompile_utils::testing::*;
 use sp_core::{H160, U256};
 use xcm::prelude::*;
 
@@ -100,9 +106,7 @@ fn test_weight_message() {
 	ExtBuilder::default().build().execute_with(|| {
 		let message: Vec<u8> = xcm::VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
-		let input = PCall::weight_message {
-			message: message.into(),
-		};
+		let input = PCall::weight_message { message: message.into() };
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
@@ -115,9 +119,7 @@ fn test_weight_message() {
 #[test]
 fn test_get_units_per_second() {
 	ExtBuilder::default().build().execute_with(|| {
-		let input = PCall::get_units_per_second {
-			multilocation: MultiLocation::parent(),
-		};
+		let input = PCall::get_units_per_second { multilocation: MultiLocation::parent() };
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
@@ -132,10 +134,7 @@ fn test_executor_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
 		let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
-		let input = PCall::xcm_execute {
-			message: xcm_to_execute.into(),
-			weight: 10000u64,
-		};
+		let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
@@ -159,10 +158,7 @@ fn test_executor_send() {
 		]))
 		.encode();
 
-		let input = PCall::xcm_execute {
-			message: xcm_to_execute.into(),
-			weight: 10000u64,
-		};
+		let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
@@ -205,10 +201,8 @@ fn test_executor_transact() {
 				call: encoded.into(),
 			}]))
 			.encode();
-			let input = PCall::xcm_execute {
-				message: xcm_to_execute.into(),
-				weight: 2_000_000_000u64,
-			};
+			let input =
+				PCall::xcm_execute { message: xcm_to_execute.into(), weight: 2_000_000_000u64 };
 
 			precompiles()
 				.prepare_test(Alice, Precompile1, input)
@@ -227,10 +221,7 @@ fn test_send_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
 		let xcm_to_send = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
-		let input = PCall::xcm_send {
-			dest: MultiLocation::parent(),
-			message: xcm_to_send.into(),
-		};
+		let input = PCall::xcm_send { dest: MultiLocation::parent(), message: xcm_to_send.into() };
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
@@ -249,10 +240,7 @@ fn test_send_clear_origin() {
 #[test]
 fn execute_fails_if_called_by_smart_contract() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockAccount::Alice.into(), 1000),
-			(MockAccount::Bob.into(), 1000),
-		])
+		.with_balances(vec![(MockAccount::Alice.into(), 1000), (MockAccount::Bob.into(), 1000)])
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
@@ -260,10 +248,7 @@ fn execute_fails_if_called_by_smart_contract() {
 
 			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
-			let input = PCall::xcm_execute {
-				message: xcm_to_execute.into(),
-				weight: 10000u64,
-			};
+			let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
 
 			PrecompilesValue::get()
 				.prepare_test(Alice, Precompile1, input)

@@ -19,26 +19,20 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use fp_evm::PrecompileHandle;
-use frame_support::traits::ConstU32;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
-	traits::OriginTrait,
+	traits::{ConstU32, OriginTrait},
 };
 use pallet_evm::AddressMapping;
 use parity_scale_codec::{Decode, DecodeLimit, MaxEncodedLen};
-use precompile_utils::precompile_set::SelectorFilter;
-use precompile_utils::prelude::*;
+use precompile_utils::{precompile_set::SelectorFilter, prelude::*};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
-use sp_std::boxed::Box;
-use sp_std::marker::PhantomData;
-use sp_std::vec;
-use sp_std::vec::Vec;
+use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
 use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 // use xcm_executor::traits::ConvertOrigin;
-use xcm_executor::traits::WeightBounds;
-use xcm_executor::traits::WeightTrader;
+use xcm_executor::traits::{WeightBounds, WeightTrader};
 
 const DEFAULT_PROOF_SIZE: u64 = 256 * 1024;
 
@@ -74,10 +68,9 @@ where
 	fn is_allowed(_caller: H160, selector: Option<u32>) -> bool {
 		match selector {
 			None => true,
-			Some(selector) => {
+			Some(selector) =>
 				!XcmUtilsPrecompileCall::<Runtime, XcmConfig>::xcm_execute_selectors()
-					.contains(&selector)
-			}
+					.contains(&selector),
 		}
 	}
 
@@ -101,34 +94,33 @@ where
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
 {
-/*
- *     #[precompile::public("multilocationToAddress((uint8,bytes[]))")]
- *     #[precompile::view]
- *     fn multilocation_to_address(
- *         handle: &mut impl PrecompileHandle,
- *         multilocation: MultiLocation,
- *     ) -> EvmResult<Address> {
- *         // storage item: AssetTypeUnitsPerSecond
- *         // max encoded len: hash (16) + Multilocation + u128 (16)
- *         handle.record_db_read::<Runtime>(32 + MultiLocation::max_encoded_len())?;
- *
- *         let origin =
- *             XcmConfig::OriginConverter::convert_origin(multilocation, OriginKind::SovereignAccount)
- *                 .map_err(|_| {
- *                     RevertReason::custom("Failed multilocation conversion")
- *                         .in_field("multilocation")
- *                 })?;
- *
- *         let account: H160 = origin
- *             .into_signer()
- *             .ok_or(
- *                 RevertReason::custom("Failed multilocation conversion").in_field("multilocation"),
- *             )?
- *             .into();
- *         Ok(Address(account))
- *     }
- *
- */
+	/*
+	 *     #[precompile::public("multilocationToAddress((uint8,bytes[]))")]
+	 *     #[precompile::view]
+	 *     fn multilocation_to_address(
+	 *         handle: &mut impl PrecompileHandle,
+	 *         multilocation: MultiLocation,
+	 *     ) -> EvmResult<Address> { // storage item: AssetTypeUnitsPerSecond // max encoded len:
+	 *       hash (16) + Multilocation + u128 (16) handle.record_db_read::<Runtime>(32 +
+	 *       MultiLocation::max_encoded_len())?;
+	 *
+	 *         let origin =
+	 *             XcmConfig::OriginConverter::convert_origin(multilocation,
+	 * OriginKind::SovereignAccount)                 .map_err(|_| {
+	 *                     RevertReason::custom("Failed multilocation conversion")
+	 *                         .in_field("multilocation")
+	 *                 })?;
+	 *
+	 *         let account: H160 = origin
+	 *             .into_signer()
+	 *             .ok_or(
+	 *                 RevertReason::custom("Failed multilocation
+	 * conversion").in_field("multilocation"),             )?
+	 *             .into();
+	 *         Ok(Address(account))
+	 *     }
+	 *
+	 */
 	#[precompile::public("getUnitsPerSecond((uint8,bytes[]))")]
 	#[precompile::view]
 	fn get_units_per_second(
@@ -164,9 +156,7 @@ where
 		{
 			Ok(amount.into())
 		} else {
-			Err(revert(
-				"Weight was too expensive to be bought with this asset",
-			))
+			Err(revert("Weight was too expensive to be bought with this asset"))
 		}
 	}
 
@@ -186,12 +176,9 @@ where
 			.map(Xcm::<<XcmConfig as xcm_executor::Config>::RuntimeCall>::try_from);
 
 		let result = match msg {
-			Ok(Ok(mut x)) => {
-				XcmConfig::Weigher::weight(&mut x).map_err(|_| revert("failed weighting"))
-			}
-			_ => Err(RevertReason::custom("Failed decoding")
-				.in_field("message")
-				.into()),
+			Ok(Ok(mut x)) =>
+				XcmConfig::Weigher::weight(&mut x).map_err(|_| revert("failed weighting")),
+			_ => Err(RevertReason::custom("Failed decoding").in_field("message").into()),
 		};
 
 		Ok(result?.ref_time())
