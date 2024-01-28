@@ -19,7 +19,7 @@ jobs:
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
         workflow_file_name: publishondhr.yml
-        ref: $${{ github.ref_name }}
+        ref: ${{ github.ref_name }}
         trigger_workflow: true
         wait_workflow: true
   trigger-deploy:
@@ -34,7 +34,7 @@ jobs:
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
         workflow_file_name: trigger-deployment.yml
-        ref: $${{ github.ref_name }}
+        ref: ${{ github.ref_name }}
         trigger_workflow: true
         wait_workflow: true
   trigger-autotest:
