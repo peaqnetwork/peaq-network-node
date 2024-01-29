@@ -1,4 +1,4 @@
-name: Trigger Manually Build and Deploy
+name: Manual Build, Deploy and Autotest
 #test 
 on:
   workflow_dispatch:
