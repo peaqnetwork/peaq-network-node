@@ -63,12 +63,12 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 					(AcceptDelegateCall, CallableByContract),
 				>,
 				PrecompileAt<
-					AddressU64<2050>,
+					AddressU64<2051>,
 					XtokensPrecompile<R>,
 					(SubcallWithMaxNesting<1>, AcceptDelegateCall, CallableByContract),
 				>,
 				PrecompileAt<
-					AddressU64<2051>,
+					AddressU64<2052>,
 					XcmUtilsPrecompile<R, XcmConfig>,
 					CallableByContract<
 						pallet_evm_precompile_xcm_utils::AllExceptXcmExecute<R, XcmConfig>,
