@@ -1,5 +1,4 @@
-name: Trigger Manually Build and Deploy
-
+name: Manual Build, Deploy and Autotest 
 on:
   workflow_dispatch:
 
@@ -31,7 +30,7 @@ jobs:
         owner: ${{ github.repository_owner }}
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
-        workflow_file_name: trigger-deployment.yml
+        workflow_file_name: deployment.yml
         ref: ${{ github.ref_name }}
         trigger_workflow: true
         wait_workflow: true
@@ -46,8 +45,8 @@ jobs:
         owner: ${{ github.repository_owner }}
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
-        workflow_file_name: trigger-autotest.yml
-        ref: dev
+        workflow_file_name: autotest.yml
+        ref: ${{ github.ref_name }}
         trigger_workflow: true
         wait_workflow: true
   
