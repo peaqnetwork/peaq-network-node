@@ -10,6 +10,7 @@ use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripe
 use pallet_evm_precompile_xtokens::XtokensPrecompile;
 use pallet_evm_precompile_xcm_utils::XcmUtilsPrecompile;
 use precompile_utils::precompile_set::*;
+use crate::xcm_config::XcmConfig;
 
 type EthereumPrecompilesChecks = (AcceptDelegateCall, CallableByContract, CallableByPrecompile);
 
@@ -68,8 +69,10 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				>,
 				PrecompileAt<
 					AddressU64<2051>,
-					XcmUtilsPrecompile<R>,
-					(SubcallWithMaxNesting<1>, AcceptDelegateCall, CallableByContract),
+					XcmUtilsPrecompile<R, XcmConfig>,
+					CallableByContract<
+						pallet_evm_precompile_xcm_utils::AllExceptXcmExecute<R, XcmConfig>,
+					>,
 				>,
 			),
 		>,

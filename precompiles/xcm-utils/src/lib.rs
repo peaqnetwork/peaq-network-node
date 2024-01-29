@@ -57,8 +57,8 @@ pub struct AllExceptXcmExecute<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConf
 impl<Runtime, XcmConfig> SelectorFilter for AllExceptXcmExecute<Runtime, XcmConfig>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
-	XcmOriginOf<XcmConfig>: OriginTrait,
-	XcmAccountIdOf<XcmConfig>: Into<H160>,
+	// XcmOriginOf<XcmConfig>: OriginTrait,
+	// XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
 	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
@@ -86,8 +86,8 @@ pub struct XcmUtilsPrecompile<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConfi
 impl<Runtime, XcmConfig> XcmUtilsPrecompile<Runtime, XcmConfig>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
-	XcmOriginOf<XcmConfig>: OriginTrait,
-	XcmAccountIdOf<XcmConfig>: Into<H160>,
+	// XcmOriginOf<XcmConfig>: OriginTrait,
+	// XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
 	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
