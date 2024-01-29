@@ -7,10 +7,10 @@ address constant XCM_UTILS_ADDRESS = 0x0000000000000000000000000000000000000804;
 /// @dev The XcmUtils contract's instance.
 XcmUtils constant XCM_UTILS_CONTRACT = XcmUtils(XCM_UTILS_ADDRESS);
 
-/// @author The Moonbeam Team
+/// @author The Peaq Team
 /// @title Xcm Utils Interface
 /// The interface through which solidity contracts will interact with xcm utils pallet
-/// @custom:address 0x000000000000000000000000000000000000080C
+/// @custom:address 0x0000000000000000000000000000000000000804
 interface XcmUtils {
     // A multilocation is defined by its number of parents and the encoded junctions (interior)
     struct Multilocation {

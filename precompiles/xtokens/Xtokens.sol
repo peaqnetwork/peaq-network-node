@@ -7,10 +7,10 @@ address constant XTOKENS_ADDRESS = 0x0000000000000000000000000000000000000803;
 /// @dev The Xtokens contract's instance.
 Xtokens constant XTOKENS_CONTRACT = Xtokens(XTOKENS_ADDRESS);
 
-/// @author The Moonbeam Team
+/// @author The Peaq Team
 /// @title Xtokens Interface
 /// @dev The interface through which solidity contracts will interact with xtokens pallet
-/// @custom:address 0x0000000000000000000000000000000000000804
+/// @custom:address 0x0000000000000000000000000000000000000803
 interface Xtokens {
     // A multilocation is defined by its number of parents and the encoded junctions (interior)
     struct Multilocation {
