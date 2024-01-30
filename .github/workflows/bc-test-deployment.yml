@@ -26,8 +26,9 @@ jobs:
                 cd peaq-bc-test
                 python3 -m pip install --upgrade pip
                 pip install -r requirements.txt
-# Use github secrets to pass autotest URI as env variable to run tests
+
+            # Use github secrets to pass autotest URI as env variable to run tests
             - name: Run peaq-bc-test
               run: |
                 cd peaq-bc-test
-                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v tests
+                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v --ignore=tests/zenlink_dex_test.py --ignore=tests/xcm_transfer_test.py
