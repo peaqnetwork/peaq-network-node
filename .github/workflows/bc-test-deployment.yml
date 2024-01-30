@@ -31,4 +31,4 @@ jobs:
             - name: Run peaq-bc-test
               run: |
                 cd peaq-bc-test
-                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v --ignore=tests/zenlink_dex_test.py --ignore=tests/xcm_transfer_test.py --ignore=tests/reward_distribution_test.py
+                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v --ignore=tests/zenlink_dex_test.py --ignore=tests/xcm_transfer_test.py
