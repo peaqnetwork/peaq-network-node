@@ -26,7 +26,7 @@ jobs:
                 cd peaq-bc-test
                 python3 -m pip install --upgrade pip
                 pip install -r requirements.txt
-                
+
             # Use github secrets to pass autotest URI as env variable to run tests
             - name: Run peaq-bc-test
               run: |
