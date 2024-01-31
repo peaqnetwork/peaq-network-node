@@ -1,0 +1,34 @@
+name: Peaq BC Test
+# This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
+on:
+    workflow_dispatch:
+    workflow_run:
+      workflows: [Build and Publish]
+      types: [completed]
+      branches: [dev]
+
+jobs:
+    bc-test:
+        # NOTE: Python3 comes preinstalled in ubuntu, so no need to install it
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Clone peaq-bc-repo
+              uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+              with:
+                depth: 1
+                branch: main
+                owner: peaqnetwork
+                repository: peaq-bc-test
+
+            - name: Install dependencies for peaq-bc-test
+              run: |
+                cd peaq-bc-test
+                python3 -m pip install --upgrade pip
+                pip install -r requirements.txt
+
+            # Use github secrets to pass autotest URI as env variable to run tests
+            - name: Run peaq-bc-test
+              run: |
+                cd peaq-bc-test
+                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v --ignore=tests/zenlink_dex_test.py --ignore=tests/xcm_transfer_test.py
