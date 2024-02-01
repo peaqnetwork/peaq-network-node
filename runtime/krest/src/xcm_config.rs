@@ -357,7 +357,9 @@ parameter_types! {
 			Parachain(ParachainInfo::parachain_id().into())
 		)
 	};
-
+	// This is how we are going to detect whether the asset is a Reserve asset
+	// This however is the chain part only
+	pub SelfReserveLocation: MultiLocation = MultiLocation::here();
 }
 
 /// `MultiAsset` reserve location provider. It's based on `RelativeReserveProvider` and in
@@ -393,11 +395,6 @@ impl orml_xtokens::Config for Runtime {
 	type MultiLocationsFilter = Everything;
 	type ReserveProvider = AbsoluteAndRelativeReserveProvider<PeaqLocationAbsolute>;
 	type UniversalLocation = UniversalLocation;
-}
-
-parameter_types! {
-	pub SelfReserveLocation: MultiLocation =
-		MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }));
 }
 
 impl xc_asset_config::Config for Runtime {
