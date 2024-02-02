@@ -53,13 +53,13 @@ fn selector_less_than_four_bytes() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			0u128,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			1
 		));
 		// This selector is only three bytes long when four are required.
 		precompiles()
-			.prepare_test(Account::Alice, Account::AssetId(0u128), vec![1u8, 2u8, 3u8])
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), vec![1u8, 2u8, 3u8])
 			.execute_reverts(|output| output == b"Tried to read selector out of bounds");
 	});
 }
@@ -70,13 +70,13 @@ fn no_selector_exists_but_length_is_right() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			0u128,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			1
 		));
 
 		precompiles()
-			.prepare_test(Account::Alice, Account::AssetId(0u128), vec![1u8, 2u8, 3u8, 4u8])
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), vec![1u8, 2u8, 3u8, 4u8])
 			.execute_reverts(|output| output == b"Unknown selector");
 	});
 }
@@ -110,20 +110,20 @@ fn selectors() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			let mut tester = PrecompilesModifierTester::new(
 				precompiles(),
-				Account::Alice,
-				Account::AssetId(0u128),
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::AssetId(0u128),
 			);
 
 			tester.test_view_modifier(PCall::balance_of_selectors());
@@ -145,25 +145,25 @@ fn modifiers() {
 #[test]
 fn get_total_supply() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000), (Account::Bob, 2500)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000), (MockPeaqAccount::Bob, 2500)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
-				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::total_supply {})
+				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::total_supply {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(U256::from(1000u64));
@@ -172,28 +172,28 @@ fn get_total_supply() {
 #[test]
 fn get_balances_known_user() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Alice.into()) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -204,22 +204,22 @@ fn get_balances_known_user() {
 #[test]
 fn get_balances_unknown_user() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Bob.into()) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -230,36 +230,36 @@ fn get_balances_unknown_user() {
 #[test]
 fn approve() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
-					Account::Alice,
-					Account::Bob,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Bob,
 					solidity::encode_event_data(U256::from(500)),
 				))
 				.execute_returns(true);
@@ -269,44 +269,44 @@ fn approve() {
 #[test]
 fn approve_saturating() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::approve { spender: Address(Account::Bob.into()), amount: U256::MAX },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::approve { spender: Address(MockPeaqAccount::Bob.into()), amount: U256::MAX },
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
-					Account::Alice,
-					Account::Bob,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Bob,
 					solidity::encode_event_data(U256::MAX),
 				))
 				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::allowance {
-						owner: Address(Account::Alice.into()),
-						spender: Address(Account::Bob.into()),
+						owner: Address(MockPeaqAccount::Alice.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 					},
 				)
 				.expect_cost(0u64)
@@ -318,29 +318,29 @@ fn approve_saturating() {
 #[test]
 fn check_allowance_existing() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
@@ -348,11 +348,11 @@ fn check_allowance_existing() {
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::allowance {
-						owner: Address(Account::Alice.into()),
-						spender: Address(Account::Bob.into()),
+						owner: Address(MockPeaqAccount::Alice.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -364,24 +364,24 @@ fn check_allowance_existing() {
 #[test]
 fn check_allowance_not_existing() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::allowance {
-						owner: Address(Account::Alice.into()),
-						spender: Address(Account::Bob.into()),
+						owner: Address(MockPeaqAccount::Alice.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 					},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -393,42 +393,42 @@ fn check_allowance_not_existing() {
 #[test]
 fn transfer() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::transfer { to: Address(Account::Bob.into()), amount: U256::from(400) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::transfer { to: Address(MockPeaqAccount::Bob.into()), amount: U256::from(400) },
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
-					Account::Alice,
-					Account::Bob,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Bob,
 					solidity::encode_event_data(U256::from(400)),
 				))
 				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
-					Account::Bob,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Bob.into()) },
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -436,9 +436,9 @@ fn transfer() {
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Alice.into()) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -449,29 +449,29 @@ fn transfer() {
 #[test]
 fn transfer_not_enough_founds() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::transfer {
-						to: Address(Account::Charlie.into()),
+						to: Address(MockPeaqAccount::Charlie.into()),
 						amount: U256::from(50),
 					},
 				)
@@ -487,29 +487,29 @@ fn transfer_not_enough_founds() {
 #[test]
 fn transfer_from() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
@@ -517,10 +517,10 @@ fn transfer_from() {
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
@@ -528,27 +528,27 @@ fn transfer_from() {
 
 			precompiles()
 				.prepare_test(
-					Account::Bob, // Bob is the one sending transferFrom!
-					Account::AssetId(0u128),
+					MockPeaqAccount::Bob, // Bob is the one sending transferFrom!
+					MockPeaqAccount::AssetId(0u128),
 					PCall::transfer_from {
-						from: Address(Account::Alice.into()),
-						to: Address(Account::Charlie.into()),
+						from: Address(MockPeaqAccount::Alice.into()),
+						to: Address(MockPeaqAccount::Charlie.into()),
 						amount: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
-					Account::Alice,
-					Account::Charlie,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Charlie,
 					solidity::encode_event_data(U256::from(400)),
 				))
 				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Alice.into()) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -556,9 +556,9 @@ fn transfer_from() {
 
 			precompiles()
 				.prepare_test(
-					Account::Bob,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Bob.into()) },
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -566,9 +566,9 @@ fn transfer_from() {
 
 			precompiles()
 				.prepare_test(
-					Account::Charlie,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Charlie.into()) },
+					MockPeaqAccount::Charlie,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Charlie.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -579,37 +579,37 @@ fn transfer_from() {
 #[test]
 fn transfer_from_non_incremental_approval() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			// We first approve 500
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
-					Account::Alice,
-					Account::Bob,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Bob,
 					solidity::encode_event_data(U256::from(500)),
 				))
 				.execute_returns(true);
@@ -620,17 +620,17 @@ fn transfer_from_non_incremental_approval() {
 			// need to clear the previous one
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(300),
 					},
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
-					Account::Alice,
-					Account::Bob,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Bob,
 					solidity::encode_event_data(U256::from(300)),
 				))
 				.execute_returns(true);
@@ -638,11 +638,11 @@ fn transfer_from_non_incremental_approval() {
 			// This should fail, as now the new approved quantity is 300
 			precompiles()
 				.prepare_test(
-					Account::Bob, // Bob is the one sending transferFrom!
-					Account::AssetId(0u128),
+					MockPeaqAccount::Bob, // Bob is the one sending transferFrom!
+					MockPeaqAccount::AssetId(0u128),
 					PCall::transfer_from {
-						from: Address(Account::Alice.into()),
-						to: Address(Account::Bob.into()),
+						from: Address(MockPeaqAccount::Alice.into()),
+						to: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
@@ -657,29 +657,29 @@ fn transfer_from_non_incremental_approval() {
 #[test]
 fn transfer_from_above_allowance() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
 					PCall::approve {
-						spender: Address(Account::Bob.into()),
+						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(300),
 					},
 				)
@@ -687,11 +687,11 @@ fn transfer_from_above_allowance() {
 
 			precompiles()
 				.prepare_test(
-					Account::Bob, // Bob is the one sending transferFrom!
-					Account::AssetId(0u128),
+					MockPeaqAccount::Bob, // Bob is the one sending transferFrom!
+					MockPeaqAccount::AssetId(0u128),
 					PCall::transfer_from {
-						from: Address(Account::Alice.into()),
-						to: Address(Account::Bob.into()),
+						from: Address(MockPeaqAccount::Alice.into()),
+						to: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(400),
 					},
 				)
@@ -706,46 +706,46 @@ fn transfer_from_above_allowance() {
 #[test]
 fn transfer_from_self() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
-				RuntimeOrigin::signed(Account::Alice),
+				RuntimeOrigin::signed(MockPeaqAccount::Alice),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				1000
 			));
 
 			precompiles()
 				.prepare_test(
-					Account::Alice, // Alice sending transferFrom herself, no need for allowance.
-					Account::AssetId(0u128),
+					MockPeaqAccount::Alice, // Alice sending transferFrom herself, no need for allowance.
+					MockPeaqAccount::AssetId(0u128),
 					PCall::transfer_from {
-						from: Address(Account::Alice.into()),
-						to: Address(Account::Bob.into()),
+						from: Address(MockPeaqAccount::Alice.into()),
+						to: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
-					Account::Alice,
-					Account::Bob,
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::Bob,
 					solidity::encode_event_data(U256::from(400)),
 				))
 				.execute_returns(true);
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Alice.into()) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -753,9 +753,9 @@ fn transfer_from_self() {
 
 			precompiles()
 				.prepare_test(
-					Account::Alice,
-					Account::AssetId(0u128),
-					PCall::balance_of { owner: Address(Account::Bob.into()) },
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -766,13 +766,13 @@ fn transfer_from_self() {
 #[test]
 fn get_metadata() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice, 1000), (Account::Bob, 2500)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000), (MockPeaqAccount::Bob, 2500)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
 				0u128,
-				Account::Alice.into(),
+				MockPeaqAccount::Alice.into(),
 				true,
 				1
 			));
@@ -786,19 +786,19 @@ fn get_metadata() {
 			));
 
 			precompiles()
-				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::name {})
+				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::name {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(UnboundedBytes::from("TestToken"));
 
 			precompiles()
-				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::symbol {})
+				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::symbol {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(UnboundedBytes::from("Test"));
 
 			precompiles()
-				.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::decimals {})
+				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::decimals {})
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(12u8);
@@ -812,13 +812,13 @@ fn minimum_balance_is_right() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			0u128,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			expected_min_balance,
 		));
 
 		precompiles()
-			.prepare_test(Account::Alice, Account::AssetId(0u128), PCall::minimum_balance {})
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::minimum_balance {})
 			.expect_cost(0) // TODO: Test db read/write costs
 			.expect_no_logs()
 			.execute_returns(expected_min_balance);
@@ -832,32 +832,32 @@ fn mint_is_ok() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			1,
 		));
 
 		// Sanity check, Bob should be without assets
-		assert!(Assets::balance(asset_id, &Account::Bob.into()).is_zero());
+		assert!(Assets::balance(asset_id, &MockPeaqAccount::Bob.into()).is_zero());
 
 		// Mint some assets for Bob
 		let mint_amount = 7 * 11 * 19;
 		precompiles()
 			.prepare_test(
-				Account::Alice,
-				Account::AssetId(asset_id),
-				PCall::mint { to: Address(Account::Bob.into()), amount: U256::from(mint_amount) },
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::AssetId(asset_id),
+				PCall::mint { to: Address(MockPeaqAccount::Bob.into()), amount: U256::from(mint_amount) },
 			)
-			.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 				SELECTOR_LOG_TRANSFER,
 				H160::zero(),
-				Account::Bob,
+				MockPeaqAccount::Bob,
 				solidity::encode_event_data(U256::from(mint_amount)),
 			))
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was increased
-		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), mint_amount);
+		assert_eq!(Assets::balance(asset_id, &MockPeaqAccount::Bob.into()), mint_amount);
 	});
 }
 
@@ -868,16 +868,16 @@ fn mint_non_admin_is_not_ok() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			1,
 		));
 
 		precompiles()
 			.prepare_test(
-				Account::Bob,
-				Account::AssetId(asset_id),
-				PCall::mint { to: Address(Account::Bob.into()), amount: U256::from(42) },
+				MockPeaqAccount::Bob,
+				MockPeaqAccount::AssetId(asset_id),
+				PCall::mint { to: Address(MockPeaqAccount::Bob.into()), amount: U256::from(42) },
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
@@ -891,7 +891,7 @@ fn burn_is_ok() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			1,
 		));
@@ -899,31 +899,31 @@ fn burn_is_ok() {
 		// Issue some initial assets for Bob
 		let init_amount = 123;
 		assert_ok!(Assets::mint(
-			RuntimeOrigin::signed(Account::Alice),
+			RuntimeOrigin::signed(MockPeaqAccount::Alice),
 			asset_id,
-			Account::Bob.into(),
+			MockPeaqAccount::Bob.into(),
 			init_amount,
 		));
-		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), init_amount);
+		assert_eq!(Assets::balance(asset_id, &MockPeaqAccount::Bob.into()), init_amount);
 
 		// Burn some assets from Bob
 		let burn_amount = 19;
 		precompiles()
 			.prepare_test(
-				Account::Alice,
-				Account::AssetId(asset_id),
-				PCall::burn { who: Address(Account::Bob.into()), amount: U256::from(burn_amount) },
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::AssetId(asset_id),
+				PCall::burn { who: Address(MockPeaqAccount::Bob.into()), amount: U256::from(burn_amount) },
 			)
-			.expect_log(LogsBuilder::new(Account::AssetId(0u128).into()).log3(
+			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 				SELECTOR_LOG_TRANSFER,
-				Account::Bob,
+				MockPeaqAccount::Bob,
 				H160::zero(),
 				solidity::encode_event_data(U256::from(burn_amount)),
 			))
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
-		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), init_amount - burn_amount);
+		assert_eq!(Assets::balance(asset_id, &MockPeaqAccount::Bob.into()), init_amount - burn_amount);
 	});
 }
 
@@ -934,22 +934,22 @@ fn burn_non_admin_is_not_ok() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
-			Account::Alice.into(),
+			MockPeaqAccount::Alice.into(),
 			true,
 			1,
 		));
 		assert_ok!(Assets::mint(
-			RuntimeOrigin::signed(Account::Alice),
+			RuntimeOrigin::signed(MockPeaqAccount::Alice),
 			asset_id,
-			Account::Bob.into(),
+			MockPeaqAccount::Bob.into(),
 			1000000,
 		));
 
 		precompiles()
 			.prepare_test(
-				Account::Bob,
-				Account::AssetId(asset_id),
-				PCall::burn { who: Address(Account::Bob.into()), amount: U256::from(42) },
+				MockPeaqAccount::Bob,
+				MockPeaqAccount::AssetId(asset_id),
+				PCall::burn { who: Address(MockPeaqAccount::Bob.into()), amount: U256::from(42) },
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));

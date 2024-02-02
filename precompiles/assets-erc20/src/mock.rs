@@ -43,6 +43,7 @@ use frame_support::{
 	weights::Weight,
 };
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use precompile_utils::testing::*;
 
 use frame_system::EnsureRoot;
 use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
@@ -54,63 +55,65 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 
-pub type AccountId = Account;
-pub type AssetId = u128;
+pub type AccountId = MockPeaqAccount;
+pub type AssetId = MockAssetId;
 pub type Balance = u128;
 pub type BlockNumber = u64;
 pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 
-/// A simple account type.
-#[derive(
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Clone,
-	Encode,
-	Decode,
-	Debug,
-	MaxEncodedLen,
-	Serialize,
-	Deserialize,
-	derive_more::Display,
-	TypeInfo,
-)]
-pub enum Account {
-	Alice,
-	Bob,
-	Charlie,
-	Bogus,
-	AssetId(AssetId),
-}
-
-impl Default for Account {
-	fn default() -> Self {
-		Self::Bogus
-	}
-}
-
-impl AddressMapping<Account> for Account {
-	fn into_account_id(h160_account: H160) -> Account {
-		match h160_account {
-			a if a == H160::repeat_byte(0xAA) => Self::Alice,
-			a if a == H160::repeat_byte(0xBB) => Self::Bob,
-			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
-			_ => {
-				let mut data = [0u8; 16];
-				let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
-				if prefix_part == &[255u8; 4] {
-					data.copy_from_slice(id_part);
-
-					return Self::AssetId(u128::from_be_bytes(data))
-				}
-				Self::Bogus
-			},
-		}
-	}
-}
-
+/*
+ * /// A simple account type.
+ * #[derive(
+ *     Eq,
+ *     PartialEq,
+ *     Ord,
+ *     PartialOrd,
+ *     Clone,
+ *     Encode,
+ *     Decode,
+ *     Debug,
+ *     MaxEncodedLen,
+ *     Serialize,
+ *     Deserialize,
+ *     derive_more::Display,
+ *     TypeInfo,
+ * )]
+ * pub enum Account {
+ *     Alice,
+ *     Bob,
+ *     Charlie,
+ *     Bogus,
+ *     AssetId(AssetId),
+ * }
+ *
+ * impl Default for Account {
+ *     fn default() -> Self {
+ *         Self::Bogus
+ *     }
+ * }
+ *
+ * impl AddressMapping<Account> for Account {
+ *     fn into_account_id(h160_account: H160) -> Account {
+ *         match h160_account {
+ *             a if a == H160::repeat_byte(0xAA) => Self::Alice,
+ *             a if a == H160::repeat_byte(0xBB) => Self::Bob,
+ *             a if a == H160::repeat_byte(0xCC) => Self::Charlie,
+ *             _ => {
+ *                 let mut data = [0u8; 16];
+ *                 let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
+ *                 if prefix_part == &[255u8; 4] {
+ *                     data.copy_from_slice(id_part);
+ *
+ *                     return Self::AssetId(u128::from_be_bytes(data))
+ *                 }
+ *                 Self::Bogus
+ *             },
+ *         }
+ *     }
+ * }
+ *
+ */
 pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
 // Implement the trait, where we convert AccountId to AssetID
@@ -133,31 +136,6 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
 		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
 		H160::from(data)
-	}
-}
-
-impl From<Account> for H160 {
-	fn from(x: Account) -> H160 {
-		match x {
-			Account::Alice => H160::repeat_byte(0xAA),
-			Account::Bob => H160::repeat_byte(0xBB),
-			Account::Charlie => H160::repeat_byte(0xCC),
-			Account::AssetId(asset_id) => {
-				let mut data = [0u8; 20];
-				let id_as_bytes = asset_id.to_be_bytes();
-				data[0..4].copy_from_slice(&[255u8; 4]);
-				data[4..20].copy_from_slice(&id_as_bytes);
-				H160::from_slice(&data)
-			},
-			Account::Bogus => Default::default(),
-		}
-	}
-}
-
-impl From<Account> for H256 {
-	fn from(x: Account) -> H256 {
-		let x: H160 = x.into();
-		x.into()
 	}
 }
 

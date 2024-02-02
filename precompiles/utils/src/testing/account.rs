@@ -306,3 +306,10 @@ impl From<[u8; 32]> for MockPeaqAccount {
 		}
 	}
 }
+
+impl From<MockPeaqAccount> for H256 {
+    fn from(x: MockPeaqAccount) -> H256 {
+        let x: H160 = x.into();
+        x.into()
+    }
+}
