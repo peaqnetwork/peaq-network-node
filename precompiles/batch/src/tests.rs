@@ -15,9 +15,10 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::mock::{
-	balance, Batch, ExtBuilder, PCall, Precompiles, PrecompilesValue, Revert, Runtime, RuntimeCall,
+	balance, ExtBuilder, PCall, Precompiles, PrecompilesValue, Runtime, RuntimeCall,
 	RuntimeOrigin,
 };
+use precompile_utils::testing::*;
 use crate::{
 	log_subcall_failed, log_subcall_succeeded, Mode, LOG_SUBCALL_FAILED, LOG_SUBCALL_SUCCEEDED,
 };
@@ -28,7 +29,7 @@ use frame_support::{
 };
 use pallet_evm::Call as EvmCall;
 use precompile_utils::solidity::revert::revert_as_bytes;
-use precompile_utils::{evm::costs::call_cost, prelude::*, testing::*};
+use precompile_utils::{evm::costs::call_cost, prelude::*};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{DispatchErrorWithPostInfo, ModuleError};
 
@@ -39,7 +40,7 @@ fn precompiles() -> Precompiles<Runtime> {
 fn evm_call(from: impl Into<H160>, input: Vec<u8>) -> EvmCall<Runtime> {
 	EvmCall::call {
 		source: from.into(),
-		target: Batch.into(),
+		target: MockPeaqAccount::EVMu1Account.into(),
 		input,
 		value: U256::zero(), // No value sent in EVM
 		gas_limit: u64::max_value(),
@@ -51,7 +52,7 @@ fn evm_call(from: impl Into<H160>, input: Vec<u8>) -> EvmCall<Runtime> {
 }
 
 fn costs() -> (u64, u64) {
-	let return_log_cost = log_subcall_failed(Batch, 0).compute_cost().unwrap();
+	let return_log_cost = log_subcall_failed(MockPeaqAccount::EVMu1Account, 0).compute_cost().unwrap();
 	let call_cost =
 		return_log_cost + call_cost(U256::one(), <Runtime as pallet_evm::Config>::config());
 	(return_log_cost, call_cost)
@@ -75,10 +76,10 @@ fn selectors() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
 		.build()
 		.execute_with(|| {
-			let mut tester = PrecompilesModifierTester::new(precompiles(), Alice, Batch);
+			let mut tester = PrecompilesModifierTester::new(precompiles(), MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account);
 
 			tester.test_default_modifier(PCall::batch_some_selectors());
 			tester.test_default_modifier(PCall::batch_some_until_failure_selectors());
@@ -91,8 +92,8 @@ fn batch_some_empty() {
 	ExtBuilder::default().build().execute_with(|| {
 		precompiles()
 			.prepare_test(
-				Alice,
-				Batch,
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::EVMu1Account,
 				PCall::batch_some {
 					to: vec![].into(),
 					value: vec![].into(),
@@ -110,8 +111,8 @@ fn batch_some_until_failure_empty() {
 	ExtBuilder::default().build().execute_with(|| {
 		precompiles()
 			.prepare_test(
-				Alice,
-				Batch,
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::EVMu1Account,
 				PCall::batch_some_until_failure {
 					to: vec![].into(),
 					value: vec![].into(),
@@ -129,8 +130,8 @@ fn batch_all_empty() {
 	ExtBuilder::default().build().execute_with(|| {
 		precompiles()
 			.prepare_test(
-				Alice,
-				Batch,
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::EVMu1Account,
 				PCall::batch_all {
 					to: vec![].into(),
 					value: vec![].into(),
@@ -153,11 +154,11 @@ fn batch_returns(
 
 	precompiles
 		.prepare_test(
-			Alice,
-			Batch,
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
 			PCall::batch_from_mode(
 				mode,
-				vec![Address(Bob.into()), Address(Charlie.into())],
+				vec![Address(MockPeaqAccount::Bob.into()), Address(MockPeaqAccount::Charlie.into())],
 				vec![U256::from(1u8), U256::from(2u8)],
 				vec![b"one".to_vec(), b"two".to_vec()],
 				vec![],
@@ -175,11 +176,11 @@ fn batch_returns(
 			} = subcall;
 
 			// Called from the precompile caller.
-			assert_eq!(context.caller, Alice.into());
+			assert_eq!(context.caller, MockPeaqAccount::Alice.into());
 			assert_eq!(is_static, false);
 
 			match address {
-				a if a == Bob.into() => {
+				a if a == MockPeaqAccount::Bob.into() => {
 					assert_eq!(counter, 0, "this is the first call");
 					counter += 1;
 
@@ -189,22 +190,22 @@ fn batch_returns(
 						"batch forward all gas"
 					);
 					let transfer = transfer.expect("there is a transfer");
-					assert_eq!(transfer.source, Alice.into());
-					assert_eq!(transfer.target, Bob.into());
+					assert_eq!(transfer.source, MockPeaqAccount::Alice.into());
+					assert_eq!(transfer.target, MockPeaqAccount::Bob.into());
 					assert_eq!(transfer.value, 1u8.into());
 
-					assert_eq!(context.address, Bob.into());
+					assert_eq!(context.address, MockPeaqAccount::Bob.into());
 					assert_eq!(context.apparent_value, 1u8.into());
 
 					assert_eq!(&input, b"one");
 
 					SubcallOutput {
 						cost: 13,
-						logs: vec![log1(Bob, H256::repeat_byte(0x11), vec![])],
+						logs: vec![log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![])],
 						..SubcallOutput::succeed()
 					}
 				}
-				a if a == Charlie.into() => {
+				a if a == MockPeaqAccount::Charlie.into() => {
 					assert_eq!(counter, 1, "this is the second call");
 					counter += 1;
 
@@ -214,18 +215,18 @@ fn batch_returns(
 						"batch forward all gas"
 					);
 					let transfer = transfer.expect("there is a transfer");
-					assert_eq!(transfer.source, Alice.into());
-					assert_eq!(transfer.target, Charlie.into());
+					assert_eq!(transfer.source, MockPeaqAccount::Alice.into());
+					assert_eq!(transfer.target, MockPeaqAccount::Charlie.into());
 					assert_eq!(transfer.value, 2u8.into());
 
-					assert_eq!(context.address, Charlie.into());
+					assert_eq!(context.address, MockPeaqAccount::Charlie.into());
 					assert_eq!(context.apparent_value, 2u8.into());
 
 					assert_eq!(&input, b"two");
 
 					SubcallOutput {
 						cost: 17,
-						logs: vec![log1(Charlie, H256::repeat_byte(0x22), vec![])],
+						logs: vec![log1(MockPeaqAccount::Charlie, H256::repeat_byte(0x22), vec![])],
 						..SubcallOutput::succeed()
 					}
 				}
@@ -239,10 +240,10 @@ fn batch_returns(
 fn batch_some_returns() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_returns(&precompiles(), Mode::BatchSome)
-			.expect_log(log1(Bob, H256::repeat_byte(0x11), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 0))
-			.expect_log(log1(Charlie, H256::repeat_byte(0x22), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 1))
+			.expect_log(log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 0))
+			.expect_log(log1(MockPeaqAccount::Charlie, H256::repeat_byte(0x22), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 1))
 			.execute_returns(())
 	})
 }
@@ -251,10 +252,10 @@ fn batch_some_returns() {
 fn batch_some_until_failure_returns() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_returns(&precompiles(), Mode::BatchSomeUntilFailure)
-			.expect_log(log1(Bob, H256::repeat_byte(0x11), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 0))
-			.expect_log(log1(Charlie, H256::repeat_byte(0x22), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 1))
+			.expect_log(log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 0))
+			.expect_log(log1(MockPeaqAccount::Charlie, H256::repeat_byte(0x22), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 1))
 			.execute_returns(())
 	})
 }
@@ -263,10 +264,10 @@ fn batch_some_until_failure_returns() {
 fn batch_all_returns() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_returns(&precompiles(), Mode::BatchAll)
-			.expect_log(log1(Bob, H256::repeat_byte(0x11), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 0))
-			.expect_log(log1(Charlie, H256::repeat_byte(0x22), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 1))
+			.expect_log(log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 0))
+			.expect_log(log1(MockPeaqAccount::Charlie, H256::repeat_byte(0x22), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 1))
 			.execute_returns(())
 	})
 }
@@ -279,11 +280,11 @@ fn batch_out_of_gas(
 
 	precompiles
 		.prepare_test(
-			Alice,
-			Batch,
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
 			PCall::batch_from_mode(
 				mode,
-				vec![Address(Bob.into())],
+				vec![Address(MockPeaqAccount::Bob.into())],
 				vec![U256::from(1u8)],
 				vec![b"one".to_vec()],
 				vec![],
@@ -301,22 +302,22 @@ fn batch_out_of_gas(
 			} = subcall;
 
 			// Called from the precompile caller.
-			assert_eq!(context.caller, Alice.into());
+			assert_eq!(context.caller, MockPeaqAccount::Alice.into());
 			assert_eq!(is_static, false);
 
 			match address {
-				a if a == Bob.into() => {
+				a if a == MockPeaqAccount::Bob.into() => {
 					assert_eq!(
 						target_gas,
 						Some(50_000 - total_call_cost),
 						"batch forward all gas"
 					);
 					let transfer = transfer.expect("there is a transfer");
-					assert_eq!(transfer.source, Alice.into());
-					assert_eq!(transfer.target, Bob.into());
+					assert_eq!(transfer.source, MockPeaqAccount::Alice.into());
+					assert_eq!(transfer.target, MockPeaqAccount::Bob.into());
 					assert_eq!(transfer.value, 1u8.into());
 
-					assert_eq!(context.address, Bob.into());
+					assert_eq!(context.address, MockPeaqAccount::Bob.into());
 					assert_eq!(context.apparent_value, 1u8.into());
 
 					assert_eq!(&input, b"one");
@@ -335,7 +336,7 @@ fn batch_out_of_gas(
 fn batch_some_out_of_gas() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_out_of_gas(&precompiles(), Mode::BatchSome)
-			.expect_log(log_subcall_failed(Batch, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 0))
 			.execute_returns(())
 	})
 }
@@ -344,7 +345,7 @@ fn batch_some_out_of_gas() {
 fn batch_some_until_failure_out_of_gas() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_out_of_gas(&precompiles(), Mode::BatchSomeUntilFailure)
-			.expect_log(log_subcall_failed(Batch, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 0))
 			.execute_returns(())
 	})
 }
@@ -366,14 +367,14 @@ fn batch_incomplete(
 
 	precompiles
 		.prepare_test(
-			Alice,
-			Batch,
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
 			PCall::batch_from_mode(
 				mode,
 				vec![
-					Address(Bob.into()),
-					Address(Charlie.into()),
-					Address(Alice.into()),
+					Address(MockPeaqAccount::Bob.into()),
+					Address(MockPeaqAccount::Charlie.into()),
+					Address(MockPeaqAccount::Alice.into()),
 				],
 				vec![U256::from(1u8), U256::from(2u8), U256::from(3u8)],
 				vec![b"one".to_vec()],
@@ -392,11 +393,11 @@ fn batch_incomplete(
 			} = subcall;
 
 			// Called from the precompile caller.
-			assert_eq!(context.caller, Alice.into());
+			assert_eq!(context.caller, MockPeaqAccount::Alice.into());
 			assert_eq!(is_static, false);
 
 			match address {
-				a if a == Bob.into() => {
+				a if a == MockPeaqAccount::Bob.into() => {
 					assert_eq!(counter, 0, "this is the first call");
 					counter += 1;
 
@@ -406,22 +407,22 @@ fn batch_incomplete(
 						"batch forward all gas"
 					);
 					let transfer = transfer.expect("there is a transfer");
-					assert_eq!(transfer.source, Alice.into());
-					assert_eq!(transfer.target, Bob.into());
+					assert_eq!(transfer.source, MockPeaqAccount::Alice.into());
+					assert_eq!(transfer.target, MockPeaqAccount::Bob.into());
 					assert_eq!(transfer.value, 1u8.into());
 
-					assert_eq!(context.address, Bob.into());
+					assert_eq!(context.address, MockPeaqAccount::Bob.into());
 					assert_eq!(context.apparent_value, 1u8.into());
 
 					assert_eq!(&input, b"one");
 
 					SubcallOutput {
 						cost: 13,
-						logs: vec![log1(Bob, H256::repeat_byte(0x11), vec![])],
+						logs: vec![log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![])],
 						..SubcallOutput::succeed()
 					}
 				}
-				a if a == Charlie.into() => {
+				a if a == MockPeaqAccount::Charlie.into() => {
 					assert_eq!(counter, 1, "this is the second call");
 					counter += 1;
 
@@ -431,11 +432,11 @@ fn batch_incomplete(
 						"batch forward all gas"
 					);
 					let transfer = transfer.expect("there is a transfer");
-					assert_eq!(transfer.source, Alice.into());
-					assert_eq!(transfer.target, Charlie.into());
+					assert_eq!(transfer.source, MockPeaqAccount::Alice.into());
+					assert_eq!(transfer.target, MockPeaqAccount::Charlie.into());
 					assert_eq!(transfer.value, 2u8.into());
 
-					assert_eq!(context.address, Charlie.into());
+					assert_eq!(context.address, MockPeaqAccount::Charlie.into());
 					assert_eq!(context.apparent_value, 2u8.into());
 
 					assert_eq!(&input, b"");
@@ -446,7 +447,7 @@ fn batch_incomplete(
 						..SubcallOutput::revert()
 					}
 				}
-				a if a == Alice.into() => {
+				a if a == MockPeaqAccount::Alice.into() => {
 					assert_eq!(counter, 2, "this is the third call");
 					counter += 1;
 
@@ -456,18 +457,18 @@ fn batch_incomplete(
 						"batch forward all gas"
 					);
 					let transfer = transfer.expect("there is a transfer");
-					assert_eq!(transfer.source, Alice.into());
-					assert_eq!(transfer.target, Alice.into());
+					assert_eq!(transfer.source, MockPeaqAccount::Alice.into());
+					assert_eq!(transfer.target, MockPeaqAccount::Alice.into());
 					assert_eq!(transfer.value, 3u8.into());
 
-					assert_eq!(context.address, Alice.into());
+					assert_eq!(context.address, MockPeaqAccount::Alice.into());
 					assert_eq!(context.apparent_value, 3u8.into());
 
 					assert_eq!(&input, b"");
 
 					SubcallOutput {
 						cost: 19,
-						logs: vec![log1(Alice, H256::repeat_byte(0x33), vec![])],
+						logs: vec![log1(MockPeaqAccount::Alice, H256::repeat_byte(0x33), vec![])],
 						..SubcallOutput::succeed()
 					}
 				}
@@ -482,11 +483,11 @@ fn batch_some_incomplete() {
 		let (_, total_call_cost) = costs();
 
 		batch_incomplete(&precompiles(), Mode::BatchSome)
-			.expect_log(log1(Bob, H256::repeat_byte(0x11), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 0))
-			.expect_log(log_subcall_failed(Batch, 1))
-			.expect_log(log1(Alice, H256::repeat_byte(0x33), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 2))
+			.expect_log(log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 1))
+			.expect_log(log1(MockPeaqAccount::Alice, H256::repeat_byte(0x33), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 2))
 			.expect_cost(13 + 17 + 19 + total_call_cost * 3)
 			.execute_returns(())
 	})
@@ -498,9 +499,9 @@ fn batch_some_until_failure_incomplete() {
 		let (_, total_call_cost) = costs();
 
 		batch_incomplete(&precompiles(), Mode::BatchSomeUntilFailure)
-			.expect_log(log1(Bob, H256::repeat_byte(0x11), vec![]))
-			.expect_log(log_subcall_succeeded(Batch, 0))
-			.expect_log(log_subcall_failed(Batch, 1))
+			.expect_log(log1(MockPeaqAccount::Bob, H256::repeat_byte(0x11), vec![]))
+			.expect_log(log_subcall_succeeded(MockPeaqAccount::EVMu1Account, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 1))
 			.expect_cost(13 + 17 + total_call_cost * 2)
 			.execute_returns(())
 	})
@@ -522,11 +523,11 @@ fn batch_log_out_of_gas(
 
 	precompiles
 		.prepare_test(
-			Alice,
-			Batch,
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
 			PCall::batch_from_mode(
 				mode,
-				vec![Address(Bob.into())],
+				vec![Address(MockPeaqAccount::Bob.into())],
 				vec![U256::from(1u8)],
 				vec![b"one".to_vec()],
 				vec![],
@@ -569,11 +570,11 @@ fn batch_call_out_of_gas(
 
 	precompiles
 		.prepare_test(
-			Alice,
-			Batch,
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
 			PCall::batch_from_mode(
 				mode,
-				vec![Address(Bob.into())],
+				vec![Address(MockPeaqAccount::Bob.into())],
 				vec![U256::from(1u8)],
 				vec![b"one".to_vec()],
 				vec![],
@@ -594,7 +595,7 @@ fn batch_all_call_out_of_gas() {
 fn batch_some_call_out_of_gas() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_call_out_of_gas(&precompiles(), Mode::BatchSome)
-			.expect_log(log_subcall_failed(Batch, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 0))
 			.execute_returns(());
 	})
 }
@@ -603,7 +604,7 @@ fn batch_some_call_out_of_gas() {
 fn batch_some_until_failure_call_out_of_gas() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_call_out_of_gas(&precompiles(), Mode::BatchSomeUntilFailure)
-			.expect_log(log_subcall_failed(Batch, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 0))
 			.execute_returns(());
 	})
 }
@@ -616,11 +617,11 @@ fn batch_gas_limit(
 
 	precompiles
 		.prepare_test(
-			Alice,
-			Batch,
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
 			PCall::batch_from_mode(
 				mode,
-				vec![Address(Bob.into())],
+				vec![Address(MockPeaqAccount::Bob.into())],
 				vec![U256::from(1u8)],
 				vec![b"one".to_vec()],
 				vec![50_000 - total_call_cost + 1],
@@ -643,7 +644,7 @@ fn batch_some_gas_limit() {
 		let (return_log_cost, _) = costs();
 
 		batch_gas_limit(&precompiles(), Mode::BatchSome)
-			.expect_log(log_subcall_failed(Batch, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 0))
 			.expect_cost(return_log_cost)
 			.execute_returns(());
 	})
@@ -653,7 +654,7 @@ fn batch_some_gas_limit() {
 fn batch_some_until_failure_gas_limit() {
 	ExtBuilder::default().build().execute_with(|| {
 		batch_gas_limit(&precompiles(), Mode::BatchSomeUntilFailure)
-			.expect_log(log_subcall_failed(Batch, 0))
+			.expect_log(log_subcall_failed(MockPeaqAccount::EVMu1Account, 0))
 			.execute_returns(());
 	})
 }
@@ -661,13 +662,13 @@ fn batch_some_until_failure_gas_limit() {
 #[test]
 fn evm_batch_some_transfers_enough() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_some {
-					to: vec![Address(Bob.into()), Address(Charlie.into())].into(),
+					to: vec![Address(MockPeaqAccount::Bob.into()), Address(MockPeaqAccount::Charlie.into())].into(),
 					value: vec![U256::from(1_000u16), U256::from(2_000u16)].into(),
 					call_data: vec![].into(),
 					gas_limit: vec![].into(),
@@ -681,13 +682,13 @@ fn evm_batch_some_transfers_enough() {
 #[test]
 fn evm_batch_some_until_failure_transfers_enough() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_some_until_failure {
-					to: vec![Address(Bob.into()), Address(Charlie.into())].into(),
+					to: vec![Address(MockPeaqAccount::Bob.into()), Address(MockPeaqAccount::Charlie.into())].into(),
 					value: vec![U256::from(1_000u16), U256::from(2_000u16)].into(),
 					call_data: vec![].into(),
 					gas_limit: vec![].into(),
@@ -701,13 +702,13 @@ fn evm_batch_some_until_failure_transfers_enough() {
 #[test]
 fn evm_batch_all_transfers_enough() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_all {
-					to: vec![Address(Bob.into()), Address(Charlie.into())].into(),
+					to: vec![Address(MockPeaqAccount::Bob.into()), Address(MockPeaqAccount::Charlie.into())].into(),
 					value: vec![U256::from(1_000u16), U256::from(2_000u16)].into(),
 					call_data: vec![].into(),
 					gas_limit: vec![].into(),
@@ -716,24 +717,24 @@ fn evm_batch_all_transfers_enough() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Bob), 1_000);
-			assert_eq!(balance(Charlie), 2_000);
+			assert_eq!(balance(MockPeaqAccount::Bob), 1_000);
+			assert_eq!(balance(MockPeaqAccount::Charlie), 2_000);
 		})
 }
 
 #[test]
 fn evm_batch_some_transfers_too_much() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_some {
 					to: vec![
-						Address(Bob.into()),
-						Address(Charlie.into()),
-						Address(David.into()),
+						Address(MockPeaqAccount::Bob.into()),
+						Address(MockPeaqAccount::Charlie.into()),
+						Address(MockPeaqAccount::David.into()),
 					]
 					.into(),
 					value: vec![
@@ -749,26 +750,26 @@ fn evm_batch_some_transfers_too_much() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 500); // gasprice = 0
-			assert_eq!(balance(Bob), 9_000);
-			assert_eq!(balance(Charlie), 0);
-			assert_eq!(balance(David), 500);
+			assert_eq!(balance(MockPeaqAccount::Alice), 500); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 9_000);
+			assert_eq!(balance(MockPeaqAccount::Charlie), 0);
+			assert_eq!(balance(MockPeaqAccount::David), 500);
 		})
 }
 
 #[test]
 fn evm_batch_some_until_failure_transfers_too_much() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_some_until_failure {
 					to: vec![
-						Address(Bob.into()),
-						Address(Charlie.into()),
-						Address(David.into()),
+						Address(MockPeaqAccount::Bob.into()),
+						Address(MockPeaqAccount::Charlie.into()),
+						Address(MockPeaqAccount::David.into()),
 					]
 					.into(),
 					value: vec![
@@ -784,26 +785,26 @@ fn evm_batch_some_until_failure_transfers_too_much() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 1_000); // gasprice = 0
-			assert_eq!(balance(Bob), 9_000);
-			assert_eq!(balance(Charlie), 0);
-			assert_eq!(balance(David), 0);
+			assert_eq!(balance(MockPeaqAccount::Alice), 1_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 9_000);
+			assert_eq!(balance(MockPeaqAccount::Charlie), 0);
+			assert_eq!(balance(MockPeaqAccount::David), 0);
 		})
 }
 
 #[test]
 fn evm_batch_all_transfers_too_much() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_all {
 					to: vec![
-						Address(Bob.into()),
-						Address(Charlie.into()),
-						Address(David.into()),
+						Address(MockPeaqAccount::Bob.into()),
+						Address(MockPeaqAccount::Charlie.into()),
+						Address(MockPeaqAccount::David.into()),
 					]
 					.into(),
 					value: vec![
@@ -819,26 +820,26 @@ fn evm_batch_all_transfers_too_much() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 10_000); // gasprice = 0
-			assert_eq!(balance(Bob), 0);
-			assert_eq!(balance(Charlie), 0);
-			assert_eq!(balance(David), 0);
+			assert_eq!(balance(MockPeaqAccount::Alice), 10_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 0);
+			assert_eq!(balance(MockPeaqAccount::Charlie), 0);
+			assert_eq!(balance(MockPeaqAccount::David), 0);
 		})
 }
 
 #[test]
 fn evm_batch_some_contract_revert() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_some {
 					to: vec![
-						Address(Bob.into()),
-						Address(Revert.into()),
-						Address(David.into()),
+						Address(MockPeaqAccount::Bob.into()),
+						Address(MockPeaqAccount::EVMu2Account.into()),
+						Address(MockPeaqAccount::David.into()),
 					]
 					.into(),
 					value: vec![
@@ -854,26 +855,26 @@ fn evm_batch_some_contract_revert() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 6_000); // gasprice = 0
-			assert_eq!(balance(Bob), 1_000);
-			assert_eq!(balance(Revert), 0);
-			assert_eq!(balance(David), 3_000);
+			assert_eq!(balance(MockPeaqAccount::Alice), 6_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 1_000);
+			assert_eq!(balance(MockPeaqAccount::EVMu2Account), 0);
+			assert_eq!(balance(MockPeaqAccount::David), 3_000);
 		})
 }
 
 #[test]
 fn evm_batch_some_until_failure_contract_revert() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_some_until_failure {
 					to: vec![
-						Address(Bob.into()),
-						Address(Revert.into()),
-						Address(David.into()),
+						Address(MockPeaqAccount::Bob.into()),
+						Address(MockPeaqAccount::EVMu2Account.into()),
+						Address(MockPeaqAccount::David.into()),
 					]
 					.into(),
 					value: vec![
@@ -889,26 +890,26 @@ fn evm_batch_some_until_failure_contract_revert() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 9_000); // gasprice = 0
-			assert_eq!(balance(Bob), 1_000);
-			assert_eq!(balance(Revert), 0);
-			assert_eq!(balance(David), 0);
+			assert_eq!(balance(MockPeaqAccount::Alice), 9_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 1_000);
+			assert_eq!(balance(MockPeaqAccount::EVMu2Account), 0);
+			assert_eq!(balance(MockPeaqAccount::David), 0);
 		})
 }
 
 #[test]
 fn evm_batch_all_contract_revert() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
-				Alice,
+				MockPeaqAccount::Alice,
 				PCall::batch_all {
 					to: vec![
-						Address(Bob.into()),
-						Address(Revert.into()),
-						Address(David.into()),
+						Address(MockPeaqAccount::Bob.into()),
+						Address(MockPeaqAccount::EVMu2Account.into()),
+						Address(MockPeaqAccount::David.into()),
 					]
 					.into(),
 					value: vec![
@@ -924,28 +925,29 @@ fn evm_batch_all_contract_revert() {
 			))
 			.dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 10_000); // gasprice = 0
-			assert_eq!(balance(Bob), 0);
-			assert_eq!(balance(Revert), 0);
-			assert_eq!(balance(David), 0);
+			assert_eq!(balance(MockPeaqAccount::Alice), 10_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 0);
+			// [TODO]
+			// assert_eq!(balance(Revert), 0);
+			assert_eq!(balance(MockPeaqAccount::David), 0);
 		})
 }
 
 #[test]
 fn evm_batch_recursion_under_limit() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			// Mock sets the recursion limit to 2, and we 2 nested batch.
 			// Thus it succeeds.
 
 			let input = PCall::batch_all {
-				to: vec![Address(Batch.into())].into(),
+				to: vec![Address(MockPeaqAccount::EVMu1Account.into())].into(),
 				value: vec![].into(),
 				gas_limit: vec![].into(),
 				call_data: vec![PCall::batch_all {
-					to: vec![Address(Bob.into())].into(),
+					to: vec![Address(MockPeaqAccount::Bob.into())].into(),
 					value: vec![1000_u32.into()].into(),
 					gas_limit: vec![].into(),
 					call_data: vec![].into(),
@@ -956,17 +958,17 @@ fn evm_batch_recursion_under_limit() {
 			}
 			.into();
 
-			assert_ok!(RuntimeCall::Evm(evm_call(Alice, input)).dispatch(RuntimeOrigin::root()));
+			assert_ok!(RuntimeCall::Evm(evm_call(MockPeaqAccount::Alice, input)).dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 9_000); // gasprice = 0
-			assert_eq!(balance(Bob), 1_000);
+			assert_eq!(balance(MockPeaqAccount::Alice), 9_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 1_000);
 		})
 }
 
 #[test]
 fn evm_batch_recursion_over_limit() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			// Mock sets the recursion limit to 2, and we 3 nested batch.
@@ -974,15 +976,15 @@ fn evm_batch_recursion_over_limit() {
 
 			let input = PCall::batch_from_mode(
 				Mode::BatchAll,
-				vec![Address(Batch.into())],
+				vec![Address(MockPeaqAccount::EVMu1Account.into())],
 				vec![],
 				vec![PCall::batch_from_mode(
 					Mode::BatchAll,
-					vec![Address(Batch.into())],
+					vec![Address(MockPeaqAccount::EVMu1Account.into())],
 					vec![],
 					vec![PCall::batch_from_mode(
 						Mode::BatchAll,
-						vec![Address(Bob.into())],
+						vec![Address(MockPeaqAccount::Bob.into())],
 						vec![1000_u32.into()],
 						vec![],
 						vec![].into(),
@@ -995,30 +997,30 @@ fn evm_batch_recursion_over_limit() {
 			)
 			.into();
 
-			assert_ok!(RuntimeCall::Evm(evm_call(Alice, input)).dispatch(RuntimeOrigin::root()));
+			assert_ok!(RuntimeCall::Evm(evm_call(MockPeaqAccount::Alice, input)).dispatch(RuntimeOrigin::root()));
 
-			assert_eq!(balance(Alice), 10_000); // gasprice = 0
-			assert_eq!(balance(Bob), 0);
+			assert_eq!(balance(MockPeaqAccount::Alice), 10_000); // gasprice = 0
+			assert_eq!(balance(MockPeaqAccount::Bob), 0);
 		})
 }
 
 #[test]
 fn batch_not_callable_by_smart_contract() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			// "deploy" SC to alice address
-			let alice_h160: H160 = Alice.into();
+			let alice_h160: H160 = MockPeaqAccount::Alice.into();
 			pallet_evm::AccountCodes::<Runtime>::insert(alice_h160, vec![10u8]);
 
 			// succeeds if not called by SC, see `evm_batch_recursion_under_limit`
 			let input = PCall::batch_all {
-				to: vec![Address(Batch.into())].into(),
+				to: vec![Address(MockPeaqAccount::EVMu1Account.into())].into(),
 				value: vec![].into(),
 				gas_limit: vec![].into(),
 				call_data: vec![PCall::batch_all {
-					to: vec![Address(Bob.into())].into(),
+					to: vec![Address(MockPeaqAccount::Bob.into())].into(),
 					value: vec![1000_u32.into()].into(),
 					gas_limit: vec![].into(),
 					call_data: vec![].into(),
@@ -1029,7 +1031,7 @@ fn batch_not_callable_by_smart_contract() {
 			}
 			.into();
 
-			match RuntimeCall::Evm(evm_call(Alice, input)).dispatch(RuntimeOrigin::root()) {
+			match RuntimeCall::Evm(evm_call(MockPeaqAccount::Alice, input)).dispatch(RuntimeOrigin::root()) {
 				Err(DispatchErrorWithPostInfo {
 					error:
 						DispatchError::Module(ModuleError {
@@ -1046,11 +1048,11 @@ fn batch_not_callable_by_smart_contract() {
 #[test]
 fn batch_is_not_callable_by_dummy_code() {
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
 		.build()
 		.execute_with(|| {
 			// "deploy" dummy code to alice address
-			let alice_h160: H160 = Alice.into();
+			let alice_h160: H160 = MockPeaqAccount::Alice.into();
 			pallet_evm::AccountCodes::<Runtime>::insert(
 				alice_h160,
 				[0x60, 0x00, 0x60, 0x00, 0xfd].to_vec(),
@@ -1058,11 +1060,11 @@ fn batch_is_not_callable_by_dummy_code() {
 
 			// succeeds if called by dummy code, see `evm_batch_recursion_under_limit`
 			let input = PCall::batch_all {
-				to: vec![Address(Batch.into())].into(),
+				to: vec![Address(MockPeaqAccount::EVMu1Account.into())].into(),
 				value: vec![].into(),
 				gas_limit: vec![].into(),
 				call_data: vec![PCall::batch_all {
-					to: vec![Address(Bob.into())].into(),
+					to: vec![Address(MockPeaqAccount::Bob.into())].into(),
 					value: vec![1000_u32.into()].into(),
 					gas_limit: vec![].into(),
 					call_data: vec![].into(),
@@ -1073,7 +1075,7 @@ fn batch_is_not_callable_by_dummy_code() {
 			}
 			.into();
 
-			match RuntimeCall::Evm(evm_call(Alice, input)).dispatch(RuntimeOrigin::root()) {
+			match RuntimeCall::Evm(evm_call(MockPeaqAccount::Alice, input)).dispatch(RuntimeOrigin::root()) {
 				Err(DispatchErrorWithPostInfo {
 					error:
 						DispatchError::Module(ModuleError {

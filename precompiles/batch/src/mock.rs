@@ -20,17 +20,15 @@ use super::*;
 use frame_support::traits::Everything;
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use precompile_utils::{mock_account, precompile_set::*, testing::MockAccount};
+use precompile_utils::{precompile_set::*, testing::*};
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
 };
 
-pub type AccountId = MockAccount;
+pub type AccountId = MockPeaqAccount;
 pub type Balance = u128;
 pub type BlockNumber = u32;
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
 
@@ -49,9 +47,6 @@ construct_runtime!(
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
-	pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 1);
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
 	pub const SS58Prefix: u8 = 42;
 }
 
@@ -81,12 +76,15 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
+
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 0;
+	pub const ExistentialDeposit: u128 = 1;
 }
+
 impl pallet_balances::Config for Runtime {
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 4];
+	// type ReserveIdentifier = [u8; 4];
+	type ReserveIdentifier = ();
 	type MaxLocks = ();
 	type Balance = Balance;
 	type RuntimeEvent = RuntimeEvent;
@@ -118,9 +116,6 @@ pub type Precompiles<R> = PrecompileSetBuilder<
 
 pub type PCall = BatchPrecompileCall<Runtime>;
 
-mock_account!(Batch, |_| MockAccount::from_u64(1));
-mock_account!(Revert, |_| MockAccount::from_u64(2));
-
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block storage limit in bytes. Set to 40 KB.
 const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
@@ -149,8 +144,8 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = Precompiles<Runtime>;
 	type PrecompilesValue = PrecompilesValue;
+	type PrecompilesType = Precompiles<Self>;
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
@@ -195,17 +190,14 @@ impl ExtBuilder {
 			.build_storage::<Runtime>()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
+			.assimilate_storage(&mut t)
+			.expect("Pallet balances storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
-		ext.execute_with(|| {
-			System::set_block_number(1);
+		ext.execute_with(|| { System::set_block_number(1);
 			pallet_evm::Pallet::<Runtime>::create_account(
-				Revert.into(),
+				MockPeaqAccount::EVMu2Account.into(),
 				hex_literal::hex!("1460006000fd").to_vec(),
 			);
 		});

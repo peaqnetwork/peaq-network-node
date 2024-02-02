@@ -180,3 +180,111 @@ pub fn baltathar_secret_key() -> [u8; 32] {
 pub fn charleth_secret_key() -> [u8; 32] {
 	hex_literal::hex!("0b6e18cafb6ed99687ec547bd28139cafdd2bffe70e6b688025de6b445aa5c5b")
 }
+
+
+/// [TODO] Should extract
+/// A simple account type.
+#[derive(
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Clone,
+	Encode,
+	Decode,
+	Debug,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+	derive_more::Display,
+	TypeInfo,
+)]
+pub enum MockPeaqAccount {
+	Alice,
+	Bob,
+	Charlie,
+	David,
+	Bogus,
+
+	SelfReserve,
+	ParentAccount,
+
+	EVMu1Account,
+	EVMu2Account,
+}
+
+impl Default for MockPeaqAccount {
+	fn default() -> Self {
+		Self::Bogus
+	}
+}
+
+impl From<MockPeaqAccount> for H160 {
+	fn from(x: MockPeaqAccount) -> H160 {
+		match x {
+			MockPeaqAccount::Alice => H160::repeat_byte(0xAA),
+			MockPeaqAccount::Bob => H160::repeat_byte(0xBB),
+			MockPeaqAccount::Charlie => H160::repeat_byte(0xCC),
+			MockPeaqAccount::SelfReserve => H160::repeat_byte(0xDD),
+			MockPeaqAccount::ParentAccount => H160::repeat_byte(0xEE),
+			MockPeaqAccount::David => H160::repeat_byte(0x12),
+			MockPeaqAccount::EVMu1Account => H160::from_low_u64_be(1).into(),
+			MockPeaqAccount::EVMu2Account => H160::from_low_u64_be(2).into(),
+			MockPeaqAccount::Bogus => Default::default(),
+		}
+	}
+}
+
+impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
+	fn into_account_id(h160_account: H160) -> MockPeaqAccount {
+		match h160_account {
+			a if a == H160::repeat_byte(0xAA) => Self::Alice,
+			a if a == H160::repeat_byte(0xBB) => Self::Bob,
+			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
+			a if a == H160::repeat_byte(0xDD) => Self::SelfReserve,
+			a if a == H160::repeat_byte(0xEE) => Self::ParentAccount,
+			a if a == H160::repeat_byte(0x12) => Self::David,
+			a if a == H160::from_low_u64_be(1).into() => Self::EVMu1Account,
+			a if a == H160::from_low_u64_be(2).into() => Self::EVMu2Account,
+			_ => Self::Bogus,
+		}
+	}
+}
+
+impl From<H160> for MockPeaqAccount {
+	fn from(x: H160) -> MockPeaqAccount {
+		MockPeaqAccount::into_account_id(x)
+	}
+}
+
+impl From<MockPeaqAccount> for [u8; 32] {
+	fn from(value: MockPeaqAccount) -> [u8; 32] {
+		match value {
+			MockPeaqAccount::Alice => [0xAA; 32],
+			MockPeaqAccount::Bob => [0xBB; 32],
+			MockPeaqAccount::Charlie => [0xCC; 32],
+			MockPeaqAccount::SelfReserve => [0xDD; 32],
+			MockPeaqAccount::ParentAccount => [0xEE; 32],
+			MockPeaqAccount::David => [0x12; 32],
+			MockPeaqAccount::EVMu1Account => [0x13; 32],
+			MockPeaqAccount::EVMu2Account => [0x14; 32],
+			_ => Default::default(),
+		}
+	}
+}
+
+impl From<[u8; 32]> for MockPeaqAccount {
+	fn from(value: [u8; 32]) -> MockPeaqAccount {
+		match value {
+			a if a == [0xAA; 32] => MockPeaqAccount::Alice,
+			a if a == [0xBB; 32] => MockPeaqAccount::Bob,
+			a if a == [0xCC; 32] => MockPeaqAccount::Charlie,
+			a if a == [0xDD; 32] => MockPeaqAccount::SelfReserve,
+			a if a == [0xEE; 32] => MockPeaqAccount::ParentAccount,
+			a if a == [0x12; 32] => MockPeaqAccount::David,
+			a if a == [0x13; 32] => MockPeaqAccount::EVMu1Account,
+			a if a == [0x14; 32] => MockPeaqAccount::EVMu2Account,
+			_ => MockPeaqAccount::Bogus,
+		}
+	}
+}
