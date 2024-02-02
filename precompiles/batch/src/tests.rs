@@ -927,8 +927,7 @@ fn evm_batch_all_contract_revert() {
 
 			assert_eq!(balance(MockPeaqAccount::Alice), 10_000); // gasprice = 0
 			assert_eq!(balance(MockPeaqAccount::Bob), 0);
-			// [TODO]
-			// assert_eq!(balance(Revert), 0);
+			assert_eq!(balance(MockPeaqAccount::EVMu2Account), 0);
 			assert_eq!(balance(MockPeaqAccount::David), 0);
 		})
 }
