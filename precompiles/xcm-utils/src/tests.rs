@@ -16,7 +16,6 @@
 
 use crate::mock::{
 	sent_xcm,
-	Account as MockAccount,
 	AccountId,
 	Balances,
 	ExtBuilder,
@@ -50,7 +49,7 @@ fn test_selector_enum() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut tester = PrecompilesModifierTester::new(precompiles(), Alice, Precompile1);
+		let mut tester = PrecompilesModifierTester::new(precompiles(), MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account);
 
 		/*
 		 * tester.test_view_modifier(PCall::multilocation_to_address_selectors());
@@ -68,10 +67,10 @@ fn modifiers() {
  *             multilocation: MultiLocation::parent(),
  *         };
  *
- *         let expected_address: H160 = ParentAccount.into();
+ *         let expected_address: H160 = MockPeaqAccount::ParentAccount.into();
  *
  *         precompiles()
- *             .prepare_test(Alice, Precompile1, input)
+ *             .prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
  *             .expect_cost(1)
  *             .expect_no_logs()
  *             .execute_returns(Address(expected_address));
@@ -93,7 +92,7 @@ fn modifiers() {
  *         let expected_address: H160 = SiblingParachainAccount(2000u32).into();
  *
  *         precompiles()
- *             .prepare_test(Alice, Precompile1, input)
+ *             .prepare_test(Alice, MockPeaqAccount::EVMu1Account, input)
  *             .expect_cost(1)
  *             .expect_no_logs()
  *             .execute_returns(Address(expected_address));
@@ -109,7 +108,7 @@ fn test_weight_message() {
 		let input = PCall::weight_message { message: message.into() };
 
 		precompiles()
-			.prepare_test(Alice, Precompile1, input)
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 			.expect_cost(0)
 			.expect_no_logs()
 			.execute_returns(1000u64);
@@ -122,7 +121,7 @@ fn test_get_units_per_second() {
 		let input = PCall::get_units_per_second { multilocation: MultiLocation::parent() };
 
 		precompiles()
-			.prepare_test(Alice, Precompile1, input)
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 			.expect_cost(1)
 			.expect_no_logs()
 			.execute_returns(U256::from(1_000_000_000_000u128));
@@ -137,7 +136,7 @@ fn test_executor_clear_origin() {
 		let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
 
 		precompiles()
-			.prepare_test(Alice, Precompile1, input)
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 			.expect_cost(100001001)
 			.expect_no_logs()
 			.execute_returns(());
@@ -161,7 +160,7 @@ fn test_executor_send() {
 		let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
 
 		precompiles()
-			.prepare_test(Alice, Precompile1, input)
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 			.expect_cost(100002001)
 			.expect_no_logs()
 			.execute_returns(());
@@ -178,7 +177,7 @@ fn test_executor_transact() {
 	let _ = env_logger::try_init();
 
 	ExtBuilder::default()
-		.with_balances(vec![(MockAccount::Alice.into(), 1000000000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000000000)])
 		.build()
 		.execute_with(|| {
 			let mut encoded: Vec<u8> = Vec::new();
@@ -189,7 +188,7 @@ fn test_executor_transact() {
 
 			// Then call bytes
 			let mut call_bytes = pallet_balances::Call::<Runtime>::transfer {
-				dest: MockAccount::Bob.into(),
+				dest: MockPeaqAccount::Bob.into(),
 				value: 100u32.into(),
 			}
 			.encode();
@@ -205,13 +204,13 @@ fn test_executor_transact() {
 				PCall::xcm_execute { message: xcm_to_execute.into(), weight: 2_000_000_000u64 };
 
 			precompiles()
-				.prepare_test(Alice, Precompile1, input)
+				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 				.expect_cost(1100001001)
 				.expect_no_logs()
 				.execute_returns(());
 
 			// Transact executed
-			let baltathar_account: AccountId = MockAccount::Bob.into();
+			let baltathar_account: AccountId = MockPeaqAccount::Bob.into();
 			assert_eq!(System::account(baltathar_account).data.free, 100);
 		});
 }
@@ -224,7 +223,7 @@ fn test_send_clear_origin() {
 		let input = PCall::xcm_send { dest: MultiLocation::parent(), message: xcm_to_send.into() };
 
 		precompiles()
-			.prepare_test(Alice, Precompile1, input)
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 			// Only the cost of TestWeightInfo
 			.expect_cost(100000000)
 			.expect_no_logs()
@@ -240,18 +239,18 @@ fn test_send_clear_origin() {
 #[test]
 fn execute_fails_if_called_by_smart_contract() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockAccount::Alice.into(), 1000), (MockAccount::Bob.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000), (MockPeaqAccount::Bob.into(), 1000)])
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
-			pallet_evm::AccountCodes::<Runtime>::insert(H160::from(Alice), vec![10u8]);
+			pallet_evm::AccountCodes::<Runtime>::insert(H160::from(MockPeaqAccount::Alice), vec![10u8]);
 
 			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
 			let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
 
 			PrecompilesValue::get()
-				.prepare_test(Alice, Precompile1, input)
+				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 				.execute_reverts(|output| output == b"Function not callable by smart contracts");
 		})
 }

@@ -22,10 +22,7 @@ use frame_support::{
 	weights::{RuntimeDbWeight, Weight},
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
-use parity_scale_codec::Encode;
-use precompile_utils::precompile_set::*;
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
+use precompile_utils::{precompile_set::*, testing::*};
 use sp_core::{H256, U256};
 use sp_io;
 use sp_runtime::testing::Header;
@@ -50,101 +47,11 @@ use xcm_executor::{
 };
 use Junctions::Here;
 
-pub type AccountId = Account;
+pub type AccountId = MockPeaqAccount;
 pub type Balance = u128;
 pub type BlockNumber = u64;
 pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
-
-/// [TODO] Should extract
-/// A simple account type.
-#[derive(
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Clone,
-	Encode,
-	Decode,
-	Debug,
-	MaxEncodedLen,
-	Serialize,
-	Deserialize,
-	derive_more::Display,
-	TypeInfo,
-)]
-pub enum Account {
-	Alice,
-	Bob,
-	Charlie,
-	Bogus,
-	SelfReserve,
-	ParentAccount,
-}
-
-impl Default for Account {
-	fn default() -> Self {
-		Self::Bogus
-	}
-}
-
-impl From<Account> for H160 {
-	fn from(x: Account) -> H160 {
-		match x {
-			Account::Alice => H160::repeat_byte(0xAA),
-			Account::Bob => H160::repeat_byte(0xBB),
-			Account::Charlie => H160::repeat_byte(0xCC),
-			Account::SelfReserve => H160::repeat_byte(0xDD),
-			Account::ParentAccount => H160::repeat_byte(0xEE),
-			Account::Bogus => Default::default(),
-		}
-	}
-}
-
-impl AddressMapping<Account> for Account {
-	fn into_account_id(h160_account: H160) -> Account {
-		match h160_account {
-			a if a == H160::repeat_byte(0xAA) => Self::Alice,
-			a if a == H160::repeat_byte(0xBB) => Self::Bob,
-			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
-			a if a == H160::repeat_byte(0xDD) => Self::SelfReserve,
-			a if a == H160::repeat_byte(0xEE) => Self::ParentAccount,
-			_ => Self::Bogus,
-		}
-	}
-}
-
-impl From<H160> for Account {
-	fn from(x: H160) -> Account {
-		Account::into_account_id(x)
-	}
-}
-
-impl From<Account> for [u8; 32] {
-	fn from(value: Account) -> [u8; 32] {
-		match value {
-			Account::Alice => [0xAA; 32],
-			Account::Bob => [0xBB; 32],
-			Account::Charlie => [0xCC; 32],
-			Account::SelfReserve => [0xDD; 32],
-			Account::ParentAccount => [0xEE; 32],
-			_ => Default::default(),
-		}
-	}
-}
-
-impl From<[u8; 32]> for Account {
-	fn from(value: [u8; 32]) -> Account {
-		match value {
-			a if a == [0xAA; 32] => Account::Alice,
-			a if a == [0xBB; 32] => Account::Bob,
-			a if a == [0xCC; 32] => Account::Charlie,
-			a if a == [0xDD; 32] => Account::SelfReserve,
-			a if a == [0xEE; 32] => Account::ParentAccount,
-			_ => Account::Bogus,
-		}
-	}
-}
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -166,20 +73,20 @@ impl<
 		AccountId: From<[u8; 32]>
 			+ Into<[u8; 32]>
 			+ Clone
-			+ std::convert::From<mock::Account>
-			+ std::cmp::PartialEq<mock::Account>,
+			+ std::convert::From<MockPeaqAccount>
+			+ std::cmp::PartialEq<MockPeaqAccount>,
 	> Convert<MultiLocation, AccountId> for MockParentMultilocationToAccountConverter<AccountId>
 {
 	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
 		let key = match location {
-			MultiLocation { parents: 1, interior: Here } => Account::ParentAccount,
+			MultiLocation { parents: 1, interior: Here } => MockPeaqAccount::ParentAccount,
 			_ => return Err(location),
 		};
 		Ok(key.into())
 	}
 
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
-		if who != Account::ParentAccount {
+		if who != MockPeaqAccount::ParentAccount {
 			return Err(who)
 		}
 		Ok(MultiLocation { parents: 1, interior: Here })

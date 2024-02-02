@@ -182,7 +182,6 @@ pub fn charleth_secret_key() -> [u8; 32] {
 }
 
 
-/// [TODO] Should extract
 /// A simple account type.
 #[derive(
 	Eq,
