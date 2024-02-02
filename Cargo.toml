@@ -209,6 +209,7 @@ sp-staking = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 frame-try-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43"}
 
+# [TODO] ...
 zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
 zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
 zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }

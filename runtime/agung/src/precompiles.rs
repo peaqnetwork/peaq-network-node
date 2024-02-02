@@ -1,5 +1,6 @@
 use frame_support::parameter_types;
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
+use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_modexp::Modexp;
@@ -73,6 +74,15 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 					CallableByContract<
 						pallet_evm_precompile_xcm_utils::AllExceptXcmExecute<R, XcmConfig>,
 					>,
+				>,
+				PrecompileAt<
+					AddressU64<2053>,
+					BatchPrecompile<R>,
+					(
+						SubcallWithMaxNesting<2>,
+						// Batch is the only precompile allowed to call Batch.
+						CallableByPrecompile<OnlyFrom<AddressU64<2053>>>,
+					),
 				>,
 			),
 		>,
