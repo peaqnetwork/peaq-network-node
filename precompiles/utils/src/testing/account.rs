@@ -181,6 +181,11 @@ pub fn charleth_secret_key() -> [u8; 32] {
 	hex_literal::hex!("0b6e18cafb6ed99687ec547bd28139cafdd2bffe70e6b688025de6b445aa5c5b")
 }
 
+mock_account!(
+	SiblingParachainAccount(u32),
+	|v: SiblingParachainAccount| { AddressInPrefixedSet(0xffffffff, v.0 as u128).into() }
+);
+
 pub type MockAssetId = u128;
 
 /// A simple account type.
@@ -208,6 +213,7 @@ pub enum MockPeaqAccount {
 
 	SelfReserve,
 	ParentAccount,
+	SlibingParaAccount,
 
 	EVMu1Account,
 	EVMu2Account,
@@ -229,6 +235,7 @@ impl From<MockPeaqAccount> for H160 {
 			MockPeaqAccount::Charlie => H160::repeat_byte(0xCC),
 			MockPeaqAccount::SelfReserve => H160::repeat_byte(0xDD),
 			MockPeaqAccount::ParentAccount => H160::repeat_byte(0xEE),
+			MockPeaqAccount::SlibingParaAccount => H160::repeat_byte(0x11),
 			MockPeaqAccount::David => H160::repeat_byte(0x12),
 			MockPeaqAccount::EVMu1Account => H160::from_low_u64_be(1).into(),
 			MockPeaqAccount::EVMu2Account => H160::from_low_u64_be(2).into(),
@@ -252,6 +259,7 @@ impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
 			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
 			a if a == H160::repeat_byte(0xDD) => Self::SelfReserve,
 			a if a == H160::repeat_byte(0xEE) => Self::ParentAccount,
+			a if a == H160::repeat_byte(0x11) => Self::SlibingParaAccount,
 			a if a == H160::repeat_byte(0x12) => Self::David,
 			a if a == H160::from_low_u64_be(1).into() => Self::EVMu1Account,
 			a if a == H160::from_low_u64_be(2).into() => Self::EVMu2Account,
@@ -283,6 +291,7 @@ impl From<MockPeaqAccount> for [u8; 32] {
 			MockPeaqAccount::Charlie => [0xCC; 32],
 			MockPeaqAccount::SelfReserve => [0xDD; 32],
 			MockPeaqAccount::ParentAccount => [0xEE; 32],
+			MockPeaqAccount::SlibingParaAccount => [0x11; 32],
 			MockPeaqAccount::David => [0x12; 32],
 			MockPeaqAccount::EVMu1Account => [0x13; 32],
 			MockPeaqAccount::EVMu2Account => [0x14; 32],
@@ -299,6 +308,7 @@ impl From<[u8; 32]> for MockPeaqAccount {
 			a if a == [0xCC; 32] => MockPeaqAccount::Charlie,
 			a if a == [0xDD; 32] => MockPeaqAccount::SelfReserve,
 			a if a == [0xEE; 32] => MockPeaqAccount::ParentAccount,
+			a if a == [0x11; 32] => MockPeaqAccount::SlibingParaAccount,
 			a if a == [0x12; 32] => MockPeaqAccount::David,
 			a if a == [0x13; 32] => MockPeaqAccount::EVMu1Account,
 			a if a == [0x14; 32] => MockPeaqAccount::EVMu2Account,

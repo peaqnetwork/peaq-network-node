@@ -31,7 +31,7 @@ use sp_runtime::traits::Dispatchable;
 use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
 use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
-// use xcm_executor::traits::ConvertOrigin;
+use xcm_executor::traits::ConvertOrigin;
 use xcm_executor::traits::{WeightBounds, WeightTrader};
 
 const DEFAULT_PROOF_SIZE: u64 = 256 * 1024;
@@ -57,8 +57,8 @@ pub struct AllExceptXcmExecute<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConf
 impl<Runtime, XcmConfig> SelectorFilter for AllExceptXcmExecute<Runtime, XcmConfig>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
-	// XcmOriginOf<XcmConfig>: OriginTrait,
-	// XcmAccountIdOf<XcmConfig>: Into<H160>,
+	XcmOriginOf<XcmConfig>: OriginTrait,
+	XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
 	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
@@ -86,41 +86,39 @@ pub struct XcmUtilsPrecompile<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConfi
 impl<Runtime, XcmConfig> XcmUtilsPrecompile<Runtime, XcmConfig>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
-	// XcmOriginOf<XcmConfig>: OriginTrait,
-	// XcmAccountIdOf<XcmConfig>: Into<H160>,
+	XcmOriginOf<XcmConfig>: OriginTrait,
+	XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
 	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
 {
-	/*
-	 *     #[precompile::public("multilocationToAddress((uint8,bytes[]))")]
-	 *     #[precompile::view]
-	 *     fn multilocation_to_address(
-	 *         handle: &mut impl PrecompileHandle,
-	 *         multilocation: MultiLocation,
-	 *     ) -> EvmResult<Address> { // storage item: AssetTypeUnitsPerSecond // max encoded len:
-	 *       hash (16) + Multilocation + u128 (16) handle.record_db_read::<Runtime>(32 +
-	 *       MultiLocation::max_encoded_len())?;
-	 *
-	 *         let origin =
-	 *             XcmConfig::OriginConverter::convert_origin(multilocation,
-	 * OriginKind::SovereignAccount)                 .map_err(|_| {
-	 *                     RevertReason::custom("Failed multilocation conversion")
-	 *                         .in_field("multilocation")
-	 *                 })?;
-	 *
-	 *         let account: H160 = origin
-	 *             .into_signer()
-	 *             .ok_or(
-	 *                 RevertReason::custom("Failed multilocation
-	 * conversion").in_field("multilocation"),             )?
-	 *             .into();
-	 *         Ok(Address(account))
-	 *     }
-	 *
-	 */
+		#[precompile::public("multilocationToAddress((uint8,bytes[]))")]
+		#[precompile::view]
+		fn multilocation_to_address(
+			handle: &mut impl PrecompileHandle,
+			multilocation: MultiLocation,
+		) -> EvmResult<Address> {
+			// storage item: AssetTypeUnitsPerSecond
+			// max encoded len: hash (16) + Multilocation + u128 (16)
+			handle.record_db_read::<Runtime>(32 + MultiLocation::max_encoded_len())?;
+
+			let origin =
+				XcmConfig::OriginConverter::convert_origin(multilocation, OriginKind::SovereignAccount)
+				.map_err(|_| {
+						RevertReason::custom("Failed multilocation conversion")
+							.in_field("multilocation")
+					})?;
+
+			let account: H160 = origin
+				.as_signed()
+				.ok_or(
+					RevertReason::custom("Failed multilocation conversion").in_field("multilocation"),             )?
+				.into();
+			Ok(Address(account))
+		}
+
 	#[precompile::public("getUnitsPerSecond((uint8,bytes[]))")]
 	#[precompile::view]
 	fn get_units_per_second(

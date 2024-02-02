@@ -68,48 +68,38 @@ construct_runtime!(
 	}
 );
 
-pub struct MockParentMultilocationToAccountConverter<AccountId>(PhantomData<AccountId>);
+pub struct MockMultilocationToAccountConverter<AccountId>(PhantomData<AccountId>);
 impl<
 		AccountId: From<[u8; 32]>
 			+ Into<[u8; 32]>
 			+ Clone
 			+ std::convert::From<MockPeaqAccount>
 			+ std::cmp::PartialEq<MockPeaqAccount>,
-	> Convert<MultiLocation, AccountId> for MockParentMultilocationToAccountConverter<AccountId>
+	> Convert<MultiLocation, AccountId> for MockMultilocationToAccountConverter<AccountId>
 {
 	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
 		let key = match location {
 			MultiLocation { parents: 1, interior: Here } => MockPeaqAccount::ParentAccount,
+			MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) } =>
+				MockPeaqAccount::SlibingParaAccount,
 			_ => return Err(location),
 		};
 		Ok(key.into())
 	}
 
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
-		if who != MockPeaqAccount::ParentAccount {
-			return Err(who)
+		if who == MockPeaqAccount::ParentAccount.into() {
+			Ok(MultiLocation { parents: 1, interior: Here })
+		} else if who == MockPeaqAccount::SlibingParaAccount.into() {
+			Ok(MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) })
+		} else {
+			Err(who)
 		}
-		Ok(MultiLocation { parents: 1, interior: Here })
 	}
 }
 
-/*
- * pub struct MockParachainMultilocationToAccountConverter;
- * impl ConvertLocation<AccountId> for MockParachainMultilocationToAccountConverter {
- *     fn convert_location(location: &MultiLocation) -> Option<AccountId> {
- *         match location.borrow() {
- *             MultiLocation {
- *                 parents: 1,
- *                 interior: Junctions::X1(Parachain(id)),
- *             } => Some(SiblingParachainAccount(*id).into()),
- *             _ => None,
- *         }
- *     }
- * }
- */
 pub type LocationToAccountId = (
-	// MockParachainMultilocationToAccountConverter,
-	MockParentMultilocationToAccountConverter<AccountId>,
+	MockMultilocationToAccountConverter<AccountId>,
 	xcm_builder::AccountId32Aliases<LocalNetworkId, AccountId>,
 );
 

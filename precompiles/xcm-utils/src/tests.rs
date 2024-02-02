@@ -32,6 +32,7 @@ use parity_scale_codec::Encode;
 use precompile_utils::testing::*;
 use sp_core::{H160, U256};
 use xcm::prelude::*;
+use precompile_utils::prelude::Address;
 
 fn precompiles() -> Precompiles<Runtime> {
 	PrecompilesValue::get()
@@ -51,54 +52,48 @@ fn modifiers() {
 	ExtBuilder::default().build().execute_with(|| {
 		let mut tester = PrecompilesModifierTester::new(precompiles(), MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account);
 
-		/*
-		 * tester.test_view_modifier(PCall::multilocation_to_address_selectors());
-		 */
+		tester.test_view_modifier(PCall::multilocation_to_address_selectors());
 		tester.test_view_modifier(PCall::weight_message_selectors());
 		tester.test_view_modifier(PCall::get_units_per_second_selectors());
 	});
 }
 
-/*
- * #[test]
- * fn test_get_account_parent() {
- *     ExtBuilder::default().build().execute_with(|| {
- *         let input = PCall::multilocation_to_address {
- *             multilocation: MultiLocation::parent(),
- *         };
- *
- *         let expected_address: H160 = MockPeaqAccount::ParentAccount.into();
- *
- *         precompiles()
- *             .prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
- *             .expect_cost(1)
- *             .expect_no_logs()
- *             .execute_returns(Address(expected_address));
- *     });
- * }
- */
+#[test]
+fn test_get_account_parent() {
+	ExtBuilder::default().build().execute_with(|| {
+		let input = PCall::multilocation_to_address {
+			multilocation: MultiLocation::parent(),
+		};
 
-/*
- * #[test]
- * fn test_get_account_sibling() {
- *     ExtBuilder::default().build().execute_with(|| {
- *         let input = PCall::multilocation_to_address {
- *             multilocation: MultiLocation {
- *                 parents: 1,
- *                 interior: Junctions::X1(Junction::Parachain(2000u32)),
- *             },
- *         };
- *
- *         let expected_address: H160 = SiblingParachainAccount(2000u32).into();
- *
- *         precompiles()
- *             .prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
- *             .expect_cost(1)
- *             .expect_no_logs()
- *             .execute_returns(Address(expected_address));
- *     });
- * }
- */
+		let expected_address: H160 = MockPeaqAccount::ParentAccount.into();
+
+		precompiles()
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
+			.expect_cost(1)
+			.expect_no_logs()
+			.execute_returns(Address(expected_address));
+	});
+}
+
+#[test]
+fn test_get_account_sibling() {
+	ExtBuilder::default().build().execute_with(|| {
+		let input = PCall::multilocation_to_address {
+			multilocation: MultiLocation {
+				parents: 1,
+				interior: Junctions::X1(Junction::Parachain(3000u32)),
+			},
+		};
+
+		let expected_address: H160 = MockPeaqAccount::SlibingParaAccount.into();
+
+		precompiles()
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
+			.expect_cost(1)
+			.expect_no_logs()
+			.execute_returns(Address(expected_address));
+	});
+}
 
 #[test]
 fn test_weight_message() {
