@@ -11,6 +11,7 @@ members = [
 	"precompiles/assets-erc20",
 	"precompiles/xtokens",
 	"precompiles/xcm-utils",
+	"precompiles/batch",
 ]
 resolver = "2"
 
