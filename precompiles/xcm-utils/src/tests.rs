@@ -92,7 +92,7 @@ fn modifiers() {
  *         let expected_address: H160 = SiblingParachainAccount(2000u32).into();
  *
  *         precompiles()
- *             .prepare_test(Alice, MockPeaqAccount::EVMu1Account, input)
+ *             .prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
  *             .expect_cost(1)
  *             .expect_no_logs()
  *             .execute_returns(Address(expected_address));

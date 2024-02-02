@@ -181,6 +181,7 @@ pub fn charleth_secret_key() -> [u8; 32] {
 	hex_literal::hex!("0b6e18cafb6ed99687ec547bd28139cafdd2bffe70e6b688025de6b445aa5c5b")
 }
 
+pub type MockAssetId = u128;
 
 /// A simple account type.
 #[derive(
@@ -210,6 +211,8 @@ pub enum MockPeaqAccount {
 
 	EVMu1Account,
 	EVMu2Account,
+
+	AssetId(MockAssetId),
 }
 
 impl Default for MockPeaqAccount {
@@ -229,6 +232,13 @@ impl From<MockPeaqAccount> for H160 {
 			MockPeaqAccount::David => H160::repeat_byte(0x12),
 			MockPeaqAccount::EVMu1Account => H160::from_low_u64_be(1).into(),
 			MockPeaqAccount::EVMu2Account => H160::from_low_u64_be(2).into(),
+			MockPeaqAccount::AssetId(asset_id) => {
+				let mut data = [0u8; 20];
+				let id_as_bytes = asset_id.to_be_bytes();
+				data[0..4].copy_from_slice(&[255u8; 4]);
+				data[4..20].copy_from_slice(&id_as_bytes);
+				H160::from_slice(&data)
+			},
 			MockPeaqAccount::Bogus => Default::default(),
 		}
 	}
@@ -245,7 +255,16 @@ impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
 			a if a == H160::repeat_byte(0x12) => Self::David,
 			a if a == H160::from_low_u64_be(1).into() => Self::EVMu1Account,
 			a if a == H160::from_low_u64_be(2).into() => Self::EVMu2Account,
-			_ => Self::Bogus,
+			_ => {
+				let mut data = [0u8; 16];
+				let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
+				if prefix_part == &[255u8; 4] {
+					data.copy_from_slice(id_part);
+
+					return Self::AssetId(u128::from_be_bytes(data))
+				}
+				Self::Bogus
+			},
 		}
 	}
 }
