@@ -62,58 +62,6 @@ pub type BlockNumber = u64;
 pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 
-/*
- * /// A simple account type.
- * #[derive(
- *     Eq,
- *     PartialEq,
- *     Ord,
- *     PartialOrd,
- *     Clone,
- *     Encode,
- *     Decode,
- *     Debug,
- *     MaxEncodedLen,
- *     Serialize,
- *     Deserialize,
- *     derive_more::Display,
- *     TypeInfo,
- * )]
- * pub enum Account {
- *     Alice,
- *     Bob,
- *     Charlie,
- *     Bogus,
- *     AssetId(AssetId),
- * }
- *
- * impl Default for Account {
- *     fn default() -> Self {
- *         Self::Bogus
- *     }
- * }
- *
- * impl AddressMapping<Account> for Account {
- *     fn into_account_id(h160_account: H160) -> Account {
- *         match h160_account {
- *             a if a == H160::repeat_byte(0xAA) => Self::Alice,
- *             a if a == H160::repeat_byte(0xBB) => Self::Bob,
- *             a if a == H160::repeat_byte(0xCC) => Self::Charlie,
- *             _ => {
- *                 let mut data = [0u8; 16];
- *                 let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
- *                 if prefix_part == &[255u8; 4] {
- *                     data.copy_from_slice(id_part);
- *
- *                     return Self::AssetId(u128::from_be_bytes(data))
- *                 }
- *                 Self::Bogus
- *             },
- *         }
- *     }
- * }
- *
- */
 pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
 // Implement the trait, where we convert AccountId to AssetID
