@@ -59,7 +59,11 @@ fn selector_less_than_four_bytes() {
 		));
 		// This selector is only three bytes long when four are required.
 		precompiles()
-			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), vec![1u8, 2u8, 3u8])
+			.prepare_test(
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::AssetId(0u128),
+				vec![1u8, 2u8, 3u8],
+			)
 			.execute_reverts(|output| output == b"Tried to read selector out of bounds");
 	});
 }
@@ -76,7 +80,11 @@ fn no_selector_exists_but_length_is_right() {
 		));
 
 		precompiles()
-			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), vec![1u8, 2u8, 3u8, 4u8])
+			.prepare_test(
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::AssetId(0u128),
+				vec![1u8, 2u8, 3u8, 4u8],
+			)
 			.execute_reverts(|output| output == b"Unknown selector");
 	});
 }
@@ -163,7 +171,11 @@ fn get_total_supply() {
 			));
 
 			precompiles()
-				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::total_supply {})
+				.prepare_test(
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::total_supply {},
+				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(U256::from(1000u64));
@@ -290,7 +302,10 @@ fn approve_saturating() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(0u128),
-					PCall::approve { spender: Address(MockPeaqAccount::Bob.into()), amount: U256::MAX },
+					PCall::approve {
+						spender: Address(MockPeaqAccount::Bob.into()),
+						amount: U256::MAX,
+					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_APPROVAL,
@@ -414,7 +429,10 @@ fn transfer() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(0u128),
-					PCall::transfer { to: Address(MockPeaqAccount::Bob.into()), amount: U256::from(400) },
+					PCall::transfer {
+						to: Address(MockPeaqAccount::Bob.into()),
+						amount: U256::from(400),
+					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 					SELECTOR_LOG_TRANSFER,
@@ -725,7 +743,8 @@ fn transfer_from_self() {
 
 			precompiles()
 				.prepare_test(
-					MockPeaqAccount::Alice, // Alice sending transferFrom herself, no need for allowance.
+					MockPeaqAccount::Alice, /* Alice sending transferFrom herself, no need for
+					                         * allowance. */
 					MockPeaqAccount::AssetId(0u128),
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
@@ -786,19 +805,31 @@ fn get_metadata() {
 			));
 
 			precompiles()
-				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::name {})
+				.prepare_test(
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::name {},
+				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(UnboundedBytes::from("TestToken"));
 
 			precompiles()
-				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::symbol {})
+				.prepare_test(
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::symbol {},
+				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(UnboundedBytes::from("Test"));
 
 			precompiles()
-				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::decimals {})
+				.prepare_test(
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::AssetId(0u128),
+					PCall::decimals {},
+				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
 				.execute_returns(12u8);
@@ -818,7 +849,11 @@ fn minimum_balance_is_right() {
 		));
 
 		precompiles()
-			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::AssetId(0u128), PCall::minimum_balance {})
+			.prepare_test(
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::AssetId(0u128),
+				PCall::minimum_balance {},
+			)
 			.expect_cost(0) // TODO: Test db read/write costs
 			.expect_no_logs()
 			.execute_returns(expected_min_balance);
@@ -846,7 +881,10 @@ fn mint_is_ok() {
 			.prepare_test(
 				MockPeaqAccount::Alice,
 				MockPeaqAccount::AssetId(asset_id),
-				PCall::mint { to: Address(MockPeaqAccount::Bob.into()), amount: U256::from(mint_amount) },
+				PCall::mint {
+					to: Address(MockPeaqAccount::Bob.into()),
+					amount: U256::from(mint_amount),
+				},
 			)
 			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 				SELECTOR_LOG_TRANSFER,
@@ -912,7 +950,10 @@ fn burn_is_ok() {
 			.prepare_test(
 				MockPeaqAccount::Alice,
 				MockPeaqAccount::AssetId(asset_id),
-				PCall::burn { who: Address(MockPeaqAccount::Bob.into()), amount: U256::from(burn_amount) },
+				PCall::burn {
+					who: Address(MockPeaqAccount::Bob.into()),
+					amount: U256::from(burn_amount),
+				},
 			)
 			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
 				SELECTOR_LOG_TRANSFER,
@@ -923,7 +964,10 @@ fn burn_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
-		assert_eq!(Assets::balance(asset_id, &MockPeaqAccount::Bob.into()), init_amount - burn_amount);
+		assert_eq!(
+			Assets::balance(asset_id, &MockPeaqAccount::Bob.into()),
+			init_amount - burn_amount
+		);
 	});
 }
 

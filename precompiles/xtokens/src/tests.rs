@@ -16,8 +16,8 @@
 
 use crate::{
 	mock::{
-		events, CurrencyIdToMultiLocation, ExtBuilder, PCall, Precompiles,
-		PrecompilesValue, Runtime,
+		events, CurrencyIdToMultiLocation, ExtBuilder, PCall, Precompiles, PrecompilesValue,
+		Runtime,
 	},
 	Currency, EvmMultiAsset,
 };
@@ -45,7 +45,11 @@ fn test_selector_enum() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut tester = PrecompilesModifierTester::new(precompiles(), MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account);
+		let mut tester = PrecompilesModifierTester::new(
+			precompiles(),
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
+		);
 
 		tester.test_default_modifier(PCall::transfer_selectors());
 		tester.test_default_modifier(PCall::transfer_multiasset_selectors());
@@ -59,7 +63,11 @@ fn modifiers() {
 fn selector_less_than_four_bytes() {
 	ExtBuilder::default().build().execute_with(|| {
 		precompiles()
-			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, vec![1u8, 2u8, 3u8])
+			.prepare_test(
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::EVMu1Account,
+				vec![1u8, 2u8, 3u8],
+			)
 			.execute_reverts(|output| output == b"Tried to read selector out of bounds");
 	});
 }
@@ -68,7 +76,11 @@ fn selector_less_than_four_bytes() {
 fn no_selector_exists_but_length_is_right() {
 	ExtBuilder::default().build().execute_with(|| {
 		precompiles()
-			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, vec![1u8, 2u8, 3u8, 4u8])
+			.prepare_test(
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::EVMu1Account,
+				vec![1u8, 2u8, 3u8, 4u8],
+			)
 			.execute_reverts(|output| output == b"Unknown selector");
 	});
 }

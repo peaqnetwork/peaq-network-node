@@ -21,7 +21,7 @@
 use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
-	traits::{ConstU32},
+	traits::ConstU32,
 };
 use pallet_evm::AddressMapping;
 use parity_scale_codec::{Decode, DecodeLimit, MaxEncodedLen};

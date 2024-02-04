@@ -17,14 +17,11 @@
 //! Test utilities
 use super::*;
 
-use frame_support::traits::Everything;
-use frame_support::{construct_runtime, parameter_types, weights::Weight};
+use frame_support::{construct_runtime, parameter_types, traits::Everything, weights::Weight};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use precompile_utils::{precompile_set::*, testing::*};
 use sp_core::H256;
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 
 pub type AccountId = MockPeaqAccount;
 pub type Balance = u128;
@@ -195,7 +192,8 @@ impl ExtBuilder {
 			.expect("Pallet balances storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
-		ext.execute_with(|| { System::set_block_number(1);
+		ext.execute_with(|| {
+			System::set_block_number(1);
 			pallet_evm::Pallet::<Runtime>::create_account(
 				MockPeaqAccount::EVMu2Account.into(),
 				hex_literal::hex!("1460006000fd").to_vec(),

@@ -181,10 +181,9 @@ pub fn charleth_secret_key() -> [u8; 32] {
 	hex_literal::hex!("0b6e18cafb6ed99687ec547bd28139cafdd2bffe70e6b688025de6b445aa5c5b")
 }
 
-mock_account!(
-	SiblingParachainAccount(u32),
-	|v: SiblingParachainAccount| { AddressInPrefixedSet(0xffffffff, v.0 as u128).into() }
-);
+mock_account!(SiblingParachainAccount(u32), |v: SiblingParachainAccount| {
+	AddressInPrefixedSet(0xffffffff, v.0 as u128).into()
+});
 
 pub type MockAssetId = u128;
 
@@ -318,8 +317,8 @@ impl From<[u8; 32]> for MockPeaqAccount {
 }
 
 impl From<MockPeaqAccount> for H256 {
-    fn from(x: MockPeaqAccount) -> H256 {
-        let x: H160 = x.into();
-        x.into()
-    }
+	fn from(x: MockPeaqAccount) -> H256 {
+		let x: H160 = x.into();
+		x.into()
+	}
 }

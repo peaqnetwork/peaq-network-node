@@ -29,10 +29,9 @@ use crate::mock::{
 };
 use frame_support::{traits::PalletInfo, weights::Weight};
 use parity_scale_codec::Encode;
-use precompile_utils::testing::*;
+use precompile_utils::{prelude::Address, testing::*};
 use sp_core::{H160, U256};
 use xcm::prelude::*;
-use precompile_utils::prelude::Address;
 
 fn precompiles() -> Precompiles<Runtime> {
 	PrecompilesValue::get()
@@ -47,7 +46,11 @@ fn test_selector_enum() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut tester = PrecompilesModifierTester::new(precompiles(), MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account);
+		let mut tester = PrecompilesModifierTester::new(
+			precompiles(),
+			MockPeaqAccount::Alice,
+			MockPeaqAccount::EVMu1Account,
+		);
 
 		tester.test_view_modifier(PCall::weight_message_selectors());
 		tester.test_view_modifier(PCall::get_units_per_second_selectors());
@@ -193,11 +196,17 @@ fn test_send_clear_origin() {
 #[test]
 fn execute_fails_if_called_by_smart_contract() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000), (MockPeaqAccount::Bob.into(), 1000)])
+		.with_balances(vec![
+			(MockPeaqAccount::Alice.into(), 1000),
+			(MockPeaqAccount::Bob.into(), 1000),
+		])
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
-			pallet_evm::AccountCodes::<Runtime>::insert(H160::from(MockPeaqAccount::Alice), vec![10u8]);
+			pallet_evm::AccountCodes::<Runtime>::insert(
+				H160::from(MockPeaqAccount::Alice),
+				vec![10u8],
+			);
 
 			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
