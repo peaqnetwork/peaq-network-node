@@ -1,0 +1,23 @@
+name: Autotest
+
+on:
+  workflow_call:
+jobs:
+  Test:
+    name: Run Autotest
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Wait for Block Generation
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '180s'
+      - name: Run Test
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: peaqnetwork
+          repo: peaq-network-qa
+          github_token: ${{ secrets.TOKEN_FOR_AUTOTEST }}
+          workflow_file_name: main.yml
+          ref: Parachain-Connection
+          trigger_workflow: true
+          wait_workflow: true
