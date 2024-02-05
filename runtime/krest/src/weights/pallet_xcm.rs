@@ -98,9 +98,9 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for WeightInfo<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
-        // Minimum execution time: 4_364_000 picoseconds.
-        Weight::from_parts(4_364_000, 0)
-            .saturating_add(Weight::from_parts(0, 0))
+		// Minimum execution time: 18_446_744_073_709_551_000 picoseconds.
+		Weight::from_parts(18_446_744_073_709_551_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// Storage: PolkadotXcm SupportedVersion (r:0 w:1)
 	/// Proof Skipped: PolkadotXcm SupportedVersion (max_values: None, max_size: None, mode: Measured)
