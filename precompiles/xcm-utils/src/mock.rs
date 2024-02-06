@@ -321,9 +321,7 @@ impl SendXcm for TestSendXcm {
 		destination: &mut Option<MultiLocation>,
 		message: &mut Option<opaque::Xcm>,
 	) -> SendResult<Self::Ticket> {
-		SENT_XCM.with(|q| {
-			q.borrow_mut().push(((*destination).unwrap(), message.clone().unwrap()))
-		});
+		SENT_XCM.with(|q| q.borrow_mut().push(((*destination).unwrap(), message.clone().unwrap())));
 		Ok(((), MultiAssets::new()))
 	}
 
@@ -423,8 +421,6 @@ pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
 }
-
-
 
 impl ExtBuilder {
 	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {

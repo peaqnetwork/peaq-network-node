@@ -114,8 +114,6 @@ construct_runtime!(
 #[derive(Default)]
 pub struct ExtBuilder();
 
-
-
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();

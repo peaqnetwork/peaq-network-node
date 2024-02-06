@@ -93,159 +93,121 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 
 			// 1 is block author for 1st block
 			roll_to(2, authors.clone());
-			assert!(
-				almost_equal(
-					Balances::usable_balance(1),
-					user_1 + c_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(1),
+				user_1 + c_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_eq!(Balances::usable_balance(2), user_2);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(3),
-					user_3 + d_1_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(4),
-					user_4 + d_2_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(3),
+				user_3 + d_1_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(4),
+				user_4 + d_2_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 1 is block author for 2nd block
 			roll_to(3, authors.clone());
-			assert!(
-				almost_equal(
-					Balances::usable_balance(1),
-					user_1 + 2 * c_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(1),
+				user_1 + 2 * c_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_eq!(Balances::usable_balance(2), user_2);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(3),
-					user_3 + 2 * d_1_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(4),
-					user_4 + 2 * d_2_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(3),
+				user_3 + 2 * d_1_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(4),
+				user_4 + 2 * d_2_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 1 is block author for 3rd block
 			roll_to(4, authors.clone());
-			assert!(
-				almost_equal(
-					Balances::usable_balance(1),
-					user_1 + 3 * c_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(1),
+				user_1 + 3 * c_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_eq!(Balances::usable_balance(2), user_2);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(3),
-					user_3 + 3 * d_1_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(4),
-					user_4 + 3 * d_2_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(3),
+				user_3 + 3 * d_1_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(4),
+				user_4 + 3 * d_2_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 2 is block author for 4th block
 			roll_to(5, authors.clone());
-			assert!(
-				almost_equal(
-					Balances::usable_balance(1),
-					user_1 + 3 * c_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(2),
-					user_2 + c_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(3),
-					user_3 + 3 * d_1_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(4),
-					user_4 + 3 * d_2_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(5),
-					user_5 + d_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(1),
+				user_1 + 3 * c_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(2),
+				user_2 + c_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(3),
+				user_3 + 3 * d_1_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(4),
+				user_4 + 3 * d_2_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(5),
+				user_5 + d_rewards,
+				Perbill::from_parts(1)
+			));
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
 
 			// 2 is block author for 5th block
 			roll_to(6, authors);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(1),
-					user_1 + 3 * c_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(2),
-					user_2 + c_rewards + c_total_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(3),
-					user_3 + 3 * d_1_rewards,
-					Perbill::from_parts(1)
-				)
-			);
-			assert!(
-				almost_equal(
-					Balances::usable_balance(4),
-					user_4 + 3 * d_2_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(1),
+				user_1 + 3 * c_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(2),
+				user_2 + c_rewards + c_total_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(3),
+				user_3 + 3 * d_1_rewards,
+				Perbill::from_parts(1)
+			));
+			assert!(almost_equal(
+				Balances::usable_balance(4),
+				user_4 + 3 * d_2_rewards,
+				Perbill::from_parts(1)
+			));
 			// should not receive rewards due to revoked delegation
-			assert!(
-				almost_equal(
-					Balances::usable_balance(5),
-					user_5 + d_rewards,
-					Perbill::from_parts(1)
-				)
-			);
+			assert!(almost_equal(
+				Balances::usable_balance(5),
+				user_5 + d_rewards,
+				Perbill::from_parts(1)
+			));
 		});
 }
 

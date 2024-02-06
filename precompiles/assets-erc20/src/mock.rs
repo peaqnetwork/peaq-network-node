@@ -42,12 +42,11 @@ use frame_support::{
 	traits::{AsEnsureOriginWithArg, Everything},
 	weights::Weight,
 };
-use parity_scale_codec::{MaxEncodedLen};
+use parity_scale_codec::MaxEncodedLen;
 use precompile_utils::testing::*;
 
 use frame_system::EnsureRoot;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-
 
 use sp_core::{ConstU32, H160, H256};
 use sp_runtime::{
@@ -246,8 +245,6 @@ pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
 }
-
-
 
 impl ExtBuilder {
 	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {

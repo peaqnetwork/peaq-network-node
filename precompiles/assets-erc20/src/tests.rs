@@ -964,10 +964,7 @@ fn burn_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
-		assert_eq!(
-			Assets::balance(asset_id, &MockPeaqAccount::Bob),
-			init_amount - burn_amount
-		);
+		assert_eq!(Assets::balance(asset_id, &MockPeaqAccount::Bob), init_amount - burn_amount);
 	});
 }
 

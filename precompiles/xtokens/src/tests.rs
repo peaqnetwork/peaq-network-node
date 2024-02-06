@@ -459,10 +459,8 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(self_reserve),
-				fun: Fungibility::Fungible(500),
-			};
+			let expected_asset: MultiAsset =
+				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(500) };
 			let expected_fee: MultiAsset =
 				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(50) };
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {

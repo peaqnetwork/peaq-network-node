@@ -130,11 +130,8 @@ where
 			let value = value.unwrap_or(U256::zero());
 			let call_data = call_data.unwrap_or(vec![]);
 
-			let sub_context = Context {
-				caller: handle.context().caller,
-				address,
-				apparent_value: value,
-			};
+			let sub_context =
+				Context { caller: handle.context().caller, address, apparent_value: value };
 
 			let transfer = if value.is_zero() {
 				None

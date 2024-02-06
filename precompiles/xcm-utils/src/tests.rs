@@ -29,7 +29,7 @@ use crate::mock::{
 };
 use frame_support::{traits::PalletInfo, weights::Weight};
 use parity_scale_codec::Encode;
-use precompile_utils::{testing::*};
+use precompile_utils::testing::*;
 use sp_core::{H160, U256};
 use xcm::prelude::*;
 
@@ -196,10 +196,7 @@ fn test_send_clear_origin() {
 #[test]
 fn execute_fails_if_called_by_smart_contract() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockPeaqAccount::Alice, 1000),
-			(MockPeaqAccount::Bob, 1000),
-		])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000), (MockPeaqAccount::Bob, 1000)])
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
