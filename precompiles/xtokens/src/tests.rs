@@ -88,7 +88,7 @@ fn no_selector_exists_but_length_is_right() {
 #[test]
 fn transfer_self_reserve_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -103,7 +103,7 @@ fn transfer_self_reserve_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(0u128).into()),
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -116,7 +116,7 @@ fn transfer_self_reserve_works() {
 				fun: Fungibility::Fungible(500),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -130,7 +130,7 @@ fn transfer_self_reserve_works() {
 #[test]
 fn transfer_to_reserve_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -145,7 +145,7 @@ fn transfer_to_reserve_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -158,7 +158,7 @@ fn transfer_to_reserve_works() {
 				fun: Fungibility::Fungible(500),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -172,7 +172,7 @@ fn transfer_to_reserve_works() {
 #[test]
 fn transfer_to_reserve_with_unlimited_weight_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -187,7 +187,7 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: u64::MAX,
 					},
 				)
@@ -200,7 +200,7 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 				fun: Fungibility::Fungible(500),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -213,7 +213,7 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 #[test]
 fn transfer_to_reserve_with_fee_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -230,7 +230,7 @@ fn transfer_to_reserve_with_fee_works() {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
 						amount: 500.into(),
 						fee: 50.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -247,7 +247,7 @@ fn transfer_to_reserve_with_fee_works() {
 				fun: Fungibility::Fungible(50),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
 				dest: destination,
@@ -261,7 +261,7 @@ fn transfer_to_reserve_with_fee_works() {
 #[test]
 fn transfer_non_reserve_to_non_reserve_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -277,7 +277,7 @@ fn transfer_non_reserve_to_non_reserve_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -290,7 +290,7 @@ fn transfer_non_reserve_to_non_reserve_works() {
 				fun: Fungibility::Fungible(500),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -303,7 +303,7 @@ fn transfer_non_reserve_to_non_reserve_works() {
 #[test]
 fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -320,7 +320,7 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
 						amount: 500.into(),
 						fee: 50.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -337,7 +337,7 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 				fun: Fungibility::Fungible(50),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
 				dest: destination,
@@ -350,7 +350,7 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 #[test]
 fn transfer_multi_asset_to_reserve_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -365,9 +365,9 @@ fn transfer_multi_asset_to_reserve_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset {
-						asset: asset.clone(),
+						asset,
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -378,7 +378,7 @@ fn transfer_multi_asset_to_reserve_works() {
 			let expected_asset: MultiAsset =
 				MultiAsset { id: AssetId::Concrete(asset), fun: Fungibility::Fungible(500) };
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -392,7 +392,7 @@ fn transfer_multi_asset_to_reserve_works() {
 #[test]
 fn transfer_multi_asset_self_reserve_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -407,9 +407,9 @@ fn transfer_multi_asset_self_reserve_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset {
-						asset: self_reserve.clone(),
+						asset: self_reserve,
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -420,7 +420,7 @@ fn transfer_multi_asset_self_reserve_works() {
 			let expected_asset: MultiAsset =
 				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(500) };
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -433,7 +433,7 @@ fn transfer_multi_asset_self_reserve_works() {
 #[test]
 fn transfer_multi_asset_self_reserve_with_fee_works() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -448,10 +448,10 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset_with_fee {
-						asset: self_reserve.clone(),
+						asset: self_reserve,
 						amount: 500.into(),
 						fee: 50.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -460,13 +460,13 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 				.execute_returns(());
 
 			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(self_reserve.clone()),
+				id: AssetId::Concrete(self_reserve),
 				fun: Fungibility::Fungible(500),
 			};
 			let expected_fee: MultiAsset =
 				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(50) };
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
 				dest: destination,
@@ -479,7 +479,7 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 #[test]
 fn transfer_multi_asset_non_reserve_to_non_reserve() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -497,9 +497,9 @@ fn transfer_multi_asset_non_reserve_to_non_reserve() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset {
-						asset: asset_location.clone(),
+						asset: asset_location,
 						amount: 500.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -512,7 +512,7 @@ fn transfer_multi_asset_non_reserve_to_non_reserve() {
 				fun: Fungibility::Fungible(500),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
 				dest: destination,
@@ -525,7 +525,7 @@ fn transfer_multi_asset_non_reserve_to_non_reserve() {
 #[test]
 fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -543,10 +543,10 @@ fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset_with_fee {
-						asset: asset_location.clone(),
+						asset: asset_location,
 						amount: 500.into(),
 						fee: 50.into(),
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -555,7 +555,7 @@ fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 				.execute_returns(());
 
 			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(asset_location.clone()),
+				id: AssetId::Concrete(asset_location),
 				fun: Fungibility::Fungible(500),
 			};
 			let expected_fee: MultiAsset = MultiAsset {
@@ -563,7 +563,7 @@ fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 				fun: Fungibility::Fungible(50),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
 				dest: destination,
@@ -577,7 +577,7 @@ fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 #[test]
 fn transfer_multi_currencies() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -597,7 +597,7 @@ fn transfer_multi_currencies() {
 					PCall::transfer_multi_currencies {
 						currencies: currencies.into(),
 						fee_item: 0,
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -614,7 +614,7 @@ fn transfer_multi_currencies() {
 				fun: Fungibility::Fungible(500),
 			};
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset_1.clone(), expected_asset_2].into(),
 				fee: expected_asset_1,
 				dest: destination,
@@ -628,7 +628,7 @@ fn transfer_multi_currencies() {
 #[test]
 fn transfer_multi_assets() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -649,12 +649,12 @@ fn transfer_multi_assets() {
 			);
 
 			let assets: Vec<EvmMultiAsset> = vec![
-				(asset_1_location.clone(), U256::from(500)).into(),
-				(asset_2_location.clone(), U256::from(500)).into(),
+				(asset_1_location, U256::from(500)).into(),
+				(asset_2_location, U256::from(500)).into(),
 			];
 
 			let multiassets = MultiAssets::from_sorted_and_deduplicated(vec![
-				(asset_1_location.clone(), 500).into(),
+				(asset_1_location, 500).into(),
 				(asset_2_location, 500).into(),
 			])
 			.unwrap();
@@ -667,7 +667,7 @@ fn transfer_multi_assets() {
 					PCall::transfer_multi_assets {
 						assets: assets.into(),
 						fee_item: 0,
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -676,7 +676,7 @@ fn transfer_multi_assets() {
 				.execute_returns(());
 
 			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
-				sender: MockPeaqAccount::Alice.into(),
+				sender: MockPeaqAccount::Alice,
 				assets: multiassets,
 				fee: (asset_1_location, 500).into(),
 				dest: destination,
@@ -692,7 +692,7 @@ fn transfer_multi_assets() {
 #[test]
 fn transfer_multi_currencies_cannot_insert_more_than_max() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -713,7 +713,7 @@ fn transfer_multi_currencies_cannot_insert_more_than_max() {
 					PCall::transfer_multi_currencies {
 						currencies: currencies.into(),
 						fee_item: 0,
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -724,7 +724,7 @@ fn transfer_multi_currencies_cannot_insert_more_than_max() {
 #[test]
 fn transfer_multi_assets_cannot_insert_more_than_max() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -750,9 +750,9 @@ fn transfer_multi_assets_cannot_insert_more_than_max() {
 			);
 
 			let assets: Vec<EvmMultiAsset> = vec![
-				(asset_1_location.clone(), U256::from(500)).into(),
-				(asset_2_location.clone(), U256::from(500)).into(),
-				(asset_3_location.clone(), U256::from(500)).into(),
+				(asset_1_location, U256::from(500)).into(),
+				(asset_2_location, U256::from(500)).into(),
+				(asset_3_location, U256::from(500)).into(),
 			];
 
 			// We are transferring 3 assets, when max is 2
@@ -763,7 +763,7 @@ fn transfer_multi_assets_cannot_insert_more_than_max() {
 					PCall::transfer_multi_assets {
 						assets: assets.into(),
 						fee_item: 0,
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)
@@ -774,7 +774,7 @@ fn transfer_multi_assets_cannot_insert_more_than_max() {
 #[test]
 fn transfer_multi_assets_is_not_sorted_error() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let destination = MultiLocation::new(
@@ -796,8 +796,8 @@ fn transfer_multi_assets_is_not_sorted_error() {
 			);
 
 			let assets: Vec<EvmMultiAsset> = vec![
-				(asset_1_location.clone(), U256::from(500)).into(),
-				(asset_2_location.clone(), U256::from(500)).into(),
+				(asset_1_location, U256::from(500)).into(),
+				(asset_2_location, U256::from(500)).into(),
 			];
 
 			// We are transferring 3 assets, when max is 2
@@ -808,7 +808,7 @@ fn transfer_multi_assets_is_not_sorted_error() {
 					PCall::transfer_multi_assets {
 						assets: assets.into(),
 						fee_item: 0,
-						destination: destination.clone(),
+						destination,
 						weight: 4_000_000,
 					},
 				)

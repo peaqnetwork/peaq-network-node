@@ -28,12 +28,12 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{MaxEncodedLen};
 use precompile_utils::{precompile_set::*, testing::*};
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
+
+
 use sp_core::H256;
-use sp_io;
+
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -425,16 +425,13 @@ construct_runtime!(
 	}
 );
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
 }
 
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
-}
+
 
 impl ExtBuilder {
 	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {

@@ -29,7 +29,7 @@ use crate::mock::{
 };
 use frame_support::{traits::PalletInfo, weights::Weight};
 use parity_scale_codec::Encode;
-use precompile_utils::{prelude::Address, testing::*};
+use precompile_utils::{testing::*};
 use sp_core::{H160, U256};
 use xcm::prelude::*;
 
@@ -134,7 +134,7 @@ fn test_executor_transact() {
 	let _ = env_logger::try_init();
 
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000000000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000000000)])
 		.build()
 		.execute_with(|| {
 			let mut encoded: Vec<u8> = Vec::new();
@@ -145,7 +145,7 @@ fn test_executor_transact() {
 
 			// Then call bytes
 			let mut call_bytes = pallet_balances::Call::<Runtime>::transfer {
-				dest: MockPeaqAccount::Bob.into(),
+				dest: MockPeaqAccount::Bob,
 				value: 100u32.into(),
 			}
 			.encode();
@@ -167,7 +167,7 @@ fn test_executor_transact() {
 				.execute_returns(());
 
 			// Transact executed
-			let baltathar_account: AccountId = MockPeaqAccount::Bob.into();
+			let baltathar_account: AccountId = MockPeaqAccount::Bob;
 			assert_eq!(System::account(baltathar_account).data.free, 100);
 		});
 }
@@ -197,8 +197,8 @@ fn test_send_clear_origin() {
 fn execute_fails_if_called_by_smart_contract() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1000),
-			(MockPeaqAccount::Bob.into(), 1000),
+			(MockPeaqAccount::Alice, 1000),
+			(MockPeaqAccount::Bob, 1000),
 		])
 		.build()
 		.execute_with(|| {

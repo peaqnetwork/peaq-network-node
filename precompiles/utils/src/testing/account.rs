@@ -236,8 +236,8 @@ impl From<MockPeaqAccount> for H160 {
 			MockPeaqAccount::ParentAccount => H160::repeat_byte(0xEE),
 			MockPeaqAccount::SlibingParaAccount => H160::repeat_byte(0x11),
 			MockPeaqAccount::David => H160::repeat_byte(0x12),
-			MockPeaqAccount::EVMu1Account => H160::from_low_u64_be(1).into(),
-			MockPeaqAccount::EVMu2Account => H160::from_low_u64_be(2).into(),
+			MockPeaqAccount::EVMu1Account => H160::from_low_u64_be(1),
+			MockPeaqAccount::EVMu2Account => H160::from_low_u64_be(2),
 			MockPeaqAccount::AssetId(asset_id) => {
 				let mut data = [0u8; 20];
 				let id_as_bytes = asset_id.to_be_bytes();
@@ -260,8 +260,8 @@ impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
 			a if a == H160::repeat_byte(0xEE) => Self::ParentAccount,
 			a if a == H160::repeat_byte(0x11) => Self::SlibingParaAccount,
 			a if a == H160::repeat_byte(0x12) => Self::David,
-			a if a == H160::from_low_u64_be(1).into() => Self::EVMu1Account,
-			a if a == H160::from_low_u64_be(2).into() => Self::EVMu2Account,
+			a if a == H160::from_low_u64_be(1) => Self::EVMu1Account,
+			a if a == H160::from_low_u64_be(2) => Self::EVMu2Account,
 			_ => {
 				let mut data = [0u8; 16];
 				let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);

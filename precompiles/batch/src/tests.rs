@@ -78,7 +78,7 @@ fn selectors() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let mut tester = PrecompilesModifierTester::new(
@@ -179,7 +179,7 @@ fn batch_returns(
 
 			// Called from the precompile caller.
 			assert_eq!(context.caller, MockPeaqAccount::Alice.into());
-			assert_eq!(is_static, false);
+			assert!(!is_static);
 
 			match address {
 				a if a == MockPeaqAccount::Bob.into() => {
@@ -298,7 +298,7 @@ fn batch_out_of_gas(
 
 			// Called from the precompile caller.
 			assert_eq!(context.caller, MockPeaqAccount::Alice.into());
-			assert_eq!(is_static, false);
+			assert!(!is_static);
 
 			match address {
 				a if a == MockPeaqAccount::Bob.into() => {
@@ -375,7 +375,7 @@ fn batch_incomplete(
 
 			// Called from the precompile caller.
 			assert_eq!(context.caller, MockPeaqAccount::Alice.into());
-			assert_eq!(is_static, false);
+			assert!(!is_static);
 
 			match address {
 				a if a == MockPeaqAccount::Bob.into() => {
@@ -643,7 +643,7 @@ fn batch_some_until_failure_gas_limit() {
 #[test]
 fn evm_batch_some_transfers_enough() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -667,7 +667,7 @@ fn evm_batch_some_transfers_enough() {
 #[test]
 fn evm_batch_some_until_failure_transfers_enough() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -691,7 +691,7 @@ fn evm_batch_some_until_failure_transfers_enough() {
 #[test]
 fn evm_batch_all_transfers_enough() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -718,7 +718,7 @@ fn evm_batch_all_transfers_enough() {
 #[test]
 fn evm_batch_some_transfers_too_much() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -749,7 +749,7 @@ fn evm_batch_some_transfers_too_much() {
 #[test]
 fn evm_batch_some_until_failure_transfers_too_much() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -780,7 +780,7 @@ fn evm_batch_some_until_failure_transfers_too_much() {
 #[test]
 fn evm_batch_all_transfers_too_much() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -811,7 +811,7 @@ fn evm_batch_all_transfers_too_much() {
 #[test]
 fn evm_batch_some_contract_revert() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -842,7 +842,7 @@ fn evm_batch_some_contract_revert() {
 #[test]
 fn evm_batch_some_until_failure_contract_revert() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -873,7 +873,7 @@ fn evm_batch_some_until_failure_contract_revert() {
 #[test]
 fn evm_batch_all_contract_revert() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(RuntimeCall::Evm(evm_call(
@@ -904,7 +904,7 @@ fn evm_batch_all_contract_revert() {
 #[test]
 fn evm_batch_recursion_under_limit() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			// Mock sets the recursion limit to 2, and we 2 nested batch.
@@ -937,7 +937,7 @@ fn evm_batch_recursion_under_limit() {
 #[test]
 fn evm_batch_recursion_over_limit() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			// Mock sets the recursion limit to 2, and we 3 nested batch.
@@ -956,10 +956,10 @@ fn evm_batch_recursion_over_limit() {
 						vec![Address(MockPeaqAccount::Bob.into())],
 						vec![1000_u32.into()],
 						vec![],
-						vec![].into(),
+						vec![],
 					)
 					.into()],
-					vec![].into(),
+					vec![],
 				)
 				.into()],
 				vec![],
@@ -977,7 +977,7 @@ fn evm_batch_recursion_over_limit() {
 #[test]
 fn batch_not_callable_by_smart_contract() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			// "deploy" SC to alice address
@@ -1016,7 +1016,7 @@ fn batch_not_callable_by_smart_contract() {
 #[test]
 fn batch_is_not_callable_by_dummy_code() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 10_000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10_000)])
 		.build()
 		.execute_with(|| {
 			// "deploy" dummy code to alice address

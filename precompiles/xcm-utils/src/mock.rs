@@ -24,7 +24,7 @@ use frame_support::{
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use precompile_utils::{precompile_set::*, testing::*};
 use sp_core::{H256, U256};
-use sp_io;
+
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{
 	BlakeTwo256,
@@ -88,9 +88,9 @@ impl<
 	}
 
 	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
-		if who == MockPeaqAccount::ParentAccount.into() {
+		if who == MockPeaqAccount::ParentAccount {
 			Ok(MultiLocation { parents: 1, interior: Here })
-		} else if who == MockPeaqAccount::SlibingParaAccount.into() {
+		} else if who == MockPeaqAccount::SlibingParaAccount {
 			Ok(MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) })
 		} else {
 			Err(who)
@@ -109,7 +109,7 @@ impl sp_runtime::traits::Convert<AccountId, MultiLocation> for AccountIdToMultiL
 		let as_h160: H160 = account.into();
 		MultiLocation::new(
 			0,
-			Junctions::X1(AccountKey20 { network: None, key: as_h160.as_fixed_bytes().clone() }),
+			Junctions::X1(AccountKey20 { network: None, key: *as_h160.as_fixed_bytes() }),
 		)
 	}
 }
@@ -251,7 +251,7 @@ impl GasWeightMapping for MockGasWeightMapping {
 		Weight::from_parts(gas, 1)
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight.ref_time().into()
+		weight.ref_time()
 	}
 }
 
@@ -322,7 +322,7 @@ impl SendXcm for TestSendXcm {
 		message: &mut Option<opaque::Xcm>,
 	) -> SendResult<Self::Ticket> {
 		SENT_XCM.with(|q| {
-			q.borrow_mut().push((destination.clone().unwrap(), message.clone().unwrap()))
+			q.borrow_mut().push(((*destination).unwrap(), message.clone().unwrap()))
 		});
 		Ok(((), MultiAssets::new()))
 	}
@@ -380,7 +380,7 @@ parameter_types! {
 
 	pub UniversalLocation: InteriorMultiLocation = Here;
 	pub Ancestry: InteriorMultiLocation =
-		X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainId::get().into()).into());
+		X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainId::get().into()));
 
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
@@ -418,16 +418,13 @@ impl xcm_executor::Config for XcmConfig {
 	type SafeCallFilter = Everything;
 }
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
 }
 
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
-}
+
 
 impl ExtBuilder {
 	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
