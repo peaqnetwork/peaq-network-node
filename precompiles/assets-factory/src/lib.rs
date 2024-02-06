@@ -6,23 +6,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(test, feature(assert_matches))]
 
-use fp_evm::{PrecompileHandle};
+use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
-	traits::{
-		OriginTrait,
-		ConstU32,
-	},
+	traits::{ConstU32, OriginTrait},
 };
 
-use precompile_utils::prelude::BoundedBytes;
-use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
 use pallet_evm::AddressMapping;
+use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
 use precompile_utils::{
 	prelude::{
-		Address, InjectBacktrace,
-		RevertReason, RuntimeHelper, SYSTEM_ACCOUNT_SIZE,
+		Address, BoundedBytes, InjectBacktrace, RevertReason, RuntimeHelper, SYSTEM_ACCOUNT_SIZE,
 	},
 	solidity, EvmResult,
 };
@@ -31,8 +26,8 @@ use sp_runtime::traits::Bounded;
 use sp_core::{H160, U256};
 use sp_std::{
 	convert::{TryFrom, TryInto},
-	vec::Vec,
 	marker::PhantomData,
+	vec::Vec,
 };
 
 #[cfg(test)]
@@ -49,7 +44,8 @@ pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<I
 pub type AssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
 
 /// Alias for the Asset Id Parametertype for the provided Runtime and Instance.
-pub type AssetIdParameterOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetIdParameter;
+pub type AssetIdParameterOf<Runtime, Instance = ()> =
+	<Runtime as pallet_assets::Config<Instance>>::AssetIdParameter;
 
 pub struct AssetsFactoryPrecompile<Runtime, Instance: 'static = ()>(
 	PhantomData<(Runtime, Instance)>,
@@ -65,23 +61,22 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	AssetIdOf<Runtime, Instance>: TryFrom<u64>,
-    AssetIdParameterOf<Runtime, Instance>: TryFrom<u64>,
+	AssetIdParameterOf<Runtime, Instance>: TryFrom<u64>,
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
 {
-    #[precompile::public("convertAssetIdToAddress(uint64)")]
-    #[precompile::view]
-    fn convert_asset_id_to_address(
-        _handle: &mut impl PrecompileHandle,
-        id: u64,
-    ) -> EvmResult<Address> {
+	#[precompile::public("convertAssetIdToAddress(uint64)")]
+	#[precompile::view]
+	fn convert_asset_id_to_address(
+		_handle: &mut impl PrecompileHandle,
+		id: u64,
+	) -> EvmResult<Address> {
+		let asset_id = id
+			.try_into()
+			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 
-        let asset_id = id
-            .try_into()
-            .map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
-
-        Ok(Runtime::asset_id_to_address(asset_id).into())
-    }
+		Ok(Runtime::asset_id_to_address(asset_id).into())
+	}
 
 	#[precompile::public("create(uint64,address,uint128)")]
 	fn create(
@@ -143,8 +138,8 @@ where
 				Some(origin).into(),
 				pallet_assets::Call::<Runtime, Instance>::set_metadata {
 					id: asset_id,
-					name: name,
-					symbol: symbol,
+					name,
+					symbol,
 					decimals,
 				},
 				SYSTEM_ACCOUNT_SIZE,
@@ -256,10 +251,7 @@ where
 		Ok(())
 	}
 	#[precompile::public("startDestroy(uint64)")]
-	fn start_destroy(
-		handle: &mut impl PrecompileHandle,
-		id: u64,
-	) -> EvmResult {
+	fn start_destroy(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -272,9 +264,7 @@ where
 			RuntimeHelper::<Runtime>::try_dispatch(
 				handle,
 				Some(origin).into(),
-				pallet_assets::Call::<Runtime, Instance>::start_destroy {
-					id: asset_id,
-				},
+				pallet_assets::Call::<Runtime, Instance>::start_destroy { id: asset_id },
 				SYSTEM_ACCOUNT_SIZE,
 			)?;
 		}
@@ -283,10 +273,7 @@ where
 	}
 
 	#[precompile::public("finishDestroy(uint64)")]
-	fn finish_destroy(
-		handle: &mut impl PrecompileHandle,
-		id: u64,
-	) -> EvmResult {
+	fn finish_destroy(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -299,9 +286,7 @@ where
 			RuntimeHelper::<Runtime>::try_dispatch(
 				handle,
 				Some(origin).into(),
-				pallet_assets::Call::<Runtime, Instance>::finish_destroy {
-					id: asset_id,
-				},
+				pallet_assets::Call::<Runtime, Instance>::finish_destroy { id: asset_id },
 				SYSTEM_ACCOUNT_SIZE,
 			)?;
 		}

@@ -111,17 +111,15 @@ fn modifiers() {
 
 #[test]
 fn convert_asset_id_to_address() {
-     ExtBuilder::default()
-         .build()
-         .execute_with(|| {
-			let input = PCall::convert_asset_id_to_address { id: 3u64 };
+	ExtBuilder::default().build().execute_with(|| {
+		let input = PCall::convert_asset_id_to_address { id: 3u64 };
 
-			precompiles()
-				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
-				.expect_cost(0)
-				.expect_no_logs()
-				.execute_returns(Address(MockPeaqAccount::EVMu2Account.into()));
-         });
+		precompiles()
+			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
+			.expect_cost(0)
+			.expect_no_logs()
+			.execute_returns(Address(MockPeaqAccount::EVMu2Account.into()));
+	});
 }
 
 #[test]
@@ -203,10 +201,7 @@ fn set_min_balance() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
-					PCall::set_min_balance {
-						id: 7u64,
-						min_balance: 1000,
-					},
+					PCall::set_min_balance { id: 7u64, min_balance: 1000 },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -304,9 +299,7 @@ fn start_destroy() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
-					PCall::start_destroy {
-						id: 7u64,
-					},
+					PCall::start_destroy { id: 7u64 },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -336,9 +329,7 @@ fn end_destroy() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
-					PCall::start_destroy {
-						id: 7u64,
-					},
+					PCall::start_destroy { id: 7u64 },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -347,12 +338,9 @@ fn end_destroy() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
-					PCall::finish_destroy {
-						id: 7u64,
-					},
+					PCall::finish_destroy { id: 7u64 },
 				)
 				.expect_no_logs()
 				.execute_returns(());
-
 		});
 }
