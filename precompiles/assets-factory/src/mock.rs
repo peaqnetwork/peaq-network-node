@@ -42,13 +42,12 @@ use frame_support::{
 	traits::{AsEnsureOriginWithArg, Everything},
 	weights::Weight,
 };
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use precompile_utils::{precompile_set::*, testing::*};
 
 use frame_system::EnsureRoot;
-use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
+
+
 use sp_core::{ConstU32, H160, H256};
 use sp_runtime::{
 	testing::Header,

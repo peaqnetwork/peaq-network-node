@@ -33,15 +33,13 @@
 
 // You should have received a copy of the GNU General Public License
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
-use frame_support::assert_ok;
-use sp_runtime::traits::Zero;
-use std::str::from_utf8;
+
+
+
 
 use crate::{mock::*, *};
 
 use precompile_utils::testing::*;
-// use precompile_utils::{prelude::LogsBuilder, testing::*, EvmDataWriter};
-use sha3::{Digest, Keccak256};
 
 fn precompiles() -> Precompiles<Runtime> {
 	PrecompilesValue::get()

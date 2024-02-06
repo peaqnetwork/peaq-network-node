@@ -21,6 +21,7 @@ use precompile_utils::{
 	},
 	solidity, EvmResult,
 };
+use precompile_utils::prelude::PrecompileHandleExt;
 use sp_runtime::traits::Bounded;
 
 use sp_core::{H160, U256};
@@ -85,6 +86,8 @@ where
 		admin: Address,
 		min_balance: u128,
 	) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let admin: H160 = admin.into();
 		let asset_id = id
 			.try_into()
@@ -122,6 +125,8 @@ where
 		symbol: BoundedBytes<GetBytesLimit>,
 		decimals: u8,
 	) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -155,6 +160,8 @@ where
 		id: u64,
 		min_balance: u128,
 	) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -189,6 +196,8 @@ where
 		admin: Address,
 		freezer: Address,
 	) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -226,6 +235,8 @@ where
 		id: u64,
 		owner: Address,
 	) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -252,6 +263,8 @@ where
 	}
 	#[precompile::public("startDestroy(uint64)")]
 	fn start_destroy(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
@@ -274,6 +287,8 @@ where
 
 	#[precompile::public("finishDestroy(uint64)")]
 	fn finish_destroy(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
