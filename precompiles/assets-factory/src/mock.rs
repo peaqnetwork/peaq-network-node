@@ -43,7 +43,7 @@ use frame_support::{
 	weights::Weight,
 };
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
-use precompile_utils::testing::*;
+use precompile_utils::{precompile_set::*, testing::*};
 
 use frame_system::EnsureRoot;
 use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
@@ -62,28 +62,19 @@ pub type BlockNumber = u64;
 pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 
-pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
-
 // Implement the trait, where we convert AccountId to AssetID
 impl EVMAddressToAssetId<AssetId> for Runtime {
 	/// The way to convert an account to assetId is by ensuring that the prefix is 0XFFFFFFFF
 	/// and by taking the lowest 128 bits as the assetId
-	fn address_to_asset_id(address: H160) -> Option<AssetId> {
-		let mut data = [0u8; 16];
-		let address_bytes: [u8; 20] = address.into();
-		if ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
-			data.copy_from_slice(&address_bytes[4..20]);
-			Some(u128::from_be_bytes(data))
-		} else {
-			None
-		}
+	fn address_to_asset_id(_address: H160) -> Option<AssetId> {
+		None
 	}
 
 	fn asset_id_to_address(asset_id: AssetId) -> H160 {
-		let mut data = [0u8; 20];
-		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
-		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
-		H160::from(data)
+		match asset_id {
+			3 => MockPeaqAccount::EVMu2Account.into(),
+			_ => H160::from([0u8; 20]),
+		}
 	}
 }
 
@@ -153,12 +144,15 @@ impl pallet_balances::Config for Runtime {
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block Storage Limit in bytes. Set to 40KB.
 const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
-pub type PCall = Erc20AssetsPrecompileSetCall<Runtime, ()>;
+pub type PCall = AssetsFactoryPrecompileCall<Runtime, ()>;
+
+pub type Precompiles<R> =
+	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<1>, AssetsFactoryPrecompile<R>>,)>;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
-	pub const PrecompilesValue: Erc20AssetsPrecompileSet<Runtime> =
-		Erc20AssetsPrecompileSet(PhantomData);
+	pub PrecompilesValue: Precompiles<Runtime> = Precompiles::new();
+
 	pub WeightPerGas: Weight = Weight::from_parts(1, 0);
 	pub GasLimitPovSizeRatio: u64 = {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
@@ -180,7 +174,7 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type PrecompilesType = Erc20AssetsPrecompileSet<Self>;
+	type PrecompilesType = Precompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ();
 	type OnChargeTransaction = ();

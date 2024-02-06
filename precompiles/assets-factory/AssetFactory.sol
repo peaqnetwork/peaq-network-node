@@ -12,32 +12,36 @@ AssetFactory constant ASSET_FACTORY_CONTRACT = AssetFactory(ASSET_FACTORY_ADDRES
 /// The interface through which solidity contracts will interact with xcm utils pallet
 /// @custom:address 0x0000000000000000000000000000000000000806
 interface AssetFactory {
+
     /// Get the address of the asset with the given id
-    /// @custom: selector ?????
-    function convertAssetIdToAddress(uint32 id) external view returns (address);
+    /// selector: a70174cb
+    function convertAssetIdToAddress(uint64 id) external view returns (address);
 
     /// Issue a new class of fungible assets from a public origin
-    /// @custom:selector ?????
-    /// TODO see whether we return the id and address?
-    function create(uint32 id, address admin, uint128 minBalance) external;
+    /// selector: 9c28547e
+    function create(uint64 id, address admin, uint128 minBalance) external;
 
     /// Set the metadata for a given asset
-    /// @custom:selector ?????
-    function setMetadata(uint32 id, bytes memory name, bytes memory symbol, uint8 decimal) external;
+    /// selector: f96ee86d
+    function setMetadata(uint64 id, bytes memory name, bytes memory symbol, uint8 decimal) external;
 
     /// Set the minimum balance for a given asset
-    /// @custom:selector ?????
-    function setMinBalance(uint32 id, uint128 minBalance) external;
+    /// selector: 28bfefa1
+    function setMinBalance(uint64 id, uint128 minBalance) external;
 
     /// Set the issuer, Admin and Freezer of a given asset
-    /// @custom:selector ?????
-    function setTeam(uint32 id, address issuer, address admin, address freezer) external;
+    /// selector: b6e6b7d4
+    function setTeam(uint64 id, address issuer, address admin, address freezer) external;
+
+    /// Transfer ownership of a given asset
+    /// selector: 0a94864e
+    function transferOwnership(uint64 id, address owner) external;
 
      /// Start the process of destroying a fungible asset class
-    /// @custom:selector ?????
-    function startDestroy(uint32 id) external;
+    /// selector: 13f946af
+    function startDestroy(uint64 id) external;
 
      /// Complete destroying asset and unreserve currency
-    /// @custom:selector ?????
-    function finishDestroy(uint32 id) external;
+    /// selector: 99c720ff
+    function finishDestroy(uint64 id) external;
 }
