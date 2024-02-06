@@ -6904,6 +6904,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-assets-factory"
+version = "0.0.1"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum 0.5.11",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-evm-precompile-assets-erc20",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-batch"
 version = "0.1.0"
 dependencies = [
@@ -8149,6 +8176,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
+ "pallet-evm-precompile-assets-factory",
  "pallet-evm-precompile-batch",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
