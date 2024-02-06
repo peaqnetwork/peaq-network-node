@@ -23,7 +23,7 @@ parameter_types! {
 
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
-/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Peaq specific
+/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Peaq-dev specific
 pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 	R,
 	(
