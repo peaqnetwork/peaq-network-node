@@ -20,26 +20,24 @@ interface AssetFactory {
     /// @custom:selector ?????
     /// TODO see whether we return the id and address?
     function create(uint32 id, address admin, uint128 minBalance) external;
-/*
- *
- *     /// Set the metadata for a given asset
- *     /// @custom:selector ?????
- *     function setMetadata(uint32 id, bytes memory name, bytes memory symbol) external;
- *
- *     /// Set the minimum balance for a given asset
- *     /// @custom:selector ?????
- *     function setMinBalance(uint32 id, uint128 minBalance) external;
- *
- *     /// Set the issuer, Admin and Freezer of a given asset
- *     /// @custom:selector ?????
- *     function setIssuerAdminFreezer(uint32 id, address issuer, address admin, address freezer) external;
- *
- *     /// Start the process of destroying a fungible asset class
- *     /// @custom:selector ?????
- *     function destroy(uint32 id) external;
- *
- *     /// Complete destroying asset and unreserve currency
- *     /// @custom:selector ?????
- *     function finishDestroy(uint32 id) external;
- */
+
+    /// Set the metadata for a given asset
+    /// @custom:selector ?????
+    function setMetadata(uint32 id, bytes memory name, bytes memory symbol, uint8 decimal) external;
+
+    /// Set the minimum balance for a given asset
+    /// @custom:selector ?????
+    function setMinBalance(uint32 id, uint128 minBalance) external;
+
+    /// Set the issuer, Admin and Freezer of a given asset
+    /// @custom:selector ?????
+    function setTeam(uint32 id, address issuer, address admin, address freezer) external;
+
+     /// Start the process of destroying a fungible asset class
+    /// @custom:selector ?????
+    function startDestroy(uint32 id) external;
+
+     /// Complete destroying asset and unreserve currency
+    /// @custom:selector ?????
+    function finishDestroy(uint32 id) external;
 }
