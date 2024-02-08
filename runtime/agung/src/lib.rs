@@ -92,8 +92,8 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 // Polkadot imports
 use peaq_primitives_xcm::{
-	Address, AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance, EvmRevertCodeHandler,
-	Header, Moment, Nonce, RbacEntityId, NATIVE_CURRNECY_ID,
+	Address, AssetId, AssetIdExt, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
+	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, NATIVE_CURRNECY_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -104,7 +104,7 @@ pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
 
 // For Zenlink-DEX-Module
-use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+use peaq_primitives_xcm::EVMAddressToAssetId;
 
 pub use precompiles::EVMAssetPrefix;
 

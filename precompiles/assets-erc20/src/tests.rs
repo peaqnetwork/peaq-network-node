@@ -50,9 +50,11 @@ fn precompiles() -> Erc20AssetsPrecompileSet<Runtime> {
 #[test]
 fn selector_less_than_four_bytes() {
 	ExtBuilder::default().build().execute_with(|| {
+		let asset_id = MockAssetId(0u128);
+
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
-			0u128,
+			asset_id,
 			MockPeaqAccount::Alice,
 			true,
 			1
@@ -61,7 +63,7 @@ fn selector_less_than_four_bytes() {
 		precompiles()
 			.prepare_test(
 				MockPeaqAccount::Alice,
-				MockPeaqAccount::AssetId(0u128),
+				MockPeaqAccount::AssetId(asset_id),
 				vec![1u8, 2u8, 3u8],
 			)
 			.execute_reverts(|output| output == b"Tried to read selector out of bounds");
@@ -71,9 +73,11 @@ fn selector_less_than_four_bytes() {
 #[test]
 fn no_selector_exists_but_length_is_right() {
 	ExtBuilder::default().build().execute_with(|| {
+		let asset_id = MockAssetId(0u128);
+
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
-			0u128,
+			asset_id,
 			MockPeaqAccount::Alice,
 			true,
 			1
@@ -82,7 +86,7 @@ fn no_selector_exists_but_length_is_right() {
 		precompiles()
 			.prepare_test(
 				MockPeaqAccount::Alice,
-				MockPeaqAccount::AssetId(0u128),
+				MockPeaqAccount::AssetId(asset_id),
 				vec![1u8, 2u8, 3u8, 4u8],
 			)
 			.execute_reverts(|output| output == b"Unknown selector");
@@ -121,9 +125,11 @@ fn modifiers() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
@@ -131,7 +137,7 @@ fn modifiers() {
 			let mut tester = PrecompilesModifierTester::new(
 				precompiles(),
 				MockPeaqAccount::Alice,
-				MockPeaqAccount::AssetId(0u128),
+				MockPeaqAccount::AssetId(asset_id),
 			);
 
 			tester.test_view_modifier(PCall::balance_of_selectors());
@@ -156,16 +162,18 @@ fn get_total_supply() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000), (MockPeaqAccount::Bob, 2500)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -173,7 +181,7 @@ fn get_total_supply() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::total_supply {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -187,16 +195,18 @@ fn get_balances_known_user() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -204,7 +214,7 @@ fn get_balances_known_user() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -219,9 +229,11 @@ fn get_balances_unknown_user() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
@@ -230,7 +242,7 @@ fn get_balances_unknown_user() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -245,16 +257,18 @@ fn approve() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -262,13 +276,13 @@ fn approve() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -284,16 +298,18 @@ fn approve_saturating() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -301,13 +317,13 @@ fn approve_saturating() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::MAX,
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -318,7 +334,7 @@ fn approve_saturating() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::allowance {
 						owner: Address(MockPeaqAccount::Alice.into()),
 						spender: Address(MockPeaqAccount::Bob.into()),
@@ -336,16 +352,18 @@ fn check_allowance_existing() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
+
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -353,7 +371,7 @@ fn check_allowance_existing() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
@@ -364,7 +382,7 @@ fn check_allowance_existing() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::allowance {
 						owner: Address(MockPeaqAccount::Alice.into()),
 						spender: Address(MockPeaqAccount::Bob.into()),
@@ -382,9 +400,10 @@ fn check_allowance_not_existing() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
@@ -393,7 +412,7 @@ fn check_allowance_not_existing() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::allowance {
 						owner: Address(MockPeaqAccount::Alice.into()),
 						spender: Address(MockPeaqAccount::Bob.into()),
@@ -411,16 +430,17 @@ fn transfer() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -428,13 +448,13 @@ fn transfer() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer {
 						to: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_TRANSFER,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -445,7 +465,7 @@ fn transfer() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -455,7 +475,7 @@ fn transfer() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -470,16 +490,17 @@ fn transfer_not_enough_founds() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1
 			));
@@ -487,7 +508,7 @@ fn transfer_not_enough_founds() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer {
 						to: Address(MockPeaqAccount::Charlie.into()),
 						amount: U256::from(50),
@@ -508,16 +529,17 @@ fn transfer_from() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -525,7 +547,7 @@ fn transfer_from() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
@@ -536,7 +558,7 @@ fn transfer_from() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
@@ -547,14 +569,14 @@ fn transfer_from() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob, // Bob is the one sending transferFrom!
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Charlie.into()),
 						amount: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_TRANSFER,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Charlie,
@@ -565,7 +587,7 @@ fn transfer_from() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -575,7 +597,7 @@ fn transfer_from() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -585,7 +607,7 @@ fn transfer_from() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Charlie,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Charlie.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -600,16 +622,17 @@ fn transfer_from_non_incremental_approval() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -618,13 +641,13 @@ fn transfer_from_non_incremental_approval() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(500),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -639,13 +662,13 @@ fn transfer_from_non_incremental_approval() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(300),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -657,7 +680,7 @@ fn transfer_from_non_incremental_approval() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob, // Bob is the one sending transferFrom!
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Bob.into()),
@@ -678,16 +701,17 @@ fn transfer_from_above_allowance() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -695,7 +719,7 @@ fn transfer_from_above_allowance() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(300),
@@ -706,7 +730,7 @@ fn transfer_from_above_allowance() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob, // Bob is the one sending transferFrom!
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Bob.into()),
@@ -727,16 +751,17 @@ fn transfer_from_self() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(MockPeaqAccount::Alice),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				1000
 			));
@@ -745,14 +770,14 @@ fn transfer_from_self() {
 				.prepare_test(
 					MockPeaqAccount::Alice, /* Alice sending transferFrom herself, no need for
 					                         * allowance. */
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Bob.into()),
 						amount: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 					SELECTOR_LOG_TRANSFER,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -763,7 +788,7 @@ fn transfer_from_self() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -773,7 +798,7 @@ fn transfer_from_self() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -788,16 +813,17 @@ fn get_metadata() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000), (MockPeaqAccount::Bob, 2500)])
 		.build()
 		.execute_with(|| {
+			let asset_id = MockAssetId(0u128);
 			assert_ok!(Assets::force_create(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				MockPeaqAccount::Alice,
 				true,
 				1
 			));
 			assert_ok!(Assets::force_set_metadata(
 				RuntimeOrigin::root(),
-				0u128,
+				asset_id,
 				b"TestToken".to_vec(),
 				b"Test".to_vec(),
 				12,
@@ -807,7 +833,7 @@ fn get_metadata() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::name {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -817,7 +843,7 @@ fn get_metadata() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::symbol {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -827,7 +853,7 @@ fn get_metadata() {
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
-					MockPeaqAccount::AssetId(0u128),
+					MockPeaqAccount::AssetId(asset_id),
 					PCall::decimals {},
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
@@ -839,10 +865,11 @@ fn get_metadata() {
 #[test]
 fn minimum_balance_is_right() {
 	ExtBuilder::default().build().execute_with(|| {
+		let asset_id = MockAssetId(0u128);
 		let expected_min_balance = 19;
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
-			0u128,
+			asset_id,
 			MockPeaqAccount::Alice,
 			true,
 			expected_min_balance,
@@ -851,7 +878,7 @@ fn minimum_balance_is_right() {
 		precompiles()
 			.prepare_test(
 				MockPeaqAccount::Alice,
-				MockPeaqAccount::AssetId(0u128),
+				MockPeaqAccount::AssetId(asset_id),
 				PCall::minimum_balance {},
 			)
 			.expect_cost(0) // TODO: Test db read/write costs
@@ -863,7 +890,7 @@ fn minimum_balance_is_right() {
 #[test]
 fn mint_is_ok() {
 	ExtBuilder::default().build().execute_with(|| {
-		let asset_id = 0;
+		let asset_id = MockAssetId(0);
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
@@ -886,7 +913,7 @@ fn mint_is_ok() {
 					amount: U256::from(mint_amount),
 				},
 			)
-			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
 				SELECTOR_LOG_TRANSFER,
 				H160::zero(),
 				MockPeaqAccount::Bob,
@@ -902,7 +929,7 @@ fn mint_is_ok() {
 #[test]
 fn mint_non_admin_is_not_ok() {
 	ExtBuilder::default().build().execute_with(|| {
-		let asset_id = 0;
+		let asset_id = MockAssetId(0);
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
@@ -925,7 +952,7 @@ fn mint_non_admin_is_not_ok() {
 #[test]
 fn burn_is_ok() {
 	ExtBuilder::default().build().execute_with(|| {
-		let asset_id = 0;
+		let asset_id = MockAssetId(0);
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,
@@ -955,7 +982,7 @@ fn burn_is_ok() {
 					amount: U256::from(burn_amount),
 				},
 			)
-			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128).into()).log3(
+			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128.into()).into()).log3(
 				SELECTOR_LOG_TRANSFER,
 				MockPeaqAccount::Bob,
 				H160::zero(),
@@ -971,7 +998,7 @@ fn burn_is_ok() {
 #[test]
 fn burn_non_admin_is_not_ok() {
 	ExtBuilder::default().build().execute_with(|| {
-		let asset_id = 0;
+		let asset_id = MockAssetId(0);
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			asset_id,

@@ -101,7 +101,7 @@ fn transfer_self_reserve_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer {
-						currency_address: Address(MockPeaqAccount::AssetId(0u128).into()),
+						currency_address: Address(MockPeaqAccount::AssetId(0u128.into()).into()),
 						amount: 500.into(),
 						destination,
 						weight: 4_000_000,
@@ -143,7 +143,7 @@ fn transfer_to_reserve_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer {
-						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
+						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						destination,
 						weight: 4_000_000,
@@ -185,7 +185,7 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer {
-						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
+						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						destination,
 						weight: u64::MAX,
@@ -227,7 +227,7 @@ fn transfer_to_reserve_with_fee_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_with_fee {
-						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
+						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						fee: 50.into(),
 						destination,
@@ -275,7 +275,7 @@ fn transfer_non_reserve_to_non_reserve_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer {
-						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
+						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						destination,
 						weight: 4_000_000,
@@ -317,7 +317,7 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_with_fee {
-						currency_address: Address(MockPeaqAccount::AssetId(1u128).into()),
+						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						fee: 50.into(),
 						destination,
@@ -583,8 +583,8 @@ fn transfer_multi_currencies() {
 				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
 			);
 			let currencies: Vec<Currency> = vec![
-				(Address(MockPeaqAccount::AssetId(2u128).into()), U256::from(500)).into(),
-				(Address(MockPeaqAccount::AssetId(3u128).into()), U256::from(500)).into(),
+				(Address(MockPeaqAccount::AssetId(2u128.into()).into()), U256::from(500)).into(),
+				(Address(MockPeaqAccount::AssetId(3u128.into()).into()), U256::from(500)).into(),
 			];
 
 			// We are transferring 2 assets
@@ -698,9 +698,9 @@ fn transfer_multi_currencies_cannot_insert_more_than_max() {
 				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
 			);
 			let currencies: Vec<Currency> = vec![
-				(Address(MockPeaqAccount::AssetId(1u128).into()), U256::from(500)).into(),
-				(Address(MockPeaqAccount::AssetId(2u128).into()), U256::from(500)).into(),
-				(Address(MockPeaqAccount::AssetId(3u128).into()), U256::from(500)).into(),
+				(Address(MockPeaqAccount::AssetId(1u128.into()).into()), U256::from(500)).into(),
+				(Address(MockPeaqAccount::AssetId(2u128.into()).into()), U256::from(500)).into(),
+				(Address(MockPeaqAccount::AssetId(3u128.into()).into()), U256::from(500)).into(),
 			];
 
 			// We are transferring 3 assets, when max is 2

@@ -14,16 +14,17 @@ use frame_support::{
 };
 
 use pallet_evm::AddressMapping;
-use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
 	prelude::{
-		Address, BoundedBytes, InjectBacktrace, RevertReason, RuntimeHelper, SYSTEM_ACCOUNT_SIZE,
+		Address, BoundedBytes, InjectBacktrace, PrecompileHandleExt, RevertReason, RuntimeHelper,
+		SYSTEM_ACCOUNT_SIZE,
 	},
 	solidity, EvmResult,
 };
-use precompile_utils::prelude::PrecompileHandleExt;
 use sp_runtime::traits::Bounded;
 
+use peaq_primitives_xcm::AssetIdExt;
 use sp_core::{H160, U256};
 use sp_std::{
 	convert::{TryFrom, TryInto},
@@ -61,8 +62,8 @@ where
 	Runtime::RuntimeCall: From<pallet_assets::Call<Runtime, Instance>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
-	AssetIdOf<Runtime, Instance>: TryFrom<u64>,
-	AssetIdParameterOf<Runtime, Instance>: TryFrom<u64>,
+	AssetIdOf<Runtime, Instance>: TryFrom<u64> + AssetIdExt,
+	AssetIdParameterOf<Runtime, Instance>: TryFrom<u64> + AssetIdExt,
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
 {
@@ -89,9 +90,13 @@ where
 		handle.record_log_costs_manual(3, 32)?;
 
 		let admin: H160 = admin.into();
-		let asset_id = id
+		let asset_id: AssetIdParameterOf<Runtime, Instance> = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+
+		if !asset_id.is_allow_to_create() {
+			return Err(RevertReason::Custom("Invalid asset id".into()).into())
+		}
 
 		let min_balance: BalanceOf<Runtime, Instance> =
 			min_balance.try_into().unwrap_or_else(|_| Bounded::max_value());

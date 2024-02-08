@@ -12,6 +12,7 @@ slices = { workspace = true }
 
 precompile-utils = { path = "../utils", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "../assets-erc20", default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 
 # Substrate
 frame-support = { workspace = true }
@@ -50,6 +51,7 @@ std = [
 	"pallet-balances/std",
 	"pallet-evm-precompile-assets-erc20/std",
 	"precompile-utils/std",
+	"peaq-primitives-xcm/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",

@@ -185,7 +185,57 @@ mock_account!(SiblingParachainAccount(u32), |v: SiblingParachainAccount| {
 	AddressInPrefixedSet(0xffffffff, v.0 as u128).into()
 });
 
-pub type MockAssetId = u128;
+/// A simple asset id type.
+#[derive(
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Clone,
+	Copy,
+	Encode,
+	Decode,
+	Debug,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+	derive_more::Display,
+	TypeInfo,
+)]
+pub struct MockAssetId(pub u128);
+
+impl From<MockAssetId> for u128 {
+	fn from(asset_id: MockAssetId) -> u128 {
+		asset_id.0
+	}
+}
+
+impl From<u128> for MockAssetId {
+	fn from(index: u128) -> MockAssetId {
+		MockAssetId(index)
+	}
+}
+
+impl TryFrom<u64> for MockAssetId {
+	type Error = ();
+
+	fn try_from(index: u64) -> Result<Self, Self::Error> {
+		Ok(MockAssetId(index as u128))
+	}
+}
+
+impl peaq_primitives_xcm::AssetIdExt for MockAssetId {
+	fn is_native_token(&self) -> bool {
+		self.0 == 0
+	}
+
+	fn is_allow_to_create(&self) -> bool {
+		if self.is_native_token() {
+			return false
+		}
+		return true
+	}
+}
 
 /// A simple account type.
 #[derive(
@@ -240,7 +290,7 @@ impl From<MockPeaqAccount> for H160 {
 			MockPeaqAccount::EVMu2Account => H160::from_low_u64_be(2),
 			MockPeaqAccount::AssetId(asset_id) => {
 				let mut data = [0u8; 20];
-				let id_as_bytes = asset_id.to_be_bytes();
+				let id_as_bytes = asset_id.0.to_be_bytes();
 				data[0..4].copy_from_slice(&[255u8; 4]);
 				data[4..20].copy_from_slice(&id_as_bytes);
 				H160::from_slice(&data)
@@ -268,7 +318,7 @@ impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
 				if prefix_part == &[255u8; 4] {
 					data.copy_from_slice(id_part);
 
-					return Self::AssetId(u128::from_be_bytes(data))
+					return Self::AssetId(MockAssetId(u128::from_be_bytes(data)))
 				}
 				Self::Bogus
 			},

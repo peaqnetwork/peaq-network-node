@@ -47,7 +47,6 @@ use precompile_utils::{precompile_set::*, testing::*};
 use frame_system::EnsureRoot;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 
-
 use sp_core::{ConstU32, H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -71,7 +70,7 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 
 	fn asset_id_to_address(asset_id: AssetId) -> H160 {
 		match asset_id {
-			3 => MockPeaqAccount::EVMu2Account.into(),
+			MockAssetId(3) => MockPeaqAccount::EVMu2Account.into(),
 			_ => H160::from([0u8; 20]),
 		}
 	}

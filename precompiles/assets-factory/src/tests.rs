@@ -34,9 +34,6 @@
 // You should have received a copy of the GNU General Public License
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
 use crate::{mock::*, *};
 
 use precompile_utils::testing::*;
