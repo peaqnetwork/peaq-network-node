@@ -1,0 +1,54 @@
+name: Manual Build, Deploy and Autotest 
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-build_and_publish:
+    name: Build and Publish Docker image
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v3
+    - name: Trigger Build Docker Image workflow
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
+      with:
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
+        workflow_file_name: publishondhr.yml
+        ref: ${{ github.ref_name }}
+        trigger_workflow: true
+        wait_workflow: true
+  trigger-deploy:
+    name: Deploy
+    runs-on: ubuntu-20.04
+    needs: trigger-build_and_publish
+    steps:
+    - name: Trigger Deployment workflow
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
+      with:
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
+        workflow_file_name: deployment.yml
+        ref: ${{ github.ref_name }}
+        trigger_workflow: true
+        wait_workflow: true
+  trigger-autotest:
+    name: Autotest
+    runs-on: ubuntu-20.04
+    needs: trigger-deploy
+    steps:
+    - name: Trigger Autotest workflow
+      uses: convictional/trigger-workflow-and-wait@v1.6.1
+      with:
+        owner: ${{ github.repository_owner }}
+        repo: ${{ github.event.repository.name }}
+        github_token: ${{ secrets.GHACTION }}
+        workflow_file_name: autotest.yml
+        ref: ${{ github.ref_name }}
+        trigger_workflow: true
+        wait_workflow: true
+  
+
+  
