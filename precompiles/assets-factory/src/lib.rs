@@ -18,7 +18,6 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
 	prelude::{
 		Address, BoundedBytes, InjectBacktrace, PrecompileHandleExt, RevertReason, RuntimeHelper,
-		SYSTEM_ACCOUNT_SIZE,
 	},
 	solidity, EvmResult,
 };
@@ -115,7 +114,7 @@ where
 					admin: Runtime::Lookup::unlookup(admin),
 					min_balance,
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -152,7 +151,7 @@ where
 					symbol,
 					decimals,
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -186,7 +185,7 @@ where
 					id: asset_id,
 					min_balance,
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -227,7 +226,7 @@ where
 					admin: Runtime::Lookup::unlookup(admin),
 					freezer: Runtime::Lookup::unlookup(freezer),
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -260,7 +259,7 @@ where
 					id: asset_id,
 					owner: Runtime::Lookup::unlookup(owner),
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -283,7 +282,7 @@ where
 				handle,
 				Some(origin).into(),
 				pallet_assets::Call::<Runtime, Instance>::start_destroy { id: asset_id },
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -307,7 +306,7 @@ where
 				handle,
 				Some(origin).into(),
 				pallet_assets::Call::<Runtime, Instance>::finish_destroy { id: asset_id },
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
