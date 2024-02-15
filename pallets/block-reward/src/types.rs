@@ -64,7 +64,7 @@ pub struct RewardDistributionConfigV0 {
 
 impl Default for RewardDistributionConfigV0 {
 	/// `default` values based on configuration at the time of writing this code.
-	/// Should be overriden by desired params.
+	/// Should be overridden by desired params.
 	fn default() -> Self {
 		RewardDistributionConfigV0 {
 			treasury_percent: Perbill::from_percent(15),
@@ -104,7 +104,7 @@ pub struct RewardDistributionConfig {
 
 impl Default for RewardDistributionConfig {
 	/// `default` values based on configuration at the time of writing this code.
-	/// Should be overriden by desired params.
+	/// Should be overridden by desired params.
 	fn default() -> Self {
 		RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(15),
@@ -120,7 +120,7 @@ impl Default for RewardDistributionConfig {
 impl RewardDistributionConfig {
 	/// `true` if sum of all percentages is `one whole`, `false` otherwise.
 	pub fn is_consistent(&self) -> bool {
-		// TODO: perhaps this can be writen in a more cleaner way?
+		// TODO: perhaps this can be written in a more cleaner way?
 		// experimental-only `try_reduce` could be used but it's not available
 		// https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.try_reduce
 

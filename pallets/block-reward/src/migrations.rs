@@ -43,7 +43,7 @@ mod v2 {
 
 			if onchain_version < current {
 				log!(info, "Enter and do the migration, {:?} < {:?}", onchain_version, current);
-				// Deprecated the ObsoletRelease because ther are some wrong settings.. Therefore,
+				// Deprecated the ObsoletRelease because there are some wrong settings.. Therefore,
 				// try to use another checking
 				if HardCap::<T>::exists() {
 					log!(info, "Migrating block_reward to Releases::V2_1_0");
