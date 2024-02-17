@@ -37,7 +37,8 @@ pub enum AssetId {
 	LPToken(u32, u32),
 }
 
-pub const NATIVE_CURRNECY_ID: AssetId = AssetId::Token(0);
+pub const NATIVE_ASSET_ID: u64 = 0;
+pub const NATIVE_CURRNECY_ID: AssetId = AssetId::Token(NATIVE_ASSET_ID as u32);
 const TOKEN_MASK: u32 = 0b0000_1111_1111_1111_1111_1111_1111_1111;
 impl AssetId {
 	pub fn is_token(&self) -> bool {
@@ -130,12 +131,13 @@ impl Default for AssetId {
 // Zenlink (2000, 0, 0) and (2000, 2, 0) map to AssetId::Token(0)
 pub struct AssetIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<AssetId, Option<ZenlinkAssetId>> for AssetIdToZenlinkId<GetParaId>
+impl<GetParaId> Convert<u64, Option<ZenlinkAssetId>> for AssetIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {
-	fn convert(asset_id: AssetId) -> Option<ZenlinkAssetId> {
-		let asset_index = <AssetId as TryInto<u64>>::try_into(asset_id).ok()?;
+	fn convert(asset_id: u64) -> Option<ZenlinkAssetId> {
+		let asset_index = asset_id;
+		let asset_id: AssetId = asset_index.try_into().ok()?;
 		match asset_id {
 			AssetId::Token(symbol) => {
 				let asset_type =

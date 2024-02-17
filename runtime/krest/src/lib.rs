@@ -92,8 +92,8 @@ pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 use peaq_primitives_xcm::{
-	Address, AssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance, EvmRevertCodeHandler,
-	Header, Moment, Nonce, RbacEntityId, NATIVE_CURRNECY_ID,
+	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
+	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, NATIVE_ASSET_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -115,6 +115,7 @@ use runtime_common::{
 	MILLICENTS,
 };
 
+type AssetId = u64;
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
 
@@ -255,7 +256,11 @@ impl Contains<RuntimeCall> for BaseFilter {
 		match call {
 			// Filter permission-less assets creation/destroying.
 			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
-			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) => id.is_allow_to_create(),
+			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) =>
+				match <u64 as TryInto<PeaqAssetId>>::try_into(*id) {
+					Ok(id) => id.is_allow_to_create(),
+					Err(_) => false,
+				},
 			// These modules are not allowed to be called by transactions:
 			// To leave collator just shutdown it, next session funds will be released
 			// Other modules should works:
@@ -438,7 +443,7 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 parameter_types! {
 	// [TODO] Should have a way to increase it without doing runtime upgrade
 	pub PcpcLocalAccepted: Vec<AssetId> = vec![
-		AssetId::Token(1),
+		PeaqAssetId::Token(1).try_into().unwrap(),
 	];
 }
 
@@ -733,6 +738,7 @@ pub mod staking {
 	pub fn reward_rate_config() -> RewardRateInfo {
 		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
 	}
+
 	pub fn coefficient() -> u8 {
 		8
 	}
@@ -856,7 +862,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeAssetId: AssetId = NATIVE_CURRNECY_ID;
+	pub const GetNativeAssetId: AssetId = NATIVE_ASSET_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -906,8 +912,11 @@ type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
 >;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets =
-	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<PeaqMultiCurrencies, AssetId>>;
+pub type MultiAssets = ZenlinkMultiAssets<
+	ZenlinkProtocol,
+	Balances,
+	LocalAssetAdaptor<PeaqMultiCurrencies, PeaqAssetId, AssetId>,
+>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -1800,7 +1809,7 @@ impl_runtime_apis! {
 
 	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
 		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
-			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
+			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id.into(), &owner)
 		}
 
 		fn get_pair_by_asset_id(
@@ -1980,7 +1989,7 @@ parameter_types! {
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = AssetId;
+	type AssetId = u64;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
@@ -2008,12 +2017,16 @@ impl address_unification::Config for Runtime {
 	type WeightInfo = address_unification::weights::SubstrateWeight<Runtime>;
 }
 
-impl EVMAddressToAssetId<AssetId> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<AssetId> {
-		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+impl EVMAddressToAssetId<u64> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<u64> {
+		match AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address) {
+			Some(asset_id) => asset_id.try_into().ok(),
+			None => None,
+		}
 	}
 
-	fn asset_id_to_address(asset_id: AssetId) -> H160 {
-		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	fn asset_id_to_address(asset_id: u64) -> Option<H160> {
+		let asset_id = asset_id.try_into().ok()?;
+		Some(AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id))
 	}
 }
