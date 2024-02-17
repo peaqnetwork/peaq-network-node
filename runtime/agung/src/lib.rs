@@ -94,6 +94,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use peaq_primitives_xcm::{
 	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
 	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, NATIVE_ASSET_ID,
+	StorageAssetId as AssetId,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -115,7 +116,6 @@ use runtime_common::{
 	MILLICENTS,
 };
 
-type AssetId = u64;
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
 
@@ -257,7 +257,7 @@ impl Contains<RuntimeCall> for BaseFilter {
 			// Filter permission-less assets creation/destroying.
 			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
 			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) =>
-				match <u64 as TryInto<PeaqAssetId>>::try_into(*id) {
+				match <AssetId as TryInto<PeaqAssetId>>::try_into(*id) {
 					Ok(id) => id.is_allow_to_create(),
 					Err(_) => false,
 				},
@@ -861,7 +861,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeAssetId: u64 = NATIVE_ASSET_ID;
+	pub const GetNativeAssetId: AssetId = NATIVE_ASSET_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -1987,7 +1987,7 @@ parameter_types! {
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = u64;
+	type AssetId = AssetId;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
@@ -2015,15 +2015,15 @@ impl address_unification::Config for Runtime {
 	type WeightInfo = address_unification::weights::SubstrateWeight<Runtime>;
 }
 
-impl EVMAddressToAssetId<u64> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<u64> {
+impl EVMAddressToAssetId<AssetId> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<AssetId> {
 		match AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address) {
 			Some(asset_id) => asset_id.try_into().ok(),
 			None => None,
 		}
 	}
 
-	fn asset_id_to_address(asset_id: u64) -> Option<H160> {
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160> {
 		let asset_id = asset_id.try_into().ok()?;
 		Some(AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id))
 	}

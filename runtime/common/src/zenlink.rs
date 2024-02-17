@@ -54,6 +54,7 @@ where
 					ExistentialDeposit::get(),
 				)
 				.ok()?;
+				// Cannot setup the metadata for the LP asset because admin account doesn't have enough balance.
 				Some(())
 			},
 			(_, _) => None,

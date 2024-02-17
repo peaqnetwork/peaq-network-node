@@ -1,5 +1,5 @@
 use super::{
-	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, BlockReward, GetNativeAssetId,
+	AccountId, AllPalletsWithSystem, AssetId, Assets, Balance, Balances, BlockReward, GetNativeAssetId,
 	ParachainInfo, ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeOrigin, WeightToFee, XcAssetConfig, XcmpQueue,
 };
@@ -49,7 +49,6 @@ use frame_support::pallet_prelude::Get;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
-type AssetId = u64;
 
 pub type PeaqAssetLocationIdConverter = MultiLocationToAssetId<Runtime>;
 

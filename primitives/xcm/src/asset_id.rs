@@ -37,7 +37,8 @@ pub enum AssetId {
 	LPToken(u32, u32),
 }
 
-pub const NATIVE_ASSET_ID: u64 = 0;
+pub type StorageAssetId = u64;
+pub const NATIVE_ASSET_ID: StorageAssetId = 0;
 pub const NATIVE_CURRNECY_ID: AssetId = AssetId::Token(NATIVE_ASSET_ID as u32);
 const TOKEN_MASK: u32 = 0b0000_1111_1111_1111_1111_1111_1111_1111;
 impl AssetId {
@@ -81,7 +82,7 @@ impl AssetIdExt for AssetId {
 
 // AssetId::Token(0) map to 0
 // This is for Zenlink Protocol
-impl TryFrom<AssetId> for u64 {
+impl TryFrom<AssetId> for StorageAssetId {
 	type Error = ();
 
 	fn try_from(asset_id: AssetId) -> Result<Self, Self::Error> {
@@ -94,10 +95,10 @@ impl TryFrom<AssetId> for u64 {
 	}
 }
 
-impl TryFrom<u64> for AssetId {
+impl TryFrom<StorageAssetId> for AssetId {
 	type Error = ();
 
-	fn try_from(index: u64) -> Result<Self, Self::Error> {
+	fn try_from(index: StorageAssetId) -> Result<Self, Self::Error> {
 		let type_index = (index >> 60) as u8;
 		match type_index {
 			0 => {
@@ -131,11 +132,11 @@ impl Default for AssetId {
 // Zenlink (2000, 0, 0) and (2000, 2, 0) map to AssetId::Token(0)
 pub struct AssetIdToZenlinkId<GetParaId>(PhantomData<GetParaId>);
 
-impl<GetParaId> Convert<u64, Option<ZenlinkAssetId>> for AssetIdToZenlinkId<GetParaId>
+impl<GetParaId> Convert<StorageAssetId, Option<ZenlinkAssetId>> for AssetIdToZenlinkId<GetParaId>
 where
 	GetParaId: Get<u32>,
 {
-	fn convert(asset_id: u64) -> Option<ZenlinkAssetId> {
+	fn convert(asset_id: StorageAssetId) -> Option<ZenlinkAssetId> {
 		let asset_index = asset_id;
 		let asset_id: AssetId = asset_index.try_into().ok()?;
 		match asset_id {
@@ -161,7 +162,7 @@ where
 {
 	fn convert(asset_id: AssetId) -> EvmAddress {
 		let mut data = [0u8; 20];
-		let index: u64 = <AssetId as TryInto<u64>>::try_into(asset_id).unwrap();
+		let index: StorageAssetId = <AssetId as TryInto<StorageAssetId>>::try_into(asset_id).unwrap();
 		data[0..4].copy_from_slice(GetPrefix::get());
 		data[4..20].copy_from_slice(&(index as u128).to_be_bytes());
 		EvmAddress::from(data)
@@ -177,7 +178,7 @@ where
 		let address_bytes: [u8; 20] = address.into();
 		if GetPrefix::get().eq(&address_bytes[0..4]) {
 			data.copy_from_slice(&address_bytes[4..20]);
-			(u128::from_be_bytes(data) as u64).try_into().ok()
+			(u128::from_be_bytes(data) as StorageAssetId).try_into().ok()
 		} else {
 			None
 		}
