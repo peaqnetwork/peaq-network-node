@@ -5,9 +5,8 @@ use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
 use zenlink_protocol::GenerateLpAssetId;
 
-use peaq_primitives_xcm::{AssetId as PeaqAssetId, AssetIdToZenlinkId};
+use peaq_primitives_xcm::{AssetId as PeaqAssetId, AssetIdToZenlinkId, StorageAssetId};
 use zenlink_protocol::{AssetId as ZenlinkAssetId, Config as ZenProtConfig};
-type AssetId = u64;
 
 /// This is the Peaq's default GenerateLpAssetId implementation.
 pub struct PeaqAssetZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>(
@@ -17,8 +16,8 @@ pub struct PeaqAssetZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount
 impl<T, Local, ExistentialDeposit, AdminAccount> GenerateLpAssetId<ZenlinkAssetId>
 	for PeaqAssetZenlinkLpGenerate<T, Local, ExistentialDeposit, AdminAccount>
 where
-	Local: fungibles::Create<T::AccountId, AssetId = AssetId, Balance = T::Balance>
-		+ fungibles::Inspect<T::AccountId, AssetId = AssetId, Balance = T::Balance>,
+	Local: fungibles::Create<T::AccountId, AssetId = StorageAssetId, Balance = T::Balance>
+		+ fungibles::Inspect<T::AccountId, AssetId = StorageAssetId, Balance = T::Balance>,
 	T: SysConfig + AssetsConfig + ZenProtConfig,
 	ExistentialDeposit: Get<T::Balance>,
 	AdminAccount: Get<T::AccountId>,
@@ -54,7 +53,8 @@ where
 					ExistentialDeposit::get(),
 				)
 				.ok()?;
-				// Cannot setup the metadata for the LP asset because admin account doesn't have enough balance.
+				// Cannot setup the metadata for the LP asset because admin account doesn't have
+				// enough balance.
 				Some(())
 			},
 			(_, _) => None,

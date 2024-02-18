@@ -32,6 +32,8 @@ pub enum AssetId {
 	/// The first 4 bits are the identifier
 	/// 0 is the token
 	/// 1 is the LPToken
+	/// This is only for readability
+	/// We can conert it to StorageAssetId, ZenlinkAssetId to understand the type easier
 	Token(u32),
 	/// Liquidity Pairs (Pairs of Tokens) within the PEAQ-Parachain.
 	LPToken(u32, u32),
@@ -162,7 +164,8 @@ where
 {
 	fn convert(asset_id: AssetId) -> EvmAddress {
 		let mut data = [0u8; 20];
-		let index: StorageAssetId = <AssetId as TryInto<StorageAssetId>>::try_into(asset_id).unwrap();
+		let index: StorageAssetId =
+			<AssetId as TryInto<StorageAssetId>>::try_into(asset_id).unwrap();
 		data[0..4].copy_from_slice(GetPrefix::get());
 		data[4..20].copy_from_slice(&(index as u128).to_be_bytes());
 		EvmAddress::from(data)
