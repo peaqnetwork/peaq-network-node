@@ -127,6 +127,8 @@ frame-try-runtime = { workspace = true, default-features = false, optional = tru
 log = {workspace = true, default-features = false}
 ethereum = {workspace = true, default-features = false}
 
+pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
+
 [features]
 default = ["std", "aura"]
 aura = []
@@ -269,6 +271,7 @@ std = [
 	"pallet-evm-precompile-peaq-did/std",
 	"pallet-evm-precompile-peaq-storage/std",
 	"pallet-xcm/std",
+	"pallet-evm-precompile-peaq-rbac/std",
 
 	# try-runtime
 	"frame-try-runtime/std",

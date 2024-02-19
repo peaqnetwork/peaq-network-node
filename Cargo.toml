@@ -8,7 +8,8 @@ members = [
     "precompiles/utils/macro",
 	"precompiles/peaq-did",
 	"precompiles/peaq-storage",
-	"precompiles/assets-erc20"
+    "precompiles/peaq-rbac",
+	"precompiles/assets-erc20",
 ]
 resolver = "2"
 
