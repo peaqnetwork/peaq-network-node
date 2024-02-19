@@ -68,7 +68,7 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 					AddressU64<2050>,
 					PeaqRbacPrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
-        >,
+				>,
 				PrecompileAt<
 					AddressU64<2051>,
 					XtokensPrecompile<R>,
