@@ -1,7 +1,7 @@
 name: Autotest
 
 on:
-  workflow_call:
+  workflow_dispatch:
 jobs:
   Test:
     name: Run Autotest

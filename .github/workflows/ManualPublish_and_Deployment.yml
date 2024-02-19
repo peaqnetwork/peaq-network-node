@@ -30,7 +30,7 @@ jobs:
         owner: ${{ github.repository_owner }}
         repo: ${{ github.event.repository.name }}
         github_token: ${{ secrets.GHACTION }}
-        workflow_file_name: deployment.yml
+        workflow_file_name: deploy.yml
         ref: ${{ github.ref_name }}
         trigger_workflow: true
         wait_workflow: true
