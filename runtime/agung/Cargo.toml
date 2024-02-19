@@ -120,6 +120,7 @@ pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", 
 pallet-evm-precompile-xtokens = { path = "../../precompiles/xtokens", default-features = false }
 pallet-evm-precompile-xcm-utils = { path = "../../precompiles/xcm-utils", default-features = false }
 runtime-common = { path = "../common", default-features = false }
+pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 
@@ -273,6 +274,7 @@ std = [
 	"pallet-evm-precompile-peaq-storage/std",
 	"pallet-evm-precompile-xtokens/std",
 	"pallet-evm-precompile-xcm-utils/std",
+	"pallet-evm-precompile-peaq-rbac/std",
 	"pallet-xcm/std",
 
 	# try-runtime
