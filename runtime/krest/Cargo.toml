@@ -116,6 +116,7 @@ pallet-evm-precompile-assets-erc20 = { path = "../../precompiles/assets-erc20", 
 pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-features = false }
 pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
 runtime-common = { path = "../common", default-features = false }
+pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 
@@ -265,6 +266,7 @@ std = [
 	"pallet-evm-precompile-assets-erc20/std",
 	"pallet-evm-precompile-peaq-did/std",
 	"pallet-evm-precompile-peaq-storage/std",
+	"pallet-evm-precompile-peaq-rbac/std",
 	"pallet-xcm/std",
 
 	# try-runtime
