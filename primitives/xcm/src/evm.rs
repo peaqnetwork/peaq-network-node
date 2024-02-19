@@ -24,7 +24,7 @@ where
 {
 	fn created(id: &R::AssetId, _: &AccountId) -> Result<(), ()> {
 		match A::asset_id_to_address((*id).clone()) {
-			None => return Ok(()),
+			None => Ok(()),
 			Some(address) => {
 				ensure!(!pallet_evm::AccountCodes::<R>::contains_key(address), ());
 				pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
@@ -35,7 +35,7 @@ where
 
 	fn destroyed(id: &R::AssetId) -> Result<(), ()> {
 		match A::asset_id_to_address((*id).clone()) {
-			None => return Ok(()),
+			None => Ok(()),
 			Some(address) => {
 				pallet_evm::AccountCodes::<R>::remove(address);
 				Ok(())

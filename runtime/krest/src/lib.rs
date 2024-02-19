@@ -1808,7 +1808,7 @@ impl_runtime_apis! {
 
 	impl zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId> for Runtime {
 		fn get_balance(asset_id: ZenlinkAssetId, owner: AccountId) -> AssetBalance {
-			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id.into(), &owner)
+			<Runtime as zenlink_protocol::Config>::MultiAssetsHandler::balance_of(asset_id, &owner)
 		}
 
 		fn get_pair_by_asset_id(
