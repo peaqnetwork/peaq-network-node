@@ -104,6 +104,9 @@ impl TryFrom<StorageAssetId> for AssetId {
 		let type_index = (index >> 60) as u8;
 		match type_index {
 			0 => {
+				if index >= TOKEN_MASK as u64 {
+					return Err(())
+				}
 				let symbol = (index & (TOKEN_MASK as u64)) as u32;
 				Ok(AssetId::Token(symbol))
 			},
