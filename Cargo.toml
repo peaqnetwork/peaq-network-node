@@ -12,6 +12,7 @@ members = [
 	"precompiles/xtokens",
 	"precompiles/xcm-utils",
 	"precompiles/batch",
+  "precompiles/peaq-rbac",
 ]
 resolver = "2"
 
