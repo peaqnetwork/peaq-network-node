@@ -65,7 +65,7 @@ impl AssetId {
 			return false
 		}
 		match *self {
-			AssetId::Token(symbol) => symbol < TOKEN_MASK,
+			AssetId::Token(symbol) => symbol <= TOKEN_MASK,
 			// Only allow Zenlink protocol to create it
 			AssetId::LPToken(_, _) => false,
 		}
@@ -104,7 +104,7 @@ impl TryFrom<StorageAssetId> for AssetId {
 		let type_index = (index >> 60) as u8;
 		match type_index {
 			0 => {
-				if index >= TOKEN_MASK as u64 {
+				if index > TOKEN_MASK as u64 {
 					return Err(())
 				}
 				let symbol = (index & (TOKEN_MASK as u64)) as u32;
