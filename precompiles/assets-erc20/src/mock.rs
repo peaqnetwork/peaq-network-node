@@ -321,8 +321,6 @@ pub(crate) struct ExtBuilder {
 	balances: Vec<(AccountId, Balance)>,
 }
 
-
-
 impl ExtBuilder {
 	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
 		self.balances = balances;

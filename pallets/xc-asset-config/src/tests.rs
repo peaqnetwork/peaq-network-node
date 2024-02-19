@@ -118,8 +118,7 @@ fn register_asset_location_and_units_per_sec_is_ok() {
 			},
 		));
 		assert_eq!(
-			AssetLocationUnitsPerSecond::<Test>::get(asset_location.into_versioned())
-				.unwrap(),
+			AssetLocationUnitsPerSecond::<Test>::get(asset_location.into_versioned()).unwrap(),
 			units
 		);
 	})
@@ -202,8 +201,7 @@ fn change_asset_location_is_ok() {
 			asset_location.into_versioned()
 		));
 		assert_eq!(
-			AssetLocationUnitsPerSecond::<Test>::get(new_asset_location.into_versioned())
-				.unwrap(),
+			AssetLocationUnitsPerSecond::<Test>::get(new_asset_location.into_versioned()).unwrap(),
 			units
 		);
 	})
@@ -235,9 +233,7 @@ fn remove_payment_asset_is_ok() {
 			Box::new(asset_location.into_versioned()),
 		));
 		System::assert_last_event(mock::RuntimeEvent::XcAssetConfig(
-			Event::SupportedAssetRemoved {
-				asset_location: asset_location.into_versioned(),
-			},
+			Event::SupportedAssetRemoved { asset_location: asset_location.into_versioned() },
 		));
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
 			asset_location.into_versioned()
@@ -369,10 +365,7 @@ fn different_xcm_versions_are_ok() {
 		));
 
 		// Ensure that the new format is properly returned
-		assert_eq!(
-			XcAssetConfig::get_xc_asset_location(asset_id),
-			Some(new_asset_location)
-		);
+		assert_eq!(XcAssetConfig::get_xc_asset_location(asset_id), Some(new_asset_location));
 	})
 }
 
