@@ -85,59 +85,59 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
 			let authors: Vec<Option<AccountId>> =
 				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
-			let user_1 = Balances::usable_balance(&1);
-			let user_2 = Balances::usable_balance(&2);
-			let user_3 = Balances::usable_balance(&3);
-			let user_4 = Balances::usable_balance(&4);
-			let user_5 = Balances::usable_balance(&5);
+			let user_1 = Balances::usable_balance(1);
+			let user_2 = Balances::usable_balance(2);
+			let user_3 = Balances::usable_balance(3);
+			let user_4 = Balances::usable_balance(4);
+			let user_5 = Balances::usable_balance(5);
 
-			assert_eq!(Balances::usable_balance(&1), user_1);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3);
-			assert_eq!(Balances::usable_balance(&4), user_4);
-			assert_eq!(Balances::usable_balance(&5), user_5);
+			assert_eq!(Balances::usable_balance(1), user_1);
+			assert_eq!(Balances::usable_balance(2), user_2);
+			assert_eq!(Balances::usable_balance(3), user_3);
+			assert_eq!(Balances::usable_balance(4), user_4);
+			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 1 is block author for 1st block
 			roll_to(2, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5);
+			assert_eq!(Balances::usable_balance(1), user_1 + c_rewards);
+			assert_eq!(Balances::usable_balance(2), user_2);
+			assert_eq!(Balances::usable_balance(3), user_3 + d_1_rewards);
+			assert_eq!(Balances::usable_balance(4), user_4 + d_2_rewards);
+			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 1 is block author for 2nd block
 			roll_to(3, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + 2 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 2 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 2 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5);
+			assert_eq!(Balances::usable_balance(1), user_1 + 2 * c_rewards);
+			assert_eq!(Balances::usable_balance(2), user_2);
+			assert_eq!(Balances::usable_balance(3), user_3 + 2 * d_1_rewards);
+			assert_eq!(Balances::usable_balance(4), user_4 + 2 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 1 is block author for 3rd block
 			roll_to(4, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5);
+			assert_eq!(Balances::usable_balance(1), user_1 + 3 * c_rewards);
+			assert_eq!(Balances::usable_balance(2), user_2);
+			assert_eq!(Balances::usable_balance(3), user_3 + 3 * d_1_rewards);
+			assert_eq!(Balances::usable_balance(4), user_4 + 3 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(5), user_5);
 
 			// 2 is block author for 4th block
 			roll_to(5, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
+			assert_eq!(Balances::usable_balance(1), user_1 + 3 * c_rewards);
+			assert_eq!(Balances::usable_balance(2), user_2 + c_rewards);
+			assert_eq!(Balances::usable_balance(3), user_3 + 3 * d_1_rewards);
+			assert_eq!(Balances::usable_balance(4), user_4 + 3 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(5), user_5 + d_rewards);
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
 
 			// 2 is block author for 5th block
 			roll_to(6, authors);
-			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards + c_total_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
+			assert_eq!(Balances::usable_balance(1), user_1 + 3 * c_rewards);
+			assert_eq!(Balances::usable_balance(2), user_2 + c_rewards + c_total_rewards);
+			assert_eq!(Balances::usable_balance(3), user_3 + 3 * d_1_rewards);
+			assert_eq!(Balances::usable_balance(4), user_4 + 3 * d_2_rewards);
 			// should not receive rewards due to revoked delegation
-			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
+			assert_eq!(Balances::usable_balance(5), user_5 + d_rewards);
 		});
 }
 

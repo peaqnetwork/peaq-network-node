@@ -15,7 +15,7 @@ use sp_runtime::traits::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
-use peaq_primitives_xcm::AssetIdExt;
+use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
@@ -35,7 +35,7 @@ where
 	C: Currency<T::AccountId>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 	PCPC: PeaqMultiCurrenciesPaymentConvert<AccountId = T::AccountId, Currency = C>,
-	PCPC::AssetId: AssetIdExt,
+	PCPC::AssetId: TryFrom<PeaqAssetId>,
 	AssetBalance: From<BalanceOf<C, T>>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
@@ -67,7 +67,8 @@ where
 
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
-		if !currency_id.is_native_token() {
+		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
+		if currency_id != native_currency_id {
 			log!(
 				info,
 				PeaqMultiCurrenciesOnChargeTransaction,

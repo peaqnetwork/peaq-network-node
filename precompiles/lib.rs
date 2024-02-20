@@ -123,7 +123,7 @@ pub trait EVMAddressToAssetId<AssetId> {
 	fn address_to_asset_id(address: H160) -> Option<AssetId>;
 
 	// Get address from AssetId
-	fn asset_id_to_address(asset_id: AssetId) -> H160;
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160>;
 }
 
 /// The following distribution has been decided for the precompiles

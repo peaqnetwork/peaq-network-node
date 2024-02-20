@@ -128,11 +128,11 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 		}
 	}
 
-	fn asset_id_to_address(asset_id: AssetId) -> H160 {
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160> {
 		let mut data = [0u8; 20];
 		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
 		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
-		H160::from(data)
+		Some(H160::from(data))
 	}
 }
 
@@ -315,15 +315,10 @@ construct_runtime!(
 	}
 );
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
 }
 
 impl ExtBuilder {

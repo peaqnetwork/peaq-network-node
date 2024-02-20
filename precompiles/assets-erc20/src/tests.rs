@@ -50,13 +50,7 @@ fn precompiles() -> Erc20AssetsPrecompileSet<Runtime> {
 #[test]
 fn selector_less_than_four_bytes() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			0u128,
-			Account::Alice.into(),
-			true,
-			1
-		));
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 		// This selector is only three bytes long when four are required.
 		precompiles()
 			.prepare_test(Account::Alice, Account::AssetId(0u128), vec![1u8, 2u8, 3u8])
@@ -67,13 +61,7 @@ fn selector_less_than_four_bytes() {
 #[test]
 fn no_selector_exists_but_length_is_right() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			0u128,
-			Account::Alice.into(),
-			true,
-			1
-		));
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 
 		precompiles()
 			.prepare_test(Account::Alice, Account::AssetId(0u128), vec![1u8, 2u8, 3u8, 4u8])
@@ -110,16 +98,10 @@ fn selectors() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default()
-		.with_balances(vec![(Account::Alice.into(), 1000)])
+		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			let mut tester = PrecompilesModifierTester::new(
 				precompiles(),
 				Account::Alice,
@@ -148,17 +130,11 @@ fn get_total_supply() {
 		.with_balances(vec![(Account::Alice, 1000), (Account::Bob, 2500)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -175,17 +151,11 @@ fn get_balances_known_user() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -207,13 +177,7 @@ fn get_balances_unknown_user() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 
 			precompiles()
 				.prepare_test(
@@ -233,17 +197,11 @@ fn approve() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -272,17 +230,11 @@ fn approve_saturating() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -321,17 +273,11 @@ fn check_allowance_existing() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -367,13 +313,7 @@ fn check_allowance_not_existing() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 
 			precompiles()
 				.prepare_test(
@@ -396,17 +336,11 @@ fn transfer() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -452,17 +386,11 @@ fn transfer_not_enough_founds() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1
 			));
 
@@ -476,10 +404,10 @@ fn transfer_not_enough_founds() {
 					},
 				)
 				.execute_reverts(|output| {
-					from_utf8(&output)
+					from_utf8(output)
 						.unwrap()
 						.contains("Dispatched call failed with error: Module(ModuleError") &&
-						from_utf8(&output).unwrap().contains("BalanceLow")
+						from_utf8(output).unwrap().contains("BalanceLow")
 				});
 		});
 }
@@ -490,17 +418,11 @@ fn transfer_from() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -582,17 +504,11 @@ fn transfer_from_non_incremental_approval() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -660,17 +576,11 @@ fn transfer_from_above_allowance() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -709,17 +619,11 @@ fn transfer_from_self() {
 		.with_balances(vec![(Account::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::mint(
 				RuntimeOrigin::signed(Account::Alice),
 				0u128,
-				Account::Alice.into(),
+				Account::Alice,
 				1000
 			));
 
@@ -769,13 +673,7 @@ fn get_metadata() {
 		.with_balances(vec![(Account::Alice, 1000), (Account::Bob, 2500)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(Assets::force_create(
-				RuntimeOrigin::root(),
-				0u128,
-				Account::Alice.into(),
-				true,
-				1
-			));
+			assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0u128, Account::Alice, true, 1));
 			assert_ok!(Assets::force_set_metadata(
 				RuntimeOrigin::root(),
 				0u128,
@@ -812,7 +710,7 @@ fn minimum_balance_is_right() {
 		assert_ok!(Assets::force_create(
 			RuntimeOrigin::root(),
 			0u128,
-			Account::Alice.into(),
+			Account::Alice,
 			true,
 			expected_min_balance,
 		));
@@ -829,16 +727,10 @@ fn minimum_balance_is_right() {
 fn mint_is_ok() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_id = 0;
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			asset_id,
-			Account::Alice.into(),
-			true,
-			1,
-		));
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset_id, Account::Alice, true, 1,));
 
 		// Sanity check, Bob should be without assets
-		assert!(Assets::balance(asset_id, &Account::Bob.into()).is_zero());
+		assert!(Assets::balance(asset_id, &Account::Bob).is_zero());
 
 		// Mint some assets for Bob
 		let mint_amount = 7 * 11 * 19;
@@ -857,7 +749,7 @@ fn mint_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was increased
-		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), mint_amount);
+		assert_eq!(Assets::balance(asset_id, &Account::Bob), mint_amount);
 	});
 }
 
@@ -865,13 +757,7 @@ fn mint_is_ok() {
 fn mint_non_admin_is_not_ok() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_id = 0;
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			asset_id,
-			Account::Alice.into(),
-			true,
-			1,
-		));
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset_id, Account::Alice, true, 1,));
 
 		precompiles()
 			.prepare_test(
@@ -880,7 +766,7 @@ fn mint_non_admin_is_not_ok() {
 				PCall::mint { to: Address(Account::Bob.into()), amount: U256::from(42) },
 			)
 			.expect_no_logs()
-			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
+			.execute_reverts(|output| from_utf8(output).unwrap().contains("NoPermission"));
 	});
 }
 
@@ -888,23 +774,17 @@ fn mint_non_admin_is_not_ok() {
 fn burn_is_ok() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_id = 0;
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			asset_id,
-			Account::Alice.into(),
-			true,
-			1,
-		));
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset_id, Account::Alice, true, 1,));
 
 		// Issue some initial assets for Bob
 		let init_amount = 123;
 		assert_ok!(Assets::mint(
 			RuntimeOrigin::signed(Account::Alice),
 			asset_id,
-			Account::Bob.into(),
+			Account::Bob,
 			init_amount,
 		));
-		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), init_amount);
+		assert_eq!(Assets::balance(asset_id, &Account::Bob), init_amount);
 
 		// Burn some assets from Bob
 		let burn_amount = 19;
@@ -923,7 +803,7 @@ fn burn_is_ok() {
 			.execute_returns(true);
 
 		// Ensure Bob's asset balance was decreased
-		assert_eq!(Assets::balance(asset_id, &Account::Bob.into()), init_amount - burn_amount);
+		assert_eq!(Assets::balance(asset_id, &Account::Bob), init_amount - burn_amount);
 	});
 }
 
@@ -931,17 +811,11 @@ fn burn_is_ok() {
 fn burn_non_admin_is_not_ok() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_id = 0;
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			asset_id,
-			Account::Alice.into(),
-			true,
-			1,
-		));
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset_id, Account::Alice, true, 1,));
 		assert_ok!(Assets::mint(
 			RuntimeOrigin::signed(Account::Alice),
 			asset_id,
-			Account::Bob.into(),
+			Account::Bob,
 			1000000,
 		));
 
@@ -952,6 +826,6 @@ fn burn_non_admin_is_not_ok() {
 				PCall::burn { who: Address(Account::Bob.into()), amount: U256::from(42) },
 			)
 			.expect_no_logs()
-			.execute_reverts(|output| from_utf8(&output).unwrap().contains("NoPermission"));
+			.execute_reverts(|output| from_utf8(output).unwrap().contains("NoPermission"));
 	});
 }
