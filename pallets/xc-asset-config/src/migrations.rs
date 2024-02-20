@@ -18,8 +18,7 @@
 
 use super::*;
 use frame_support::{
-	dispatch::GetStorageVersion,
-	log,
+	pallet_prelude::GetStorageVersion,
 	pallet_prelude::*,
 	traits::{Get, OnRuntimeUpgrade},
 };
