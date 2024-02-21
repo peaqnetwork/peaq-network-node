@@ -18,15 +18,19 @@
 //! - Substrate call dispatch.
 //! - Substrate DB read and write costs
 
-use crate::{evm::handle::using_precompile_handle, solidity::revert::revert};
-use core::marker::PhantomData;
-use fp_evm::{ExitError, PrecompileFailure, PrecompileHandle};
-use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	pallet_prelude::*,
-	traits::Get,
+use sp_runtime::traits::Dispatchable;
+
+use {
+	crate::{evm::handle::using_precompile_handle, solidity::revert::revert},
+	core::marker::PhantomData,
+	fp_evm::{ExitError, PrecompileFailure, PrecompileHandle},
+	frame_support::{
+		dispatch::{GetDispatchInfo, PostDispatchInfo},
+		pallet_prelude::*,
+		traits::Get,
+	},
+	pallet_evm::GasWeightMapping,
 };
-use pallet_evm::GasWeightMapping;
 
 /// System account size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
 /// Blake2_128Concat (16) + AccountId (32) + AccountInfo (4 + 12 + AccountData (4* 16)) = 148
@@ -112,7 +116,7 @@ where
 		let dispatch_info = call.get_dispatch_info();
 
 		Self::reocrd_external_cost(handle, dispatch_info.weight, storage_growth)
-			.map_err(TryDispatchError::Evm)?;
+			.map_err(|e| TryDispatchError::Evm(e))?;
 
 		// Dispatch call.
 		// It may be possible to not record gas cost if the call returns Pays::No.
