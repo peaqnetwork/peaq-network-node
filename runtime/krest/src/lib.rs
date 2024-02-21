@@ -195,10 +195,6 @@ const fn contracts_deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 40 * MILLICENTS + (bytes as Balance) * MILLICENTS
 }
 
-const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
-}
-
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
@@ -513,7 +509,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = DOLLARS;
 	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(1);
+	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = DOLLARS;
@@ -1967,14 +1963,15 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetDeposit: Balance = 20 * CENTS;
 	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetApprovalDeposit: Balance = 20 * MILLICENTS;
 	pub const AssetsStringLimit: u32 = 50;
 	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
 	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-	pub const MetadataDepositBase: Balance = deposit(1, 68);
-	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-	pub const AssetAccountDeposit: Balance = deposit(1, 18);
+	pub const MetadataDepositBase: Balance = 200 * MILLICENTS;
+	pub const MetadataDepositPerByte: Balance = 20 * MILLICENTS;
+	pub const AssetAccountDeposit: Balance = 200 * MILLICENTS;
 }
 
 impl pallet_assets::Config for Runtime {
@@ -1988,7 +1985,7 @@ impl pallet_assets::Config for Runtime {
 	type MetadataDepositBase = MetadataDepositBase;
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type AssetAccountDeposit = AssetAccountDeposit;
-	type ApprovalDeposit = AssetExistentialDeposit;
+	type ApprovalDeposit = AssetApprovalDeposit;
 	type StringLimit = AssetsStringLimit;
 	type Freezer = ();
 	type Extra = ();
