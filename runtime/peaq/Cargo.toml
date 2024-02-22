@@ -113,6 +113,7 @@ pallet-block-reward = { path = "../../pallets/block-reward", default-features = 
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "../../precompiles/assets-erc20", default-features = false }
+pallet-evm-precompile-assets-factory = { path = "../../precompiles/assets-factory", default-features = false }
 pallet-evm-precompile-batch = { path = "../../precompiles/batch", default-features = false }
 pallet-evm-precompile-peaq-did = { path = "../../precompiles/peaq-did", default-features = false }
 pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", default-features = false }
@@ -269,6 +270,7 @@ std = [
 	"runtime-common/std",
 
 	"pallet-evm-precompile-assets-erc20/std",
+	"pallet-evm-precompile-assets-factory/std",
 	"pallet-evm-precompile-batch/std",
 	"pallet-evm-precompile-peaq-did/std",
 	"pallet-evm-precompile-peaq-storage/std",

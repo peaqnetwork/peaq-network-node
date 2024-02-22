@@ -1,9 +1,9 @@
 [package]
-name = "pallet-evm-precompile-assets-erc20"
-description = "A Precompile to expose a Assets pallet through an ERC20-compliant interface."
-version = "0.5.2"
+name = "pallet-evm-precompile-assets-factory"
+description = "A Precompile to expose a Assets factory"
+version = "0.0.1"
 edition = "2021"
-authors = [ "Astar" ]
+authors = [ "Peaq" ]
 
 [dependencies]
 log = { workspace = true }
@@ -11,6 +11,7 @@ num_enum = { workspace = true }
 slices = { workspace = true }
 
 precompile-utils = { path = "../utils", default-features = false }
+pallet-evm-precompile-assets-erc20 = { path = "../assets-erc20", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 
 # Substrate
@@ -48,10 +49,11 @@ std = [
 	"pallet-assets/std",
 	"pallet-evm/std",
 	"pallet-balances/std",
+	"pallet-evm-precompile-assets-erc20/std",
 	"precompile-utils/std",
+	"peaq-primitives-xcm/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"peaq-primitives-xcm/std",
 ]

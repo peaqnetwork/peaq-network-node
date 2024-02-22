@@ -9,6 +9,7 @@ members = [
 	"precompiles/peaq-did",
 	"precompiles/peaq-storage",
 	"precompiles/assets-erc20",
+	"precompiles/assets-factory",
 	"precompiles/xtokens",
 	"precompiles/xcm-utils",
 	"precompiles/batch",

@@ -55,8 +55,20 @@ impl AssetId {
 			AssetId::LPToken(_, _) => 1,
 		}
 	}
+}
 
-	pub fn is_allow_to_create(&self) -> bool {
+pub trait AssetIdExt {
+	fn is_native_token(&self) -> bool;
+
+	fn is_allow_to_create(&self) -> bool;
+}
+
+impl AssetIdExt for AssetId {
+	fn is_native_token(&self) -> bool {
+		NATIVE_CURRNECY_ID == *self
+	}
+
+	fn is_allow_to_create(&self) -> bool {
 		if self.is_native_token() {
 			return false
 		}
@@ -65,16 +77,6 @@ impl AssetId {
 			// Only allow Zenlink protocol to create it
 			AssetId::LPToken(_, _) => false,
 		}
-	}
-}
-
-pub trait AssetIdExt {
-	fn is_native_token(&self) -> bool;
-}
-
-impl AssetIdExt for AssetId {
-	fn is_native_token(&self) -> bool {
-		NATIVE_CURRNECY_ID == *self
 	}
 }
 

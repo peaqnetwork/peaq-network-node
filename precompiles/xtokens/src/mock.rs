@@ -28,7 +28,6 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use parity_scale_codec::MaxEncodedLen;
 use precompile_utils::{precompile_set::*, testing::*};
 
 use sp_core::H256;
@@ -69,7 +68,7 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 		let address_bytes: [u8; 20] = address.into();
 		if ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
 			data.copy_from_slice(&address_bytes[4..20]);
-			Some(u128::from_be_bytes(data))
+			Some(u128::from_be_bytes(data).into())
 		} else {
 			None
 		}
@@ -78,7 +77,7 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 	fn asset_id_to_address(asset_id: AssetId) -> H160 {
 		let mut data = [0u8; 20];
 		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
-		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
+		data[4..20].copy_from_slice(&asset_id.0.to_be_bytes());
 		H160::from(data)
 	}
 }

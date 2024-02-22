@@ -1,6 +1,7 @@
 use crate::xcm_config::XcmConfig;
 use frame_support::parameter_types;
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
+use pallet_evm_precompile_assets_factory::AssetsFactoryPrecompile;
 use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
@@ -23,7 +24,7 @@ parameter_types! {
 
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
-/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Peaq specific
+/// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Peaq-dev specific
 pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 	R,
 	(
@@ -89,6 +90,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 						// Batch is the only precompile allowed to call Batch.
 						CallableByPrecompile<OnlyFrom<AddressU64<2053>>>,
 					),
+				>,
+				PrecompileAt<
+					AddressU64<2054>,
+					AssetsFactoryPrecompile<R>,
+					(AcceptDelegateCall, CallableByContract),
 				>,
 			),
 		>,
