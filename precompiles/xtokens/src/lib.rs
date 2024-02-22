@@ -46,8 +46,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-const DEFAULT_PROOF_SIZE: u64 = 256 * 1024;
-
 pub type XBalanceOf<Runtime> = <Runtime as orml_xtokens::Config>::Balance;
 pub type MaxAssetsForTransfer<Runtime> = <Runtime as orml_xtokens::Config>::MaxAssetsForTransfer;
 

@@ -33,9 +33,6 @@ use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 use xcm_executor::traits::{WeightBounds, WeightTrader};
 
-// [TODO] Extract
-const DEFAULT_PROOF_SIZE: u64 = 256 * 1024;
-
 pub type SystemCallOf<Runtime> = <Runtime as frame_system::Config>::RuntimeCall;
 pub const XCM_SIZE_LIMIT: u32 = 2u32.pow(16);
 type GetXcmSizeLimit = ConstU32<XCM_SIZE_LIMIT>;

@@ -46,6 +46,7 @@ pub use precompile_utils_macro::{keccak256, precompile, precompile_name_from_add
 pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;
 
 pub mod prelude {
+	pub const DEFAULT_PROOF_SIZE: u64 = 256 * 1024;
 	pub use {
 		crate::{
 			evm::{
