@@ -6904,6 +6904,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-batch"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.3.4",
+ "log",
+ "num_enum 0.5.11",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "paste",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-blake2"
 version = "2.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v0.9.43#d9f7e8d8d7b9aa43cfe1780800295aa8f4c8c9ae"
@@ -7020,6 +7048,74 @@ dependencies = [
  "fp-evm",
  "ripemd",
  "sp-io",
+]
+
+[[package]]
+name = "pallet-evm-precompile-xcm-utils"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "derive_more",
+ "env_logger 0.9.3",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum 0.5.11",
+ "orml-traits",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
+]
+
+[[package]]
+name = "pallet-evm-precompile-xtokens"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum 0.5.11",
+ "orml-traits",
+ "orml-xtokens",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-evm-precompile-assets-erc20",
+ "pallet-timestamp",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "precompile-utils",
+ "rustc-hex",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -7948,6 +8044,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
+ "pallet-evm-precompile-batch",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
@@ -7957,6 +8054,8 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-xcm-utils",
+ "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
  "pallet-multisig",
  "pallet-session",
@@ -8072,6 +8171,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
+ "pallet-evm-precompile-batch",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
@@ -8081,6 +8181,8 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-xcm-utils",
+ "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
  "pallet-multisig",
  "pallet-session",
@@ -8202,6 +8304,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
+ "pallet-evm-precompile-batch",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
@@ -8211,6 +8314,8 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-xcm-utils",
+ "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
  "pallet-multisig",
  "pallet-session",
@@ -8808,6 +8913,7 @@ dependencies = [
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
+ "pallet-evm-precompile-batch",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
@@ -8817,6 +8923,8 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-xcm-utils",
+ "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
  "pallet-multisig",
  "pallet-session",

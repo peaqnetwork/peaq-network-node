@@ -83,43 +83,42 @@ fn register_asset_location_and_units_per_sec_is_ok() {
 		// Register asset and ensure it's ok
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			asset_id
 		));
 		System::assert_last_event(mock::RuntimeEvent::XcAssetConfig(Event::AssetRegistered {
-			asset_location: asset_location.clone().into_versioned(),
+			asset_location: asset_location.into_versioned(),
 			asset_id,
 		}));
 
 		// Assert storage state after registering asset
 		assert_eq!(
-			AssetIdToLocation::<Test>::get(&asset_id).unwrap(),
-			asset_location.clone().into_versioned()
+			AssetIdToLocation::<Test>::get(asset_id).unwrap(),
+			asset_location.into_versioned()
 		);
 		assert_eq!(
-			AssetLocationToId::<Test>::get(asset_location.clone().into_versioned()).unwrap(),
+			AssetLocationToId::<Test>::get(asset_location.into_versioned()).unwrap(),
 			asset_id
 		);
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
-			asset_location.clone().into_versioned()
+			asset_location.into_versioned()
 		));
 
 		// Register unit per second rate and verify storage
 		let units: u128 = 7 * 11 * 13 * 17 * 29;
 		assert_ok!(XcAssetConfig::set_asset_units_per_second(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			units
 		));
 		System::assert_last_event(mock::RuntimeEvent::XcAssetConfig(
 			Event::UnitsPerSecondChanged {
-				asset_location: asset_location.clone().into_versioned(),
+				asset_location: asset_location.into_versioned(),
 				units_per_second: units,
 			},
 		));
 		assert_eq!(
-			AssetLocationUnitsPerSecond::<Test>::get(&asset_location.clone().into_versioned())
-				.unwrap(),
+			AssetLocationUnitsPerSecond::<Test>::get(asset_location.into_versioned()).unwrap(),
 			units
 		);
 	})
@@ -136,7 +135,7 @@ fn asset_is_already_registered() {
 		// Register asset and ensure it's ok
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			asset_id
 		));
 
@@ -144,7 +143,7 @@ fn asset_is_already_registered() {
 		assert_noop!(
 			XcAssetConfig::register_asset_location(
 				RuntimeOrigin::root(),
-				Box::new(asset_location.clone().into_versioned()),
+				Box::new(asset_location.into_versioned()),
 				asset_id
 			),
 			Error::<Test>::AssetAlreadyRegistered
@@ -163,12 +162,12 @@ fn change_asset_location_is_ok() {
 		// Register asset and ups
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			asset_id
 		));
 		assert_ok!(XcAssetConfig::set_asset_units_per_second(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			units
 		));
 
@@ -178,32 +177,31 @@ fn change_asset_location_is_ok() {
 
 		assert_ok!(XcAssetConfig::change_existing_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(new_asset_location.clone().into_versioned()),
+			Box::new(new_asset_location.into_versioned()),
 			asset_id
 		));
 		System::assert_last_event(mock::RuntimeEvent::XcAssetConfig(Event::AssetLocationChanged {
-			previous_asset_location: asset_location.clone().into_versioned(),
+			previous_asset_location: asset_location.into_versioned(),
 			asset_id,
-			new_asset_location: new_asset_location.clone().into_versioned(),
+			new_asset_location: new_asset_location.into_versioned(),
 		}));
 
 		// Assert storage state
 		assert_eq!(
-			AssetIdToLocation::<Test>::get(&asset_id).unwrap(),
-			new_asset_location.clone().into_versioned()
+			AssetIdToLocation::<Test>::get(asset_id).unwrap(),
+			new_asset_location.into_versioned()
 		);
 		assert_eq!(
-			AssetLocationToId::<Test>::get(new_asset_location.clone().into_versioned()).unwrap(),
+			AssetLocationToId::<Test>::get(new_asset_location.into_versioned()).unwrap(),
 			asset_id
 		);
 
 		// This should have been deleted
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
-			asset_location.clone().into_versioned()
+			asset_location.into_versioned()
 		));
 		assert_eq!(
-			AssetLocationUnitsPerSecond::<Test>::get(new_asset_location.clone().into_versioned())
-				.unwrap(),
+			AssetLocationUnitsPerSecond::<Test>::get(new_asset_location.into_versioned()).unwrap(),
 			units
 		);
 	})
@@ -220,33 +218,31 @@ fn remove_payment_asset_is_ok() {
 		// Register asset and ups
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			asset_id
 		));
 		assert_ok!(XcAssetConfig::set_asset_units_per_second(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			units
 		));
 
 		// Now we remove supported asset
 		assert_ok!(XcAssetConfig::remove_payment_asset(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 		));
 		System::assert_last_event(mock::RuntimeEvent::XcAssetConfig(
-			Event::SupportedAssetRemoved {
-				asset_location: asset_location.clone().into_versioned(),
-			},
+			Event::SupportedAssetRemoved { asset_location: asset_location.into_versioned() },
 		));
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
-			asset_location.clone().into_versioned()
+			asset_location.into_versioned()
 		));
 
 		// Repeated calls don't do anything
 		assert_ok!(XcAssetConfig::remove_payment_asset(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 		));
 	})
 }
@@ -262,27 +258,27 @@ fn remove_asset_is_ok() {
 		// Register asset and ups
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			asset_id
 		));
 		assert_ok!(XcAssetConfig::set_asset_units_per_second(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			units
 		));
 
 		// Remove asset entirely and assert op is ok
 		assert_ok!(XcAssetConfig::remove_asset(RuntimeOrigin::root(), asset_id,));
 		System::assert_last_event(mock::RuntimeEvent::XcAssetConfig(Event::AssetRemoved {
-			asset_location: asset_location.clone().into_versioned(),
+			asset_location: asset_location.into_versioned(),
 			asset_id,
 		}));
 
 		// Assert that storage is empty after successful removal
 		assert!(!AssetIdToLocation::<Test>::contains_key(asset_id));
-		assert!(!AssetLocationToId::<Test>::contains_key(asset_location.clone().into_versioned()));
+		assert!(!AssetLocationToId::<Test>::contains_key(asset_location.into_versioned()));
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
-			asset_location.clone().into_versioned()
+			asset_location.into_versioned()
 		));
 	})
 }
@@ -298,7 +294,7 @@ fn not_registered_asset_is_not_ok() {
 		assert_noop!(
 			XcAssetConfig::set_asset_units_per_second(
 				RuntimeOrigin::root(),
-				Box::new(asset_location.clone().into_versioned()),
+				Box::new(asset_location.into_versioned()),
 				units
 			),
 			Error::<Test>::AssetDoesNotExist
@@ -307,7 +303,7 @@ fn not_registered_asset_is_not_ok() {
 		assert_noop!(
 			XcAssetConfig::change_existing_asset_location(
 				RuntimeOrigin::root(),
-				Box::new(asset_location.clone().into_versioned()),
+				Box::new(asset_location.into_versioned()),
 				asset_id
 			),
 			Error::<Test>::AssetDoesNotExist
@@ -330,26 +326,26 @@ fn public_interfaces_are_ok() {
 
 		// Initially, expect `None` to be returned for all
 		assert!(XcAssetConfig::get_xc_asset_location(asset_id).is_none());
-		assert!(XcAssetConfig::get_asset_id(asset_location.clone()).is_none());
-		assert!(XcAssetConfig::get_units_per_second(asset_location.clone()).is_none());
+		assert!(XcAssetConfig::get_asset_id(asset_location).is_none());
+		assert!(XcAssetConfig::get_units_per_second(asset_location).is_none());
 
 		// Register asset and expect values to be returned but UPS should still be `None`
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			asset_id
 		));
-		assert_eq!(XcAssetConfig::get_xc_asset_location(asset_id), Some(asset_location.clone()));
-		assert_eq!(XcAssetConfig::get_asset_id(asset_location.clone()), Some(asset_id));
-		assert!(XcAssetConfig::get_units_per_second(asset_location.clone()).is_none());
+		assert_eq!(XcAssetConfig::get_xc_asset_location(asset_id), Some(asset_location));
+		assert_eq!(XcAssetConfig::get_asset_id(asset_location), Some(asset_id));
+		assert!(XcAssetConfig::get_units_per_second(asset_location).is_none());
 
 		// Register ups and expect value value to be returned
 		assert_ok!(XcAssetConfig::set_asset_units_per_second(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 			units
 		));
-		assert_eq!(XcAssetConfig::get_units_per_second(asset_location.clone()), Some(units));
+		assert_eq!(XcAssetConfig::get_units_per_second(asset_location), Some(units));
 	})
 }
 
@@ -369,10 +365,7 @@ fn different_xcm_versions_are_ok() {
 		));
 
 		// Ensure that the new format is properly returned
-		assert_eq!(
-			XcAssetConfig::get_xc_asset_location(asset_id),
-			Some(new_asset_location.clone())
-		);
+		assert_eq!(XcAssetConfig::get_xc_asset_location(asset_id), Some(new_asset_location));
 	})
 }
 

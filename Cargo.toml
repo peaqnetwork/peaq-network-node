@@ -8,8 +8,11 @@ members = [
     "precompiles/utils/macro",
 	"precompiles/peaq-did",
 	"precompiles/peaq-storage",
-    "precompiles/peaq-rbac",
 	"precompiles/assets-erc20",
+	"precompiles/xtokens",
+	"precompiles/xcm-utils",
+	"precompiles/batch",
+  "precompiles/peaq-rbac",
 ]
 resolver = "2"
 
@@ -58,6 +61,7 @@ prettyplease = "0.1.18"
 proc-macro2 = "1.0"
 quote = "1.0"
 rlp = { version = "0.5", default-features = false }
+rustc-hex = { version = "2.0.1", default-features = false }
 scale-info = { version = "2.1", default-features = false, features = ["derive"] }
 sha3 = { version = "0.9.1", default-features = false }
 serde_json = { version = "1.0" }
@@ -206,6 +210,7 @@ sp-staking = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 frame-try-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43"}
 
+# [TODO] ...
 zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
 zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
 zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
