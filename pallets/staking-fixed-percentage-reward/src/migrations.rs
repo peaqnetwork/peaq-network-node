@@ -2,7 +2,7 @@
 
 use super::*;
 use frame_support::{
-	dispatch::GetStorageVersion,
+	pallet_prelude::GetStorageVersion,
 	pallet_prelude::{StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
