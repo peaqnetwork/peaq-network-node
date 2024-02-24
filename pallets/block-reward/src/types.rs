@@ -139,7 +139,7 @@ impl RewardDistributionConfig {
 			if let Some(mid_result) = result {
 				accumulator = mid_result;
 			} else {
-				return false
+				return false;
 			}
 		}
 

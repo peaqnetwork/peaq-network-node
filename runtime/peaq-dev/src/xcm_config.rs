@@ -105,7 +105,7 @@ impl<
 {
 	fn take_revenue(revenue: MultiAsset) {
 		match Matcher::matches_fungibles(&revenue) {
-			Ok((asset_id, amount)) =>
+			Ok((asset_id, amount)) => {
 				if amount > Zero::zero() {
 					if let Err(error) =
 						Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
@@ -121,7 +121,8 @@ impl<
 							amount, asset_id,
 						);
 					}
-				},
+				}
+			},
 			Err(_) => {
 				log::error!(
 					target: "xcm::weight",

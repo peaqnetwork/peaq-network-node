@@ -111,10 +111,12 @@ pub enum DiscriminantResult<T> {
 impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
 	fn from(val: DiscriminantResult<T>) -> Self {
 		match val {
-			DiscriminantResult::<T>::Some(_, extra_cost) =>
-				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
-			DiscriminantResult::<T>::None(extra_cost) =>
-				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
+			DiscriminantResult::<T>::Some(_, extra_cost) => {
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost }
+			},
+			DiscriminantResult::<T>::None(extra_cost) => {
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost }
+			},
 			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
 	}
@@ -321,19 +323,19 @@ pub fn get_address_type<R: pallet_evm::Config>(
 
 	// 0 => either EOA or precompile without dummy code
 	if code_len == 0 {
-		return Ok(AddressType::EOA)
+		return Ok(AddressType::EOA);
 	}
 
 	// dummy code is 5 bytes long, so any other len means it is a contract.
 	if code_len != 5 {
-		return Ok(AddressType::Contract)
+		return Ok(AddressType::Contract);
 	}
 
 	// check code matches dummy code
 	handle.record_db_read::<R>(code_len as usize)?;
 	let code = pallet_evm::AccountCodes::<R>::get(address);
 	if code == [0x60, 0x00, 0x60, 0x00, 0xfd] {
-		return Ok(AddressType::Precompile)
+		return Ok(AddressType::Precompile);
 	}
 
 	Ok(AddressType::Unknown)
@@ -360,7 +362,7 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	// Check DELEGATECALL config.
 	let accept_delegate_call = C::accept_delegate_call().unwrap_or(false);
 	if !accept_delegate_call && code_address != handle.context().address {
-		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"))
+		return Err(revert("Cannot be called with DELEGATECALL or CALLCODE"));
 	}
 
 	// Extract which selector is called.
@@ -374,13 +376,13 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 	let callable_by_smart_contract =
 		C::callable_by_smart_contract(caller, selector).unwrap_or(false);
 	if !callable_by_smart_contract && !is_address_eoa_or_precompile::<R>(handle, caller)? {
-		return Err(revert("Function not callable by smart contracts"))
+		return Err(revert("Function not callable by smart contracts"));
 	}
 
 	// Is this selector callable from a precompile?
 	let callable_by_precompile = C::callable_by_precompile(caller, selector).unwrap_or(false);
 	if !callable_by_precompile && is_precompile_or_fail::<R>(caller, handle.remaining_gas())? {
-		return Err(revert("Function not callable by precompiles"))
+		return Err(revert("Function not callable by precompiles"));
 	}
 
 	Ok(())
@@ -389,8 +391,9 @@ fn common_checks<R: pallet_evm::Config, C: PrecompileChecks>(
 pub fn is_precompile_or_fail<R: pallet_evm::Config>(address: H160, gas: u64) -> EvmResult<bool> {
 	match <R as pallet_evm::Config>::PrecompilesValue::get().is_precompile(address, gas) {
 		IsPrecompileResult::Answer { is_precompile, .. } => Ok(is_precompile),
-		IsPrecompileResult::OutOfGas =>
-			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
+		IsPrecompileResult::OutOfGas => {
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
+		},
 	}
 }
 
@@ -421,7 +424,7 @@ impl<'a, H: PrecompileHandle> PrecompileHandle for RestrictiveHandle<'a, H> {
 			return (
 				evm::ExitReason::Revert(evm::ExitRevert::Reverted),
 				crate::solidity::revert::revert_as_bytes("subcalls disabled for this precompile"),
-			)
+			);
 		}
 
 		self.handle.call(address, transfer, input, target_gas, is_static, context)
@@ -543,12 +546,12 @@ where
 
 		// Check if this is the address of the precompile.
 		if A::get() != code_address {
-			return None
+			return None;
 		}
 
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err))
+			return Some(Err(err));
 		}
 
 		// Check and increase recursion level if needed.
@@ -557,7 +560,7 @@ where
 			match self.current_recursion_level.try_borrow_mut() {
 				Ok(mut recursion_level) => {
 					if *recursion_level > max_recursion_level {
-						return Some(Err(revert("Precompile is called with too high nesting")))
+						return Some(Err(revert("Precompile is called with too high nesting")));
 					}
 
 					*recursion_level += 1;
@@ -656,11 +659,11 @@ where
 	) -> Option<PrecompileResult> {
 		let code_address = handle.code_address();
 		if !is_precompile_or_fail::<R>(code_address, handle.remaining_gas()).ok()? {
-			return None
+			return None;
 		}
 		// Perform common checks.
 		if let Err(err) = common_checks::<R, C>(handle) {
-			return Some(Err(err))
+			return Some(Err(err));
 		}
 
 		// Check and increase recursion level if needed.
@@ -671,7 +674,7 @@ where
 					let recursion_level = recursion_level_map.entry(code_address).or_insert(0);
 
 					if *recursion_level > max_recursion_level {
-						return Some(Err(revert("Precompile is called with too high nesting")))
+						return Some(Err(revert("Precompile is called with too high nesting")));
 					}
 
 					*recursion_level += 1;
@@ -711,7 +714,7 @@ where
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		if address.as_bytes().starts_with(A::get()) {
-			return self.precompile_set.is_precompile(address, gas)
+			return self.precompile_set.is_precompile(address, gas);
 		}
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}

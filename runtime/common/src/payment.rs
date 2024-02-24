@@ -51,7 +51,7 @@ where
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		if total_fee.is_zero() {
-			return Ok(None)
+			return Ok(None);
 		}
 		let inclusion_fee = total_fee - tip;
 
@@ -215,7 +215,7 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 					if Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in).is_ok() {
 						let info =
 							PaymentConvertInfo { amount_in: amounts[0], amount_out, zen_path };
-						return Ok((local_id, Some(info)))
+						return Ok((local_id, Some(info)));
 					}
 				}
 			}

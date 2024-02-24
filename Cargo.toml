@@ -212,14 +212,14 @@ frame-try-runtime = { git = "https://github.com/peaqnetwork/polkadot-sdk", branc
 try-runtime-cli = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "release-polkadot-v1.1.0"}
 
 # [TODO] ...
-zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
-zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
-zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
+zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.1.0", default-features = false }
+zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.1.0", default-features = false }
+zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.1.0", default-features = false }
 
 # Peaq's own developments
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v1.1.0", default-features = false }
 peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v1.1.0" }
-peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch ="dev", default-features = false }
+peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch ="peaq-polkadot-v1.1.0", default-features = false }
 peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "peaq-polkadot-v1.1.0", default-features = false }
 peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v1.1.0", default-features = false }
 peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v1.1.0" }

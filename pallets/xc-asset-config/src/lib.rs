@@ -114,14 +114,14 @@ pub mod pallet {
 	impl<T: Config> XcAssetLocation<T::AssetId> for Pallet<T> {
 		fn get_xc_asset_location(asset_id: T::AssetId) -> Option<MultiLocation> {
 			if asset_id == T::NativeAssetId::get() {
-				return Some(T::NativeAssetLocation::get())
+				return Some(T::NativeAssetLocation::get());
 			}
 			AssetIdToLocation::<T>::get(asset_id).and_then(|x| x.try_into().ok())
 		}
 
 		fn get_asset_id(asset_location: MultiLocation) -> Option<T::AssetId> {
 			if asset_location == T::NativeAssetLocation::get() {
-				return Some(T::NativeAssetId::get())
+				return Some(T::NativeAssetId::get());
 			}
 			AssetLocationToId::<T>::get(asset_location.into_versioned())
 		}

@@ -148,7 +148,7 @@ pub mod pallet {
 						Weight::from_parts(1_u64, 0),
 						Weight::from_parts(1_u64, 0),
 						Reward { owner: stake.id.clone(), amount: percentage * issue_number },
-					)
+					);
 				}
 			}
 			log::error!(
@@ -186,8 +186,8 @@ pub mod pallet {
 						.filter(|x| x.amount >= min_delegator_stake)
 						.map(|x| Reward {
 							owner: x.owner.clone(),
-							amount: Perquintill::from_rational(x.amount, denominator) *
-								issue_number,
+							amount: Perquintill::from_rational(x.amount, denominator)
+								* issue_number,
 						})
 						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 
@@ -195,7 +195,7 @@ pub mod pallet {
 						Weight::from_parts(1_u64 + 4_u64, 0),
 						Weight::from_parts(inner.len() as u64, 0),
 						inner.try_into().expect("Did not extend vec q.e.d."),
-					)
+					);
 				}
 			}
 			log::error!(

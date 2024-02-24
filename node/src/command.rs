@@ -152,7 +152,7 @@ impl SubstrateCli for Cli {
 						std::path::PathBuf::from(path),
 					)?)
 				} else {
-					return Err(format!("Wrong chain_spec, {}", path))
+					return Err(format!("Wrong chain_spec, {}", path));
 				}
 			},
 		})
@@ -172,13 +172,13 @@ impl SubstrateCli for Cli {
 }
 
 fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.ethapi.contains(&EthApi::Debug) || cli.run.ethapi.contains(&EthApi::Trace)) &&
-		cli.run.base.base.import_params.wasm_runtime_overrides.is_none()
+	if (cli.run.ethapi.contains(&EthApi::Debug) || cli.run.ethapi.contains(&EthApi::Trace))
+		&& cli.run.base.base.import_params.wasm_runtime_overrides.is_none()
 	{
 		return Err(
 			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
 				.into(),
-		)
+		);
 	}
 	Ok(())
 }
@@ -311,8 +311,9 @@ pub fn run() -> sc_cli::Result<()> {
 					DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
 						path: frontier_database_dir(&config, "paritydb"),
 					},
-					_ =>
-						return Err(format!("Cannot purge `{:?}` database", config.database).into()),
+					_ => {
+						return Err(format!("Cannot purge `{:?}` database", config.database).into())
+					},
 				};
 				cmd.run(frontier_database_config)
 			})
@@ -332,7 +333,7 @@ pub fn run() -> sc_cli::Result<()> {
 			})
 		},
 		#[cfg(feature = "frame-benchmarking-cli")]
-		Some(Subcommand::Benchmark(cmd)) =>
+		Some(Subcommand::Benchmark(cmd)) => {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 				let chain_spec = &runner.config().chain_spec;
@@ -384,7 +385,8 @@ pub fn run() -> sc_cli::Result<()> {
 				Err("Benchmarking wasn't enabled when building the node. You can enable it with \
 					 `--features runtime-benchmarks`."
 					.into())
-			},
+			}
+		},
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");

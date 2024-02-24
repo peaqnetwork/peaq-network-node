@@ -240,9 +240,9 @@ impl peaq_primitives_xcm::AssetIdExt for MockAssetId {
 
 	fn is_allow_to_create(&self) -> bool {
 		if self.is_native_token() {
-			return false
+			return false;
 		}
-		return true
+		return true;
 	}
 }
 
@@ -327,7 +327,7 @@ impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
 				if prefix_part == &[255u8; 4] {
 					data.copy_from_slice(id_part);
 
-					return Self::AssetId(MockAssetId(u128::from_be_bytes(data)))
+					return Self::AssetId(MockAssetId(u128::from_be_bytes(data)));
 				}
 				Self::Bogus
 			},

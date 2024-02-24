@@ -148,7 +148,7 @@ where
 	fn discriminant(address: H160, gas: u64) -> DiscriminantResult<AssetIdOf<Runtime, Instance>> {
 		let extra_cost = RuntimeHelper::<Runtime>::db_read_gas_cost();
 		if gas < extra_cost {
-			return DiscriminantResult::OutOfGas
+			return DiscriminantResult::OutOfGas;
 		}
 
 		let asset_id = match Runtime::address_to_asset_id(address) {

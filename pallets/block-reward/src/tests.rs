@@ -365,12 +365,12 @@ impl FreeBalanceSnapshot {
 
 	/// `true` if all free balances equal `Zero`, `false` otherwise
 	fn is_zero(&self) -> bool {
-		self.treasury.is_zero() &&
-			self.collators.is_zero() &&
-			self.dapps.is_zero() &&
-			self.lp_users.is_zero() &&
-			self.machines.is_zero() &&
-			self.parachain_lease_fund.is_zero()
+		self.treasury.is_zero()
+			&& self.collators.is_zero()
+			&& self.dapps.is_zero()
+			&& self.lp_users.is_zero()
+			&& self.machines.is_zero()
+			&& self.parachain_lease_fund.is_zero()
 	}
 
 	/// Asserts that `post_reward_state` is as expected.

@@ -91,15 +91,17 @@ pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
 					path: frontier_database_dir(config, "db"),
 					cache_size: 0,
 				},
-				DatabaseSource::ParityDb { .. } =>
-					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") },
+				DatabaseSource::ParityDb { .. } => {
+					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") }
+				},
 				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
 					rocksdb_path: frontier_database_dir(config, "db"),
 					paritydb_path: frontier_database_dir(config, "paritydb"),
 					cache_size: 0,
 				},
-				_ =>
-					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
+				_ => {
+					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
+				},
 			},
 		},
 	)?)))

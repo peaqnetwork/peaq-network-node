@@ -112,7 +112,7 @@ impl<T: Ord + Clone, S: Get<u32>> OrderedSet<T, S> {
 		// the highest allowed index
 		let highest_index: usize = S::get().saturating_sub(1).saturated_into();
 		if S::get().is_zero() {
-			return Err(true)
+			return Err(true);
 		}
 		match self.try_insert(value.clone()) {
 			Err(loc) if loc <= highest_index => {

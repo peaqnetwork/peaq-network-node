@@ -62,18 +62,18 @@ fn coinbase_rewards_few_blocks_detailed_check() {
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
 			// compute rewards
-			let c_rewards: BalanceOf<Test> = (1000. * 8_000_000. * 8. /
-				(8_000_000. * 8. + 32_000_000. + 16_000_000.))
+			let c_rewards: BalanceOf<Test> = (1000. * 8_000_000. * 8.
+				/ (8_000_000. * 8. + 32_000_000. + 16_000_000.))
 				as BalanceOf<Test>;
 			let d_rewards: BalanceOf<Test> =
 				(1000. * 8_000_000. * 8. / (8_000_000. * 8. + 16_000_000.)) as BalanceOf<Test>;
 
 			let c_total_rewards = c_rewards + d_rewards;
-			let d_1_rewards: BalanceOf<Test> = (1000. * 32_000_000. /
-				(8_000_000. * 8. + 32_000_000. + 16_000_000.))
+			let d_1_rewards: BalanceOf<Test> = (1000. * 32_000_000.
+				/ (8_000_000. * 8. + 32_000_000. + 16_000_000.))
 				as BalanceOf<Test>;
-			let d_2_rewards: BalanceOf<Test> = (1000. * 16_000_000. /
-				(8_000_000. * 8. + 32_000_000. + 16_000_000.))
+			let d_2_rewards: BalanceOf<Test> = (1000. * 16_000_000.
+				/ (8_000_000. * 8. + 32_000_000. + 16_000_000.))
 				as BalanceOf<Test>;
 
 			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5

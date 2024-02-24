@@ -80,8 +80,9 @@ impl<
 	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
 		let key = match location {
 			MultiLocation { parents: 1, interior: Here } => MockPeaqAccount::ParentAccount,
-			MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) } =>
-				MockPeaqAccount::SlibingParaAccount,
+			MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) } => {
+				MockPeaqAccount::SlibingParaAccount
+			},
 			_ => return Err(location),
 		};
 		Ok(key.into())

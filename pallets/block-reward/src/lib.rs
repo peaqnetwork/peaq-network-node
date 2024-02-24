@@ -155,7 +155,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			assert!(self.reward_config.is_consistent());
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
@@ -247,7 +247,7 @@ pub mod pallet {
 	impl<Moment, T: Config> OnTimestampSet<Moment> for Pallet<T> {
 		fn on_timestamp_set(_moment: Moment) {
 			if T::Currency::total_issuance() >= Self::max_currency_supply() {
-				return
+				return;
 			}
 
 			let inflation = T::Currency::issue(Self::block_issue_reward());
