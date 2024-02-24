@@ -84,21 +84,22 @@ pub mod pallet {
 	pub(crate) type CoefficientConfig<T: Config> = StorageValue<_, u8, ValueQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		pub coefficient: u8,
+        pub _phantom: PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
+	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { coefficient: DEFAULT_COEFFICIENT }
+			Self { coefficient: DEFAULT_COEFFICIENT, _phantom: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			<CoefficientConfig<T>>::put(self.coefficient);
+			CoefficientConfig::<T>::put(self.coefficient);
 		}
 	}
 

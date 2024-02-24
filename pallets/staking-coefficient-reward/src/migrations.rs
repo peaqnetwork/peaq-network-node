@@ -2,12 +2,12 @@
 
 use super::*;
 use frame_support::{
-	dispatch::GetStorageVersion,
 	pallet_prelude::{StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,
 };
+use frame_support::pallet_prelude::GetStorageVersion;
 
 const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
