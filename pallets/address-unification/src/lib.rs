@@ -133,7 +133,7 @@ pub mod module {
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -280,7 +280,7 @@ impl<T: Config> Pallet<T> {
 		domain_seperator_msg.extend_from_slice(&keccak256!("1")); // version
 		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
 		domain_seperator_msg.extend_from_slice(
-			frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref(),
+			frame_system::Pallet::<T>::block_hash(BlockNumberFor::<T>::zero()).as_ref(),
 		); // genesis block hash
 		keccak_256(domain_seperator_msg.as_slice())
 	}
