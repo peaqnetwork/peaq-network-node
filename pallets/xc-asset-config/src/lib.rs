@@ -59,9 +59,6 @@
 
 use frame_support::pallet;
 pub use pallet::*;
-use sp_runtime::traits::Convert;
-use sp_std::{borrow::Borrow, marker::PhantomData};
-use xcm_executor::traits::Convert as XCMConvert;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
@@ -75,7 +72,6 @@ pub mod migrations;
 
 pub mod weights;
 pub use weights::WeightInfo;
-use xcm::latest::prelude::MultiLocation;
 
 #[pallet]
 pub mod pallet {
@@ -83,7 +79,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin};
 	use frame_system::pallet_prelude::*;
-	// use parity_scale_codec::HasCompact;
+	use parity_scale_codec::HasCompact;
 	use sp_std::boxed::Box;
 	use xcm::{v3::MultiLocation, VersionedMultiLocation};
 
@@ -139,7 +135,7 @@ pub mod pallet {
 
 		/// The Asset Id. This will be used to create the asset and to associate it with
 		/// a AssetLocation
-		type AssetId: Member + Parameter + Default + Copy + MaxEncodedLen;
+		type AssetId: Member + Parameter + Default + Copy + HasCompact + MaxEncodedLen;
 
 		/// Native Asset Id for the Token(0)
 		type NativeAssetId: Get<Self::AssetId>;
@@ -223,7 +219,7 @@ pub mod pallet {
 		pub fn register_asset_location(
 			origin: OriginFor<T>,
 			asset_location: Box<VersionedMultiLocation>,
-			asset_id: T::AssetId,
+			#[pallet::compact] asset_id: T::AssetId,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -289,7 +285,7 @@ pub mod pallet {
 		pub fn change_existing_asset_location(
 			origin: OriginFor<T>,
 			new_asset_location: Box<VersionedMultiLocation>,
-			asset_id: T::AssetId,
+			#[pallet::compact] asset_id: T::AssetId,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin)?;
 
@@ -372,41 +368,5 @@ pub mod pallet {
 			Self::deposit_event(Event::AssetRemoved { asset_id, asset_location });
 			Ok(())
 		}
-	}
-}
-
-pub struct MultiLocationToAssetId<T: Config>(PhantomData<T>);
-
-impl<T: Config> XCMConvert<MultiLocation, T::AssetId> for MultiLocationToAssetId<T>
-where
-	T: Config,
-	Pallet<T>: XcAssetLocation<T::AssetId>,
-{
-	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<T::AssetId, ()> {
-		let location = *location.borrow();
-		if let Some(asset_id) = Pallet::<T>::get_asset_id(location) {
-			Ok(asset_id)
-		} else {
-			Err(())
-		}
-	}
-
-	fn reverse_ref(id: impl Borrow<T::AssetId>) -> Result<MultiLocation, ()> {
-		let id = *id.borrow();
-		if let Some(multilocation) = Pallet::<T>::get_xc_asset_location(id) {
-			Ok(multilocation)
-		} else {
-			Err(())
-		}
-	}
-}
-
-impl<T: Config> Convert<T::AssetId, Option<MultiLocation>> for MultiLocationToAssetId<T>
-where
-	T: Config,
-	Pallet<T>: XcAssetLocation<T::AssetId>,
-{
-	fn convert(id: T::AssetId) -> Option<MultiLocation> {
-		<Self as XCMConvert<MultiLocation, T::AssetId>>::reverse_ref(id).ok()
 	}
 }

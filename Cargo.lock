@@ -9465,6 +9465,7 @@ dependencies = [
  "frame-support 4.0.0-dev (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-polkadot-v1.1.0)",
  "log",
  "num_enum 0.5.11",
+ "orml-traits",
  "pallet-assets",
  "pallet-evm",
  "parity-scale-codec",

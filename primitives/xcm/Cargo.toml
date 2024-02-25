@@ -26,6 +26,7 @@ pallet-evm = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
+orml-traits = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -47,4 +48,5 @@ std = [
 	"xcm/std",
 	"xcm-builder/std",
 	"zenlink-protocol/std",
+	"orml-traits/std",
 ]
