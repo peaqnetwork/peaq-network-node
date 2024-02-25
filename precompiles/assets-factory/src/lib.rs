@@ -4,14 +4,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::PrecompileHandle;
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{ConstU32, OriginTrait},
 };
+use sp_runtime::traits::Dispatchable;
 
 use pallet_evm::AddressMapping;
 use peaq_primitives_xcm::{AssetId as PeaqAssetId, EVMAddressToAssetId};
