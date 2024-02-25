@@ -35,11 +35,10 @@
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::{ExitError, PrecompileHandle};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{
 		fungibles::{
@@ -48,6 +47,7 @@ use frame_support::{
 		OriginTrait,
 	},
 };
+use sp_runtime::traits::Dispatchable;
 use pallet_evm::AddressMapping;
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
