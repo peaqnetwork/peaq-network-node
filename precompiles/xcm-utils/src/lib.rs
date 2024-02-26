@@ -101,11 +101,18 @@ where
 
 		let mut trader = <XcmConfig as xcm_executor::Config>::Trader::new();
 
+        let ctx = XcmContext {
+            origin: Some(multilocation),
+            message_id: XcmHash::default(),
+            topic: None,
+        };
+
 		// buy_weight returns unused assets
 		let unused = trader
 			.buy_weight(
 				Weight::from_parts(weight_per_second, DEFAULT_PROOF_SIZE),
 				vec![multiasset.clone()].into(),
+				&ctx,
 			)
 			.map_err(|_| {
 				RevertReason::custom("Asset not supported as fee payment").in_field("multilocation")

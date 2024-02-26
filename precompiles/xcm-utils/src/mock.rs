@@ -24,22 +24,22 @@ use frame_support::{
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use precompile_utils::{precompile_set::*, testing::*};
 use sp_core::{H256, U256};
+use sp_runtime::BuildStorage;
 
-use sp_runtime::testing::Header;
 use sp_runtime::traits::{
 	BlakeTwo256,
 	IdentityLookup,
 	// TryConvert
 };
+use sp_std::borrow::Borrow;
 use xcm::latest::Error as XcmError;
 use xcm_builder::{
 	AllowUnpaidExecutionFrom, FixedWeightBounds, IsConcrete, SignedToAccountId32,
 	SovereignSignedViaLocation,
 };
-use xcm_executor::traits::Convert;
 use xcm_executor::{
 	traits::{
-		// ConvertLocation,
+		ConvertLocation,
 		TransactAsset,
 		WeightTrader,
 	},
@@ -49,16 +49,11 @@ use Junctions::Here;
 
 pub type AccountId = MockPeaqAccount;
 pub type Balance = u128;
-pub type BlockNumber = u64;
-pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Runtime
 	{
 		System: frame_system,
 		Balances: pallet_balances,
@@ -68,39 +63,22 @@ construct_runtime!(
 	}
 );
 
-pub struct MockMultilocationToAccountConverter<AccountId>(PhantomData<AccountId>);
-impl<
-		AccountId: From<[u8; 32]>
-			+ Into<[u8; 32]>
-			+ Clone
-			+ std::convert::From<MockPeaqAccount>
-			+ std::cmp::PartialEq<MockPeaqAccount>,
-	> Convert<MultiLocation, AccountId> for MockMultilocationToAccountConverter<AccountId>
-{
-	fn convert(location: MultiLocation) -> Result<AccountId, MultiLocation> {
-		let key = match location {
-			MultiLocation { parents: 1, interior: Here } => MockPeaqAccount::ParentAccount,
-			MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) } => {
-				MockPeaqAccount::SlibingParaAccount
-			},
-			_ => return Err(location),
-		};
-		Ok(key.into())
-	}
-
-	fn reverse(who: AccountId) -> Result<MultiLocation, AccountId> {
-		if who == MockPeaqAccount::ParentAccount {
-			Ok(MultiLocation { parents: 1, interior: Here })
-		} else if who == MockPeaqAccount::SlibingParaAccount {
-			Ok(MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) })
-		} else {
-			Err(who)
+pub struct MockParachainMultilocationToAccountConverter;
+impl ConvertLocation<AccountId> for MockParachainMultilocationToAccountConverter {
+	fn convert_location(location: &MultiLocation) -> Option<AccountId> {
+		match location.borrow() {
+			MultiLocation {
+				parents: 1,
+				interior: Junctions::X1(Parachain(3000)),
+			} => Some(MockPeaqAccount::SlibingParaAccount),
+			MultiLocation { parents: 1, interior: Here } => Some(MockPeaqAccount::ParentAccount),
+			_ => None,
 		}
 	}
 }
 
 pub type LocationToAccountId = (
-	MockMultilocationToAccountConverter<AccountId>,
+	MockParachainMultilocationToAccountConverter,
 	xcm_builder::AccountId32Aliases<LocalNetworkId, AccountId>,
 );
 
@@ -133,14 +111,13 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = MockDbWeight;
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
 	type RuntimeCall = RuntimeCall;
+	type Nonce = u64;
+	type Block = Block;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -169,10 +146,11 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -352,7 +330,7 @@ impl WeightTrader for DummyWeightTrader {
 		DummyWeightTrader
 	}
 
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(&mut self, weight: Weight, payment: Assets, _context: &XcmContext) -> Result<Assets, XcmError> {
 		let asset_to_charge: MultiAsset =
 			(MultiLocation::parent(), weight.ref_time() as u128).into();
 		let unused = payment.checked_sub(asset_to_charge).map_err(|_| XcmError::TooExpensive)?;
@@ -415,6 +393,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
+	type Aliasers = Nothing;
 }
 
 #[derive(Default)]
@@ -430,8 +409,8 @@ impl ExtBuilder {
 	}
 
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::<Runtime>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
 		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
