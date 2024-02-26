@@ -5,9 +5,10 @@
 // primitives and utils imports
 use fp_evm::PrecompileHandle;
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
+use sp_runtime::traits::Dispatchable;
 use peaq_pallet_rbac::{
 	error::{RbacError, RbacErrorType},
 	rbac::{Rbac, Role},
