@@ -25,8 +25,9 @@ use crate::{
 use fp_evm::ExitError;
 use frame_support::{
 	assert_ok,
-	dispatch::{DispatchError, Dispatchable},
 };
+use sp_runtime::DispatchError;
+use sp_runtime::traits::Dispatchable;
 use pallet_evm::Call as EvmCall;
 use precompile_utils::{
 	evm::costs::call_cost, prelude::*, solidity::revert::revert_as_bytes, testing::*,
