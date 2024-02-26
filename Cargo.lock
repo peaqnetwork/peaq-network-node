@@ -9186,7 +9186,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v1.1.0#35685a96e10133f2eff7023de99bac993d98bdd7"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v1.1.0#222f8b83066901f0a6f799ef99cf8e66d35774c5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9205,14 +9205,14 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-rbac"
-version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#0879c1a11915b4549e1f6f6ac162cbd537b48155"
+version = "0.1.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#875cea7cc1818921bcc5837040839255d6933d42"
 dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
  "log",
- "frame-benchmarking 4.0.0-dev (git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.43)",
- "frame-support 4.0.0-dev (git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.43)",
- "frame-system 4.0.0-dev (git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.43)",
- "pallet-timestamp 4.0.0-dev (git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.43)",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -9224,8 +9224,8 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-rbac-rpc"
-version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#0879c1a11915b4549e1f6f6ac162cbd537b48155"
+version = "0.1.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#875cea7cc1818921bcc5837040839255d6933d42"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -9242,8 +9242,8 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
-version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#0879c1a11915b4549e1f6f6ac162cbd537b48155"
+version = "0.1.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#875cea7cc1818921bcc5837040839255d6933d42"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",

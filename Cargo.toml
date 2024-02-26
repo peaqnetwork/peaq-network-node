@@ -111,7 +111,7 @@ fp-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "pe
 fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0" }
 fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false }
 fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false }
-fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false }
+fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false, features = ["serde"] }
 pallet-base-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false }
 pallet-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false }
 pallet-ethereum = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.1.0", default-features = false }

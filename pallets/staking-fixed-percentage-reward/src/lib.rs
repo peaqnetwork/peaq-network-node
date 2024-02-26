@@ -85,7 +85,6 @@ pub mod pallet {
 		pub _phantom: PhantomData<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			let config = RewardRateInfo::new(

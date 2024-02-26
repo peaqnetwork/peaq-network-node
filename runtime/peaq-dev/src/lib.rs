@@ -94,6 +94,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 use peaq_primitives_xcm::{
 	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
 	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, StorageAssetId, NATIVE_ASSET_ID,
+	xcm::AssetLocationIdConverter,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -137,6 +138,8 @@ type Hash = peaq_primitives_xcm::Hash;
 /// Block type as expected by this runtime.
 /// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+pub type PeaqAssetLocationIdConverter = AssetLocationIdConverter<StorageAssetId, XcAssetConfig>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -218,7 +221,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2_u64),
-	polkadot_primitives::v4::MAX_POV_SIZE as u64,
+	polkadot_primitives::MAX_POV_SIZE as u64,
 );
 
 parameter_types! {
@@ -272,6 +275,8 @@ impl Contains<RuntimeCall> for BaseFilter {
 
 // Configure FRAME pallets to include in runtime.
 impl frame_system::Config for Runtime {
+	type Nonce = Nonce;
+	type Block = Block;
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = BaseFilter;
 	/// Block & extrinsics weights: base values and limits.
@@ -285,16 +290,10 @@ impl frame_system::Config for Runtime {
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup =
 		(AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, AddressUnification);
-	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Nonce;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = peaq_primitives_xcm::Header;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
@@ -333,6 +332,10 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
+
+    // Should be only enabled (`true`) when async backing is enabled
+    // otherwise set to `false`
+    type AllowMultipleBlocksPerSlot = ConstBool<false>;
 }
 
 // For ink
@@ -345,6 +348,9 @@ parameter_types! {
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const DeletionQueueDepth: u32 = 128;
 	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
+    // TODO: re-vist to make sure values are appropriate
+    pub const MaxDelegateDependencies: u32 = 32;
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -375,6 +381,19 @@ impl pallet_contracts::Config for Runtime {
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 	type UnsafeUnstableInterface = ConstBool<false>;
 	type DefaultDepositLimit = DefaultDepositLimit;
+
+	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+	type MaxDelegateDependencies = MaxDelegateDependencies;
+	type RuntimeHoldReason = RuntimeHoldReason;
+    // TODO: re-vist to make sure migration sequence is correct
+    type Migrations = (
+        pallet_contracts::migration::v12::Migration<Runtime, Balances>,
+        pallet_contracts::migration::v13::Migration<Runtime>,
+        pallet_contracts::migration::v14::Migration<Runtime, Balances>,
+        pallet_contracts::migration::v15::Migration<Runtime>,
+    );
+    type Debug = ();
+    type Environment = ();
 }
 
 parameter_types! {
@@ -408,8 +427,8 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
-	type HoldIdentifier = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -941,51 +960,49 @@ impl zenlink_protocol::Config for Runtime {
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
+	type ControlOrigin = EnsureRoot<AccountId>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Runtime
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+		System: frame_system = 0,
 		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip::{Pallet, Storage} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		Aura: pallet_aura::{Pallet, Config<T>} = 3,
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Balances: pallet_balances = 4,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
-		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
+		Contracts: pallet_contracts = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
 		Treasury: pallet_treasury = 9,
 		Council: pallet_collective::<Instance1> = 10,
 
 		// EVM
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 12,
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
+		Ethereum: pallet_ethereum = 11,
+		EVM: pallet_evm = 12,
+		DynamicFee: pallet_dynamic_fee = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
+		AuraExt: cumulus_pallet_aura_ext = 22,
+		ParachainStaking: parachain_staking = 23,
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
+		ParachainInfo: parachain_info = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
-		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
+		StakingCoefficientRewardCalculator: staking_coefficient_reward = 27,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
+		PolkadotXcm: pallet_xcm = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
-		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
+		Assets: pallet_assets = 39,
 		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
 		AddressUnification: address_unification::{Pallet, Call, Storage, Event<T>} = 41,
 
@@ -1605,6 +1622,10 @@ impl_runtime_apis! {
 				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
 			)
 		}
+
+        fn initialize_pending_block(header: &<Block as BlockT>::Header) {
+            Executive::initialize_block(header)
+        }
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

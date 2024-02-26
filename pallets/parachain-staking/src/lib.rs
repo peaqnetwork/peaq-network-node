@@ -646,7 +646,6 @@ pub mod pallet {
 		pub max_candidate_stake: BalanceOf<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { stakers: Default::default(), max_candidate_stake: Default::default() }

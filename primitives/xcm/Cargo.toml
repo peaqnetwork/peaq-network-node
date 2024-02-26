@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 log = { workspace = true }
 bstringify = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, default-features = false, optional = true }
 parity-scale-codec = { workspace = true }
 num_enum = { workspace = true }
 sp-core = { workspace = true }
@@ -17,7 +17,7 @@ sp-std = { workspace = true }
 evm = { workspace = true }
 scale-info = { workspace = true }
 sha3 = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, optional = true }
 frame-support = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
 pallet-assets = { workspace = true, default-features = false }
@@ -49,4 +49,6 @@ std = [
 	"xcm-builder/std",
 	"zenlink-protocol/std",
 	"orml-traits/std",
+	"serde",
+	"serde_json",
 ]

@@ -17,7 +17,7 @@ log = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false, optional = true }
 scale-info = { workspace = true, default-features = false, features = ["derive"] }
-serde = { workspace = true, default-features = false, optional = true }
+serde = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false, optional = true }
 sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
@@ -36,7 +36,7 @@ std = [
 	"pallet-balances/std",
 	"pallet-timestamp/std",
 	"scale-info/std",
-	"serde",
+	"serde/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",

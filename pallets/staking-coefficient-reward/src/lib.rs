@@ -89,7 +89,6 @@ pub mod pallet {
         pub _phantom: PhantomData<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { coefficient: DEFAULT_COEFFICIENT, _phantom: Default::default() }
