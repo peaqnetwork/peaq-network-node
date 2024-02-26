@@ -7,6 +7,7 @@ use xcm::latest::{
 };
 use xcm_builder::TakeRevenue;
 use xcm_executor::traits::WeightTrader;
+use cumulus_primitives_core::XcmContext;
 
 /// Used as weight trader for foreign assets.
 ///
@@ -36,6 +37,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		&mut self,
 		weight: Weight,
 		payment: xcm_executor::Assets,
+		_context: &XcmContext,
 	) -> Result<xcm_executor::Assets, XcmError> {
 		log::trace!(
 			target: "xcm::weight",
@@ -88,7 +90,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		}
 	}
 
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: Weight, _context: &XcmContext) -> Option<MultiAsset> {
 		log::trace!(target: "xcm::weight", "FixedRateOfForeignAsset::refund_weight weight: {:?}", weight);
 
 		if let Some((asset_location, units_per_second)) = self.asset_location_and_units_per_second {
