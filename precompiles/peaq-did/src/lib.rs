@@ -4,9 +4,11 @@
 
 // primitives and utils imports
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
+use sp_runtime::traits::Dispatchable;
 use precompile_utils::prelude::*;
 use sp_core::{Decode, H256, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -18,7 +20,6 @@ use pallet_evm::AddressMapping;
 use peaq_pallet_did::did::Did as PeaqDidT;
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
-type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
 type MomentOf<Runtime> = <Runtime as pallet_timestamp::Config>::Moment;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
@@ -49,13 +50,13 @@ where
 		+ frame_system::pallet::Config
 		+ pallet_timestamp::Config,
 	peaq_pallet_did::Pallet<Runtime>:
-		PeaqDidT<AccountIdOf<Runtime>, BlockNumberOf<Runtime>, MomentOf<Runtime>>,
+		PeaqDidT<AccountIdOf<Runtime>, BlockNumberFor<Runtime>, MomentOf<Runtime>>,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	Runtime::RuntimeCall: From<peaq_pallet_did::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
 	MomentOf<Runtime>: Into<U256>,
 	AccountIdOf<Runtime>: From<[u8; 32]>,
-	BlockNumberOf<Runtime>: Into<u32>,
+	BlockNumberFor<Runtime>: Into<u32>,
 	sp_core::U256: From<MomentOf<Runtime>>,
 {
 	#[precompile::public("read_attribute(bytes32,bytes)")]
@@ -92,7 +93,7 @@ where
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		let did_account_addr = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
-		let valid_for_opt: Option<BlockNumberOf<Runtime>> = match valid_for {
+		let valid_for_opt: Option<BlockNumberFor<Runtime>> = match valid_for {
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
@@ -139,7 +140,7 @@ where
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		let did_account_addr = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
-		let valid_for_opt: Option<BlockNumberOf<Runtime>> = match valid_for {
+		let valid_for_opt: Option<BlockNumberFor<Runtime>> = match valid_for {
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
