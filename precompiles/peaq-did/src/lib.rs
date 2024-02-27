@@ -33,13 +33,6 @@ pub(crate) const SELECTOR_LOG_REMOVE_ATTRIBUTE: [u8; 32] =
 
 pub struct PeaqDIDPrecompile<Runtime>(PhantomData<Runtime>);
 
-/// Just a rough estimation
-/// Attribute size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
-/// Blake2_128Concat (16) + Hash (32) + Attribute Data
-/// Onwer size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
-/// Blake2_128Concat (16) + AccountId (32) + Hash (32) + AccountID (32)
-const PEAQ_DID_KEY_SIZE: u64 = 224;
-
 #[derive(Default, Debug, solidity::Codec)]
 pub struct EVMAttribute {
 	name: UnboundedBytes,
@@ -113,10 +106,7 @@ where
 				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
-			PEAQ_DID_KEY_SIZE +
-				32_u64 + name.as_bytes().len() as u64 +
-				value.as_bytes().len() as u64 +
-				4_u64,
+			0,
 		)?;
 
 		let event = log1(
@@ -163,7 +153,7 @@ where
 				value: value.as_bytes().to_vec(),
 				valid_for: valid_for_opt,
 			},
-			32_u64 + name.as_bytes().len() as u64 + value.as_bytes().len() as u64 + 4_u64,
+			0,
 		)?;
 
 		let event = log1(

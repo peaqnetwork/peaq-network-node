@@ -54,7 +54,7 @@ use precompile_utils::{
 	evm::logs::LogsBuilder,
 	prelude::{
 		Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
-		RevertReason, RuntimeHelper, UnboundedBytes, SYSTEM_ACCOUNT_SIZE,
+		RevertReason, RuntimeHelper, UnboundedBytes,
 	},
 	solidity,
 };
@@ -312,7 +312,7 @@ where
 					target: Runtime::Lookup::unlookup(to),
 					amount,
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -360,7 +360,7 @@ where
 						destination: Runtime::Lookup::unlookup(to),
 						amount,
 					},
-					SYSTEM_ACCOUNT_SIZE,
+					0,
 				)?;
 			} else {
 				// Dispatch call (if enough gas).
@@ -372,7 +372,7 @@ where
 						target: Runtime::Lookup::unlookup(to),
 						amount,
 					},
-					SYSTEM_ACCOUNT_SIZE,
+					0,
 				)?;
 			}
 		}
@@ -457,7 +457,7 @@ where
 				beneficiary: Runtime::Lookup::unlookup(beneficiary),
 				amount,
 			},
-			SYSTEM_ACCOUNT_SIZE,
+			0,
 		)?;
 
 		LogsBuilder::new(handle.context().address)
