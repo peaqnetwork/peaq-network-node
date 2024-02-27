@@ -28,11 +28,6 @@ pub(crate) const SELECTOR_LOG_ITEM_UPDATED: [u8; 32] =
 
 pub struct PeaqStoragePrecompile<Runtime>(PhantomData<Runtime>);
 
-/// Just a rough estimation
-/// Size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
-/// Blake2_128Concat (16) + Hash (32) but without Vec length
-const PEAQ_STORAGE_KEY_SIZE: u64 = 80;
-
 #[precompile_utils::precompile]
 impl<Runtime> PeaqStoragePrecompile<Runtime>
 where
@@ -76,9 +71,8 @@ where
 				item_type: item_type.as_bytes().to_vec(),
 				item: item.as_bytes().to_vec(),
 			},
-			PEAQ_STORAGE_KEY_SIZE + item.as_bytes().len() as u64,
+			0,
 		)?;
-		log::error!("add_item after dispatch");
 
 		let event = log1(
 			handle.context().address,
@@ -113,7 +107,7 @@ where
 				item_type: item_type.as_bytes().to_vec(),
 				item: item.as_bytes().to_vec(),
 			},
-			item.as_bytes().len() as u64,
+			0,
 		)?;
 
 		let event = log1(

@@ -49,14 +49,16 @@ use frame_support::{
 	},
 };
 use pallet_evm::AddressMapping;
+use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
 	evm::logs::LogsBuilder,
 	prelude::{
 		Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
-		RevertReason, RuntimeHelper, UnboundedBytes, SYSTEM_ACCOUNT_SIZE,
+		RevertReason, RuntimeHelper, UnboundedBytes,
 	},
 	solidity,
 };
+
 use precompile_utils::{
 	keccak256,
 	// succeed,
@@ -96,16 +98,6 @@ pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<I
 
 /// Alias for the Asset Id type for the provided Runtime and Instance.
 pub type AssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
-
-/// This trait ensure we can convert EVM address to AssetIds
-/// We will require Runtime to have this trait implemented
-pub trait EVMAddressToAssetId<AssetId> {
-	// Get assetId from address
-	fn address_to_asset_id(address: H160) -> Option<AssetId>;
-
-	// Get address from AssetId
-	fn asset_id_to_address(asset_id: AssetId) -> Option<H160>;
-}
 
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
@@ -320,7 +312,7 @@ where
 					target: Runtime::Lookup::unlookup(to),
 					amount,
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -368,7 +360,7 @@ where
 						destination: Runtime::Lookup::unlookup(to),
 						amount,
 					},
-					SYSTEM_ACCOUNT_SIZE,
+					0,
 				)?;
 			} else {
 				// Dispatch call (if enough gas).
@@ -380,7 +372,7 @@ where
 						target: Runtime::Lookup::unlookup(to),
 						amount,
 					},
-					SYSTEM_ACCOUNT_SIZE,
+					0,
 				)?;
 			}
 		}
@@ -465,7 +457,7 @@ where
 				beneficiary: Runtime::Lookup::unlookup(beneficiary),
 				amount,
 			},
-			SYSTEM_ACCOUNT_SIZE,
+			0,
 		)?;
 
 		LogsBuilder::new(handle.context().address)

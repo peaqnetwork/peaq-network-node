@@ -92,7 +92,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 // Polkadot imports
 use peaq_primitives_xcm::{
-	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
+	Address, AssetId as PeaqAssetId, AssetIdExt, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
 	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, StorageAssetId, NATIVE_ASSET_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
@@ -104,7 +104,7 @@ pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
 
 // For Zenlink-DEX-Module
-use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
+use peaq_primitives_xcm::EVMAddressToAssetId;
 
 pub use precompiles::EVMAssetPrefix;
 
@@ -517,7 +517,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = DOLLARS;
 	pub const SpendPeriod: BlockNumber = DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
+	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
 	pub const TipReportDepositBase: Balance = DOLLARS;

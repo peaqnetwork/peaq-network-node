@@ -1,8 +1,7 @@
-use crate::AccountId;
+use crate::{AccountId};
 use frame_support::ensure;
 use pallet_assets::AssetsCallback;
-use pallet_evm_precompile_assets_erc20::EVMAddressToAssetId;
-use sp_core::U256;
+use sp_core::{H160, U256};
 use sp_std::marker::PhantomData;
 
 /// Evm Address.
@@ -15,6 +14,16 @@ pub fn to_bytes<T: Into<U256>>(value: T) -> [u8; 32] {
 
 /// Revert opt code. It's inserted at the precompile addresses, to make them functional in EVM.
 pub const EVM_REVERT_CODE: &[u8] = &[0x60, 0x00, 0x60, 0x00, 0xfd];
+
+/// This trait ensure we can convert EVM address to AssetIds
+/// We will require Runtime to have this trait implemented
+pub trait EVMAddressToAssetId<AssetId> {
+	// Get assetId from address
+	fn address_to_asset_id(address: H160) -> Option<AssetId>;
+
+	// Get address from AssetId
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160>;
+}
 
 pub struct EvmRevertCodeHandler<A, R>(PhantomData<(A, R)>);
 impl<A, R> AssetsCallback<R::AssetId, AccountId> for EvmRevertCodeHandler<A, R>

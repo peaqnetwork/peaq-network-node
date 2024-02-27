@@ -74,11 +74,24 @@ impl AssetId {
 
 pub trait AssetIdExt {
 	fn is_native_token(&self) -> bool;
+
+	fn is_allow_to_create(&self) -> bool;
 }
 
 impl AssetIdExt for AssetId {
 	fn is_native_token(&self) -> bool {
 		NATIVE_CURRNECY_ID == *self
+	}
+
+	fn is_allow_to_create(&self) -> bool {
+		if self.is_native_token() {
+			return false
+		}
+		match *self {
+			AssetId::Token(symbol) => symbol < TOKEN_MASK,
+			// Only allow Zenlink protocol to create it
+			AssetId::LPToken(_, _) => false,
+		}
 	}
 }
 

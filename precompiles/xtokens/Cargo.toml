@@ -1,0 +1,78 @@
+[package]
+name = "pallet-evm-precompile-xtokens"
+authors = [ "peaq" ]
+description = "A Precompile to make xtokens accessible to pallet-evm"
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+log = { workspace = true, default-features = false }
+num_enum = { workspace = true, default-features = false }
+rustc-hex = { workspace = true, default-features = false }
+
+# Peaq
+precompile-utils = { path = "../utils", default-features = false, features = [ "codec-xcm" ] }
+pallet-evm-precompile-assets-erc20 = { path = "../assets-erc20", default-features = false }
+pallet-assets = { workspace = true, default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
+
+# Substrate
+frame-support = { workspace = true, default-features = false }
+sp-core = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+sp-weights = { workspace = true, default-features = false }
+
+# Frontier
+fp-evm = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
+
+# Polkadot / XCM
+orml-xtokens = { workspace = true, default-features = false }
+xcm = { workspace = true, default-features = false }
+
+[dev-dependencies]
+derive_more = { workspace = true }
+serde = { workspace = true }
+sha3 = { workspace = true }
+
+# Peaq
+precompile-utils = { path = "../utils", features = [ "testing" ] }
+
+# Substrate
+pallet-balances = { workspace = true, features = [ "std" ] }
+pallet-timestamp = { workspace = true }
+parity-scale-codec = { workspace = true, features = [ "max-encoded-len" ] }
+scale-info = { workspace = true, features = [ "derive" ] }
+sp-io = { workspace = true }
+
+# Cumulus
+cumulus-primitives-core = { workspace = true }
+
+# Polkadot
+orml-traits = { workspace = true }
+pallet-xcm = { workspace = true }
+xcm-builder = { workspace = true, features = ["std"] }
+xcm-executor = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"orml-xtokens/std",
+	"pallet-evm/std",
+	"precompile-utils/std",
+	"sp-core/std",
+	"sp-std/std",
+	"pallet-assets/std",
+	"pallet-evm-precompile-assets-erc20/std",
+	"peaq-primitives-xcm/std",
+]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+]
