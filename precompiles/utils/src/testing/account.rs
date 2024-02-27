@@ -15,6 +15,7 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use pallet_evm::AddressMapping;
+use peaq_primitives_xcm::{AssetId as PeaqAssetId};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::{Decode, Encode, MaxEncodedLen, H160, H256};
@@ -221,6 +222,14 @@ impl TryFrom<u64> for MockAssetId {
 
 	fn try_from(index: u64) -> Result<Self, Self::Error> {
 		Ok(MockAssetId(index as u128))
+	}
+}
+
+impl TryFrom<MockAssetId> for PeaqAssetId {
+	type Error = ();
+
+	fn try_from(asset: MockAssetId) -> Result<Self, Self::Error> {
+		Ok(PeaqAssetId::Token(asset.0 as u32))
 	}
 }
 

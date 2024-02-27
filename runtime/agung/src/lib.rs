@@ -92,7 +92,7 @@ pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 // Polkadot imports
 use peaq_primitives_xcm::{
-	Address, AssetId as PeaqAssetId, AssetIdExt, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
+	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
 	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, StorageAssetId, NATIVE_ASSET_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
