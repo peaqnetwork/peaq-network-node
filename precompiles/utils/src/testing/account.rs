@@ -15,7 +15,7 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use pallet_evm::AddressMapping;
-use peaq_primitives_xcm::{AssetId as PeaqAssetId};
+use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::{Decode, Encode, MaxEncodedLen, H160, H256};

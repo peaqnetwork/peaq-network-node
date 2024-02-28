@@ -14,8 +14,7 @@ use frame_support::{
 };
 
 use pallet_evm::AddressMapping;
-use peaq_primitives_xcm::EVMAddressToAssetId;
-use peaq_primitives_xcm::AssetId as PeaqAssetId;
+use peaq_primitives_xcm::{AssetId as PeaqAssetId, EVMAddressToAssetId};
 use precompile_utils::{
 	prelude::{
 		Address, BoundedBytes, InjectBacktrace, PrecompileHandleExt, RevertReason, RuntimeHelper,
@@ -43,7 +42,8 @@ type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
 pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::Balance;
 
 /// Alias for the Asset Id type for the provided Runtime and Instance.
-pub type StorageAssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
+pub type StorageAssetIdOf<Runtime, Instance = ()> =
+	<Runtime as pallet_assets::Config<Instance>>::AssetId;
 
 /// Alias for the Asset Id Parametertype for the provided Runtime and Instance.
 pub type AssetIdParameterOf<Runtime, Instance = ()> =
@@ -103,7 +103,7 @@ where
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 		if !check_asset_id.is_allow_to_create() {
-			return Err(RevertReason::Custom("Invalid asset id".into()).into());
+			return Err(RevertReason::Custom("Invalid asset id".into()).into())
 		}
 
 		let min_balance: BalanceOf<Runtime, Instance> =

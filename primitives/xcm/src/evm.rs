@@ -1,4 +1,4 @@
-use crate::{AccountId};
+use crate::AccountId;
 use frame_support::ensure;
 use pallet_assets::AssetsCallback;
 use sp_core::{H160, U256};
