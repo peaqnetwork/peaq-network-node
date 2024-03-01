@@ -33,39 +33,58 @@ parameter_types! {
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
-pub struct LocalAssetAdaptor<Local, AssetId>(PhantomData<(Local, AssetId)>);
+pub struct LocalAssetAdaptor<Local, IAssetId, SAssetId>(PhantomData<(Local, IAssetId, SAssetId)>);
 
-impl<Local, AssetId, AccountId> LocalAssetHandler<AccountId> for LocalAssetAdaptor<Local, AssetId>
+impl<Local, IAssetId, SAssetId, AccountId> LocalAssetHandler<AccountId>
+	for LocalAssetAdaptor<Local, IAssetId, SAssetId>
 where
-	Local: MultiCurrency<AccountId, CurrencyId = AssetId>,
-	AssetId: TryFrom<ZenlinkAssetId>,
+	Local: MultiCurrency<AccountId, CurrencyId = SAssetId>,
+	IAssetId: TryFrom<ZenlinkAssetId>,
+	SAssetId: TryFrom<IAssetId>,
 {
 	fn local_balance_of(asset_id: ZenlinkAssetId, who: &AccountId) -> AssetBalance {
-		if let Ok(asset_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::free_balance(asset_id, who))
-				.unwrap_or_default()
-		}
-		AssetBalance::default()
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return AssetBalance::default(),
+		};
+		let asset_id: SAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return AssetBalance::default(),
+		};
+
+		TryInto::<AssetBalance>::try_into(Local::free_balance(asset_id, who)).unwrap_or_default()
 	}
 
 	fn local_total_supply(asset_id: ZenlinkAssetId) -> AssetBalance {
-		if let Ok(asset_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::total_issuance(asset_id))
-				.unwrap_or_default()
-		}
-		AssetBalance::default()
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return AssetBalance::default(),
+		};
+		let asset_id: SAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return AssetBalance::default(),
+		};
+		TryInto::<AssetBalance>::try_into(Local::total_issuance(asset_id)).unwrap_or_default()
 	}
 
 	fn local_minimum_balance(asset_id: ZenlinkAssetId) -> AssetBalance {
-		if let Ok(asset_id) = asset_id.try_into() {
-			return TryInto::<AssetBalance>::try_into(Local::minimum_balance(asset_id))
-				.unwrap_or_default()
-		}
-		AssetBalance::default()
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return AssetBalance::default(),
+		};
+		let asset_id: SAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return AssetBalance::default(),
+		};
+		TryInto::<AssetBalance>::try_into(Local::minimum_balance(asset_id)).unwrap_or_default()
 	}
 
 	fn local_is_exists(asset_id: ZenlinkAssetId) -> bool {
-		<ZenlinkAssetId as TryInto<AssetId>>::try_into(asset_id).is_ok()
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return false,
+		};
+		<SAssetId as TryFrom<IAssetId>>::try_from(asset_id).is_ok()
 	}
 
 	fn local_transfer(
@@ -74,18 +93,22 @@ where
 		target: &AccountId,
 		amount: AssetBalance,
 	) -> DispatchResult {
-		if let Ok(asset_id) = asset_id.try_into() {
-			Local::transfer(
-				asset_id,
-				origin,
-				target,
-				amount
-					.try_into()
-					.map_err(|_| DispatchError::Other("convert amount in local transfer"))?,
-			)
-		} else {
-			Err(DispatchError::Other("unknown asset in local transfer"))
-		}
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return Err(DispatchError::Other("unknown asset in local transfer")),
+		};
+		let asset_id: SAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return Err(DispatchError::Other("unknown asset in local transfer")),
+		};
+		Local::transfer(
+			asset_id,
+			origin,
+			target,
+			amount
+				.try_into()
+				.map_err(|_| DispatchError::Other("convert amount in local transfer"))?,
+		)
 	}
 
 	fn local_deposit(
@@ -93,17 +116,21 @@ where
 		origin: &AccountId,
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
-		if let Ok(asset_id) = asset_id.try_into() {
-			Local::deposit(
-				asset_id,
-				origin,
-				amount
-					.try_into()
-					.map_err(|_| DispatchError::Other("convert amount in local deposit"))?,
-			)?;
-		} else {
-			return Err(DispatchError::Other("unknown asset in local transfer"))
-		}
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return Err(DispatchError::Other("unknown asset in local transfer")),
+		};
+		let asset_id: SAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return Err(DispatchError::Other("unknown asset in local transfer")),
+		};
+		Local::deposit(
+			asset_id,
+			origin,
+			amount
+				.try_into()
+				.map_err(|_| DispatchError::Other("convert amount in local deposit"))?,
+		)?;
 
 		Ok(amount)
 	}
@@ -113,17 +140,21 @@ where
 		origin: &AccountId,
 		amount: AssetBalance,
 	) -> Result<AssetBalance, DispatchError> {
-		if let Ok(asset_id) = asset_id.try_into() {
-			Local::withdraw(
-				asset_id,
-				origin,
-				amount
-					.try_into()
-					.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
-			)?;
-		} else {
-			return Err(DispatchError::Other("unknown asset in local transfer"))
-		}
+		let asset_id: IAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return Err(DispatchError::Other("unknown asset in local transfer")),
+		};
+		let asset_id: SAssetId = match asset_id.try_into() {
+			Ok(asset_id) => asset_id,
+			Err(_) => return Err(DispatchError::Other("unknown asset in local transfer")),
+		};
+		Local::withdraw(
+			asset_id,
+			origin,
+			amount
+				.try_into()
+				.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
+		)?;
 
 		Ok(amount)
 	}

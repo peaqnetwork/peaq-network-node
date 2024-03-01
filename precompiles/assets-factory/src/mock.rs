@@ -68,10 +68,10 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 		None
 	}
 
-	fn asset_id_to_address(asset_id: AssetId) -> H160 {
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160> {
 		match asset_id {
-			MockAssetId(3) => MockPeaqAccount::EVMu2Account.into(),
-			_ => H160::from([0u8; 20]),
+			MockAssetId(3) => Some(MockPeaqAccount::EVMu2Account.into()),
+			_ => Some(H160::from([0u8; 20])),
 		}
 	}
 }

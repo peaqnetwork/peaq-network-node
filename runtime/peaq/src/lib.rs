@@ -92,8 +92,8 @@ pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 use peaq_primitives_xcm::{
-	Address, AssetId, AssetIdExt, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
-	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, NATIVE_CURRNECY_ID,
+	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
+	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, StorageAssetId, NATIVE_ASSET_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -162,7 +162,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2,
+	spec_version: 4,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -251,7 +251,11 @@ impl Contains<RuntimeCall> for BaseFilter {
 		match call {
 			// Filter permission-less assets creation/destroying.
 			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
-			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) => id.is_allow_to_create(),
+			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) =>
+				match <StorageAssetId as TryInto<PeaqAssetId>>::try_into(*id) {
+					Ok(id) => id.is_allow_to_create(),
+					Err(_) => false,
+				},
 			// These modules are not allowed to be called by transactions:
 			// To leave collator just shutdown it, next session funds will be released
 			// Other modules should works:
@@ -433,8 +437,8 @@ type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 parameter_types! {
 	// [TODO] Should have a way to increase it without doing runtime upgrade
-	pub PcpcLocalAccepted: Vec<AssetId> = vec![
-		AssetId::Token(1),
+	pub PcpcLocalAccepted: Vec<StorageAssetId> = vec![
+		PeaqAssetId::Token(1).try_into().unwrap(),
 	];
 }
 
@@ -448,7 +452,7 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type ExistentialDeposit = ExistentialDeposit;
 	type NativeAssetId = GetNativeAssetId;
 	type LocalAcceptedIds = PcpcLocalAccepted;
-	type AssetId = AssetId;
+	type AssetId = StorageAssetId;
 	type AssetIdToZenlinkId = AssetIdToZenlinkId<SelfParaId>;
 }
 
@@ -852,7 +856,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 }
 
 parameter_types! {
-	pub const GetNativeAssetId: AssetId = NATIVE_CURRNECY_ID;
+	pub const GetNativeAssetId: StorageAssetId = NATIVE_ASSET_ID;
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
@@ -902,8 +906,11 @@ type PeaqMultiCurrencies = PeaqMultiCurrenciesWrapper<
 >;
 
 /// Short form for our individual configuration of Zenlink's MultiAssets.
-pub type MultiAssets =
-	ZenlinkMultiAssets<ZenlinkProtocol, Balances, LocalAssetAdaptor<PeaqMultiCurrencies, AssetId>>;
+pub type MultiAssets = ZenlinkMultiAssets<
+	ZenlinkProtocol,
+	Balances,
+	LocalAssetAdaptor<PeaqMultiCurrencies, PeaqAssetId, StorageAssetId>,
+>;
 
 impl zenlink_protocol::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -1001,10 +1008,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		xc_asset_config::migrations::MigrationXcmV3<Runtime>,
-		pallet_assets::migration::v1::MigrateToV1<Runtime>,
-	),
+	(),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1976,7 +1980,7 @@ parameter_types! {
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = AssetId;
+	type AssetId = StorageAssetId;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
 	type ForceOrigin = EnsureRoot<AccountId>;
@@ -1990,7 +1994,7 @@ impl pallet_assets::Config for Runtime {
 	type Extra = ();
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
-	type AssetIdParameter = AssetId;
+	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	// #[cfg(feature = "runtime-benchmarks")]
 	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
@@ -2004,12 +2008,16 @@ impl address_unification::Config for Runtime {
 	type WeightInfo = address_unification::weights::SubstrateWeight<Runtime>;
 }
 
-impl EVMAddressToAssetId<AssetId> for Runtime {
-	fn address_to_asset_id(address: H160) -> Option<AssetId> {
-		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address)
+impl EVMAddressToAssetId<StorageAssetId> for Runtime {
+	fn address_to_asset_id(address: H160) -> Option<StorageAssetId> {
+		match AssetIdToEVMAddress::<EVMAssetPrefix>::convert(address) {
+			Some(asset_id) => asset_id.try_into().ok(),
+			None => None,
+		}
 	}
 
-	fn asset_id_to_address(asset_id: AssetId) -> H160 {
-		AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id)
+	fn asset_id_to_address(asset_id: StorageAssetId) -> Option<H160> {
+		let asset_id = asset_id.try_into().ok()?;
+		Some(AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id))
 	}
 }

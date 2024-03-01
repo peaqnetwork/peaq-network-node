@@ -148,7 +148,7 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v0.0.10 \
+docker run -v peaq-dev-storage/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-dev-v0.0.12 \
 RPC_ENDPOINT="https://rpcpc1-qa.agung.peaq.network" \
 --parachain-id 2000 \
 --chain ./node/src/chain-specs/peaq-dev-raw.json \
@@ -167,7 +167,7 @@ RPC_ENDPOINT="https://rpcpc1-qa.agung.peaq.network" \
 #### Krest env
 
  ```bash
-docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v0.0.5 \
+docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v0.0.6 \
 --parachain-id 2241 \
 --chain ./node/src/chain-specs/krest-raw.json \
 --base-path chain-data \
@@ -186,7 +186,7 @@ docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain
 #### Peaq env
 
  ```bash
-docker run -v peaq-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-v0.0.2 \
+docker run -v peaq-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:peaq-v0.0.4 \
 --parachain-id 3338 \
 --chain ./node/src/chain-specs/peaq-raw.json \
 --base-path chain-data \
@@ -212,17 +212,17 @@ for peaq-network-node from the git repository
 
 #### PEAQ-Dev env
 ```bash
-git clone --branch peaq-dev-v0.0.10 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch peaq-dev-v0.0.12 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 #### Krest env
 ```bash
-git clone --branch krest-v0.0.5 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch krest-v0.0.6 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 #### Peaq env
 ```bash
-git clone --branch peaq-v0.0.2 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch peaq-v0.0.4 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 2. CD into the peaq-network-node directory:

@@ -1,4 +1,4 @@
-use crate::{AccountId, AssetId};
+use crate::AccountId;
 use frame_support::ensure;
 use pallet_assets::AssetsCallback;
 use sp_core::{H160, U256};
@@ -22,25 +22,33 @@ pub trait EVMAddressToAssetId<AssetId> {
 	fn address_to_asset_id(address: H160) -> Option<AssetId>;
 
 	// Get address from AssetId
-	fn asset_id_to_address(asset_id: AssetId) -> H160;
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160>;
 }
 
 pub struct EvmRevertCodeHandler<A, R>(PhantomData<(A, R)>);
-impl<A, R> AssetsCallback<AssetId, AccountId> for EvmRevertCodeHandler<A, R>
+impl<A, R> AssetsCallback<R::AssetId, AccountId> for EvmRevertCodeHandler<A, R>
 where
-	A: EVMAddressToAssetId<AssetId>,
-	R: pallet_evm::Config,
+	A: EVMAddressToAssetId<R::AssetId>,
+	R: pallet_evm::Config + pallet_assets::Config,
 {
-	fn created(id: &AssetId, _: &AccountId) -> Result<(), ()> {
-		let address = A::asset_id_to_address(*id);
-		ensure!(!pallet_evm::AccountCodes::<R>::contains_key(address), ());
-		pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
-		Ok(())
+	fn created(id: &R::AssetId, _: &AccountId) -> Result<(), ()> {
+		match A::asset_id_to_address((*id).clone()) {
+			None => Ok(()),
+			Some(address) => {
+				ensure!(!pallet_evm::AccountCodes::<R>::contains_key(address), ());
+				pallet_evm::AccountCodes::<R>::insert(address, EVM_REVERT_CODE.to_vec());
+				Ok(())
+			},
+		}
 	}
 
-	fn destroyed(id: &AssetId) -> Result<(), ()> {
-		let address = A::asset_id_to_address(*id);
-		pallet_evm::AccountCodes::<R>::remove(address);
-		Ok(())
+	fn destroyed(id: &R::AssetId) -> Result<(), ()> {
+		match A::asset_id_to_address((*id).clone()) {
+			None => Ok(()),
+			Some(address) => {
+				pallet_evm::AccountCodes::<R>::remove(address);
+				Ok(())
+			},
+		}
 	}
 }

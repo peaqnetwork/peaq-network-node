@@ -14,7 +14,7 @@ use frame_support::{
 };
 
 use pallet_evm::AddressMapping;
-use peaq_primitives_xcm::EVMAddressToAssetId;
+use peaq_primitives_xcm::{AssetId as PeaqAssetId, EVMAddressToAssetId};
 use precompile_utils::{
 	prelude::{
 		Address, BoundedBytes, InjectBacktrace, PrecompileHandleExt, RevertReason, RuntimeHelper,
@@ -42,7 +42,8 @@ type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
 pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::Balance;
 
 /// Alias for the Asset Id type for the provided Runtime and Instance.
-pub type AssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
+pub type StorageAssetIdOf<Runtime, Instance = ()> =
+	<Runtime as pallet_assets::Config<Instance>>::AssetId;
 
 /// Alias for the Asset Id Parametertype for the provided Runtime and Instance.
 pub type AssetIdParameterOf<Runtime, Instance = ()> =
@@ -61,9 +62,10 @@ where
 	Runtime::RuntimeCall: From<pallet_assets::Call<Runtime, Instance>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
-	AssetIdOf<Runtime, Instance>: TryFrom<u64> + AssetIdExt,
-	AssetIdParameterOf<Runtime, Instance>: TryFrom<u64> + AssetIdExt,
-	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
+	StorageAssetIdOf<Runtime, Instance>: TryFrom<u64>,
+	PeaqAssetId: TryFrom<AssetIdParameterOf<Runtime, Instance>> + AssetIdExt,
+	AssetIdParameterOf<Runtime, Instance>: TryFrom<u64>,
+	Runtime: EVMAddressToAssetId<StorageAssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
 {
 	#[precompile::public("convertAssetIdToAddress(uint64)")]
@@ -76,7 +78,10 @@ where
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 
-		Ok(Runtime::asset_id_to_address(asset_id).into())
+		match Runtime::asset_id_to_address(asset_id) {
+			Some(address) => Ok(address.into()),
+			None => Err(RevertReason::Custom("Invalid asset id".into()).into()),
+		}
 	}
 
 	#[precompile::public("create(uint64,address,uint128)")]
@@ -93,7 +98,11 @@ where
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 
-		if !asset_id.is_allow_to_create() {
+		// Convert to asset id
+		let check_asset_id: PeaqAssetId = asset_id
+			.try_into()
+			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+		if !check_asset_id.is_allow_to_create() {
 			return Err(RevertReason::Custom("Invalid asset id".into()).into())
 		}
 
