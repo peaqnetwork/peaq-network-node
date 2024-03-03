@@ -3,11 +3,14 @@ use super::{
 	ParachainInfo, ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee, XcAssetConfig, XcmpQueue,
 };
+use crate::PeaqAssetLocationIdConverter;
+use sp_runtime::traits::Convert;
+use sp_runtime::traits::MaybeEquivalence;
 use frame_support::{
-	dispatch::Weight,
 	match_types, parameter_types,
 	traits::{fungibles, ContainsPair, Everything, Nothing},
 };
+use sp_weights::Weight;
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
@@ -15,7 +18,6 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{AccountIdToMultiLocation, FixedRateOfForeignAsset};
 use sp_runtime::traits::ConstU32;
-use xc_asset_config::MultiLocationToAssetId;
 use xcm::latest::{prelude::*, MultiAsset};
 use xcm_builder::{
 	AccountId32Aliases,
@@ -49,8 +51,6 @@ use frame_support::pallet_prelude::Get;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
-
-pub type PeaqAssetLocationIdConverter = MultiLocationToAssetId<Runtime>;
 
 parameter_types! {
 	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
@@ -278,6 +278,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
+	type Aliasers = Nothing;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -380,11 +381,19 @@ impl<AbsoluteLocation: Get<MultiLocation>> Reserve
 	}
 }
 
+/// Convert `AssetId` to optional `MultiLocation`. The impl is a wrapper
+pub struct AssetIdConvert;
+impl Convert<StorageAssetId, Option<MultiLocation>> for AssetIdConvert {
+    fn convert(asset_id: StorageAssetId) -> Option<MultiLocation> {
+        PeaqAssetLocationIdConverter::convert_back(&asset_id)
+    }
+}
+
 impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = StorageAssetId;
-	type CurrencyIdConvert = PeaqAssetLocationIdConverter;
+	type CurrencyIdConvert = AssetIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = PeaqLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
