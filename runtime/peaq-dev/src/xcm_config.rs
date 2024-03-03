@@ -382,7 +382,6 @@ impl<AbsoluteLocation: Get<MultiLocation>> Reserve
 }
 
 /// Convert `AssetId` to optional `MultiLocation`. The impl is a wrapper
-/// on `ShidenAssetLocationIdConverter`.
 pub struct AssetIdConvert;
 impl Convert<StorageAssetId, Option<MultiLocation>> for AssetIdConvert {
     fn convert(asset_id: StorageAssetId) -> Option<MultiLocation> {

@@ -758,6 +758,7 @@ pub mod staking {
 	pub fn reward_rate_config() -> RewardRateInfo {
 		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
 	}
+
 	pub fn coefficient() -> u8 {
 		8
 	}
