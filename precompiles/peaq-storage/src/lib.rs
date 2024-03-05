@@ -38,6 +38,7 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
 	AccountIdOf<Runtime>: From<[u8; 32]> + AsRef<[u8]>,
 {
+	#[precompile::public("getItem(bytes32,bytes)")]
 	#[precompile::public("get_item(bytes32,bytes)")]
 	#[precompile::view]
 	fn get_item(
@@ -53,6 +54,7 @@ where
 		}
 	}
 
+	#[precompile::public("addItem(bytes,bytes)")]
 	#[precompile::public("add_item(bytes,bytes)")]
 	fn add_item(
 		handle: &mut impl PrecompileHandle,
@@ -89,6 +91,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updateItem(bytes,bytes)")]
 	#[precompile::public("update_item(bytes,bytes)")]
 	fn update_item(
 		handle: &mut impl PrecompileHandle,
