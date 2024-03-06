@@ -300,6 +300,7 @@ where
 	}
 
 	#[precompile::public("destroyAccounts(uint64)")]
+	#[precompile::public("destroy_accounts(uint64)")]
 	fn destroy_accounts(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
 		handle.record_log_costs_manual(3, 32)?;
 
@@ -324,6 +325,7 @@ where
 	}
 
 	#[precompile::public("destroyApprovals(uint64)")]
+	#[precompile::public("destroy_approvals(uint64)")]
 	fn destroy_approvals(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
 		handle.record_log_costs_manual(3, 32)?;
 
