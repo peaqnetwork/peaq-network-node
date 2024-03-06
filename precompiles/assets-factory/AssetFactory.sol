@@ -21,6 +21,14 @@ interface AssetFactory {
     /// selector: 9c28547e
     function create(uint64 id, address admin, uint128 minBalance) external;
 
+    /// Destroy all accounts associated with a given asset
+    /// selector: ?
+    function destroyAccounts(uint64 id) external;
+
+    /// Destroy all approvals associated with a given asset up to the max
+    /// selector: ?
+    function destroyApprovals(uint64 id) external;
+
     /// Set the metadata for a given asset
     /// selector: f96ee86d
     function setMetadata(uint64 id, bytes memory name, bytes memory symbol, uint8 decimal) external;
