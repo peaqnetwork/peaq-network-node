@@ -73,8 +73,8 @@ fn no_selector_exists_but_length_is_right() {
 fn selectors() {
 	assert!(PCall::convert_asset_id_to_address_selectors().contains(&0xa70174cb));
 	assert!(PCall::create_selectors().contains(&0x9c28547e));
-	assert!(PCall::destroy_accounts_selectors().contains(&0x3e3d3d3e));
-	assert!(PCall::destroy_approvals_selectors().contains(&0x3e3d3d3e));
+	assert!(PCall::destroy_accounts_selectors().contains(&0x5ff80cd9));
+	assert!(PCall::destroy_approvals_selectors().contains(&0xcc8ae474));
 	assert!(PCall::set_metadata_selectors().contains(&0xf96ee86d));
 	assert!(PCall::set_min_balance_selectors().contains(&0x28bfefa1));
 	assert!(PCall::set_team_selectors().contains(&0xb6e6b7d4));
