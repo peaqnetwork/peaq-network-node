@@ -157,8 +157,10 @@ impl SubstrateCli for Cli {
 			},
 		})
 	}
+}
 
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+impl Cli {
+	fn runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_agung() {
 			&peaq_agung_runtime::VERSION
 		} else if chain_spec.is_krest() {
@@ -214,10 +216,6 @@ impl SubstrateCli for RelayChainCli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
-	}
-
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		polkadot_cli::Cli::native_runtime_version(chain_spec)
 	}
 }
 
@@ -393,7 +391,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let _ = builder.init();
 
 			let spec = cli.load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&spec).state_version();
+			let state_version = Cli::runtime_version(&spec).state_version();
 
 			let block: Block = generate_genesis_block(&*spec, state_version)?;
 			let raw_header = block.header().encode();
@@ -465,9 +463,9 @@ pub fn run() -> sc_cli::Result<()> {
 				let id = ParaId::from(cli.run.parachain_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v4::AccountId>::into_account_truncating(&id);
+					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(&id);
 
-				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
+				let state_version = Cli::runtime_version(&config.chain_spec).state_version();
 				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));

@@ -101,8 +101,12 @@ fn configure_genesis(
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
+			..Default::default()
 		},
-		parachain_info: ParachainInfoConfig { parachain_id },
+		parachain_info: ParachainInfoConfig {
+			parachain_id,
+			..Default::default()
+		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
@@ -119,6 +123,7 @@ fn configure_genesis(
 		},
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
+			..Default::default()
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
@@ -154,14 +159,19 @@ fn configure_genesis(
 					)
 				})
 				.collect(),
+			..Default::default()
 		},
-		ethereum: EthereumConfig {},
+		ethereum: EthereumConfig {
+			..Default::default()
+		},
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_agung_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
 		},
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
+		assets: Default::default(),
 	}
 }
