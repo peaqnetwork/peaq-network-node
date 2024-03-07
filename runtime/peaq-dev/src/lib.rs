@@ -894,8 +894,8 @@ parameter_types! {
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EntityId = RbacEntityId;
-	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
 	type BoundedDataLen = ConstU32<256>;
+	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
 }
 
 // Config the storage in pallets/storage
