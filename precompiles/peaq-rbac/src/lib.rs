@@ -42,6 +42,8 @@ pub fn err2str(error: &RbacError) -> &str {
 		RbacError { typ: RbacErrorType::AssignmentDoesNotExist, .. } =>
 			"RbacError.AssignmentDoesNotExist",
 		RbacError { typ: RbacErrorType::NameExceedMaxChar, .. } => "RbacError.NameExceedMaxChar",
+		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } =>
+			"RbacError.StorageExceedsMaxBounds",
 	}
 }
 
