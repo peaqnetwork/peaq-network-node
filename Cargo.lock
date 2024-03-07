@@ -8592,7 +8592,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=bugfix/impl-bounded-vec#1487f1d3970e104053521a3804272619ac891b61"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#0879c1a11915b4549e1f6f6ac162cbd537b48155"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8611,7 +8611,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=bugfix/impl-bounded-vec#1487f1d3970e104053521a3804272619ac891b61"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#0879c1a11915b4549e1f6f6ac162cbd537b48155"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8629,7 +8629,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=bugfix/impl-bounded-vec#1487f1d3970e104053521a3804272619ac891b61"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#0879c1a11915b4549e1f6f6ac162cbd537b48155"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
