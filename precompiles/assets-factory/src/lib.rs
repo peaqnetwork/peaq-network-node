@@ -103,7 +103,7 @@ where
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 		if !check_asset_id.is_allow_to_create() {
-			return Err(RevertReason::Custom("Invalid asset id".into()).into())
+			return Err(RevertReason::Custom("Invalid asset id".into()).into());
 		}
 
 		let min_balance: BalanceOf<Runtime, Instance> =

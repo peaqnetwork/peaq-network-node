@@ -8,13 +8,13 @@ use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 };
-use sp_runtime::traits::Dispatchable;
 use peaq_pallet_rbac::{
 	error::{RbacError, RbacErrorType},
 	rbac::{Rbac, Role},
 };
 use precompile_utils::prelude::*;
 use sp_core::{Decode, H256};
+use sp_runtime::traits::Dispatchable;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;

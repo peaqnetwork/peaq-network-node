@@ -87,10 +87,8 @@ pub mod pallet {
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			let config = RewardRateInfo::new(
-	            Perquintill::from_percent(30),
-		        Perquintill::from_percent(70),
-			);
+			let config =
+				RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70));
 			Self { reward_rate_config: config, _phantom: Default::default() }
 		}
 	}

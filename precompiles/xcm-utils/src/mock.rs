@@ -38,11 +38,7 @@ use xcm_builder::{
 	SovereignSignedViaLocation,
 };
 use xcm_executor::{
-	traits::{
-		ConvertLocation,
-		TransactAsset,
-		WeightTrader,
-	},
+	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	Assets,
 };
 use Junctions::Here;
@@ -67,10 +63,9 @@ pub struct MockParachainMultilocationToAccountConverter;
 impl ConvertLocation<AccountId> for MockParachainMultilocationToAccountConverter {
 	fn convert_location(location: &MultiLocation) -> Option<AccountId> {
 		match location.borrow() {
-			MultiLocation {
-				parents: 1,
-				interior: Junctions::X1(Parachain(3000)),
-			} => Some(MockPeaqAccount::SlibingParaAccount),
+			MultiLocation { parents: 1, interior: Junctions::X1(Parachain(3000)) } => {
+				Some(MockPeaqAccount::SlibingParaAccount)
+			},
 			MultiLocation { parents: 1, interior: Here } => Some(MockPeaqAccount::ParentAccount),
 			_ => None,
 		}
@@ -330,7 +325,12 @@ impl WeightTrader for DummyWeightTrader {
 		DummyWeightTrader
 	}
 
-	fn buy_weight(&mut self, weight: Weight, payment: Assets, _context: &XcmContext) -> Result<Assets, XcmError> {
+	fn buy_weight(
+		&mut self,
+		weight: Weight,
+		payment: Assets,
+		_context: &XcmContext,
+	) -> Result<Assets, XcmError> {
 		let asset_to_charge: MultiAsset =
 			(MultiLocation::parent(), weight.ref_time() as u128).into();
 		let unused = payment.checked_sub(asset_to_charge).map_err(|_| XcmError::TooExpensive)?;

@@ -1,3 +1,4 @@
+use cumulus_primitives_core::XcmContext;
 use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
 use sp_std::marker::PhantomData;
 use xc_asset_config::ExecutionPaymentRate;
@@ -7,7 +8,6 @@ use xcm::latest::{
 };
 use xcm_builder::TakeRevenue;
 use xcm_executor::traits::WeightTrader;
-use cumulus_primitives_core::XcmContext;
 
 /// Used as weight trader for foreign assets.
 ///

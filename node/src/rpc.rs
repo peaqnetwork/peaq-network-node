@@ -1,15 +1,18 @@
 //! A collection of node-specific RPC methods.
 
 use cumulus_primitives_core::ParaId;
+use cumulus_primitives_parachain_inherent::ParachainInherentData;
+use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
+use polkadot_primitives::PersistedValidationData;
+use sc_client_api::UsageProvider;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
-use sc_client_api::UsageProvider;
 use sc_consensus_manual_seal::rpc::EngineCommand;
 use sc_network::NetworkService;
 use sc_network_sync::SyncingService;
@@ -22,14 +25,11 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
+use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
 use sp_core::H256;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use std::{collections::BTreeMap, sync::Arc};
 use zenlink_protocol::AssetId as ZenlinkAssetId;
-use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use cumulus_primitives_parachain_inherent::ParachainInherentData;
-use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
-use polkadot_primitives::PersistedValidationData;
 
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
@@ -178,39 +178,38 @@ where
 	let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-    let pending_create_inherent_data_providers = move |_, _| async move {
-        let current = sp_timestamp::InherentDataProvider::from_system_time();
-        let next_slot = current.timestamp().as_millis() + slot_duration.as_millis();
-        let timestamp = sp_timestamp::InherentDataProvider::new(next_slot.into());
-        let slot =
-            sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                *timestamp,
-                slot_duration,
-            );
-        // Create a dummy parachain inherent data provider which is required to pass
-        // the checks by the para chain system. We use dummy values because in the 'pending context'
-        // neither do we have access to the real values nor do we need them.
-        let (relay_parent_storage_root, relay_chain_state) =
-            RelayStateSproofBuilder::default().into_state_root_and_proof();
-        let vfp = PersistedValidationData {
-            // This is a hack to make `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases`
-            // happy. Relay parent number can't be bigger than u32::MAX.
-            relay_parent_number: u32::MAX,
-            relay_parent_storage_root,
-            ..Default::default()
-        };
-        let parachain_inherent_data = ParachainInherentData {
-            validation_data: vfp,
-            relay_chain_state,
-            downward_messages: Default::default(),
-            horizontal_messages: Default::default(),
-        };
-        Ok((slot, timestamp, parachain_inherent_data))
-    };
+	let pending_create_inherent_data_providers = move |_, _| async move {
+		let current = sp_timestamp::InherentDataProvider::from_system_time();
+		let next_slot = current.timestamp().as_millis() + slot_duration.as_millis();
+		let timestamp = sp_timestamp::InherentDataProvider::new(next_slot.into());
+		let slot =
+			sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+				*timestamp,
+				slot_duration,
+			);
+		// Create a dummy parachain inherent data provider which is required to pass
+		// the checks by the para chain system. We use dummy values because in the 'pending context'
+		// neither do we have access to the real values nor do we need them.
+		let (relay_parent_storage_root, relay_chain_state) =
+			RelayStateSproofBuilder::default().into_state_root_and_proof();
+		let vfp = PersistedValidationData {
+			// This is a hack to make `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases`
+			// happy. Relay parent number can't be bigger than u32::MAX.
+			relay_parent_number: u32::MAX,
+			relay_parent_storage_root,
+			..Default::default()
+		};
+		let parachain_inherent_data = ParachainInherentData {
+			validation_data: vfp,
+			relay_chain_state,
+			downward_messages: Default::default(),
+			horizontal_messages: Default::default(),
+		};
+		Ok((slot, timestamp, parachain_inherent_data))
+	};
 
-    let pending_consensus_data_provider = Box::new(
-        fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()),
-    );
+	let pending_consensus_data_provider =
+		Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
 
 	io.merge(
 		Eth::new(

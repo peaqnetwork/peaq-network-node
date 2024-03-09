@@ -111,10 +111,7 @@ fn configure_genesis(
 			code: wasm_binary.to_vec(),
 			..Default::default()
 		},
-		parachain_info: ParachainInfoConfig {
-			parachain_id,
-			..Default::default()
-		},
+		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
@@ -169,9 +166,7 @@ fn configure_genesis(
 				.collect(),
 			..Default::default()
 		},
-		ethereum: EthereumConfig {
-			..Default::default()
-		},
+		ethereum: EthereumConfig { ..Default::default() },
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_runtime::PolkadotXcmConfig {

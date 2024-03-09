@@ -62,7 +62,7 @@ impl AssetId {
 
 	pub fn is_allow_to_create(&self) -> bool {
 		if self.is_native_token() {
-			return false
+			return false;
 		}
 		match *self {
 			AssetId::Token(symbol) => symbol <= TOKEN_MASK,
@@ -118,7 +118,7 @@ impl TryFrom<StorageAssetId> for AssetId {
 		match type_index {
 			0 => {
 				if index > TOKEN_MASK as u64 {
-					return Err(())
+					return Err(());
 				}
 				let symbol = (index & (TOKEN_MASK as u64)) as u32;
 				Ok(AssetId::Token(symbol))

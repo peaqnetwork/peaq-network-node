@@ -21,7 +21,7 @@ use crate::solidity::{
 	revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
 };
 use alloc::string::String;
-use frame_support::{weights::Weight, ensure, traits::ConstU32};
+use frame_support::{ensure, traits::ConstU32, weights::Weight};
 use sp_core::H256;
 use sp_std::vec::Vec;
 use xcm::latest::{Junction, Junctions, MultiLocation, NetworkId};

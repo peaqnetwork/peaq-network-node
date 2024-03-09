@@ -4,8 +4,8 @@ use frame_support::{pallet_prelude::*, traits::Currency};
 use sp_runtime::{traits::CheckedAdd, Perbill};
 use sp_std::vec;
 
-use serde::{Deserialize, Serialize};
 use crate::pallet::Config as PalletConfig;
+use serde::{Deserialize, Serialize};
 
 /// The balance type of this pallet.
 pub(crate) type BalanceOf<T> =
@@ -40,7 +40,18 @@ pub trait BeneficiaryPayout<Imbalance> {
 /// After next next version, we can remove this RewardDistributionConfigV0
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen, Serialize, Deserialize)]
+#[derive(
+	PartialEq,
+	Eq,
+	Clone,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+)]
 pub struct RewardDistributionConfigV0 {
 	/// Base percentage of reward that goes to treasury
 	#[codec(compact)]
@@ -79,7 +90,18 @@ impl Default for RewardDistributionConfigV0 {
 
 /// List of configuration parameters used to calculate reward distribution portions for all the
 /// beneficiaries.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen, Serialize, Deserialize)]
+#[derive(
+	PartialEq,
+	Eq,
+	Clone,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+)]
 pub struct RewardDistributionConfig {
 	/// Base percentage of reward that goes to treasury
 	#[codec(compact)]

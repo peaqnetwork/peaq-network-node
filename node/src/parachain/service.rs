@@ -8,16 +8,16 @@ use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
 use cumulus_primitives_core::ParaId;
-use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
+use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node_with_rpc;
 use fc_consensus::FrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use futures::StreamExt;
-use polkadot_service::CollatorPair;
 use peaq_primitives_xcm::*;
+use polkadot_service::CollatorPair;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::NativeElseWasmExecutor;
@@ -170,10 +170,7 @@ where
 		Option<TelemetryHandle>,
 		&TaskManager,
 		u64,
-	) -> Result<
-		sc_consensus::DefaultImportQueue<Block>,
-		sc_service::Error,
-	>,
+	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 {
 	// Use ethereum style for subscription ids
 	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
@@ -254,29 +251,26 @@ where
 }
 
 async fn build_relay_chain_interface(
-    polkadot_config: Configuration,
-    parachain_config: &Configuration,
-    telemetry_worker_handle: Option<TelemetryWorkerHandle>,
-    task_manager: &mut TaskManager,
-    collator_options: CollatorOptions,
-) -> RelayChainResult<(
-    Arc<(dyn RelayChainInterface + 'static)>,
-    Option<CollatorPair>,
-)> {
-    if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
-        collator_options.relay_chain_mode
-    {
-        build_minimal_relay_chain_node_with_rpc(polkadot_config, task_manager, rpc_target_urls)
-            .await
-    } else {
-        build_inprocess_relay_chain(
-            polkadot_config,
-            parachain_config,
-            telemetry_worker_handle,
-            task_manager,
-            None,
-        )
-    }
+	polkadot_config: Configuration,
+	parachain_config: &Configuration,
+	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+	task_manager: &mut TaskManager,
+	collator_options: CollatorOptions,
+) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
+	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
+		collator_options.relay_chain_mode
+	{
+		build_minimal_relay_chain_node_with_rpc(polkadot_config, task_manager, rpc_target_urls)
+			.await
+	} else {
+		build_inprocess_relay_chain(
+			polkadot_config,
+			parachain_config,
+			telemetry_worker_handle,
+			task_manager,
+			None,
+		)
+	}
 }
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
@@ -332,10 +326,7 @@ where
 		Option<TelemetryHandle>,
 		&TaskManager,
 		u64,
-	) -> Result<
-		sc_consensus::DefaultImportQueue<Block>,
-		sc_service::Error,
-	>,
+	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	BIC: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
 		ParachainBlockImport<
@@ -646,10 +637,7 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 	target_gas_price: u64,
-) -> Result<
-	sc_consensus::DefaultImportQueue<Block>,
-	sc_service::Error,
->
+) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
 	RuntimeApi:
 		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,

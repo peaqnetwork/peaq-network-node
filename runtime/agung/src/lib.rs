@@ -92,9 +92,9 @@ pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 use peaq_primitives_xcm::{
-	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
-	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, StorageAssetId, NATIVE_ASSET_ID,
-	xcm::AssetLocationIdConverter,
+	xcm::AssetLocationIdConverter, Address, AssetId as PeaqAssetId, AssetIdToEVMAddress,
+	AssetIdToZenlinkId, Balance, EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId,
+	StorageAssetId, NATIVE_ASSET_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -258,11 +258,12 @@ impl Contains<RuntimeCall> for BaseFilter {
 		match call {
 			// Filter permission-less assets creation/destroying.
 			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
-			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) =>
+			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) => {
 				match <StorageAssetId as TryInto<PeaqAssetId>>::try_into(*id) {
 					Ok(id) => id.is_allow_to_create(),
 					Err(_) => false,
-				},
+				}
+			},
 			// These modules are not allowed to be called by transactions:
 			// To leave collator just shutdown it, next session funds will be released
 			// Other modules should works:
@@ -331,9 +332,9 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
 
-    // Should be only enabled (`true`) when async backing is enabled
-    // otherwise set to `false`
-    type AllowMultipleBlocksPerSlot = ConstBool<false>;
+	// Should be only enabled (`true`) when async backing is enabled
+	// otherwise set to `false`
+	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 }
 
 // For ink
@@ -347,8 +348,8 @@ parameter_types! {
 	pub const DeletionQueueDepth: u32 = 128;
 	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
 	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
-    // TODO: re-vist to make sure values are appropriate
-    pub const MaxDelegateDependencies: u32 = 32;
+	// TODO: re-vist to make sure values are appropriate
+	pub const MaxDelegateDependencies: u32 = 32;
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -383,15 +384,15 @@ impl pallet_contracts::Config for Runtime {
 	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
 	type MaxDelegateDependencies = MaxDelegateDependencies;
 	type RuntimeHoldReason = RuntimeHoldReason;
-    // TODO: re-vist to make sure migration sequence is correct
-    type Migrations = (
-        pallet_contracts::migration::v12::Migration<Runtime, Balances>,
-        pallet_contracts::migration::v13::Migration<Runtime>,
-        pallet_contracts::migration::v14::Migration<Runtime, Balances>,
-        pallet_contracts::migration::v15::Migration<Runtime>,
-    );
-    type Debug = ();
-    type Environment = ();
+	// TODO: re-vist to make sure migration sequence is correct
+	type Migrations = (
+		pallet_contracts::migration::v12::Migration<Runtime, Balances>,
+		pallet_contracts::migration::v13::Migration<Runtime>,
+		pallet_contracts::migration::v14::Migration<Runtime, Balances>,
+		pallet_contracts::migration::v15::Migration<Runtime>,
+	);
+	type Debug = ();
+	type Environment = ();
 }
 
 parameter_types! {
@@ -1605,9 +1606,9 @@ impl_runtime_apis! {
 			)
 		}
 
-        fn initialize_pending_block(header: &<Block as BlockT>::Header) {
-            Executive::initialize_block(header)
-        }
+		fn initialize_pending_block(header: &<Block as BlockT>::Header) {
+			Executive::initialize_block(header)
+		}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

@@ -4,6 +4,7 @@
 
 use super::*;
 use crate::{self as reward_calculator, weights::WeightInfo};
+use frame_support::traits::ConstBool;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, OnFinalize, OnInitialize},
@@ -17,12 +18,11 @@ use sp_core::H256;
 use sp_runtime::BuildStorage;
 use sp_runtime::{
 	impl_opaque_keys,
-	testing::{UintAuthorityId},
+	testing::UintAuthorityId,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
 	Perbill,
 };
 use sp_std::fmt::Debug;
-use frame_support::traits::ConstBool;
 
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
 pub(crate) type Balance = u128;
@@ -272,13 +272,15 @@ impl ExtBuilder {
 			.assimilate_storage(&mut t)
 			.expect("Parachain Staking's storage can be assimilated");
 
-		let reward_calculator_config =
-			reward_calculator::GenesisConfig {
-				coefficient: self.coefficient,
-				_phantom: Default::default(),
-			};
-		reward_calculator::GenesisConfig::<Test>::assimilate_storage(&reward_calculator_config, &mut t)
-			.expect("Reward Calculator's storage can be assimilated");
+		let reward_calculator_config = reward_calculator::GenesisConfig {
+			coefficient: self.coefficient,
+			_phantom: Default::default(),
+		};
+		reward_calculator::GenesisConfig::<Test>::assimilate_storage(
+			&reward_calculator_config,
+			&mut t,
+		)
+		.expect("Reward Calculator's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self

@@ -30,9 +30,7 @@ use pallet_evm::HashedAddressMapping;
 use peaq_primitives_xcm::Balance;
 use sp_core::{crypto::AccountId32, H256};
 use sp_io::hashing::keccak_256;
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use sp_runtime::BuildStorage;
 
 pub type AccountId = AccountId32;
@@ -84,7 +82,6 @@ impl pallet_balances::Config for Runtime {
 	type MaxHolds = ();
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
-
 }
 
 impl Config for Runtime {

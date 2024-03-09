@@ -25,17 +25,15 @@ use frame_support::{
 	},
 	weights::Weight,
 };
-use sp_runtime::BuildStorage;
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use precompile_utils::{precompile_set::*, testing::*};
+use sp_runtime::BuildStorage;
 
 use sp_core::H256;
 
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use xcm::latest::{prelude::*, Error as XcmError};
 use xcm_builder::{AllowUnpaidExecutionFrom, FixedWeightBounds, IsConcrete};
 use xcm_executor::{traits::TransactAsset, Assets as XCMAssets, XcmExecutor};

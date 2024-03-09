@@ -47,7 +47,6 @@ use frame_support::{
 		OriginTrait,
 	},
 };
-use sp_runtime::traits::Dispatchable;
 use pallet_evm::AddressMapping;
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
@@ -58,6 +57,7 @@ use precompile_utils::{
 	},
 	solidity,
 };
+use sp_runtime::traits::Dispatchable;
 
 use precompile_utils::{
 	keccak256,

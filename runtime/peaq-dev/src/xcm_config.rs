@@ -4,13 +4,10 @@ use super::{
 	RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee, XcAssetConfig, XcmpQueue,
 };
 use crate::PeaqAssetLocationIdConverter;
-use sp_runtime::traits::Convert;
-use sp_runtime::traits::MaybeEquivalence;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{fungibles, ContainsPair, Everything, Nothing},
 };
-use sp_weights::Weight;
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
@@ -18,6 +15,9 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use runtime_common::{AccountIdToMultiLocation, FixedRateOfForeignAsset};
 use sp_runtime::traits::ConstU32;
+use sp_runtime::traits::Convert;
+use sp_runtime::traits::MaybeEquivalence;
+use sp_weights::Weight;
 use xcm::latest::{prelude::*, MultiAsset};
 use xcm_builder::{
 	AccountId32Aliases,
@@ -384,9 +384,9 @@ impl<AbsoluteLocation: Get<MultiLocation>> Reserve
 /// Convert `AssetId` to optional `MultiLocation`. The impl is a wrapper
 pub struct AssetIdConvert;
 impl Convert<StorageAssetId, Option<MultiLocation>> for AssetIdConvert {
-    fn convert(asset_id: StorageAssetId) -> Option<MultiLocation> {
-        PeaqAssetLocationIdConverter::convert_back(&asset_id)
-    }
+	fn convert(asset_id: StorageAssetId) -> Option<MultiLocation> {
+		PeaqAssetLocationIdConverter::convert_back(&asset_id)
+	}
 }
 
 impl orml_xtokens::Config for Runtime {
