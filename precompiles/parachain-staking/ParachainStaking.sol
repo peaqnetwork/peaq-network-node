@@ -23,25 +23,30 @@ interface ParachainStaking {
 		/// Delegate another collator's candidate by staking some funds and
 		/// increasing the pallet's as well as the collator's total stake.
     /// selector: ?
-    function delegateAnotherCandidate(uint256 stake) external;
+    function delegateAnotherCandidate(address collator, uint256 stake) external;
 
+    // [TODO]
 		/// Leave the set of delegators and, by implication, revoke all ongoing
 		/// delegations.
     /// selector: ?
     function leaveDelegators() external;
 
+    // [TODO]
 		/// Terminates an ongoing delegation for a given collator candidate.
     /// selector: ?
     function revokeDelegation(address collator) external;
 
+    // [TODO]
 		/// Increase the stake for delegating a collator candidate.
     /// selector: ?
     function delegatorStakeMore(address collator, uint256 stake) external;
 
+    // [TODO]
 		/// Reduce the stake for delegating a collator candidate.
     /// selector: ?
     function delegatorStakeLess(address collator, uint256 stake) external;
 
+    // [TODO]
 		/// Unlock all previously staked funds that are now available for
 		/// unlocking by the origin account after `StakeDuration` blocks have
 		/// elapsed.

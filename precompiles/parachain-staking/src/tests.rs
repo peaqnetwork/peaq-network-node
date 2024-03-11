@@ -157,15 +157,16 @@ fn should_update_total_stake() {
 			(MockPeaqAccount::Alice, 100),
 			(MockPeaqAccount::Bob, 100),
 			(MockPeaqAccount::Charlie, 100),
-			(MockPeaqAccount::David, 100),
+			(MockPeaqAccount::David, 500),
+			(MockPeaqAccount::ParentAccount, 100),
 		])
-		.with_collators(vec![(MockPeaqAccount::Alice, 30)])
+		.with_collators(vec![(MockPeaqAccount::Alice, 30), (MockPeaqAccount::ParentAccount, 30)])
 		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 20)])
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
 			let mut old_stake = StakePallet::total_collator_stake();
-			assert_eq!(old_stake, TotalStake { collators: 30, delegators: 20 });
+			assert_eq!(old_stake, TotalStake { collators: 60, delegators: 20 });
 
 			old_stake = StakePallet::total_collator_stake();
 			assert_ok!(StakePallet::delegator_stake_more(RuntimeOrigin::signed(MockPeaqAccount::Bob), MockPeaqAccount::Alice, 50));
@@ -199,15 +200,24 @@ fn should_update_total_stake() {
 				TotalStake { delegators: old_stake.delegators + 50, ..old_stake }
 			);
 
-/*
- *             old_stake = StakePallet::total_collator_stake();
- *             assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(11), 2, 150));
- *             assert_eq!(
- *                 StakePallet::total_collator_stake(),
- *                 TotalStake { delegators: old_stake.delegators + 150, ..old_stake }
- *             );
- *
- *             old_stake = StakePallet::total_collator_stake();
+			old_stake = StakePallet::total_collator_stake();
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::David,
+					MockPeaqAccount::EVMu1Account,
+					PCall::delegate_another_candidate {
+						collator: Address(MockPeaqAccount::ParentAccount.into()),
+						amount: 60.into(),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(());
+
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators + 60, ..old_stake }
+			);
+ /*             old_stake = StakePallet::total_collator_stake();
  *             assert_eq!(StakePallet::delegator_state(11).unwrap().total, 350);
  *             assert_ok!(StakePallet::leave_delegators(RuntimeOrigin::signed(11)));
  *             assert_eq!(
