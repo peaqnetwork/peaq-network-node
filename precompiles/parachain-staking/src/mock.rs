@@ -38,16 +38,15 @@ use sp_runtime::{
 };
 use sp_std::{cell::RefCell, fmt::Debug};
 
-use precompile_utils::testing::MockPeaqAccount;
-use parachain_staking::*;
-use parachain_staking::reward_config_calc::DefaultRewardCalculator;
-use parachain_staking::reward_rate::RewardRateInfo;
-use parachain_staking::reward_config_calc::RewardRateConfigTrait;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
+use parachain_staking::{
+	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
+	reward_rate::RewardRateInfo,
+	*,
+};
+use precompile_utils::testing::MockPeaqAccount;
 
-use precompile_utils::precompile_set::PrecompileSetBuilder;
-use precompile_utils::precompile_set::PrecompileAt;
-use precompile_utils::precompile_set::AddressU64;
+use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -165,7 +164,6 @@ parameter_types! {
 		block_gas_limit.saturating_div(BLOCK_STORAGE_LIMIT)
 	};
 }
-
 
 impl pallet_evm::Config for Test {
 	type FeeCalculator = ();
@@ -371,15 +369,20 @@ impl ExtBuilder {
 		for delegator in self.delegators.clone() {
 			stakers.push((delegator.0, Some(delegator.1), delegator.2));
 		}
-		parachain_staking::GenesisConfig::<Test> { stakers, max_candidate_stake: 160_000_000 * DECIMALS }
-			.assimilate_storage(&mut t)
-			.expect("Parachain Staking's storage can be assimilated");
+		parachain_staking::GenesisConfig::<Test> {
+			stakers,
+			max_candidate_stake: 160_000_000 * DECIMALS,
+		}
+		.assimilate_storage(&mut t)
+		.expect("Parachain Staking's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self
 			.collators
 			.iter()
-			.map(|(k, _)| (*k, *k, MockSessionKeys { aura: UintAuthorityId(u64::from(*k)).to_public_key() }))
+			.map(|(k, _)| {
+				(*k, *k, MockSessionKeys { aura: UintAuthorityId(u64::from(*k)).to_public_key() })
+			})
 			.collect();
 
 		// NOTE: this will initialize the aura authorities
