@@ -6998,6 +6998,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-parachain-staking"
+version = "0.0.1"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum 0.5.11",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-session",
+ "pallet-timestamp",
+ "parachain-staking",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "slices",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-peaq-did"
 version = "0.1.0"
 dependencies = [
