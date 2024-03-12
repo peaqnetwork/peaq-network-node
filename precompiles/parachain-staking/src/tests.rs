@@ -99,10 +99,14 @@ fn unlock_unstaked() {
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
-			assert_ok!(StakePallet::unlock_unstaked(
-				RuntimeOrigin::signed(MockPeaqAccount::Bob),
-				MockPeaqAccount::Bob
-			));
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 
@@ -129,10 +133,14 @@ fn unlock_unstaked() {
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
-			assert_ok!(StakePallet::unlock_unstaked(
-				RuntimeOrigin::signed(MockPeaqAccount::Bob),
-				MockPeaqAccount::Bob
-			));
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 
@@ -141,10 +149,14 @@ fn unlock_unstaked() {
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
-			assert_ok!(StakePallet::unlock_unstaked(
-				RuntimeOrigin::signed(MockPeaqAccount::Bob),
-				MockPeaqAccount::Bob
-			));
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 
@@ -152,10 +164,14 @@ fn unlock_unstaked() {
 			unstaking.remove(&4);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock]);
 			// shouldn't be able to unlock anything
-			assert_ok!(StakePallet::unlock_unstaked(
-				RuntimeOrigin::signed(MockPeaqAccount::Bob),
-				MockPeaqAccount::Bob
-			));
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
 			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![]);
 		});
