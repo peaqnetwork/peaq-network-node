@@ -13,6 +13,7 @@ slices = { workspace = true }
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+address-unification = { path = "../../pallets/address-unification", default-features = false }
 
 # Substrate
 parity-scale-codec = { workspace = true, features = ["max-encoded-len"] }
@@ -31,6 +32,7 @@ pallet-evm = { workspace = true }
 [dev-dependencies]
 pallet-aura = { workspace = true, default-features = false }
 sp-consensus-aura = { workspace = true, default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
@@ -59,4 +61,6 @@ std = [
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-session/std",
+	"address-unification/std",
+	"peaq-primitives-xcm/std",
 ]

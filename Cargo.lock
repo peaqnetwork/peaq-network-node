@@ -7001,6 +7001,7 @@ dependencies = [
 name = "pallet-evm-precompile-parachain-staking"
 version = "0.0.1"
 dependencies = [
+ "address-unification",
  "derive_more",
  "fp-evm",
  "frame-support",
@@ -7015,6 +7016,7 @@ dependencies = [
  "pallet-timestamp",
  "parachain-staking",
  "parity-scale-codec",
+ "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
  "serde",

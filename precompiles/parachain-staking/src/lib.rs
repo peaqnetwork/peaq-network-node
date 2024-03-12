@@ -35,6 +35,7 @@ use precompile_utils::prelude::*;
 use sp_core::{H160, U256};
 use sp_runtime::traits::{Dispatchable, StaticLookup};
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use address_unification::EVMAddressMapping;
 
 type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
@@ -44,17 +45,38 @@ type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as C
 ///
 /// EXAMPLE USECASE:
 /// A simple example usecase is a contract that allows stakings.
-pub struct ParachainStakingPrecompile<Runtime>(PhantomData<Runtime>);
+pub struct ParachainStakingPrecompile<Runtime, AU>(PhantomData<(Runtime, AU)>);
+
+#[derive(Default, solidity::Codec)]
+pub struct CollatorInfo {
+    addr: Address,
+    stake: U256,
+}
 
 #[precompile_utils::precompile]
-impl<Runtime> ParachainStakingPrecompile<Runtime>
+impl<Runtime, AU> ParachainStakingPrecompile<Runtime, AU>
 where
-	Runtime: parachain_staking::Config + pallet_evm::Config,
+	Runtime: parachain_staking::Config + pallet_evm::Config + address_unification::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<parachain_staking::Call<Runtime>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
+    AU: EVMAddressMapping<Runtime::AccountId>,
 {
+
+	#[precompile::public("getCollatorList()")]
+	#[precompile::public("get_collator_list()")]
+	fn get_collator_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
+        // [TODO] Add db estimation
+        Ok(parachain_staking::Pallet::<Runtime>::top_candidates()
+            .into_iter()
+            .map(|stake_info| {
+                let addr = AU::get_evm_address_or_default(&stake_info.owner);
+                CollatorInfo { addr: Address(addr), stake: stake_info.amount.into() }
+            })
+			.collect::<Vec<CollatorInfo>>())
+	}
+
 	#[precompile::public("joinDelegators(address,uint256)")]
 	#[precompile::public("join_delegators(address,uint256)")]
 	fn join_delegators(

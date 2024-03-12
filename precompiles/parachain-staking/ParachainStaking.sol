@@ -13,7 +13,7 @@ ParachainStaking constant PARACHAIN_STAKING_CONTRACT = ParachainStaking(PARACHAI
 /// @custom:address 0x0000000000000000000000000000000000000807
 interface ParachainStaking {
 
-    /// ????
+    /// Get all collator informations
     fucntion getCollatorList() external view returns (address[] memory, uint256[] memory);
 
     /// Join the set of delegators by delegating to a collator candidate
@@ -42,7 +42,6 @@ interface ParachainStaking {
     /// selector: ?
     function delegatorStakeLess(address collator, uint256 stake) external;
 
-    // [TODO]
 		/// Unlock all previously staked funds that are now available for
 		/// unlocking by the origin account after `StakeDuration` blocks have
 		/// elapsed.
