@@ -104,14 +104,10 @@ where
 
 	#[precompile::public("leaveDelegators()")]
 	#[precompile::public("leave_delegators()")]
-	fn leave_delegators(
-		handle: &mut impl PrecompileHandle,
-	) -> EvmResult {
-
+	fn leave_delegators(handle: &mut impl PrecompileHandle) -> EvmResult {
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let call =
-			parachain_staking::Call::<Runtime>::leave_delegators { };
+		let call = parachain_staking::Call::<Runtime>::leave_delegators {};
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -122,47 +118,53 @@ where
 	#[precompile::public("delegatorStakeMore(address,uint256)")]
 	#[precompile::public("delegator_stake_more(address,uint256)")]
 	fn delegator_stake_more(
-	    handle: &mut impl PrecompileHandle,
-	    collator: Address,
-	    amount: U256,
-	) -> EvmResult { let amount = Self::u256_to_amount(amount).in_field("amount")?;
+		handle: &mut impl PrecompileHandle,
+		collator: Address,
+		amount: U256,
+	) -> EvmResult {
+		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
-	    // Build call with origin.
-	    let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-	    let collator: Runtime::AccountId = Runtime::AddressMapping::into_account_id(collator.into());
-		let collator: <Runtime::Lookup as StaticLookup>::Source = <Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+		// Build call with origin.
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let collator: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: <Runtime::Lookup as StaticLookup>::Source =
+			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_more {
 			candidate: collator,
-	        more: amount,
-	    };
+			more: amount,
+		};
 
-	    // Dispatch call (if enough gas).
-	    RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		// Dispatch call (if enough gas).
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
-	    Ok(())
+		Ok(())
 	}
 
 	#[precompile::public("delegatorStakeLess(address,uint256)")]
 	#[precompile::public("delegator_stake_less(address,uint256)")]
 	fn delegator_stake_less(
-	    handle: &mut impl PrecompileHandle,
-	    collator: Address,
-	    amount: U256,
-	) -> EvmResult { let amount = Self::u256_to_amount(amount).in_field("amount")?;
+		handle: &mut impl PrecompileHandle,
+		collator: Address,
+		amount: U256,
+	) -> EvmResult {
+		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
-	    // Build call with origin.
-	    let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-	    let collator: Runtime::AccountId = Runtime::AddressMapping::into_account_id(collator.into());
-		let collator: <Runtime::Lookup as StaticLookup>::Source = <Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+		// Build call with origin.
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let collator: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: <Runtime::Lookup as StaticLookup>::Source =
+			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_less {
 			candidate: collator,
-	        less: amount,
-	    };
+			less: amount,
+		};
 
-	    // Dispatch call (if enough gas).
-	    RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		// Dispatch call (if enough gas).
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
-	    Ok(())
+		Ok(())
 	}
 
 	fn u256_to_amount(value: U256) -> MayRevert<BalanceOf<Runtime>> {

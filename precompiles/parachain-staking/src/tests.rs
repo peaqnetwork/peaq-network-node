@@ -172,8 +172,10 @@ fn should_update_total_stake() {
 			(MockPeaqAccount::ParentAccount, 100),
 		])
 		.with_collators(vec![(MockPeaqAccount::Alice, 30), (MockPeaqAccount::ParentAccount, 30)])
-		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 20),
-                              (MockPeaqAccount::Charlie, MockPeaqAccount::Alice, 20),])
+		.with_delegators(vec![
+			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 20),
+			(MockPeaqAccount::Charlie, MockPeaqAccount::Alice, 20),
+		])
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
@@ -252,21 +254,20 @@ fn should_update_total_stake() {
 			);
 
 			old_stake = StakePallet::total_collator_stake();
-            assert_eq!(StakePallet::delegator_state(MockPeaqAccount::Charlie).unwrap().total, 20);
+			assert_eq!(StakePallet::delegator_state(MockPeaqAccount::Charlie).unwrap().total, 20);
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Charlie,
 					MockPeaqAccount::EVMu1Account,
-					PCall::leave_delegators {
-					},
+					PCall::leave_delegators {},
 				)
 				.expect_no_logs()
 				.execute_returns(());
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators - 20, ..old_stake }
-            );
-			 /*             let old_stake = StakePallet::total_collator_stake();
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators - 20, ..old_stake }
+			);
+			/*             let old_stake = StakePallet::total_collator_stake();
 			 *             assert_eq!(StakePallet::delegator_state(8).unwrap().total, 10);
 			 *             assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(8),
 			 * 2));             assert_eq!(
