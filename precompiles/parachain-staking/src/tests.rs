@@ -18,24 +18,18 @@
 
 use crate::{
 	mock::{
-		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles, PrecompilesValue,
-		RuntimeOrigin, StakePallet, Test,
+		roll_to, AddressUnification, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
+		PrecompilesValue, RuntimeOrigin, StakePallet, Test,
 	},
-	Address, BalanceOf,
+	Address, BalanceOf, CollatorInfo, U256,
 };
-use frame_support::{
-	assert_noop, assert_ok,
-	storage::bounded_btree_map::BoundedBTreeMap,
-	traits::{EstimateNextSessionRotation, LockIdentifier},
-	BoundedVec,
-};
-use crate::mock::AddressUnification;
 use address_unification::EVMAddressMapping;
+use frame_support::{
+	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
+};
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt};
-use crate::CollatorInfo;
-use crate::U256;
 
 const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
@@ -52,9 +46,10 @@ fn collator_list_test() {
 	// 2 should still have 100 locked until unlocking
 	ExtBuilder::default()
 		.with_balances(vec![
-            (MockPeaqAccount::Alice, 10),
-            (MockPeaqAccount::Bob, 100),
-            (MockPeaqAccount::Charlie, 100)])
+			(MockPeaqAccount::Alice, 10),
+			(MockPeaqAccount::Bob, 100),
+			(MockPeaqAccount::Charlie, 100),
+		])
 		.with_collators(vec![(MockPeaqAccount::Alice, 10), (MockPeaqAccount::Charlie, 20)])
 		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 100)])
 		.build()
@@ -63,246 +58,251 @@ fn collator_list_test() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::get_collator_list {
-					},
+					PCall::get_collator_list {},
 				)
 				.expect_no_logs()
 				.execute_returns(vec![
-                    CollatorInfo { addr:
-                    Address(AddressUnification::get_evm_address_or_default(&MockPeaqAccount::Alice)),
-                        stake: U256::from(110) },
-                    CollatorInfo { addr:
-                    Address(AddressUnification::get_evm_address_or_default(&MockPeaqAccount::Charlie)),
-                        stake: U256::from(20) },
-                ]);
-        });
+					CollatorInfo {
+						addr: Address(AddressUnification::get_evm_address_or_default(
+							&MockPeaqAccount::Alice,
+						)),
+						stake: U256::from(110),
+					},
+					CollatorInfo {
+						addr: Address(AddressUnification::get_evm_address_or_default(
+							&MockPeaqAccount::Charlie,
+						)),
+						stake: U256::from(20),
+					},
+				]);
+		});
 }
 
 #[test]
 fn unlock_unstaked() {
-    // same_unstaked_as_restaked
-    // block 1: stake & unstake for 100
-    // block 2: stake & unstake for 100
-    // should remove first entry in unstaking BoundedBTreeMap when staking in block
-    // 2 should still have 100 locked until unlocking
-    ExtBuilder::default()
-        .with_balances(vec![(MockPeaqAccount::Alice, 10), (MockPeaqAccount::Bob, 100)])
-        .with_collators(vec![(MockPeaqAccount::Alice, 10)])
-        .with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 100)])
-        .build()
-        .execute_with(|| {
-            assert_ok!(StakePallet::revoke_delegation(
-                RuntimeOrigin::signed(MockPeaqAccount::Bob),
-                MockPeaqAccount::Alice
-            ));
-            let mut unstaking: BoundedBTreeMap<
-                BlockNumber,
-                BalanceOf<Test>,
-                <Test as parachain_staking::Config>::MaxUnstakeRequests,
-            > = BoundedBTreeMap::new();
-            assert_ok!(unstaking.try_insert(3, 100));
-            let lock = BalanceLock { id: STAKING_ID, amount: 100, reasons: Reasons::All };
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
-            // shouldn't be able to unlock anything
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
-                )
-                .expect_no_logs()
-                .execute_returns(());
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+	// same_unstaked_as_restaked
+	// block 1: stake & unstake for 100
+	// block 2: stake & unstake for 100
+	// should remove first entry in unstaking BoundedBTreeMap when staking in block
+	// 2 should still have 100 locked until unlocking
+	ExtBuilder::default()
+		.with_balances(vec![(MockPeaqAccount::Alice, 10), (MockPeaqAccount::Bob, 100)])
+		.with_collators(vec![(MockPeaqAccount::Alice, 10)])
+		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 100)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(StakePallet::revoke_delegation(
+				RuntimeOrigin::signed(MockPeaqAccount::Bob),
+				MockPeaqAccount::Alice
+			));
+			let mut unstaking: BoundedBTreeMap<
+				BlockNumber,
+				BalanceOf<Test>,
+				<Test as parachain_staking::Config>::MaxUnstakeRequests,
+			> = BoundedBTreeMap::new();
+			assert_ok!(unstaking.try_insert(3, 100));
+			let lock = BalanceLock { id: STAKING_ID, amount: 100, reasons: Reasons::All };
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			// shouldn't be able to unlock anything
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 
-            // join delegators and revoke again --> consume unstaking at block 3
-            roll_to(2, vec![]);
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::join_delegators {
-                        collator: Address(MockPeaqAccount::Alice.into()),
-                        amount: 100.into(),
-                    },
-                )
-                .expect_no_logs()
-                .execute_returns(());
+			// join delegators and revoke again --> consume unstaking at block 3
+			roll_to(2, vec![]);
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::join_delegators {
+						collator: Address(MockPeaqAccount::Alice.into()),
+						amount: 100.into(),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(());
 
-            assert_ok!(StakePallet::revoke_delegation(
-                RuntimeOrigin::signed(MockPeaqAccount::Bob),
-                MockPeaqAccount::Alice
-            ));
-            unstaking.remove(&3);
-            assert_ok!(unstaking.try_insert(4, 100));
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
-            // shouldn't be able to unlock anything
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
-                )
-                .expect_no_logs()
-                .execute_returns(());
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_ok!(StakePallet::revoke_delegation(
+				RuntimeOrigin::signed(MockPeaqAccount::Bob),
+				MockPeaqAccount::Alice
+			));
+			unstaking.remove(&3);
+			assert_ok!(unstaking.try_insert(4, 100));
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			// shouldn't be able to unlock anything
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 
-            // should reduce unlocking but not unlock anything
-            roll_to(3, vec![]);
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
-            // shouldn't be able to unlock anything
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
-                )
-                .expect_no_logs()
-                .execute_returns(());
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			// should reduce unlocking but not unlock anything
+			roll_to(3, vec![]);
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			// shouldn't be able to unlock anything
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
 
-            roll_to(4, vec![]);
-            unstaking.remove(&4);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock]);
-            // shouldn't be able to unlock anything
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
-                )
-                .expect_no_logs()
-                .execute_returns(());
-            assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-            assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![]);
-        });
+			roll_to(4, vec![]);
+			unstaking.remove(&4);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock]);
+			// shouldn't be able to unlock anything
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
+			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![]);
+		});
 }
 
 #[test]
 fn should_update_total_stake() {
-    ExtBuilder::default()
-        .with_balances(vec![
-            (MockPeaqAccount::Alice, 100),
-            (MockPeaqAccount::Bob, 100),
-            (MockPeaqAccount::Charlie, 100),
-            (MockPeaqAccount::David, 500),
-            (MockPeaqAccount::ParentAccount, 100),
-        ])
-        .with_collators(vec![(MockPeaqAccount::Alice, 30), (MockPeaqAccount::ParentAccount, 30)])
-        .with_delegators(vec![
-            (MockPeaqAccount::Bob, MockPeaqAccount::Alice, 20),
-            (MockPeaqAccount::Charlie, MockPeaqAccount::Alice, 20),
-        ])
-        .set_blocks_per_round(5)
-        .build()
-        .execute_with(|| {
-            let mut old_stake = StakePallet::total_collator_stake();
-            assert_eq!(old_stake, TotalStake { collators: 60, delegators: 40 });
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Bob, 100),
+			(MockPeaqAccount::Charlie, 100),
+			(MockPeaqAccount::David, 500),
+			(MockPeaqAccount::ParentAccount, 100),
+		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 30), (MockPeaqAccount::ParentAccount, 30)])
+		.with_delegators(vec![
+			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 20),
+			(MockPeaqAccount::Charlie, MockPeaqAccount::Alice, 20),
+		])
+		.set_blocks_per_round(5)
+		.build()
+		.execute_with(|| {
+			let mut old_stake = StakePallet::total_collator_stake();
+			assert_eq!(old_stake, TotalStake { collators: 60, delegators: 40 });
 
-            old_stake = StakePallet::total_collator_stake();
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::delegator_stake_more {
-                        collator: Address(MockPeaqAccount::Alice.into()),
-                        amount: 50.into(),
-                    },
-                )
-                .expect_no_logs()
-                .execute_returns(());
+			old_stake = StakePallet::total_collator_stake();
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::delegator_stake_more {
+						collator: Address(MockPeaqAccount::Alice.into()),
+						amount: 50.into(),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(());
 
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators + 50, ..old_stake }
-            );
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators + 50, ..old_stake }
+			);
 
-            old_stake = StakePallet::total_collator_stake();
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::delegator_stake_less {
-                        collator: Address(MockPeaqAccount::Alice.into()),
-                        amount: 50.into(),
-                    },
-                )
-                .expect_no_logs()
-                .execute_returns(());
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators - 50, ..old_stake }
-            );
+			old_stake = StakePallet::total_collator_stake();
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::delegator_stake_less {
+						collator: Address(MockPeaqAccount::Alice.into()),
+						amount: 50.into(),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(());
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators - 50, ..old_stake }
+			);
 
-            old_stake = StakePallet::total_collator_stake();
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::David,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::join_delegators {
-                        collator: Address(MockPeaqAccount::Alice.into()),
-                        amount: 50.into(),
-                    },
-                )
-                .expect_no_logs()
-                .execute_returns(());
+			old_stake = StakePallet::total_collator_stake();
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::David,
+					MockPeaqAccount::EVMu1Account,
+					PCall::join_delegators {
+						collator: Address(MockPeaqAccount::Alice.into()),
+						amount: 50.into(),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(());
 
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators + 50, ..old_stake }
-            );
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators + 50, ..old_stake }
+			);
 
-            old_stake = StakePallet::total_collator_stake();
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::David,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::delegate_another_candidate {
-                        collator: Address(MockPeaqAccount::ParentAccount.into()),
-                        amount: 60.into(),
-                    },
-                )
-                .expect_no_logs()
-                .execute_returns(());
+			old_stake = StakePallet::total_collator_stake();
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::David,
+					MockPeaqAccount::EVMu1Account,
+					PCall::delegate_another_candidate {
+						collator: Address(MockPeaqAccount::ParentAccount.into()),
+						amount: 60.into(),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(());
 
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators + 60, ..old_stake }
-            );
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators + 60, ..old_stake }
+			);
 
-            old_stake = StakePallet::total_collator_stake();
-            assert_eq!(StakePallet::delegator_state(MockPeaqAccount::Charlie).unwrap().total, 20);
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Charlie,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::leave_delegators {},
-                )
-                .expect_no_logs()
-                .execute_returns(());
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators - 20, ..old_stake }
-            );
-            let old_stake = StakePallet::total_collator_stake();
-            assert_eq!(StakePallet::delegator_state(MockPeaqAccount::Bob).unwrap().total, 20);
-            precompiles()
-                .prepare_test(
-                    MockPeaqAccount::Bob,
-                    MockPeaqAccount::EVMu1Account,
-                    PCall::revoke_delegation { collator: Address(MockPeaqAccount::Alice.into()) },
-                )
-                .expect_no_logs()
-                .execute_returns(());
+			old_stake = StakePallet::total_collator_stake();
+			assert_eq!(StakePallet::delegator_state(MockPeaqAccount::Charlie).unwrap().total, 20);
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Charlie,
+					MockPeaqAccount::EVMu1Account,
+					PCall::leave_delegators {},
+				)
+				.expect_no_logs()
+				.execute_returns(());
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators - 20, ..old_stake }
+			);
+			let old_stake = StakePallet::total_collator_stake();
+			assert_eq!(StakePallet::delegator_state(MockPeaqAccount::Bob).unwrap().total, 20);
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::revoke_delegation { collator: Address(MockPeaqAccount::Alice.into()) },
+				)
+				.expect_no_logs()
+				.execute_returns(());
 
-            assert_eq!(
-                StakePallet::total_collator_stake(),
-                TotalStake { delegators: old_stake.delegators - 20, ..old_stake }
-            );
-        })
+			assert_eq!(
+				StakePallet::total_collator_stake(),
+				TotalStake { delegators: old_stake.delegators - 20, ..old_stake }
+			);
+		})
 }

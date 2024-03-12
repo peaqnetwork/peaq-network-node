@@ -38,7 +38,7 @@ use sp_runtime::{
 };
 use sp_std::{cell::RefCell, fmt::Debug};
 
-use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping, HashedAddressMapping};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use parachain_staking::{
 	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
 	reward_rate::RewardRateInfo,
@@ -143,8 +143,10 @@ impl pallet_authorship::Config for Test {
 	type EventHandler = Pallet<Test>;
 }
 
-pub type Precompiles<R> =
-	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<1>, ParachainStakingPrecompile<R, AddressUnification>>,)>;
+pub type Precompiles<R> = PrecompileSetBuilder<
+	R,
+	(PrecompileAt<AddressU64<1>, ParachainStakingPrecompile<R, AddressUnification>>,),
+>;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block storage limit in bytes. Set to 40 KB.
@@ -345,22 +347,6 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(
-		mut self,
-		col_reward: u64,
-		del_reward: u64,
-		blocks_per_round: BlockNumber,
-	) -> Self {
-		MockRewardConfig::set_reward_rate_config(RewardRateInfo::new(
-			Perquintill::from_percent(col_reward),
-			Perquintill::from_percent(del_reward),
-		));
-		self.blocks_per_round = blocks_per_round;
-
-		self
-	}
-
-	#[must_use]
 	pub(crate) fn set_blocks_per_round(mut self, blocks_per_round: BlockNumber) -> Self {
 		self.blocks_per_round = blocks_per_round;
 		self
@@ -418,12 +404,6 @@ impl ExtBuilder {
 	}
 }
 
-/// Compare whether the difference of both sides is at most `precision * left`.
-pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) -> bool {
-	let err = precision * left;
-	left.max(right) - left.min(right) <= err
-}
-
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
@@ -438,16 +418,4 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 		System::set_block_number(System::block_number() + 1);
 		<AllPalletsWithSystem as OnInitialize<u64>>::on_initialize(System::block_number());
 	}
-}
-
-pub(crate) fn last_event() -> RuntimeEvent {
-	System::events().pop().expect("Event expected").event
-}
-
-pub(crate) fn events() -> Vec<pallet::Event<Test>> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| if let RuntimeEvent::StakePallet(inner) = e { Some(inner) } else { None })
-		.collect::<Vec<_>>()
 }

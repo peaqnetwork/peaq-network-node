@@ -13,8 +13,14 @@ ParachainStaking constant PARACHAIN_STAKING_CONTRACT = ParachainStaking(PARACHAI
 /// @custom:address 0x0000000000000000000000000000000000000807
 interface ParachainStaking {
 
+    struct CollatorInfo {
+        address addr;
+        uint256 stake;
+    }
+
     /// Get all collator informations
-    fucntion getCollatorList() external view returns (address[] memory, uint256[] memory);
+    // selector: ?
+    fucntion getCollatorList() external view returns (CollatorInfo[] memory);
 
     /// Join the set of delegators by delegating to a collator candidate
     /// selector: ?

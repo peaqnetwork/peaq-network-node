@@ -24,18 +24,17 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use address_unification::EVMAddressMapping;
 use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
-	sp_runtime::Percent,
-	traits::{Currency, Get},
+	traits::Currency,
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_core::{H160, U256};
+use sp_core::U256;
 use sp_runtime::traits::{Dispatchable, StaticLookup};
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
-use address_unification::EVMAddressMapping;
 
 type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
@@ -49,8 +48,8 @@ pub struct ParachainStakingPrecompile<Runtime, AU>(PhantomData<(Runtime, AU)>);
 
 #[derive(Default, solidity::Codec)]
 pub struct CollatorInfo {
-    addr: Address,
-    stake: U256,
+	addr: Address,
+	stake: U256,
 }
 
 #[precompile_utils::precompile]
@@ -61,19 +60,22 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<parachain_staking::Call<Runtime>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
-    AU: EVMAddressMapping<Runtime::AccountId>,
+	AU: EVMAddressMapping<Runtime::AccountId>,
 {
-
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
-	fn get_collator_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
-        // [TODO] Add db estimation
-        Ok(parachain_staking::Pallet::<Runtime>::top_candidates()
-            .into_iter()
-            .map(|stake_info| {
-                let addr = AU::get_evm_address_or_default(&stake_info.owner);
-                CollatorInfo { addr: Address(addr), stake: stake_info.amount.into() }
-            })
+	fn get_collator_list(_handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
+		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
+		// we account for a theoretical 150 pool.
+
+		handle.record_db_read::<Runtime>(7200)?;
+
+		Ok(parachain_staking::Pallet::<Runtime>::top_candidates()
+			.into_iter()
+			.map(|stake_info| {
+				let addr = AU::get_evm_address_or_default(&stake_info.owner);
+				CollatorInfo { addr: Address(addr), stake: stake_info.amount.into() }
+			})
 			.collect::<Vec<CollatorInfo>>())
 	}
 
