@@ -64,7 +64,8 @@ where
 {
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
-	fn get_collator_list(_handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
+	#[precompile::view]
+	fn get_collator_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
 		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
 		// we account for a theoretical 150 pool.
 

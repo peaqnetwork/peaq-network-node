@@ -6,7 +6,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// The KILT Blockchain is distributed in the hope that it will be useful,
+// The EoTLabs is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -30,11 +30,43 @@ use frame_support::{
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt};
+use precompile_utils::testing::PrecompilesModifierTester;
 
 const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
 fn precompiles() -> Precompiles<Test> {
 	PrecompilesValue::get()
+}
+
+#[test]
+fn test_selector_enum() {
+	assert!(PCall::get_collator_list_selectors().contains(&0xaaacb283));
+	assert!(PCall::join_delegators_selectors().contains(&0x04e97247));
+	assert!(PCall::delegate_another_candidate_selectors().contains(&0x99d7f9e0));
+	assert!(PCall::leave_delegators_selectors().contains(&0x4b99dc38));
+	assert!(PCall::revoke_delegation_selectors().contains(&0x808d5014));
+	assert!(PCall::delegator_stake_more_selectors().contains(&0x95d5c10b));
+	assert!(PCall::delegator_stake_less_selectors().contains(&0x2da10bc2));
+	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
+}
+
+#[test]
+fn modifiers() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 10),
+		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 10)])
+		.build()
+		.execute_with(|| {
+			let mut tester = PrecompilesModifierTester::new(
+				precompiles(),
+				MockPeaqAccount::Alice,
+				MockPeaqAccount::EVMu1Account,
+			);
+
+			tester.test_view_modifier(PCall::get_collator_list_selectors());
+	});
 }
 
 #[test]
