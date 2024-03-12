@@ -30,7 +30,6 @@ interface ParachainStaking {
     /// selector: ?
     function leaveDelegators() external;
 
-    // [TODO]
 		/// Terminates an ongoing delegation for a given collator candidate.
     /// selector: ?
     function revokeDelegation(address collator) external;

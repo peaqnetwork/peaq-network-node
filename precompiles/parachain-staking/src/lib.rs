@@ -115,6 +115,23 @@ where
 		Ok(())
 	}
 
+	#[precompile::public("revokeDelegation(address)")]
+	#[precompile::public("revoke_delegation(address)")]
+	fn revoke_delegation(handle: &mut impl PrecompileHandle, collator: Address) -> EvmResult {
+		// Build call with origin.
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let collator: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: <Runtime::Lookup as StaticLookup>::Source =
+			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+		let call = parachain_staking::Call::<Runtime>::revoke_delegation { collator };
+
+		// Dispatch call (if enough gas).
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+
+		Ok(())
+	}
+
 	#[precompile::public("delegatorStakeMore(address,uint256)")]
 	#[precompile::public("delegator_stake_more(address,uint256)")]
 	fn delegator_stake_more(
