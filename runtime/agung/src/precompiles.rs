@@ -1,4 +1,5 @@
 use crate::xcm_config::XcmConfig;
+use crate::AddressUnification;
 use frame_support::parameter_types;
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 use pallet_evm_precompile_assets_factory::AssetsFactoryPrecompile;
@@ -13,6 +14,7 @@ use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
 use pallet_evm_precompile_xcm_utils::XcmUtilsPrecompile;
 use pallet_evm_precompile_xtokens::XtokensPrecompile;
+use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
 use precompile_utils::precompile_set::*;
 
 type EthereumPrecompilesChecks = (AcceptDelegateCall, CallableByContract, CallableByPrecompile);
@@ -94,6 +96,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2054>,
 					AssetsFactoryPrecompile<R>,
+					(AcceptDelegateCall, CallableByContract),
+				>,
+				PrecompileAt<
+					AddressU64<2055>,
+					ParachainStakingPrecompile<R, AddressUnification>,
 					(AcceptDelegateCall, CallableByContract),
 				>,
 			),
