@@ -25,7 +25,6 @@ interface ParachainStaking {
     /// selector: ?
     function delegateAnotherCandidate(address collator, uint256 stake) external;
 
-    // [TODO]
 		/// Leave the set of delegators and, by implication, revoke all ongoing
 		/// delegations.
     /// selector: ?
@@ -36,12 +35,10 @@ interface ParachainStaking {
     /// selector: ?
     function revokeDelegation(address collator) external;
 
-    // [TODO]
 		/// Increase the stake for delegating a collator candidate.
     /// selector: ?
     function delegatorStakeMore(address collator, uint256 stake) external;
 
-    // [TODO]
 		/// Reduce the stake for delegating a collator candidate.
     /// selector: ?
     function delegatorStakeLess(address collator, uint256 stake) external;
