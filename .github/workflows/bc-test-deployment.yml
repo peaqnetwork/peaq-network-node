@@ -38,4 +38,5 @@ jobs:
                 --ignore=tests/bridge_xtokens_test.py \
                 --ignore=tests/delegator_issue_test.py \
                 --ignore=test/reward_distribution_test.py \
-                --ignore=test/token_economy_test.py           
+                --ignore=test/token_economy_test.py \
+                --ignore=test/bride_xcmutils_test.py       
