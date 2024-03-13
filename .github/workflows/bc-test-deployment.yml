@@ -1,47 +1,47 @@
 name: Peaq BC Test
 # This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
 on:
-    workflow_dispatch:
-    workflow_run:
-      workflows: [Build and Publish]
-      types: [completed]
-      branches: [dev]
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Build and Publish]
+    types: [completed]
+    branches: [dev]
 
 jobs:
-    bc-test:
-        # NOTE: Python3 comes preinstalled in ubuntu, so no need to install it
-        runs-on: ubuntu-20.04
+  bc-test:
+    # NOTE: Python3 comes preinstalled in ubuntu, so no need to install it
+    runs-on: ubuntu-20.04
 
-        steps:
-            - name: Clone peaq-bc-repo
-              uses: GuillaumeFalourd/clone-github-repo-action@v2.3
-              with:
-                depth: 1
-                branch: main
-                owner: peaqnetwork
-                repository: peaq-bc-test
+    steps:
+      - name: Clone peaq-bc-repo
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        with:
+          depth: 1
+          branch: main
+          owner: peaqnetwork
+          repository: peaq-bc-test
 
-            - name: Install dependencies for peaq-bc-test
-              run: |
-                cd peaq-bc-test
-                python3 -m pip install --upgrade pip
-                pip install -r requirements.txt
+      - name: Install dependencies for peaq-bc-test
+        run: |
+          cd peaq-bc-test
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-            # Use github secrets to pass autotest URI as env variable to run tests
-            # This suite ignores tests that utilize parachain_launch methods or XCM channels as neither are available in Autotest env.
-            - name: Run peaq-bc-test
-              run: |
-                cd peaq-bc-test
-                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v \
-                --ignore=tests/zenlink_dex_test.py \
-                --ignore=tests/xcm_transfer_test.py \
-                --ignore=tests/bridge_xtokens_test.py \
-                --ignore=tests/delegator_issue_test.py \
-                --ignore=tests/reward_distribution_test.py \
-                --ignore=tests/token_economy_test.py \
-                --ignore=tests/bridge_xcmutils_test.py
-    # We redeploy the autotest env as to clear the state of the parachain
-    redeploy:
-        runs-on: ubuntu-20.04
-        steps:
-          - uses: ./workflows/ManualPublish_and_Deployment.yml/trigger-deploy
+      # Use github secrets to pass autotest URI as env variable to run tests
+      # This suite ignores tests that utilize parachain_launch methods or XCM channels as neither are available in Autotest env.
+      - name: Run peaq-bc-test
+        run: |
+          cd peaq-bc-test
+          AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v \
+          --ignore=tests/zenlink_dex_test.py \
+          --ignore=tests/xcm_transfer_test.py \
+          --ignore=tests/bridge_xtokens_test.py \
+          --ignore=tests/delegator_issue_test.py \
+          --ignore=tests/reward_distribution_test.py \
+          --ignore=tests/token_economy_test.py \
+          --ignore=tests/bridge_xcmutils_test.py
+  # We redeploy the autotest env as to clear the state of the parachain
+  redeploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: ./workflows/ManualPublish_and_Deployment.yml/trigger-deploy
