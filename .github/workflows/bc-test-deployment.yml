@@ -39,4 +39,9 @@ jobs:
                 --ignore=tests/delegator_issue_test.py \
                 --ignore=tests/reward_distribution_test.py \
                 --ignore=tests/token_economy_test.py \
-                --ignore=tests/bridge_xcmutils_test.py       
+                --ignore=tests/bridge_xcmutils_test.py
+    # We redeploy the autotest env as to clear the state of the parachain
+    redeploy:
+        runs-on: ubuntu-20.04
+        steps:
+          - uses: ./workflows/ManualPublish_and_Deployment.yml/trigger-deploy
