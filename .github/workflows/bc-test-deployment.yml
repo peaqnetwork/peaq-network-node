@@ -28,7 +28,14 @@ jobs:
                 pip install -r requirements.txt
 
             # Use github secrets to pass autotest URI as env variable to run tests
+            # This suite ignores tests that utilize parachain_launch methods or XCM channels as neither are available in Autotest env.
             - name: Run peaq-bc-test
               run: |
                 cd peaq-bc-test
-                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v --ignore=tests/zenlink_dex_test.py --ignore=tests/xcm_transfer_test.py
+                AUTOTEST_URI="${{ secrets.AUTOTEST_HOST }}" pytest -v \
+                --ignore=tests/zenlink_dex_test.py \
+                --ignore=tests/xcm_transfer_test.py \
+                --ignore=tests/bridge_xtokens_test.py \
+                --ignore=tests/delegator_issue_test.py \
+                --ignore=test/reward_distribution_test.py \
+                --ignore=test/token_economy_test.py           
