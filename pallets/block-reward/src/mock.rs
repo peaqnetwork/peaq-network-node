@@ -151,7 +151,10 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 	}
 
 	fn depin_incentivization(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(), reward);
+		Balances::resolve_creating(
+			&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(),
+			reward,
+		);
 	}
 }
 

@@ -286,7 +286,8 @@ pub mod pallet {
 			let parachain_lease_fund_balance =
 				distro_params.parachain_lease_fund_percent * imbalance.peek();
 			let depin_staking_balance = distro_params.depin_staking_percent * imbalance.peek();
-			let depin_incentivization_balance = distro_params.depin_incentivization_percent * imbalance.peek();
+			let depin_incentivization_balance =
+				distro_params.depin_incentivization_percent * imbalance.peek();
 
 			// Prepare imbalances
 			let (dapps_imbalance, remainder) = imbalance.split(dapps_balance);
@@ -294,7 +295,8 @@ pub mod pallet {
 			let (lp_imbalance, remainder) = remainder.split(lp_balance);
 			let (machines_imbalance, remainder) = remainder.split(machines_balance);
 			let (depin_staking_imbalance, remainder) = remainder.split(depin_staking_balance);
-			let (depin_incentivization_imbalance, remainder) = remainder.split(depin_incentivization_balance);
+			let (depin_incentivization_imbalance, remainder) =
+				remainder.split(depin_incentivization_balance);
 			let (parachain_lease_fund_balance, treasury_imbalance) =
 				remainder.split(parachain_lease_fund_balance);
 

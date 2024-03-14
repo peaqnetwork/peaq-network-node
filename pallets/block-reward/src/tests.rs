@@ -25,6 +25,8 @@ fn reward_distribution_config_is_consistent() {
 		lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
 		parachain_lease_fund_percent: Zero::zero(),
+		depin_staking_percent: Zero::zero(),
+		depin_incentivization_percent: Zero::zero(),
 	};
 	assert!(reward_config.is_consistent());
 
@@ -36,6 +38,8 @@ fn reward_distribution_config_is_consistent() {
 		lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
 		parachain_lease_fund_percent: Zero::zero(),
+		depin_staking_percent: Zero::zero(),
+		depin_incentivization_percent: Zero::zero(),
 	};
 	assert!(reward_config.is_consistent());
 
@@ -47,6 +51,8 @@ fn reward_distribution_config_is_consistent() {
 		lp_percent: Zero::zero(),
 		machines_percent: Zero::zero(),
 		parachain_lease_fund_percent: Zero::zero(),
+		depin_staking_percent: Zero::zero(),
+		depin_incentivization_percent: Zero::zero(),
 	};
 	assert!(!reward_config.is_consistent());
 
@@ -59,6 +65,8 @@ fn reward_distribution_config_is_consistent() {
 		lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(4),
 		parachain_lease_fund_percent: Perbill::from_percent(4),
+		depin_staking_percent: Perbill::from_percent(0),
+		depin_incentivization_percent: Perbill::from_percent(0),
 	};
 	assert!(reward_config.is_consistent());
 }
@@ -81,6 +89,8 @@ fn reward_distribution_config_not_consistent() {
 		lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(7),
 		parachain_lease_fund_percent: Perbill::from_percent(7),
+		depin_staking_percent: Perbill::from_percent(0),
+		depin_incentivization_percent: Perbill::from_percent(0),
 	};
 	assert!(!reward_config.is_consistent());
 
@@ -93,6 +103,8 @@ fn reward_distribution_config_not_consistent() {
 		lp_percent: Perbill::from_percent(2),
 		machines_percent: Perbill::from_percent(4),
 		parachain_lease_fund_percent: Perbill::from_percent(5),
+		depin_staking_percent: Perbill::from_percent(0),
+		depin_incentivization_percent: Perbill::from_percent(0),
 	};
 	assert!(!reward_config.is_consistent());
 }
@@ -130,6 +142,8 @@ pub fn set_configuration_is_ok() {
 			lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(3),
 			parachain_lease_fund_percent: Perbill::from_percent(4),
+			depin_staking_percent: Perbill::from_percent(0),
+			depin_incentivization_percent: Perbill::from_percent(0),
 		};
 		assert!(reward_config.is_consistent());
 
@@ -255,6 +269,8 @@ pub fn reward_distribution_as_expected() {
 			lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(3),
 			parachain_lease_fund_percent: Perbill::from_percent(5),
+			depin_staking_percent: Perbill::from_percent(0),
+			depin_incentivization_percent: Perbill::from_percent(0),
 		};
 		assert!(reward_config.is_consistent());
 		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
@@ -282,6 +298,8 @@ pub fn reward_distribution_no_adjustable_part() {
 			lp_percent: Perbill::from_percent(2),
 			machines_percent: Perbill::from_percent(5),
 			parachain_lease_fund_percent: Perbill::from_percent(5),
+			depin_staking_percent: Perbill::from_percent(0),
+			depin_incentivization_percent: Perbill::from_percent(0),
 		};
 		assert!(reward_config.is_consistent());
 		assert_ok!(BlockReward::set_configuration(RuntimeOrigin::root(), reward_config.clone()));
