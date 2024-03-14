@@ -34,6 +34,12 @@ pub trait BeneficiaryPayout<Imbalance> {
 
 	/// Payout Parachain
 	fn parachain_lease_fund(reward: Imbalance);
+
+	/// Payout DePIN staking rewards
+	fn depin_staking(reward: Imbalance);
+
+	/// Payout DePIN incentivization
+	fn depin_incentivization(reward: Imbalance);
 }
 
 /// After next next version, we can remove this RewardDistributionConfigV0
@@ -100,6 +106,12 @@ pub struct RewardDistributionConfig {
 	/// Percentage of reward that goes to parachain lease fund
 	#[codec(compact)]
 	pub parachain_lease_fund_percent: Perbill,
+	/// Percentage of rewards that goes to DePIN staking
+	#[codec(compact)]
+	pub depin_staking_percent: Perbill,
+	/// Percentage of rewards that goes to DePIN incentivization
+	#[codec(compact)]
+	pub depin_incentivization_percent: Perbill,
 }
 
 impl Default for RewardDistributionConfig {
@@ -113,6 +125,8 @@ impl Default for RewardDistributionConfig {
 			lp_percent: Perbill::from_percent(20),
 			machines_percent: Perbill::from_percent(5),
 			parachain_lease_fund_percent: Perbill::from_percent(5),
+			depin_staking_percent: Perbill::from_percent(0),
+			depin_incentivization_percent: Perbill::from_percent(0),
 		}
 	}
 }

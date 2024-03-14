@@ -114,6 +114,8 @@ pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
 pub(crate) const LP_POT: PalletId = PalletId(*b"lpreward");
 pub(crate) const MACHINE_POT: PalletId = PalletId(*b"machiner");
 pub(crate) const PARACHAIN_LEASE_FUND: PalletId = PalletId(*b"parlease");
+pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"depinstk");
+pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"depininc");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -142,6 +144,14 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 
 	fn parachain_lease_fund(reward: NegativeImbalanceOf<TestRuntime>) {
 		Balances::resolve_creating(&PARACHAIN_LEASE_FUND.into_account_truncating(), reward);
+	}
+
+	fn depin_staking(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&DE_PINSTAKING_ACCOUNT.into_account_truncating(), reward);
+	}
+
+	fn depin_incentivization(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(), reward);
 	}
 }
 

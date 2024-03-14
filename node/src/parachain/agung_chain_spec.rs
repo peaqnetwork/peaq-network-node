@@ -129,6 +129,8 @@ fn configure_genesis(
 				lp_percent: Perbill::from_percent(25),
 				machines_percent: Perbill::from_percent(10),
 				parachain_lease_fund_percent: Perbill::from_percent(10),
+				depin_staking_percent: Perbill::from_percent(0),
+				depin_incentivization_percent: Perbill::from_percent(0),
 			},
 			block_issue_reward: 7_909_867 * MILLICENTS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,

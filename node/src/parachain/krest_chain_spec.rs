@@ -128,11 +128,13 @@ fn configure_genesis(
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
 				treasury_percent: Perbill::from_percent(25),
-				dapps_percent: Perbill::from_percent(20),
+				dapps_percent: Perbill::from_percent(0),
 				collators_percent: Perbill::from_percent(40),
 				lp_percent: Perbill::from_percent(10),
 				machines_percent: Perbill::from_percent(5),
 				parachain_lease_fund_percent: Perbill::from_percent(0),
+				depin_staking_percent: Perbill::from_percent(5),
+				depin_incentivization_percent: Perbill::from_percent(15),
 			},
 			block_issue_reward: 380_517_503_805 * NANOCENTS,
 			max_currency_supply: 400_000_000 * DOLLARS,

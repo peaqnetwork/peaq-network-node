@@ -857,6 +857,10 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	fn machines(_reward: NegativeImbalance) {}
 
 	fn parachain_lease_fund(_reward: NegativeImbalance) {}
+
+	fn depin_incentivization(_reward: NegativeImbalance) {}
+
+	fn depin_staking(_reward: NegativeImbalance) {}
 }
 
 parameter_types! {
