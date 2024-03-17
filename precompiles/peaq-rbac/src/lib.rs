@@ -192,7 +192,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_user_roles(bytes32,bytes32)")]
+	#[precompile::public("fetch_user_roles(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_roles(
 		handle: &mut impl PrecompileHandle,
@@ -276,7 +276,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_permission(bytes32,bytes32)")]
+	#[precompile::public("fetch_permission(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_permission(
 		handle: &mut impl PrecompileHandle,
@@ -294,7 +294,7 @@ where
 		}
 	}
 
-	#[precompile::public("fetch_permissions(bytes32)")]
+	#[precompile::public("fetch_permissions(address)")]
 	#[precompile::view]
 	fn fetch_permissions(
 		handle: &mut impl PrecompileHandle,
@@ -416,7 +416,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_role_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetch_role_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role_permissions(
 		handle: &mut impl PrecompileHandle,
@@ -510,7 +510,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_group(bytes32,bytes32)")]
+	#[precompile::public("fetch_group(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group(
 		handle: &mut impl PrecompileHandle,
@@ -680,7 +680,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_group_roles(bytes32,bytes32)")]
+	#[precompile::public("fetch_group_roles(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group_roles(
 		handle: &mut impl PrecompileHandle,
@@ -770,7 +770,7 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_user_groups(bytes32,bytes32)")]
+	#[precompile::public("fetch_user_groups(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_groups(
 		handle: &mut impl PrecompileHandle,
@@ -792,7 +792,7 @@ where
 		result
 	}
 
-	#[precompile::public("fetch_user_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetch_user_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_permissions(
 		handle: &mut impl PrecompileHandle,
@@ -819,7 +819,7 @@ where
 		result
 	}
 
-	#[precompile::public("fetch_group_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetch_group_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group_permissions(
 		handle: &mut impl PrecompileHandle,
