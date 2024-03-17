@@ -70,7 +70,8 @@ where
 		entity: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner_account: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
+		let owner_account: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(owner.into());
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
@@ -83,7 +84,8 @@ where
 	#[precompile::view]
 	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: Address) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner_account: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
+		let owner_account: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_roles(&owner_account) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
