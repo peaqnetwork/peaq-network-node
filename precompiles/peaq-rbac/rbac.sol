@@ -56,7 +56,7 @@ interface RBAC {
     function disable_role(bytes32 role_id) external returns (bool);
 
     function fetch_user_roles(
-        bytes32 owner,
+        address owner,
         bytes32 user_id
     ) external view returns (Role2User[] memory);
 
@@ -71,12 +71,12 @@ interface RBAC {
     ) external returns (bool);
 
     function fetch_permission(
-        bytes32 owner,
+        address owner,
         bytes32 permission_id
     ) external view returns (Entity memory);
 
     function fetch_permissions(
-        bytes32 owner
+        address owner
     ) external view returns (Entity[] memory);
 
     function add_permission(
@@ -92,7 +92,7 @@ interface RBAC {
     function disable_permission(bytes32 permission_id) external returns (bool);
 
     function fetch_role_permissions(
-        bytes32 owner,
+        address owner,
         bytes32 role_id
     ) external view returns (Permission2Role[] memory);
 
@@ -107,7 +107,7 @@ interface RBAC {
     ) external returns (bool);
 
     function fetch_group(
-        bytes32 owner,
+        address owner,
         bytes32 group_id
     ) external view returns (Entity memory);
 
@@ -134,7 +134,7 @@ interface RBAC {
     ) external returns (bool);
 
     function fetch_group_roles(
-        bytes32 owner,
+        address owner,
         bytes32 group_id
     ) external view returns (Role2User[] memory);
 
@@ -149,17 +149,17 @@ interface RBAC {
     ) external returns (bool);
 
     function fetch_user_groups(
-        bytes32 owner,
+        address owner,
         bytes32 user_id
     ) external view returns (User2Group[] memory);
 
     function fetch_user_permissions(
-        bytes32 owner,
+        address owner,
         bytes32 user_id
     ) external view returns (Entity[] memory);
 
     function fetch_group_permissions(
-        bytes32 owner,
+        address owner,
         bytes32 group_id
     ) external view returns (Entity[] memory);
 
