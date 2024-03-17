@@ -48,8 +48,7 @@ pub fn err2str(error: &RbacError) -> &str {
 }
 
 // Precompule struct
-// NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
-// represent both.
+// NOTE: EntityId is sized and aligned at 32 and 0x1, hence using H256 as placeholder
 pub struct PeaqRbacPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]
@@ -59,7 +58,9 @@ where
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	Runtime::RuntimeCall: From<peaq_pallet_rbac::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
-	EntityIdOf<Runtime>: From<[u8; 32]>,
+	// Ensure EntityIdOf<Runtime> can be derived from whatever type
+	// peaq-primitives-xcm::RbacEntityId is
+	EntityIdOf<Runtime>: From<RbacEntityId>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
 {
 	#[precompile::public("fetch_role(address,bytes32)")]
@@ -279,7 +280,7 @@ where
 	#[precompile::view]
 	fn fetch_permission(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		permission_id: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -297,7 +298,7 @@ where
 	#[precompile::view]
 	fn fetch_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
@@ -419,7 +420,7 @@ where
 	#[precompile::view]
 	fn fetch_role_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		role_id: H256,
 	) -> EvmResult<Vec<Permission2Role>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -513,7 +514,7 @@ where
 	#[precompile::view]
 	fn fetch_group(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		group_id: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -683,7 +684,7 @@ where
 	#[precompile::view]
 	fn fetch_group_roles(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		group_id: H256,
 	) -> EvmResult<Vec<Role2Group>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -773,7 +774,7 @@ where
 	#[precompile::view]
 	fn fetch_user_groups(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		user_id: H256,
 	) -> EvmResult<Vec<User2Group>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -795,7 +796,7 @@ where
 	#[precompile::view]
 	fn fetch_user_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		user_id: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -822,7 +823,7 @@ where
 	#[precompile::view]
 	fn fetch_group_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		group_id: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;

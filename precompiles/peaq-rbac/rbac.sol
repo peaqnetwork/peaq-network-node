@@ -12,7 +12,7 @@ interface RBAC {
     // ======================= Return Structs ======================= //
 
     struct Entity {
-        bytes32 owner;
+        bytes32 id;
         bytes name;
         bool enabled;
     }
