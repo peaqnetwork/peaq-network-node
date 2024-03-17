@@ -18,6 +18,7 @@ use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
 use peaq_pallet_rbac::rbac::{Group, Permission};
+use peaq_primitives_xcm::RbacEntityId;
 
 pub mod structs;
 pub use structs::*;
@@ -25,7 +26,6 @@ pub use structs::*;
 pub mod selectors;
 pub use selectors::*;
 
-type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type EntityIdOf<Runtime> = <Runtime as peaq_pallet_rbac::Config>::EntityId;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
@@ -58,20 +58,19 @@ where
 	Runtime: pallet_evm::Config + peaq_pallet_rbac::Config + frame_system::pallet::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	Runtime::RuntimeCall: From<peaq_pallet_rbac::Call<Runtime>>,
-	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
-	AccountIdOf<Runtime>: From<[u8; 32]>,
+	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	EntityIdOf<Runtime>: From<[u8; 32]>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
 {
-	#[precompile::public("fetch_role(bytes32,bytes32)")]
+	#[precompile::public("fetch_role(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		entity: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner_account: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
@@ -80,11 +79,11 @@ where
 		}
 	}
 
-	#[precompile::public("fetch_roles(bytes32)")]
+	#[precompile::public("fetch_roles(address)")]
 	#[precompile::view]
-	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: H256) -> EvmResult<Vec<Entity>> {
+	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: Address) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner_account: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_roles(&owner_account) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
@@ -108,7 +107,7 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
@@ -140,7 +139,7 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
@@ -168,7 +167,7 @@ where
 	#[precompile::public("disable_role(bytes32)")]
 	fn disable_role(handle: &mut impl PrecompileHandle, role_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
@@ -194,13 +193,13 @@ where
 	#[precompile::view]
 	fn fetch_user_roles(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		user_id: H256,
 	) -> EvmResult<Vec<Role2User>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let user_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
-		let owner_addr = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner_addr: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_user_roles(&owner_addr, user_id_addr) {
@@ -221,7 +220,7 @@ where
 		user_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -251,7 +250,7 @@ where
 		user_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -282,7 +281,7 @@ where
 		permission_id: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let permission_id: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
 
@@ -299,7 +298,7 @@ where
 		owner: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_permissions(&owner) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
@@ -323,7 +322,7 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -357,7 +356,7 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let permission_id: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
@@ -392,7 +391,7 @@ where
 		permission_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -422,7 +421,7 @@ where
 		role_id: H256,
 	) -> EvmResult<Vec<Permission2Role>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
 
 		let result =
@@ -447,7 +446,7 @@ where
 		role_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -481,7 +480,7 @@ where
 		role_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -516,7 +515,7 @@ where
 		group_id: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
@@ -532,7 +531,7 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -562,7 +561,7 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -588,7 +587,7 @@ where
 	#[precompile::public("disable_group(bytes32)")]
 	fn disable_group(handle: &mut impl PrecompileHandle, group_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -617,7 +616,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -651,7 +650,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -686,7 +685,7 @@ where
 		group_id: H256,
 	) -> EvmResult<Vec<Role2Group>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_group_roles(&owner, group_id) {
@@ -707,7 +706,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -741,7 +740,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -776,7 +775,7 @@ where
 		user_id: H256,
 	) -> EvmResult<Vec<User2Group>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_user_groups(&owner, user_id) {
@@ -798,7 +797,7 @@ where
 		user_id: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		let result =
@@ -825,7 +824,7 @@ where
 		group_id: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		let result =
