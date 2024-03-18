@@ -15,6 +15,7 @@ pub enum ObsoleteStorageReleases {
 	V2_1_0, // First changes compared to releases before, renaming HardCap to MaxCurrencySupply
 	#[default]
 	V2_2_0, // change the machine subsidization to parachain lease fund
+	V2_3_0, // change the reward distribution configuration
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
@@ -23,6 +24,7 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 
 mod v2 {
 	use super::*;
+	use sp_runtime::Perbill;
 
 	#[storage_alias]
 	type VersionStorage<T: Config> = StorageValue<Pallet<T>, ObsoleteStorageReleases, ValueQuery>;
@@ -55,6 +57,24 @@ mod v2 {
 					log!(info, "Releases::V2_1_0 Migrating Done.");
 					weight_reads += 1;
 					weight_writes += 2
+				}
+				log!(info, "Enter and do the migration, {:?} < {:?}", onchain_version, current);
+				if RewardDistributionConfigStorage::<T>::exists() {
+					log!(info, "Migrating block_reward to Releases::V2_3_0");
+					let new_config = RewardDistributionConfig {
+						treasury_percent: Perbill::from_percent(25),
+						depin_staking_percent: Perbill::from_percent(5),
+						depin_incentivization_percent: Perbill::from_percent(15),
+						collators_percent: Perbill::from_percent(40),
+						lp_percent: Perbill::from_percent(10),
+						machines_percent: Perbill::from_percent(5),
+						parachain_lease_fund_percent: Perbill::from_percent(0),
+						dapps_percent: Perbill::from_percent(0),
+					};
+					RewardDistributionConfigStorage::<T>::put(new_config);
+					log!(info, "Releases::V2_3_0 Migrating Done.");
+					weight_reads += 1;
+					weight_writes += 1;
 				}
 				// Ignore the RewardDistributionConfigStorageV0 directly because it will
 				// automatically chain
