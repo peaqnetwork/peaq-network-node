@@ -17,7 +17,7 @@ git = "https://github.com/peaqnetwork/substrate"
 branch = "peaq-polkadot-v0.9.43"
 
 [dependencies]
-# sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false, features = ["std", "force-debug"] }
+# sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false, features = ["std", "force-debug"] }
 parity-scale-codec = { workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }

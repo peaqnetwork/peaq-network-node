@@ -14,8 +14,9 @@ ParachainStaking constant PARACHAIN_STAKING_CONTRACT = ParachainStaking(PARACHAI
 interface ParachainStaking {
 
     struct CollatorInfo {
-        address addr;
-        uint256 stake;
+        address owner;
+        uint256 amount;
+        bool linked;
     }
 
     /// Get all collator informations

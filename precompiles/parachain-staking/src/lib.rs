@@ -48,8 +48,9 @@ pub struct ParachainStakingPrecompile<Runtime, AU>(PhantomData<(Runtime, AU)>);
 
 #[derive(Default, solidity::Codec)]
 pub struct CollatorInfo {
-	addr: Address,
-	stake: U256,
+	owner: Address,
+	amount: U256,
+	linked: bool,
 }
 
 #[precompile_utils::precompile]
@@ -75,7 +76,11 @@ where
 			.into_iter()
 			.map(|stake_info| {
 				let addr = AU::get_evm_address_or_default(&stake_info.owner);
-				CollatorInfo { addr: Address(addr), stake: stake_info.amount.into() }
+				if AU::is_linked(&stake_info.owner, &addr) {
+					CollatorInfo { owner: Address(addr), amount: stake_info.amount.into(), linked: true }
+				} else {
+					CollatorInfo { owner: Address(addr), amount: stake_info.amount.into(), linked: false }
+				}
 			})
 			.collect::<Vec<CollatorInfo>>())
 	}

@@ -95,16 +95,18 @@ fn collator_list_test() {
 				.expect_no_logs()
 				.execute_returns(vec![
 					CollatorInfo {
-						addr: Address(AddressUnification::get_evm_address_or_default(
+						owner: Address(AddressUnification::get_evm_address_or_default(
 							&MockPeaqAccount::Alice,
 						)),
-						stake: U256::from(110),
+						amount: U256::from(110),
+						linked: false,
 					},
 					CollatorInfo {
-						addr: Address(AddressUnification::get_evm_address_or_default(
+						owner: Address(AddressUnification::get_evm_address_or_default(
 							&MockPeaqAccount::Charlie,
 						)),
-						stake: U256::from(20),
+						amount: U256::from(20),
+						linked: false,
 					},
 				]);
 		});
