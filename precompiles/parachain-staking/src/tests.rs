@@ -29,8 +29,7 @@ use frame_support::{
 };
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
-use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt};
-use precompile_utils::testing::PrecompilesModifierTester;
+use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt, PrecompilesModifierTester};
 
 const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
@@ -53,9 +52,7 @@ fn test_selector_enum() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockPeaqAccount::Alice, 10),
-		])
+		.with_balances(vec![(MockPeaqAccount::Alice, 10)])
 		.with_collators(vec![(MockPeaqAccount::Alice, 10)])
 		.build()
 		.execute_with(|| {
@@ -66,7 +63,7 @@ fn modifiers() {
 			);
 
 			tester.test_view_modifier(PCall::get_collator_list_selectors());
-	});
+		});
 }
 
 #[test]

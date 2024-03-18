@@ -77,9 +77,17 @@ where
 			.map(|stake_info| {
 				let addr = AU::get_evm_address_or_default(&stake_info.owner);
 				if AU::is_linked(&stake_info.owner, &addr) {
-					CollatorInfo { owner: Address(addr), amount: stake_info.amount.into(), linked: true }
+					CollatorInfo {
+						owner: Address(addr),
+						amount: stake_info.amount.into(),
+						linked: true,
+					}
 				} else {
-					CollatorInfo { owner: Address(addr), amount: stake_info.amount.into(), linked: false }
+					CollatorInfo {
+						owner: Address(addr),
+						amount: stake_info.amount.into(),
+						linked: false,
+					}
 				}
 			})
 			.collect::<Vec<CollatorInfo>>())
