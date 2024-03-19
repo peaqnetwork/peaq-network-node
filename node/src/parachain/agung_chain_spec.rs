@@ -123,14 +123,14 @@ fn configure_genesis(
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
-				treasury_percent: Perbill::from_percent(20),
-				depin_percent: Perbill::from_percent(25),
-				collators_delegators_percent: Perbill::from_percent(10),
-				coretime_percent: Perbill::from_percent(25),
-				subsidization_pool_percent: Perbill::from_percent(10),
-				parachain_lease_fund_percent: Perbill::from_percent(10),
-				depin_staking_percent: Perbill::from_percent(0),
-				depin_incentivization_percent: Perbill::from_percent(0),
+				treasury_percent: Perbill::from_percent(25),
+				depin_percent: Perbill::from_percent(0),
+				collators_delegators_percent: Perbill::from_percent(40),
+				coretime_percent: Perbill::from_percent(10),
+				subsidization_pool_percent: Perbill::from_percent(5),
+				parachain_lease_fund_percent: Perbill::from_percent(0),
+				depin_staking_percent: Perbill::from_percent(5),
+				depin_incentivization_percent: Perbill::from_percent(15),
 			},
 			block_issue_reward: 7_909_867 * MILLICENTS,
 			max_currency_supply: 4_200_000_000 * DOLLARS,

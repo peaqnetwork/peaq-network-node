@@ -119,14 +119,14 @@ impl Default for RewardDistributionConfig {
 	/// Should be overriden by desired params.
 	fn default() -> Self {
 		RewardDistributionConfig {
-			treasury_percent: Perbill::from_percent(15),
-			depin_percent: Perbill::from_percent(45),
-			collators_delegators_percent: Perbill::from_percent(10),
-			coretime_percent: Perbill::from_percent(20),
+			treasury_percent: Perbill::from_percent(25),
+			depin_percent: Perbill::from_percent(0),
+			collators_delegators_percent: Perbill::from_percent(40),
+			coretime_percent: Perbill::from_percent(10),
 			subsidization_pool_percent: Perbill::from_percent(5),
-			parachain_lease_fund_percent: Perbill::from_percent(5),
-			depin_staking_percent: Perbill::from_percent(0),
-			depin_incentivization_percent: Perbill::from_percent(0),
+			parachain_lease_fund_percent: Perbill::from_percent(0),
+			depin_staking_percent: Perbill::from_percent(5),
+			depin_incentivization_percent: Perbill::from_percent(15),
 		}
 	}
 }
@@ -145,6 +145,8 @@ impl RewardDistributionConfig {
 			&self.coretime_percent,
 			&self.subsidization_pool_percent,
 			&self.parachain_lease_fund_percent,
+			&self.depin_staking_percent,
+			&self.depin_incentivization_percent,
 		];
 
 		let mut accumulator = Perbill::zero();
