@@ -7032,6 +7032,7 @@ dependencies = [
  "parity-scale-codec",
  "paste",
  "peaq-pallet-rbac",
+ "peaq-primitives-xcm",
  "precompile-utils",
  "slices",
  "sp-core",
