@@ -91,18 +91,18 @@ pub struct RewardDistributionConfig {
 	/// Base percentage of reward that goes to treasury
 	#[codec(compact)]
 	pub treasury_percent: Perbill,
-	/// Percentage of rewards that goes to dApps
+	/// Percentage of rewards that goes to DePIN apps
 	#[codec(compact)]
-	pub dapps_percent: Perbill,
-	/// Percentage of reward that goes to collators
+	pub depin_percent: Perbill,
+	/// Percentage of reward that goes to collators and delegators
 	#[codec(compact)]
-	pub collators_percent: Perbill,
-	/// Percentage of reward that goes to lp users
+	pub collators_delegators_percent: Perbill,
+	/// Percentage of reward that goes to coretime
 	#[codec(compact)]
-	pub lp_percent: Perbill,
-	/// Percentage of reward that goes to machines
+	pub coretime_percent: Perbill,
+	/// Percentage of reward that goes to subsidization pool
 	#[codec(compact)]
-	pub machines_percent: Perbill,
+	pub subsidization_pool_percent: Perbill,
 	/// Percentage of reward that goes to parachain lease fund
 	#[codec(compact)]
 	pub parachain_lease_fund_percent: Perbill,
@@ -120,10 +120,10 @@ impl Default for RewardDistributionConfig {
 	fn default() -> Self {
 		RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(15),
-			dapps_percent: Perbill::from_percent(45),
-			collators_percent: Perbill::from_percent(10),
-			lp_percent: Perbill::from_percent(20),
-			machines_percent: Perbill::from_percent(5),
+			depin_percent: Perbill::from_percent(45),
+			collators_delegators_percent: Perbill::from_percent(10),
+			coretime_percent: Perbill::from_percent(20),
+			subsidization_pool_percent: Perbill::from_percent(5),
 			parachain_lease_fund_percent: Perbill::from_percent(5),
 			depin_staking_percent: Perbill::from_percent(0),
 			depin_incentivization_percent: Perbill::from_percent(0),
@@ -140,10 +140,10 @@ impl RewardDistributionConfig {
 
 		let variables = vec![
 			&self.treasury_percent,
-			&self.dapps_percent,
-			&self.collators_percent,
-			&self.lp_percent,
-			&self.machines_percent,
+			&self.depin_percent,
+			&self.collators_delegators_percent,
+			&self.coretime_percent,
+			&self.subsidization_pool_percent,
 			&self.parachain_lease_fund_percent,
 		];
 

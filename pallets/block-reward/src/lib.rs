@@ -279,10 +279,10 @@ pub mod pallet {
 			let distro_params = Self::reward_config();
 
 			// Pre-calculate balance which will be deposited for each beneficiary
-			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
-			let collator_balance = distro_params.collators_percent * imbalance.peek();
-			let lp_balance = distro_params.lp_percent * imbalance.peek();
-			let machines_balance = distro_params.machines_percent * imbalance.peek();
+			let dapps_balance = distro_params.depin_percent * imbalance.peek();
+			let collator_balance = distro_params.collators_delegators_percent * imbalance.peek();
+			let lp_balance = distro_params.coretime_percent * imbalance.peek();
+			let machines_balance = distro_params.subsidization_pool_percent * imbalance.peek();
 			let parachain_lease_fund_balance =
 				distro_params.parachain_lease_fund_percent * imbalance.peek();
 			let depin_staking_balance = distro_params.depin_staking_percent * imbalance.peek();

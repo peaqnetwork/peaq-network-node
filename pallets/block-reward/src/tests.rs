@@ -20,10 +20,10 @@ fn reward_distribution_config_is_consistent() {
 	// 1
 	let reward_config = RewardDistributionConfig {
 		treasury_percent: Perbill::from_percent(100),
-		dapps_percent: Zero::zero(),
-		collators_percent: Zero::zero(),
-		lp_percent: Zero::zero(),
-		machines_percent: Zero::zero(),
+		depin_percent: Zero::zero(),
+		collators_delegators_percent: Zero::zero(),
+		coretime_percent: Zero::zero(),
+		subsidization_pool_percent: Zero::zero(),
 		parachain_lease_fund_percent: Zero::zero(),
 		depin_staking_percent: Zero::zero(),
 		depin_incentivization_percent: Zero::zero(),
@@ -33,10 +33,10 @@ fn reward_distribution_config_is_consistent() {
 	// 2
 	let reward_config = RewardDistributionConfig {
 		treasury_percent: Zero::zero(),
-		dapps_percent: Perbill::from_percent(100),
-		collators_percent: Zero::zero(),
-		lp_percent: Zero::zero(),
-		machines_percent: Zero::zero(),
+		depin_percent: Perbill::from_percent(100),
+		collators_delegators_percent: Zero::zero(),
+		coretime_percent: Zero::zero(),
+		subsidization_pool_percent: Zero::zero(),
 		parachain_lease_fund_percent: Zero::zero(),
 		depin_staking_percent: Zero::zero(),
 		depin_incentivization_percent: Zero::zero(),
@@ -46,10 +46,10 @@ fn reward_distribution_config_is_consistent() {
 	// 3
 	let reward_config = RewardDistributionConfig {
 		treasury_percent: Zero::zero(),
-		dapps_percent: Zero::zero(),
-		collators_percent: Zero::zero(),
-		lp_percent: Zero::zero(),
-		machines_percent: Zero::zero(),
+		depin_percent: Zero::zero(),
+		collators_delegators_percent: Zero::zero(),
+		coretime_percent: Zero::zero(),
+		subsidization_pool_percent: Zero::zero(),
 		parachain_lease_fund_percent: Zero::zero(),
 		depin_staking_percent: Zero::zero(),
 		depin_incentivization_percent: Zero::zero(),
@@ -60,10 +60,10 @@ fn reward_distribution_config_is_consistent() {
 	// 100%
 	let reward_config = RewardDistributionConfig {
 		treasury_percent: Perbill::from_percent(3),
-		dapps_percent: Perbill::from_percent(62),
-		collators_percent: Perbill::from_percent(25),
-		lp_percent: Perbill::from_percent(2),
-		machines_percent: Perbill::from_percent(4),
+		depin_percent: Perbill::from_percent(62),
+		collators_delegators_percent: Perbill::from_percent(25),
+		coretime_percent: Perbill::from_percent(2),
+		subsidization_pool_percent: Perbill::from_percent(4),
 		parachain_lease_fund_percent: Perbill::from_percent(4),
 		depin_staking_percent: Perbill::from_percent(0),
 		depin_incentivization_percent: Perbill::from_percent(0),
@@ -84,10 +84,10 @@ fn reward_distribution_config_not_consistent() {
 	// 99%
 	let reward_config = RewardDistributionConfig {
 		treasury_percent: Perbill::from_percent(10),
-		dapps_percent: Perbill::from_percent(40),
-		collators_percent: Perbill::from_percent(33),
-		lp_percent: Perbill::from_percent(2),
-		machines_percent: Perbill::from_percent(7),
+		depin_percent: Perbill::from_percent(40),
+		collators_delegators_percent: Perbill::from_percent(33),
+		coretime_percent: Perbill::from_percent(2),
+		subsidization_pool_percent: Perbill::from_percent(7),
 		parachain_lease_fund_percent: Perbill::from_percent(7),
 		depin_staking_percent: Perbill::from_percent(0),
 		depin_incentivization_percent: Perbill::from_percent(0),
@@ -98,10 +98,10 @@ fn reward_distribution_config_not_consistent() {
 	// 101%
 	let reward_config = RewardDistributionConfig {
 		treasury_percent: Perbill::from_percent(10),
-		dapps_percent: Perbill::from_percent(40),
-		collators_percent: Perbill::from_percent(40),
-		lp_percent: Perbill::from_percent(2),
-		machines_percent: Perbill::from_percent(4),
+		depin_percent: Perbill::from_percent(40),
+		collators_delegators_percent: Perbill::from_percent(40),
+		coretime_percent: Perbill::from_percent(2),
+		subsidization_pool_percent: Perbill::from_percent(4),
 		parachain_lease_fund_percent: Perbill::from_percent(5),
 		depin_staking_percent: Perbill::from_percent(0),
 		depin_incentivization_percent: Perbill::from_percent(0),
@@ -137,10 +137,10 @@ pub fn set_configuration_is_ok() {
 		// custom config so it differs from the default one
 		let reward_config = RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(3),
-			dapps_percent: Perbill::from_percent(28),
-			collators_percent: Perbill::from_percent(60),
-			lp_percent: Perbill::from_percent(2),
-			machines_percent: Perbill::from_percent(3),
+			depin_percent: Perbill::from_percent(28),
+			collators_delegators_percent: Perbill::from_percent(60),
+			coretime_percent: Perbill::from_percent(2),
+			subsidization_pool_percent: Perbill::from_percent(3),
 			parachain_lease_fund_percent: Perbill::from_percent(4),
 			depin_staking_percent: Perbill::from_percent(0),
 			depin_incentivization_percent: Perbill::from_percent(0),
@@ -264,10 +264,10 @@ pub fn reward_distribution_as_expected() {
 		// Prepare a custom config (easily discernable percentages for visual verification)
 		let reward_config = RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(10),
-			dapps_percent: Perbill::from_percent(40),
-			collators_percent: Perbill::from_percent(40),
-			lp_percent: Perbill::from_percent(2),
-			machines_percent: Perbill::from_percent(3),
+			depin_percent: Perbill::from_percent(40),
+			collators_delegators_percent: Perbill::from_percent(40),
+			coretime_percent: Perbill::from_percent(2),
+			subsidization_pool_percent: Perbill::from_percent(3),
 			parachain_lease_fund_percent: Perbill::from_percent(5),
 			depin_staking_percent: Perbill::from_percent(0),
 			depin_incentivization_percent: Perbill::from_percent(0),
@@ -293,10 +293,10 @@ pub fn reward_distribution_no_adjustable_part() {
 	ExternalityBuilder::build().execute_with(|| {
 		let reward_config = RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(10),
-			dapps_percent: Perbill::from_percent(75),
-			collators_percent: Perbill::from_percent(3),
-			lp_percent: Perbill::from_percent(2),
-			machines_percent: Perbill::from_percent(5),
+			depin_percent: Perbill::from_percent(75),
+			collators_delegators_percent: Perbill::from_percent(3),
+			coretime_percent: Perbill::from_percent(2),
+			subsidization_pool_percent: Perbill::from_percent(5),
 			parachain_lease_fund_percent: Perbill::from_percent(5),
 			depin_staking_percent: Perbill::from_percent(0),
 			depin_incentivization_percent: Perbill::from_percent(0),
@@ -427,10 +427,10 @@ impl Rewards {
 	/// Method assumes that total issuance will be increased by `BLOCK_REWARD`.
 	fn calculate(reward_config: &RewardDistributionConfig) -> Self {
 		let treasury_reward = reward_config.treasury_percent * BLOCK_REWARD;
-		let dapps_reward = reward_config.dapps_percent * BLOCK_REWARD;
-		let collators_reward = reward_config.collators_percent * BLOCK_REWARD;
-		let lp_reward = reward_config.lp_percent * BLOCK_REWARD;
-		let machines_reward = reward_config.machines_percent * BLOCK_REWARD;
+		let dapps_reward = reward_config.depin_percent * BLOCK_REWARD;
+		let collators_reward = reward_config.collators_delegators_percent * BLOCK_REWARD;
+		let lp_reward = reward_config.coretime_percent * BLOCK_REWARD;
+		let machines_reward = reward_config.subsidization_pool_percent * BLOCK_REWARD;
 		let parachain_lease_fund_reward = reward_config.parachain_lease_fund_percent * BLOCK_REWARD;
 
 		Self {
