@@ -13,8 +13,8 @@ use sp_runtime::traits::Zero;
 pub enum ObsoleteStorageReleases {
 	V2_0_0,
 	V2_1_0, // First changes compared to releases before, renaming HardCap to MaxCurrencySupply
-	#[default]
 	V2_2_0, // change the machine subsidization to parachain lease fund
+	#[default]
 	V2_3_0, // change the reward distribution configuration
 }
 

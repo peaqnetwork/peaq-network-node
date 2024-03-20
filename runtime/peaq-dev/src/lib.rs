@@ -849,15 +849,15 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 		ToTreasuryPot::on_unbalanced(reward);
 	}
 
-	fn collators(reward: NegativeImbalance) {
+	fn collators_delegators(reward: NegativeImbalance) {
 		ToStakingPot::on_unbalanced(reward);
 	}
 
-	fn dapps_staking(_reward: NegativeImbalance) {}
+	fn depin(_reward: NegativeImbalance) {}
 
-	fn lp_users(_reward: NegativeImbalance) {}
+	fn coretime(_reward: NegativeImbalance) {}
 
-	fn machines(reward: NegativeImbalance) {
+	fn subsidization_pool(reward: NegativeImbalance) {
 		let amount = reward.peek();
 		ToMachinePot::on_unbalanced(reward);
 		PeaqMor::log_block_rewards(amount);

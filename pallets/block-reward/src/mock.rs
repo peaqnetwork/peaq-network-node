@@ -126,19 +126,19 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 		Balances::resolve_creating(&TREASURY_POT.into_account_truncating(), reward);
 	}
 
-	fn collators(reward: NegativeImbalanceOf<TestRuntime>) {
+	fn collators_delegators(reward: NegativeImbalanceOf<TestRuntime>) {
 		Balances::resolve_creating(&COLLATOR_POT.into_account_truncating(), reward);
 	}
 
-	fn dapps_staking(reward: NegativeImbalanceOf<TestRuntime>) {
+	fn depin(reward: NegativeImbalanceOf<TestRuntime>) {
 		Balances::resolve_creating(&DAPPS_POT.into_account_truncating(), reward);
 	}
 
-	fn lp_users(reward: NegativeImbalanceOf<TestRuntime>) {
+	fn coretime(reward: NegativeImbalanceOf<TestRuntime>) {
 		Balances::resolve_creating(&LP_POT.into_account_truncating(), reward);
 	}
 
-	fn machines(reward: NegativeImbalanceOf<TestRuntime>) {
+	fn subsidization_pool(reward: NegativeImbalanceOf<TestRuntime>) {
 		Balances::resolve_creating(&MACHINE_POT.into_account_truncating(), reward);
 	}
 

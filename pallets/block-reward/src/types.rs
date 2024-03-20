@@ -21,16 +21,16 @@ pub trait BeneficiaryPayout<Imbalance> {
 	fn treasury(reward: Imbalance);
 
 	/// Payout reward to the collators
-	fn collators(reward: Imbalance);
+	fn collators_delegators(reward: Imbalance);
 
 	/// Payout reward to dapps staking
-	fn dapps_staking(dapps: Imbalance);
+	fn depin(dapps: Imbalance);
 
 	/// Payout LP users
-	fn lp_users(reward: Imbalance);
+	fn coretime(reward: Imbalance);
 
 	/// Payout Machines
-	fn machines(reward: Imbalance);
+	fn subsidization_pool(reward: Imbalance);
 
 	/// Payout Parachain
 	fn parachain_lease_fund(reward: Imbalance);
