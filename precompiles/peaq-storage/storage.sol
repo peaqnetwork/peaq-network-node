@@ -9,7 +9,7 @@ Storage constant Storage_CONTRACT = Storage(PRECOMPILE_ADDR);
 interface Storage {
 
     function get_item(
-        bytes32 account,
+        address account,
         bytes memory item_type
     ) external view returns (bytes memory);
 
@@ -25,13 +25,11 @@ interface Storage {
 
     event ItemAdded(
         address sender,
-        bytes32 account,
         bytes item_type,
         bytes item
     );
     event ItemUpdated(
         address sender,
-        bytes32 account,
         bytes item_type,
         bytes item
     );
