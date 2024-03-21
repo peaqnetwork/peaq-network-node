@@ -112,8 +112,8 @@ pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
 pub(crate) const CORETIME_POT: PalletId = PalletId(*b"lpreward");
 pub(crate) const SUBSIDIZATION_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"depinstk");
-pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"depininc");
+pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"destakin");
+pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"deincent");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();

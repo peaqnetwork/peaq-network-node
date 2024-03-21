@@ -366,11 +366,11 @@ impl FreeBalanceSnapshot {
 	/// `true` if all free balances equal `Zero`, `false` otherwise
 	fn is_zero(&self) -> bool {
 		self.treasury.is_zero() &&
-		self.collators_delegators.is_zero() &&
-		self.coretime.is_zero() &&
-		self.subsidization_pool.is_zero() &&
-		self.depin_staking.is_zero() &&
-		self.depin_incentivization.is_zero()
+			self.collators_delegators.is_zero() &&
+			self.coretime.is_zero() &&
+			self.subsidization_pool.is_zero() &&
+			self.depin_staking.is_zero() &&
+			self.depin_incentivization.is_zero()
 	}
 
 	/// Asserts that `post_reward_state` is as expected.
@@ -382,10 +382,19 @@ impl FreeBalanceSnapshot {
 		println!("rewards: {:?}", rewards);
 
 		assert_eq!(self.treasury + rewards.treasury_reward, post_reward_state.treasury);
-		assert_eq!(self.collators_delegators + rewards.collators_delegators_reward, post_reward_state.collators_delegators);
+		assert_eq!(
+			self.collators_delegators + rewards.collators_delegators_reward,
+			post_reward_state.collators_delegators
+		);
 		assert_eq!(self.coretime + rewards.coretime_reward, post_reward_state.coretime);
-		assert_eq!(self.subsidization_pool + rewards.subsidization_pool_reward, post_reward_state.subsidization_pool);
-		assert_eq!(self.depin_staking + rewards.depin_staking_reward, post_reward_state.depin_staking);
+		assert_eq!(
+			self.subsidization_pool + rewards.subsidization_pool_reward,
+			post_reward_state.subsidization_pool
+		);
+		assert_eq!(
+			self.depin_staking + rewards.depin_staking_reward,
+			post_reward_state.depin_staking
+		);
 		assert_eq!(
 			self.depin_incentivization + rewards.depin_incentivization_reward,
 			post_reward_state.depin_incentivization
@@ -413,7 +422,8 @@ impl Rewards {
 		let coretime_reward = reward_config.coretime_percent * BLOCK_REWARD;
 		let subsidization_pool_reward = reward_config.subsidization_pool_percent * BLOCK_REWARD;
 		let depin_staking_reward = reward_config.depin_staking_percent * BLOCK_REWARD;
-		let depin_incentivization_reward = reward_config.depin_incentivization_percent * BLOCK_REWARD;
+		let depin_incentivization_reward =
+			reward_config.depin_incentivization_percent * BLOCK_REWARD;
 
 		Self {
 			treasury_reward,
@@ -421,7 +431,7 @@ impl Rewards {
 			coretime_reward,
 			subsidization_pool_reward,
 			depin_staking_reward,
-			depin_incentivization_reward
+			depin_incentivization_reward,
 		}
 	}
 }
