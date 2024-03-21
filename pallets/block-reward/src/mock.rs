@@ -109,11 +109,9 @@ pub(crate) const MAX_CURRENCY_SUPPLY: Balance = 900_000_000;
 
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
-pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
-pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
-pub(crate) const LP_POT: PalletId = PalletId(*b"lpreward");
-pub(crate) const MACHINE_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const PARACHAIN_LEASE_FUND: PalletId = PalletId(*b"parlease");
+pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
+pub(crate) const CORETIME_POT: PalletId = PalletId(*b"lpreward");
+pub(crate) const SUBSIDIZATION_POT: PalletId = PalletId(*b"machiner");
 pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"depinstk");
 pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"depininc");
 
@@ -127,23 +125,15 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 	}
 
 	fn collators_delegators(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&COLLATOR_POT.into_account_truncating(), reward);
-	}
-
-	fn depin(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&DAPPS_POT.into_account_truncating(), reward);
+		Balances::resolve_creating(&COLLATOR_DELEGATOR_POT.into_account_truncating(), reward);
 	}
 
 	fn coretime(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&LP_POT.into_account_truncating(), reward);
+		Balances::resolve_creating(&CORETIME_POT.into_account_truncating(), reward);
 	}
 
 	fn subsidization_pool(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&MACHINE_POT.into_account_truncating(), reward);
-	}
-
-	fn parachain_lease_fund(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&PARACHAIN_LEASE_FUND.into_account_truncating(), reward);
+		Balances::resolve_creating(&SUBSIDIZATION_POT.into_account_truncating(), reward);
 	}
 
 	fn depin_staking(reward: NegativeImbalanceOf<TestRuntime>) {

@@ -23,17 +23,11 @@ pub trait BeneficiaryPayout<Imbalance> {
 	/// Payout reward to the collators
 	fn collators_delegators(reward: Imbalance);
 
-	/// Payout reward to dapps staking
-	fn depin(dapps: Imbalance);
-
 	/// Payout LP users
 	fn coretime(reward: Imbalance);
 
 	/// Payout Machines
 	fn subsidization_pool(reward: Imbalance);
-
-	/// Payout Parachain
-	fn parachain_lease_fund(reward: Imbalance);
 
 	/// Payout DePIN staking rewards
 	fn depin_staking(reward: Imbalance);
@@ -91,9 +85,6 @@ pub struct RewardDistributionConfig {
 	/// Base percentage of reward that goes to treasury
 	#[codec(compact)]
 	pub treasury_percent: Perbill,
-	/// Percentage of rewards that goes to DePIN apps
-	#[codec(compact)]
-	pub depin_percent: Perbill,
 	/// Percentage of reward that goes to collators and delegators
 	#[codec(compact)]
 	pub collators_delegators_percent: Perbill,
@@ -103,9 +94,6 @@ pub struct RewardDistributionConfig {
 	/// Percentage of reward that goes to subsidization pool
 	#[codec(compact)]
 	pub subsidization_pool_percent: Perbill,
-	/// Percentage of reward that goes to parachain lease fund
-	#[codec(compact)]
-	pub parachain_lease_fund_percent: Perbill,
 	/// Percentage of rewards that goes to DePIN staking
 	#[codec(compact)]
 	pub depin_staking_percent: Perbill,
@@ -120,11 +108,9 @@ impl Default for RewardDistributionConfig {
 	fn default() -> Self {
 		RewardDistributionConfig {
 			treasury_percent: Perbill::from_percent(25),
-			depin_percent: Perbill::from_percent(0),
 			collators_delegators_percent: Perbill::from_percent(40),
 			coretime_percent: Perbill::from_percent(10),
 			subsidization_pool_percent: Perbill::from_percent(5),
-			parachain_lease_fund_percent: Perbill::from_percent(0),
 			depin_staking_percent: Perbill::from_percent(5),
 			depin_incentivization_percent: Perbill::from_percent(15),
 		}
@@ -140,11 +126,9 @@ impl RewardDistributionConfig {
 
 		let variables = vec![
 			&self.treasury_percent,
-			&self.depin_percent,
 			&self.collators_delegators_percent,
 			&self.coretime_percent,
 			&self.subsidization_pool_percent,
-			&self.parachain_lease_fund_percent,
 			&self.depin_staking_percent,
 			&self.depin_incentivization_percent,
 		];

@@ -853,8 +853,6 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 		ToStakingPot::on_unbalanced(reward);
 	}
 
-	fn depin(_reward: NegativeImbalance) {}
-
 	fn coretime(_reward: NegativeImbalance) {}
 
 	fn subsidization_pool(reward: NegativeImbalance) {
@@ -862,8 +860,6 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 		ToMachinePot::on_unbalanced(reward);
 		PeaqMor::log_block_rewards(amount);
 	}
-
-	fn parachain_lease_fund(_reward: NegativeImbalance) {}
 
 	fn depin_staking(_reward: NegativeImbalance) {}
 

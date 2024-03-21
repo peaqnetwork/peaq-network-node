@@ -68,8 +68,6 @@ mod v2 {
 						collators_delegators_percent: Perbill::from_percent(40),
 						coretime_percent: Perbill::from_percent(10),
 						subsidization_pool_percent: Perbill::from_percent(5),
-						parachain_lease_fund_percent: Perbill::from_percent(0),
-						depin_percent: Perbill::from_percent(0),
 					};
 					RewardDistributionConfigStorage::<T>::put(new_config);
 					log!(info, "Releases::V2_3_0 Migrating Done.");

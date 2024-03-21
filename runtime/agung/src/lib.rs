@@ -850,13 +850,9 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 		ToStakingPot::on_unbalanced(reward);
 	}
 
-	fn depin(_reward: NegativeImbalance) {}
-
 	fn coretime(_reward: NegativeImbalance) {}
 
 	fn subsidization_pool(_reward: NegativeImbalance) {}
-
-	fn parachain_lease_fund(_reward: NegativeImbalance) {}
 
 	fn depin_incentivization(_reward: NegativeImbalance) {}
 
