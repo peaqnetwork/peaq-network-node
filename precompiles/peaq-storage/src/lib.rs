@@ -8,7 +8,7 @@ use frame_support::{
 	traits::ConstU32,
 };
 use precompile_utils::prelude::*;
-use sp_core::{Decode};
+use sp_core::Decode;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use fp_evm::PrecompileHandle;
@@ -20,8 +20,7 @@ use peaq_pallet_storage::traits::Storage as PeaqStorageT;
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
-pub(crate) const SELECTOR_LOG_ITEM_ADDED: [u8; 32] =
-	keccak256!("ItemAdded(address,bytes,bytes)");
+pub(crate) const SELECTOR_LOG_ITEM_ADDED: [u8; 32] = keccak256!("ItemAdded(address,bytes,bytes)");
 
 pub(crate) const SELECTOR_LOG_ITEM_UPDATED: [u8; 32] =
 	keccak256!("ItemUpdated(address,bytes,bytes)");
@@ -77,11 +76,7 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ITEM_ADDED,
-			solidity::encode_event_data((
-				Address::from(handle.context().caller),
-				item_type,
-				item,
-			)),
+			solidity::encode_event_data((Address::from(handle.context().caller), item_type, item)),
 		);
 		event.record(handle)?;
 
@@ -112,11 +107,7 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ITEM_UPDATED,
-			solidity::encode_event_data((
-				Address::from(handle.context().caller),
-				item_type,
-				item,
-			)),
+			solidity::encode_event_data((Address::from(handle.context().caller), item_type, item)),
 		);
 		event.record(handle)?;
 
