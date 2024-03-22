@@ -8,7 +8,7 @@ use frame_support::{
 	traits::ConstU32,
 };
 use precompile_utils::prelude::*;
-use sp_core::{Decode, H256, U256};
+use sp_core::{Decode, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use fp_evm::PrecompileHandle;
@@ -23,13 +23,13 @@ type MomentOf<Runtime> = <Runtime as pallet_timestamp::Config>::Moment;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
 pub(crate) const SELECTOR_LOG_ADD_ATTRIBUTE: [u8; 32] =
-	keccak256!("AddAttribute(address,bytes32,bytes,bytes,uint32)");
+	keccak256!("AddAttribute(address,address,bytes,bytes,uint32)");
 
 pub(crate) const SELECTOR_LOG_UPDATE_ATTRIBUTE: [u8; 32] =
-	keccak256!("UpdateAttribute(address,bytes32,bytes,bytes,uint32)");
+	keccak256!("UpdateAttribute(address,address,bytes,bytes,uint32)");
 
 pub(crate) const SELECTOR_LOG_REMOVE_ATTRIBUTE: [u8; 32] =
-	keccak256!("RemoveAttribte(bytes32,bytes)");
+	keccak256!("RemoveAttribte(address,bytes)");
 
 pub struct PeaqDIDPrecompile<Runtime>(PhantomData<Runtime>);
 
@@ -58,16 +58,16 @@ where
 	BlockNumberOf<Runtime>: Into<u32>,
 	sp_core::U256: From<MomentOf<Runtime>>,
 {
-	#[precompile::public("readAttribute(bytes32,bytes)")]
-	#[precompile::public("read_attribute(bytes32,bytes)")]
+	#[precompile::public("readAttribute(address,bytes)")]
+	#[precompile::public("read_attribute(address,bytes)")]
 	#[precompile::view]
 	fn read_attribute(
 		handle: &mut impl PrecompileHandle,
-		did_account: H256,
+		did_account: Address,
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<EVMAttribute> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let did_account = Runtime::AddressMapping::into_account_id(did_account.into());
 		match peaq_pallet_did::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
 			Some(v) => Ok(EVMAttribute {
 				name: v.name.into(),
@@ -79,11 +79,11 @@ where
 		}
 	}
 
-	#[precompile::public("addAttribute(bytes32,bytes,bytes,uint32)")]
-	#[precompile::public("add_attribute(bytes32,bytes,bytes,uint32)")]
+	#[precompile::public("addAttribute(address,bytes,bytes,uint32)")]
+	#[precompile::public("add_attribute(address,bytes,bytes,uint32)")]
 	fn add_attribute(
 		handle: &mut impl PrecompileHandle,
-		did_account: H256,
+		did_account: Address,
 		name: BoundedBytes<GetBytesLimit>,
 		value: BoundedBytes<GetBytesLimit>,
 		valid_for: u32,
@@ -93,7 +93,7 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let did_account_addr = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		let valid_for_opt: Option<BlockNumberOf<Runtime>> = match valid_for {
 			0 => None,
 			_ => Some(valid_for.into()),
@@ -127,11 +127,11 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("updateAttribute(bytes32,bytes,bytes,uint32)")]
-	#[precompile::public("update_attribute(bytes32,bytes,bytes,uint32)")]
+	#[precompile::public("updateAttribute(address,bytes,bytes,uint32)")]
+	#[precompile::public("update_attribute(address,bytes,bytes,uint32)")]
 	fn update_attribute(
 		handle: &mut impl PrecompileHandle,
-		did_account: H256,
+		did_account: Address,
 		name: BoundedBytes<GetBytesLimit>,
 		value: BoundedBytes<GetBytesLimit>,
 		valid_for: u32,
@@ -141,7 +141,7 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let did_account_addr = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		let valid_for_opt: Option<BlockNumberOf<Runtime>> = match valid_for {
 			0 => None,
 			_ => Some(valid_for.into()),
@@ -175,11 +175,11 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("removeAttribute(bytes32,bytes)")]
-	#[precompile::public("remove_attribute(bytes32,bytes)")]
+	#[precompile::public("removeAttribute(address,bytes)")]
+	#[precompile::public("remove_attribute(address,bytes)")]
 	fn remove_attribute(
 		handle: &mut impl PrecompileHandle,
-		did_account: H256,
+		did_account: Address,
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
@@ -187,11 +187,12 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
+		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::remove_attribute {
-				did_account: AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes()),
+				did_account: did_account_addr,
 				name: name.as_bytes().to_vec(),
 			},
 			0,

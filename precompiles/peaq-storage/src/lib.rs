@@ -8,7 +8,7 @@ use frame_support::{
 	traits::ConstU32,
 };
 use precompile_utils::prelude::*;
-use sp_core::{Decode, H256};
+use sp_core::Decode;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use fp_evm::PrecompileHandle;
@@ -20,11 +20,10 @@ use peaq_pallet_storage::traits::Storage as PeaqStorageT;
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
-pub(crate) const SELECTOR_LOG_ITEM_ADDED: [u8; 32] =
-	keccak256!("ItemAdded(address,bytes32,bytes,bytes)");
+pub(crate) const SELECTOR_LOG_ITEM_ADDED: [u8; 32] = keccak256!("ItemAdded(address,bytes,bytes)");
 
 pub(crate) const SELECTOR_LOG_ITEM_UPDATED: [u8; 32] =
-	keccak256!("ItemUpdated(address,bytes32,bytes,bytes)");
+	keccak256!("ItemUpdated(address,bytes,bytes)");
 
 pub struct PeaqStoragePrecompile<Runtime>(PhantomData<Runtime>);
 
@@ -38,16 +37,16 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
 	AccountIdOf<Runtime>: From<[u8; 32]> + AsRef<[u8]>,
 {
-	#[precompile::public("getItem(bytes32,bytes)")]
-	#[precompile::public("get_item(bytes32,bytes)")]
+	#[precompile::public("getItem(address,bytes)")]
+	#[precompile::public("get_item(address,bytes)")]
 	#[precompile::view]
 	fn get_item(
 		handle: &mut impl PrecompileHandle,
-		did_account: H256,
+		did_account: Address,
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<UnboundedBytes> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let did_account = AccountIdOf::<Runtime>::from(did_account.to_fixed_bytes());
+		let did_account = Runtime::AddressMapping::into_account_id(did_account.into());
 		match peaq_pallet_storage::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
 			Some(v) => Ok(v.into()),
 			None => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
@@ -79,12 +78,7 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ITEM_ADDED,
-			solidity::encode_event_data((
-				Address::from(handle.context().caller),
-				H256::from_slice(caller.as_ref()),
-				item_type,
-				item,
-			)),
+			solidity::encode_event_data((Address::from(handle.context().caller), item_type, item)),
 		);
 		event.record(handle)?;
 
@@ -116,12 +110,7 @@ where
 		let event = log1(
 			handle.context().address,
 			SELECTOR_LOG_ITEM_UPDATED,
-			solidity::encode_event_data((
-				Address::from(handle.context().caller),
-				H256::from_slice(caller.as_ref()),
-				item_type,
-				item,
-			)),
+			solidity::encode_event_data((Address::from(handle.context().caller), item_type, item)),
 		);
 		event.record(handle)?;
 
