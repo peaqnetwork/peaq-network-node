@@ -16,45 +16,45 @@ interface DID {
     }
 
     function read_attribute(
-        bytes32 did_account,
+        address did_account,
         bytes memory name
     ) external view returns (Attribute memory);
 
     function add_attribute(
-        bytes32 did_account,
+        address did_account,
         bytes memory name,
         bytes memory value,
         uint32 validity_for
     ) external returns (bool);
 
     function update_attribute(
-        bytes32 did_account,
+        address did_account,
         bytes memory name,
         bytes memory value,
         uint32 validity_for
     ) external returns (bool);
 
     function remove_attribute(
-        bytes32 did_account,
+        address did_account,
         bytes memory name
     ) external returns (bool);
 
     event AddAttribute(
         address sender,
-        bytes32 did_account,
+        address did_account,
         bytes name,
         bytes value,
         uint32 validity
     );
     event UpdateAttribute(
         address sender,
-        bytes32 did_account,
+        address did_account,
         bytes name,
         bytes value,
         uint32 validity
     );
     event RemoveAttribte(
-        bytes32 did_account,
+        address did_account,
         bytes name
     );
 }
