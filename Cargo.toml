@@ -13,7 +13,8 @@ members = [
 	"precompiles/xtokens",
 	"precompiles/xcm-utils",
 	"precompiles/batch",
-  "precompiles/peaq-rbac",
+	"precompiles/peaq-rbac",
+	"precompiles/parachain-staking",
 ]
 resolver = "2"
 
@@ -211,10 +212,9 @@ sp-staking = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-
 frame-try-runtime = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43", default-features = false }
 try-runtime-cli = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.43"}
 
-# [TODO] ...
-zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
-zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
-zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "bug/1205393435579954_existential_deposit_0.9.43", default-features = false }
+zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
+zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
+zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v0.9.43", default-features = false }
 
 # Peaq's own developments
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
