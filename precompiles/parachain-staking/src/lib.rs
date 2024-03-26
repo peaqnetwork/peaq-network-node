@@ -31,7 +31,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_core::{U256, H256};
+use sp_core::{H256, U256};
 use sp_runtime::traits::{Dispatchable, StaticLookup};
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
 
@@ -62,7 +62,7 @@ where
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	[u8; 32]: From<AccountIdOf<Runtime>>,
-	H256: From<[u8; 32]>
+	H256: From<[u8; 32]>,
 {
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
@@ -75,11 +75,9 @@ where
 
 		Ok(parachain_staking::Pallet::<Runtime>::top_candidates()
 			.into_iter()
-			.map(|stake_info| {
-				CollatorInfo {
-					owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.owner)),
-					amount: stake_info.amount.into(),
-				}
+			.map(|stake_info| CollatorInfo {
+				owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.owner)),
+				amount: stake_info.amount.into(),
 			})
 			.collect::<Vec<CollatorInfo>>())
 	}

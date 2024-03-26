@@ -142,10 +142,8 @@ impl pallet_authorship::Config for Test {
 	type EventHandler = Pallet<Test>;
 }
 
-pub type Precompiles<R> = PrecompileSetBuilder<
-	R,
-	(PrecompileAt<AddressU64<1>, ParachainStakingPrecompile<R>>,),
->;
+pub type Precompiles<R> =
+	PrecompileSetBuilder<R, (PrecompileAt<AddressU64<1>, ParachainStakingPrecompile<R>>,)>;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block storage limit in bytes. Set to 40 KB.

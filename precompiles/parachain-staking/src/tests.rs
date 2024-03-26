@@ -18,18 +18,18 @@
 
 use crate::{
 	mock::{
-		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
-		PrecompilesValue, RuntimeOrigin, StakePallet, Test,
+		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles, PrecompilesValue,
+		RuntimeOrigin, StakePallet, Test,
 	},
 	Address, BalanceOf, CollatorInfo, U256,
 };
 use frame_support::{
 	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
 };
-use sp_core::H256;
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt, PrecompilesModifierTester};
+use sp_core::H256;
 
 const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
@@ -328,7 +328,9 @@ fn should_update_total_stake() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::revoke_delegation { collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice) },
+					PCall::revoke_delegation {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+					},
 				)
 				.expect_no_logs()
 				.execute_returns(());
