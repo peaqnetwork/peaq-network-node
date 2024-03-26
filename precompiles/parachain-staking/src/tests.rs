@@ -26,6 +26,7 @@ use crate::{
 use frame_support::{
 	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
 };
+use sp_core::H256;
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt, PrecompilesModifierTester};
@@ -34,6 +35,14 @@ const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
 fn precompiles() -> Precompiles<Test> {
 	PrecompilesValue::get()
+}
+
+/// In the precompile the account is converted to a H256
+/// But because the accountID32 cannot convert to H256,
+/// We have to convert it to [u8; 32] first
+/// Then convert it to H256
+fn convert_mock_account_by_u8_list(account: MockPeaqAccount) -> H256 {
+	H256::from(<[u8; 32]>::from(account))
 }
 
 #[test]
@@ -91,11 +100,11 @@ fn collator_list_test() {
 				.expect_no_logs()
 				.execute_returns(vec![
 					CollatorInfo {
-						owner: MockPeaqAccount::Alice.into(),
+						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: U256::from(110),
 					},
 					CollatorInfo {
-						owner: MockPeaqAccount::Charlie.into(),
+						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
 						amount: U256::from(20),
 					},
 				]);
@@ -147,7 +156,7 @@ fn unlock_unstaked() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
-						collator: MockPeaqAccount::Alice.into(),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 100.into(),
 					},
 				)
@@ -234,7 +243,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_more {
-						collator: MockPeaqAccount::Alice.into(),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 50.into(),
 					},
 				)
@@ -252,7 +261,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_less {
-						collator: MockPeaqAccount::Alice.into(),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 50.into(),
 					},
 				)
@@ -269,7 +278,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
-						collator: MockPeaqAccount::Alice.into(),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 50.into(),
 					},
 				)
@@ -287,7 +296,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegate_another_candidate {
-						collator: MockPeaqAccount::ParentAccount.into(),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::ParentAccount),
 						amount: 60.into(),
 					},
 				)
@@ -319,7 +328,7 @@ fn should_update_total_stake() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::revoke_delegation { collator: MockPeaqAccount::Alice.into() },
+					PCall::revoke_delegation { collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice) },
 				)
 				.expect_no_logs()
 				.execute_returns(());
