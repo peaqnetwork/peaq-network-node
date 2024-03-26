@@ -32,10 +32,11 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_core::U256;
+use sp_core::{U256, H256};
 use sp_runtime::traits::{Dispatchable, StaticLookup};
 use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
 
+type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
 >>::Balance;
@@ -48,9 +49,8 @@ pub struct ParachainStakingPrecompile<Runtime, AU>(PhantomData<(Runtime, AU)>);
 
 #[derive(Default, solidity::Codec)]
 pub struct CollatorInfo {
-	owner: Address,
+	owner: H256,
 	amount: U256,
-	linked: bool,
 }
 
 #[precompile_utils::precompile]
@@ -62,6 +62,8 @@ where
 	Runtime::RuntimeCall: From<parachain_staking::Call<Runtime>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	AU: EVMAddressMapping<Runtime::AccountId>,
+	AccountIdOf<Runtime>: From<[u8; 32]>,
+	H256: From<<Runtime as frame_system::Config>::AccountId>,
 {
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
@@ -75,37 +77,26 @@ where
 		Ok(parachain_staking::Pallet::<Runtime>::top_candidates()
 			.into_iter()
 			.map(|stake_info| {
-				let addr = AU::get_evm_address_or_default(&stake_info.owner);
-				if AU::is_linked(&stake_info.owner, &addr) {
-					CollatorInfo {
-						owner: Address(addr),
-						amount: stake_info.amount.into(),
-						linked: true,
-					}
-				} else {
-					CollatorInfo {
-						owner: Address(addr),
-						amount: stake_info.amount.into(),
-						linked: false,
-					}
+				CollatorInfo {
+					owner: stake_info.owner.into(),
+					amount: stake_info.amount.into(),
 				}
 			})
 			.collect::<Vec<CollatorInfo>>())
 	}
 
-	#[precompile::public("joinDelegators(address,uint256)")]
-	#[precompile::public("join_delegators(address,uint256)")]
+	#[precompile::public("joinDelegators(bytes32,uint256)")]
+	#[precompile::public("join_delegators(bytes32,uint256)")]
 	fn join_delegators(
 		handle: &mut impl PrecompileHandle,
-		collator: Address,
+		collator: H256,
 		amount: U256,
 	) -> EvmResult {
 		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId =
-			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::join_delegators { collator, amount };
@@ -116,19 +107,18 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("delegateAnotherCandidate(address,uint256)")]
-	#[precompile::public("delegate_another_candidate(address,uint256)")]
+	#[precompile::public("delegateAnotherCandidate(bytes32,uint256)")]
+	#[precompile::public("delegate_another_candidate(bytes32,uint256)")]
 	fn delegate_another_candidate(
 		handle: &mut impl PrecompileHandle,
-		collator: Address,
+		collator: H256,
 		amount: U256,
 	) -> EvmResult {
 		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId =
-			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call =
@@ -153,13 +143,12 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("revokeDelegation(address)")]
-	#[precompile::public("revoke_delegation(address)")]
-	fn revoke_delegation(handle: &mut impl PrecompileHandle, collator: Address) -> EvmResult {
+	#[precompile::public("revokeDelegation(bytes32)")]
+	#[precompile::public("revoke_delegation(bytes32)")]
+	fn revoke_delegation(handle: &mut impl PrecompileHandle, collator: H256) -> EvmResult {
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId =
-			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::revoke_delegation { collator };
@@ -170,19 +159,18 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("delegatorStakeMore(address,uint256)")]
-	#[precompile::public("delegator_stake_more(address,uint256)")]
+	#[precompile::public("delegatorStakeMore(bytes32,uint256)")]
+	#[precompile::public("delegator_stake_more(bytes32,uint256)")]
 	fn delegator_stake_more(
 		handle: &mut impl PrecompileHandle,
-		collator: Address,
+		collator: H256,
 		amount: U256,
 	) -> EvmResult {
 		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId =
-			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_more {
@@ -196,19 +184,18 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("delegatorStakeLess(address,uint256)")]
-	#[precompile::public("delegator_stake_less(address,uint256)")]
+	#[precompile::public("delegatorStakeLess(bytes32,uint256)")]
+	#[precompile::public("delegator_stake_less(bytes32,uint256)")]
 	fn delegator_stake_less(
 		handle: &mut impl PrecompileHandle,
-		collator: Address,
+		collator: H256,
 		amount: U256,
 	) -> EvmResult {
 		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId =
-			Runtime::AddressMapping::into_account_id(collator.into());
+		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_less {
@@ -222,12 +209,12 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("unlockUnstaked(address)")]
-	#[precompile::public("unlock_unstaked(address)")]
-	fn unlock_unstaked(handle: &mut impl PrecompileHandle, target: Address) -> EvmResult {
+	#[precompile::public("unlockUnstaked(bytes32)")]
+	#[precompile::public("unlock_unstaked(bytes32)")]
+	fn unlock_unstaked(handle: &mut impl PrecompileHandle, target: H256) -> EvmResult {
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let target: Runtime::AccountId = Runtime::AddressMapping::into_account_id(target.into());
+		let target: Runtime::AccountId = AccountIdOf::<Runtime>::from(target.to_fixed_bytes());
 		let target: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(target.clone());
 		let call = parachain_staking::Call::<Runtime>::unlock_unstaked { target };

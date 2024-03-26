@@ -21,7 +21,7 @@ use crate::{
 		roll_to, AddressUnification, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
 		PrecompilesValue, RuntimeOrigin, StakePallet, Test,
 	},
-	Address, BalanceOf, CollatorInfo, U256,
+	Address, BalanceOf, CollatorInfo, U256, H256,
 };
 use address_unification::EVMAddressMapping;
 use frame_support::{
@@ -92,18 +92,12 @@ fn collator_list_test() {
 				.expect_no_logs()
 				.execute_returns(vec![
 					CollatorInfo {
-						owner: Address(AddressUnification::get_evm_address_or_default(
-							&MockPeaqAccount::Alice,
-						)),
+						owner: MockPeaqAccount::Alice.into(),
 						amount: U256::from(110),
-						linked: false,
 					},
 					CollatorInfo {
-						owner: Address(AddressUnification::get_evm_address_or_default(
-							&MockPeaqAccount::Charlie,
-						)),
+						owner: MockPeaqAccount::Charlie.into(),
 						amount: U256::from(20),
-						linked: false,
 					},
 				]);
 		});
@@ -140,7 +134,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -154,7 +148,7 @@ fn unlock_unstaked() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: MockPeaqAccount::Alice.into(),
 						amount: 100.into(),
 					},
 				)
@@ -174,7 +168,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -190,7 +184,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -205,7 +199,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
+					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -241,7 +235,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_more {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: MockPeaqAccount::Alice.into(),
 						amount: 50.into(),
 					},
 				)
@@ -259,7 +253,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_less {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: MockPeaqAccount::Alice.into(),
 						amount: 50.into(),
 					},
 				)
@@ -276,7 +270,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: MockPeaqAccount::Alice.into(),
 						amount: 50.into(),
 					},
 				)
@@ -294,7 +288,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegate_another_candidate {
-						collator: Address(MockPeaqAccount::ParentAccount.into()),
+						collator: MockPeaqAccount::ParentAccount.into(),
 						amount: 60.into(),
 					},
 				)
@@ -326,7 +320,7 @@ fn should_update_total_stake() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::revoke_delegation { collator: Address(MockPeaqAccount::Alice.into()) },
+					PCall::revoke_delegation { collator: MockPeaqAccount::Alice.into() },
 				)
 				.expect_no_logs()
 				.execute_returns(());
