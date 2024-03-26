@@ -51,6 +51,6 @@ interface ParachainStaking {
 		/// Unlock all previously staked funds that are now available for
 		/// unlocking by the origin account after `StakeDuration` blocks have
 		/// elapsed.
-    /// selector: 0x5936a069
-    function unlockUnstaked(bytes32 target) external;
+    /// selector: 0x0f615369
+    function unlockUnstaked(address target) external;
 }

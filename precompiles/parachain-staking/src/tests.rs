@@ -21,7 +21,7 @@ use crate::{
 		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
 		PrecompilesValue, RuntimeOrigin, StakePallet, Test,
 	},
-	BalanceOf, CollatorInfo, U256,
+	Address, BalanceOf, CollatorInfo, U256,
 };
 use frame_support::{
 	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
@@ -45,7 +45,7 @@ fn test_selector_enum() {
 	assert!(PCall::revoke_delegation_selectors().contains(&0xb96f2b07));
 	assert!(PCall::delegator_stake_more_selectors().contains(&0x1b3d3cdf));
 	assert!(PCall::delegator_stake_less_selectors().contains(&0xb7e8947f));
-	assert!(PCall::unlock_unstaked_selectors().contains(&0x5936a069));
+	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -167,7 +167,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -183,7 +183,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_no_logs()
 				.execute_returns(());
@@ -198,7 +198,7 @@ fn unlock_unstaked() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::unlock_unstaked { target: MockPeaqAccount::Bob.into() },
+					PCall::unlock_unstaked { target: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_no_logs()
 				.execute_returns(());

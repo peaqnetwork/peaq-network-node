@@ -208,12 +208,12 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("unlockUnstaked(bytes32)")]
-	#[precompile::public("unlock_unstaked(bytes32)")]
-	fn unlock_unstaked(handle: &mut impl PrecompileHandle, target: H256) -> EvmResult {
+	#[precompile::public("unlockUnstaked(address)")]
+	#[precompile::public("unlock_unstaked(address)")]
+	fn unlock_unstaked(handle: &mut impl PrecompileHandle, target: Address) -> EvmResult {
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let target: Runtime::AccountId = AccountIdOf::<Runtime>::from(target.to_fixed_bytes());
+		let target: Runtime::AccountId = Runtime::AddressMapping::into_account_id(target.into());
 		let target: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(target.clone());
 		let call = parachain_staking::Call::<Runtime>::unlock_unstaked { target };
