@@ -73,7 +73,6 @@ construct_runtime!(
 		Timestamp: pallet_timestamp,
 		Evm: pallet_evm,
 		StakePallet: parachain_staking,
-		AddressUnification: address_unification,
 	}
 );
 
@@ -145,13 +144,13 @@ impl pallet_authorship::Config for Test {
 
 pub type Precompiles<R> = PrecompileSetBuilder<
 	R,
-	(PrecompileAt<AddressU64<1>, ParachainStakingPrecompile<R, AddressUnification>>,),
+	(PrecompileAt<AddressU64<1>, ParachainStakingPrecompile<R>>,),
 >;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block storage limit in bytes. Set to 40 KB.
 const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
-pub type PCall = ParachainStakingPrecompileCall<Test, AddressUnification>;
+pub type PCall = ParachainStakingPrecompileCall<Test>;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
@@ -287,18 +286,6 @@ impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const EvmChainId: u64 = 9990;
-}
-
-impl address_unification::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type OriginAddressMapping = MockPeaqAccount;
-	type ChainId = EvmChainId;
 	type WeightInfo = ();
 }
 

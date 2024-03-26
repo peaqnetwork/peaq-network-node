@@ -24,7 +24,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use address_unification::EVMAddressMapping;
 use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
@@ -45,7 +44,7 @@ type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as C
 ///
 /// EXAMPLE USECASE:
 /// A simple example usecase is a contract that allows stakings.
-pub struct ParachainStakingPrecompile<Runtime, AU>(PhantomData<(Runtime, AU)>);
+pub struct ParachainStakingPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[derive(Default, solidity::Codec)]
 pub struct CollatorInfo {
@@ -54,16 +53,16 @@ pub struct CollatorInfo {
 }
 
 #[precompile_utils::precompile]
-impl<Runtime, AU> ParachainStakingPrecompile<Runtime, AU>
+impl<Runtime> ParachainStakingPrecompile<Runtime>
 where
-	Runtime: parachain_staking::Config + pallet_evm::Config + address_unification::Config,
+	Runtime: parachain_staking::Config + pallet_evm::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<parachain_staking::Call<Runtime>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
-	AU: EVMAddressMapping<Runtime::AccountId>,
 	AccountIdOf<Runtime>: From<[u8; 32]>,
-	H256: From<<Runtime as frame_system::Config>::AccountId>,
+	[u8; 32]: From<AccountIdOf<Runtime>>,
+	H256: From<[u8; 32]>
 {
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
@@ -78,7 +77,7 @@ where
 			.into_iter()
 			.map(|stake_info| {
 				CollatorInfo {
-					owner: stake_info.owner.into(),
+					owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.owner)),
 					amount: stake_info.amount.into(),
 				}
 			})

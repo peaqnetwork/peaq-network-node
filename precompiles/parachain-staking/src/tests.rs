@@ -18,12 +18,11 @@
 
 use crate::{
 	mock::{
-		roll_to, AddressUnification, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
+		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
 		PrecompilesValue, RuntimeOrigin, StakePallet, Test,
 	},
-	Address, BalanceOf, CollatorInfo, U256, H256,
+	BalanceOf, CollatorInfo, U256,
 };
-use address_unification::EVMAddressMapping;
 use frame_support::{
 	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
 };
@@ -40,13 +39,13 @@ fn precompiles() -> Precompiles<Test> {
 #[test]
 fn test_selector_enum() {
 	assert!(PCall::get_collator_list_selectors().contains(&0xaaacb283));
-	assert!(PCall::join_delegators_selectors().contains(&0x04e97247));
-	assert!(PCall::delegate_another_candidate_selectors().contains(&0x99d7f9e0));
+	assert!(PCall::join_delegators_selectors().contains(&0xd9f511cd));
+	assert!(PCall::delegate_another_candidate_selectors().contains(&0x1916fdca));
 	assert!(PCall::leave_delegators_selectors().contains(&0x4b99dc38));
-	assert!(PCall::revoke_delegation_selectors().contains(&0x808d5014));
-	assert!(PCall::delegator_stake_more_selectors().contains(&0x95d5c10b));
-	assert!(PCall::delegator_stake_less_selectors().contains(&0x2da10bc2));
-	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
+	assert!(PCall::revoke_delegation_selectors().contains(&0xb96f2b07));
+	assert!(PCall::delegator_stake_more_selectors().contains(&0x1b3d3cdf));
+	assert!(PCall::delegator_stake_less_selectors().contains(&0xb7e8947f));
+	assert!(PCall::unlock_unstaked_selectors().contains(&0x5936a069));
 }
 
 #[test]
