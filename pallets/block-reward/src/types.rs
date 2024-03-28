@@ -21,19 +21,19 @@ pub trait BeneficiaryPayout<Imbalance> {
 	fn treasury(reward: Imbalance);
 
 	/// Payout reward to the collators
-	fn collators(reward: Imbalance);
-
-	/// Payout reward to dapps staking
-	fn dapps_staking(dapps: Imbalance);
+	fn collators_delegators(reward: Imbalance);
 
 	/// Payout LP users
-	fn lp_users(reward: Imbalance);
+	fn coretime(reward: Imbalance);
 
 	/// Payout Machines
-	fn machines(reward: Imbalance);
+	fn subsidization_pool(reward: Imbalance);
 
-	/// Payout Parachain
-	fn parachain_lease_fund(reward: Imbalance);
+	/// Payout DePIN staking rewards
+	fn depin_staking(reward: Imbalance);
+
+	/// Payout DePIN incentivization
+	fn depin_incentivization(reward: Imbalance);
 }
 
 /// After next next version, we can remove this RewardDistributionConfigV0
@@ -85,21 +85,21 @@ pub struct RewardDistributionConfig {
 	/// Base percentage of reward that goes to treasury
 	#[codec(compact)]
 	pub treasury_percent: Perbill,
-	/// Percentage of rewards that goes to dApps
+	/// Percentage of reward that goes to collators and delegators
 	#[codec(compact)]
-	pub dapps_percent: Perbill,
-	/// Percentage of reward that goes to collators
+	pub collators_delegators_percent: Perbill,
+	/// Percentage of reward that goes to coretime
 	#[codec(compact)]
-	pub collators_percent: Perbill,
-	/// Percentage of reward that goes to lp users
+	pub coretime_percent: Perbill,
+	/// Percentage of reward that goes to subsidization pool
 	#[codec(compact)]
-	pub lp_percent: Perbill,
-	/// Percentage of reward that goes to machines
+	pub subsidization_pool_percent: Perbill,
+	/// Percentage of rewards that goes to DePIN staking
 	#[codec(compact)]
-	pub machines_percent: Perbill,
-	/// Percentage of reward that goes to parachain lease fund
+	pub depin_staking_percent: Perbill,
+	/// Percentage of rewards that goes to DePIN incentivization
 	#[codec(compact)]
-	pub parachain_lease_fund_percent: Perbill,
+	pub depin_incentivization_percent: Perbill,
 }
 
 impl Default for RewardDistributionConfig {
@@ -107,12 +107,12 @@ impl Default for RewardDistributionConfig {
 	/// Should be overriden by desired params.
 	fn default() -> Self {
 		RewardDistributionConfig {
-			treasury_percent: Perbill::from_percent(15),
-			dapps_percent: Perbill::from_percent(45),
-			collators_percent: Perbill::from_percent(10),
-			lp_percent: Perbill::from_percent(20),
-			machines_percent: Perbill::from_percent(5),
-			parachain_lease_fund_percent: Perbill::from_percent(5),
+			treasury_percent: Perbill::from_percent(25),
+			collators_delegators_percent: Perbill::from_percent(40),
+			coretime_percent: Perbill::from_percent(10),
+			subsidization_pool_percent: Perbill::from_percent(5),
+			depin_staking_percent: Perbill::from_percent(5),
+			depin_incentivization_percent: Perbill::from_percent(15),
 		}
 	}
 }
@@ -126,11 +126,11 @@ impl RewardDistributionConfig {
 
 		let variables = vec![
 			&self.treasury_percent,
-			&self.dapps_percent,
-			&self.collators_percent,
-			&self.lp_percent,
-			&self.machines_percent,
-			&self.parachain_lease_fund_percent,
+			&self.collators_delegators_percent,
+			&self.coretime_percent,
+			&self.subsidization_pool_percent,
+			&self.depin_staking_percent,
+			&self.depin_incentivization_percent,
 		];
 
 		let mut accumulator = Perbill::zero();

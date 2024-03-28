@@ -164,7 +164,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 12,
+	spec_version: 17,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -849,21 +849,21 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 		ToTreasuryPot::on_unbalanced(reward);
 	}
 
-	fn collators(reward: NegativeImbalance) {
+	fn collators_delegators(reward: NegativeImbalance) {
 		ToStakingPot::on_unbalanced(reward);
 	}
 
-	fn dapps_staking(_reward: NegativeImbalance) {}
+	fn coretime(_reward: NegativeImbalance) {}
 
-	fn lp_users(_reward: NegativeImbalance) {}
-
-	fn machines(reward: NegativeImbalance) {
+	fn subsidization_pool(reward: NegativeImbalance) {
 		let amount = reward.peek();
 		ToMachinePot::on_unbalanced(reward);
 		PeaqMor::log_block_rewards(amount);
 	}
 
-	fn parachain_lease_fund(_reward: NegativeImbalance) {}
+	fn depin_staking(_reward: NegativeImbalance) {}
+
+	fn depin_incentivization(_reward: NegativeImbalance) {}
 }
 
 parameter_types! {

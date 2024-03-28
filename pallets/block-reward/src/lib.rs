@@ -77,7 +77,7 @@ pub mod pallet {
 
 	use super::*;
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(3);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -279,28 +279,32 @@ pub mod pallet {
 			let distro_params = Self::reward_config();
 
 			// Pre-calculate balance which will be deposited for each beneficiary
-			let dapps_balance = distro_params.dapps_percent * imbalance.peek();
-			let collator_balance = distro_params.collators_percent * imbalance.peek();
-			let lp_balance = distro_params.lp_percent * imbalance.peek();
-			let machines_balance = distro_params.machines_percent * imbalance.peek();
-			let parachain_lease_fund_balance =
-				distro_params.parachain_lease_fund_percent * imbalance.peek();
+			let collator_delegator_balance =
+				distro_params.collators_delegators_percent * imbalance.peek();
+			let coretime_balance = distro_params.coretime_percent * imbalance.peek();
+			let subsidization_pool_balance =
+				distro_params.subsidization_pool_percent * imbalance.peek();
+			let depin_staking_balance = distro_params.depin_staking_percent * imbalance.peek();
+			let depin_incentivization_balance =
+				distro_params.depin_incentivization_percent * imbalance.peek();
 
 			// Prepare imbalances
-			let (dapps_imbalance, remainder) = imbalance.split(dapps_balance);
-			let (collator_imbalance, remainder) = remainder.split(collator_balance);
-			let (lp_imbalance, remainder) = remainder.split(lp_balance);
-			let (machines_imbalance, remainder) = remainder.split(machines_balance);
-			let (parachain_lease_fund_balance, treasury_imbalance) =
-				remainder.split(parachain_lease_fund_balance);
+			let (collator_delegator_imbalance, remainder) =
+				imbalance.split(collator_delegator_balance);
+			let (coretime_imbalance, remainder) = remainder.split(coretime_balance);
+			let (subsidization_pool_imbalance, remainder) =
+				remainder.split(subsidization_pool_balance);
+			let (depin_staking_imbalance, remainder) = remainder.split(depin_staking_balance);
+			let (depin_incentivization_imbalance, treasury_imbalance) =
+				remainder.split(depin_incentivization_balance);
 
 			// Payout beneficiaries
 			T::BeneficiaryPayout::treasury(treasury_imbalance);
-			T::BeneficiaryPayout::collators(collator_imbalance);
-			T::BeneficiaryPayout::dapps_staking(dapps_imbalance);
-			T::BeneficiaryPayout::lp_users(lp_imbalance);
-			T::BeneficiaryPayout::machines(machines_imbalance);
-			T::BeneficiaryPayout::parachain_lease_fund(parachain_lease_fund_balance);
+			T::BeneficiaryPayout::collators_delegators(collator_delegator_imbalance);
+			T::BeneficiaryPayout::coretime(coretime_imbalance);
+			T::BeneficiaryPayout::subsidization_pool(subsidization_pool_imbalance);
+			T::BeneficiaryPayout::depin_staking(depin_staking_imbalance);
+			T::BeneficiaryPayout::depin_incentivization(depin_incentivization_imbalance);
 
 			Self::deposit_event(dpt_event);
 		}
