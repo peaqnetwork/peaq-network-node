@@ -4,7 +4,7 @@
 pub use pallet::*;
 
 pub mod types;
-pub use types::{BalanceOf, InflationParameters, Year};
+pub use types::{BalanceOf, InflationParameters};
 
 use frame_support::{
 	pallet_prelude::*,
