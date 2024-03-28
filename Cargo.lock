@@ -4380,14 +4380,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "inflation-calculator"
+name = "inflation-manager"
 version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
  "log",
  "parity-scale-codec",
+ "peaq-primitives-xcm",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
