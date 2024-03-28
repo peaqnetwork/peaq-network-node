@@ -11,8 +11,8 @@ use frame_support::{
 	traits::{Currency, IsType},
 };
 use frame_system::WeightInfo;
-use sp_runtime::{traits::BlockNumberProvider, Perbill};
-pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12 as u32;
+use sp_runtime::traits::BlockNumberProvider;
+pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -72,17 +72,12 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_config]
+	#[derive(Default)]
 	pub struct GenesisConfig {
 		pub base_inflation_parameters: InflationParameters,
 	}
 
 	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			Self { base_inflation_parameters: Default::default() }
-		}
-	}
-
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
@@ -102,7 +97,7 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-		fn on_initialize(now: T::BlockNumber) -> frame_support::weights::Weight {
+		fn on_initialize(_now: T::BlockNumber) -> frame_support::weights::Weight {
 			Default::default()
 		}
 	}
@@ -121,7 +116,7 @@ pub mod pallet {
 
 		// We do not expect this to underflow/overflow
 		fn update_inflation_parameters(
-			inflation_parameters: &mut InflationParameters,
+			inflation_parameters: &InflationParameters,
 		) -> InflationParameters {
 			// Calculate effective disinflation rate as
 			// effective_disinflation_rate(n) =

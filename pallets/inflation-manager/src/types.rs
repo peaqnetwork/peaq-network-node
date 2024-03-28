@@ -1,6 +1,6 @@
 use crate::pallet::Config as PalletConfig;
 use frame_support::{pallet_prelude::*, traits::Currency};
-use peaq_primitives_xcm::BlockNumber;
+
 use scale_info::TypeInfo;
 use sp_runtime::Perbill;
 
