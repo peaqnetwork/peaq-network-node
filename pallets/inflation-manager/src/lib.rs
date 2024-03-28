@@ -4,21 +4,21 @@
 pub use pallet::*;
 
 pub mod types;
-pub use types::{BalanceOf, InflationParameters};
+pub use types::{BalanceOf, InflationParameters, Year};
 
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, IsType},
 };
 use frame_system::WeightInfo;
-// use peaq_primitives_xcm::Balance;
-use sp_runtime::Perbill;
+use sp_runtime::{traits::BlockNumberProvider, Perbill};
+pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12 as u32;
 
 #[frame_support::pallet]
 pub mod pallet {
 
 	use super::*;
-	// pub const BLOCKS_PER_YEAR: BlockNumberFor<T> = (365 * 24 * 60 * 60) / 12;
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -34,16 +34,28 @@ pub mod pallet {
 		type BoundedDataLen: Get<u32>;
 	}
 
+	/// Inflation kicks off with these parameters
 	#[pallet::storage]
-	#[pallet::getter(fn fiscal_year_info)]
+	#[pallet::getter(fn base_inflation_parameters)]
+	pub type BaseInflationParameters<T: Config> = StorageValue<_, InflationParameters, ValueQuery>;
+
+	/// inflation parameters, calculated each year, based off of the base inflation parameters
+	/// provided at genesis
+	#[pallet::storage]
+	#[pallet::getter(fn effective_inflation_parameters)]
 	pub type YearlyInflationParameters<T: Config> =
 		StorageValue<_, InflationParameters, OptionQuery>;
+
+	/// Info for how many years have passed, starting and ending at which block.
+	#[pallet::storage]
+	#[pallet::getter(fn current_year)]
+	pub type CurrentYear<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	/// Flag indicating whether on the first possible opportunity, recalculation of the inflation
 	/// parameters should be done.
 	#[pallet::storage]
-	#[pallet::getter(fn get_do_recalculation_at)]
-	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
+	#[pallet::getter(fn recalculation_at)]
+	pub type RecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
@@ -61,25 +73,27 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub inflation_parameters: InflationParameters,
+		pub base_inflation_parameters: InflationParameters,
 	}
 
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self { inflation_parameters: Default::default() }
+			Self { base_inflation_parameters: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			// install inflation parameters
-			YearlyInflationParameters::<T>::put(self.inflation_parameters.clone());
+			// install base inflation parameters
+			BaseInflationParameters::<T>::put(self.base_inflation_parameters.clone());
+			YearlyInflationParameters::<T>::put(self.base_inflation_parameters.clone());
 
-			// set the first block to recalculate inflation parameters at
-			// blocks in a year
-			DoRecalculationAt::<T>::put(T::BlockNumber::from(365 * 24 * 60 * 60 / 12 as u32));
+			// set the flag to calculate inflation parameters after a year(in blocks)
+			let target_block = frame_system::Pallet::<T>::current_block_number() +
+				T::BlockNumber::from(BLOCKS_PER_YEAR);
+			RecalculationAt::<T>::put(target_block);
 		}
 	}
 
@@ -100,29 +114,28 @@ pub mod pallet {
 		// calculate inflationary tokens per block
 		fn rewards_per_block(inflation_parameters: &InflationParameters) -> BalanceOf<T> {
 			let total_issuance = T::Currency::total_issuance();
+			let rewards_total = inflation_parameters.effective_inflation_rate * total_issuance;
+			// TODO Verify this convesion
+			rewards_total / BalanceOf::<T>::from(BLOCKS_PER_YEAR)
 		}
 
 		// We do not expect this to underflow/overflow
-		fn next_inflation_parameters(
+		fn update_inflation_parameters(
 			inflation_parameters: &mut InflationParameters,
 		) -> InflationParameters {
 			// Calculate effective disinflation rate as
 			// effective_disinflation_rate(n) =
 			// effective_disinflation_rate(0) * effective_disinflation_rate(n-1)
-			inflation_parameters.effective_disinflation_rate =
-				inflation_parameters.effective_disinflation_rate * T::BaseDisinflationRate::get();
+			let effective_disinflation_rate = inflation_parameters.effective_disinflation_rate *
+				BaseInflationParameters::<T>::get().effective_disinflation_rate;
 
 			// Calculate effective inflation rate as
 			// effective_inflation_rate(n) =
 			// effective_inflation_rate(n-1) * effective_disinflation_rate(n)
-			inflation_parameters.effective_inflation_rate =
-				inflation_parameters.effective_inflation_rate * effective_disinflation;
+			let effective_inflation_rate =
+				inflation_parameters.effective_inflation_rate * effective_disinflation_rate;
 
-			// calculate rewards per block
-			let current_total_issuance: BalanceOf<T> = BalanceOf::<T>::default();
-			let target_inflationary_tokens_issuance = effective_inflation * current_total_issuance;
-
-			Default::default()
+			InflationParameters { effective_inflation_rate, effective_disinflation_rate }
 		}
 	}
 }
