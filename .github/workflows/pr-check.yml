@@ -41,12 +41,12 @@ jobs:
             curl \
             protobuf-compiler
 
-      - name: "[Setup] Install Rust"
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2023-10-05
-          components: rustfmt, clippy
-          target: wasm32-unknown-unknown
+      - name: "[Setup] Rust"
+        run: |
+          TLCHN=nightly-2023-10-05
+          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHN
+          rustup target add wasm32-unknown-unknown --toolchain $TLCHN
+          cargo install cargo-expand --locked --version 1.0.71
 
       - name: "[Check] Format Check"
         run: cargo fmt --check
