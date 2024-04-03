@@ -1,42 +1,63 @@
-
 name: Pull Request Check
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - closed
+    types: [opened, synchronize, closed]
 
 jobs:
   check:
     runs-on: ubuntu-20.04
+    
+    # Define caching strategy
+    defaults:
+      run:
+        working-directory: ./peaq-network-node
+    env:
+      # Define the directory where dependencies are stored
+      CARGO_HOME: ${{ github.workspace }}/cargo
 
     steps:
-      - name: "[Setup] Free Disk Space (insightsengineering/disk-space-reclaimer)"
-        uses: insightsengineering/disk-space-reclaimer@v1.1.0
-
-      - name: "[Setup] Linux Tools"
-        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
-
-      - name: "[Setup] Rust"
-        run: |
-          TLCHN=nightly-2023-10-05
-          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHN
-          rustup target add wasm32-unknown-unknown --toolchain $TLCHN
-          cargo install cargo-expand --locked --version 1.0.71
-
-      - name: Checkout Sources (actions/checkout)
+      - name: "[Setup] Checkout Code"
         uses: actions/checkout@v3
 
-      - name: "[Ceck] cargo fmt"
-        run: |
-          cargo fmt --check
+      - name: "[Setup] Restore Cargo Cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.CARGO_HOME }}/registry
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
-      - name: "[Check] cargo test"
+      - name: "[Setup] Install Dependencies"
         run: |
-          cargo test --release
+          sudo apt update
+          sudo apt install -y \
+            cmake \
+            pkg-config \
+            libssl-dev \
+            build-essential \
+            clang \
+            libclang-dev \
+            curl \
+            protobuf-compiler
 
-      - name: "[Check] cargo clippy"
-        run: |
-          cargo clippy --release -- -Dwarnings
+      - name: "[Setup] Install Rust"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2023-10-05
+          components: rustfmt, clippy, rust-src, wasm32-unknown-unknown
+
+      - name: "[Check] Format Check"
+        run: cargo fmt --check
+
+      - name: "[Check] Run Tests"
+        run: cargo test --release
+
+      - name: "[Check] Clippy Check"
+        run: cargo clippy --release -- -Dwarnings
+
+      - name: "[Setup] Save Cargo Cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.CARGO_HOME }}/registry
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
