@@ -861,7 +861,6 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn coretime(reward: NegativeImbalance) {
 		ToCoreTimePot::on_unbalanced(reward);
-		impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
 	}
 
 	fn subsidization_pool(reward: NegativeImbalance) {
