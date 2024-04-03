@@ -11,7 +11,7 @@ jobs:
     # Define caching strategy
     defaults:
       run:
-        working-directory: ./peaq-network-node
+        working-directory: .
     env:
       # Define the directory where dependencies are stored
       CARGO_HOME: ${{ github.workspace }}/cargo
