@@ -17,6 +17,9 @@ jobs:
       CARGO_HOME: ${{ github.workspace }}/cargo
 
     steps:
+      - name: "[Setup] Free Disk Space (insightsengineering/disk-space-reclaimer)"
+        uses: insightsengineering/disk-space-reclaimer@v1.1.0
+        
       - name: "[Setup] Checkout Code"
         uses: actions/checkout@v3
 
