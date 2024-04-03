@@ -45,7 +45,8 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly-2023-10-05
-          components: rustfmt, clippy, rust-src, wasm32-unknown-unknown
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
 
       - name: "[Check] Format Check"
         run: cargo fmt --check
