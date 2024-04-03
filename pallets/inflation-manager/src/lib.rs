@@ -62,13 +62,24 @@ pub mod pallet {
 	#[pallet::getter(fn recalculation_at)]
 	pub type RecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
 
+	/// The current rewards per block
+	#[pallet::storage]
+	#[pallet::getter(fn block_rewards)]
+	pub type BlockRewards<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// New fiscal year triggered with updated inflation, disinflation rate and inflationary
 		// tokens to mint per block
-		InflationParametersUpdated { updated_inflation_parameters: InflationParametersT },
-		InflationConfigurationSet { inflation_configuration: InflationConfigurationT },
+		InflationParametersUpdated {
+			inflation_parameters: InflationParametersT,
+			block_rewards: BalanceOf<T>,
+			current_year: u128,
+		},
+		InflationConfigurationSet {
+			inflation_configuration: InflationConfigurationT,
+		},
 	}
 
 	/// Error for evm accounts module.
@@ -113,15 +124,21 @@ pub mod pallet {
 		fn on_finalize(now: T::BlockNumber) {
 			let current_year = CurrentYear::<T>::get();
 			let inflation_config = InflationConfiguration::<T>::get();
+			let mut inflation_parameters = YearlyInflationParameters::<T>::get();
 
 			// if we have reached the stagnation year, kill the recalculation flag
 			// and set inflation parameters to stagnation values
 			if current_year == inflation_config.inflation_stagnation_year {
-				RecalculationAt::<T>::kill();
-				YearlyInflationParameters::<T>::put(InflationParametersT {
+				inflation_parameters = InflationParametersT {
 					effective_inflation_rate: inflation_config.inflation_stagnation_rate,
 					effective_disinflation_rate: Perbill::one(),
-				});
+				};
+
+				// kill recalculation flag
+				RecalculationAt::<T>::kill();
+
+				// put stagnation inflation parameters into storage
+				YearlyInflationParameters::<T>::put(inflation_parameters.clone());
 			}
 
 			// check if we need to recalculate inflation parameters for a new year
@@ -130,23 +147,30 @@ pub mod pallet {
 				if now >= target_block && current_year < inflation_config.inflation_stagnation_year
 				{
 					// update inflation parameters
-					let inflation_parameters = YearlyInflationParameters::<T>::get();
-					let updated_inflation_parameters =
-						Self::update_inflation_parameters(&inflation_parameters);
-					YearlyInflationParameters::<T>::put(updated_inflation_parameters.clone());
+					inflation_parameters =
+						Self::update_inflation_parameters(&inflation_parameters.clone());
+					YearlyInflationParameters::<T>::put(inflation_parameters.clone());
 
 					// set the flag to calculate inflation parameters after a year(in blocks)
 					let target_block = now + T::BlockNumber::from(BLOCKS_PER_YEAR);
 					RecalculationAt::<T>::put(target_block);
-
-					Self::deposit_event(Event::InflationParametersUpdated {
-						updated_inflation_parameters,
-					});
 				}
 			}
 
+			let block_rewards = Self::rewards_per_block(&inflation_parameters);
+
+			// put new block rewards into storage
+			BlockRewards::<T>::put(block_rewards);
+
 			// update current year in any case
 			CurrentYear::<T>::put(current_year + 1);
+
+			// Event
+			Self::deposit_event(Event::InflationParametersUpdated {
+				current_year,
+				inflation_parameters: inflation_parameters.clone(),
+				block_rewards,
+			});
 		}
 	}
 
