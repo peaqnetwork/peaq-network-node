@@ -7,7 +7,7 @@ use peaq_agung_runtime::{
 	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance};
-use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
+use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
