@@ -124,6 +124,7 @@ runtime-common = { path = "../common", default-features = false }
 peaq-pallet-mor = { workspace = true, default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
+inflation-manager = { path = "../../pallets/inflation-manager", default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
@@ -282,6 +283,7 @@ std = [
 	"pallet-evm-precompile-peaq-rbac/std",
 	"pallet-evm-precompile-parachain-staking/std",
 	"pallet-xcm/std",
+	"inflation-manager/std",
 
 	# try-runtime
 	"frame-try-runtime/std",

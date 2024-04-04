@@ -4,7 +4,7 @@ use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
-	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY, InflationManagerConfig
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -129,6 +129,16 @@ fn configure_genesis(
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
 		},
+		inflation_manager: InflationManagerConfig {
+			inflation_configuration: inflation_manager::InflationConfigurationT {
+				base_inflation_parameters: inflation_manager::InflationParametersT {
+					effective_inflation_rate: Perbill::from_percent(7 / 5), // 3.5%
+					effective_disinflation_rate: Perbill::from_percent(90), // 1 - 10%
+				},
+				inflation_stagnation_rate: Perbill::from_percent(1), // 0.010
+				inflation_stagnation_year: 13
+			}
+		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
@@ -139,8 +149,7 @@ fn configure_genesis(
 				depin_staking_percent: Perbill::from_percent(5),
 				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			block_issue_reward: 7_909_867 * MILLICENTS,
-			max_currency_supply: 4_200_000_000 * DOLLARS,
+			_phantom: Default::default()
 		},
 		vesting: Default::default(),
 		aura: Default::default(),

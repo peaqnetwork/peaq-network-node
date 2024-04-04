@@ -130,6 +130,7 @@ peaq-rpc-txpool = { path = "../client/rpc/txpool" }
 pallet-block-reward = { path = "../pallets/block-reward" }
 peaq-primitives-xcm = { path = "../primitives/xcm" }
 runtime-common = { path = "../runtime/common" }
+inflation-manager ={ path = "../pallets/inflation-manager" }
 
 [features]
 default = [
