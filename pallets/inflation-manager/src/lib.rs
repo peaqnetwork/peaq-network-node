@@ -81,6 +81,9 @@ pub mod pallet {
 		InflationConfigurationSet {
 			inflation_configuration: InflationConfigurationT,
 		},
+		BlockRewardsUpdated {
+			block_rewards: Balance,
+		},
 	}
 
 	/// Error for evm accounts module.
@@ -114,6 +117,16 @@ pub mod pallet {
 
 			// Update recalculation flag
 			RecalculationAt::<T>::put(racalculation_target_block);
+
+			let block_rewards = Pallet::<T>::rewards_per_block(
+				&self.inflation_configuration.base_inflation_parameters,
+			);
+
+			BlockRewards::<T>::put(block_rewards);
+
+			Pallet::<T>::deposit_event(Event::InflationConfigurationSet {
+				inflation_configuration: self.inflation_configuration.clone(),
+			});
 		}
 	}
 
@@ -123,13 +136,18 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_finalize(now: T::BlockNumber) {
+			// flag to check weather or not we're at end of a year and must recalculate block rewards
+			let mut logic_switch: bool = false;
+
 			let current_year = CurrentYear::<T>::get();
 			let inflation_config = InflationConfiguration::<T>::get();
 			let mut inflation_parameters = YearlyInflationParameters::<T>::get();
+			let mut block_rewards = BlockRewards::<T>::get();
 
 			// if we have reached the stagnation year, kill the recalculation flag
 			// and set inflation parameters to stagnation values
 			if current_year == inflation_config.inflation_stagnation_year {
+
 				inflation_parameters = InflationParametersT {
 					effective_inflation_rate: inflation_config.inflation_stagnation_rate,
 					effective_disinflation_rate: Perbill::one(),
@@ -140,6 +158,8 @@ pub mod pallet {
 
 				// put stagnation inflation parameters into storage
 				YearlyInflationParameters::<T>::put(inflation_parameters.clone());
+
+				logic_switch = true;
 			}
 
 			// check if we need to recalculate inflation parameters for a new year
@@ -155,13 +175,23 @@ pub mod pallet {
 					// set the flag to calculate inflation parameters after a year(in blocks)
 					let target_block = now + T::BlockNumber::from(BLOCKS_PER_YEAR);
 					RecalculationAt::<T>::put(target_block);
+
+					logic_switch = true;
 				}
 			}
 
-			let block_rewards = Self::rewards_per_block(&inflation_parameters);
+			if logic_switch {
+				// calculate new block rewards	
+				block_rewards = Self::rewards_per_block(&inflation_parameters);
 
-			// put new block rewards into storage
-			BlockRewards::<T>::put(block_rewards);
+				// put new block rewards into storage
+				BlockRewards::<T>::put(block_rewards);
+
+				// log this change
+				Self::deposit_event(Event::BlockRewardsUpdated {
+					block_rewards,
+				});
+			}
 
 			// update current year in any case
 			CurrentYear::<T>::put(current_year + 1);
