@@ -3,8 +3,9 @@ use cumulus_primitives_core::ParaId;
 use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
-	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY, InflationManagerConfig
+	GenesisAccount, GenesisConfig, InflationManagerConfig, ParachainInfoConfig,
+	ParachainStakingConfig, PeaqPrecompiles, Runtime, StakingCoefficientRewardCalculatorConfig,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::{DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
@@ -136,8 +137,8 @@ fn configure_genesis(
 					effective_disinflation_rate: Perbill::from_percent(90), // 1 - 10%
 				},
 				inflation_stagnation_rate: Perbill::from_percent(1), // 0.010
-				inflation_stagnation_year: 13
-			}
+				inflation_stagnation_year: 13,
+			},
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
@@ -149,7 +150,7 @@ fn configure_genesis(
 				depin_staking_percent: Perbill::from_percent(5),
 				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			_phantom: Default::default()
+			_phantom: Default::default(),
 		},
 		vesting: Default::default(),
 		aura: Default::default(),
