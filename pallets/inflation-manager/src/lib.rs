@@ -16,6 +16,7 @@ use frame_support::{
 use frame_system::WeightInfo;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
+use peaq_primitives_xcm::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -27,7 +28,7 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency trait.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Currency<Self::AccountId, Balance = Balance>;
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -65,7 +66,7 @@ pub mod pallet {
 	/// The current rewards per block
 	#[pallet::storage]
 	#[pallet::getter(fn block_rewards)]
-	pub type BlockRewards<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	pub type BlockRewards<T: Config> = StorageValue<_, Balance, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
@@ -74,7 +75,7 @@ pub mod pallet {
 		// tokens to mint per block
 		InflationParametersUpdated {
 			inflation_parameters: InflationParametersT,
-			block_rewards: BalanceOf<T>,
+			block_rewards: Balance,
 			current_year: u128,
 		},
 		InflationConfigurationSet {
@@ -179,11 +180,11 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		// calculate inflationary tokens per block
-		fn rewards_per_block(inflation_parameters: &InflationParametersT) -> BalanceOf<T> {
+		fn rewards_per_block(inflation_parameters: &InflationParametersT) -> Balance {
 			let total_issuance = T::Currency::total_issuance();
 			let rewards_total = inflation_parameters.effective_inflation_rate * total_issuance;
 			// TODO Verify this convesion
-			rewards_total / BalanceOf::<T>::from(BLOCKS_PER_YEAR)
+			rewards_total / Balance::from(BLOCKS_PER_YEAR)
 		}
 
 		// We do not expect this to underflow/overflow
