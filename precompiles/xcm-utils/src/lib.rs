@@ -84,6 +84,7 @@ where
 	// Remove multilocationToAddress
 
 	#[precompile::public("getUnitsPerSecond((uint8,bytes[]))")]
+	#[precompile::public("get_units_per_second((uint8,bytes[]))")]
 	#[precompile::view]
 	fn get_units_per_second(
 		handle: &mut impl PrecompileHandle,
@@ -123,6 +124,7 @@ where
 	}
 
 	#[precompile::public("weightMessage(bytes)")]
+	#[precompile::public("weight_message(bytes)")]
 	#[precompile::view]
 	fn weight_message(
 		_handle: &mut impl PrecompileHandle,
@@ -147,6 +149,7 @@ where
 	}
 
 	#[precompile::public("xcmExecute(bytes,uint64)")]
+	#[precompile::public("xcm_execute(bytes,uint64)")]
 	fn xcm_execute(
 		handle: &mut impl PrecompileHandle,
 		message: BoundedBytes<GetXcmSizeLimit>,
@@ -174,6 +177,7 @@ where
 	}
 
 	#[precompile::public("xcmSend((uint8,bytes[]),bytes)")]
+	#[precompile::public("xcm_send((uint8,bytes[]),bytes)")]
 	fn xcm_send(
 		handle: &mut impl PrecompileHandle,
 		dest: MultiLocation,

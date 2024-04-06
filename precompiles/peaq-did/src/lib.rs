@@ -58,6 +58,7 @@ where
 	BlockNumberOf<Runtime>: Into<u32>,
 	sp_core::U256: From<MomentOf<Runtime>>,
 {
+	#[precompile::public("readAttribute(address,bytes)")]
 	#[precompile::public("read_attribute(address,bytes)")]
 	#[precompile::view]
 	fn read_attribute(
@@ -78,6 +79,7 @@ where
 		}
 	}
 
+	#[precompile::public("addAttribute(address,bytes,bytes,uint32)")]
 	#[precompile::public("add_attribute(address,bytes,bytes,uint32)")]
 	fn add_attribute(
 		handle: &mut impl PrecompileHandle,
@@ -125,6 +127,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updateAttribute(address,bytes,bytes,uint32)")]
 	#[precompile::public("update_attribute(address,bytes,bytes,uint32)")]
 	fn update_attribute(
 		handle: &mut impl PrecompileHandle,
@@ -172,6 +175,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("removeAttribute(address,bytes)")]
 	#[precompile::public("remove_attribute(address,bytes)")]
 	fn remove_attribute(
 		handle: &mut impl PrecompileHandle,

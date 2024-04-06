@@ -99,7 +99,7 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				>,
 				PrecompileAt<
 					AddressU64<2055>,
-					ParachainStakingPrecompile<R, AddressUnification>,
+					ParachainStakingPrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
 				>,
 			),
