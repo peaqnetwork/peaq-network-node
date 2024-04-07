@@ -1,4 +1,4 @@
-use crate::{xcm_config::XcmConfig, AddressUnification};
+use crate::{xcm_config::XcmConfig};
 use frame_support::parameter_types;
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 use pallet_evm_precompile_assets_factory::AssetsFactoryPrecompile;
