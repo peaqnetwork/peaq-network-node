@@ -55,10 +55,10 @@ jobs:
         run: cargo fmt --check
 
       - name: "[Check] Run Tests"
-        run: cargo test --release
+        run: RUST_TEST_THREADS=4 cargo test
 
       - name: "[Check] Clippy Check"
-        run: cargo clippy --release -- -Dwarnings
+        run: cargo clippy -- -Dwarnings
 
       - name: "[Setup] Save Cargo Cache"
         uses: actions/cache@v2

@@ -32,6 +32,9 @@ lto = true
 opt-level = 3
 panic = "unwind" # Peaq runtime requires unwinding.
 
+[profile.test]
+opt-level = 2
+
 [workspace.dependencies]
 # Crates
 affix = "0.1.2"
