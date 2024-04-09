@@ -93,14 +93,20 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_config]
-	#[derive(Default)]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		pub inflation_configuration: InflationConfigurationT,
+		pub _phantom: PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { inflation_configuration: Default::default(), _phantom: Default::default() }
+		}
+	}
+
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			// install base inflation parameters
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());

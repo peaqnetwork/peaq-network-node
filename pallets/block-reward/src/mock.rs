@@ -8,7 +8,7 @@ use frame_support::{
 	PalletId,
 };
 
-use sp_core::H256;
+use sp_core::{ConstU32, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
@@ -16,7 +16,7 @@ use sp_runtime::{
 
 pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
-pub(crate) type Balance = u128;
+pub(crate) use peaq_primitives_xcm::Balance;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
@@ -34,6 +34,7 @@ construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		InflationManager: inflation_manager::{Pallet, Call, Storage, Event<T>},
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -148,6 +149,13 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 	}
 }
 
+impl inflation_manager::Config for TestRuntime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BoundedDataLen = ConstU32<1024>;
+	type WeightInfo = ();
+}
+
 impl pallet_block_reward::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
@@ -168,10 +176,15 @@ impl ExternalityBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
+		inflation_manager::GenesisConfig::<TestRuntime> {
+			inflation_configuration: inflation_manager::InflationConfigurationT::default(),
+			_phantom: Default::default(),
+		}
+		.assimilate_storage(&mut storage)
+		.ok();
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
-			block_issue_reward: BLOCK_REWARD,
-			max_currency_supply: MAX_CURRENCY_SUPPLY,
+			_phantom: Default::default(),
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
