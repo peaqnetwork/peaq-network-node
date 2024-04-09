@@ -149,7 +149,7 @@ fn configure_genesis(
 				inflation_stagnation_rate: Perbill::from_percent(1), // 0.010
 				inflation_stagnation_year: 13,
 			},
-			_phantom: Default::default()
+			_phantom: Default::default(),
 		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
