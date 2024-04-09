@@ -118,7 +118,6 @@ try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
 
 peaq-dev-runtime = { path = "../runtime/peaq-dev" }
-peaq-agung-runtime = { path = "../runtime/agung" }
 peaq-krest-runtime = { path = "../runtime/krest" }
 peaq-runtime = { path = "../runtime/peaq" }
 peaq-primitives-ext = { path = "../primitives/ext" }
@@ -139,19 +138,16 @@ default = [
 	]
 aura = [
 	"peaq-dev-runtime/aura",
-	"peaq-agung-runtime/aura",
 	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking-cli",
-	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
 try-runtime = [
-	"peaq-agung-runtime/try-runtime",
 	"peaq-dev-runtime/try-runtime",
 	"peaq-krest-runtime/try-runtime",
 	"peaq-runtime/try-runtime",
