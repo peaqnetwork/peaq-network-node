@@ -104,9 +104,6 @@ impl pallet_timestamp::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
-// A fairly high block reward so we can detect slight changes in reward distribution
-pub(crate) const BLOCK_REWARD: Balance = 1_000_000;
-
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
