@@ -106,7 +106,6 @@ impl pallet_timestamp::Config for TestRuntime {
 
 // A fairly high block reward so we can detect slight changes in reward distribution
 pub(crate) const BLOCK_REWARD: Balance = 1_000_000;
-pub(crate) const MAX_CURRENCY_SUPPLY: Balance = 900_000_000;
 
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
