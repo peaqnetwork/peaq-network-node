@@ -136,7 +136,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_finalize(now: T::BlockNumber) {
-			// flag to check weather or not we're at end of a year and must recalculate block rewards
+			// flag to check weather or not we're at end of a year and must recalculate block
+			// rewards
 			let mut logic_switch: bool = false;
 
 			let current_year = CurrentYear::<T>::get();
@@ -147,7 +148,6 @@ pub mod pallet {
 			// if we have reached the stagnation year, kill the recalculation flag
 			// and set inflation parameters to stagnation values
 			if current_year == inflation_config.inflation_stagnation_year {
-
 				inflation_parameters = InflationParametersT {
 					effective_inflation_rate: inflation_config.inflation_stagnation_rate,
 					effective_disinflation_rate: Perbill::one(),
@@ -180,21 +180,21 @@ pub mod pallet {
 				}
 			}
 
+			// recalculate block rewards and update current year if inflation parameters were
+			// updated
 			if logic_switch {
-				// calculate new block rewards	
+				// calculate new block rewards
 				block_rewards = Self::rewards_per_block(&inflation_parameters);
 
 				// put new block rewards into storage
 				BlockRewards::<T>::put(block_rewards);
 
 				// log this change
-				Self::deposit_event(Event::BlockRewardsUpdated {
-					block_rewards,
-				});
-			}
+				Self::deposit_event(Event::BlockRewardsUpdated { block_rewards });
 
-			// update current year in any case
-			CurrentYear::<T>::put(current_year + 1);
+				// update current year in any case
+				CurrentYear::<T>::put(current_year + 1);
+			}
 
 			// Event
 			Self::deposit_event(Event::InflationParametersUpdated {
