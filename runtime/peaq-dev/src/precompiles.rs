@@ -1,4 +1,4 @@
-use crate::{xcm_config::XcmConfig, AddressUnification};
+use crate::xcm_config::XcmConfig;
 use frame_support::parameter_types;
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 use pallet_evm_precompile_assets_factory::AssetsFactoryPrecompile;
@@ -99,7 +99,7 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				>,
 				PrecompileAt<
 					AddressU64<2055>,
-					ParachainStakingPrecompile<R, AddressUnification>,
+					ParachainStakingPrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
 				>,
 			),

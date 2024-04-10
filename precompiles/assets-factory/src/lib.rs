@@ -69,6 +69,7 @@ where
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
 {
 	#[precompile::public("convertAssetIdToAddress(uint64)")]
+	#[precompile::public("convert_asset_id_to_address(uint64)")]
 	#[precompile::view]
 	fn convert_asset_id_to_address(
 		_handle: &mut impl PrecompileHandle,
@@ -131,6 +132,7 @@ where
 	}
 
 	#[precompile::public("setMetadata(uint64,bytes,bytes,uint8)")]
+	#[precompile::public("set_metadata(uint64,bytes,bytes,uint8)")]
 	fn set_metadata(
 		handle: &mut impl PrecompileHandle,
 		id: u64,
@@ -168,6 +170,7 @@ where
 	}
 
 	#[precompile::public("setMinBalance(uint64,uint128)")]
+	#[precompile::public("set_min_balance(uint64,uint128)")]
 	fn set_min_balance(
 		handle: &mut impl PrecompileHandle,
 		id: u64,
@@ -202,6 +205,7 @@ where
 	}
 
 	#[precompile::public("setTeam(uint64,address,address,address)")]
+	#[precompile::public("set_team(uint64,address,address,address)")]
 	fn set_team(
 		handle: &mut impl PrecompileHandle,
 		id: u64,
@@ -243,6 +247,7 @@ where
 	}
 
 	#[precompile::public("transferOwnership(uint64,address)")]
+	#[precompile::public("transfer_ownership(uint64,address)")]
 	fn transfer_ownership(
 		handle: &mut impl PrecompileHandle,
 		id: u64,
@@ -274,7 +279,9 @@ where
 
 		Ok(())
 	}
+
 	#[precompile::public("startDestroy(uint64)")]
+	#[precompile::public("start_destroy(uint64)")]
 	fn start_destroy(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
 		handle.record_log_costs_manual(3, 32)?;
 
@@ -298,7 +305,57 @@ where
 		Ok(())
 	}
 
+	#[precompile::public("destroyAccounts(uint64)")]
+	#[precompile::public("destroy_accounts(uint64)")]
+	fn destroy_accounts(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
+		let asset_id = id
+			.try_into()
+			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+
+		// Build call with origin.
+		{
+			let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+
+			// Dispatch call (if enough gas).
+			RuntimeHelper::<Runtime>::try_dispatch(
+				handle,
+				Some(origin).into(),
+				pallet_assets::Call::<Runtime, Instance>::destroy_accounts { id: asset_id },
+				0,
+			)?;
+		}
+
+		Ok(())
+	}
+
+	#[precompile::public("destroyApprovals(uint64)")]
+	#[precompile::public("destroy_approvals(uint64)")]
+	fn destroy_approvals(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
+		let asset_id = id
+			.try_into()
+			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+
+		// Build call with origin.
+		{
+			let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+
+			// Dispatch call (if enough gas).
+			RuntimeHelper::<Runtime>::try_dispatch(
+				handle,
+				Some(origin).into(),
+				pallet_assets::Call::<Runtime, Instance>::destroy_approvals { id: asset_id },
+				0,
+			)?;
+		}
+
+		Ok(())
+	}
 	#[precompile::public("finishDestroy(uint64)")]
+	#[precompile::public("finish_destroy(uint64)")]
 	fn finish_destroy(handle: &mut impl PrecompileHandle, id: u64) -> EvmResult {
 		handle.record_log_costs_manual(3, 32)?;
 
