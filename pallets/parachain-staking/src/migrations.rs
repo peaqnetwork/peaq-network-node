@@ -12,10 +12,11 @@ use frame_support::{
 	weights::Weight,
 };
 
+// History of storage versions
 #[derive(Default)]
 enum Versions {
-	V7 = 7,
-	V8 = 8,
+	_V7 = 7,
+	_V8 = 8,
 	#[default]
 	V9 = 9,
 }
@@ -42,19 +43,6 @@ mod upgrade {
 			let mut weight_reads = 0;
 			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
 			if onchain_storage_version < StorageVersion::new(Versions::default() as u16) {
-				if RewardRateConfig::<T>::exists() {
-					log::info!(
-						"Migrating from version {} parchain_staking to version {}",
-						Versions::V7 as u16,
-						Versions::V8 as u16
-					);
-
-					RewardRateConfig::<T>::kill();
-
-					log::info!("V8 Migrating Done.");
-					weight_writes += 2;
-				}
-
 				// Change the STAKING_ID value
 				log::info!("Updating lock id from old staking ID to new staking ID.");
 				for (account_id, balance) in Locks::<T>::iter() {
@@ -75,6 +63,7 @@ mod upgrade {
 					weight_reads += 1;
 				}
 				StorageVersion::new(Versions::default() as u16).put::<Pallet<T>>();
+				log::info!("V9 Migrating Done.");
 			}
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
