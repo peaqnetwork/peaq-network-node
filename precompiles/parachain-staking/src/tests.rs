@@ -18,18 +18,18 @@
 
 use crate::{
 	mock::{
-		roll_to, AddressUnification, Balances, BlockNumber, ExtBuilder, PCall, Precompiles,
-		PrecompilesValue, RuntimeOrigin, StakePallet, Test,
+		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles, PrecompilesValue,
+		RuntimeOrigin, StakePallet, Test,
 	},
 	Address, BalanceOf, CollatorInfo, U256,
 };
-use address_unification::EVMAddressMapping;
 use frame_support::{
 	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
 };
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt, PrecompilesModifierTester};
+use sp_core::H256;
 
 const STAKING_ID: LockIdentifier = *b"kiltpstk";
 
@@ -37,15 +37,23 @@ fn precompiles() -> Precompiles<Test> {
 	PrecompilesValue::get()
 }
 
+/// In the precompile the account is converted to a H256
+/// But because the accountID32 cannot convert to H256,
+/// We have to convert it to [u8; 32] first
+/// Then convert it to H256
+fn convert_mock_account_by_u8_list(account: MockPeaqAccount) -> H256 {
+	H256::from(<[u8; 32]>::from(account))
+}
+
 #[test]
 fn test_selector_enum() {
 	assert!(PCall::get_collator_list_selectors().contains(&0xaaacb283));
-	assert!(PCall::join_delegators_selectors().contains(&0x04e97247));
-	assert!(PCall::delegate_another_candidate_selectors().contains(&0x99d7f9e0));
+	assert!(PCall::join_delegators_selectors().contains(&0xd9f511cd));
+	assert!(PCall::delegate_another_candidate_selectors().contains(&0x1916fdca));
 	assert!(PCall::leave_delegators_selectors().contains(&0x4b99dc38));
-	assert!(PCall::revoke_delegation_selectors().contains(&0x808d5014));
-	assert!(PCall::delegator_stake_more_selectors().contains(&0x95d5c10b));
-	assert!(PCall::delegator_stake_less_selectors().contains(&0x2da10bc2));
+	assert!(PCall::revoke_delegation_selectors().contains(&0xb96f2b07));
+	assert!(PCall::delegator_stake_more_selectors().contains(&0x1b3d3cdf));
+	assert!(PCall::delegator_stake_less_selectors().contains(&0xb7e8947f));
 	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
 }
 
@@ -92,18 +100,12 @@ fn collator_list_test() {
 				.expect_no_logs()
 				.execute_returns(vec![
 					CollatorInfo {
-						owner: Address(AddressUnification::get_evm_address_or_default(
-							&MockPeaqAccount::Alice,
-						)),
+						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: U256::from(110),
-						linked: false,
 					},
 					CollatorInfo {
-						owner: Address(AddressUnification::get_evm_address_or_default(
-							&MockPeaqAccount::Charlie,
-						)),
+						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
 						amount: U256::from(20),
-						linked: false,
 					},
 				]);
 		});
@@ -154,7 +156,7 @@ fn unlock_unstaked() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 100.into(),
 					},
 				)
@@ -241,7 +243,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_more {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 50.into(),
 					},
 				)
@@ -259,7 +261,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_less {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 50.into(),
 					},
 				)
@@ -276,7 +278,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
-						collator: Address(MockPeaqAccount::Alice.into()),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: 50.into(),
 					},
 				)
@@ -294,7 +296,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegate_another_candidate {
-						collator: Address(MockPeaqAccount::ParentAccount.into()),
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::ParentAccount),
 						amount: 60.into(),
 					},
 				)
@@ -326,7 +328,9 @@ fn should_update_total_stake() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::revoke_delegation { collator: Address(MockPeaqAccount::Alice.into()) },
+					PCall::revoke_delegation {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+					},
 				)
 				.expect_no_logs()
 				.execute_returns(());
