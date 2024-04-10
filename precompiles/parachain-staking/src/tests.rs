@@ -31,7 +31,7 @@ use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt, PrecompilesModifierTester};
 use sp_core::H256;
 
-const STAKING_ID: LockIdentifier = *b"kiltpstk";
+const STAKING_ID: LockIdentifier = *b"peaqstak";
 
 fn precompiles() -> Precompiles<Test> {
 	PrecompilesValue::get()

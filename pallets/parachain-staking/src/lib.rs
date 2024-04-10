@@ -199,7 +199,8 @@ pub mod pallet {
 	};
 
 	/// Kilt-specific lock for staking rewards.
-	pub(crate) const STAKING_ID: LockIdentifier = *b"kiltpstk";
+	pub(crate) const OLD_STAKING_ID: LockIdentifier = *b"kiltpstk";
+	pub(crate) const STAKING_ID: LockIdentifier = *b"peaqstak";
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
