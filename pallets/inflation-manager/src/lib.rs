@@ -15,7 +15,13 @@ use frame_support::{
 };
 use frame_system::WeightInfo;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
+
+#[cfg(not(feature = "fast-inflation"))]
 pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
+
+#[cfg(feature = "fast-inflation")]
+pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 4;
+
 use peaq_primitives_xcm::Balance;
 
 #[frame_support::pallet]
