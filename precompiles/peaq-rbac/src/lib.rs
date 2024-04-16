@@ -63,6 +63,7 @@ where
 	EntityIdOf<Runtime>: From<RbacEntityId>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
 {
+	#[precompile::public("fetchRole(address,bytes32)")]
 	#[precompile::public("fetch_role(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role(
@@ -81,6 +82,7 @@ where
 		}
 	}
 
+	#[precompile::public("fetchRoles(address)")]
 	#[precompile::public("fetch_roles(address)")]
 	#[precompile::view]
 	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: Address) -> EvmResult<Vec<Entity>> {
@@ -103,6 +105,7 @@ where
 		result
 	}
 
+	#[precompile::public("addRole(bytes32,bytes)")]
 	#[precompile::public("add_role(bytes32,bytes)")]
 	fn add_role(
 		handle: &mut impl PrecompileHandle,
@@ -135,6 +138,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updateRole(bytes32,bytes)")]
 	#[precompile::public("update_role(bytes32,bytes)")]
 	fn update_role(
 		handle: &mut impl PrecompileHandle,
@@ -167,6 +171,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("disableRole(bytes32)")]
 	#[precompile::public("disable_role(bytes32)")]
 	fn disable_role(handle: &mut impl PrecompileHandle, role_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -192,6 +197,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("fetchUserRoles(address,bytes32)")]
 	#[precompile::public("fetch_user_roles(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_roles(
@@ -216,6 +222,7 @@ where
 		result
 	}
 
+	#[precompile::public("assignRoleToUser(bytes32,bytes32)")]
 	#[precompile::public("assign_role_to_user(bytes32,bytes32)")]
 	fn assign_role_to_user(
 		handle: &mut impl PrecompileHandle,
@@ -246,6 +253,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignRoleToUser(bytes32,bytes32)")]
 	#[precompile::public("unassign_role_to_user(bytes32,bytes32)")]
 	fn unassign_role_to_user(
 		handle: &mut impl PrecompileHandle,
@@ -276,6 +284,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("fetchPermission(address,bytes32)")]
 	#[precompile::public("fetch_permission(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_permission(
@@ -294,6 +303,7 @@ where
 		}
 	}
 
+	#[precompile::public("fetchPermissions(address)")]
 	#[precompile::public("fetch_permissions(address)")]
 	#[precompile::view]
 	fn fetch_permissions(
@@ -318,6 +328,7 @@ where
 		result
 	}
 
+	#[precompile::public("addPermission(bytes32,bytes)")]
 	#[precompile::public("add_permission(bytes32,bytes)")]
 	fn add_permission(
 		handle: &mut impl PrecompileHandle,
@@ -352,6 +363,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updatePermission(bytes32,bytes)")]
 	#[precompile::public("update_permission(bytes32,bytes)")]
 	fn update_permission(
 		handle: &mut impl PrecompileHandle,
@@ -388,6 +400,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("disablePermission(bytes32)")]
 	#[precompile::public("disable_permission(bytes32)")]
 	fn disable_permission(
 		handle: &mut impl PrecompileHandle,
@@ -416,6 +429,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("fetchRolePermissions(address,bytes32)")]
 	#[precompile::public("fetch_role_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role_permissions(
@@ -442,6 +456,7 @@ where
 		result
 	}
 
+	#[precompile::public("assignPermissionToRole(bytes32,bytes32)")]
 	#[precompile::public("assign_permission_to_role(bytes32,bytes32)")]
 	fn assign_permission_to_role(
 		handle: &mut impl PrecompileHandle,
@@ -476,6 +491,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignPermissionToRole(bytes32,bytes32)")]
 	#[precompile::public("unassign_permission_to_role(bytes32,bytes32)")]
 	fn unassign_permission_to_role(
 		handle: &mut impl PrecompileHandle,
@@ -510,6 +526,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("fetchGroup(address,bytes32)")]
 	#[precompile::public("fetch_group(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group(
@@ -527,6 +544,7 @@ where
 		}
 	}
 
+	#[precompile::public("addGroup(bytes32,bytes)")]
 	#[precompile::public("add_group(bytes32,bytes)")]
 	fn add_group(
 		handle: &mut impl PrecompileHandle,
@@ -557,6 +575,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updateGroup(bytes32,bytes)")]
 	#[precompile::public("update_group(bytes32,bytes)")]
 	fn update_group(
 		handle: &mut impl PrecompileHandle,
@@ -587,6 +606,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("disableGroup(bytes32)")]
 	#[precompile::public("disable_group(bytes32)")]
 	fn disable_group(handle: &mut impl PrecompileHandle, group_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
@@ -612,6 +632,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("assignRoleToGroup(bytes32,bytes32)")]
 	#[precompile::public("assign_role_to_group(bytes32,bytes32)")]
 	fn assign_role_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -646,6 +667,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignRoleToGroup(bytes32,bytes32)")]
 	#[precompile::public("unassign_role_to_group(bytes32,bytes32)")]
 	fn unassign_role_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -680,6 +702,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("fetchGroupRoles(address,bytes32)")]
 	#[precompile::public("fetch_group_roles(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group_roles(
@@ -702,6 +725,7 @@ where
 		result
 	}
 
+	#[precompile::public("assignUserToGroup(bytes32,bytes32)")]
 	#[precompile::public("assign_user_to_group(bytes32,bytes32)")]
 	fn assign_user_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -736,6 +760,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignUserToGroup(bytes32,bytes32)")]
 	#[precompile::public("unassign_user_to_group(bytes32,bytes32)")]
 	fn unassign_user_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -770,6 +795,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("fetchUserGroups(address,bytes32)")]
 	#[precompile::public("fetch_user_groups(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_groups(
@@ -792,6 +818,7 @@ where
 		result
 	}
 
+	#[precompile::public("fetchUserPermissions(address,bytes32)")]
 	#[precompile::public("fetch_user_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_permissions(
@@ -819,6 +846,7 @@ where
 		result
 	}
 
+	#[precompile::public("fetchGroupPermissions(address,bytes32)")]
 	#[precompile::public("fetch_group_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group_permissions(

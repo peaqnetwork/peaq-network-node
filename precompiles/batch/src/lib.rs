@@ -65,6 +65,7 @@ where
 	Runtime: pallet_evm::Config,
 {
 	#[precompile::public("batchSome(address[],uint256[],bytes[],uint64[])")]
+	#[precompile::public("batch_some(address[],uint256[],bytes[],uint64[])")]
 	fn batch_some(
 		handle: &mut impl PrecompileHandle,
 		to: BoundedVec<Address, GetArrayLimit>,
@@ -76,6 +77,7 @@ where
 	}
 
 	#[precompile::public("batchSomeUntilFailure(address[],uint256[],bytes[],uint64[])")]
+	#[precompile::public("batch_some_until_failure(address[],uint256[],bytes[],uint64[])")]
 	fn batch_some_until_failure(
 		handle: &mut impl PrecompileHandle,
 		to: BoundedVec<Address, GetArrayLimit>,
@@ -87,6 +89,7 @@ where
 	}
 
 	#[precompile::public("batchAll(address[],uint256[],bytes[],uint64[])")]
+	#[precompile::public("batch_all(address[],uint256[],bytes[],uint64[])")]
 	fn batch_all(
 		handle: &mut impl PrecompileHandle,
 		to: BoundedVec<Address, GetArrayLimit>,

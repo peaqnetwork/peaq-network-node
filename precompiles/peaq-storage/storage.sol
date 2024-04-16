@@ -8,17 +8,17 @@ Storage constant Storage_CONTRACT = Storage(PRECOMPILE_ADDR);
 
 interface Storage {
 
-    function get_item(
+    function getItem(
         address account,
         bytes memory item_type
     ) external view returns (bytes memory);
 
-    function add_item(
+    function addItem(
         bytes memory item_type,
         bytes memory item
     ) external returns (bool);
 
-    function update_item(
+    function updateItem(
         bytes memory item_type,
         bytes memory item
     ) external returns (bool);
