@@ -133,7 +133,7 @@ fn configure_genesis(
 		inflation_manager: InflationManagerConfig {
 			inflation_configuration: inflation_manager::InflationConfigurationT {
 				base_inflation_parameters: inflation_manager::InflationParametersT {
-					effective_inflation_rate: Perbill::from_percent(7 / 5), // 3.5%
+					effective_inflation_rate: Perbill::from_percent(7 / 2), // 3.5%
 					effective_disinflation_rate: Perbill::from_percent(90), // 1 - 10%
 				},
 				inflation_stagnation_rate: Perbill::from_percent(1), // 0.010
