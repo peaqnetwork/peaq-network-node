@@ -711,6 +711,9 @@ parameter_types! {
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
 	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
+	pub const PotCoretimeId: PalletId = PalletId(*b"PotCoret");
+	pub const PotSubsidizationId: PalletId = PalletId(*b"PotSubsi");
+	pub const PotDepinStakingId: PalletId = PalletId(*b"PotDPStk");
 }
 
 impl pallet_authorship::Config for Runtime {
@@ -827,6 +830,9 @@ macro_rules! impl_to_pot_adapter {
 
 impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
 impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
+impl_to_pot_adapter!(ToCoreTimePot, PotCoretimeId, NegativeImbalance);
+impl_to_pot_adapter!(ToSubsidizationPot, PotSubsidizationId, NegativeImbalance);
+impl_to_pot_adapter!(ToDepinStakingPot, PotDepinStakingId, NegativeImbalance);
 
 pub struct ToTreasuryPot;
 impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
@@ -853,17 +859,23 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 		ToStakingPot::on_unbalanced(reward);
 	}
 
-	fn coretime(_reward: NegativeImbalance) {}
+	fn coretime(reward: NegativeImbalance) {
+		ToCoreTimePot::on_unbalanced(reward);
+	}
 
 	fn subsidization_pool(reward: NegativeImbalance) {
+		ToSubsidizationPot::on_unbalanced(reward);
+	}
+
+	fn depin_staking(reward: NegativeImbalance) {
+		ToDepinStakingPot::on_unbalanced(reward);
+	}
+
+	fn depin_incentivization(reward: NegativeImbalance) {
 		let amount = reward.peek();
 		ToMachinePot::on_unbalanced(reward);
 		PeaqMor::log_block_rewards(amount);
 	}
-
-	fn depin_staking(_reward: NegativeImbalance) {}
-
-	fn depin_incentivization(_reward: NegativeImbalance) {}
 }
 
 parameter_types! {
@@ -875,6 +887,9 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 		PotStakeId::get().into_account_truncating(),
 		PotMorId::get().into_account_truncating(),
 		PotTreasuryId::get().into_account_truncating(),
+		PotCoretimeId::get().into_account_truncating(),
+		PotSubsidizationId::get().into_account_truncating(),
+		PotDepinStakingId::get().into_account_truncating(),
 	]
 }
 
@@ -889,6 +904,9 @@ parameter_types! {
 	pub PeaqAssetAdm: AccountId = AssetAdminId::get().into_account_truncating();
 	pub PeaqPotAccount: AccountId = PotStakeId::get().into_account_truncating();
 	pub PeaqTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
+	pub PeaqCoretimeAccount: AccountId = PotCoretimeId::get().into_account_truncating();
+	pub PeaqSubsidizationAccount: AccountId = PotSubsidizationId::get().into_account_truncating();
+	pub PeaqDepinStakingAccount: AccountId = PotDepinStakingId::get().into_account_truncating();
 }
 
 impl peaq_pallet_rbac::Config for Runtime {
