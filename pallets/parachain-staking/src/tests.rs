@@ -3498,17 +3498,12 @@ fn collator_reward_per_block_with_delegator() {
 fn check_collator_block() {
 	let stake = 100 * DECIMALS;
 	ExtBuilder::default()
-		.with_balances(vec![
-			(1, stake),
-			(2, stake),
-			(3, stake),
-			(4, stake),
-		])
+		.with_balances(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
 		.with_collators(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
 		.build()
 		.execute_with(|| {
 			let authors: Vec<Option<AccountId>> =
-			vec![None, Some(1u64), Some(1u64), Some(3u64), Some(4u64), Some(1u64)];
+				vec![None, Some(1u64), Some(1u64), Some(3u64), Some(4u64), Some(1u64)];
 
 			roll_to(2, authors.clone());
 			assert_eq!(StakePallet::collator_blocks(1), 1);
@@ -3528,8 +3523,8 @@ fn check_collator_block() {
 			assert_eq!(StakePallet::collator_blocks(3), 1);
 			assert_eq!(StakePallet::collator_blocks(4), 0);
 
-			// Because the new session start, we'll add the counter and clean the all collator blocks immediately
-			// the session number is BLOCKS_PER_ROUND (5)
+			// Because the new session start, we'll add the counter and clean the all collator
+			// blocks immediately the session number is BLOCKS_PER_ROUND (5)
 			roll_to(5, authors.clone());
 			assert_eq!(StakePallet::collator_blocks(1), 0);
 			assert_eq!(StakePallet::collator_blocks(2), 0);
@@ -3552,34 +3547,60 @@ fn check_claim_block_normal_wo_delegator() {
 		.with_collators(vec![(1, 1 * stake), (2, 2 * stake), (3, 3 * stake), (4, 4 * stake)])
 		.build()
 		.execute_with(|| {
-			let authors: Vec<Option<AccountId>> =
-			vec![None, Some(1u64), Some(2u64), Some(3u64), Some(4u64),
-			     Some(1u64), Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(2u64),
+				Some(3u64),
+				Some(4u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+			];
 
 			roll_to(5, authors.clone());
 
 			let first_session_reward = 1_000 * 4;
 
-			assert_eq!(Balances::free_balance(1),
-					Perquintill::from_float(1. / 10.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(2),
-					Perquintill::from_float(2. / 10.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(3),
-					Perquintill::from_float(3. / 10.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(4),
-					Perquintill::from_float(4. / 10.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 10.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 10.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 10.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 10.) * first_session_reward + origin_balance
+			);
 
 			let next_session_reward = 1_000 * 5;
 			// Cross session but only 1 is selected
 			roll_to(10, authors.clone());
-			assert_eq!(Balances::free_balance(1),
-					Perquintill::from_float(1. / 10.) * first_session_reward + next_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(2),
-					Perquintill::from_float(2. / 10.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(3),
-					Perquintill::from_float(3. / 10.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(4),
-					Perquintill::from_float(4. / 10.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 10.) * first_session_reward +
+					next_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 10.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 10.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 10.) * first_session_reward + origin_balance
+			);
 		});
 }
 
@@ -3601,75 +3622,130 @@ fn check_claim_block_normal_wi_delegator() {
 			(10, origin_balance),
 		])
 		.with_collators(vec![(1, 1 * stake), (2, 2 * stake), (3, 3 * stake), (4, 4 * stake)])
-		 .with_delegators(vec![(5, 1, 5 * stake), (6, 1, 6 * stake), (7, 2, 7 * stake),
-							  (8, 3, 8 * stake), (9, 4, 9 * stake), (10, 4, 10 * stake)])
+		.with_delegators(vec![
+			(5, 1, 5 * stake),
+			(6, 1, 6 * stake),
+			(7, 2, 7 * stake),
+			(8, 3, 8 * stake),
+			(9, 4, 9 * stake),
+			(10, 4, 10 * stake),
+		])
 		.build()
 		.execute_with(|| {
-			let authors: Vec<Option<AccountId>> =
-			vec![None, Some(1u64), Some(2u64), Some(3u64), Some(4u64),
-				 Some(1u64), Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(2u64),
+				Some(3u64),
+				Some(4u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+			];
 
 			roll_to(5, authors.clone());
 
 			let first_session_reward = 1_000 * 4;
 
-			assert_eq!(Balances::free_balance(1),
-					Perquintill::from_float(1. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(5),
-					Perquintill::from_float(5. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(6),
-					Perquintill::from_float(6. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				Perquintill::from_float(5. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(6),
+				Perquintill::from_float(6. / 55.) * first_session_reward + origin_balance
+			);
 
-			assert_eq!(Balances::free_balance(2),
-					Perquintill::from_float(2. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(7),
-					Perquintill::from_float(7. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(7),
+				Perquintill::from_float(7. / 55.) * first_session_reward + origin_balance
+			);
 
-			assert_eq!(Balances::free_balance(3),
-					Perquintill::from_float(3. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(8),
-					Perquintill::from_float(8. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(8),
+				Perquintill::from_float(8. / 55.) * first_session_reward + origin_balance
+			);
 
-			assert_eq!(Balances::free_balance(4),
-					Perquintill::from_float(4. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(9),
-					Perquintill::from_float(9. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(10),
-					Perquintill::from_float(10. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(9),
+				Perquintill::from_float(9. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(10),
+				Perquintill::from_float(10. / 55.) * first_session_reward + origin_balance
+			);
 
 			// Cross session but only 1 is selected
 			roll_to(10, authors.clone());
 			let next_session_reward = 1_000 * 5;
 
-			assert_eq!(Balances::free_balance(1),
-					Perquintill::from_float(1. / 55.) * first_session_reward +
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 55.) * first_session_reward +
 					Perquintill::from_float(1. / 12.) * next_session_reward +
-					origin_balance);
-			assert_eq!(Balances::free_balance(5),
-					Perquintill::from_float(5. / 55.) * first_session_reward +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				Perquintill::from_float(5. / 55.) * first_session_reward +
 					Perquintill::from_float(5. / 12.) * next_session_reward +
-					origin_balance);
-			assert_eq!(Balances::free_balance(6),
-					Perquintill::from_float(6. / 55.) * first_session_reward +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(6),
+				Perquintill::from_float(6. / 55.) * first_session_reward +
 					Perquintill::from_float(6. / 12.) * next_session_reward +
-					origin_balance);
+					origin_balance
+			);
 
 			// Nothing change
-			assert_eq!(Balances::free_balance(2),
-					Perquintill::from_float(2. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(7),
-					Perquintill::from_float(7. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(7),
+				Perquintill::from_float(7. / 55.) * first_session_reward + origin_balance
+			);
 
-			assert_eq!(Balances::free_balance(3),
-					Perquintill::from_float(3. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(8),
-					Perquintill::from_float(8. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(8),
+				Perquintill::from_float(8. / 55.) * first_session_reward + origin_balance
+			);
 
-			assert_eq!(Balances::free_balance(4),
-					Perquintill::from_float(4. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(9),
-					Perquintill::from_float(9. / 55.) * first_session_reward + origin_balance);
-			assert_eq!(Balances::free_balance(10),
-					Perquintill::from_float(10. / 55.) * first_session_reward + origin_balance);
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(9),
+				Perquintill::from_float(9. / 55.) * first_session_reward + origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(10),
+				Perquintill::from_float(10. / 55.) * first_session_reward + origin_balance
+			);
 		});
 }

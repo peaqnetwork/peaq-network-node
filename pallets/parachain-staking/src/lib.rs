@@ -193,7 +193,7 @@ pub mod pallet {
 		set::OrderedSet,
 		types::{
 			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
-			ReplacedDelegator, RoundInfo, Stake, StakeOf, TotalStake, Reward,
+			ReplacedDelegator, Reward, RoundInfo, Stake, StakeOf, TotalStake,
 		},
 		weightinfo::WeightInfo,
 	};
@@ -629,13 +629,8 @@ pub mod pallet {
 	/// We use this storage to store collator's block generation
 	#[pallet::storage]
 	#[pallet::getter(fn collator_blocks)]
-	pub(crate) type CollatorBlock<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::AccountId,
-		u32,
-		ValueQuery,
-	>;
+	pub(crate) type CollatorBlock<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, u32, ValueQuery>;
 
 	/// The maximum amount a collator candidate can stake.
 	#[pallet::storage]
@@ -2675,7 +2670,8 @@ pub mod pallet {
 					let collator_total = T::CurrencyBalance::from(num)
 						.checked_mul(&state.total)
 						.unwrap_or_else(Zero::zero);
-					total_staking_in_session = total_staking_in_session.saturating_add(collator_total);
+					total_staking_in_session =
+						total_staking_in_session.saturating_add(collator_total);
 					read += 2;
 				} else {
 					read += 1;
@@ -2691,7 +2687,6 @@ pub mod pallet {
 			total_staking_in_session: BalanceOf<T>,
 			issue_number: BalanceOf<T>,
 		) -> Reward<T::AccountId, BalanceOf<T>> {
-
 			let delegator_sum = (&stake.delegators)
 				.into_iter()
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
@@ -2705,11 +2700,16 @@ pub mod pallet {
 			if percentage.is_zero() {
 				log::error!(
 					"Error in collator calculation: block_num {:?} stake.total {:?} delegator_sum
-					{:?} total_staking_in_session {:?}", block_num, stake.total, delegator_sum, total_staking_in_session
+					{:?} total_staking_in_session {:?}",
+					block_num,
+					stake.total,
+					delegator_sum,
+					total_staking_in_session
 				);
 				log::error!(
 					"Error in collator calculation: nominator {:?} percentage {:?}",
-					nominator, percentage
+					nominator,
+					percentage
 				);
 				Reward { owner: stake.id.clone(), amount: Zero::zero() }
 			} else {
@@ -2731,7 +2731,8 @@ pub mod pallet {
 					let nominator = T::CurrencyBalance::from(block_num)
 						.checked_mul(&x.amount)
 						.unwrap_or_else(Zero::zero);
-					let percentage = Perquintill::from_rational(nominator, total_staking_in_session);
+					let percentage =
+						Perquintill::from_rational(nominator, total_staking_in_session);
 					if percentage.is_zero() {
 						log::error!(
 							"Error in delegator calculation: block_num {:?} amount {:?} total_staking_in_session {:?}",
@@ -2739,7 +2740,8 @@ pub mod pallet {
 						);
 						log::error!(
 							"Error in delegator calculation: nominator {:?} percentage {:?}",
-							nominator, percentage
+							nominator,
+							percentage
 						);
 						Reward { owner: x.owner.clone(), amount: Zero::zero() }
 					} else {
@@ -2766,15 +2768,23 @@ pub mod pallet {
 			CollatorBlock::<T>::iter().for_each(|(collator, block_num)| {
 				// Get the delegator's staking number
 				if let Some(state) = CandidatePool::<T>::get(collator.clone()) {
-					let now_reward =
-						Self::get_collator_reward_per_session(&state, block_num, total_staking_in_session, issue_number);
+					let now_reward = Self::get_collator_reward_per_session(
+						&state,
+						block_num,
+						total_staking_in_session,
+						issue_number,
+					);
 
 					Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
 					reads = reads.saturating_add(1.into());
 					writes = writes.saturating_add(1.into());
 
-					let now_rewards =
-						Self::get_delgators_reward_per_session(&state, block_num, total_staking_in_session, issue_number);
+					let now_rewards = Self::get_delgators_reward_per_session(
+						&state,
+						block_num,
+						total_staking_in_session,
+						issue_number,
+					);
 
 					let len = now_rewards.len().saturated_into::<u64>();
 					now_rewards.into_iter().for_each(|x| {
@@ -2832,7 +2842,6 @@ pub mod pallet {
 		/// 3. AuRa queries the authorities from the session pallet for this session and picks
 		///    authors on round-robin-basis from list of authorities.
 		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-
 			log::debug!(
 				"assembling new collators for new session {} at #{:?}",
 				new_index,
