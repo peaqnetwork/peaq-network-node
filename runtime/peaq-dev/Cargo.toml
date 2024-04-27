@@ -168,7 +168,6 @@ runtime-benchmarks = [
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
 	"peaq-pallet-mor/runtime-benchmarks",
-	"inflation-manager/runtime-benchmarks",
 ]
 
 std = [
