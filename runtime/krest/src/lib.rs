@@ -20,7 +20,6 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
-use parachain_staking::reward_rate::RewardRateInfo;
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_rbac::{
@@ -48,7 +47,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
+	ApplyExtrinsicResult, Perbill, Percent, Permill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
@@ -732,15 +731,6 @@ pub mod staking {
 	use super::*;
 
 	pub const MAX_COLLATOR_STAKE: Balance = 10_000 * MinCollatorStake::get();
-
-	/// Reward rate configuration which is used at genesis
-	pub fn reward_rate_config() -> RewardRateInfo {
-		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
-	}
-
-	pub fn coefficient() -> u8 {
-		8
-	}
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
