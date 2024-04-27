@@ -151,7 +151,6 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const TestIssueNumber: Balance = 1_000_000_000;
 }
 
 impl Config for Test {
@@ -176,7 +175,6 @@ impl Config for Test {
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
 	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
-	type TestIssueNumber = TestIssueNumber;
 }
 
 // Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
@@ -354,12 +352,15 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 }
 
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
+	let pot = &StakePallet::account_id();
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			Balances::make_free_balance_be(
-				&StakePallet::account_id(),
-				1000 + Balances::minimum_balance(),
-			);
+			let now_balance = Balances::free_balance(pot);
+			if now_balance < Balances::minimum_balance() {
+				Balances::make_free_balance_be(pot, 1000 + Balances::minimum_balance());
+			} else {
+				Balances::make_free_balance_be(pot, now_balance + 1000);
+			}
 			StakePallet::note_author(*author);
 		}
 		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());

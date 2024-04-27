@@ -312,10 +312,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type MinDelegatorStake: Get<BalanceOf<Self>>;
 
-		/// Only for testing.
-		#[pallet::constant]
-		type TestIssueNumber: Get<BalanceOf<Self>>;
-
 		/// Max number of concurrent active unstaking requests before
 		/// unlocking.
 		///
@@ -640,19 +636,6 @@ pub mod pallet {
 		u32,
 		ValueQuery,
 	>;
-
-	/// We use this storage to store collator's block generation
-	#[pallet::storage]
-	#[pallet::getter(fn claim_balance)]
-	pub(crate) type ClaimBalance<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::AccountId,
-		BalanceOf<T>,
-		ValueQuery,
-	>;
-
-
 
 	/// The maximum amount a collator candidate can stake.
 	#[pallet::storage]
@@ -2772,13 +2755,10 @@ pub mod pallet {
 			let mut reads = Weight::from_parts(0, 1);
 			let mut writes = Weight::from_parts(0, 1);
 
-			// [TODO] Need to change...
-			// let pot = Self::account_id();
-			// let issue_number = T::Currency::free_balance(&pot)
-			//	.checked_sub(&T::Currency::minimum_balance())
-			//	.unwrap_or_else(Zero::zero);
-
-			let issue_number = T::TestIssueNumber::get();
+			let pot = Self::account_id();
+			let issue_number = T::Currency::free_balance(&pot)
+				.checked_sub(&T::Currency::minimum_balance())
+				.unwrap_or_else(Zero::zero);
 
 			let (in_reads, total_staking_in_session) = Self::get_total_collator_staking_num();
 			reads.saturating_add(in_reads);
@@ -2789,24 +2769,21 @@ pub mod pallet {
 					let now_reward =
 						Self::get_collator_reward_per_session(&state, block_num, total_staking_in_session, issue_number);
 
-					// [TODO] Need to distributed, now for easier to test only
-					// Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-					let amount = ClaimBalance::<T>::get(&now_reward.owner).saturating_add(now_reward.amount);
-					ClaimBalance::<T>::insert(&now_reward.owner, amount);
+					Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
 					reads = reads.saturating_add(1.into());
 					writes = writes.saturating_add(1.into());
 
 					let now_rewards =
 						Self::get_delgators_reward_per_session(&state, block_num, total_staking_in_session, issue_number);
 
+					let len = now_rewards.len().saturated_into::<u64>();
 					now_rewards.into_iter().for_each(|x| {
-						// [TODO] Need to distributed, now for easier to test only
-						// Self::do_reward(&pot, &x.owner, x.amount);
-						let amount = ClaimBalance::<T>::get(&x.owner).saturating_add(x.amount);
-						ClaimBalance::<T>::insert(&x.owner, amount);
+						Self::do_reward(&pot, &x.owner, x.amount);
 						reads = reads.saturating_add(1.into());
 						writes = writes.saturating_add(1.into());
 					});
+					reads = reads.saturating_add(len.into());
+					writes = writes.saturating_add(len.into());
 				}
 				reads = reads.saturating_add(1.into());
 			});
@@ -2845,8 +2822,6 @@ pub mod pallet {
 		fn note_author(author: T::AccountId) {
 			let unstaking = <CollatorBlock<T>>::get(author.clone());
 			CollatorBlock::<T>::insert(author.clone(), unstaking + 1);
-
-			Self::peaq_reward_mechanism(author);
 		}
 	}
 
