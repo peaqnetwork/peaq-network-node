@@ -2662,7 +2662,8 @@ pub mod pallet {
 			);
 		}
 
-		fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {
+		// Public only for testing purpose
+		pub fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {
 			let mut total_staking_in_session = BalanceOf::<T>::zero();
 			let mut read: u64 = 0;
 			CollatorBlock::<T>::iter().for_each(|(collator, num)| {
@@ -2680,8 +2681,9 @@ pub mod pallet {
 			(Weight::from_parts(read as u64, 0), total_staking_in_session)
 		}
 
+		// Public only for testing purpose
 		// No read/write from DB
-		fn get_collator_reward_per_session(
+		pub fn get_collator_reward_per_session(
 			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 			block_num: u32,
 			total_staking_in_session: BalanceOf<T>,
@@ -2717,8 +2719,9 @@ pub mod pallet {
 			}
 		}
 
+		// Public only for testing purpose
 		// No read/write from DB
-		fn get_delgators_reward_per_session(
+		pub fn get_delgators_reward_per_session(
 			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
 			block_num: u32,
 			total_staking_in_session: BalanceOf<T>,
@@ -2776,8 +2779,8 @@ pub mod pallet {
 					);
 
 					Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-					reads = reads.saturating_add(1.into());
-					writes = writes.saturating_add(1.into());
+					reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
+					writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
 					let now_rewards = Self::get_delgators_reward_per_session(
 						&state,
@@ -2789,13 +2792,11 @@ pub mod pallet {
 					let len = now_rewards.len().saturated_into::<u64>();
 					now_rewards.into_iter().for_each(|x| {
 						Self::do_reward(&pot, &x.owner, x.amount);
-						reads = reads.saturating_add(1.into());
-						writes = writes.saturating_add(1.into());
 					});
-					reads = reads.saturating_add(len.into());
-					writes = writes.saturating_add(len.into());
+					reads = reads.saturating_add(Weight::from_parts(len, 0));
+					writes = writes.saturating_add(Weight::from_parts(len, 0));
 				}
-				reads = reads.saturating_add(1.into());
+				reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
 			});
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(

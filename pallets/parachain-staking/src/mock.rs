@@ -179,6 +179,7 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
+	// [TODO] Should remove
 	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
 }
 
@@ -278,22 +279,6 @@ impl ExtBuilder {
 		delegators: Vec<(AccountId, AccountId, Balance)>,
 	) -> Self {
 		self.delegators = delegators;
-		self
-	}
-
-	#[must_use]
-	pub(crate) fn with_reward_rate(
-		mut self,
-		col_reward: u64,
-		del_reward: u64,
-		blocks_per_round: BlockNumber,
-	) -> Self {
-		MockRewardConfig::set_reward_rate_config(RewardRateInfo::new(
-			Perquintill::from_percent(col_reward),
-			Perquintill::from_percent(del_reward),
-		));
-		self.blocks_per_round = blocks_per_round;
-
 		self
 	}
 
