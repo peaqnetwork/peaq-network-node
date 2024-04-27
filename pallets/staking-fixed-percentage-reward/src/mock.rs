@@ -159,7 +159,6 @@ impl parachain_staking::Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = ();
-	type BlockRewardCalculator = RewardCalculatorPallet;
 }
 
 impl_opaque_keys! {

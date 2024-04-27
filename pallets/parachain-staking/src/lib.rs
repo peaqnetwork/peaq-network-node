@@ -189,7 +189,6 @@ pub mod pallet {
 	use sp_std::{convert::TryInto, fmt::Debug, prelude::*};
 
 	use crate::{
-		reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 		set::OrderedSet,
 		types::{
 			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
@@ -331,8 +330,6 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
-
-		type BlockRewardCalculator: CollatorDelegatorBlockRewardCalculator<Self>;
 	}
 
 	#[pallet::error]
@@ -2630,37 +2627,6 @@ pub mod pallet {
 		// T::MaxTopCandidates>, ) -> Result<(), DispatchError> {
 		// 	todo!()
 		// }
-
-		fn peaq_reward_mechanism(author: T::AccountId) {
-			let mut reads = Weight::from_parts(0, 1);
-			let mut writes = Weight::from_parts(0, 1);
-
-			if let Some(state) = CandidatePool::<T>::get(author) {
-				let pot = Self::account_id();
-				let issue_number = T::Currency::free_balance(&pot)
-					.checked_sub(&T::Currency::minimum_balance())
-					.unwrap_or_else(Zero::zero);
-
-				let (now_read, now_write, now_reward) =
-					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::collator_reward_per_block(&state, issue_number);
-				Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-				reads = reads.saturating_add(now_read);
-				writes = writes.saturating_add(now_write);
-
-				let (now_read, now_write, now_rewards) =
-					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::delegator_reward_per_block(&state, issue_number);
-				now_rewards.into_iter().for_each(|x| {
-					Self::do_reward(&pot, &x.owner, x.amount);
-				});
-				reads = reads.saturating_add(now_read);
-				writes = writes.saturating_add(now_write);
-			}
-
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
-		}
 
 		// Public only for testing purpose
 		pub fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {

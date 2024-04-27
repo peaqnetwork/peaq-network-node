@@ -797,12 +797,6 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
-	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
-}
-
-impl staking_coefficient_reward::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = staking_coefficient_reward::weights::WeightInfo<Runtime>;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
@@ -981,7 +975,7 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
-		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
+		// Remove StakingCoefficientRewardCalculator: 27
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
@@ -1050,7 +1044,6 @@ mod benches {
 		[pallet_multisig, Multisig]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[parachain_staking, ParachainStaking]
-		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
 		[pallet_block_reward, BlockReward]
 		[peaq_pallet_transaction, Transaction]
 		[peaq_pallet_did, PeaqDid]
