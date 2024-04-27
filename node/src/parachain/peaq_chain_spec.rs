@@ -126,7 +126,6 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
-		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
