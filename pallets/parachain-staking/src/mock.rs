@@ -52,6 +52,11 @@ pub(crate) type BlockNumber = u64;
 pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
+pub(crate) const BLOCK_REWARD_PER_BLOCK: Balance = 1000;
+pub(crate) const BLOCK_REWARD_IN_GENESIS_SESSION: Balance =
+	BLOCK_REWARD_PER_BLOCK * (BLOCKS_PER_ROUND as u128 - 1);
+pub(crate) const BLOCK_REWARD_IN_NORMAL_SESSION: Balance =
+	BLOCK_REWARD_PER_BLOCK * (BLOCKS_PER_ROUND as u128);
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -357,9 +362,12 @@ pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
 			let now_balance = Balances::free_balance(pot);
 			if now_balance < Balances::minimum_balance() {
-				Balances::make_free_balance_be(pot, 1000 + Balances::minimum_balance());
+				Balances::make_free_balance_be(
+					pot,
+					Balances::minimum_balance() + BLOCK_REWARD_PER_BLOCK,
+				);
 			} else {
-				Balances::make_free_balance_be(pot, now_balance + 1000);
+				Balances::make_free_balance_be(pot, now_balance + BLOCK_REWARD_PER_BLOCK);
 			}
 			StakePallet::note_author(*author);
 		}

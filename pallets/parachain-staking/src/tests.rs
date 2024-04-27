@@ -38,7 +38,8 @@ use crate::{
 	mock::{
 		almost_equal, events, last_event, roll_to, AccountId, Balance, Balances, BlockNumber,
 		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
-		BLOCKS_PER_ROUND, DECIMALS,
+		BLOCKS_PER_ROUND, BLOCK_REWARD_IN_GENESIS_SESSION, BLOCK_REWARD_IN_NORMAL_SESSION,
+		DECIMALS,
 	},
 	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 	set::OrderedSet,
@@ -1468,99 +1469,6 @@ fn round_transitions() {
 }
 
 #[test]
-fn coinbase_rewards_few_blocks_detailed_check() {
-	ExtBuilder::default()
-		.with_balances(vec![
-			(1, 40_000_000 * DECIMALS),
-			(2, 40_000_000 * DECIMALS),
-			(3, 40_000_000 * DECIMALS),
-			(4, 20_000_000 * DECIMALS),
-			(5, 20_000_000 * DECIMALS),
-		])
-		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
-		.with_delegators(vec![
-			(3, 1, 32_000_000 * DECIMALS),
-			(4, 1, 16_000_000 * DECIMALS),
-			(5, 2, 16_000_000 * DECIMALS),
-		])
-		.with_reward_rate(30, 70, 5)
-		.build()
-		.execute_with(|| {
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
-			let total_issuance = <Test as Config>::Currency::total_issuance();
-			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
-
-			// compute rewards
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
-
-			let c_total_rewards = c_rewards + d_rewards;
-			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2. / 3.));
-			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1. / 3.));
-
-			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
-			let authors: Vec<Option<AccountId>> =
-				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
-			let user_1 = Balances::usable_balance(1);
-			let user_2 = Balances::usable_balance(2);
-			let user_3 = Balances::usable_balance(3);
-			let user_4 = Balances::usable_balance(4);
-			let user_5 = Balances::usable_balance(5);
-
-			assert_eq!(Balances::usable_balance(1), user_1);
-			assert_eq!(Balances::usable_balance(2), user_2);
-			assert_eq!(Balances::usable_balance(3), user_3);
-			assert_eq!(Balances::usable_balance(4), user_4);
-			assert_eq!(Balances::usable_balance(5), user_5);
-
-			// 1 is block author for 1st block
-			roll_to(2, authors.clone());
-			assert_eq!(Balances::usable_balance(1), user_1 + c_rewards);
-			assert_eq!(Balances::usable_balance(2), user_2);
-			assert_eq!(Balances::usable_balance(3), user_3 + d_1_rewards);
-			assert_eq!(Balances::usable_balance(4), user_4 + d_2_rewards);
-			assert_eq!(Balances::usable_balance(5), user_5);
-
-			// 1 is block author for 2nd block
-			roll_to(3, authors.clone());
-			assert_eq!(Balances::usable_balance(1), user_1 + 2 * c_rewards);
-			assert_eq!(Balances::usable_balance(2), user_2);
-			assert_eq!(Balances::usable_balance(3), user_3 + 2 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(4), user_4 + 2 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(5), user_5);
-
-			// 1 is block author for 3rd block
-			roll_to(4, authors.clone());
-			assert_eq!(Balances::usable_balance(1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(2), user_2);
-			assert_eq!(Balances::usable_balance(3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(5), user_5);
-
-			// 2 is block author for 4th block
-			roll_to(5, authors.clone());
-			assert_eq!(Balances::usable_balance(1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(2), user_2 + c_rewards);
-			assert_eq!(Balances::usable_balance(3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(5), user_5 + d_rewards);
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
-
-			// 2 is block author for 5th block
-			roll_to(6, authors);
-			assert_eq!(Balances::usable_balance(1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(2), user_2 + c_rewards + c_total_rewards);
-			assert_eq!(Balances::usable_balance(3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(4), user_4 + 3 * d_2_rewards);
-			// should not receive rewards due to revoked delegation
-			assert_eq!(Balances::usable_balance(5), user_5 + d_rewards);
-		});
-}
-
-#[test]
 fn delegator_should_not_receive_rewards_after_revoking() {
 	// test edge case of 1 delegator
 	ExtBuilder::default()
@@ -1603,9 +1511,9 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 			assert_eq!(Balances::usable_balance(3), 10_000_000 * DECIMALS);
 		});
 }
+
 #[test]
 fn coinbase_rewards_many_blocks_simple_check() {
-	let num_of_years: Perquintill = Perquintill::from_perthousand(2);
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 40_000_000 * DECIMALS),
@@ -1614,110 +1522,175 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			(4, 20_000_000 * DECIMALS),
 			(5, 20_000_000 * DECIMALS),
 		])
-		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_collators(vec![(1, 32_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
 		.with_delegators(vec![
-			(3, 1, 32_000_000 * DECIMALS),
+			(3, 1, 8_000_000 * DECIMALS),
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
-
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
-			const BLOCKS_PER_YEAR: BlockNumber = 5 * 60 * 24 * 36525 / 100;
-
-			let end_block: BlockNumber = num_of_years * BLOCKS_PER_YEAR as BlockNumber;
+			let end_block: BlockNumber = 26295;
 			// set round robin authoring
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
-			roll_to(end_block, authors);
+			// adding one is to force the session go next
+			roll_to(5, authors.clone());
 
-			let rewards_1 = Balances::free_balance(1).saturating_sub(40_000_000 * DECIMALS);
-			let rewards_2 = Balances::free_balance(2).saturating_sub(40_000_000 * DECIMALS);
-			let rewards_3 = Balances::free_balance(3).saturating_sub(40_000_000 * DECIMALS);
-			let rewards_4 = Balances::free_balance(4).saturating_sub(20_000_000 * DECIMALS);
-			let rewards_5 = Balances::free_balance(5).saturating_sub(20_000_000 * DECIMALS);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
-			let expected_collator_rewards = end_block as u128 * c_rewards;
-			let expected_delegator_rewards = end_block as u128 * d_rewards;
+			let genesis_reward_1 = Perbill::from_float(32. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_3 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_4 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
 
-			// collator rewards should be about the same
-			assert!(almost_equal(rewards_1, rewards_2, Perbill::from_perthousand(1)));
-			assert!(
-				almost_equal(
-					rewards_1,
-					c_rewards * end_block as u128 / 2,
-					Perbill::from_perthousand(1)
-				),
-				"left {:?}, right {:?}",
-				rewards_1,
-				c_rewards * end_block as u128 / 2,
+			let genesis_reward_2 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_5 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+
+			assert_eq!(Balances::free_balance(1), genesis_reward_1 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(2), genesis_reward_2 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(3), genesis_reward_3 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(4), genesis_reward_4 + 20_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(5), genesis_reward_5 + 20_000_000 * DECIMALS);
+
+			// 2 is block author for 3 blocks, 1 is block author for 2 block
+			roll_to(10, authors.clone());
+			let normal_odd_total_stake: u64 = 2 * (32 + 8 + 16) + 3 * (8 + 16);
+
+			let normal_odd_reward_1 = Perbill::from_rational(2 * 32, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_3 = Perbill::from_rational(2 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_4 = Perbill::from_rational(2 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_2 = Perbill::from_rational(3 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_5 = Perbill::from_rational(3 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 + normal_odd_reward_1 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 + normal_odd_reward_2 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 + normal_odd_reward_3 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 + normal_odd_reward_4 + 20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 + normal_odd_reward_5 + 20_000_000 * DECIMALS
 			);
 
-			// delegator rewards should be about the same
-			assert!(
-				almost_equal(rewards_3 + rewards_4, rewards_5, Perbill::from_perthousand(1)),
-				"left {:?}, right {:?}",
-				rewards_3 + rewards_4,
-				rewards_5
+			// 2 is block author for 3 blocks, 1 is block author for 2 block
+			roll_to(15, authors.clone());
+			let normal_even_total_stake: u64 = 3 * (32 + 8 + 16) + 2 * (8 + 16);
+
+			let normal_even_reward_1 = Perbill::from_rational(3 * 32, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_3 = Perbill::from_rational(3 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_4 = Perbill::from_rational(3 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_2 = Perbill::from_rational(2 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_5 = Perbill::from_rational(2 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 +
+					normal_odd_reward_1 + normal_even_reward_1 +
+					40_000_000 * DECIMALS
 			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 +
+					normal_odd_reward_2 + normal_even_reward_2 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 +
+					normal_odd_reward_3 + normal_even_reward_3 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 +
+					normal_odd_reward_4 + normal_even_reward_4 +
+					20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 +
+					normal_odd_reward_5 + normal_even_reward_5 +
+					20_000_000 * DECIMALS
+			);
+
+			roll_to(end_block, authors.clone());
+			let multiply_factor = (end_block as u128 - 5) / 10;
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor +
+					20_000_000 * DECIMALS
+			);
+
+			// Check total issue number
 			assert!(almost_equal(
-				rewards_5,
-				d_rewards * end_block as u128 / 2,
+				total_issuance +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor,
+				<Test as Config>::Currency::total_issuance(),
 				Perbill::from_perthousand(1)
 			));
-
-			// check rewards in total
-			assert!(
-				almost_equal(
-					rewards_1 + rewards_2,
-					expected_collator_rewards,
-					Perbill::from_perthousand(1),
-				),
-				"left {:?}, right {:?}",
-				rewards_1 + rewards_2,
-				expected_collator_rewards,
-			);
-			assert!(
-				almost_equal(
-					rewards_3 + rewards_4 + rewards_5,
-					expected_delegator_rewards,
-					Perbill::from_perthousand(1),
-				),
-				"left {:?}, right {:?}",
-				rewards_3 + rewards_4 + rewards_5,
-				expected_delegator_rewards,
-			);
-
-			// old issuance + rewards should equal new issuance
-			assert!(
-				almost_equal(
-					total_issuance + expected_collator_rewards + expected_delegator_rewards,
-					<Test as Config>::Currency::total_issuance(),
-					Perbill::from_perthousand(1),
-				),
-				"left {:?}, right {:?}",
-				total_issuance + expected_collator_rewards + expected_delegator_rewards,
-				<Test as Config>::Currency::total_issuance(),
-			);
 		});
 }
 
-// Could only occur if we increase MinDelegatorStakeOf::<Test>via runtime
+// Could only occur if we increase MinDelegatorStakeOf::<Test> via runtime
 // upgrade and don't migrate delegators which fall below minimum
 #[test]
-fn should_not_reward_delegators_below_min_stake() {
+fn should_reward_delegators_below_min_stake() {
+    let stake_num = 10 * DECIMALS;
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS), (3, 10 * DECIMALS), (4, 5)])
-		.with_collators(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS)])
-		.with_delegators(vec![(3, 2, 10 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		.with_balances(vec![(1, stake_num), (2, stake_num), (3, stake_num), (4, stake_num)])
+		.with_collators(vec![(1, stake_num), (2, stake_num)])
+		.with_delegators(vec![(3, 2, stake_num)])
 		.build()
 		.execute_with(|| {
 			// impossible but lets assume it happened
@@ -1732,16 +1705,21 @@ fn should_not_reward_delegators_below_min_stake() {
 			<crate::CandidatePool<Test>>::insert(1u64, state);
 
 			let authors: Vec<Option<AccountId>> =
-				vec![Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
+				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
 			assert_eq!(Balances::usable_balance(1), Balance::zero());
 			assert_eq!(Balances::usable_balance(2), Balance::zero());
 			assert_eq!(Balances::usable_balance(3), Balance::zero());
-			assert_eq!(Balances::usable_balance(4), 5);
+			assert_eq!(Balances::usable_balance(4), stake_num);
 
 			// should only reward 1
-			roll_to(4, authors);
-			assert!(Balances::usable_balance(1) > Balance::zero());
-			assert_eq!(Balances::usable_balance(4), 5);
+            let total_stake_num = stake_num + delegator_stake_below_min;
+			roll_to(5, authors);
+			assert_eq!(Balances::usable_balance(1),
+                       Perquintill::from_rational(stake_num, total_stake_num) *
+BLOCK_REWARD_IN_GENESIS_SESSION); 			assert_eq!(Balances::usable_balance(4) - stake_num,
+                       Perquintill::from_rational(delegator_stake_below_min, total_stake_num) *
+BLOCK_REWARD_IN_GENESIS_SESSION);
+
 			assert_eq!(Balances::usable_balance(2), Balance::zero());
 			assert_eq!(Balances::usable_balance(3), Balance::zero());
 		});
@@ -2061,28 +2039,28 @@ fn set_max_selected_candidates_total_stake() {
 /*
  * #[test]
  * fn update_reward_rate() {
- *     ExtBuilder::default()
- *         .with_balances(vec![(1, 10)])
- *         .with_collators(vec![(1, 10)])
- *         .build()
- *         .execute_with(|| {
- *             let invalid_reward_rate = RewardRateInfo {
- *                 collator_rate: Perquintill::one(),
- *                 delegator_rate: Perquintill::one(),
- *             };
- *             assert!(!invalid_reward_rate.is_valid());
+ * ExtBuilder::default()
+ * .with_balances(vec![(1, 10)])
+ * .with_collators(vec![(1, 10)])
+ * .build()
+ * .execute_with(|| {
+ * let invalid_reward_rate = RewardRateInfo {
+ * collator_rate: Perquintill::one(),
+ * delegator_rate: Perquintill::one(),
+ * };
+ * assert!(!invalid_reward_rate.is_valid());
  *
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 RuntimeOrigin::root(),
- *                 Perquintill::from_percent(0),
- *                 Perquintill::from_percent(100),
- *             ));
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 RuntimeOrigin::root(),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(0),
- *             ));
- *         });
+ * assert_ok!(StakePallet::set_reward_rate(
+ * RuntimeOrigin::root(),
+ * Perquintill::from_percent(0),
+ * Perquintill::from_percent(100),
+ * ));
+ * assert_ok!(StakePallet::set_reward_rate(
+ * RuntimeOrigin::root(),
+ * Perquintill::from_percent(100),
+ * Perquintill::from_percent(0),
+ * ));
+ * });
  * }
  */
 
@@ -3136,30 +3114,24 @@ fn authorities_per_round() {
 			// reward 1 once per round
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
 
-			// roll to last block of round 0
-			roll_to(4, authors.clone());
-			let reward_0 = reward_rate.compute_collator_reward::<Test>(1000) +
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+			// roll to new round 1
+            let reward_0 = 1000;
+			roll_to(BLOCKS_PER_ROUND, authors.clone());
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));
 
-			// roll to last block of round 1
-			// should still multiply with 2 because the Authority set was chosen at start of
-			// round 1
-			roll_to(9, authors.clone());
+			// roll to new round 2
+			roll_to(BLOCKS_PER_ROUND * 2, authors.clone());
 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 2);
 
-			// roll to last block of round 2
-			// should multiply with 4 because there are only 4 candidates
-			roll_to(14, authors.clone());
+			// roll to new round 3
+			roll_to(BLOCKS_PER_ROUND * 3, authors.clone());
 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 3);
 
-			// roll to last block of round 3
-			// should multiply with 4 because there are only 4 candidates
-			roll_to(19, authors);
+			// roll to new round 4
+			roll_to(BLOCKS_PER_ROUND * 4, authors);
 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 4);
 		});
 }
@@ -3562,44 +3534,41 @@ fn check_claim_block_normal_wo_delegator() {
 
 			roll_to(5, authors.clone());
 
-			let first_session_reward = 1_000 * 4;
-
 			assert_eq!(
 				Balances::free_balance(1),
-				Perquintill::from_float(1. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(1. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(2),
-				Perquintill::from_float(2. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(2. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(3),
-				Perquintill::from_float(3. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(3. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(4),
-				Perquintill::from_float(4. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(4. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
-			let next_session_reward = 1_000 * 5;
 			// Cross session but only 1 is selected
 			roll_to(10, authors.clone());
 			assert_eq!(
 				Balances::free_balance(1),
-				Perquintill::from_float(1. / 10.) * first_session_reward +
-					next_session_reward + origin_balance
+				Perquintill::from_float(1. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					BLOCK_REWARD_IN_NORMAL_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(2),
-				Perquintill::from_float(2. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(2. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(3),
-				Perquintill::from_float(3. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(3. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(4),
-				Perquintill::from_float(4. / 10.) * first_session_reward + origin_balance
+				Perquintill::from_float(4. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 		});
 }
@@ -3647,105 +3616,102 @@ fn check_claim_block_normal_wi_delegator() {
 
 			roll_to(5, authors.clone());
 
-			let first_session_reward = 1_000 * 4;
-
 			assert_eq!(
 				Balances::free_balance(1),
-				Perquintill::from_float(1. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(1. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(5),
-				Perquintill::from_float(5. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(5. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(6),
-				Perquintill::from_float(6. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(6. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
 			assert_eq!(
 				Balances::free_balance(2),
-				Perquintill::from_float(2. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(2. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(7),
-				Perquintill::from_float(7. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(7. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
 			assert_eq!(
 				Balances::free_balance(3),
-				Perquintill::from_float(3. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(3. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(8),
-				Perquintill::from_float(8. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(8. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
 			assert_eq!(
 				Balances::free_balance(4),
-				Perquintill::from_float(4. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(4. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(9),
-				Perquintill::from_float(9. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(9. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(10),
-				Perquintill::from_float(10. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(10. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
 			// Cross session but only 1 is selected
 			roll_to(10, authors.clone());
-			let next_session_reward = 1_000 * 5;
 
 			assert_eq!(
 				Balances::free_balance(1),
-				Perquintill::from_float(1. / 55.) * first_session_reward +
-					Perquintill::from_float(1. / 12.) * next_session_reward +
+				Perquintill::from_float(1. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_float(1. / 12.) * BLOCK_REWARD_IN_NORMAL_SESSION +
 					origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(5),
-				Perquintill::from_float(5. / 55.) * first_session_reward +
-					Perquintill::from_float(5. / 12.) * next_session_reward +
+				Perquintill::from_float(5. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_float(5. / 12.) * BLOCK_REWARD_IN_NORMAL_SESSION +
 					origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(6),
-				Perquintill::from_float(6. / 55.) * first_session_reward +
-					Perquintill::from_float(6. / 12.) * next_session_reward +
+				Perquintill::from_float(6. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_float(6. / 12.) * BLOCK_REWARD_IN_NORMAL_SESSION +
 					origin_balance
 			);
 
 			// Nothing change
 			assert_eq!(
 				Balances::free_balance(2),
-				Perquintill::from_float(2. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(2. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(7),
-				Perquintill::from_float(7. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(7. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
 			assert_eq!(
 				Balances::free_balance(3),
-				Perquintill::from_float(3. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(3. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(8),
-				Perquintill::from_float(8. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(8. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 
 			assert_eq!(
 				Balances::free_balance(4),
-				Perquintill::from_float(4. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(4. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(9),
-				Perquintill::from_float(9. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(9. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(10),
-				Perquintill::from_float(10. / 55.) * first_session_reward + origin_balance
+				Perquintill::from_float(10. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION + origin_balance
 			);
 		});
 }

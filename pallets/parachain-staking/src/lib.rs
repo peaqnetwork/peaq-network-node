@@ -2734,12 +2734,12 @@ pub mod pallet {
 					let percentage =
 						Perquintill::from_rational(nominator, total_staking_in_session);
 					if percentage.is_zero() {
-						log::error!(
-							"Error in delegator calculation: block_num {:?} amount {:?} total_staking_in_session {:?}",
+						log::info!(
+							"Delegator calculation: block_num {:?} amount {:?} total_staking_in_session {:?}",
 							block_num, x.amount, total_staking_in_session
 						);
-						log::error!(
-							"Error in delegator calculation: nominator {:?} percentage {:?}",
+						log::info!(
+							"Delegator calculation: nominator {:?} percentage {:?}",
 							nominator,
 							percentage
 						);
