@@ -193,10 +193,11 @@ pub mod pallet {
 		set::OrderedSet,
 		types::{
 			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
-			ReplacedDelegator, RoundInfo, Stake, StakeOf, TotalStake,
+			ReplacedDelegator, RoundInfo, Stake, StakeOf, TotalStake, Reward,
 		},
 		weightinfo::WeightInfo,
 	};
+	use sp_runtime::Perquintill;
 
 	/// Kilt-specific lock for staking rewards.
 	pub(crate) const OLD_STAKING_ID: LockIdentifier = *b"kiltpstk";
@@ -310,6 +311,10 @@ pub mod pallet {
 		/// Minimum stake required for any account to become a delegator.
 		#[pallet::constant]
 		type MinDelegatorStake: Get<BalanceOf<Self>>;
+
+		/// Only for testing.
+		#[pallet::constant]
+		type TestIssueNumber: Get<BalanceOf<Self>>;
 
 		/// Max number of concurrent active unstaking requests before
 		/// unlocking.
@@ -624,6 +629,30 @@ pub mod pallet {
 		BoundedBTreeMap<T::BlockNumber, BalanceOf<T>, T::MaxUnstakeRequests>,
 		ValueQuery,
 	>;
+
+	/// We use this storage to store collator's block generation
+	#[pallet::storage]
+	#[pallet::getter(fn collator_blocks)]
+	pub(crate) type CollatorBlock<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		u32,
+		ValueQuery,
+	>;
+
+	/// We use this storage to store collator's block generation
+	#[pallet::storage]
+	#[pallet::getter(fn claim_balance)]
+	pub(crate) type ClaimBalance<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::AccountId,
+		BalanceOf<T>,
+		ValueQuery,
+	>;
+
+
 
 	/// The maximum amount a collator candidate can stake.
 	#[pallet::storage]
@@ -2655,6 +2684,139 @@ pub mod pallet {
 			);
 		}
 
+		fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {
+			let mut total_staking_in_session = BalanceOf::<T>::zero();
+			let mut read: u64 = 0;
+			CollatorBlock::<T>::iter().for_each(|(collator, num)| {
+				if let Some(state) = CandidatePool::<T>::get(collator) {
+					let collator_total = T::CurrencyBalance::from(num)
+						.checked_mul(&state.total)
+						.unwrap_or_else(Zero::zero);
+					total_staking_in_session = total_staking_in_session.saturating_add(collator_total);
+					read += 2;
+				} else {
+					read += 1;
+				}
+			});
+			(Weight::from_parts(read as u64, 0), total_staking_in_session)
+		}
+
+		// No read/write from DB
+		fn get_collator_reward_per_session(
+			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
+			block_num: u32,
+			total_staking_in_session: BalanceOf<T>,
+			issue_number: BalanceOf<T>,
+		) -> Reward<T::AccountId, BalanceOf<T>> {
+
+			let delegator_sum = (&stake.delegators)
+				.into_iter()
+				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
+
+			// issue_number = block_num * (state.total - delegator_sum) / total_staking_in_session
+			// [TODO] Calculate the overflow... 200 * staking number...?
+			let nominator = T::CurrencyBalance::from(block_num)
+				.checked_mul(&stake.total.checked_sub(&delegator_sum).unwrap_or_else(Zero::zero))
+				.unwrap_or_else(Zero::zero);
+			let percentage = Perquintill::from_rational(nominator, total_staking_in_session);
+			if percentage.is_zero() {
+				log::error!(
+					"Error in collator calculation: block_num {:?} stake.total {:?} delegator_sum
+					{:?} total_staking_in_session {:?}", block_num, stake.total, delegator_sum, total_staking_in_session
+				);
+				log::error!(
+					"Error in collator calculation: nominator {:?} percentage {:?}",
+					nominator, percentage
+				);
+				Reward { owner: stake.id.clone(), amount: Zero::zero() }
+			} else {
+				Reward { owner: stake.id.clone(), amount: percentage * issue_number }
+			}
+		}
+
+		// No read/write from DB
+		fn get_delgators_reward_per_session(
+			stake: &Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
+			block_num: u32,
+			total_staking_in_session: BalanceOf<T>,
+			issue_number: BalanceOf<T>,
+		) -> BoundedVec<Reward<T::AccountId, BalanceOf<T>>, T::MaxDelegatorsPerCollator> {
+			let inner = (&stake.delegators)
+				.into_iter()
+				.map(|x| {
+					// issue_number = block_num * (delegator.stake) / total_staking_in_session
+					let nominator = T::CurrencyBalance::from(block_num)
+						.checked_mul(&x.amount)
+						.unwrap_or_else(Zero::zero);
+					let percentage = Perquintill::from_rational(nominator, total_staking_in_session);
+					if percentage.is_zero() {
+						log::error!(
+							"Error in delegator calculation: block_num {:?} amount {:?} total_staking_in_session {:?}",
+							block_num, x.amount, total_staking_in_session
+						);
+						log::error!(
+							"Error in delegator calculation: nominator {:?} percentage {:?}",
+							nominator, percentage
+						);
+						Reward { owner: x.owner.clone(), amount: Zero::zero() }
+					} else {
+						Reward { owner: x.owner.clone(), amount: percentage * issue_number }
+					}
+				})
+				.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
+
+			inner.try_into().expect("Did not extend vec q.e.d.")
+		}
+
+		fn peaq_reward_mechanism_impl() {
+			let mut reads = Weight::from_parts(0, 1);
+			let mut writes = Weight::from_parts(0, 1);
+
+			// [TODO] Need to change...
+			// let pot = Self::account_id();
+			// let issue_number = T::Currency::free_balance(&pot)
+			//	.checked_sub(&T::Currency::minimum_balance())
+			//	.unwrap_or_else(Zero::zero);
+
+			let issue_number = T::TestIssueNumber::get();
+
+			let (in_reads, total_staking_in_session) = Self::get_total_collator_staking_num();
+			reads.saturating_add(in_reads);
+
+			CollatorBlock::<T>::iter().for_each(|(collator, block_num)| {
+				// Get the delegator's staking number
+				if let Some(state) = CandidatePool::<T>::get(collator.clone()) {
+					let now_reward =
+						Self::get_collator_reward_per_session(&state, block_num, total_staking_in_session, issue_number);
+
+					// [TODO] Need to distributed, now for easier to test only
+					// Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
+					let amount = ClaimBalance::<T>::get(&now_reward.owner).saturating_add(now_reward.amount);
+					ClaimBalance::<T>::insert(&now_reward.owner, amount);
+					reads = reads.saturating_add(1.into());
+					writes = writes.saturating_add(1.into());
+
+					let now_rewards =
+						Self::get_delgators_reward_per_session(&state, block_num, total_staking_in_session, issue_number);
+
+					now_rewards.into_iter().for_each(|x| {
+						// [TODO] Need to distributed, now for easier to test only
+						// Self::do_reward(&pot, &x.owner, x.amount);
+						let amount = ClaimBalance::<T>::get(&x.owner).saturating_add(x.amount);
+						ClaimBalance::<T>::insert(&x.owner, amount);
+						reads = reads.saturating_add(1.into());
+						writes = writes.saturating_add(1.into());
+					});
+				}
+				reads = reads.saturating_add(1.into());
+			});
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
+				DispatchClass::Mandatory,
+			);
+		}
+
 		/// Get a unique, inaccessible account id from the `PotId`.
 		pub fn account_id() -> T::AccountId {
 			T::PotId::get().into_account_truncating()
@@ -2681,6 +2843,9 @@ pub mod pallet {
 		/// - Writes: (D + 1) * Balance
 		/// # </weight>
 		fn note_author(author: T::AccountId) {
+			let unstaking = <CollatorBlock<T>>::get(author.clone());
+			CollatorBlock::<T>::insert(author.clone(), unstaking + 1);
+
 			Self::peaq_reward_mechanism(author);
 		}
 	}
@@ -2692,6 +2857,7 @@ pub mod pallet {
 		/// 3. AuRa queries the authorities from the session pallet for this session and picks
 		///    authors on round-robin-basis from list of authorities.
 		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+
 			log::debug!(
 				"assembling new collators for new session {} at #{:?}",
 				new_index,
@@ -2713,8 +2879,15 @@ pub mod pallet {
 			}
 		}
 
-		fn end_session(_end_index: SessionIndex) {
-			// we too are not caring.
+		fn end_session(end_index: SessionIndex) {
+			log::debug!("new_session: {:?}", end_index);
+			Self::peaq_reward_mechanism_impl();
+
+			// [TODO] Need to check the remove_all or clean fn
+			CollatorBlock::<T>::iter().for_each(|(k, _)| {
+				log::debug!("show all collator {:?}, {:?}", k, CollatorBlock::<T>::get(k.clone()));
+				CollatorBlock::<T>::remove(k);
+			});
 		}
 
 		fn start_session(_start_index: SessionIndex) {

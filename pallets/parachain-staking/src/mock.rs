@@ -151,6 +151,7 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
+	pub const TestIssueNumber: Balance = 1_000_000_000;
 }
 
 impl Config for Test {
@@ -175,6 +176,7 @@ impl Config for Test {
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
 	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
+	type TestIssueNumber = TestIssueNumber;
 }
 
 // Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
