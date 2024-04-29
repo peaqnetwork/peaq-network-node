@@ -54,8 +54,7 @@ pub mod pallet {
 	/// provided at genesis
 	#[pallet::storage]
 	#[pallet::getter(fn effective_inflation_parameters)]
-	pub type YearlyInflationParameters<T: Config> =
-		StorageValue<_, InflationParametersT, ValueQuery>;
+	pub type InflationParameters<T: Config> = StorageValue<_, InflationParametersT, ValueQuery>;
 
 	/// Info for how many years have passed, starting and ending at which block.
 	#[pallet::storage]
@@ -67,7 +66,7 @@ pub mod pallet {
 	/// New inflation parameters kick in from the next block after the recalculation block.
 	#[pallet::storage]
 	#[pallet::getter(fn recalculation_at)]
-	pub type RecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
+	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
 
 	/// The current rewards per block
 	#[pallet::storage]
@@ -116,7 +115,7 @@ pub mod pallet {
 		fn build(&self) {
 			// install base inflation parameters
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
-			YearlyInflationParameters::<T>::put(
+			InflationParameters::<T>::put(
 				self.inflation_configuration.base_inflation_parameters.clone(),
 			);
 
@@ -128,7 +127,7 @@ pub mod pallet {
 				T::BlockNumber::from(BLOCKS_PER_YEAR);
 
 			// Update recalculation flag
-			RecalculationAt::<T>::put(racalculation_target_block);
+			DoRecalculationAt::<T>::put(racalculation_target_block);
 
 			let block_rewards = Pallet::<T>::rewards_per_block(
 				&self.inflation_configuration.base_inflation_parameters,
@@ -148,12 +147,12 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_finalize(now: T::BlockNumber) {
-			let target_block = RecalculationAt::<T>::get().unwrap();
+			let target_block = DoRecalculationAt::<T>::get().unwrap();
 			let current_year = CurrentYear::<T>::get();
 			let new_year = current_year + 1;
 
 			let inflation_config = InflationConfiguration::<T>::get();
-			let mut inflation_parameters = YearlyInflationParameters::<T>::get();
+			let mut inflation_parameters = InflationParameters::<T>::get();
 
 			// if we're at the end of a year
 			if now >= target_block {
@@ -172,16 +171,16 @@ pub mod pallet {
 				// flag and set inflation parameters to stagnation values
 				if new_year == inflation_config.inflation_stagnation_year {
 					inflation_parameters = InflationParametersT {
-						effective_inflation_rate: inflation_config.inflation_stagnation_rate,
-						effective_disinflation_rate: Perbill::one(),
+						inflation_rate: inflation_config.inflation_stagnation_rate,
+						disinflation_rate: Perbill::one(),
 					};
 				}
 
-				YearlyInflationParameters::<T>::put(inflation_parameters.clone());
+				InflationParameters::<T>::put(inflation_parameters.clone());
 
 				// set the flag to calculate inflation parameters after a year(in blocks)
 				let target_block = now + T::BlockNumber::from(BLOCKS_PER_YEAR);
-				RecalculationAt::<T>::put(target_block);
+				DoRecalculationAt::<T>::put(target_block);
 
 				// calculate block rewards for new year
 				let block_rewards = Self::rewards_per_block(&inflation_parameters);
@@ -200,8 +199,9 @@ pub mod pallet {
 		// calculate inflationary tokens per block
 		fn rewards_per_block(inflation_parameters: &InflationParametersT) -> Balance {
 			let total_issuance = T::Currency::total_issuance();
-			let rewards_total = inflation_parameters.effective_inflation_rate * total_issuance;
-			// TODO Verify this convesion
+			let rewards_total = inflation_parameters.inflation_rate * total_issuance;
+
+			// return rewards per block
 			rewards_total / Balance::from(BLOCKS_PER_YEAR)
 		}
 
@@ -212,18 +212,17 @@ pub mod pallet {
 			let base_inflation_parameters =
 				InflationConfiguration::<T>::get().base_inflation_parameters;
 			// Calculate effective disinflation rate as
-			// effective_disinflation_rate(n) =
-			// effective_disinflation_rate(0) * effective_disinflation_rate(n-1)
-			let effective_disinflation_rate = inflation_parameters.effective_disinflation_rate *
-				base_inflation_parameters.effective_disinflation_rate;
+			// disinflation_rate(n) =
+			// disinflation_rate(0) * disinflation_rate(n-1)
+			let disinflation_rate = inflation_parameters.disinflation_rate *
+				base_inflation_parameters.disinflation_rate;
 
 			// Calculate effective inflation rate as
-			// effective_inflation_rate(n) =
-			// effective_inflation_rate(n-1) * effective_disinflation_rate(n)
-			let effective_inflation_rate =
-				inflation_parameters.effective_inflation_rate * effective_disinflation_rate;
+			// inflation_rate(n) =
+			// inflation_rate(n-1) * disinflation_rate(n)
+			let inflation_rate = inflation_parameters.inflation_rate * disinflation_rate;
 
-			InflationParametersT { effective_inflation_rate, effective_disinflation_rate }
+			InflationParametersT { inflation_rate, disinflation_rate }
 		}
 	}
 }
