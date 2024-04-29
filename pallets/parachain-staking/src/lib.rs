@@ -2644,7 +2644,7 @@ pub mod pallet {
 					read += 1;
 				}
 			});
-			(Weight::from_parts(read as u64, 0), total_staking_in_session)
+			(Weight::from_parts(read, 0), total_staking_in_session)
 		}
 
 		// Public only for testing purpose
