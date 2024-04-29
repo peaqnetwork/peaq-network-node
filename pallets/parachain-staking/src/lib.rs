@@ -2660,7 +2660,6 @@ pub mod pallet {
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
 
 			// issue_number = block_num * (state.total - delegator_sum) / total_staking_in_session
-			// [TODO] Calculate the overflow... 200 * staking number...?
 			let nominator = T::CurrencyBalance::from(block_num)
 				.checked_mul(&stake.total.checked_sub(&delegator_sum).unwrap_or_else(Zero::zero))
 				.unwrap_or_else(Zero::zero);
@@ -2781,24 +2780,16 @@ pub mod pallet {
 	where
 		T: Config + pallet_authorship::Config + pallet_session::Config,
 	{
-		/// Compute coinbase rewards for block production and distribute it to
-		/// collator's (block producer) and its delegators according to their
-		/// stake and the current RewardRateInfo.
-		///
-		/// The rewards are split between collators and delegators with
-		/// different reward rates. Rewards are immediately available without any restrictions
-		/// after minting.
+		/// Only for record the collator's created block number
 		///
 		/// # <weight>
-		/// Weight: O(D) where D is the number of delegators of this collator
-		/// block author bounded by `MaxDelegatorsPerCollator`.
-		/// - Reads: CandidatePool, TotalCollatorStake, Balance, MaxSelectedCandidates, Validators,
-		///   DisabledValidators
-		/// - Writes: (D + 1) * Balance
+		/// Weight: 2
+		/// - Reads: 1
+		/// - Writes: 1
 		/// # </weight>
 		fn note_author(author: T::AccountId) {
-			let unstaking = <CollatorBlock<T>>::get(author.clone());
-			CollatorBlock::<T>::insert(author.clone(), unstaking + 1);
+			let block_num = <CollatorBlock<T>>::get(author.clone());
+			CollatorBlock::<T>::insert(author.clone(), block_num + 1);
 		}
 	}
 
@@ -2830,11 +2821,22 @@ pub mod pallet {
 			}
 		}
 
+		/// After a session ends,
+		/// 1. We have do the reward mechanism for the collators and delegators.
+		///		1.1. The current distributed way is to get the total staking number
+		///			sum[total generated block number * (collator stake + delegator stake)]
+		///		1.2. Calculate the ratio:
+		///			collator reward ratio = block_num * (collator stake) / total staking number
+		///			delegator reward ratio = block_num * (delegator stake) / total staking number
+		///		1.3. Calcuate the reward:
+		///			collator reward = collator reward ratio * pot balance
+		///			delegator reward = delegator reward ratio * pot balance
+		///		1.4. Transfer the reward to the collator and delegator.
+		/// 2. we need to clean up the state of the pallet.
 		fn end_session(end_index: SessionIndex) {
 			log::debug!("new_session: {:?}", end_index);
 			Self::peaq_reward_mechanism_impl();
 
-			// [TODO] Need to check the remove_all or clean fn
 			CollatorBlock::<T>::iter().for_each(|(k, _)| {
 				log::debug!("show all collator {:?}, {:?}", k, CollatorBlock::<T>::get(k.clone()));
 				CollatorBlock::<T>::remove(k);
