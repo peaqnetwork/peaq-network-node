@@ -117,12 +117,13 @@ pub mod pallet {
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
 
 			// install inflation parameters for first year
-			InflationParameters::<T>::put(
-				InflationParametersT {
-					inflation_rate: self.inflation_configuration.base_inflation_parameters.inflation_rate,
-					disinflation_rate: Perbill::one(),
-				}
-			);
+			InflationParameters::<T>::put(InflationParametersT {
+				inflation_rate: self
+					.inflation_configuration
+					.base_inflation_parameters
+					.inflation_rate,
+				disinflation_rate: Perbill::one(),
+			});
 
 			// set current inflationary year
 			CurrentYear::<T>::put(1);
