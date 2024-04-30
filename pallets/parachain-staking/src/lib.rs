@@ -2838,7 +2838,6 @@ pub mod pallet {
 			Self::peaq_reward_mechanism_impl();
 
 			CollatorBlock::<T>::iter().for_each(|(k, _)| {
-				log::debug!("show all collator {:?}, {:?}", k, CollatorBlock::<T>::get(k.clone()));
 				CollatorBlock::<T>::remove(k);
 			});
 		}

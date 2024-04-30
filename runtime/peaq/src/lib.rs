@@ -318,14 +318,10 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
-parameter_types! {
-	pub const MaxAuthorities: u32 = 32;
-}
-
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = staking::MaxCollatorCandidates;
 }
 
 // For ink
@@ -733,7 +729,7 @@ pub mod staking {
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
-			pub const MinBlocksPerRound: BlockNumber = HOURS;
+			pub const MinBlocksPerRound: BlockNumber = 20 * MINUTES;
 			/// Default length of a round/session is 2 hours
 			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
 			/// Unstaked balance can be unlocked after 7 days
@@ -748,7 +744,7 @@ pub mod staking {
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// Maximum 25 delegators per collator at launch, might be increased later
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxDelegatorsPerCollator: u32 = 25;
+			pub const MaxDelegatorsPerCollator: u32 = 100;
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
@@ -758,7 +754,7 @@ pub mod staking {
 			pub const MinDelegatorStake: Balance = 20_000;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 100;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
