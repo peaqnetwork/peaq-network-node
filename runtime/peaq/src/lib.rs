@@ -758,7 +758,7 @@ pub mod staking {
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// No maximum number of delegators per collator at launch
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxDelegatorsPerCollator: u32 = u32::MAX / 100;
+			pub const MaxDelegatorsPerCollator: u32 = u32::MAX;
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
