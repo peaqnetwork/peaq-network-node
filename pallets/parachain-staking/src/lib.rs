@@ -2837,6 +2837,10 @@ pub mod pallet {
 		fn end_session(end_index: SessionIndex) {
 			log::debug!("new_session: {:?}", end_index);
 			Self::peaq_reward_mechanism_impl();
+
+			CollatorBlock::<T>::iter().for_each(|(k, _)| {
+				CollatorBlock::<T>::remove(k);
+			});
 		}
 
 		fn start_session(_start_index: SessionIndex) {

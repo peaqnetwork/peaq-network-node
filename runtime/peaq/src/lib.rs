@@ -757,9 +757,9 @@ pub mod staking {
 
 	parameter_types! {
 			/// Minimum round length is 1 hour
-			pub const MinBlocksPerRound: BlockNumber = HOURS;
-			/// Default length of a round/session is 4 hours
-			pub const DefaultBlocksPerRound: BlockNumber = 4 * HOURS;
+			pub const MinBlocksPerRound: BlockNumber = 20 * MINUTES;
+			/// Default length of a round/session is 2 hours
+			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
 			/// Unstaked balance can be unlocked after 7 days
 			pub const StakeDuration: BlockNumber = 7 * DAYS;
 			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
@@ -772,7 +772,7 @@ pub mod staking {
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// No maximum number of delegators per collator at launch
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxDelegatorsPerCollator: u32 = 32;
+			pub const MaxDelegatorsPerCollator: u32 = 100;
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
@@ -782,11 +782,11 @@ pub mod staking {
 			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
+<<<<<<< HEAD
 			pub const MaxCollatorCandidates: u32 = 32;
-			/// Maximum number of concurrent requests to unlock unstaked balance
-			pub const MaxUnstakeRequests: u32 = 10;
+=======
+			pub const MaxCollatorCandidates: u32 = 100;
 	}
-}
 
 impl parachain_staking::Config for Runtime {
 	type PotId = PotStakeId;
