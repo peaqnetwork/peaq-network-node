@@ -113,10 +113,15 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			// install base inflation parameters
+			// install inflation config
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
+
+			// install inflation parameters for first year
 			InflationParameters::<T>::put(
-				self.inflation_configuration.base_inflation_parameters.clone(),
+				InflationParametersT {
+					inflation_rate: self.inflation_configuration.base_inflation_parameters.inflation_rate,
+					disinflation_rate: Perbill::one(),
+				}
 			);
 
 			// set current inflationary year
