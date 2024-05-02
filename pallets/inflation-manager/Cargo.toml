@@ -16,6 +16,8 @@ sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 serde = { workspace = true, default-features = false, optional = true }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
+pallet-balances = { workspace = true, default-features = false }
+pallet-timestamp = { workspace = true, default-features = false, optional = true }
 
 [dev-dependencies]
 
@@ -33,6 +35,8 @@ std = [
 	"frame-system/std",
 	"serde",
 	"peaq-primitives-xcm/std",
+	"pallet-balances/std",
+	"pallet-timestamp/std",
 ]
 runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",

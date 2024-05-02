@@ -9,6 +9,12 @@ pub use types::{
 	InflationParameters as InflationParametersT,
 };
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
 use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, IsType},
@@ -46,14 +52,14 @@ pub mod pallet {
 
 	/// Inflation kicks off with these parameters
 	#[pallet::storage]
-	#[pallet::getter(fn base_inflation_parameters)]
+	#[pallet::getter(fn inflation_configuration)]
 	pub type InflationConfiguration<T: Config> =
 		StorageValue<_, InflationConfigurationT, ValueQuery>;
 
 	/// inflation parameters, calculated each year, based off of the base inflation parameters
 	/// provided at genesis
 	#[pallet::storage]
-	#[pallet::getter(fn effective_inflation_parameters)]
+	#[pallet::getter(fn inflation_parameters)]
 	pub type InflationParameters<T: Config> = StorageValue<_, InflationParametersT, ValueQuery>;
 
 	/// Info for how many years have passed, starting and ending at which block.
@@ -65,7 +71,7 @@ pub mod pallet {
 	/// parameters should be done.
 	/// New inflation parameters kick in from the next block after the recalculation block.
 	#[pallet::storage]
-	#[pallet::getter(fn recalculation_at)]
+	#[pallet::getter(fn do_recalculation_at)]
 	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
 
 	/// The current rewards per block
@@ -116,14 +122,13 @@ pub mod pallet {
 			// install inflation config
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
 
+			let initial_inflation_parameters = InflationParametersT {
+				inflation_rate: self.inflation_configuration.inflation_parameters.inflation_rate,
+				disinflation_rate: self.inflation_configuration.initial_disinflation,
+			};
+
 			// install inflation parameters for first year
-			InflationParameters::<T>::put(InflationParametersT {
-				inflation_rate: self
-					.inflation_configuration
-					.base_inflation_parameters
-					.inflation_rate,
-				disinflation_rate: Perbill::one(),
-			});
+			InflationParameters::<T>::put(initial_inflation_parameters.clone());
 
 			// set current inflationary year
 			CurrentYear::<T>::put(1);
@@ -135,9 +140,7 @@ pub mod pallet {
 			// Update recalculation flag
 			DoRecalculationAt::<T>::put(racalculation_target_block);
 
-			let block_rewards = Pallet::<T>::rewards_per_block(
-				&self.inflation_configuration.base_inflation_parameters,
-			);
+			let block_rewards = Pallet::<T>::rewards_per_block(&initial_inflation_parameters);
 
 			BlockRewards::<T>::put(block_rewards);
 
@@ -215,8 +218,7 @@ pub mod pallet {
 		fn update_inflation_parameters(
 			inflation_parameters: &InflationParametersT,
 		) -> InflationParametersT {
-			let base_inflation_parameters =
-				InflationConfiguration::<T>::get().base_inflation_parameters;
+			let base_inflation_parameters = InflationConfiguration::<T>::get().inflation_parameters;
 			// Calculate effective disinflation rate as
 			// disinflation_rate(n) =
 			// disinflation_rate(0) * disinflation_rate(n-1)
