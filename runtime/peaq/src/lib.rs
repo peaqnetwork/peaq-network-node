@@ -768,7 +768,7 @@ pub mod staking {
 			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 32;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
