@@ -60,6 +60,38 @@ fn parameters_update_as_expected() {
 	})
 }
 
+#[test]
+fn stagnation_reached_as_expected() {
+	ExternalityBuilder::build().execute_with(|| {
+		let inflation_configuration = InflationManager::inflation_configuration();
+		let stagnation_snapshot_year = inflation_configuration.inflation_stagnation_year as usize;
+		let last_snapshot_year = (stagnation_snapshot_year + 1) as usize;
+
+		let yearly_snapshots: Vec<InflationManagerSnapshot> = (0..=last_snapshot_year)
+			.map(|i| InflationManagerSnapshot::take_snapshot_at(BLOCKS_PER_YEAR * i as u32))
+			.collect();
+
+		// verify snapshot inflation parameters - stagnation year index is (year - 1)
+		assert_eq!(
+			yearly_snapshots[stagnation_snapshot_year - 1]
+				.inflation_parameters
+				.inflation_rate,
+			inflation_configuration.inflation_stagnation_rate
+		);
+		assert_eq!(
+			yearly_snapshots[stagnation_snapshot_year - 1].current_year,
+			inflation_configuration.inflation_stagnation_year
+		);
+
+		// ensure stagnation continues after stagnation year
+		assert_eq!(
+			yearly_snapshots[stagnation_snapshot_year].inflation_parameters,
+			yearly_snapshots[last_snapshot_year].inflation_parameters
+		);
+		println!("{:?}", yearly_snapshots[12]);
+	})
+}
+
 /// Represents inflation manager storage snapshot at current block
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 struct InflationManagerSnapshot {
