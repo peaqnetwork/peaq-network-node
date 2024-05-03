@@ -29,7 +29,10 @@ pub(crate) const INFLATION_CONFIGURATION: InflationConfigurationT = InflationCon
 		inflation_rate: Perbill::from_perthousand(35u32),
 		disinflation_rate: Perbill::from_percent(90),
 	},
-	initial_disinflation: Perbill::one(),
+	initial_inflation_parameters: InflationParametersT {
+		inflation_rate: Perbill::from_perthousand(35u32),
+		disinflation_rate: Perbill::one(),
+	},
 	inflation_stagnation_rate: Perbill::from_percent(1),
 	inflation_stagnation_year: 13,
 };

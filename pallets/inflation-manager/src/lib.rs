@@ -122,13 +122,10 @@ pub mod pallet {
 			// install inflation config
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
 
-			let initial_inflation_parameters = InflationParametersT {
-				inflation_rate: self.inflation_configuration.inflation_parameters.inflation_rate,
-				disinflation_rate: self.inflation_configuration.initial_disinflation,
-			};
-
 			// install inflation parameters for first year
-			InflationParameters::<T>::put(initial_inflation_parameters.clone());
+			InflationParameters::<T>::put(
+				self.inflation_configuration.initial_inflation_parameters.clone(),
+			);
 
 			// set current inflationary year
 			CurrentYear::<T>::put(1);
@@ -140,13 +137,11 @@ pub mod pallet {
 			// Update recalculation flag
 			DoRecalculationAt::<T>::put(racalculation_target_block);
 
-			let block_rewards = Pallet::<T>::rewards_per_block(&initial_inflation_parameters);
+			let block_rewards = Pallet::<T>::rewards_per_block(
+				&self.inflation_configuration.initial_inflation_parameters,
+			);
 
 			BlockRewards::<T>::put(block_rewards);
-
-			Pallet::<T>::deposit_event(Event::InflationConfigurationSet {
-				inflation_configuration: self.inflation_configuration.clone(),
-			});
 		}
 	}
 
