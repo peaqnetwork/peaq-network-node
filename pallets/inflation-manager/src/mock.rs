@@ -127,7 +127,11 @@ impl ExternalityBuilder {
 
 		// This will cause some initial issuance
 		pallet_balances::GenesisConfig::<TestRuntime> {
-			balances: vec![(1, 9000), (2, 800), (3, 10000)],
+			balances: vec![
+				(1, 1400000000000000000000000000),
+				(2, 1400000000000000000000000000),
+				(3, 1400000000000000000000000000),
+			],
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
