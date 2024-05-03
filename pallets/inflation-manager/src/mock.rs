@@ -2,7 +2,7 @@ use crate::{self as inflation_manager, InflationConfigurationT, InflationParamet
 
 use frame_support::{
 	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
-	weights::Weight, PalletId,
+	weights::Weight,
 };
 
 use sp_core::{ConstU32, H256};

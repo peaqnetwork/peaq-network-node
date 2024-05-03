@@ -65,7 +65,7 @@ fn stagnation_reached_as_expected() {
 	ExternalityBuilder::build().execute_with(|| {
 		let inflation_configuration = InflationManager::inflation_configuration();
 		let stagnation_snapshot_year = inflation_configuration.inflation_stagnation_year as usize;
-		let last_snapshot_year = (stagnation_snapshot_year + 1) as usize;
+		let last_snapshot_year = stagnation_snapshot_year + 1;
 
 		let yearly_snapshots: Vec<InflationManagerSnapshot> = (0..=last_snapshot_year)
 			.map(|i| InflationManagerSnapshot::take_snapshot_at(BLOCKS_PER_YEAR * i as u32))
