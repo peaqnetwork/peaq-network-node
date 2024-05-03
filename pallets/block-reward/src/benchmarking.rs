@@ -19,21 +19,7 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::<T>::DistributionConfigurationChanged(reward_config).into());
 	}
-
-	set_block_issue_reward {
-		let block_reward = BalanceOf::<T>::from(100_000u32);
-	}: _(RawOrigin::Root, block_reward)
-	verify {
-		assert_last_event::<T>(Event::<T>::BlockIssueRewardChanged(block_reward).into());
-	}
-
-	set_max_currency_supply {
-		let max_currency_supply = BalanceOf::<T>::from(100_123u32);
-	}: _(RawOrigin::Root, max_currency_supply)
-	verify {
-		assert_last_event::<T>(Event::<T>::MaxCurrencySupplyChanged(max_currency_supply).into());
-	}
-
+	
 }
 
 #[cfg(test)]
