@@ -88,7 +88,6 @@ fn stagnation_reached_as_expected() {
 			yearly_snapshots[stagnation_snapshot_year].inflation_parameters,
 			yearly_snapshots[last_snapshot_year].inflation_parameters
 		);
-		println!("{:?}", yearly_snapshots[12]);
 	})
 }
 
