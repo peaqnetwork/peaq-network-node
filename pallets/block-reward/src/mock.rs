@@ -172,12 +172,7 @@ impl ExternalityBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
-		inflation_manager::GenesisConfig::<TestRuntime> {
-			inflation_configuration: inflation_manager::InflationConfigurationT::default(),
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
+
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
 			_phantom: Default::default(),
