@@ -25,6 +25,7 @@ use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 
 pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
+const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -102,6 +103,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]

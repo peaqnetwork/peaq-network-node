@@ -15,20 +15,27 @@ mod upgrade {
 	impl<T: Config> MigrateToV0<T> {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
-			let weight_reads = 0;
+			let mut weight_reads = 0;
 
 			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
+			weight_reads += 1;
 
-			if onchain_storage_version.eq(&CURRENT_STORAGE_VERSION) {
+			let current = Pallet::<T>::current_storage_version();
+
+			if onchain_storage_version < current {
+				let inflation_configuration = InflationConfigurationT::default();
 				// install inflation config
-				InflationConfiguration::<T>::put(InflationConfigurationT::default());
+				InflationConfiguration::<T>::put(inflation_configuration.clone());
 				weight_writes += 1;
 
 				// set current year to 1
 				CurrentYear::<T>::put(1);
 				weight_writes += 1;
 
-				let inflation_parameters = InflationParametersT::default();
+				// calculate inflation parameters for the first year
+				let inflation_parameters =
+					Pallet::<T>::update_inflation_parameters(&inflation_configuration);
+
 				// install inflation parameters for first year
 				InflationParameters::<T>::put(inflation_parameters.clone());
 				weight_writes += 1;
@@ -45,6 +52,18 @@ mod upgrade {
 
 				BlockRewards::<T>::put(block_rewards);
 				weight_writes += 1;
+
+				// Update storage version
+				STORAGE_VERSION.put::<Pallet<T>>();
+
+				log::info!(
+					"Inflation Manager storage migration completed, params installed: {:?}",
+					inflation_parameters
+				);
+
+				log::info!(
+					"Inflation Manager storage migration completed from version {:?} to version {:?}", onchain_storage_version, current
+				);
 			}
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}

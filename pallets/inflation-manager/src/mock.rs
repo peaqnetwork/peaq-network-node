@@ -1,8 +1,7 @@
 use crate::{self as inflation_manager};
 
 use frame_support::{
-	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
-	weights::Weight,
+	construct_runtime, parameter_types, sp_io::TestExternalities, weights::Weight,
 };
 
 use sp_core::{ConstU32, H256};

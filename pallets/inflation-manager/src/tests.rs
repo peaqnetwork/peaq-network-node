@@ -5,20 +5,19 @@ use peaq_primitives_xcm::BlockNumber;
 #[test]
 fn sanity_check() {
 	ExternalityBuilder::build().execute_with(|| {
-		let onchain_inflation_config = InflationManager::inflation_configuration();
-		let onchain_inflation_parameters = InflationManager::inflation_parameters();
+		InflationManager::on_runtime_upgrade();
+		let current_block = System::block_number();
+
+		let snapshot = InflationManagerSnapshot::take_snapshot_at(0);
 		let expected_inflation_parameters = InflationParametersT {
 			inflation_rate: Perbill::from_perthousand(35u32),
 			disinflation_rate: Perbill::one(),
 		};
-		let onchain_do_recalculation_at: BlockNumber =
-			InflationManager::do_recalculation_at().try_into().unwrap();
-		let onchain_current_year = InflationManager::current_year();
 
-		assert_eq!(onchain_inflation_config, InflationConfigurationT::default());
-		assert_eq!(onchain_inflation_parameters, expected_inflation_parameters);
-		assert_eq!(onchain_do_recalculation_at, BLOCKS_PER_YEAR);
-		assert_eq!(onchain_current_year, 1u128);
+		assert_eq!(snapshot.inflation_configuration, InflationConfigurationT::default());
+		assert_eq!(snapshot.inflation_parameters, expected_inflation_parameters);
+		assert_eq!(snapshot.do_recalculation_at, BLOCKS_PER_YEAR + current_block as u32);
+		assert_eq!(snapshot.current_year, 1u128);
 	})
 }
 
@@ -27,7 +26,10 @@ fn sanity_check() {
 #[test]
 fn parameters_update_as_expected() {
 	ExternalityBuilder::build().execute_with(|| {
-		let target_block_at_genesis = BLOCKS_PER_YEAR;
+		InflationManager::on_runtime_upgrade();
+		let current_block = System::block_number();
+
+		let target_block_at_genesis = BLOCKS_PER_YEAR + current_block as u32;
 
 		let snapshots_before_new_year = vec![
 			InflationManagerSnapshot::take_snapshot_at(target_block_at_genesis - 2),
@@ -89,6 +91,13 @@ fn stagnation_reached_as_expected() {
 			yearly_snapshots[stagnation_snapshot_year].inflation_parameters,
 			yearly_snapshots[last_snapshot_year].inflation_parameters
 		);
+
+		for snapshot in yearly_snapshots.iter() {
+			println!(
+				"year: {:?} params: {:?}",
+				snapshot.current_year, snapshot.inflation_parameters
+			);
+		}
 	})
 }
 
