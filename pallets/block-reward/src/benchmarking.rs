@@ -19,7 +19,7 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::<T>::DistributionConfigurationChanged(reward_config).into());
 	}
-	
+
 }
 
 #[cfg(test)]

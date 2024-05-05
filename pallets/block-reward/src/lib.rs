@@ -104,14 +104,6 @@ pub mod pallet {
 	#[pallet::getter(fn reward_config)]
 	pub(super) type RewardDistributionConfigStorage<T: Config> =
 		StorageValue<_, RewardDistributionConfig, ValueQuery>;
-	// TODO kill from storage
-	#[pallet::storage]
-	#[pallet::getter(fn block_issue_reward)]
-	pub(super) type BlockIssueReward<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
-	// TODO kill from storage
-	#[pallet::storage]
-	#[pallet::getter(fn max_currency_supply)]
-	pub(super) type MaxCurrencySupply<T: Config> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
