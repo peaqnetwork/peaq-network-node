@@ -7,21 +7,37 @@ use sp_runtime::Perbill;
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type BalanceOf<T> = <<T as PalletConfig>::Currency as Currency<AccountIdOf<T>>>::Balance;
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen, Default)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct InflationParameters {
 	pub inflation_rate: Perbill,
 	pub disinflation_rate: Perbill,
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen, Default)]
+impl Default for InflationParameters {
+	fn default() -> Self {
+		Self {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::from_percent(90),
+		}
+	}
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct InflationConfiguration {
 	// the invariant rates for inflation and disinflation going forward
 	pub inflation_parameters: InflationParameters,
-	// the inflation and disinflation in affect at genesis, they are updated yearly with onchain
-	// logic Reusing InflationParameters type here
-	pub initial_inflation_parameters: InflationParameters,
 	pub inflation_stagnation_rate: Perbill,
 	pub inflation_stagnation_year: u128,
+}
+
+impl Default for InflationConfiguration {
+	fn default() -> Self {
+		Self {
+			inflation_parameters: InflationParameters::default(),
+			inflation_stagnation_rate: Perbill::from_percent(1),
+			inflation_stagnation_year: 13,
+		}
+	}
 }

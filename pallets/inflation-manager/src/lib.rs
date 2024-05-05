@@ -33,6 +33,8 @@ use peaq_primitives_xcm::Balance;
 #[frame_support::pallet]
 pub mod pallet {
 
+	use sp_runtime::traits::Saturating;
+
 	use super::*;
 
 	#[pallet::config]
@@ -122,13 +124,15 @@ pub mod pallet {
 			// install inflation config
 			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
 
-			// install inflation parameters for first year
-			InflationParameters::<T>::put(
-				self.inflation_configuration.initial_inflation_parameters.clone(),
-			);
-
-			// set current inflationary year
+			// set current year to 1
 			CurrentYear::<T>::put(1);
+
+			// calc inflation for first year
+			let inflation_parameters =
+				Pallet::<T>::update_inflation_parameters(&self.inflation_configuration);
+
+			// install inflation parameters for first year
+			InflationParameters::<T>::put(inflation_parameters.clone());
 
 			// set the flag to calculate inflation parameters after a year(in blocks)
 			let racalculation_target_block = frame_system::Pallet::<T>::current_block_number() +
@@ -137,9 +141,7 @@ pub mod pallet {
 			// Update recalculation flag
 			DoRecalculationAt::<T>::put(racalculation_target_block);
 
-			let block_rewards = Pallet::<T>::rewards_per_block(
-				&self.inflation_configuration.initial_inflation_parameters,
-			);
+			let block_rewards = Pallet::<T>::rewards_per_block(&inflation_parameters);
 
 			BlockRewards::<T>::put(block_rewards);
 		}
@@ -167,8 +169,7 @@ pub mod pallet {
 				// update inflation parameters if we havent reached the stagnation year
 				if new_year < inflation_config.inflation_stagnation_year {
 					// update inflation parameters
-					inflation_parameters =
-						Self::update_inflation_parameters(&inflation_parameters.clone());
+					inflation_parameters = Self::update_inflation_parameters(&inflation_config);
 				}
 
 				// if, at end of year, we have reached the stagnation year, kill the recalculation
@@ -211,19 +212,20 @@ pub mod pallet {
 
 		// We do not expect this to underflow/overflow
 		fn update_inflation_parameters(
-			inflation_parameters: &InflationParametersT,
+			inflation_config: &InflationConfigurationT,
 		) -> InflationParametersT {
-			let base_inflation_parameters = InflationConfiguration::<T>::get().inflation_parameters;
-			// Calculate effective disinflation rate as
-			// disinflation_rate(n) =
-			// disinflation_rate(0) * disinflation_rate(n-1)
-			let disinflation_rate = inflation_parameters.disinflation_rate *
-				base_inflation_parameters.disinflation_rate;
+			let current_year = CurrentYear::<T>::get();
+
+			// Calculate disinflation rate as disinflation rate(n) = disinflation rate(0) ^ (n-1)
+			let disinflation_rate = inflation_config
+				.inflation_parameters
+				.disinflation_rate
+				.saturating_pow((current_year - 1).try_into().unwrap());
 
 			// Calculate effective inflation rate as
-			// inflation_rate(n) =
-			// inflation_rate(n-1) * disinflation_rate(n)
-			let inflation_rate = inflation_parameters.inflation_rate * disinflation_rate;
+			// inflation_rate(n) = inflation_rate(0) * disinflation_rate(n)
+			let inflation_rate =
+				inflation_config.inflation_parameters.inflation_rate * disinflation_rate;
 
 			InflationParametersT { inflation_rate, disinflation_rate }
 		}

@@ -1,4 +1,4 @@
-use crate::{self as inflation_manager, InflationConfigurationT, InflationParametersT};
+use crate::{self as inflation_manager};
 
 use frame_support::{
 	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
@@ -9,7 +9,6 @@ use sp_core::{ConstU32, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
 };
 
 pub(crate) type AccountId = u64;
@@ -22,20 +21,6 @@ type Block = frame_system::mocking::MockBlock<TestRuntime>;
 /// Value shouldn't be less than 2 for testing purposes, otherwise we cannot test certain corner
 /// cases.
 pub(crate) const EXISTENTIAL_DEPOSIT: Balance = 2;
-
-/// Inflation values same as genesis values
-pub(crate) const INFLATION_CONFIGURATION: InflationConfigurationT = InflationConfigurationT {
-	inflation_parameters: InflationParametersT {
-		inflation_rate: Perbill::from_perthousand(35u32),
-		disinflation_rate: Perbill::from_percent(90),
-	},
-	initial_inflation_parameters: InflationParametersT {
-		inflation_rate: Perbill::from_perthousand(35u32),
-		disinflation_rate: Perbill::one(),
-	},
-	inflation_stagnation_rate: Perbill::from_percent(1),
-	inflation_stagnation_year: 13,
-};
 
 construct_runtime!(
 	pub enum TestRuntime where
@@ -139,7 +124,7 @@ impl ExternalityBuilder {
 		.assimilate_storage(&mut storage)
 		.ok();
 		inflation_manager::GenesisConfig::<TestRuntime> {
-			inflation_configuration: INFLATION_CONFIGURATION,
+			inflation_configuration: Default::default(),
 			_phantom: Default::default(),
 		}
 		.assimilate_storage(&mut storage)
