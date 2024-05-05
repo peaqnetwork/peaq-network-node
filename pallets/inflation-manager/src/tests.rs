@@ -12,7 +12,7 @@ fn sanity_check() {
 			disinflation_rate: Perbill::one(),
 		};
 		let onchain_do_recalculation_at: BlockNumber =
-			InflationManager::do_recalculation_at().unwrap().try_into().unwrap();
+			InflationManager::do_recalculation_at().try_into().unwrap();
 		let onchain_current_year = InflationManager::current_year();
 
 		assert_eq!(onchain_inflation_config, InflationConfigurationT::default());
@@ -108,7 +108,6 @@ impl InflationManagerSnapshot {
 			inflation_configuration: InflationManager::inflation_configuration(),
 			inflation_parameters: InflationManager::inflation_parameters(),
 			do_recalculation_at: InflationManager::do_recalculation_at()
-				.unwrap()
 				.try_into()
 				.unwrap(),
 			current_year: InflationManager::current_year(),

@@ -20,15 +20,10 @@ use frame_support::{
 	traits::{Currency, IsType},
 };
 use frame_system::WeightInfo;
+use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 
-#[cfg(not(feature = "fast-inflation"))]
 pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
-
-#[cfg(feature = "fast-inflation")]
-pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 4;
-
-use peaq_primitives_xcm::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -74,7 +69,7 @@ pub mod pallet {
 	/// New inflation parameters kick in from the next block after the recalculation block.
 	#[pallet::storage]
 	#[pallet::getter(fn do_recalculation_at)]
-	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, OptionQuery>;
+	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
 	/// The current rewards per block
 	#[pallet::storage]
@@ -153,7 +148,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_finalize(now: T::BlockNumber) {
-			let target_block = DoRecalculationAt::<T>::get().unwrap();
+			let target_block = DoRecalculationAt::<T>::get();
 			let current_year = CurrentYear::<T>::get();
 			let new_year = current_year + 1;
 
