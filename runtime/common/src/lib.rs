@@ -29,7 +29,7 @@ pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;
-	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(0);
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
