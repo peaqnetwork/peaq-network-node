@@ -8,7 +8,6 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 
 mod upgrade {
 	use super::*;
-	const CURRENT_STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	pub struct MigrateToV0<T>(sp_std::marker::PhantomData<T>);
 
@@ -35,6 +34,7 @@ mod upgrade {
 				// calculate inflation parameters for the first year
 				let inflation_parameters =
 					Pallet::<T>::update_inflation_parameters(&inflation_configuration);
+				weight_reads += 1;
 
 				// install inflation parameters for first year
 				InflationParameters::<T>::put(inflation_parameters.clone());
@@ -43,23 +43,20 @@ mod upgrade {
 				// set the flag to calculate inflation parameters after a year(in blocks)
 				let racalculation_target_block = frame_system::Pallet::<T>::current_block_number() +
 					T::BlockNumber::from(BLOCKS_PER_YEAR);
+				weight_reads += 1;
 
 				// Update recalculation flag
 				DoRecalculationAt::<T>::put(racalculation_target_block);
 				weight_writes += 1;
 
 				let block_rewards = Pallet::<T>::rewards_per_block(&inflation_parameters);
+				weight_reads += 1;
 
 				BlockRewards::<T>::put(block_rewards);
 				weight_writes += 1;
 
 				// Update storage version
 				STORAGE_VERSION.put::<Pallet<T>>();
-
-				log::info!(
-					"Inflation Manager storage migration completed, params installed: {:?}",
-					inflation_parameters
-				);
 
 				log::info!(
 					"Inflation Manager storage migration completed from version {:?} to version {:?}", onchain_storage_version, current
