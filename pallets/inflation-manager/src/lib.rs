@@ -9,6 +9,7 @@ pub use types::{
 	InflationParameters as InflationParametersT,
 };
 
+mod migrations;
 #[cfg(test)]
 mod mock;
 
@@ -149,6 +150,10 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			migrations::on_runtime_upgrade::<T>()
+		}
+
 		fn on_finalize(now: T::BlockNumber) {
 			let target_block = DoRecalculationAt::<T>::get();
 			let current_year = CurrentYear::<T>::get();
@@ -199,7 +204,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		// calculate inflationary tokens per block
-		fn rewards_per_block(inflation_parameters: &InflationParametersT) -> Balance {
+		pub fn rewards_per_block(inflation_parameters: &InflationParametersT) -> Balance {
 			let total_issuance = T::Currency::total_issuance();
 			let rewards_total = inflation_parameters.inflation_rate * total_issuance;
 
@@ -208,7 +213,7 @@ pub mod pallet {
 		}
 
 		// We do not expect this to underflow/overflow
-		fn update_inflation_parameters(
+		pub fn update_inflation_parameters(
 			inflation_config: &InflationConfigurationT,
 		) -> InflationParametersT {
 			let current_year = CurrentYear::<T>::get();

@@ -3,11 +3,8 @@ use mock::*;
 use peaq_primitives_xcm::BlockNumber;
 
 #[test]
-fn sanity_check() {
+fn sanity_check_genesis() {
 	ExternalityBuilder::build().execute_with(|| {
-		InflationManager::on_runtime_upgrade();
-		let current_block = System::block_number();
-
 		let snapshot = InflationManagerSnapshot::take_snapshot_at(0);
 		let expected_inflation_parameters = InflationParametersT {
 			inflation_rate: Perbill::from_perthousand(35u32),
@@ -16,7 +13,26 @@ fn sanity_check() {
 
 		assert_eq!(snapshot.inflation_configuration, InflationConfigurationT::default());
 		assert_eq!(snapshot.inflation_parameters, expected_inflation_parameters);
-		assert_eq!(snapshot.do_recalculation_at, BLOCKS_PER_YEAR + current_block as u32);
+		assert_eq!(snapshot.do_recalculation_at, BLOCKS_PER_YEAR);
+		assert_eq!(snapshot.current_year, 1u128);
+	})
+}
+
+#[test]
+fn sanity_check_storage_migration() {
+	ExternalityBuilder::build().execute_with(|| {
+		InflationManager::on_runtime_upgrade();
+		let current_block = System::block_number() as u32;
+
+		let snapshot = InflationManagerSnapshot::take_snapshot_at(current_block);
+		let expected_inflation_parameters = InflationParametersT {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::one(),
+		};
+
+		assert_eq!(snapshot.inflation_configuration, InflationConfigurationT::default());
+		assert_eq!(snapshot.inflation_parameters, expected_inflation_parameters);
+		assert_eq!(snapshot.do_recalculation_at, BLOCKS_PER_YEAR + current_block);
 		assert_eq!(snapshot.current_year, 1u128);
 	})
 }
@@ -26,10 +42,7 @@ fn sanity_check() {
 #[test]
 fn parameters_update_as_expected() {
 	ExternalityBuilder::build().execute_with(|| {
-		InflationManager::on_runtime_upgrade();
-		let current_block = System::block_number();
-
-		let target_block_at_genesis = BLOCKS_PER_YEAR + current_block as u32;
+		let target_block_at_genesis = BLOCKS_PER_YEAR;
 
 		let snapshots_before_new_year = vec![
 			InflationManagerSnapshot::take_snapshot_at(target_block_at_genesis - 2),
@@ -109,9 +122,7 @@ impl InflationManagerSnapshot {
 		Self {
 			inflation_configuration: InflationManager::inflation_configuration(),
 			inflation_parameters: InflationManager::inflation_parameters(),
-			do_recalculation_at: InflationManager::do_recalculation_at()
-				.try_into()
-				.unwrap(),
+			do_recalculation_at: InflationManager::do_recalculation_at().try_into().unwrap(),
 			current_year: InflationManager::current_year(),
 			block_rewards: InflationManager::block_rewards(),
 		}

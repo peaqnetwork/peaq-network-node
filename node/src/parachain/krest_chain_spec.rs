@@ -126,12 +126,7 @@ fn configure_genesis(
 			coefficient: staking::coefficient(),
 		},
 		inflation_manager: InflationManagerConfig {
-			inflation_configuration: inflation_manager::InflationConfigurationT {
-				inflation_parameters: Default::default(),
-
-				inflation_stagnation_rate: Perbill::from_percent(1), // 0.010
-				inflation_stagnation_year: 13,
-			},
+			inflation_configuration: Default::default(),
 			_phantom: Default::default(),
 		},
 		block_reward: BlockRewardConfig {
