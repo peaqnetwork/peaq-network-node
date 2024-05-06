@@ -1,17 +1,14 @@
-use crate::{self as pallet_block_reward, NegativeImbalanceOf};
+use crate::{self as inflation_manager};
 
 use frame_support::{
-	construct_runtime, parameter_types,
-	sp_io::TestExternalities,
-	traits::{Currency, GenesisBuild},
+	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
 	weights::Weight,
-	PalletId,
 };
 
 use sp_core::{ConstU32, H256};
 use sp_runtime::{
 	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup},
 };
 
 pub(crate) type AccountId = u64;
@@ -35,7 +32,6 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		InflationManager: inflation_manager::{Pallet, Call, Storage, Event<T>},
-		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -104,61 +100,12 @@ impl pallet_timestamp::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
-// Fake accounts used to simulate reward beneficiaries balances
-pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
-pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
-pub(crate) const CORETIME_POT: PalletId = PalletId(*b"lpreward");
-pub(crate) const SUBSIDIZATION_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"destakin");
-pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"deincent");
-
-// Type used as beneficiary payout handle
-pub struct BeneficiaryPayout();
-impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
-	for BeneficiaryPayout
-{
-	fn treasury(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&TREASURY_POT.into_account_truncating(), reward);
-	}
-
-	fn collators_delegators(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&COLLATOR_DELEGATOR_POT.into_account_truncating(), reward);
-	}
-
-	fn coretime(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&CORETIME_POT.into_account_truncating(), reward);
-	}
-
-	fn subsidization_pool(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&SUBSIDIZATION_POT.into_account_truncating(), reward);
-	}
-
-	fn depin_staking(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&DE_PINSTAKING_ACCOUNT.into_account_truncating(), reward);
-	}
-
-	fn depin_incentivization(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(
-			&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(),
-			reward,
-		);
-	}
-}
-
 impl inflation_manager::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BoundedDataLen = ConstU32<1024>;
 	type WeightInfo = ();
 }
-
-impl pallet_block_reward::Config for TestRuntime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BeneficiaryPayout = BeneficiaryPayout;
-	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
-}
-
 pub struct ExternalityBuilder;
 
 impl ExternalityBuilder {
@@ -168,18 +115,16 @@ impl ExternalityBuilder {
 
 		// This will cause some initial issuance
 		pallet_balances::GenesisConfig::<TestRuntime> {
-			balances: vec![(1, 9000), (2, 800), (3, 10000)],
+			balances: vec![
+				(1, 1400000000000000000000000000),
+				(2, 1400000000000000000000000000),
+				(3, 1400000000000000000000000000),
+			],
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
 		inflation_manager::GenesisConfig::<TestRuntime> {
-			inflation_configuration: inflation_manager::InflationConfigurationT::default(),
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
-		pallet_block_reward::GenesisConfig::<TestRuntime> {
-			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
+			inflation_configuration: Default::default(),
 			_phantom: Default::default(),
 		}
 		.assimilate_storage(&mut storage)

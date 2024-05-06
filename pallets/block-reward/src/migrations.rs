@@ -32,6 +32,12 @@ mod v2 {
 	#[storage_alias]
 	type HardCap<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
 
+	#[storage_alias]
+	type MaxCurrencySupply<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
+
+	#[storage_alias]
+	type BlockIssueReward<T: Config> = StorageValue<Pallet<T>, BalanceOf<T>, ValueQuery>;
+
 	/// Migration implementation that renames storage HardCap into MaxCurrencySupply
 	pub struct MigrateToV2x<T>(sp_std::marker::PhantomData<T>);
 
@@ -58,6 +64,15 @@ mod v2 {
 					weight_reads += 1;
 					weight_writes += 2
 				}
+
+				if MaxCurrencySupply::<T>::exists() {
+					MaxCurrencySupply::<T>::kill();
+				}
+
+				if BlockIssueReward::<T>::exists() {
+					BlockIssueReward::<T>::kill();
+				}
+
 				log!(info, "Enter and do the migration, {:?} < {:?}", onchain_version, current);
 				if RewardDistributionConfigStorage::<T>::exists() {
 					log!(info, "Migrating block_reward to Releases::V2_3_0");
