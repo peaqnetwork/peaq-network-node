@@ -949,6 +949,13 @@ impl zenlink_protocol::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl inflation_manager::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BoundedDataLen = ConstU32<262144>;
+	type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -975,6 +982,7 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
+		InflationManager: inflation_manager::{Pallet, Storage, Config<T>, Event<T>} = 15,
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,

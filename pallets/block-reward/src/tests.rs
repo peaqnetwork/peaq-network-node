@@ -143,100 +143,22 @@ pub fn set_configuration_is_ok() {
 }
 
 #[test]
-pub fn set_block_issue_reward_is_failure() {
-	ExternalityBuilder::build().execute_with(|| {
-		assert_noop!(
-			BlockReward::set_block_issue_reward(RuntimeOrigin::signed(1), Default::default()),
-			BadOrigin
-		);
-	})
-}
-
-#[test]
-pub fn set_block_issue_reward_is_ok() {
-	ExternalityBuilder::build().execute_with(|| {
-		let reward = 3_123_456 as Balance;
-		// custom config so it differs from the default one
-		assert_ok!(BlockReward::set_block_issue_reward(RuntimeOrigin::root(), reward));
-		System::assert_last_event(mock::RuntimeEvent::BlockReward(Event::BlockIssueRewardChanged(
-			reward,
-		)));
-
-		assert_eq!(BlockIssueReward::<TestRuntime>::get(), reward);
-	})
-}
-
-#[test]
-pub fn set_maxcurrencysupply_is_failure() {
-	ExternalityBuilder::build().execute_with(|| {
-		assert_noop!(
-			BlockReward::set_max_currency_supply(RuntimeOrigin::signed(1), Default::default()),
-			BadOrigin
-		);
-	})
-}
-
-#[test]
-pub fn set_maxcurrencysupply_is_ok() {
-	ExternalityBuilder::build().execute_with(|| {
-		let limit = 3_123_456 as Balance;
-		// custom config so it differs from the default one
-		assert_ok!(BlockReward::set_max_currency_supply(RuntimeOrigin::root(), limit));
-		System::assert_last_event(mock::RuntimeEvent::BlockReward(
-			Event::MaxCurrencySupplyChanged(limit),
-		));
-
-		assert_eq!(MaxCurrencySupply::<TestRuntime>::get(), limit);
-	})
-}
-
-#[test]
 pub fn inflation_and_total_issuance_as_expected() {
 	ExternalityBuilder::build().execute_with(|| {
 		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
+		let block_reward: Balance = InflationManagerPallet::<TestRuntime>::block_rewards();
 
 		for block in 0..10 {
 			assert_eq!(
 				<TestRuntime as Config>::Currency::total_issuance(),
-				block * BLOCK_REWARD + init_issuance
+				block * block_reward + init_issuance
 			);
 			BlockReward::on_timestamp_set(0);
 			assert_eq!(
 				<TestRuntime as Config>::Currency::total_issuance(),
-				(block + 1) * BLOCK_REWARD + init_issuance
+				(block + 1) * block_reward + init_issuance
 			);
 		}
-	})
-}
-
-#[test]
-pub fn harcap_reaches() {
-	ExternalityBuilder::build().execute_with(|| {
-		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
-		let block_limits = 3_u128;
-
-		assert_ok!(BlockReward::set_max_currency_supply(
-			RuntimeOrigin::root(),
-			BLOCK_REWARD * block_limits
-		));
-
-		for block in 0..block_limits {
-			assert_eq!(
-				<TestRuntime as Config>::Currency::total_issuance(),
-				block * BLOCK_REWARD + init_issuance
-			);
-			BlockReward::on_timestamp_set(0);
-			assert_eq!(
-				<TestRuntime as Config>::Currency::total_issuance(),
-				(block + 1) * BLOCK_REWARD + init_issuance
-			);
-		}
-
-		BlockReward::on_timestamp_set(0);
-		assert_eq!(
-			<TestRuntime as Config>::Currency::total_issuance(),
-			block_limits * BLOCK_REWARD + init_issuance
-		);
 	})
 }
 
@@ -417,13 +339,15 @@ impl Rewards {
 	/// Pre-calculates the reward distribution, using the provided `RewardDistributionConfig`.
 	/// Method assumes that total issuance will be increased by `BLOCK_REWARD`.
 	fn calculate(reward_config: &RewardDistributionConfig) -> Self {
-		let treasury_reward = reward_config.treasury_percent * BLOCK_REWARD;
-		let collators_delegators_reward = reward_config.collators_delegators_percent * BLOCK_REWARD;
-		let coretime_reward = reward_config.coretime_percent * BLOCK_REWARD;
-		let subsidization_pool_reward = reward_config.subsidization_pool_percent * BLOCK_REWARD;
-		let depin_staking_reward = reward_config.depin_staking_percent * BLOCK_REWARD;
+		let block_reward: Balance = InflationManager::block_rewards();
+
+		let treasury_reward = reward_config.treasury_percent * block_reward;
+		let collators_delegators_reward = reward_config.collators_delegators_percent * block_reward;
+		let coretime_reward = reward_config.coretime_percent * block_reward;
+		let subsidization_pool_reward = reward_config.subsidization_pool_percent * block_reward;
+		let depin_staking_reward = reward_config.depin_staking_percent * block_reward;
 		let depin_incentivization_reward =
-			reward_config.depin_incentivization_percent * BLOCK_REWARD;
+			reward_config.depin_incentivization_percent * block_reward;
 
 		Self {
 			treasury_reward,

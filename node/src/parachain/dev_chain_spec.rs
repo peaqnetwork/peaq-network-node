@@ -2,9 +2,9 @@ use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, MorConfig, ParachainInfoConfig, ParachainStakingConfig,
-	PeaqMorConfig, PeaqPrecompiles, Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	GenesisAccount, GenesisConfig, InflationManagerConfig, MorConfig, ParachainInfoConfig,
+	ParachainStakingConfig, PeaqMorConfig, PeaqPrecompiles, Runtime,
+	StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
@@ -140,6 +140,10 @@ fn configure_genesis(
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
 		},
+		inflation_manager: InflationManagerConfig {
+			inflation_configuration: Default::default(),
+			_phantom: Default::default(),
+		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
@@ -150,10 +154,8 @@ fn configure_genesis(
 				depin_staking_percent: Perbill::from_percent(5),
 				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			block_issue_reward: DOLLARS,
-			max_currency_supply: 4_200_000_000 * DOLLARS,
+			_phantom: Default::default(),
 		},
-
 		vesting: peaq_dev_runtime::VestingConfig { vesting: vec![] },
 		aura: Default::default(),
 		sudo: SudoConfig {
