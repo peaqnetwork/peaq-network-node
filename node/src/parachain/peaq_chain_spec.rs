@@ -3,8 +3,9 @@ use cumulus_primitives_core::ParaId;
 use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
-	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	GenesisAccount, GenesisConfig, InflationManagerConfig, ParachainInfoConfig,
+	ParachainStakingConfig, PeaqPrecompiles, Runtime, StakingCoefficientRewardCalculatorConfig,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
@@ -129,10 +130,10 @@ fn configure_genesis(
 		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
 			coefficient: staking::coefficient(),
 		},
-		// inflation_manager: InflationManagerConfig {
-		// 	inflation_configuration: Default::default(),
-		// 	_phantom: Default::default(),
-		// },
+		inflation_manager: InflationManagerConfig {
+			inflation_configuration: Default::default(),
+			_phantom: Default::default(),
+		},
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {

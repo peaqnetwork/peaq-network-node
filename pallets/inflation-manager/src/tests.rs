@@ -109,7 +109,9 @@ impl InflationManagerSnapshot {
 		Self {
 			inflation_configuration: InflationManager::inflation_configuration(),
 			inflation_parameters: InflationManager::inflation_parameters(),
-			do_recalculation_at: InflationManager::do_recalculation_at().try_into().unwrap(),
+			do_recalculation_at: InflationManager::do_recalculation_at()
+				.try_into()
+				.unwrap(),
 			current_year: InflationManager::current_year(),
 			block_rewards: InflationManager::block_rewards(),
 		}
