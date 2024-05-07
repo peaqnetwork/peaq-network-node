@@ -51,7 +51,7 @@ fn check_fund_enough_token() {
 		})
 }
 
-#[test]
+i#[test]
 fn check_not_fund_token() {
 	ExternalityBuilder::default()
 		.with_balances(vec![(1, DefaultTotalIssuanceNum::get() + 50)])
@@ -64,6 +64,25 @@ fn check_not_fund_token() {
 				DefaultTotalIssuanceNum::get() + 50
 			);
 		})
+}
+
+#[test]
+fn sanity_check_set_tge() {
+	ExternalityBuilder::build().execute_with(|| {
+		InflationManagerSnapshot::take_snapshot_at(0);
+		let expected_inflation_parameters = InflationParametersT {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::one(),
+		};
+
+		InflationManager::set_tge(RawOrigin::Root.into(), 100u32.into(), 110u32.into()).unwrap();
+
+		assert_eq!(InflationManager::inflation_configuration(), InflationConfigurationT::default());
+		assert_eq!(InflationManager::inflation_parameters(), expected_inflation_parameters);
+		assert_eq!(InflationManager::do_recalculation_at() as BlockNumber, 100 + BLOCKS_PER_YEAR);
+		assert_eq!(InflationManager::current_year(), 1u128);
+		assert_eq!(InflationManager::block_rewards(), 110u32.into());
+	})
 }
 
 #[test]

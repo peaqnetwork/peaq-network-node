@@ -17,8 +17,8 @@ benchmarks! {
 		assert_eq!(CurrencyOf::<T>::free_balance(&pot_account), 0);
 		assert_eq!(CurrencyOf::<T>::free_balance(&dest), 1000);
 	}
-
-}
+	set_tge {
+	}: _(RawOrigin::Root, (1000 as u32).into(), (1100 as u32).into())
 
 #[cfg(test)]
 mod tests {

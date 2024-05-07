@@ -43,6 +43,18 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 		Weight::from_parts(222_362_000, 0)
 			.saturating_add(Weight::from_parts(0, 6196))
 			.saturating_add(T::DbWeight::get().reads(3))
+	}
+	/// Storage: InflationManager DoRecalculationAt (r:0 w:1)
+	/// Proof: InflationManager DoRecalculationAt (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: InflationManager BlockRewards (r:0 w:1)
+	/// Proof: InflationManager BlockRewards (max_values: Some(1), max_size: Some(16), added: 511, mode: MaxEncodedLen)
+	fn set_tge() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 12_654_000 picoseconds.
+		Weight::from_parts(12_895_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 }

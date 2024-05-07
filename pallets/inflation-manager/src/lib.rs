@@ -234,6 +234,20 @@ pub mod pallet {
 				T::Currency::free_balance(&account),
 				AllowDeath,
 			)?;
+			Ok(().into())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::WeightInfo::set_tge())]
+		pub fn set_tge(
+			origin: OriginFor<T>,
+			tge_block_number: T::BlockNumber,
+			block_rewards: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			DoRecalculationAt::<T>::put(tge_block_number + T::BlockNumber::from(BLOCKS_PER_YEAR));
+			BlockRewards::<T>::put(block_rewards);
 
 			Ok(().into())
 		}
