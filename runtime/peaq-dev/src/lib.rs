@@ -479,6 +479,7 @@ impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<2560>;
 }
 
 /// Config the utility in pallets/utility

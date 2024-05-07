@@ -6,8 +6,8 @@
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
+	BoundedVec,
 };
-use precompile_utils::prelude::*;
 use sp_core::{Decode, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -16,6 +16,14 @@ use fp_evm::PrecompileHandle;
 use pallet_evm::AddressMapping;
 
 use peaq_pallet_did::did::Did as PeaqDidT;
+use precompile_utils::{
+	keccak256,
+	prelude::{
+		log1, Address, BoundedBytes, LogExt, Revert, RevertReason, RuntimeHelper, String,
+		UnboundedBytes,
+	},
+	solidity, EvmResult,
+};
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
@@ -104,8 +112,14 @@ where
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::add_attribute {
 				did_account: did_account_addr,
-				name: name.as_bytes().to_vec(),
-				value: value.as_bytes().to_vec(),
+				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
+					name.as_bytes().to_vec(),
+				)
+				.unwrap(),
+				value: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
+					value.as_bytes().to_vec(),
+				)
+				.unwrap(),
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -152,8 +166,14 @@ where
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::update_attribute {
 				did_account: did_account_addr,
-				name: name.as_bytes().to_vec(),
-				value: value.as_bytes().to_vec(),
+				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
+					name.as_bytes().to_vec(),
+				)
+				.unwrap(),
+				value: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
+					value.as_bytes().to_vec(),
+				)
+				.unwrap(),
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -193,7 +213,10 @@ where
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::remove_attribute {
 				did_account: did_account_addr,
-				name: name.as_bytes().to_vec(),
+				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
+					name.as_bytes().to_vec(),
+				)
+				.unwrap(),
 			},
 			0,
 		)?;
