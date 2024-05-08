@@ -107,23 +107,20 @@ where
 			_ => Some(valid_for.into()),
 		};
 
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let value_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
+
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::add_attribute {
 				did_account: did_account_addr,
-				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
-					name.as_bytes().to_vec(),
-				)
-				.unwrap_or_else(|_| {
-					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
-				}),
-				value: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
-					value.as_bytes().to_vec(),
-				)
-				.unwrap_or_else(|_| {
-					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
-				}),
+				name: name_vec,
+				value: value_vec,
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -164,24 +161,20 @@ where
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let value_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::update_attribute {
 				did_account: did_account_addr,
-				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
-					name.as_bytes().to_vec(),
-				)
-				.unwrap_or_else(|_| {
-					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
-				}),
-				value: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
-					value.as_bytes().to_vec(),
-				)
-				.unwrap_or_else(|_| {
-					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
-				}),
+				name: name_vec,
+				value: value_vec,
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -215,18 +208,16 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::remove_attribute {
 				did_account: did_account_addr,
-				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
-					name.as_bytes().to_vec(),
-				)
-				.unwrap_or_else(|_| {
-					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
-				}),
+				name: name_vec,
 			},
 			0,
 		)?;
