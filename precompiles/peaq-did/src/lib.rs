@@ -115,11 +115,15 @@ where
 				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
 					name.as_bytes().to_vec(),
 				)
-				.unwrap(),
+				.unwrap_or_else(|_| {
+					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
+				}),
 				value: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
 					value.as_bytes().to_vec(),
 				)
-				.unwrap(),
+				.unwrap_or_else(|_| {
+					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
+				}),
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -169,11 +173,15 @@ where
 				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
 					name.as_bytes().to_vec(),
 				)
-				.unwrap(),
+				.unwrap_or_else(|_| {
+					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
+				}),
 				value: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
 					value.as_bytes().to_vec(),
 				)
-				.unwrap(),
+				.unwrap_or_else(|_| {
+					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
+				}),
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -216,7 +224,9 @@ where
 				name: BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(
 					name.as_bytes().to_vec(),
 				)
-				.unwrap(),
+				.unwrap_or_else(|_| {
+					BoundedVec::<u8, <Runtime>::BoundedDataLen>::default()
+				}),
 			},
 			0,
 		)?;
