@@ -1,6 +1,7 @@
 use super::*;
 
 use frame_support::{pallet_prelude::*, weights::Weight};
+use sp_runtime::traits::AccountIdConversion;
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 	upgrade::MigrateToV0::<T>::on_runtime_upgrade()
@@ -12,6 +13,20 @@ mod upgrade {
 	pub struct MigrateToV0<T>(sp_std::marker::PhantomData<T>);
 
 	impl<T: Config> MigrateToV0<T> {
+		fn fund_difference_balances() {
+			let account = T::PotId::get().into_account_truncating();
+			let now_total_issuance = T::Currency::total_issuance();
+			let desired_issuance = T::TotalIssuanceNum::get();
+			if now_total_issuance < desired_issuance {
+				T::Currency::deposit_creating(&account, desired_issuance - now_total_issuance);
+				log::info!(
+					"Total issuance was increased from {:?} to {:?}",
+					now_total_issuance,
+					desired_issuance
+				);
+			}
+		}
+
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
 			let mut weight_reads = 0;
@@ -22,6 +37,8 @@ mod upgrade {
 			let current = Pallet::<T>::current_storage_version();
 
 			if onchain_storage_version < current {
+				Self::fund_difference_balances();
+
 				let inflation_configuration = InflationConfigurationT::default();
 				// install inflation config
 				InflationConfiguration::<T>::put(inflation_configuration.clone());

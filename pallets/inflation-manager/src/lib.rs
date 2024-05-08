@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
+use frame_support::PalletId;
 pub use pallet::*;
 
 pub mod types;
@@ -43,6 +44,12 @@ pub mod pallet {
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type PotId: Get<PalletId>;
+
+		#[pallet::constant]
+		type TotalIssuanceNum: Get<Balance>;
 
 		/// Bounds for BoundedVec across this pallet's storage
 		#[pallet::constant]

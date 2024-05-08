@@ -1,4 +1,5 @@
 use crate::{self as inflation_manager};
+use frame_support::PalletId;
 
 use frame_support::{
 	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
@@ -100,29 +101,50 @@ impl pallet_timestamp::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const TotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
+}
+
 impl inflation_manager::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
+	type PotId = InfaltionPot;
+	type TotalIssuanceNum = TotalIssuanceNum;
 	type BoundedDataLen = ConstU32<1024>;
 	type WeightInfo = ();
 }
-pub struct ExternalityBuilder;
+pub struct ExternalityBuilder {
+	// endowed accounts with balances
+	balances: Vec<(AccountId, Balance)>,
+}
+
+impl Default for ExternalityBuilder {
+	fn default() -> ExternalityBuilder {
+		ExternalityBuilder {
+			balances: vec![
+				(1, 1_400_000_000_000_000_000_000_000_000),
+				(2, 1_400_000_000_000_000_000_000_000_000),
+				(3, 1_400_000_000_000_000_000_000_000_000),
+			],
+		}
+	}
+}
 
 impl ExternalityBuilder {
-	pub fn build() -> TestExternalities {
+	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
+		self.balances = balances;
+		self
+	}
+
+	pub fn build(self) -> TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<TestRuntime>().unwrap();
 
 		// This will cause some initial issuance
-		pallet_balances::GenesisConfig::<TestRuntime> {
-			balances: vec![
-				(1, 1400000000000000000000000000),
-				(2, 1400000000000000000000000000),
-				(3, 1400000000000000000000000000),
-			],
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
+		pallet_balances::GenesisConfig::<TestRuntime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.ok();
 		inflation_manager::GenesisConfig::<TestRuntime> {
 			inflation_configuration: Default::default(),
 			_phantom: Default::default(),

@@ -945,10 +945,17 @@ impl zenlink_protocol::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const TotalIssuanceNum: Balance = 400_000_000 * DOLLARS;
+}
+
 impl inflation_manager::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BoundedDataLen = ConstU32<262144>;
+	type PotId = InfaltionPot;
+	type TotalIssuanceNum = TotalIssuanceNum;
 	type WeightInfo = ();
 }
 
