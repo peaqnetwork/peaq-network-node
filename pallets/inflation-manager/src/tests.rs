@@ -29,25 +29,25 @@ fn check_fund_enough_token() {
 
 			assert_eq!(
 				<TestRuntime as Config>::Currency::total_issuance(),
-				TotalIssuanceNum::get()
+				DefaultTotalIssuanceNum::get()
 			);
 			let account: AccountId =
 				<TestRuntime as Config>::PotId::get().into_account_truncating();
-			assert_eq!(Balances::usable_balance(account), TotalIssuanceNum::get() - 20);
+			assert_eq!(Balances::usable_balance(account), DefaultTotalIssuanceNum::get() - 20);
 		})
 }
 
 #[test]
 fn check_not_fund_token() {
 	ExternalityBuilder::default()
-		.with_balances(vec![(1, TotalIssuanceNum::get() + 50)])
+		.with_balances(vec![(1, DefaultTotalIssuanceNum::get() + 50)])
 		.build()
 		.execute_with(|| {
 			InflationManager::on_runtime_upgrade();
 
 			assert_eq!(
 				<TestRuntime as Config>::Currency::total_issuance(),
-				TotalIssuanceNum::get() + 50
+				DefaultTotalIssuanceNum::get() + 50
 			);
 		})
 }

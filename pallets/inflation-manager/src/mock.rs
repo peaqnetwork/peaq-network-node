@@ -1,4 +1,4 @@
-use crate::{self as inflation_manager};
+use crate::{self as inflation_manager, types, Perbill};
 use frame_support::PalletId;
 
 use frame_support::{
@@ -103,14 +103,23 @@ impl pallet_timestamp::Config for TestRuntime {
 
 parameter_types! {
 	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
-	pub const TotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
+	pub const DefaultTotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
+	pub const DefaultInflationConfiguration: types::InflationConfiguration = types::InflationConfiguration {
+		inflation_parameters: types::InflationParameters {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::from_percent(90),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 13,
+	};
 }
 
 impl inflation_manager::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type PotId = InfaltionPot;
-	type TotalIssuanceNum = TotalIssuanceNum;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
 	type WeightInfo = ();
 }

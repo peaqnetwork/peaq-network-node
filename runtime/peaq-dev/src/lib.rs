@@ -14,6 +14,7 @@ use frame_system::{
 };
 
 use address_unification::CallKillEVMLinkAccount;
+use inflation_manager::types::{InflationConfiguration, InflationParameters};
 
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
@@ -960,7 +961,15 @@ impl zenlink_protocol::Config for Runtime {
 
 parameter_types! {
 	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
-	pub const TotalIssuanceNum: Balance = 4_200_000_000 * DOLLARS;
+	pub const DefaultTotalIssuanceNum: Balance = 4_200_000_000 * DOLLARS;
+	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
+		inflation_parameters: InflationParameters {
+			inflation_rate: Perbill::from_perthousand(15u32),
+			disinflation_rate: Perbill::from_percent(70),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(2),
+		inflation_stagnation_year: 15,
+	};
 }
 
 impl inflation_manager::Config for Runtime {
@@ -968,7 +977,8 @@ impl inflation_manager::Config for Runtime {
 	type Currency = Balances;
 	type BoundedDataLen = ConstU32<262144>;
 	type PotId = InfaltionPot;
-	type TotalIssuanceNum = TotalIssuanceNum;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type WeightInfo = ();
 }
 

@@ -49,7 +49,10 @@ pub mod pallet {
 		type PotId: Get<PalletId>;
 
 		#[pallet::constant]
-		type TotalIssuanceNum: Get<Balance>;
+		type DefaultTotalIssuanceNum: Get<Balance>;
+
+		#[pallet::constant]
+		type DefaultInflationConfiguration: Get<InflationConfigurationT>;
 
 		/// Bounds for BoundedVec across this pallet's storage
 		#[pallet::constant]
@@ -118,7 +121,10 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { inflation_configuration: Default::default(), _phantom: Default::default() }
+			Self {
+				inflation_configuration: T::DefaultInflationConfiguration::get(),
+				_phantom: Default::default(),
+			}
 		}
 	}
 

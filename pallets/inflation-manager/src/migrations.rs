@@ -16,7 +16,7 @@ mod upgrade {
 		fn fund_difference_balances() {
 			let account = T::PotId::get().into_account_truncating();
 			let now_total_issuance = T::Currency::total_issuance();
-			let desired_issuance = T::TotalIssuanceNum::get();
+			let desired_issuance = T::DefaultTotalIssuanceNum::get();
 			if now_total_issuance < desired_issuance {
 				T::Currency::deposit_creating(&account, desired_issuance - now_total_issuance);
 				log::info!(
@@ -39,7 +39,7 @@ mod upgrade {
 			if onchain_storage_version < current {
 				Self::fund_difference_balances();
 
-				let inflation_configuration = InflationConfigurationT::default();
+				let inflation_configuration = T::DefaultInflationConfiguration::get();
 				// install inflation config
 				InflationConfiguration::<T>::put(inflation_configuration.clone());
 				weight_writes += 1;
