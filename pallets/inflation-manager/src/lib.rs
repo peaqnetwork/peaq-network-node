@@ -114,32 +114,29 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub inflation_configuration: InflationConfigurationT,
 		pub _phantom: PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self {
-				inflation_configuration: T::DefaultInflationConfiguration::get(),
-				_phantom: Default::default(),
-			}
+			Self { _phantom: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			let inflation_configuration = T::DefaultInflationConfiguration::get();
 			// install inflation config
-			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
+			InflationConfiguration::<T>::put(inflation_configuration.clone());
 
 			// set current year to 1
 			CurrentYear::<T>::put(1);
 
 			// calc inflation for first year
 			let inflation_parameters =
-				Pallet::<T>::update_inflation_parameters(&self.inflation_configuration);
+				Pallet::<T>::update_inflation_parameters(&inflation_configuration);
 
 			// install inflation parameters for first year
 			InflationParameters::<T>::put(inflation_parameters.clone());
