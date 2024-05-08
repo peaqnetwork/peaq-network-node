@@ -154,12 +154,9 @@ impl ExternalityBuilder {
 		pallet_balances::GenesisConfig::<TestRuntime> { balances: self.balances }
 			.assimilate_storage(&mut storage)
 			.ok();
-		inflation_manager::GenesisConfig::<TestRuntime> {
-			inflation_configuration: Default::default(),
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
+		inflation_manager::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
+			.assimilate_storage(&mut storage)
+			.ok();
 
 		let mut ext = TestExternalities::from(storage);
 		ext.execute_with(|| System::set_block_number(1));

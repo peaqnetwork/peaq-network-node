@@ -8,10 +8,12 @@ use frame_support::{
 	PalletId,
 };
 
+use inflation_manager::types::{InflationConfiguration, InflationParameters};
 use sp_core::{ConstU32, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	Perbill,
 };
 
 pub(crate) type AccountId = u64;
@@ -145,9 +147,25 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 	}
 }
 
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const DefaultTotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
+	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
+		inflation_parameters: InflationParameters {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::from_percent(90),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 13,
+	};
+}
+
 impl inflation_manager::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
+	type PotId = InfaltionPot;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
 	type WeightInfo = ();
 }
@@ -172,12 +190,9 @@ impl ExternalityBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
-		inflation_manager::GenesisConfig::<TestRuntime> {
-			inflation_configuration: inflation_manager::InflationConfigurationT::default(),
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
+		inflation_manager::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
+			.assimilate_storage(&mut storage)
+			.ok();
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
 			_phantom: Default::default(),

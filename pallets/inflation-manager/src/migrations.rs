@@ -18,11 +18,13 @@ mod upgrade {
 			let now_total_issuance = T::Currency::total_issuance();
 			let desired_issuance = T::DefaultTotalIssuanceNum::get();
 			if now_total_issuance < desired_issuance {
-				T::Currency::deposit_creating(&account, desired_issuance - now_total_issuance);
+				let amount = desired_issuance.saturating_sub(now_total_issuance);
+				T::Currency::deposit_creating(&account, amount);
 				log::info!(
-					"Total issuance was increased from {:?} to {:?}",
+					"Total issuance was increased from {:?} to {:?}, by {:?} tokens.",
 					now_total_issuance,
-					desired_issuance
+					desired_issuance,
+					amount
 				);
 			}
 		}
