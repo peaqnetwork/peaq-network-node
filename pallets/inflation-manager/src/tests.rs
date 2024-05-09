@@ -1,7 +1,9 @@
 use super::*;
+use frame_support::assert_noop;
+use frame_system::RawOrigin;
 use mock::*;
 use peaq_primitives_xcm::BlockNumber;
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::traits::{AccountIdConversion, BadOrigin};
 
 #[test]
 fn sanity_check_genesis() {
@@ -34,6 +36,15 @@ fn check_fund_enough_token() {
 			let account: AccountId =
 				<TestRuntime as Config>::PotId::get().into_account_truncating();
 			assert_eq!(Balances::usable_balance(account), DefaultTotalIssuanceNum::get() - 20);
+
+			assert_noop!(
+				InflationManager::transfer_all_pot(RuntimeOrigin::signed(1), 2),
+				BadOrigin
+			);
+
+			InflationManager::transfer_all_pot(RawOrigin::Root.into(), 2).unwrap();
+			assert_eq!(Balances::usable_balance(account), 0);
+			assert_eq!(Balances::usable_balance(2), DefaultTotalIssuanceNum::get() - 20);
 		})
 }
 

@@ -5,10 +5,19 @@ use frame_support::PalletId;
 pub use pallet::*;
 
 pub mod types;
+use frame_support::traits::ExistenceRequirement::AllowDeath;
+use frame_system::{ensure_root, pallet_prelude::OriginFor};
+use sp_runtime::traits::AccountIdConversion;
 pub use types::{
 	BalanceOf, InflationConfiguration as InflationConfigurationT,
 	InflationParameters as InflationParametersT,
 };
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weightinfo;
+pub mod weights;
+pub use weightinfo::WeightInfo;
 
 mod migrations;
 #[cfg(test)]
@@ -21,7 +30,6 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, IsType},
 };
-use frame_system::WeightInfo;
 use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 
@@ -210,7 +218,26 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(T::WeightInfo::transfer_all_pot())]
+		pub fn transfer_all_pot(
+			origin: OriginFor<T>,
+			dest: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			let account = T::PotId::get().into_account_truncating();
+			T::Currency::transfer(
+				&account,
+				&dest,
+				T::Currency::free_balance(&account),
+				AllowDeath,
+			)?;
+
+			Ok(().into())
+		}
+	}
 
 	impl<T: Config> Pallet<T> {
 		// calculate inflationary tokens per block

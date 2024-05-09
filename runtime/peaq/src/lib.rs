@@ -965,8 +965,9 @@ impl inflation_manager::Config for Runtime {
 	type PotId = InfaltionPot;
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
-	type WeightInfo = ();
+	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
 }
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1078,8 +1079,9 @@ mod benches {
 		[peaq_pallet_storage, PeaqStorage]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
-		[xc_asset_config, XCAssetConfig]
-		[address_unification, AddressUnification]
+		// [xc_asset_config, XCAssetConfig]
+		// [address_unification, AddressUnification]
+		[inflation_manager, InflationManager]
 	);
 }
 
@@ -2041,8 +2043,8 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
-	// #[cfg(feature = "runtime-benchmarks")]
-	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl address_unification::Config for Runtime {
