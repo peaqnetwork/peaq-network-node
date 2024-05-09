@@ -1,4 +1,4 @@
-use crate::{self as inflation_manager, types, Perbill};
+use crate::{self as inflation_manager, types, weights, Perbill};
 use frame_support::PalletId;
 
 use frame_support::{
@@ -121,7 +121,7 @@ impl inflation_manager::Config for TestRuntime {
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
-	type WeightInfo = ();
+	type WeightInfo = weights::WeightInfo<TestRuntime>;
 }
 pub struct ExternalityBuilder {
 	// endowed accounts with balances
