@@ -1080,8 +1080,8 @@ mod benches {
 		[peaq_pallet_mor, PeaqMor]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
-		[xc_asset_config, XCAssetConfig]
-		[address_unification, AddressUnification]
+		[xc_asset_config, XcAssetConfig]
+		// [address_unification, AddressUnification]
 	);
 }
 
@@ -2042,8 +2042,8 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
-	// #[cfg(feature = "runtime-benchmarks")]
-	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl address_unification::Config for Runtime {
