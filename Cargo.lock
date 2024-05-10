@@ -8468,7 +8468,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d8e32906a2bd43c0545dc33778b14147b1db8738"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8487,7 +8487,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d8e32906a2bd43c0545dc33778b14147b1db8738"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8507,7 +8507,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d8e32906a2bd43c0545dc33778b14147b1db8738"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -8518,7 +8518,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#43401a3dcb4a7a270899034efd66633e27f7bd8f"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#ffc90f357f3a224ac103590b650d9b9c53d3ef7c"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
