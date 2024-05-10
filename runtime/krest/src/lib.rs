@@ -913,6 +913,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<256>;
 }
 
 // Zenlink-DEX Parameter definitions
