@@ -403,6 +403,11 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 }
 
+parameter_types! {
+	pub const WeightFeeFactor: Balance = 1_745_500_000_000_000; // Around 0.002 peaq per unit of ref time.
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(0);
+}
+
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
 ///
@@ -417,10 +422,8 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLICENTS:
-		// in our template, we map to 1/10 of that, or 1/10 MILLICENTS
-		let p = MILLICENTS / 10;
-		let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
+		let p = WeightFeeFactor::get();
+		let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec![WeightToFeeCoefficient {
 			degree: 1,
 			negative: false,
@@ -456,7 +459,7 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
-		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC, EoTFeeFactor>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -912,6 +915,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<256>;
 }
 
 // Zenlink-DEX Parameter definitions

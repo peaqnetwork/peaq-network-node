@@ -112,7 +112,7 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
+	EoTFeeFactor, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
 	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
 	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
 	MILLICENTS,
@@ -462,7 +462,7 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
-		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC, EoTFeeFactor>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -918,6 +918,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<256>;
 }
 
 impl peaq_pallet_mor::Config for Runtime {

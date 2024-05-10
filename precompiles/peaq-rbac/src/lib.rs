@@ -7,18 +7,22 @@ use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
+	BoundedVec,
 };
 use peaq_pallet_rbac::{
 	error::{RbacError, RbacErrorType},
 	rbac::{Rbac, Role},
 };
-use precompile_utils::prelude::*;
 use sp_core::{Decode, H256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
 use peaq_pallet_rbac::rbac::{Group, Permission};
 use peaq_primitives_xcm::RbacEntityId;
+use precompile_utils::{
+	prelude::{log1, Address, BoundedBytes, LogExt, Revert, RevertReason, RuntimeHelper},
+	solidity, EvmResult,
+};
 
 pub mod structs;
 pub use structs::*;
@@ -117,14 +121,14 @@ where
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::add_role {
-				role_id: role_id_addr,
-				name: name.as_bytes().to_vec(),
-			},
+			peaq_pallet_rbac::Call::<Runtime>::add_role { role_id: role_id_addr, name: name_vec },
 			0,
 		)?;
 
@@ -150,13 +154,16 @@ where
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::update_role {
 				role_id: role_id_addr,
-				name: name.as_bytes().to_vec(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -338,13 +345,14 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::add_permission {
 				permission_id: EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes()),
-				name: name.clone().into(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -375,14 +383,12 @@ where
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let permission_id: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::update_permission {
-				permission_id,
-				name: name.clone().into(),
-			},
+			peaq_pallet_rbac::Call::<Runtime>::update_permission { permission_id, name: name_vec },
 			0,
 		)?;
 
@@ -554,13 +560,14 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::add_group {
 				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
-				name: name.clone().into(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -585,13 +592,14 @@ where
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::update_group {
 				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
-				name: name.clone().into(),
+				name: name_vec,
 			},
 			0,
 		)?;
