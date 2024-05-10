@@ -404,6 +404,7 @@ impl pallet_balances::Config for Runtime {
 
 parameter_types! {
 	pub const WeightFeeFactor: Balance = 1_745_500_000_000_000; // Around 0.002 peaq per unit of ref time.
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(0);
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -457,7 +458,7 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
-		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC, EoTFeeFactor>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
