@@ -6,8 +6,8 @@
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
+	BoundedVec,
 };
-use precompile_utils::prelude::*;
 use sp_core::Decode;
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -16,6 +16,13 @@ use fp_evm::PrecompileHandle;
 use pallet_evm::AddressMapping;
 
 use peaq_pallet_storage::traits::Storage as PeaqStorageT;
+use precompile_utils::{
+	keccak256,
+	prelude::{
+		log1, Address, BoundedBytes, LogExt, Revert, RevertReason, RuntimeHelper, UnboundedBytes,
+	},
+	solidity, EvmResult,
+};
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 
@@ -64,13 +71,19 @@ where
 
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let item_type_bounded =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(item_type.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Item type too long")))?;
+		let item_bounded =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(item.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Item too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller.clone()).into(),
 			peaq_pallet_storage::Call::<Runtime>::add_item {
-				item_type: item_type.as_bytes().to_vec(),
-				item: item.as_bytes().to_vec(),
+				item_type: item_type_bounded,
+				item: item_bounded,
 			},
 			0,
 		)?;
@@ -96,13 +109,19 @@ where
 
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let item_type_bounded =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(item_type.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Item type too long")))?;
+		let item_bounded =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(item.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Item too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller.clone()).into(),
 			peaq_pallet_storage::Call::<Runtime>::update_item {
-				item_type: item_type.as_bytes().to_vec(),
-				item: item.as_bytes().to_vec(),
+				item_type: item_type_bounded,
+				item: item_bounded,
 			},
 			0,
 		)?;

@@ -917,6 +917,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<256>;
 }
 
 impl peaq_pallet_mor::Config for Runtime {
