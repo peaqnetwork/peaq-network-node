@@ -402,11 +402,9 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 }
 
-
 parameter_types! {
-    pub const WeightFeeFactor: Balance = 1_745_500_000_000_000; // Around 0.002 peaq per unit of ref time.
+	pub const WeightFeeFactor: Balance = 1_745_500_000_000_000; // Around 0.002 peaq per unit of ref time.
 }
-
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
 /// node's balance type.
@@ -422,7 +420,6 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		
 		let p = WeightFeeFactor::get();
 		let q = Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec![WeightToFeeCoefficient {
