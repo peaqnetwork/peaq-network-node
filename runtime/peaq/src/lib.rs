@@ -2047,8 +2047,8 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
-	// #[cfg(feature = "runtime-benchmarks")]
-	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl address_unification::Config for Runtime {
