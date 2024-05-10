@@ -319,14 +319,10 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
-parameter_types! {
-	pub const MaxAuthorities: u32 = 32;
-}
-
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = staking::MaxCollatorCandidates;
 }
 
 // For ink
@@ -482,6 +478,7 @@ impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<2560>;
 }
 
 /// Config the utility in pallets/utility
@@ -749,8 +746,8 @@ pub mod staking {
 	parameter_types! {
 			/// Minimum round length is 1 hour
 			pub const MinBlocksPerRound: BlockNumber = HOURS;
-			/// Default length of a round/session is 2 hours
-			pub const DefaultBlocksPerRound: BlockNumber = 2 * HOURS;
+			/// Default length of a round/session is 4 hours
+			pub const DefaultBlocksPerRound: BlockNumber = 4 * HOURS;
 			/// Unstaked balance can be unlocked after 7 days
 			pub const StakeDuration: BlockNumber = 7 * DAYS;
 			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
@@ -761,19 +758,19 @@ pub mod staking {
 			pub const MinRequiredCollators: u32 = 4;
 			/// We only allow one delegation per round.
 			pub const MaxDelegationsPerRound: u32 = 1;
-			/// Maximum 25 delegators per collator at launch, might be increased later
+			/// No maximum number of delegators per collator at launch
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxDelegatorsPerCollator: u32 = 25;
+			pub const MaxDelegatorsPerCollator: u32 = 32;
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
-			/// Minimum stake required to be reserved to be a collator is 32_000
-			pub const MinCollatorStake: Balance = 32_000;
-			/// Minimum stake required to be reserved to be a delegator is 1000
-			pub const MinDelegatorStake: Balance = 20_000;
+			/// Minimum stake required to be reserved to be a collator is 50_000 * DOLLARS
+			pub const MinCollatorStake: Balance = 50_000 * DOLLARS;
+			/// Minimum stake required to be reserved to be a delegator is 100 * DOLLARS
+			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 32;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
@@ -953,6 +950,12 @@ impl zenlink_protocol::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl inflation_manager::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BoundedDataLen = ConstU32<262144>;
+	type WeightInfo = ();
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -979,6 +982,7 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
+		InflationManager: inflation_manager::{Pallet, Storage, Config<T>, Event<T>} = 15,
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,

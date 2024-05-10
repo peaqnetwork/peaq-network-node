@@ -4380,6 +4380,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "inflation-manager"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "inout"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6605,10 +6624,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "inflation-manager",
  "log",
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
+ "peaq-primitives-xcm",
  "scale-info",
  "serde",
  "sp-core",
@@ -8103,6 +8124,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "log",
  "orml-currencies",
  "orml-traits",
@@ -8238,6 +8260,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "log",
  "orml-currencies",
  "orml-traits",
@@ -8362,6 +8385,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.29",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "jsonrpsee",
@@ -8443,7 +8467,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d8e32906a2bd43c0545dc33778b14147b1db8738"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8462,7 +8486,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d8e32906a2bd43c0545dc33778b14147b1db8738"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8482,7 +8506,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d8e32906a2bd43c0545dc33778b14147b1db8738"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -8493,7 +8517,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#43401a3dcb4a7a270899034efd66633e27f7bd8f"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#ffc90f357f3a224ac103590b650d9b9c53d3ef7c"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8560,7 +8584,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#f862778f8adcf1163e15ec5b9da224df5d9fc9aa"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#484f20a8fe2ca3e93335b57ecfebeaebe7e26600"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8576,7 +8600,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#f862778f8adcf1163e15ec5b9da224df5d9fc9aa"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#484f20a8fe2ca3e93335b57ecfebeaebe7e26600"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8596,7 +8620,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#f862778f8adcf1163e15ec5b9da224df5d9fc9aa"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#484f20a8fe2ca3e93335b57ecfebeaebe7e26600"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -8848,6 +8872,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "log",
  "orml-currencies",
  "orml-traits",
