@@ -6,8 +6,8 @@
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
+	BoundedVec,
 };
-use precompile_utils::prelude::*;
 use sp_core::{Decode, U256};
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -16,6 +16,14 @@ use fp_evm::PrecompileHandle;
 use pallet_evm::AddressMapping;
 
 use peaq_pallet_did::did::Did as PeaqDidT;
+use precompile_utils::{
+	keccak256,
+	prelude::{
+		log1, Address, BoundedBytes, LogExt, Revert, RevertReason, RuntimeHelper, String,
+		UnboundedBytes,
+	},
+	solidity, EvmResult,
+};
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
@@ -99,13 +107,20 @@ where
 			_ => Some(valid_for.into()),
 		};
 
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let value_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
+
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::add_attribute {
 				did_account: did_account_addr,
-				name: name.as_bytes().to_vec(),
-				value: value.as_bytes().to_vec(),
+				name: name_vec,
+				value: value_vec,
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -146,14 +161,20 @@ where
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let value_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::update_attribute {
 				did_account: did_account_addr,
-				name: name.as_bytes().to_vec(),
-				value: value.as_bytes().to_vec(),
+				name: name_vec,
+				value: value_vec,
 				valid_for: valid_for_opt,
 			},
 			0,
@@ -187,13 +208,16 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller).into(),
 			peaq_pallet_did::Call::<Runtime>::remove_attribute {
 				did_account: did_account_addr,
-				name: name.as_bytes().to_vec(),
+				name: name_vec,
 			},
 			0,
 		)?;
