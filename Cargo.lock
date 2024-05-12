@@ -7063,7 +7063,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "paste",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits)",
+ "peaq-pallet-did",
  "precompile-utils",
  "slices",
  "sp-core",
@@ -8172,7 +8172,7 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits)",
+ "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-mor",
  "peaq-pallet-rbac",
@@ -8308,7 +8308,7 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits)",
+ "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-rbac",
  "peaq-pallet-rbac-runtime-api",
@@ -8467,32 +8467,12 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#dc01932be33c25e2482b82b0ddafd7537ce1cade"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#e3a2e85d5d1b8b772495bbe80e4d221d692a6bc5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "num-traits",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-rpc",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "peaq-pallet-did"
-version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#fe27019aef8752ebb02c34cf7ed2084afe5cc65e"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "num-traits",
- "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8506,14 +8486,14 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#fe27019aef8752ebb02c34cf7ed2084afe5cc65e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#e3a2e85d5d1b8b772495bbe80e4d221d692a6bc5"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpsee",
  "parity-scale-codec",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits)",
+ "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "serde",
  "sp-api",
@@ -8526,10 +8506,10 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#fe27019aef8752ebb02c34cf7ed2084afe5cc65e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#e3a2e85d5d1b8b772495bbe80e4d221d692a6bc5"
 dependencies = [
  "parity-scale-codec",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits)",
+ "peaq-pallet-did",
  "sp-api",
  "sp-std",
 ]
@@ -8544,7 +8524,7 @@ dependencies = [
  "frame-system",
  "log",
  "parity-scale-codec",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev)",
+ "peaq-pallet-did",
  "scale-info",
  "serde",
  "sp-core",
@@ -8556,13 +8536,12 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#0bbde35ab6fdbe2c9ed6bce0d0870e8a28740e24"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#3006eafc94a8cc6ed2fb28c7628a7234229835f8"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
- "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8576,7 +8555,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#0bbde35ab6fdbe2c9ed6bce0d0870e8a28740e24"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#3006eafc94a8cc6ed2fb28c7628a7234229835f8"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8594,7 +8573,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#0bbde35ab6fdbe2c9ed6bce0d0870e8a28740e24"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#3006eafc94a8cc6ed2fb28c7628a7234229835f8"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -8605,12 +8584,11 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#1a6c44e4b63a017968aec4b04ed18f0b423424be"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#9091522c6455d18e4eae8aafd1f21e999236ecf3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -8622,7 +8600,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#1a6c44e4b63a017968aec4b04ed18f0b423424be"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#9091522c6455d18e4eae8aafd1f21e999236ecf3"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8642,7 +8620,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits#1a6c44e4b63a017968aec4b04ed18f0b423424be"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#9091522c6455d18e4eae8aafd1f21e999236ecf3"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -8942,7 +8920,7 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-evm-tracer",
- "peaq-pallet-did 0.1.0 (git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=security-auditing-issue/1207229965380414_missing-storage-deposits)",
+ "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
  "peaq-pallet-mor",
  "peaq-pallet-rbac",

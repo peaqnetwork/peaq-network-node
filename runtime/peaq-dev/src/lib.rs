@@ -257,7 +257,7 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 42;
 
 	pub const StorageDepositBase: Balance = STORAGE_DEPOSIT_BASE;
-    pub const StorageDepositPerByte: Balance = STORAGE_DEPOSIT_PER_BYTE;
+	pub const StorageDepositPerByte: Balance = STORAGE_DEPOSIT_PER_BYTE;
 }
 
 pub struct BaseFilter;
