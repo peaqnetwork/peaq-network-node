@@ -178,7 +178,7 @@ pub type XcmOriginToCallOrigin = (
 parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
-	pub const UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 1024);
+	pub const UnitWeightCost: Weight = Weight::from_parts(10_000_000, 0);
 	pub const MaxInstructions: u32 = 100;
 }
 
