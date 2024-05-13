@@ -1,4 +1,5 @@
-use crate::{self as inflation_manager};
+use crate::{self as inflation_manager, types, weights, Perbill};
+use frame_support::PalletId;
 
 use frame_support::{
 	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
@@ -100,35 +101,62 @@ impl pallet_timestamp::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const DefaultTotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
+	pub const DefaultInflationConfiguration: types::InflationConfiguration = types::InflationConfiguration {
+		inflation_parameters: types::InflationParameters {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::from_percent(90),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 13,
+	};
+}
+
 impl inflation_manager::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
+	type PotId = InfaltionPot;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
-	type WeightInfo = ();
+	type WeightInfo = weights::WeightInfo<TestRuntime>;
 }
-pub struct ExternalityBuilder;
+pub struct ExternalityBuilder {
+	// endowed accounts with balances
+	balances: Vec<(AccountId, Balance)>,
+}
+
+impl Default for ExternalityBuilder {
+	fn default() -> ExternalityBuilder {
+		ExternalityBuilder {
+			balances: vec![
+				(1, 1_400_000_000_000_000_000_000_000_000),
+				(2, 1_400_000_000_000_000_000_000_000_000),
+				(3, 1_400_000_000_000_000_000_000_000_000),
+			],
+		}
+	}
+}
 
 impl ExternalityBuilder {
-	pub fn build() -> TestExternalities {
+	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
+		self.balances = balances;
+		self
+	}
+
+	pub fn build(self) -> TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<TestRuntime>().unwrap();
 
 		// This will cause some initial issuance
-		pallet_balances::GenesisConfig::<TestRuntime> {
-			balances: vec![
-				(1, 1400000000000000000000000000),
-				(2, 1400000000000000000000000000),
-				(3, 1400000000000000000000000000),
-			],
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
-		inflation_manager::GenesisConfig::<TestRuntime> {
-			inflation_configuration: Default::default(),
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
+		pallet_balances::GenesisConfig::<TestRuntime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.ok();
+		inflation_manager::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
+			.assimilate_storage(&mut storage)
+			.ok();
 
 		let mut ext = TestExternalities::from(storage);
 		ext.execute_with(|| System::set_block_number(1));

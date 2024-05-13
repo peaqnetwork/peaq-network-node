@@ -14,6 +14,7 @@ use frame_system::{
 };
 
 use address_unification::CallKillEVMLinkAccount;
+use inflation_manager::types::{InflationConfiguration, InflationParameters};
 
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
@@ -949,12 +950,29 @@ impl zenlink_protocol::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const DefaultTotalIssuanceNum: Balance = 4_200_000_000 * DOLLARS;
+	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
+		inflation_parameters: InflationParameters {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::from_percent(90),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 13,
+	};
+}
+
 impl inflation_manager::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BoundedDataLen = ConstU32<262144>;
-	type WeightInfo = ();
+	type PotId = InfaltionPot;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
+	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
 }
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -1068,6 +1086,7 @@ mod benches {
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
 		// [address_unification, AddressUnification]
+		[inflation_manager, InflationManager]
 	);
 }
 
