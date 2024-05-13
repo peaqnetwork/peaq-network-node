@@ -1097,7 +1097,7 @@ mod benches {
 		[peaq_pallet_mor, PeaqMor]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
-		// [xc_asset_config, XCAssetConfig]
+		[xc_asset_config, XcAssetConfig]
 		// [address_unification, AddressUnification]
 		[inflation_manager, InflationManager]
 	);
