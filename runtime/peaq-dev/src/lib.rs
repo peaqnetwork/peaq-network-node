@@ -963,14 +963,14 @@ impl zenlink_protocol::Config for Runtime {
 
 parameter_types! {
 	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
-	pub const DefaultTotalIssuanceNum: Balance = 4_200_000_000 * DOLLARS;
+	pub const DefaultTotalIssuanceNum: Balance = 400_000_000 * DOLLARS;
 	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
 		inflation_parameters: InflationParameters {
-			inflation_rate: Perbill::from_perthousand(15u32),
-			disinflation_rate: Perbill::from_percent(70),
+			inflation_rate: Perbill::from_perthousand(25u32),
+			disinflation_rate: Perbill::from_percent(90),
 		},
-		inflation_stagnation_rate: Perbill::from_percent(2),
-		inflation_stagnation_year: 15,
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 10,
 	};
 }
 
