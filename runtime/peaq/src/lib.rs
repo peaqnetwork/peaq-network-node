@@ -217,10 +217,10 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 );
 
 /// Base Deposit for occupying storage - 0.01 PEAQ
-const STORAGE_DEPOSIT_BASE: Balance = 1 * CENTS;
+const STORAGE_DEPOSIT_BASE: Balance = CENTS;
 
 /// Deposit per byte for occupying storage - 0.001 PEAQ
-const STORAGE_DEPOSIT_PER_BYTE: Balance = 1 * CENTS / 10;
+const STORAGE_DEPOSIT_PER_BYTE: Balance = CENTS / 10;
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
