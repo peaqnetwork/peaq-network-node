@@ -344,6 +344,7 @@ try-runtime = [
 	"parachain-info/try-runtime",
 	"xc-asset-config/try-runtime",
 	"address-unification/try-runtime",
+	"inflation-manager/try-runtime",
 
 	"staking-coefficient-reward/try-runtime",
 
