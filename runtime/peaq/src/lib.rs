@@ -216,6 +216,12 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	polkadot_primitives::v4::MAX_POV_SIZE as u64,
 );
 
+/// Base Deposit for occupying storage - 0.01 PEAQ
+const STORAGE_DEPOSIT_BASE: Balance = CENTS;
+
+/// Deposit per byte for occupying storage - 0.001 PEAQ
+const STORAGE_DEPOSIT_PER_BYTE: Balance = CENTS / 10;
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
@@ -244,6 +250,10 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const SS58Prefix: u16 = 42;
+
+	pub const StorageDepositBase: Balance = STORAGE_DEPOSIT_BASE;
+	pub const StorageDepositPerByte: Balance = STORAGE_DEPOSIT_PER_BYTE;
+
 }
 
 pub struct BaseFilter;
@@ -478,6 +488,9 @@ impl peaq_pallet_did::Config for Runtime {
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
 	type BoundedDataLen = ConstU32<2560>;
+	type Currency = Balances;
+	type StorageDepositBase = StorageDepositBase;
+	type StorageDepositPerByte = StorageDepositPerByte;
 }
 
 /// Config the utility in pallets/utility
@@ -909,6 +922,9 @@ impl peaq_pallet_rbac::Config for Runtime {
 	type EntityId = RbacEntityId;
 	type BoundedDataLen = ConstU32<262144>;
 	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
+	type Currency = Balances;
+	type StorageDepositBase = StorageDepositBase;
+	type StorageDepositPerByte = StorageDepositPerByte;
 }
 
 // Config the storage in pallets/storage
@@ -916,6 +932,9 @@ impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
 	type BoundedDataLen = ConstU32<256>;
+	type Currency = Balances;
+	type StorageDepositBase = StorageDepositBase;
+	type StorageDepositPerByte = StorageDepositPerByte;
 }
 
 // Zenlink-DEX Parameter definitions

@@ -48,6 +48,7 @@ pub fn err2str(error: &RbacError) -> &str {
 		RbacError { typ: RbacErrorType::NameExceedMaxChar, .. } => "RbacError.NameExceedMaxChar",
 		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } =>
 			"RbacError.StorageExceedsMaxBounds",
+		RbacError { typ: RbacErrorType::EntityDeleted, .. } => "RbacError.EntityDeleted",
 	}
 }
 
