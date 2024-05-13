@@ -216,7 +216,7 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	polkadot_primitives::v4::MAX_POV_SIZE as u64,
 );
 
-/// Base Deposit for occupying storage - 0.02 KREST
+/// Base Deposit for occupying storage - 0.002 KREST
 const STORAGE_DEPOSIT_BASE: Balance = 2 * CENTS / 10;
 
 /// Deposit per byte for occupying storage - 0.0002 KREST
