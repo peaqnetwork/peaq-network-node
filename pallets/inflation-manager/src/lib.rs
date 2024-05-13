@@ -1,13 +1,23 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
+use frame_support::PalletId;
 pub use pallet::*;
 
 pub mod types;
+use frame_support::traits::ExistenceRequirement::AllowDeath;
+use frame_system::{ensure_root, pallet_prelude::OriginFor};
+use sp_runtime::traits::AccountIdConversion;
 pub use types::{
 	BalanceOf, InflationConfiguration as InflationConfigurationT,
 	InflationParameters as InflationParametersT,
 };
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weightinfo;
+pub mod weights;
+pub use weightinfo::WeightInfo;
 
 mod migrations;
 #[cfg(test)]
@@ -20,7 +30,6 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, IsType},
 };
-use frame_system::WeightInfo;
 use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 
@@ -43,6 +52,15 @@ pub mod pallet {
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type PotId: Get<PalletId>;
+
+		#[pallet::constant]
+		type DefaultTotalIssuanceNum: Get<Balance>;
+
+		#[pallet::constant]
+		type DefaultInflationConfiguration: Get<InflationConfigurationT>;
 
 		/// Bounds for BoundedVec across this pallet's storage
 		#[pallet::constant]
@@ -104,29 +122,29 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub inflation_configuration: InflationConfigurationT,
 		pub _phantom: PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { inflation_configuration: Default::default(), _phantom: Default::default() }
+			Self { _phantom: Default::default() }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			let inflation_configuration = T::DefaultInflationConfiguration::get();
 			// install inflation config
-			InflationConfiguration::<T>::put(self.inflation_configuration.clone());
+			InflationConfiguration::<T>::put(inflation_configuration.clone());
 
 			// set current year to 1
 			CurrentYear::<T>::put(1);
 
 			// calc inflation for first year
 			let inflation_parameters =
-				Pallet::<T>::update_inflation_parameters(&self.inflation_configuration);
+				Pallet::<T>::update_inflation_parameters(&inflation_configuration);
 
 			// install inflation parameters for first year
 			InflationParameters::<T>::put(inflation_parameters.clone());
@@ -200,7 +218,26 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(T::WeightInfo::transfer_all_pot())]
+		pub fn transfer_all_pot(
+			origin: OriginFor<T>,
+			dest: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			let account = T::PotId::get().into_account_truncating();
+			T::Currency::transfer(
+				&account,
+				&dest,
+				T::Currency::free_balance(&account),
+				AllowDeath,
+			)?;
+
+			Ok(().into())
+		}
+	}
 
 	impl<T: Config> Pallet<T> {
 		// calculate inflationary tokens per block

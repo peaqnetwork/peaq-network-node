@@ -1,10 +1,13 @@
 use super::*;
+use frame_support::assert_noop;
+use frame_system::RawOrigin;
 use mock::*;
 use peaq_primitives_xcm::BlockNumber;
+use sp_runtime::traits::{AccountIdConversion, BadOrigin};
 
 #[test]
 fn sanity_check_genesis() {
-	ExternalityBuilder::build().execute_with(|| {
+	ExternalityBuilder::default().build().execute_with(|| {
 		let snapshot = InflationManagerSnapshot::take_snapshot_at(0);
 		let expected_inflation_parameters = InflationParametersT {
 			inflation_rate: Perbill::from_perthousand(35u32),
@@ -19,8 +22,50 @@ fn sanity_check_genesis() {
 }
 
 #[test]
+fn check_fund_enough_token() {
+	ExternalityBuilder::default()
+		.with_balances(vec![(1, 20)])
+		.build()
+		.execute_with(|| {
+			InflationManager::on_runtime_upgrade();
+
+			assert_eq!(
+				<TestRuntime as Config>::Currency::total_issuance(),
+				DefaultTotalIssuanceNum::get()
+			);
+			let account: AccountId =
+				<TestRuntime as Config>::PotId::get().into_account_truncating();
+			assert_eq!(Balances::usable_balance(account), DefaultTotalIssuanceNum::get() - 20);
+
+			assert_noop!(
+				InflationManager::transfer_all_pot(RuntimeOrigin::signed(1), 2),
+				BadOrigin
+			);
+
+			InflationManager::transfer_all_pot(RawOrigin::Root.into(), 2).unwrap();
+			assert_eq!(Balances::usable_balance(account), 0);
+			assert_eq!(Balances::usable_balance(2), DefaultTotalIssuanceNum::get() - 20);
+		})
+}
+
+#[test]
+fn check_not_fund_token() {
+	ExternalityBuilder::default()
+		.with_balances(vec![(1, DefaultTotalIssuanceNum::get() + 50)])
+		.build()
+		.execute_with(|| {
+			InflationManager::on_runtime_upgrade();
+
+			assert_eq!(
+				<TestRuntime as Config>::Currency::total_issuance(),
+				DefaultTotalIssuanceNum::get() + 50
+			);
+		})
+}
+
+#[test]
 fn sanity_check_storage_migration() {
-	ExternalityBuilder::build().execute_with(|| {
+	ExternalityBuilder::default().build().execute_with(|| {
 		InflationManager::on_runtime_upgrade();
 		let current_block = System::block_number() as u32;
 
@@ -41,7 +86,7 @@ fn sanity_check_storage_migration() {
 // Block rewards are distributed first and then block rewards are updated
 #[test]
 fn parameters_update_as_expected() {
-	ExternalityBuilder::build().execute_with(|| {
+	ExternalityBuilder::default().build().execute_with(|| {
 		let target_block_at_genesis = BLOCKS_PER_YEAR;
 
 		let snapshots_before_new_year = vec![
@@ -78,7 +123,7 @@ fn parameters_update_as_expected() {
 
 #[test]
 fn stagnation_reached_as_expected() {
-	ExternalityBuilder::build().execute_with(|| {
+	ExternalityBuilder::default().build().execute_with(|| {
 		let inflation_configuration = InflationManager::inflation_configuration();
 		let stagnation_snapshot_year = inflation_configuration.inflation_stagnation_year as usize;
 		let last_snapshot_year = stagnation_snapshot_year + 1;
