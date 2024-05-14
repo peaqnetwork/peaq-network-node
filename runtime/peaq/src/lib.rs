@@ -975,7 +975,7 @@ parameter_types! {
 	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
 		inflation_parameters: InflationParameters {
 			inflation_rate: Perbill::from_perthousand(35u32),
-			disinflation_rate: Perbill::from_percent(90),
+			disinflation_rate: Perbill::from_percent(10),
 		},
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
