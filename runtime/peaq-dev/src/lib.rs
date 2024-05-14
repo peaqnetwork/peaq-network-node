@@ -112,7 +112,7 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	EoTFeeFactor, LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
+	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
 	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
 	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
 	MILLICENTS,
@@ -416,6 +416,10 @@ impl pallet_balances::Config for Runtime {
 	type MaxHolds = ();
 	type HoldIdentifier = ();
 	type MaxFreezes = ();
+}
+
+parameter_types! {
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
