@@ -18,7 +18,7 @@ impl Default for InflationParameters {
 	fn default() -> Self {
 		Self {
 			inflation_rate: Perbill::from_perthousand(35u32),
-			disinflation_rate: Perbill::from_percent(90),
+			disinflation_rate: Perbill::from_percent(10),
 		}
 	}
 }
