@@ -3,7 +3,10 @@ use frame_support::assert_noop;
 use frame_system::RawOrigin;
 use mock::*;
 use peaq_primitives_xcm::BlockNumber;
-use sp_runtime::traits::{AccountIdConversion, BadOrigin};
+use sp_runtime::{
+	traits::{AccountIdConversion, BadOrigin, Saturating},
+	Perbill,
+};
 
 #[test]
 fn sanity_check_genesis() {
@@ -152,6 +155,38 @@ fn stagnation_reached_as_expected() {
 	})
 }
 
+#[test]
+fn inflation_parameters_correctness_as_expected() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		let inflation_configuration: InflationConfigurationT =
+			InflationManager::inflation_configuration();
+		let last_snapshot_year = inflation_configuration.inflation_stagnation_year as usize - 1;
+		let disinflation =
+			Perbill::one() - inflation_configuration.inflation_parameters.disinflation_rate;
+		let inflation = inflation_configuration.inflation_parameters.inflation_rate;
+		let mut expected_yearly_inflation_parameters: Vec<InflationParametersT> = vec![];
+
+		let yearly_snapshots: Vec<InflationManagerSnapshot> = (0..last_snapshot_year)
+			.map(|i| InflationManagerSnapshot::take_snapshot_at(BLOCKS_PER_YEAR * i as u32))
+			.collect();
+
+		for i in 0..last_snapshot_year {
+			// calculate expected inflation parameters manually
+			let disinflation_rate = disinflation.saturating_pow(i.try_into().unwrap());
+			let inflation_rate = inflation * disinflation_rate;
+			expected_yearly_inflation_parameters
+				.push(InflationParametersT { inflation_rate, disinflation_rate });
+		}
+
+		// verify snapshot inflation parameters
+		for i in 0..last_snapshot_year {
+			assert_eq!(
+				yearly_snapshots[i].inflation_parameters,
+				expected_yearly_inflation_parameters[i]
+			);
+		}
+	})
+}
 /// Represents inflation manager storage snapshot at current block
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 struct InflationManagerSnapshot {
