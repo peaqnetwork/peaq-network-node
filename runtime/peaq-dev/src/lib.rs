@@ -419,7 +419,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(0);
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
