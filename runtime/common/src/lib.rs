@@ -3,7 +3,7 @@
 
 use frame_support::{pallet_prelude::*, parameter_types};
 use orml_traits::MultiCurrency;
-use sp_runtime::{traits::Convert, Perbill};
+use sp_runtime::traits::Convert;
 use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
 use xcm::latest::prelude::*;
 use zenlink_protocol::{AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler};
@@ -29,7 +29,6 @@ pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;
-	pub const EoTFeeFactor: Perbill = Perbill::from_percent(50);
 }
 
 /// A local adaptor to convert between Zenlink-Assets and Peaq's local currency.
