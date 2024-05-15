@@ -488,6 +488,11 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	pub const DidStorageDepositBase: Balance = DOLLARS / 10;
+	pub const DidStorageDepositPerByte: Balance = 0;
+}
+
 /// Config the did in pallets/did
 impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -495,8 +500,8 @@ impl peaq_pallet_did::Config for Runtime {
 	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
 	type BoundedDataLen = ConstU32<2560>;
 	type Currency = Balances;
-	type StorageDepositBase = StorageDepositBase;
-	type StorageDepositPerByte = StorageDepositPerByte;
+	type StorageDepositBase = DidStorageDepositBase;
+	type StorageDepositPerByte = DidStorageDepositPerByte;
 }
 
 /// Config the utility in pallets/utility
