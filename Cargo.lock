@@ -8468,7 +8468,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=jay/named-reserved-deposit#99ba28b8d73e34ac3428344d20d21df7ee3ee749"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8488,7 +8488,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=jay/named-reserved-deposit#99ba28b8d73e34ac3428344d20d21df7ee3ee749"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8508,7 +8508,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=jay/named-reserved-deposit#99ba28b8d73e34ac3428344d20d21df7ee3ee749"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -8519,7 +8519,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#47d8849ab0737172212860c6e592c1c6586e0e20"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=jay/named-reserved-deposit#a8854a9cf7d6d4322f4afe894e78da41e4b40506"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8538,7 +8538,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#a27fdd1bbb08418f2b20ae25db95d96f4b43032e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=jay/named-reserved-deposit#baf06243239f239cd1f3e3a54a48de4c91ab159e"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8558,7 +8558,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#a27fdd1bbb08418f2b20ae25db95d96f4b43032e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=jay/named-reserved-deposit#baf06243239f239cd1f3e3a54a48de4c91ab159e"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8576,7 +8576,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#a27fdd1bbb08418f2b20ae25db95d96f4b43032e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=jay/named-reserved-deposit#baf06243239f239cd1f3e3a54a48de4c91ab159e"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -8587,7 +8587,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e340d6f1db27ae1e4a1e42b7b0fe4a9d53adac12"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=jay/named-reserved-deposit#f9c002923db3baecf3df2e39e789cc3c85abac05"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8604,7 +8604,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e340d6f1db27ae1e4a1e42b7b0fe4a9d53adac12"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=jay/named-reserved-deposit#f9c002923db3baecf3df2e39e789cc3c85abac05"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8624,7 +8624,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e340d6f1db27ae1e4a1e42b7b0fe4a9d53adac12"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=jay/named-reserved-deposit#f9c002923db3baecf3df2e39e789cc3c85abac05"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",

@@ -401,7 +401,7 @@ parameter_types! {
 	pub const MaxReserves: u32 = 50;
 	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
 	pub const StorageReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b's', b't', b'o', b'r'];
-	pub const RABCReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'r', b'b', b'a', b'c'];
+	pub const RBACReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'r', b'b', b'a', b'c'];
 }
 
 impl pallet_balances::Config for Runtime {
