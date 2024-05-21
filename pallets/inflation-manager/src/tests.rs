@@ -51,7 +51,7 @@ fn check_fund_enough_token() {
 		})
 }
 
-i#[test]
+#[test]
 fn check_not_fund_token() {
 	ExternalityBuilder::default()
 		.with_balances(vec![(1, DefaultTotalIssuanceNum::get() + 50)])
@@ -68,7 +68,7 @@ fn check_not_fund_token() {
 
 #[test]
 fn sanity_check_set_tge() {
-	ExternalityBuilder::build().execute_with(|| {
+	ExternalityBuilder::default().build().execute_with(|| {
 		InflationManagerSnapshot::take_snapshot_at(0);
 		let expected_inflation_parameters = InflationParametersT {
 			inflation_rate: Perbill::from_perthousand(35u32),

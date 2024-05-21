@@ -17,8 +17,14 @@ benchmarks! {
 		assert_eq!(CurrencyOf::<T>::free_balance(&pot_account), 0);
 		assert_eq!(CurrencyOf::<T>::free_balance(&dest), 1000);
 	}
+
 	set_tge {
 	}: _(RawOrigin::Root, (1000 as u32).into(), (1100 as u32).into())
+	verify {
+		assert_eq!(BlockRewards::<T>::get(), (1100 as u32).into());
+		assert_eq!(DoRecalculationAt::<T>::get(), (1000 as u32).into() + T::BlockNumber::from(BLOCKS_PER_YEAR));
+	}
+}
 
 #[cfg(test)]
 mod tests {
