@@ -135,13 +135,6 @@ fn stagnation_reached_as_expected() {
 			.map(|i| InflationManagerSnapshot::take_snapshot_at(BLOCKS_PER_YEAR * i as u32))
 			.collect();
 
-		for snapsot in yearly_snapshots.iter() {
-			println!(
-				"year: {}, inflation_parameters: {:?}",
-				snapsot.current_year,
-				snapsot.inflation_parameters
-			);
-		}
 		// verify snapshot inflation parameters - stagnation year index is (year - 1)
 		assert_eq!(
 			yearly_snapshots[stagnation_snapshot_year - 1]
@@ -193,6 +186,15 @@ fn inflation_parameters_correctness_as_expected() {
 			);
 		}
 	})
+}
+
+#[test]
+fn check_block_issue_rewards(){
+	ExternalityBuilder::default().build().execute_with(|| {
+		let bir = BlockIssueReward::get();
+		println!("bir: {:?}", bir);
+	})
+
 }
 /// Represents inflation manager storage snapshot at current block
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]

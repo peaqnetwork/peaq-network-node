@@ -15,7 +15,7 @@ mod upgrade {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
 			let mut weight_reads = 0;
-			let mut calculated_weight: Weight = 0.into();
+			let mut calculated_weight: Weight = Weight::default();
 
 			// get storage versions
 			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
