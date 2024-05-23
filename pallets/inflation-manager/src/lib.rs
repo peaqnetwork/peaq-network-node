@@ -151,7 +151,6 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			let inflation_configuration = T::DefaultInflationConfiguration::get();
 			let do_recalculation_at = T::DoRecalculationAt::get();
 
 			// if DoRecalculationAt was provided as zero,
