@@ -112,6 +112,7 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
+	pub const InitializeInflationAt: BlockNumber = 0;
 }
 
 impl inflation_manager::Config for TestRuntime {
@@ -122,6 +123,7 @@ impl inflation_manager::Config for TestRuntime {
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
 	type WeightInfo = weights::WeightInfo<TestRuntime>;
+	type DoRecalculationAt = InitializeInflationAt;
 }
 pub struct ExternalityBuilder {
 	// endowed accounts with balances

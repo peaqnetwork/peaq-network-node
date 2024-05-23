@@ -5,7 +5,7 @@ use frame_support::PalletId;
 pub use pallet::*;
 
 pub mod types;
-use frame_support::traits::ExistenceRequirement::AllowDeath;
+use frame_support::traits::{ExistenceRequirement::AllowDeath, StorageInstance};
 use frame_system::{ensure_root, pallet_prelude::OriginFor};
 use sp_runtime::traits::AccountIdConversion;
 pub use types::{
@@ -65,6 +65,11 @@ pub mod pallet {
 		/// Bounds for BoundedVec across this pallet's storage
 		#[pallet::constant]
 		type BoundedDataLen: Get<u32>;
+
+		/// Block where inflation is applied
+		/// Block rewards will be calculated at this block based on the then total supply or
+		/// DefaultTotalIssuanceNum
+		type DoRecalculationAt: Get<Self::BlockNumber>;
 	}
 
 	/// Inflation kicks off with these parameters
@@ -95,6 +100,17 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn block_rewards)]
 	pub type BlockRewards<T: Config> = StorageValue<_, Balance, ValueQuery>;
+
+	// TODO remove PalletBlockReward and BlockIssueReward in next migration from here
+	pub struct PalletBlockReward;
+	impl StorageInstance for PalletBlockReward {
+		fn pallet_prefix() -> &'static str {
+			"BlockReward"
+		}
+		const STORAGE_PREFIX: &'static str = "BlockIssueReward";
+	}
+
+	pub type BlockIssueReward = StorageValue<PalletBlockReward, Balance, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
@@ -136,29 +152,16 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			let inflation_configuration = T::DefaultInflationConfiguration::get();
-			// install inflation config
-			InflationConfiguration::<T>::put(inflation_configuration.clone());
+			let do_recalculation_at = T::DoRecalculationAt::get();
 
-			// set current year to 1
-			CurrentYear::<T>::put(1);
-
-			// calc inflation for first year
-			let inflation_parameters =
-				Pallet::<T>::update_inflation_parameters(&inflation_configuration);
-
-			// install inflation parameters for first year
-			InflationParameters::<T>::put(inflation_parameters.clone());
-
-			// set the flag to calculate inflation parameters after a year(in blocks)
-			let racalculation_target_block = frame_system::Pallet::<T>::current_block_number() +
-				T::BlockNumber::from(BLOCKS_PER_YEAR);
-
-			// Update recalculation flag
-			DoRecalculationAt::<T>::put(racalculation_target_block);
-
-			let block_rewards = Pallet::<T>::rewards_per_block(&inflation_parameters);
-
-			BlockRewards::<T>::put(block_rewards);
+			// if DoRecalculationAt was provided as zero,
+			// Then do TGE now and initialize inflation
+			if do_recalculation_at == T::BlockNumber::default() {
+				Pallet::<T>::fund_difference_balances();
+				Pallet::<T>::initialize_inflation();
+			} else {
+				Pallet::<T>::initialize_delayed_inflation(do_recalculation_at);
+			}
 		}
 	}
 
@@ -180,20 +183,18 @@ pub mod pallet {
 			let inflation_config = InflationConfiguration::<T>::get();
 			let mut inflation_parameters = InflationParameters::<T>::get();
 
-			// if we're at the end of a year
+			// if we're at the end of a year or initializing inflation
 			if now >= target_block {
 				// update current year
 				CurrentYear::<T>::put(new_year);
 
-				// check if we need to recalculate inflation parameters for a new year
-				// update inflation parameters if we havent reached the stagnation year
+				// if we're not at the stagnation year, update inflation parameters
 				if new_year < inflation_config.inflation_stagnation_year {
 					// update inflation parameters
 					inflation_parameters = Self::update_inflation_parameters(&inflation_config);
 				}
 
-				// if, at end of year, we have reached the stagnation year, kill the recalculation
-				// flag and set inflation parameters to stagnation values
+				// if we're at the stagnation year, set inflation parameters to the stagnation rate
 				if new_year == inflation_config.inflation_stagnation_year {
 					inflation_parameters = InflationParametersT {
 						inflation_rate: inflation_config.inflation_stagnation_rate,
@@ -201,7 +202,10 @@ pub mod pallet {
 					};
 				}
 
-				InflationParameters::<T>::put(inflation_parameters.clone());
+				// no need to update InflationParameters in storage after inflation stagnation year
+				if current_year <= inflation_config.inflation_stagnation_year {
+					InflationParameters::<T>::put(inflation_parameters.clone());
+				}
 
 				// set the flag to calculate inflation parameters after a year(in blocks)
 				let target_block = now + T::BlockNumber::from(BLOCKS_PER_YEAR);
@@ -240,7 +244,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		// calculate inflationary tokens per block
+		/// calculate inflationary tokens per block
+		/// Weight Reads: 1
 		pub fn rewards_per_block(inflation_parameters: &InflationParametersT) -> Balance {
 			let total_issuance = T::Currency::total_issuance();
 			let rewards_total = inflation_parameters.inflation_rate * total_issuance;
@@ -249,7 +254,8 @@ pub mod pallet {
 			rewards_total / Balance::from(BLOCKS_PER_YEAR)
 		}
 
-		// We do not expect this to underflow/overflow
+		/// We do not expect this to underflow/overflow
+		/// Weight Reads: 1
 		pub fn update_inflation_parameters(
 			inflation_config: &InflationConfigurationT,
 		) -> InflationParametersT {
@@ -267,6 +273,87 @@ pub mod pallet {
 				inflation_config.inflation_parameters.inflation_rate * disinflation_rate;
 
 			InflationParametersT { inflation_rate, disinflation_rate }
+		}
+
+		pub fn fund_difference_balances() {
+			let account = T::PotId::get().into_account_truncating();
+			let now_total_issuance = T::Currency::total_issuance();
+			let desired_issuance = T::DefaultTotalIssuanceNum::get();
+			if now_total_issuance < desired_issuance {
+				let amount = desired_issuance.saturating_sub(now_total_issuance);
+				T::Currency::deposit_creating(&account, amount);
+				log::info!(
+					"Total issuance was increased from {:?} to {:?}, by {:?} tokens.",
+					now_total_issuance,
+					desired_issuance,
+					amount
+				);
+			}
+		}
+
+		pub fn initialize_inflation() -> Weight {
+			let current_block = frame_system::Pallet::<T>::block_number();
+			let mut weight_reads = 1;
+			let mut weight_writes = 0;
+
+			let inflation_configuration = T::DefaultInflationConfiguration::get();
+			// install inflation config
+			InflationConfiguration::<T>::put(inflation_configuration.clone());
+			weight_writes += 1;
+
+			// set current year to 1
+			CurrentYear::<T>::put(1);
+			weight_writes += 1;
+
+			// calc inflation for first year
+			let inflation_parameters =
+				Pallet::<T>::update_inflation_parameters(&inflation_configuration);
+			weight_reads += 1;
+
+			// install inflation parameters for first year
+			InflationParameters::<T>::put(inflation_parameters.clone());
+			weight_writes += 1;
+
+			// set the flag to calculate inflation parameters after a year(in blocks)
+			let racalculation_target_block = current_block + T::BlockNumber::from(BLOCKS_PER_YEAR);
+
+			// Update recalculation flag
+			DoRecalculationAt::<T>::put(racalculation_target_block);
+			weight_writes += 1;
+
+			let block_rewards = Pallet::<T>::rewards_per_block(&inflation_parameters);
+			weight_reads += 1;
+
+			BlockRewards::<T>::put(block_rewards);
+			weight_writes += 1;
+
+			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
+		}
+
+		/// Sets DoRecalculationAt to the given block number where year 1 will kick off
+		/// Migrates pallet_block_rewards::BlockIssueReward to inflation_manager::BlockRewards
+		pub fn initialize_delayed_inflation(do_recalculation_at: T::BlockNumber) -> Weight {
+			let mut weight_reads = 0;
+			let mut weight_writes = 0;
+			let block_issue_reward = BlockIssueReward::get();
+			weight_reads += 1;
+
+			// install inflation config
+			InflationConfiguration::<T>::put(T::DefaultInflationConfiguration::get());
+			weight_writes += 1;
+
+			// migrate previous block rewards from block-rewards pallet to inflation-manager
+			// BlockIssueReward will be killed in this runtime upgrade
+			BlockRewards::<T>::put(block_issue_reward);
+			weight_writes += 1;
+
+			// set DoRecalculationAt to trigger at delayed TGE block
+			DoRecalculationAt::<T>::put(do_recalculation_at);
+			weight_writes += 1;
+
+			// return from here as we are not initializing inflation yet
+			// leaving InflationParameters uninitialized
+			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
 	}
 }
