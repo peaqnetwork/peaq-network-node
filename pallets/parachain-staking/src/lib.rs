@@ -2733,7 +2733,8 @@ pub mod pallet {
 			let (in_reads, total_staking_in_session) = Self::get_total_collator_staking_num();
 			reads.saturating_add(in_reads);
 
-			CollatorBlock::<T>::iter().for_each(|(collator, block_num)| {
+			// Here we also remove the all collator block after the iteration
+			CollatorBlock::<T>::iter().drain().for_each(|(collator, block_num)| {
 				// Get the delegator's staking number
 				if let Some(state) = CandidatePool::<T>::get(collator.clone()) {
 					let now_reward = Self::get_collator_reward_per_session(
@@ -2836,10 +2837,6 @@ pub mod pallet {
 		fn end_session(end_index: SessionIndex) {
 			log::debug!("new_session: {:?}", end_index);
 			Self::peaq_reward_mechanism_impl();
-
-			CollatorBlock::<T>::iter().for_each(|(k, _)| {
-				CollatorBlock::<T>::remove(k);
-			});
 		}
 
 		fn start_session(_start_index: SessionIndex) {
