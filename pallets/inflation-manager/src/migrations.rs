@@ -23,13 +23,13 @@ mod upgrade {
 			let current = Pallet::<T>::current_storage_version();
 
 			if onchain_storage_version < current {
-				let do_recalculation_at = T::DoRecalculationAt::get();
+				let do_initialize_at = T::DoInitializeAt::get();
 
 				let current_block = frame_system::Pallet::<T>::current_block_number();
 				weight_reads += 1;
 
 				// If Config::DoRecalculationAt was 0, then kick off inflation year 1 with TGE
-				if do_recalculation_at == T::BlockNumber::from(0u32) {
+				if do_initialize_at == T::BlockNumber::from(0u32) {
 					// adjust total issuance for TGE
 					Pallet::<T>::fund_difference_balances();
 					calculated_weight = Pallet::<T>::initialize_inflation();
@@ -37,9 +37,8 @@ mod upgrade {
 					log::info!(
 						"Inflation Manager storage migration completed from version {:?} to version {:?} with TGE", onchain_storage_version, current
 					);
-				} else if do_recalculation_at > current_block {
-					calculated_weight =
-						Pallet::<T>::initialize_delayed_inflation(do_recalculation_at);
+				} else if do_initialize_at > current_block {
+					calculated_weight = Pallet::<T>::initialize_delayed_inflation(do_initialize_at);
 				}
 
 				// Update storage version

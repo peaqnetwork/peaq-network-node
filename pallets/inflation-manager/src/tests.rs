@@ -188,14 +188,6 @@ fn inflation_parameters_correctness_as_expected() {
 	})
 }
 
-#[test]
-fn check_block_issue_rewards(){
-	ExternalityBuilder::default().build().execute_with(|| {
-		let bir = BlockIssueReward::get();
-		println!("bir: {:?}", bir);
-	})
-
-}
 /// Represents inflation manager storage snapshot at current block
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 struct InflationManagerSnapshot {

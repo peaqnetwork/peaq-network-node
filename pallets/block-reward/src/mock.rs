@@ -159,6 +159,7 @@ parameter_types! {
 		inflation_stagnation_year: 13,
 	};
 	pub const InitializeInflationAt: BlockNumber = 0;
+	pub const BlockRewardBeforeInitialize: Balance = 0;
 }
 
 impl inflation_manager::Config for TestRuntime {
@@ -169,7 +170,8 @@ impl inflation_manager::Config for TestRuntime {
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
 	type WeightInfo = inflation_manager::weights::WeightInfo<TestRuntime>;
-	type DoRecalculationAt = InitializeInflationAt;
+	type DoInitializeAt = InitializeInflationAt;
+	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
 impl pallet_block_reward::Config for TestRuntime {

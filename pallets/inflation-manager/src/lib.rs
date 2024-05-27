@@ -5,7 +5,7 @@ use frame_support::PalletId;
 pub use pallet::*;
 
 pub mod types;
-use frame_support::traits::{ExistenceRequirement::AllowDeath, StorageInstance};
+use frame_support::traits::ExistenceRequirement::AllowDeath;
 use frame_system::{ensure_root, pallet_prelude::OriginFor};
 use sp_runtime::traits::AccountIdConversion;
 pub use types::{
@@ -69,7 +69,11 @@ pub mod pallet {
 		/// Block where inflation is applied
 		/// Block rewards will be calculated at this block based on the then total supply or
 		/// DefaultTotalIssuanceNum
-		type DoRecalculationAt: Get<Self::BlockNumber>;
+		/// If no delay in TGE is expect this and BlockRewardsBeforeInitialize should be zero
+		type DoInitializeAt: Get<Self::BlockNumber>;
+
+		/// BlockRewards to distribute till delayed TGE kicks in
+		type BlockRewardBeforeInitialize: Get<Balance>;
 	}
 
 	/// Inflation kicks off with these parameters
@@ -100,17 +104,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn block_rewards)]
 	pub type BlockRewards<T: Config> = StorageValue<_, Balance, ValueQuery>;
-
-	// TODO remove PalletBlockReward and BlockIssueReward in next migration from here
-	pub struct PalletBlockReward;
-	impl StorageInstance for PalletBlockReward {
-		fn pallet_prefix() -> &'static str {
-			"BlockReward"
-		}
-		const STORAGE_PREFIX: &'static str = "BlockIssueReward";
-	}
-
-	pub type BlockIssueReward = StorageValue<PalletBlockReward, Balance, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
@@ -151,15 +144,15 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			let do_recalculation_at = T::DoRecalculationAt::get();
+			let do_initialize_at = T::DoInitializeAt::get();
 
 			// if DoRecalculationAt was provided as zero,
 			// Then do TGE now and initialize inflation
-			if do_recalculation_at == T::BlockNumber::default() {
+			if do_initialize_at == T::BlockNumber::from(0u32) {
 				Pallet::<T>::fund_difference_balances();
 				Pallet::<T>::initialize_inflation();
 			} else {
-				Pallet::<T>::initialize_delayed_inflation(do_recalculation_at);
+				Pallet::<T>::initialize_delayed_inflation(do_initialize_at);
 			}
 		}
 	}
@@ -183,9 +176,14 @@ pub mod pallet {
 			let mut inflation_parameters = InflationParameters::<T>::get();
 
 			// if we're at the end of a year or initializing inflation
-			if now >= target_block {
+			if now == target_block {
 				// update current year
 				CurrentYear::<T>::put(new_year);
+
+				// if we're at DoInitializeAt, then we need to adjust total issuance for delayed TGE
+				if now == T::DoInitializeAt::get() {
+					Self::fund_difference_balances();
+				}
 
 				// if we're not at the stagnation year, update inflation parameters
 				if new_year < inflation_config.inflation_stagnation_year {
@@ -330,11 +328,9 @@ pub mod pallet {
 		}
 
 		/// Sets DoRecalculationAt to the given block number where year 1 will kick off
-		/// Migrates pallet_block_rewards::BlockIssueReward to inflation_manager::BlockRewards
 		pub fn initialize_delayed_inflation(do_recalculation_at: T::BlockNumber) -> Weight {
 			let mut weight_reads = 0;
 			let mut weight_writes = 0;
-			let block_issue_reward = BlockIssueReward::get();
 			weight_reads += 1;
 
 			// install inflation config
@@ -343,7 +339,7 @@ pub mod pallet {
 
 			// migrate previous block rewards from block-rewards pallet to inflation-manager
 			// BlockIssueReward will be killed in this runtime upgrade
-			BlockRewards::<T>::put(block_issue_reward);
+			BlockRewards::<T>::put(T::BlockRewardBeforeInitialize::get());
 			weight_writes += 1;
 
 			// set DoRecalculationAt to trigger at delayed TGE block
@@ -351,7 +347,7 @@ pub mod pallet {
 			weight_writes += 1;
 
 			// return from here as we are not initializing inflation yet
-			// leaving InflationParameters uninitialized
+			// leaving InflationParameters and BlockRewards uninitialized, saving some weight
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 		}
 	}
