@@ -168,15 +168,15 @@ pub mod pallet {
 		}
 
 		fn on_finalize(now: T::BlockNumber) {
-			let target_block = DoRecalculationAt::<T>::get();
-			let current_year = CurrentYear::<T>::get();
-			let new_year = current_year + 1;
-
-			let inflation_config = InflationConfiguration::<T>::get();
-			let mut inflation_parameters = InflationParameters::<T>::get();
-
 			// if we're at the end of a year or initializing inflation
+			let target_block = DoRecalculationAt::<T>::get();
 			if now == target_block {
+				let current_year = CurrentYear::<T>::get();
+				let new_year = current_year + 1;
+
+				let inflation_config = InflationConfiguration::<T>::get();
+				let mut inflation_parameters = InflationParameters::<T>::get();
+
 				// update current year
 				CurrentYear::<T>::put(new_year);
 
