@@ -486,6 +486,7 @@ impl pallet_sudo::Config for Runtime {
 parameter_types! {
 	pub const DidStorageDepositBase: Balance = DOLLARS / 10;
 	pub const DidStorageDepositPerByte: Balance = 0;
+	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
 }
 /// Config the did in pallets/did
 impl peaq_pallet_did::Config for Runtime {
@@ -496,6 +497,7 @@ impl peaq_pallet_did::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = DidStorageDepositBase;
 	type StorageDepositPerByte = DidStorageDepositPerByte;
+	type ReserveIdentifier = DIDReserveIdentifier;
 }
 
 /// Config the utility in pallets/utility
