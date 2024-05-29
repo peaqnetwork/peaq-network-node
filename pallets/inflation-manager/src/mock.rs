@@ -112,8 +112,8 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
-	pub const InitializeInflationAt: BlockNumber = 0;
-	pub const BlockRewardBeforeInitialize: Balance = 0;
+	pub const InitializeInflationAt: BlockNumber = 10;
+	pub const BlockRewardBeforeInitialize: Balance = 1000;
 }
 
 impl inflation_manager::Config for TestRuntime {
