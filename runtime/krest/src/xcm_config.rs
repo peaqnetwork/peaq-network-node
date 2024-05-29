@@ -15,7 +15,7 @@ use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use runtime_common::{AccountIdToMultiLocation, FixedRateOfForeignAsset};
+use runtime_common::{AccountIdToMultiLocation, FeeManagerNotWaived, FixedRateOfForeignAsset};
 use sp_runtime::traits::ConstU32;
 use xc_asset_config::MultiLocationToAssetId;
 use xcm::latest::{prelude::*, MultiAsset};
@@ -276,7 +276,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MaxAssetsIntoHolding = ConstU32<64>;
 	type AssetLocker = ();
 	type AssetExchanger = ();
-	type FeeManager = ();
+	type FeeManager = FeeManagerNotWaived;
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
