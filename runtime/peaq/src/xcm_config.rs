@@ -3,6 +3,8 @@ use super::{
 	ParachainInfo, ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee, XcAssetConfig, XcmpQueue,
 };
+use cumulus_pallet_xcmp_queue::PriceForSiblingDelivery;
+use cumulus_primitives_core::ParaId;
 use frame_support::{
 	dispatch::Weight,
 	match_types, parameter_types,
@@ -13,7 +15,7 @@ use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use runtime_common::{AccountIdToMultiLocation, FixedRateOfForeignAsset};
+use runtime_common::{AccountIdToMultiLocation, FeeManagerNotWaived, FixedRateOfForeignAsset};
 use sp_runtime::traits::ConstU32;
 use xc_asset_config::MultiLocationToAssetId;
 use xcm::latest::{prelude::*, MultiAsset};
@@ -46,6 +48,7 @@ use xcm_builder::{
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use frame_support::pallet_prelude::Get;
+use parity_scale_codec::Encode;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
@@ -273,7 +276,7 @@ impl xcm_executor::Config for XcmConfig {
 	type MaxAssetsIntoHolding = ConstU32<64>;
 	type AssetLocker = ();
 	type AssetExchanger = ();
-	type FeeManager = ();
+	type FeeManager = FeeManagerNotWaived;
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
@@ -331,6 +334,22 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
+pub struct ExponentialFee;
+
+impl ExponentialFee {
+	fn calculate_fee(size: usize) -> MultiAssets {
+		let fee = (size * size) as u16;
+		MultiAssets::from((Here, fee))
+	}
+}
+
+impl PriceForSiblingDelivery for ExponentialFee {
+	fn price_for_sibling_delivery(_: ParaId, message: &Xcm<()>) -> MultiAssets {
+		let size = message.using_encoded(|encoded| encoded.len());
+		Self::calculate_fee(size)
+	}
+}
+
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -340,7 +359,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToCallOrigin;
 	type WeightInfo = ();
-	type PriceForSiblingDelivery = ();
+	type PriceForSiblingDelivery = ExponentialFee;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
