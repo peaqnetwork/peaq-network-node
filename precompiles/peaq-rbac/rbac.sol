@@ -12,7 +12,7 @@ interface RBAC {
     // ======================= Return Structs ======================= //
 
     struct Entity {
-        bytes32 owner;
+        bytes32 id;
         bytes name;
         bool enabled;
     }
@@ -34,132 +34,132 @@ interface RBAC {
 
     // ======================= Entry Points ======================= //
 
-    function fetch_role(
-        bytes32 owner,
+    function fetchRole(
+        address owner,
         bytes32 entity
     ) external view returns (Entity memory);
 
-    function fetch_roles(
-        bytes32 owner
+    function fetchRoles(
+        address owner
     ) external view returns (Entity[] memory);
 
-    function add_role(
+    function addRole(
         bytes32 role_id,
         bytes memory name
     ) external returns (bool);
 
-    function update_role(
+    function updateRole(
         bytes32 role_id,
         bytes memory name
     ) external returns (bool);
 
-    function disable_role(bytes32 role_id) external returns (bool);
+    function disableRole(bytes32 role_id) external returns (bool);
 
-    function fetch_user_roles(
-        bytes32 owner,
+    function fetchUserRoles(
+        address owner,
         bytes32 user_id
     ) external view returns (Role2User[] memory);
 
-    function assign_role_to_user(
+    function assignRoleToUser(
         bytes32 role_id,
         bytes32 user_id
     ) external returns (bool);
 
-    function unassign_role_to_user(
+    function unassignRoleToUser(
         bytes32 role_id,
         bytes32 user_id
     ) external returns (bool);
 
-    function fetch_permission(
-        bytes32 owner,
+    function fetchPermission(
+        address owner,
         bytes32 permission_id
-    ) external returns (Entity memory);
+    ) external view returns (Entity memory);
 
-    function fetch_permissions(
-        bytes32 owner
-    ) external returns (Entity[] memory);
+    function fetchPermissions(
+        address owner
+    ) external view returns (Entity[] memory);
 
-    function add_permission(
+    function addPermission(
         bytes32 permission_id,
         bytes memory name
     ) external returns (bool);
 
-    function update_permission(
+    function updatePermission(
         bytes32 permission_id,
         bytes memory name
     ) external returns (bool);
 
-    function disable_permission(bytes32 permission_id) external returns (bool);
+    function disablePermission(bytes32 permission_id) external returns (bool);
 
-    function fetch_role_permissions(
-        bytes32 owner,
+    function fetchRolePermissions(
+        address owner,
         bytes32 role_id
     ) external view returns (Permission2Role[] memory);
 
-    function assign_permission_to_role(
+    function assignPermissionToRole(
         bytes32 permission_id,
         bytes32 role_id
     ) external returns (bool);
 
-    function unassign_permission_to_role(
+    function unassignPermissionToRole(
         bytes32 permission_id,
         bytes32 role_id
     ) external returns (bool);
 
-    function fetch_group(
-        bytes32 owner,
+    function fetchGroup(
+        address owner,
         bytes32 group_id
     ) external view returns (Entity memory);
 
-    function add_group(
+    function addGroup(
         bytes32 group_id,
         bytes memory name
     ) external returns (bool);
 
-    function update_group(
+    function updateGroup(
         bytes32 group_id,
         bytes memory name
     ) external returns (bool);
 
-    function disable_group(bytes32 group_id) external returns (bool);
+    function disableGroup(bytes32 group_id) external returns (bool);
 
-    function assign_role_to_group(
+    function assignRoleToGroup(
         bytes32 role_id,
         bytes32 group_id
     ) external returns (bool);
 
-    function unassign_role_to_group(
+    function unassignRoleToGroup(
         bytes32 role_id,
         bytes32 group_id
     ) external returns (bool);
 
-    function fetch_group_roles(
-        bytes32 owner,
+    function fetchGroupRoles(
+        address owner,
         bytes32 group_id
     ) external view returns (Role2User[] memory);
 
-    function assign_user_to_group(
+    function assignUserToGroup(
         bytes32 user_id,
         bytes32 group_id
     ) external returns (bool);
 
-    function unassign_user_to_group(
+    function unassignUserToGroup(
         bytes32 user_id,
         bytes32 group_id
     ) external returns (bool);
 
-    function fetch_user_groups(
-        bytes32 owner,
+    function fetchUserGroups(
+        address owner,
         bytes32 user_id
     ) external view returns (User2Group[] memory);
 
-    function fetch_user_permissions(
-        bytes32 owner,
+    function fetchUserPermissions(
+        address owner,
         bytes32 user_id
     ) external view returns (Entity[] memory);
 
-    function fetch_group_permissions(
-        bytes32 owner,
+    function fetchGroupPermissions(
+        address owner,
         bytes32 group_id
     ) external view returns (Entity[] memory);
 

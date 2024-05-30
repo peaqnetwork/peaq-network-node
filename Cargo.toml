@@ -13,7 +13,8 @@ members = [
 	"precompiles/xtokens",
 	"precompiles/xcm-utils",
 	"precompiles/batch",
-  "precompiles/peaq-rbac",
+	"precompiles/peaq-rbac",
+	"precompiles/parachain-staking",
 ]
 resolver = "2"
 

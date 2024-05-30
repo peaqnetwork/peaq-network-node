@@ -14,6 +14,7 @@ slices = { workspace = true, default-features = false }
 
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 
 # Substrate
 parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
@@ -44,4 +45,5 @@ std = [
 	"sp-std/std",
 	"sp-runtime/std",
 	"peaq-pallet-rbac/std",
+	"peaq-primitives-xcm/std",
 ]

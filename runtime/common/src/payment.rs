@@ -1,4 +1,4 @@
-use crate::{EoTFeeFactor, PaymentConvertInfo};
+use crate::PaymentConvertInfo;
 use frame_support::{
 	pallet_prelude::{
 		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
@@ -9,9 +9,12 @@ use frame_support::{
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
-use sp_runtime::traits::{
-	Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
-	Saturating, Zero,
+use sp_runtime::{
+	traits::{
+		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
+		Saturating, Zero,
+	},
+	Perbill,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
@@ -27,9 +30,12 @@ type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
 
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
+pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>(
+	PhantomData<(C, OU, PCPC, FEE)>,
+);
 
-impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC>
+impl<T, C, OU, PCPC, FEE> OnChargeTransaction<T>
+	for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>
 where
 	T: SysConfig + TransPayConfig + ZenProtConfig,
 	C: Currency<T::AccountId>,
@@ -37,6 +43,7 @@ where
 	PCPC: PeaqMultiCurrenciesPaymentConvert<AccountId = T::AccountId, Currency = C>,
 	PCPC::AssetId: TryFrom<PeaqAssetId>,
 	AssetBalance: From<BalanceOf<C, T>>,
+	FEE: Get<Perbill>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
 	type Balance = <C as Currency<T::AccountId>>::Balance;
@@ -62,7 +69,7 @@ where
 		};
 
 		// Apply Peaq Economy-of-Things Fee adjustment.
-		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
+		let eot_fee = FEE::get() * inclusion_fee;
 		let tx_fee = total_fee.saturating_add(eot_fee);
 
 		// Check if user can withdraw in any valid currency.
@@ -98,7 +105,7 @@ where
 		if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
 			let cor_inclusion_fee = cor_total_fee - tip;
-			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
+			let cor_eot_fee = FEE::get() * cor_inclusion_fee;
 			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
 
 			// Calculate how much refund we should return

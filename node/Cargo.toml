@@ -1,6 +1,6 @@
 [package]
 name = "peaq-node"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.1.0"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -17,8 +17,8 @@ name = "peaq-node"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
+git = "https://github.com/peaqnetwork/polkadot-sdk"
+branch = "release-polkadot-v1.1.0"
 
 [dependencies]
 structopt = { workspace = true, default-features = true }
@@ -119,7 +119,6 @@ try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
 
 peaq-dev-runtime = { path = "../runtime/peaq-dev" }
-peaq-agung-runtime = { path = "../runtime/agung" }
 peaq-krest-runtime = { path = "../runtime/krest" }
 peaq-runtime = { path = "../runtime/peaq" }
 peaq-primitives-ext = { path = "../primitives/ext" }
@@ -131,6 +130,7 @@ peaq-rpc-txpool = { path = "../client/rpc/txpool" }
 pallet-block-reward = { path = "../pallets/block-reward" }
 peaq-primitives-xcm = { path = "../primitives/xcm" }
 runtime-common = { path = "../runtime/common" }
+inflation-manager ={ path = "../pallets/inflation-manager" }
 
 [features]
 default = [
@@ -139,19 +139,16 @@ default = [
 	]
 aura = [
 	"peaq-dev-runtime/aura",
-	"peaq-agung-runtime/aura",
 	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking-cli",
-	"peaq-agung-runtime/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
 try-runtime = [
-	"peaq-agung-runtime/try-runtime",
 	"peaq-dev-runtime/try-runtime",
 	"peaq-krest-runtime/try-runtime",
 	"peaq-runtime/try-runtime",

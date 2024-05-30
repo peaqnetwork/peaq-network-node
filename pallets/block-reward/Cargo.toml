@@ -21,6 +21,8 @@ serde = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false, optional = true }
 sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
+inflation-manager ={ path = "../inflation-manager", default-features = false}
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 
 [dev-dependencies]
 sp-io = { workspace = true, default-features = false }
@@ -41,6 +43,8 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"sp-io/std",
+	"inflation-manager/std",
+	"peaq-primitives-xcm/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

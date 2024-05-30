@@ -2536,7 +2536,7 @@ dependencies = [
  "curve25519-dalek-derive",
  "digest 0.10.7",
  "fiat-crypto",
- "platforms 3.2.0",
+ "platforms",
  "rustc_version 0.4.0",
  "subtle",
  "zeroize",
@@ -4983,6 +4983,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "inflation-manager"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "inout"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7186,10 +7206,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "inflation-manager",
  "log",
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
+ "peaq-primitives-xcm",
  "scale-info",
  "serde",
  "sp-core",
@@ -7585,6 +7607,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-parachain-staking"
+version = "0.0.1"
+dependencies = [
+ "address-unification",
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum 0.5.11",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-session",
+ "pallet-timestamp",
+ "parachain-staking",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3",
+ "slices",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-peaq-did"
 version = "0.1.0"
 dependencies = [
@@ -7620,6 +7674,7 @@ dependencies = [
  "parity-scale-codec",
  "paste",
  "peaq-pallet-rbac",
+ "peaq-primitives-xcm",
  "precompile-utils",
  "slices",
  "sp-core",
@@ -8644,120 +8699,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-agung-runtime"
-version = "3.0.0-polkadot-v0.9.43"
-dependencies = [
- "address-unification",
- "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-xcm",
- "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
- "cumulus-primitives-timestamp",
- "cumulus-primitives-utility",
- "ethereum",
- "evm-tracing-events",
- "fp-evm",
- "fp-rpc",
- "fp-self-contained",
- "frame-benchmarking",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "frame-try-runtime",
- "hex-literal 0.3.4",
- "log",
- "orml-currencies",
- "orml-traits",
- "orml-xcm-support",
- "orml-xtokens",
- "pallet-assets",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-base-fee",
- "pallet-block-reward",
- "pallet-collective",
- "pallet-contracts",
- "pallet-contracts-primitives",
- "pallet-dynamic-fee",
- "pallet-ethereum",
- "pallet-evm",
- "pallet-evm-precompile-assets-erc20",
- "pallet-evm-precompile-assets-factory",
- "pallet-evm-precompile-batch",
- "pallet-evm-precompile-blake2",
- "pallet-evm-precompile-bn128",
- "pallet-evm-precompile-dispatch",
- "pallet-evm-precompile-modexp",
- "pallet-evm-precompile-peaq-did",
- "pallet-evm-precompile-peaq-rbac",
- "pallet-evm-precompile-peaq-storage",
- "pallet-evm-precompile-sha3fips",
- "pallet-evm-precompile-simple",
- "pallet-evm-precompile-xcm-utils",
- "pallet-evm-precompile-xtokens",
- "pallet-insecure-randomness-collective-flip",
- "pallet-multisig",
- "pallet-session",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "pallet-treasury",
- "pallet-utility",
- "pallet-vesting",
- "pallet-xcm",
- "parachain-info",
- "parachain-staking",
- "parity-scale-codec",
- "peaq-evm-tracer",
- "peaq-pallet-did",
- "peaq-pallet-did-runtime-api",
- "peaq-pallet-rbac",
- "peaq-pallet-rbac-runtime-api",
- "peaq-pallet-storage",
- "peaq-pallet-storage-runtime-api",
- "peaq-pallet-transaction",
- "peaq-primitives-xcm",
- "peaq-rpc-primitives-debug",
- "peaq-rpc-primitives-txpool",
- "polkadot-parachain-primitives",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "precompile-utils",
- "rlp",
- "runtime-common",
- "scale-info",
- "sha3",
- "smallvec",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "sp-weights",
- "staging-xcm",
- "staging-xcm-builder",
- "staging-xcm-executor",
- "staking-coefficient-reward",
- "substrate-wasm-builder",
- "xc-asset-config",
- "zenlink-protocol",
- "zenlink-protocol-runtime-api",
-]
-
-[[package]]
 name = "peaq-client-evm-tracing"
 version = "0.1.0"
 dependencies = [
@@ -8773,7 +8714,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-dev-runtime"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.1.0"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -8797,6 +8738,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "log",
  "orml-currencies",
  "orml-traits",
@@ -8821,6 +8763,7 @@ dependencies = [
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
  "pallet-evm-precompile-modexp",
+ "pallet-evm-precompile-parachain-staking",
  "pallet-evm-precompile-peaq-did",
  "pallet-evm-precompile-peaq-rbac",
  "pallet-evm-precompile-peaq-storage",
@@ -8907,7 +8850,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-krest-runtime"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.1.0"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -8931,6 +8874,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "log",
  "orml-currencies",
  "orml-traits",
@@ -8955,6 +8899,7 @@ dependencies = [
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
  "pallet-evm-precompile-modexp",
+ "pallet-evm-precompile-parachain-staking",
  "pallet-evm-precompile-peaq-did",
  "pallet-evm-precompile-peaq-rbac",
  "pallet-evm-precompile-peaq-storage",
@@ -9021,7 +8966,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-node"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.1.0"
 dependencies = [
  "async-trait",
  "clap 4.4.11",
@@ -9055,6 +9000,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.29",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "jsonrpsee",
@@ -9068,7 +9014,6 @@ dependencies = [
  "pallet-evm",
  "pallet-transaction-payment-rpc",
  "parity-scale-codec",
- "peaq-agung-runtime",
  "peaq-dev-runtime",
  "peaq-krest-runtime",
  "peaq-pallet-did-rpc",
@@ -9123,7 +9068,7 @@ dependencies = [
  "sp-transaction-pool",
  "staging-xcm",
  "structopt",
- "substrate-build-script-utils 3.0.0 (git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.43)",
+ "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "tokio",
@@ -9137,12 +9082,13 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.1.0#063bbe5fc5a949af281596b42d82dd1de5feb992"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.1.0#302c63b1625943c8b4e42e68e822b1e423d3ec71"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "num-traits",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -9156,7 +9102,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.1.0#063bbe5fc5a949af281596b42d82dd1de5feb992"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.1.0#302c63b1625943c8b4e42e68e822b1e423d3ec71"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -9176,7 +9122,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.1.0#063bbe5fc5a949af281596b42d82dd1de5feb992"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.1.0#302c63b1625943c8b4e42e68e822b1e423d3ec71"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -9187,7 +9133,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v1.1.0#222f8b83066901f0a6f799ef99cf8e66d35774c5"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v1.1.0#10dc53c5af391abda4e7476dcf7a4d1b19cdeab9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9207,12 +9153,13 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#875cea7cc1818921bcc5837040839255d6933d42"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#2af645e09f5df2d88eab45e4ac2a7f420060a164"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -9226,7 +9173,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#875cea7cc1818921bcc5837040839255d6933d42"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#2af645e09f5df2d88eab45e4ac2a7f420060a164"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -9244,7 +9191,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#875cea7cc1818921bcc5837040839255d6933d42"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-v1.1.0#2af645e09f5df2d88eab45e4ac2a7f420060a164"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -9255,11 +9202,12 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v1.1.0#64c1d8092651293ed7f4fb5734b5f7b644f7f116"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v1.1.0#d8281dbd68c48ef0cf9e0d01fc21aae1a72611d2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -9271,7 +9219,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v1.1.0#64c1d8092651293ed7f4fb5734b5f7b644f7f116"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v1.1.0#d8281dbd68c48ef0cf9e0d01fc21aae1a72611d2"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -9291,7 +9239,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v1.1.0#64c1d8092651293ed7f4fb5734b5f7b644f7f116"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=peaq-polkadot-v1.1.0#d8281dbd68c48ef0cf9e0d01fc21aae1a72611d2"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -9330,7 +9278,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-primitives-xcm"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.1.0"
 dependencies = [
  "bstringify",
  "evm",
@@ -9520,7 +9468,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-runtime"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.1.0"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -9544,6 +9492,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal 0.3.4",
+ "inflation-manager",
  "log",
  "orml-currencies",
  "orml-traits",
@@ -9568,6 +9517,7 @@ dependencies = [
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
  "pallet-evm-precompile-modexp",
+ "pallet-evm-precompile-parachain-staking",
  "pallet-evm-precompile-peaq-did",
  "pallet-evm-precompile-peaq-rbac",
  "pallet-evm-precompile-peaq-storage",
@@ -9801,12 +9751,6 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
 name = "platforms"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8d0eef3571242013a0d5dc84861c3ae4a652e56e12adf8bdc26ff5f8cb34c94"
-
-[[package]]
-name = "platforms"
 version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14e6ab3f592e6fb464fc9712d8d6e6912de6473954635fd76a589d832cffcbb0"
@@ -9911,7 +9855,7 @@ dependencies = [
  "sp-io",
  "sp-keyring",
  "sp-maybe-compressed-blob",
- "substrate-build-script-utils 3.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-polkadot-v1.1.0)",
+ "substrate-build-script-utils",
  "thiserror",
  "try-runtime-cli",
 ]
@@ -10281,7 +10225,7 @@ dependencies = [
  "sp-core",
  "sp-maybe-compressed-blob",
  "sp-wasm-interface",
- "substrate-build-script-utils 3.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=release-polkadot-v1.1.0)",
+ "substrate-build-script-utils",
  "tempfile",
  "tokio",
  "tracing-gum",
@@ -11998,7 +11942,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "3.0.0-polkadot-v1.1.0"
+version = "3.1.0-polkadot-v1.1.0"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
@@ -15178,14 +15122,6 @@ dependencies = [
  "lazy_static",
  "rand 0.8.5",
  "rustc-hex",
-]
-
-[[package]]
-name = "substrate-build-script-utils"
-version = "3.0.0"
-source = "git+https://github.com/peaqnetwork/substrate?branch=peaq-polkadot-v0.9.43#13fbc72bb49646f9b9fbe07aa4b92fb3e212624d"
-dependencies = [
- "platforms 2.0.0",
 ]
 
 [[package]]

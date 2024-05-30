@@ -42,26 +42,4 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
-	/// Storage: BlockReward BlockIssueReward (r:0 w:1)
-	/// Proof: BlockReward BlockIssueReward (max_values: Some(1), max_size: Some(16), added: 511, mode: MaxEncodedLen)
-	fn set_block_issue_reward() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 13_707_000 picoseconds.
-		Weight::from_parts(14_115_000, 0)
-			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
-	}
-	/// Storage: BlockReward MaxCurrencySupply (r:0 w:1)
-	/// Proof: BlockReward MaxCurrencySupply (max_values: Some(1), max_size: Some(16), added: 511, mode: MaxEncodedLen)
-	fn set_max_currency_supply() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 13_702_000 picoseconds.
-		Weight::from_parts(14_382_000, 0)
-			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
-	}
 }

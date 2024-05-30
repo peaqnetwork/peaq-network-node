@@ -6,6 +6,7 @@ use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_modexp::Modexp;
+use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
 use pallet_evm_precompile_peaq_did::PeaqDIDPrecompile;
 use pallet_evm_precompile_peaq_rbac::PeaqRbacPrecompile;
 use pallet_evm_precompile_peaq_storage::PeaqStoragePrecompile;
@@ -94,6 +95,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2054>,
 					AssetsFactoryPrecompile<R>,
+					(AcceptDelegateCall, CallableByContract),
+				>,
+				PrecompileAt<
+					AddressU64<2055>,
+					ParachainStakingPrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
 				>,
 			),

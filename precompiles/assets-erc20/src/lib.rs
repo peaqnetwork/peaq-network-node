@@ -166,6 +166,7 @@ where
 	}
 
 	#[precompile::public("totalSupply()")]
+	#[precompile::public("total_supply()")]
 	#[precompile::view]
 	fn total_supply(
 		asset_id: AssetIdOf<Runtime, Instance>,
@@ -177,6 +178,7 @@ where
 	}
 
 	#[precompile::public("balanceOf(address)")]
+	#[precompile::public("balance_of(address)")]
 	#[precompile::view]
 	fn balance_of(
 		asset_id: AssetIdOf<Runtime, Instance>,
@@ -329,6 +331,7 @@ where
 	}
 
 	#[precompile::public("transferFrom(address,address,uint256)")]
+	#[precompile::public("transfer_from(address,address,uint256)")]
 	fn transfer_from(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
@@ -423,6 +426,7 @@ where
 	}
 
 	#[precompile::public("minimumBalance()")]
+	#[precompile::public("minimum_balance()")]
 	#[precompile::view]
 	fn minimum_balance(
 		asset_id: AssetIdOf<Runtime, Instance>,

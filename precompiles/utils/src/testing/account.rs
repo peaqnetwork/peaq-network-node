@@ -253,6 +253,7 @@ impl peaq_primitives_xcm::AssetIdExt for MockAssetId {
 	Ord,
 	PartialOrd,
 	Clone,
+	Copy,
 	Encode,
 	Decode,
 	Debug,
@@ -285,6 +286,23 @@ impl Default for MockPeaqAccount {
 	}
 }
 
+impl From<MockPeaqAccount> for u64 {
+	fn from(x: MockPeaqAccount) -> u64 {
+		match x {
+			MockPeaqAccount::Alice => 0xAA,
+			MockPeaqAccount::Bob => 0xBB,
+			MockPeaqAccount::Charlie => 0xCC,
+			MockPeaqAccount::SelfReserve => 0xDD,
+			MockPeaqAccount::ParentAccount => 0xEE,
+			MockPeaqAccount::SlibingParaAccount => 0x11,
+			MockPeaqAccount::David => 0x12,
+			MockPeaqAccount::EVMu1Account => 1 as u64,
+			MockPeaqAccount::EVMu2Account => 2 as u64,
+			MockPeaqAccount::AssetId(asset_id) => asset_id.0 as u64,
+			MockPeaqAccount::Bogus => 0,
+		}
+	}
+}
 impl From<MockPeaqAccount> for H160 {
 	fn from(x: MockPeaqAccount) -> H160 {
 		match x {

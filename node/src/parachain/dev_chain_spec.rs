@@ -142,18 +142,18 @@ fn configure_genesis(
 			coefficient: staking::coefficient(),
 			..Default::default()
 		},
+		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
-				treasury_percent: Perbill::from_percent(20),
-				dapps_percent: Perbill::from_percent(25),
-				collators_percent: Perbill::from_percent(10),
-				lp_percent: Perbill::from_percent(25),
-				machines_percent: Perbill::from_percent(10),
-				parachain_lease_fund_percent: Perbill::from_percent(10),
+				treasury_percent: Perbill::from_percent(25),
+				collators_delegators_percent: Perbill::from_percent(40),
+				coretime_percent: Perbill::from_percent(10),
+				subsidization_pool_percent: Perbill::from_percent(5),
+				depin_staking_percent: Perbill::from_percent(5),
+				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			block_issue_reward: DOLLARS,
-			max_currency_supply: 4_200_000_000 * DOLLARS,
+			_phantom: Default::default(),
 		},
 		vesting: Default::default(),
 		aura: Default::default(),

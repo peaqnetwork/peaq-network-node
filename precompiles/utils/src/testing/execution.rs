@@ -170,6 +170,10 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 						sp_core::hexdisplay::HexDisplay::from(&execution_output)
 					);
 					eprintln!(
+						"Output (output): {:?}",
+						sp_core::hexdisplay::HexDisplay::from(&output)
+					);
+					eprintln!(
 						"Output (string): {:?}",
 						core::str::from_utf8(&execution_output).ok()
 					);

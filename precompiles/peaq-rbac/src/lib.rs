@@ -7,18 +7,23 @@ use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
+	BoundedVec,
 };
 use peaq_pallet_rbac::{
 	error::{RbacError, RbacErrorType},
 	rbac::{Rbac, Role},
 };
-use precompile_utils::prelude::*;
 use sp_core::{Decode, H256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;
 use peaq_pallet_rbac::rbac::{Group, Permission};
+use peaq_primitives_xcm::RbacEntityId;
+use precompile_utils::{
+	prelude::{log1, Address, BoundedBytes, LogExt, Revert, RevertReason, RuntimeHelper},
+	solidity, EvmResult,
+};
 
 pub mod structs;
 pub use structs::*;
@@ -26,7 +31,6 @@ pub use structs::*;
 pub mod selectors;
 pub use selectors::*;
 
-type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type EntityIdOf<Runtime> = <Runtime as peaq_pallet_rbac::Config>::EntityId;
 
 type GetBytesLimit = ConstU32<{ 2u32.pow(16) }>;
@@ -46,12 +50,15 @@ pub fn err2str(error: &RbacError) -> &str {
 			"RbacError.AssignmentDoesNotExist"
 		},
 		RbacError { typ: RbacErrorType::NameExceedMaxChar, .. } => "RbacError.NameExceedMaxChar",
+		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } => {
+			"RbacError.StorageExceedsMaxBounds"
+		},
+		RbacError { typ: RbacErrorType::EntityDeleted, .. } => "RbacError.EntityDeleted",
 	}
 }
 
 // Precompule struct
-// NOTE: Both AccoundId and EntityId are sized and aligned at 32 and 0x1, hence using H256 to
-// represent both.
+// NOTE: EntityId is sized and aligned at 32 and 0x1, hence using H256 as placeholder
 pub struct PeaqRbacPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]
@@ -60,20 +67,23 @@ where
 	Runtime: pallet_evm::Config + peaq_pallet_rbac::Config + frame_system::pallet::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
 	Runtime::RuntimeCall: From<peaq_pallet_rbac::Call<Runtime>>,
-	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
-	AccountIdOf<Runtime>: From<[u8; 32]>,
-	EntityIdOf<Runtime>: From<[u8; 32]>,
+	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
+	// Ensure EntityIdOf<Runtime> can be derived from whatever type
+	// peaq-primitives-xcm::RbacEntityId is
+	EntityIdOf<Runtime>: From<RbacEntityId>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
 {
-	#[precompile::public("fetch_role(bytes32,bytes32)")]
+	#[precompile::public("fetchRole(address,bytes32)")]
+	#[precompile::public("fetch_role(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		entity: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner_account: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(owner.into());
 		let entity_id = EntityIdOf::<Runtime>::from(entity.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
@@ -82,11 +92,13 @@ where
 		}
 	}
 
-	#[precompile::public("fetch_roles(bytes32)")]
+	#[precompile::public("fetchRoles(address)")]
+	#[precompile::public("fetch_roles(address)")]
 	#[precompile::view]
-	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: H256) -> EvmResult<Vec<Entity>> {
+	fn fetch_roles(handle: &mut impl PrecompileHandle, owner: Address) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner_account = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner_account: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_roles(&owner_account) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
@@ -103,6 +115,7 @@ where
 		result
 	}
 
+	#[precompile::public("addRole(bytes32,bytes)")]
 	#[precompile::public("add_role(bytes32,bytes)")]
 	fn add_role(
 		handle: &mut impl PrecompileHandle,
@@ -110,18 +123,18 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::add_role {
-				role_id: role_id_addr,
-				name: name.as_bytes().to_vec(),
-			},
+			peaq_pallet_rbac::Call::<Runtime>::add_role { role_id: role_id_addr, name: name_vec },
 			0,
 		)?;
 
@@ -135,6 +148,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updateRole(bytes32,bytes)")]
 	#[precompile::public("update_role(bytes32,bytes)")]
 	fn update_role(
 		handle: &mut impl PrecompileHandle,
@@ -142,17 +156,20 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
+		let name_vec =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::update_role {
 				role_id: role_id_addr,
-				name: name.as_bytes().to_vec(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -167,10 +184,11 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("disableRole(bytes32)")]
 	#[precompile::public("disable_role(bytes32)")]
 	fn disable_role(handle: &mut impl PrecompileHandle, role_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let role_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
@@ -192,17 +210,18 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_user_roles(bytes32,bytes32)")]
+	#[precompile::public("fetchUserRoles(address,bytes32)")]
+	#[precompile::public("fetch_user_roles(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_roles(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		user_id: H256,
 	) -> EvmResult<Vec<Role2User>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 		let user_id_addr: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
-		let owner_addr = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner_addr: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result =
 			match peaq_pallet_rbac::Pallet::<Runtime>::get_user_roles(&owner_addr, user_id_addr) {
@@ -216,6 +235,7 @@ where
 		result
 	}
 
+	#[precompile::public("assignRoleToUser(bytes32,bytes32)")]
 	#[precompile::public("assign_role_to_user(bytes32,bytes32)")]
 	fn assign_role_to_user(
 		handle: &mut impl PrecompileHandle,
@@ -223,7 +243,7 @@ where
 		user_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -246,6 +266,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignRoleToUser(bytes32,bytes32)")]
 	#[precompile::public("unassign_role_to_user(bytes32,bytes32)")]
 	fn unassign_role_to_user(
 		handle: &mut impl PrecompileHandle,
@@ -253,7 +274,7 @@ where
 		user_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -276,15 +297,16 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_permission(bytes32,bytes32)")]
+	#[precompile::public("fetchPermission(address,bytes32)")]
+	#[precompile::public("fetch_permission(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_permission(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		permission_id: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let permission_id: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
 
@@ -294,14 +316,15 @@ where
 		}
 	}
 
-	#[precompile::public("fetch_permissions(bytes32)")]
+	#[precompile::public("fetchPermissions(address)")]
+	#[precompile::public("fetch_permissions(address)")]
 	#[precompile::view]
 	fn fetch_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_permissions(&owner) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
@@ -318,6 +341,7 @@ where
 		result
 	}
 
+	#[precompile::public("addPermission(bytes32,bytes)")]
 	#[precompile::public("add_permission(bytes32,bytes)")]
 	fn add_permission(
 		handle: &mut impl PrecompileHandle,
@@ -325,15 +349,16 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::add_permission {
 				permission_id: EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes()),
-				name: name.clone().into(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -352,6 +377,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updatePermission(bytes32,bytes)")]
 	#[precompile::public("update_permission(bytes32,bytes)")]
 	fn update_permission(
 		handle: &mut impl PrecompileHandle,
@@ -359,18 +385,16 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let permission_id: EntityIdOf<Runtime> =
 			EntityIdOf::<Runtime>::from(permission_id.to_fixed_bytes());
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
-			peaq_pallet_rbac::Call::<Runtime>::update_permission {
-				permission_id,
-				name: name.clone().into(),
-			},
+			peaq_pallet_rbac::Call::<Runtime>::update_permission { permission_id, name: name_vec },
 			0,
 		)?;
 
@@ -388,13 +412,14 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("disablePermission(bytes32)")]
 	#[precompile::public("disable_permission(bytes32)")]
 	fn disable_permission(
 		handle: &mut impl PrecompileHandle,
 		permission_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -416,15 +441,16 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_role_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetchRolePermissions(address,bytes32)")]
+	#[precompile::public("fetch_role_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_role_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		role_id: H256,
 	) -> EvmResult<Vec<Permission2Role>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let role_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(role_id.to_fixed_bytes());
 
 		let result =
@@ -442,6 +468,7 @@ where
 		result
 	}
 
+	#[precompile::public("assignPermissionToRole(bytes32,bytes32)")]
 	#[precompile::public("assign_permission_to_role(bytes32,bytes32)")]
 	fn assign_permission_to_role(
 		handle: &mut impl PrecompileHandle,
@@ -449,7 +476,7 @@ where
 		role_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -476,6 +503,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignPermissionToRole(bytes32,bytes32)")]
 	#[precompile::public("unassign_permission_to_role(bytes32,bytes32)")]
 	fn unassign_permission_to_role(
 		handle: &mut impl PrecompileHandle,
@@ -483,7 +511,7 @@ where
 		role_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -510,15 +538,16 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_group(bytes32,bytes32)")]
+	#[precompile::public("fetchGroup(address,bytes32)")]
+	#[precompile::public("fetch_group(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		group_id: H256,
 	) -> EvmResult<Entity> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
@@ -527,6 +556,7 @@ where
 		}
 	}
 
+	#[precompile::public("addGroup(bytes32,bytes)")]
 	#[precompile::public("add_group(bytes32,bytes)")]
 	fn add_group(
 		handle: &mut impl PrecompileHandle,
@@ -534,15 +564,16 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::add_group {
 				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
-				name: name.clone().into(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -557,6 +588,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("updateGroup(bytes32,bytes)")]
 	#[precompile::public("update_group(bytes32,bytes)")]
 	fn update_group(
 		handle: &mut impl PrecompileHandle,
@@ -564,15 +596,16 @@ where
 		name: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let name_vec = BoundedVec::try_from(name.as_bytes().to_vec()).unwrap();
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
 			Some(caller_addr).into(),
 			peaq_pallet_rbac::Call::<Runtime>::update_group {
 				group_id: EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes()),
-				name: name.clone().into(),
+				name: name_vec,
 			},
 			0,
 		)?;
@@ -587,10 +620,11 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("disableGroup(bytes32)")]
 	#[precompile::public("disable_group(bytes32)")]
 	fn disable_group(handle: &mut impl PrecompileHandle, group_id: H256) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -612,6 +646,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("assignRoleToGroup(bytes32,bytes32)")]
 	#[precompile::public("assign_role_to_group(bytes32,bytes32)")]
 	fn assign_role_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -619,7 +654,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -646,6 +681,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignRoleToGroup(bytes32,bytes32)")]
 	#[precompile::public("unassign_role_to_group(bytes32,bytes32)")]
 	fn unassign_role_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -653,7 +689,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -680,15 +716,16 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_group_roles(bytes32,bytes32)")]
+	#[precompile::public("fetchGroupRoles(address,bytes32)")]
+	#[precompile::public("fetch_group_roles(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group_roles(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		group_id: H256,
 	) -> EvmResult<Vec<Role2Group>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_group_roles(&owner, group_id) {
@@ -702,6 +739,7 @@ where
 		result
 	}
 
+	#[precompile::public("assignUserToGroup(bytes32,bytes32)")]
 	#[precompile::public("assign_user_to_group(bytes32,bytes32)")]
 	fn assign_user_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -709,7 +747,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -736,6 +774,7 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("unassignUserToGroup(bytes32,bytes32)")]
 	#[precompile::public("unassign_user_to_group(bytes32,bytes32)")]
 	fn unassign_user_to_group(
 		handle: &mut impl PrecompileHandle,
@@ -743,7 +782,7 @@ where
 		group_id: H256,
 	) -> EvmResult<bool> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let caller_addr: AccountIdOf<Runtime> =
+		let caller_addr: Runtime::AccountId =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		RuntimeHelper::<Runtime>::try_dispatch(
@@ -770,15 +809,16 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("fetch_user_groups(bytes32,bytes32)")]
+	#[precompile::public("fetchUserGroups(address,bytes32)")]
+	#[precompile::public("fetch_user_groups(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_groups(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		user_id: H256,
 	) -> EvmResult<Vec<User2Group>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		let result = match peaq_pallet_rbac::Pallet::<Runtime>::get_user_groups(&owner, user_id) {
@@ -792,15 +832,16 @@ where
 		result
 	}
 
-	#[precompile::public("fetch_user_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetchUserPermissions(address,bytes32)")]
+	#[precompile::public("fetch_user_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_user_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		user_id: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let user_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(user_id.to_fixed_bytes());
 
 		let result =
@@ -819,15 +860,16 @@ where
 		result
 	}
 
-	#[precompile::public("fetch_group_permissions(bytes32,bytes32)")]
+	#[precompile::public("fetchGroupPermissions(address,bytes32)")]
+	#[precompile::public("fetch_group_permissions(address,bytes32)")]
 	#[precompile::view]
 	fn fetch_group_permissions(
 		handle: &mut impl PrecompileHandle,
-		owner: H256,
+		owner: Address,
 		group_id: H256,
 	) -> EvmResult<Vec<Entity>> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let owner: AccountIdOf<Runtime> = AccountIdOf::<Runtime>::from(owner.to_fixed_bytes());
+		let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner.into());
 		let group_id: EntityIdOf<Runtime> = EntityIdOf::<Runtime>::from(group_id.to_fixed_bytes());
 
 		let result =
