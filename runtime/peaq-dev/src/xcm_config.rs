@@ -336,21 +336,22 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
-pub struct ExponentialFee;
-
-impl ExponentialFee {
-	fn calculate_fee(size: usize) -> MultiAssets {
-		let fee = (size * size) as u16;
-		MultiAssets::from((Here, fee))
-	}
-}
-
-impl PriceForParachainDelivery for ExponentialFee {
-	fn price_for_parachain_delivery(_: ParaId, message: &Xcm<()>) -> MultiAssets {
-		let size = message.using_encoded(|encoded| encoded.len());
-		Self::calculate_fee(size)
-	}
-}
+// [TODO] Need to double check whether it induced the xcm fails only in 1.1.0
+// pub struct ExponentialFee;
+//
+// impl ExponentialFee {
+// 	fn calculate_fee(size: usize) -> MultiAssets {
+// 		let fee = (size * size) as u16;
+// 		MultiAssets::from((Here, fee))
+// 	}
+// }
+//
+// impl PriceForParachainDelivery for ExponentialFee {
+// 	fn price_for_parachain_delivery(_: ParaId, message: &Xcm<()>) -> MultiAssets {
+// 		let size = message.using_encoded(|encoded| encoded.len());
+// 		Self::calculate_fee(size)
+// 	}
+// }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -361,7 +362,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToCallOrigin;
 	type WeightInfo = ();
-	type PriceForSiblingDelivery = ExponentialFee;
+	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

@@ -3,7 +3,7 @@ use cumulus_primitives_core::ParaId;
 use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
+	GenesisAccount, RuntimeGenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
 	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::TOKEN_DECIMALS;
@@ -16,7 +16,7 @@ use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_
 use sp_core::sr25519;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -98,14 +98,14 @@ fn configure_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	parachain_id: ParaId,
-) -> GenesisConfig {
+) -> RuntimeGenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
 	// within contracts.
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	GenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
