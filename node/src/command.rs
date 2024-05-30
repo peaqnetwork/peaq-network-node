@@ -142,6 +142,7 @@ impl SubstrateCli for Cli {
 }
 
 impl Cli {
+	#[allow(clippy::borrowed_box)]
 	fn runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
 		if chain_spec.is_krest() {
 			&peaq_krest_runtime::VERSION
