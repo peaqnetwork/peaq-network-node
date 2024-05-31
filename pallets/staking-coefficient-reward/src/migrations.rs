@@ -31,7 +31,7 @@ mod upgrade {
 			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
 			if onchain_storage_version.eq(&CURRENT_STORAGE_VERSION) {
 				if !CoefficientConfig::<T>::exists() {
-					log::error!("Update the initial storage");
+					log::info!("Update the initial storage");
 					CoefficientConfig::<T>::put(DEFAULT_COEFFICIENT);
 					weight_writes += 1;
 				}
