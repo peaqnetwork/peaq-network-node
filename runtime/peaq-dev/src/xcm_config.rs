@@ -56,7 +56,7 @@ use xcm_executor::traits::MatchesFungibles;
 pub type PeaqAssetLocationIdConverter = MultiLocationToAssetId<Runtime>;
 
 parameter_types! {
-	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
+	pub const RelayNetwork: NetworkId = NetworkId::Rococo;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorMultiLocation =
 	X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
@@ -73,7 +73,7 @@ pub type LocationToAccountId = (
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
-	AccountId32Aliases<RococoNetwork, AccountId>,
+	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
 /// XCM from myself to myself
@@ -173,13 +173,12 @@ pub type XcmOriginToCallOrigin = (
 	ParentAsSuperuser<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<RococoNetwork, RuntimeOrigin>,
+	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 );
 
 parameter_types! {
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	pub const UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 1024);
 	pub const MaxInstructions: u32 = 100;
@@ -283,7 +282,7 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RococoNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
 
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
