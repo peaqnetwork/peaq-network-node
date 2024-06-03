@@ -87,16 +87,16 @@ where
 	fn join_delegators(
 		handle: &mut impl PrecompileHandle,
 		collator: H256,
-		amount: U256,
+		stake: U256,
 	) -> EvmResult {
-		let amount = Self::u256_to_amount(amount).in_field("amount")?;
+		let stake = Self::u256_to_amount(stake).in_field("stake")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
-		let call = parachain_staking::Call::<Runtime>::join_delegators { collator, amount };
+		let call = parachain_staking::Call::<Runtime>::join_delegators { collator, amount: stake };
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -109,9 +109,9 @@ where
 	fn delegate_another_candidate(
 		handle: &mut impl PrecompileHandle,
 		collator: H256,
-		amount: U256,
+		stake: U256,
 	) -> EvmResult {
-		let amount = Self::u256_to_amount(amount).in_field("amount")?;
+		let stake = Self::u256_to_amount(stake).in_field("stake")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -119,7 +119,7 @@ where
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call =
-			parachain_staking::Call::<Runtime>::delegate_another_candidate { collator, amount };
+			parachain_staking::Call::<Runtime>::delegate_another_candidate { collator, amount: stake };
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -161,9 +161,9 @@ where
 	fn delegator_stake_more(
 		handle: &mut impl PrecompileHandle,
 		collator: H256,
-		amount: U256,
+		stake: U256,
 	) -> EvmResult {
-		let amount = Self::u256_to_amount(amount).in_field("amount")?;
+		let stake = Self::u256_to_amount(stake).in_field("stake")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -172,7 +172,7 @@ where
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_more {
 			candidate: collator,
-			more: amount,
+			more: stake,
 		};
 
 		// Dispatch call (if enough gas).
@@ -186,9 +186,9 @@ where
 	fn delegator_stake_less(
 		handle: &mut impl PrecompileHandle,
 		collator: H256,
-		amount: U256,
+		stake: U256,
 	) -> EvmResult {
-		let amount = Self::u256_to_amount(amount).in_field("amount")?;
+		let stake = Self::u256_to_amount(stake).in_field("stake")?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -197,7 +197,7 @@ where
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_less {
 			candidate: collator,
-			less: amount,
+			less: stake,
 		};
 
 		// Dispatch call (if enough gas).

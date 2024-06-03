@@ -183,16 +183,16 @@ where
 	fn balance_of(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-		owner: Address,
+		who: Address,
 	) -> EvmResult<U256> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let owner: H160 = owner.into();
+		let who: H160 = who.into();
 
 		// Fetch info.
 		let amount: U256 = {
-			let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner);
-			pallet_assets::Pallet::<Runtime, Instance>::balance(asset_id, &owner).into()
+			let who: Runtime::AccountId = Runtime::AddressMapping::into_account_id(who);
+			pallet_assets::Pallet::<Runtime, Instance>::balance(asset_id, &who).into()
 		};
 
 		Ok(amount)
@@ -229,7 +229,7 @@ where
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
 		spender: Address,
-		amount: U256,
+		value: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
@@ -239,8 +239,8 @@ where
 			let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 			let spender: Runtime::AccountId = Runtime::AddressMapping::into_account_id(spender);
 			// Amount saturate if too high.
-			let amount: BalanceOf<Runtime, Instance> =
-				amount.try_into().unwrap_or_else(|_| Bounded::max_value());
+			let value: BalanceOf<Runtime, Instance> =
+				value.try_into().unwrap_or_else(|_| Bounded::max_value());
 
 			// Storage item: Approvals:
 			// Blake2_128(16) + AssetId(16) + (2 * Blake2_128(16) + AccountId(20)) + Approval(32)
@@ -270,7 +270,7 @@ where
 				pallet_assets::Call::<Runtime, Instance>::approve_transfer {
 					id: asset_id.into(),
 					delegate: Runtime::Lookup::unlookup(spender),
-					amount,
+					amount: value,
 				},
 				0,
 			)?;
@@ -281,7 +281,7 @@ where
 				SELECTOR_LOG_APPROVAL,
 				handle.context().caller,
 				spender,
-				solidity::encode_event_data(amount),
+				solidity::encode_event_data(value),
 			)
 			.record(handle)?;
 
@@ -293,12 +293,12 @@ where
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
 		to: Address,
-		amount: U256,
+		value: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
 		let to: H160 = to.into();
-		let amount = Self::u256_to_amount(amount).in_field("value")?;
+		let value = Self::u256_to_amount(value).in_field("value")?;
 
 		// Build call with origin.
 		{
@@ -312,7 +312,7 @@ where
 				pallet_assets::Call::<Runtime, Instance>::transfer {
 					id: asset_id.into(),
 					target: Runtime::Lookup::unlookup(to),
-					amount,
+					amount: value,
 				},
 				0,
 			)?;
@@ -323,7 +323,7 @@ where
 				SELECTOR_LOG_TRANSFER,
 				handle.context().caller,
 				to,
-				solidity::encode_event_data(amount),
+				solidity::encode_event_data(value),
 			)
 			.record(handle)?;
 
@@ -337,13 +337,13 @@ where
 		handle: &mut impl PrecompileHandle,
 		from: Address,
 		to: Address,
-		amount: U256,
+		value: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
 		let from: H160 = from.into();
 		let to: H160 = to.into();
-		let amount = Self::u256_to_amount(amount).in_field("value")?;
+		let value = Self::u256_to_amount(value).in_field("value")?;
 
 		{
 			let caller: Runtime::AccountId =
@@ -361,7 +361,7 @@ where
 						id: asset_id.into(),
 						owner: Runtime::Lookup::unlookup(from),
 						destination: Runtime::Lookup::unlookup(to),
-						amount,
+						amount: value,
 					},
 					0,
 				)?;
@@ -373,7 +373,7 @@ where
 					pallet_assets::Call::<Runtime, Instance>::transfer {
 						id: asset_id.into(),
 						target: Runtime::Lookup::unlookup(to),
-						amount,
+						amount: value,
 					},
 					0,
 				)?;
@@ -381,7 +381,7 @@ where
 		}
 
 		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(amount))
+			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(value))
 			.record(handle)?;
 
 		// Build output.
@@ -441,12 +441,12 @@ where
 	fn mint(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-		to: Address,
+		beneficiary: Address,
 		amount: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
-		let addr: H160 = to.into();
+		let addr: H160 = beneficiary.into();
 		let amount = Self::u256_to_amount(amount).in_field("value")?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
