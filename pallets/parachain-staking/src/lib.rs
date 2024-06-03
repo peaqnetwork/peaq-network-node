@@ -414,8 +414,6 @@ pub mod pallet {
 		/// The number of selected candidates per staking round is
 		/// below the minimum value allowed.
 		CannotSetBelowMin,
-		/// An invalid reward rate configuration is trying to be set.
-		InvalidSchedule,
 		/// The staking reward being unlocked does not exist.
 		/// Max unlocking requests reached.
 		NoMoreUnstaking,
