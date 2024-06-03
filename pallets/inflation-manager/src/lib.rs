@@ -32,6 +32,7 @@ use frame_support::{
 };
 use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
+use sp_std::cmp::Ordering;
 
 pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
 const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
@@ -185,16 +186,19 @@ pub mod pallet {
 					Self::fund_difference_balances();
 				}
 
-				// if we're at the stagnation year, set inflation parameters to the stagnation rate
-				if new_year == inflation_config.inflation_stagnation_year {
-					inflation_parameters = InflationParametersT {
-						inflation_rate: inflation_config.inflation_stagnation_rate,
-						disinflation_rate: Perbill::one(),
-					};
-					InflationParameters::<T>::put(inflation_parameters.clone());
-				} else if new_year < inflation_config.inflation_stagnation_year {
-					inflation_parameters = Self::update_inflation_parameters(&inflation_config);
-					InflationParameters::<T>::put(inflation_parameters.clone());
+				match new_year.cmp(&inflation_config.inflation_stagnation_year) {
+					Ordering::Less => {
+						inflation_parameters = Self::update_inflation_parameters(&inflation_config);
+						InflationParameters::<T>::put(inflation_parameters.clone());
+					},
+					Ordering::Equal => {
+						inflation_parameters = InflationParametersT {
+							inflation_rate: inflation_config.inflation_stagnation_rate,
+							disinflation_rate: Perbill::one(),
+						};
+						InflationParameters::<T>::put(inflation_parameters.clone());
+					},
+					Ordering::Greater => {},
 				}
 
 				// set the flag to calculate inflation parameters after a year(in blocks)

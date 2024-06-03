@@ -40,7 +40,7 @@ fn check_fund_enough_token_at_delayed_tge_kickoff() {
 			// set current block to DoInitializeAt
 			System::set_block_number(do_initialize_at);
 			// run on_finalize
-			InflationManager::on_finalize(do_initialize_at.into());
+			InflationManager::on_finalize(do_initialize_at);
 
 			assert_eq!(
 				<TestRuntime as Config>::Currency::total_issuance(),
@@ -71,7 +71,7 @@ fn check_not_fund_token_at_delayed_tge_kickoff() {
 			// set current block to DoInitializeAt
 			System::set_block_number(do_initialize_at);
 			// run on_finalize
-			InflationManager::on_finalize(do_initialize_at.into());
+			InflationManager::on_finalize(do_initialize_at);
 
 			assert_eq!(
 				<TestRuntime as Config>::Currency::total_issuance(),
