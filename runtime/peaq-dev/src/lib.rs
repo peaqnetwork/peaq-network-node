@@ -779,7 +779,7 @@ pub mod staking {
 			pub const StakeDuration: BlockNumber = 7 * MINUTES;
 			/// Collator exit requests are delayed by 4 mins (2 rounds/sessions)
 			pub const ExitQueueDelay: u32 = 2;
-			/// Minimum 16 collators selected per round, default at genesis and minimum forever after
+			/// Minimum 4 collators selected per round, default at genesis and minimum forever after
 			pub const MinCollators: u32 = 4;
 			/// At least 4 candidates which cannot leave the network if there are no other candidates.
 			pub const MinRequiredCollators: u32 = 4;
@@ -791,9 +791,9 @@ pub mod staking {
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
-			/// Minimum stake required to be reserved to be a collator is 32_000
+			/// Minimum stake required to be reserved to be a collator is 32000
 			pub const MinCollatorStake: Balance = 32_000;
-			/// Minimum stake required to be reserved to be a delegator is 1000
+			/// Minimum stake required to be reserved to be a delegator is 20000
 			pub const MinDelegatorStake: Balance = 20_000;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]

@@ -774,13 +774,13 @@ pub mod staking {
 			pub const StakeDuration: BlockNumber = 7 * DAYS;
 			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
 			pub const ExitQueueDelay: u32 = 2;
-			/// Minimum 16 collators selected per round, default at genesis and minimum forever after
+			/// Minimum 4 collators selected per round, default at genesis and minimum forever after
 			pub const MinCollators: u32 = 4;
 			/// At least 4 candidates which cannot leave the network if there are no other candidates.
 			pub const MinRequiredCollators: u32 = 4;
 			/// We only allow one delegation per round.
 			pub const MaxDelegationsPerRound: u32 = 1;
-			/// No maximum number of delegators per collator at launch
+			/// Maximum number of delegators per collator at launch
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxDelegatorsPerCollator: u32 = 32;
 			/// Maximum 1 collator per delegator at launch, will be increased later
