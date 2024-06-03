@@ -185,22 +185,15 @@ pub mod pallet {
 					Self::fund_difference_balances();
 				}
 
-				// if we're not at the stagnation year, update inflation parameters
-				if new_year < inflation_config.inflation_stagnation_year {
-					// update inflation parameters
-					inflation_parameters = Self::update_inflation_parameters(&inflation_config);
-				}
-
 				// if we're at the stagnation year, set inflation parameters to the stagnation rate
 				if new_year == inflation_config.inflation_stagnation_year {
 					inflation_parameters = InflationParametersT {
 						inflation_rate: inflation_config.inflation_stagnation_rate,
 						disinflation_rate: Perbill::one(),
 					};
-				}
-
-				// no need to update InflationParameters in storage after inflation stagnation year
-				if current_year <= inflation_config.inflation_stagnation_year {
+					InflationParameters::<T>::put(inflation_parameters.clone());
+				} else if new_year < inflation_config.inflation_stagnation_year {
+					inflation_parameters = Self::update_inflation_parameters(&inflation_config);
 					InflationParameters::<T>::put(inflation_parameters.clone());
 				}
 

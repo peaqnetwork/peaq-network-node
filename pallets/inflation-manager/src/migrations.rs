@@ -11,6 +11,8 @@ mod upgrade {
 
 	pub struct MigrateToV0<T>(sp_std::marker::PhantomData<T>);
 
+	// This migration will trigger for krest runtime, but not peaq runtime
+	// since peaq will have already been migrated to this storage version with pallet version 0.1.0
 	impl<T: Config> MigrateToV0<T> {
 		pub fn on_runtime_upgrade() -> Weight {
 			let mut weight_writes = 0;
