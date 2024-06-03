@@ -2533,7 +2533,6 @@ pub mod pallet {
 			ensure!(!unstaking.is_empty(), Error::<T>::UnstakingIsEmpty);
 
 			let mut total_unlocked: BalanceOf<T> = Zero::zero();
-			let mut total_locked: BalanceOf<T> = Zero::zero();
 			let mut expired = Vec::new();
 
 			// check potential unlocks
@@ -2541,8 +2540,6 @@ pub mod pallet {
 				if block_number <= now {
 					expired.push(block_number);
 					total_unlocked = total_unlocked.saturating_add(locked_balance);
-				} else {
-					total_locked = total_locked.saturating_add(locked_balance);
 				}
 			}
 			for block_number in expired {
@@ -2551,7 +2548,7 @@ pub mod pallet {
 
 			// iterate balance locks to retrieve amount of locked balance
 			let locks = Locks::<T>::get(who);
-			total_locked = if let Some(BalanceLock { amount, .. }) =
+			let total_locked: BalanceOf<T> = if let Some(BalanceLock { amount, .. }) =
 				locks.iter().find(|l| l.id == STAKING_ID)
 			{
 				amount.saturating_sub(total_unlocked.into()).into()
