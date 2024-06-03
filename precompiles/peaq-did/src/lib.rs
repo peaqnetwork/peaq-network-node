@@ -107,9 +107,8 @@ where
 			_ => Some(valid_for.into()),
 		};
 
-		let name_vec =
-			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let name_vec = BoundedVec::<u8, ConstU32<64>>::try_from(name.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 		let value_vec =
 			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
 				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
@@ -161,9 +160,8 @@ where
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
-		let name_vec =
-			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let name_vec = BoundedVec::<u8, ConstU32<64>>::try_from(name.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 		let value_vec =
 			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
 				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
@@ -208,9 +206,8 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let name_vec =
-			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(name.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
+		let name_vec = BoundedVec::<u8, ConstU32<64>>::try_from(name.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,

@@ -393,11 +393,15 @@ impl pallet_timestamp::Config for Runtime {
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
+	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
+	pub const StorageReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b's', b't', b'o', b'r'];
+	pub const RBACReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'r', b'b', b'a', b'c'];
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -496,6 +500,7 @@ impl peaq_pallet_did::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = DidStorageDepositBase;
 	type StorageDepositPerByte = DidStorageDepositPerByte;
+	type ReserveIdentifier = DIDReserveIdentifier;
 }
 
 /// Config the utility in pallets/utility
@@ -931,6 +936,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = StorageDepositBase;
 	type StorageDepositPerByte = StorageDepositPerByte;
+	type ReserveIdentifier = RBACReserveIdentifier;
 }
 
 // Config the storage in pallets/storage
@@ -941,6 +947,7 @@ impl peaq_pallet_storage::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = StorageDepositBase;
 	type StorageDepositPerByte = StorageDepositPerByte;
+	type ReserveIdentifier = StorageReserveIdentifier;
 }
 
 // Zenlink-DEX Parameter definitions
@@ -1113,7 +1120,7 @@ mod benches {
 		[peaq_pallet_storage, PeaqStorage]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
-		[xc_asset_config, XCAssetConfig]
+		[xc_asset_config, XcAssetConfig]
 		// [address_unification, AddressUnification]
 		[inflation_manager, InflationManager]
 	);
