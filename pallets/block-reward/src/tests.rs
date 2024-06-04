@@ -4,6 +4,7 @@ use frame_support::{
 	traits::{Currency, OnTimestampSet},
 };
 use mock::*;
+use pallet_balances::NegativeImbalance;
 use sp_runtime::{
 	traits::{AccountIdConversion, BadOrigin, Zero},
 	Perbill,
@@ -341,21 +342,34 @@ impl Rewards {
 	fn calculate(reward_config: &RewardDistributionConfig) -> Self {
 		let block_reward: Balance = InflationManager::block_rewards();
 
-		let treasury_reward = reward_config.treasury_percent * block_reward;
-		let collators_delegators_reward = reward_config.collators_delegators_percent * block_reward;
-		let coretime_reward = reward_config.coretime_percent * block_reward;
-		let subsidization_pool_reward = reward_config.subsidization_pool_percent * block_reward;
-		let depin_staking_reward = reward_config.depin_staking_percent * block_reward;
-		let depin_incentivization_reward =
-			reward_config.depin_incentivization_percent * block_reward;
+		let imbalance = NegativeImbalance::<TestRuntime>::new(block_reward);
+
+		let collators_delegators_reward_imbalance =
+			reward_config.collators_delegators_percent * imbalance.peek();
+		let coretime_reward_imbalance = reward_config.coretime_percent * imbalance.peek();
+		let subsidization_pool_reward_imbalance =
+			reward_config.subsidization_pool_percent * imbalance.peek();
+		let depin_staking_reward_imbalance = reward_config.depin_staking_percent * imbalance.peek();
+		let depin_incentivization_reward_imbalance =
+			reward_config.depin_incentivization_percent * imbalance.peek();
+
+		// Prepare imbalances
+		let (collator_delegator_reward, remainder) =
+			imbalance.split(collators_delegators_reward_imbalance);
+		let (coretime_reward, remainder) = remainder.split(coretime_reward_imbalance);
+		let (subsidization_pool_reward, remainder) =
+			remainder.split(subsidization_pool_reward_imbalance);
+		let (depin_staking_reward, remainder) = remainder.split(depin_staking_reward_imbalance);
+		let (depin_incentivization_reward, treasury_reward) =
+			remainder.split(depin_incentivization_reward_imbalance);
 
 		Self {
-			treasury_reward,
-			collators_delegators_reward,
-			coretime_reward,
-			subsidization_pool_reward,
-			depin_staking_reward,
-			depin_incentivization_reward,
+			treasury_reward: treasury_reward.peek(),
+			collators_delegators_reward: collator_delegator_reward.peek(),
+			coretime_reward: coretime_reward.peek(),
+			subsidization_pool_reward: subsidization_pool_reward.peek(),
+			depin_staking_reward: depin_staking_reward.peek(),
+			depin_incentivization_reward: depin_incentivization_reward.peek(),
 		}
 	}
 }
