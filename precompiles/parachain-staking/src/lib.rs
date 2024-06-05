@@ -118,8 +118,10 @@ where
 		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
 			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
-		let call =
-			parachain_staking::Call::<Runtime>::delegate_another_candidate { collator, amount: stake };
+		let call = parachain_staking::Call::<Runtime>::delegate_another_candidate {
+			collator,
+			amount: stake,
+		};
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;

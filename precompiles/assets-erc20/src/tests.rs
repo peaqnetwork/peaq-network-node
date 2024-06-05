@@ -942,7 +942,10 @@ fn mint_non_admin_is_not_ok() {
 			.prepare_test(
 				MockPeaqAccount::Bob,
 				MockPeaqAccount::AssetId(asset_id),
-				PCall::mint { beneficiary: Address(MockPeaqAccount::Bob.into()), amount: U256::from(42) },
+				PCall::mint {
+					beneficiary: Address(MockPeaqAccount::Bob.into()),
+					amount: U256::from(42),
+				},
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(output).unwrap().contains("NoPermission"));

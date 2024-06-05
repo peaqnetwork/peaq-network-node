@@ -3498,12 +3498,22 @@ fn collator_reward_per_block_with_delegator() {
 fn delegated_funds_less_than_min_delegator_stake() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 100), (2, 100), (3, 100), (4, 100), (5, 100),
-			(6, 100), (7, 100), (8, 100), (9, 100), (10, 100),
+			(1, 100),
+			(2, 100),
+			(3, 100),
+			(4, 100),
+			(5, 100),
+			(6, 100),
+			(7, 100),
+			(8, 100),
+			(9, 100),
+			(10, 100),
 		])
 		.with_collators(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 10)])
 		.with_delegators(vec![(6, 1, 10), (7, 1, 10), (8, 2, 10), (9, 2, 10)])
-		.set_blocks_per_round(5).build().execute_with(|| {
+		.set_blocks_per_round(5)
+		.build()
+		.execute_with(|| {
 			// delegate funds to multiple candidates.
 			roll_to(4, vec![]);
 			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 9));
@@ -3511,8 +3521,8 @@ fn delegated_funds_less_than_min_delegator_stake() {
 			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 4, 7));
 			// reduce the 6 delegated funds of collator owned by `1`.
 			assert_noop!(
-			 StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 8),
-			 Error::<Test>::DelegationBelowMin
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 8),
+				Error::<Test>::DelegationBelowMin
 			);
-	});
+		});
 }
