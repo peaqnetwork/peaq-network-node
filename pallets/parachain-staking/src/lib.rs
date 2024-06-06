@@ -857,6 +857,12 @@ pub mod pallet {
 			ensure_root(origin)?;
 			ensure!(new >= T::MinCollatorCandidateStake::get(), Error::<T>::CannotSetBelowMin);
 
+			// Go through all candidates and check if the candidate staking over new max
+			let candidate_over_new_max: bool =
+				CandidatePool::<T>::iter().any(|(_, state)| state.stake > new);
+
+			ensure!(!candidate_over_new_max, Error::<T>::ValStakeAboveMax);
+
 			// *** No Fail beyond this point ***
 
 			MaxCollatorCandidateStake::<T>::put(new);

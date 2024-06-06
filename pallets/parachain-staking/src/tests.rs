@@ -2661,9 +2661,9 @@ fn decrease_max_candidate_stake() {
 				)
 			);
 
-			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 50));
-			assert_eq!(StakePallet::max_candidate_stake(), 50);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(50)));
+			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 100));
+			assert_eq!(StakePallet::max_candidate_stake(), 100);
+			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(100)));
 
 			// check collator states, nothing changed
 			assert_eq!(
@@ -3523,6 +3523,21 @@ fn delegated_funds_less_than_min_delegator_stake() {
 			assert_noop!(
 				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 8),
 				Error::<Test>::DelegationBelowMin
+			);
+		});
+}
+
+#[test]
+fn max_candidate_stake_over_max_staking() {
+	let max_stake = 160_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, 200_000_000 * DECIMALS)])
+		.with_collators(vec![(1, max_stake)])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), max_stake - 1),
+				Error::<Test>::ValStakeAboveMax
 			);
 		});
 }
