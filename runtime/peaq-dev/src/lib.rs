@@ -628,6 +628,9 @@ parameter_types! {
 	/// ceil(
 	///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
 	/// )
+	/// = ceil(max_gas_limit / max_extrinsic.proof_size())
+	/// = ceil(BlockGasLimit / (NORMAL_DISPATCH_RATIO * MAX_POV_SIZE))
+	/// = 4
 	pub const GasLimitPovSizeRatio: u64 = 4;
 	/// In moonbeam, they setup as 366 and follow below formula:
 	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
