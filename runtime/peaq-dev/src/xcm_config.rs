@@ -222,11 +222,9 @@ pub type Barrier = (
 pub struct ReserveAssetFilter;
 impl ContainsPair<MultiAsset, MultiLocation> for ReserveAssetFilter {
 	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
-		log::error!("show asset: {:?} and origin: {:?}", asset, origin);
 		// We assume that relay chain and sibling parachain assets are trusted reserves for their
 		// assets
 		let reserve_location = if let Concrete(location) = &asset.id {
-			log::error!("show location: {:?} and asset.id: {:?}", location, asset.id);
 			match (location.parents, location.first_interior()) {
 				// sibling parachain
 				(1, Some(Parachain(id))) => Some(MultiLocation::new(1, X1(Parachain(*id)))),
@@ -235,11 +233,10 @@ impl ContainsPair<MultiAsset, MultiLocation> for ReserveAssetFilter {
 				_ => None,
 			}
 		} else {
-			log::error!("None show asset.id: {:?}", asset.id);
 			None
 		};
 
-		log::error!("show origin: {:?} and reserve_location: {:?}", origin, reserve_location);
+		log::trace!("show origin: {:?} and reserve_location: {:?}", origin, reserve_location);
 		if let Some(ref reserve) = reserve_location {
 			origin == reserve
 		} else {
