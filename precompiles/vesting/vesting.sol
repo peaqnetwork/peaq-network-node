@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.3;
 
-/// @dev The VestingPrecompile contract's address.
-address constant VESTING_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000808;
+/// @dev The Vesting contract's address.
+address constant VESTING_ADDRESS = 0x0000000000000000000000000000000000000808;
 
-/// @dev The VestingPrecompile contract's instance.
-VestingPrecompile constant VESTING_PRECOMPILE_CONTRACT = VestingPrecompile(VESTING_PRECOMPILE_ADDRESS);
+/// @dev The Vesting contract's instance.
+Vesting constant VESTING_CONTRACT = Vesting(VESTING_ADDRESS);
 
 /// @author The Peaq Team
-/// @title VestingPrecompile Interface
-/// The interface through which solidity contracts will interact with the vesting precompile
+/// @title Vesting Interface
+/// The interface through which solidity contracts will interact with the vesting pallet
 /// @custom:address 0x0000000000000000000000000000000000000808
-interface VestingPrecompile {
+interface Vesting {
     /// Vest the caller's vested funds.
-    /// selector: 458efde3
+    /// selector: 0x458efde3
     function vest() external returns (bool);
 
     /// Vest the vested funds of a target account.
-    /// selector: 055e60c8
+    /// selector: 0x055e60c8
     function vestOther(address target) external returns (bool);
 
     /// Create a vested transfer.
-    /// selector: cef3705f
+    /// selector: 0xcef3705f
     function vestedTransfer(
         address target,
         uint256 locked,

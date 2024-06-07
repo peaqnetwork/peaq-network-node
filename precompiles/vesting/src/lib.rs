@@ -30,21 +30,21 @@ struct VestingParams<U256, U32> {
 pub(crate) const SELECTOR_LOG_VEST: [u8; 32] = keccak256!("Vest(address)");
 pub(crate) const SELECTOR_LOG_VEST_OTHER: [u8; 32] = keccak256!("VestOther(address,address)");
 pub(crate) const SELECTOR_LOG_VESTED_TRANSFER: [u8; 32] =
-	keccak256!("VestedTransfer(address,address,uint256,uint256,uint256)");
+	keccak256!("VestedTransfer(address,address,uint256,uint256,uint32)");
 
 pub struct VestingPrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]
 impl<Runtime> VestingPrecompile<Runtime>
 where
-	Runtime: pallet_evm::Config + vesting::Config + frame_system::Config,
-	vesting::Pallet<Runtime>: VestingSchedule<AccountIdOf<Runtime>>,
-	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Decode,
+	Runtime: vesting::Config + pallet_evm::Config + frame_system::Config,
+	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	Runtime::RuntimeCall: From<vesting::Call<Runtime>>,
-	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
+	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	BlockNumberOf<Runtime>: Into<u32>,
+	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
 {
 	#[precompile::public("vest()")]
@@ -97,8 +97,8 @@ where
 		Ok(true)
 	}
 
-	#[precompile::public("vestedTransfer(address,address,uint256,uint256,uint256)")]
-	#[precompile::public("vested_transfer(address,address,uint256,uint256,uint256)")]
+	#[precompile::public("vestedTransfer(address,uint256,uint256,uint32)")]
+	#[precompile::public("vested_transfer(address,uint256,uint256,uint32)")]
 	fn vested_transfer(
 		handle: &mut impl PrecompileHandle,
 		target: Address,
