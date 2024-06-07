@@ -395,7 +395,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = DOLLARS;
+	pub const ExistentialDeposit: u128 = 500;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
