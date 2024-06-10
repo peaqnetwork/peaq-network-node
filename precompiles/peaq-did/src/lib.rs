@@ -15,8 +15,7 @@ use fp_evm::PrecompileHandle;
 
 use pallet_evm::AddressMapping;
 
-use peaq_pallet_did::did::Did as PeaqDidT;
-use peaq_pallet_did::pallet::MAX_VALUE_SIZE as MAX_DID_VALUE_SIZE;
+use peaq_pallet_did::{did::Did as PeaqDidT, pallet::MAX_VALUE_SIZE as MAX_DID_VALUE_SIZE};
 use precompile_utils::{
 	keccak256,
 	prelude::{
@@ -26,7 +25,7 @@ use precompile_utils::{
 	solidity, EvmResult,
 };
 
-type MaxValueSize = ConstU32<{MAX_DID_VALUE_SIZE as u32}>;
+type MaxValueSize = ConstU32<{ MAX_DID_VALUE_SIZE as u32 }>;
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
 type MomentOf<Runtime> = <Runtime as pallet_timestamp::Config>::Moment;
@@ -111,9 +110,8 @@ where
 
 		let name_vec = BoundedVec::<u8, MaxValueSize>::try_from(name.as_bytes().to_vec())
 			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
-		let value_vec =
-			BoundedVec::<u8, MaxValueSize>::try_from(value.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
+		let value_vec = BoundedVec::<u8, MaxValueSize>::try_from(value.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
@@ -164,9 +162,8 @@ where
 		};
 		let name_vec = BoundedVec::<u8, MaxValueSize>::try_from(name.as_bytes().to_vec())
 			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
-		let value_vec =
-			BoundedVec::<u8, MaxValueSize>::try_from(value.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
+		let value_vec = BoundedVec::<u8, MaxValueSize>::try_from(value.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,

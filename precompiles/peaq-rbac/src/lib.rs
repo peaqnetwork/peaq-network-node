@@ -83,7 +83,8 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
+			Ok(v) =>
+				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
 		}
 	}
 
@@ -307,7 +308,8 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
+			Ok(v) =>
+				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
 		}
 	}
 
@@ -547,7 +549,8 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
+			Ok(v) =>
+				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
 		}
 	}
 
