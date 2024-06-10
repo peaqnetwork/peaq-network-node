@@ -83,7 +83,7 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
 		}
 	}
 
@@ -101,7 +101,7 @@ where
 				.iter()
 				.map(|entity| Entity {
 					id: entity.id.into(),
-					name: entity.name.clone().into(),
+					name: entity.name.to_vec().into(),
 					enabled: entity.enabled,
 				})
 				.collect::<Vec<Entity>>()),
@@ -307,7 +307,7 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
 		}
 	}
 
@@ -327,7 +327,7 @@ where
 				.iter()
 				.map(|entity| Entity {
 					id: entity.id.into(),
-					name: entity.name.clone().into(),
+					name: entity.name.to_vec().into(),
 					enabled: entity.enabled,
 				})
 				.collect::<Vec<Entity>>()),
@@ -547,7 +547,7 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.into(), enabled: v.enabled }),
+			Ok(v) => Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
 		}
 	}
 
@@ -846,7 +846,7 @@ where
 					.iter()
 					.map(|val| Entity {
 						id: val.id.into(),
-						name: val.name.clone().into(),
+						name: val.name.to_vec().into(),
 						enabled: val.enabled,
 					})
 					.collect::<Vec<Entity>>()),
@@ -874,7 +874,7 @@ where
 					.iter()
 					.map(|val| Entity {
 						id: val.id.into(),
-						name: val.name.clone().into(),
+						name: val.name.to_vec().into(),
 						enabled: val.enabled,
 					})
 					.collect::<Vec<Entity>>()),
