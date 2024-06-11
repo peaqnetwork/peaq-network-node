@@ -18,9 +18,10 @@
 
 //! Helper methods for computing issuance based on reward rate
 use crate::{pallet::Config, types::BalanceOf};
+use core::ops::Mul;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{Perquintill, RuntimeDebug};
+use sp_runtime::{Permill, Perquintill, RuntimeDebug};
 
 use sp_runtime::traits::CheckedAdd;
 
@@ -58,16 +59,23 @@ impl RewardRateInfo {
 		}
 	}
 
-	pub fn compute_collator_reward<T: Config>(&self, issue_number: BalanceOf<T>) -> BalanceOf<T> {
-		self.collator_rate * issue_number
+	pub fn compute_collator_reward<T: Config>(
+		&self,
+		issue_number: BalanceOf<T>,
+		commission: Permill,
+	) -> BalanceOf<T> {
+		self.collator_rate * issue_number + commission.mul(self.collator_rate * issue_number)
 	}
 
 	pub fn compute_delegator_reward<T: Config>(
 		&self,
 		issue_number: BalanceOf<T>,
 		staking_rate: Perquintill,
+		commission: Permill,
 	) -> BalanceOf<T> {
-		self.delegator_rate * staking_rate * issue_number
+		self.delegator_rate * staking_rate * issue_number -
+			staking_rate *
+				commission.mul((Perquintill::one() - self.delegator_rate) * issue_number)
 	}
 }
 

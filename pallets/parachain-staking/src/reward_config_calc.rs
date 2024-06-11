@@ -66,8 +66,8 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 				Reward { owner: stake.id.clone(), amount: issue_number },
 			)
 		} else {
-			let collator_reward =
-				R::get_reward_rate_config().compute_collator_reward::<T>(issue_number);
+			let collator_reward = R::get_reward_rate_config()
+				.compute_collator_reward::<T>(issue_number, stake.commission);
 			(
 				Weight::from_parts(1, 0),
 				Weight::from_parts(1, 0),
@@ -91,8 +91,11 @@ impl<T: Config, R: RewardRateConfigTrait> CollatorDelegatorBlockRewardCalculator
 			.filter(|x| x.amount >= min_delegator_stake)
 			.map(|x| {
 				let staking_rate = Perquintill::from_rational(x.amount, delegator_sum);
-				let delegator_reward = R::get_reward_rate_config()
-					.compute_delegator_reward::<T>(issue_number, staking_rate);
+				let delegator_reward = R::get_reward_rate_config().compute_delegator_reward::<T>(
+					issue_number,
+					staking_rate,
+					stake.commission,
+				);
 				Reward { owner: x.owner.clone(), amount: delegator_reward }
 			})
 			.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();

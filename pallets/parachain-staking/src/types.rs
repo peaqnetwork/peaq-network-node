@@ -21,7 +21,7 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Saturating, Zero},
-	RuntimeDebug,
+	Permill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::{
@@ -127,6 +127,9 @@ where
 	/// The current status of the candidate. Indicates whether a candidate is
 	/// active or leaving the candidate pool
 	pub status: CandidateStatus,
+
+	// Commission of the collator
+	pub commission: Permill,
 }
 
 impl<A, B, S> Candidate<A, B, S>
@@ -143,6 +146,7 @@ where
 			delegators: OrderedSet::new(),
 			total,
 			status: CandidateStatus::default(), // default active
+			commission: Permill::zero(),
 		}
 	}
 
@@ -203,6 +207,10 @@ where
 
 	pub fn leave_candidates(&mut self, round: SessionIndex) {
 		self.status = CandidateStatus::Leaving(round);
+	}
+
+	pub fn set_commission(&mut self, commission: Permill) {
+		self.commission = commission;
 	}
 }
 

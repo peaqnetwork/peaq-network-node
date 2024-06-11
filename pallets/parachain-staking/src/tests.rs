@@ -132,6 +132,7 @@ fn genesis() {
 					),
 					total: 700,
 					status: CandidateStatus::Active,
+					commission: Default::default(),
 				})
 			);
 			// 2
@@ -153,6 +154,7 @@ fn genesis() {
 					),
 					total: 400,
 					status: CandidateStatus::Active,
+					commission: Default::default(),
 				})
 			);
 			// Delegators
@@ -623,7 +625,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 240,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			assert_eq!(
@@ -640,7 +643,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 290,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			for collator in 5u64..=10u64 {
@@ -655,7 +659,8 @@ fn execute_leave_candidates_with_delay() {
 						stake: collator as u128 * 10u128,
 						delegators: OrderedSet::from(BoundedVec::default()),
 						total: collator as u128 * 10u128,
-						status: CandidateStatus::Leaving(3)
+						status: CandidateStatus::Leaving(3),
+						commission: Default::default(),
 					})
 				);
 				assert!(StakePallet::is_active_candidate(&collator).is_some());
@@ -730,7 +735,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 240,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			assert_eq!(
@@ -747,7 +753,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 290,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			for collator in 5u64..=10u64 {
@@ -762,7 +769,8 @@ fn execute_leave_candidates_with_delay() {
 						stake: collator as u128 * 10u128,
 						delegators: OrderedSet::from(BoundedVec::default()),
 						total: collator as u128 * 10u128,
-						status: CandidateStatus::Leaving(3)
+						status: CandidateStatus::Leaving(3),
+						commission: Default::default(),
 					})
 				);
 				assert!(StakePallet::is_active_candidate(&collator).is_some());
@@ -3689,5 +3697,60 @@ fn check_total_collator_staking_num() {
 
 			let (_weight, balance) = StakePallet::get_total_collator_staking_num();
 			assert_eq!(balance, 2 * (500 + 600 + 400) + 1 * (100 + 200));
+		});
+}
+
+#[test]
+fn collator_reward_per_block_with_delegator_with_commission() {
+	let col_rate = 30;
+	let del_rate = 70;
+	let reward_rate = RewardRateInfo::new(
+		Perquintill::from_percent(col_rate),
+		Perquintill::from_percent(del_rate),
+	);
+
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let mut state = CandidatePool::<Test>::get(1).unwrap();
+			state.set_commission(Permill::from_percent(10)); // 10% commission rate
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			let (_reads, _writes, reward) =
+				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
+					&state, 100,
+				);
+			let c_rewards: BalanceOf<Test> =
+				reward_rate.compute_collator_reward::<Test>(100, Permill::from_percent(10));
+			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
+
+			let (_reards, _writes, reward_vec) =
+				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
+					&state, 100,
+				);
+
+			let d_1_rewards: BalanceOf<Test> = reward_rate.compute_delegator_reward::<Test>(
+				100,
+				Perquintill::from_float(6. / 10.),
+				Permill::from_percent(10),
+			);
+			let d_2_rewards: BalanceOf<Test> = reward_rate.compute_delegator_reward::<Test>(
+				100,
+				Perquintill::from_float(4. / 10.),
+				Permill::from_percent(10),
+			);
+			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
+			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
+			assert_eq!(c_rewards + d_1_rewards + d_2_rewards, 100);
 		});
 }
