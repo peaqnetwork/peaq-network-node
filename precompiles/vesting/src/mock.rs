@@ -21,7 +21,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		AsEnsureOriginWithArg, ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait,
-		PalletInfo as PalletInfoTrait,
+		PalletInfo as PalletInfoTrait, WithdrawReasons,
 	},
 	weights::Weight,
 };
@@ -33,8 +33,19 @@ use sp_core::H256;
 
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, Convert, IdentityLookup, Saturating},
 };
+
+pub struct BlockNumberToBalance;
+impl Convert<BlockNumber, Balance> for BlockNumberToBalance {
+	fn convert(block_number: BlockNumber) -> Balance {
+		block_number.saturating_mul(1_000).into() // Example conversion logic
+	}
+}
+
+parameter_types! {
+	pub const MaxVestingSchedules: u32 = 10; // Example maximum vesting schedules
+}
 
 pub type AccountId = MockPeaqAccount;
 pub type AssetId = MockAssetId;
@@ -45,7 +56,7 @@ pub type Block = frame_system::mocking::MockBlock<Runtime>;
 pub type CurrencyId = u128;
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
 
@@ -113,7 +124,7 @@ pub type Precompiles<R> =
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 /// Block storage limit in bytes. Set to 40 KB.
 const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
-pub type PCall = XtokensPrecompileCall<Runtime>;
+pub type PCall = VestingPrecompileCall<Runtime>;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
@@ -166,6 +177,8 @@ impl pallet_vesting::Config for Runtime {
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = ();
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+	type BlockNumberToBalance = BlockNumberToBalance;
+	const MAX_VESTING_SCHEDULES: u32 = MaxVestingSchedules::get();
 }
 
 // Configure a mock runtime to test the pallet.

@@ -14,6 +14,7 @@ slices = { workspace = true, default-features = false }
 
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 
 # Substrate
 parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}
@@ -22,12 +23,23 @@ frame-system = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
+pallet-balances = { workspace = true }
 pallet-vesting = { workspace = true }
+sp-runtime = { workspace = true }
 
 # Frontier
 fp-evm = { workspace = true, default-features = false }
 pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
 
+[dev-dependencies]
+derive_more = { workspace = true }
+serde = { workspace = true }
+sha3 = { workspace = true }
+
+precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
+
+pallet-timestamp = { workspace = true, features = [ "std" ] }
+scale-info = { workspace = true }
 
 [features]
 default = [ "std" ]
@@ -42,4 +54,7 @@ std = [
 	"sp-io/std",
 	"sp-std/std",
 	"pallet-vesting/std",
+	"pallet-balances/std",
+	"peaq-primitives-xcm/std",
+	"sp-runtime/std",
 ]

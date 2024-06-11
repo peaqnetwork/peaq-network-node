@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
-	traits::{Currency, VestingSchedule},
+	traits::Currency,
 };
 use pallet_evm::AddressMapping;
 use pallet_vesting::{self as vesting, VestingInfo};
 use precompile_utils::{keccak256, prelude::*, solidity, EvmResult};
-use sp_core::{Decode, H256, U256};
+use sp_core::{H256, U256};
 use sp_std::{convert::TryInto, marker::PhantomData};
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
@@ -19,6 +20,11 @@ type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
 type BalanceOf<Runtime> = <<Runtime as vesting::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
 >>::Balance;
+
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 #[derive(solidity::Codec)]
 struct VestingParams<U256, U32> {
