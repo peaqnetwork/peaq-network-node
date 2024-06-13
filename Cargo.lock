@@ -8321,6 +8321,7 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-vesting",
  "pallet-evm-precompile-xcm-utils",
  "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
