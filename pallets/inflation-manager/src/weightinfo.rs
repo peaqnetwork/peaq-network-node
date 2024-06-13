@@ -3,5 +3,5 @@
 use frame_support::weights::Weight;
 
 pub trait WeightInfo {
-	fn set_configuration() -> Weight;
+	fn transfer_all_pot() -> Weight;
 }

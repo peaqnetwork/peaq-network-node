@@ -123,6 +123,7 @@ runtime-common = { path = "../common", default-features = false }
 pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
+inflation-manager = { path = "../../pallets/inflation-manager", default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
@@ -162,6 +163,7 @@ runtime-benchmarks = [
 	"peaq-pallet-did/runtime-benchmarks",
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
+	"inflation-manager/runtime-benchmarks",
 ]
 
 std = [
@@ -275,6 +277,7 @@ std = [
 	"pallet-evm-precompile-peaq-rbac/std",
 	"pallet-evm-precompile-parachain-staking/std",
 	"pallet-xcm/std",
+	"inflation-manager/std",
 
 	# try-runtime
 	"frame-try-runtime/std",
@@ -336,6 +339,7 @@ try-runtime = [
 	"parachain-info/try-runtime",
 	"xc-asset-config/try-runtime",
 	"address-unification/try-runtime",
+	"inflation-manager/try-runtime",
 
 	"zenlink-protocol/try-runtime",
 ]

@@ -6,7 +6,7 @@ use peaq_krest_runtime::{
 	Runtime, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance};
-use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
+use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
@@ -121,6 +121,7 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
+		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
@@ -131,8 +132,7 @@ fn configure_genesis(
 				depin_staking_percent: Perbill::from_percent(5),
 				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			block_issue_reward: 380_517_503_805 * NANOCENTS,
-			max_currency_supply: 400_000_000 * DOLLARS,
+			_phantom: Default::default(),
 		},
 		vesting: Default::default(),
 		aura: Default::default(),

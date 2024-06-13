@@ -203,7 +203,7 @@ pub mod pallet {
 	pub(crate) const STAKING_ID: LockIdentifier = *b"peaqstak";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(8);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(9);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]

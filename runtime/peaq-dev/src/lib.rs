@@ -14,6 +14,7 @@ use frame_system::{
 };
 
 use address_unification::CallKillEVMLinkAccount;
+use inflation_manager::types::{InflationConfiguration, InflationParameters};
 
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
@@ -220,6 +221,12 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	polkadot_primitives::v4::MAX_POV_SIZE as u64,
 );
 
+/// Base Deposit for occupying storage - 0.01 PEAQ
+const STORAGE_DEPOSIT_BASE: Balance = CENTS;
+
+/// Deposit per byte for occupying storage - 0.001 PEAQ
+const STORAGE_DEPOSIT_PER_BYTE: Balance = CENTS / 10;
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
@@ -248,6 +255,9 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const SS58Prefix: u16 = 42;
+
+	pub const StorageDepositBase: Balance = STORAGE_DEPOSIT_BASE;
+	pub const StorageDepositPerByte: Balance = STORAGE_DEPOSIT_PER_BYTE;
 }
 
 pub struct BaseFilter;
@@ -387,11 +397,15 @@ impl pallet_timestamp::Config for Runtime {
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
+	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
+	pub const StorageReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b's', b't', b'o', b'r'];
+	pub const RBACReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'r', b'b', b'a', b'c'];
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -405,6 +419,10 @@ impl pallet_balances::Config for Runtime {
 	type MaxHolds = ();
 	type HoldIdentifier = ();
 	type MaxFreezes = ();
+}
+
+parameter_types! {
+	pub const EoTFeeFactor: Perbill = Perbill::from_percent(0);
 }
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -460,7 +478,7 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
-		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC>;
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC, EoTFeeFactor>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
@@ -473,11 +491,21 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
+parameter_types! {
+	pub const DidStorageDepositBase: Balance = DOLLARS / 10;
+	pub const DidStorageDepositPerByte: Balance = 0;
+}
+
 /// Config the did in pallets/did
 impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Time = pallet_timestamp::Pallet<Runtime>;
 	type WeightInfo = peaq_pallet_did::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<2560>;
+	type Currency = Balances;
+	type StorageDepositBase = DidStorageDepositBase;
+	type StorageDepositPerByte = DidStorageDepositPerByte;
+	type ReserveIdentifier = DIDReserveIdentifier;
 }
 
 /// Config the utility in pallets/utility
@@ -895,12 +923,21 @@ impl peaq_pallet_rbac::Config for Runtime {
 	type EntityId = RbacEntityId;
 	type BoundedDataLen = ConstU32<262144>;
 	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
+	type Currency = Balances;
+	type StorageDepositBase = StorageDepositBase;
+	type StorageDepositPerByte = StorageDepositPerByte;
+	type ReserveIdentifier = RBACReserveIdentifier;
 }
 
 // Config the storage in pallets/storage
 impl peaq_pallet_storage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
+	type BoundedDataLen = ConstU32<256>;
+	type Currency = Balances;
+	type StorageDepositBase = StorageDepositBase;
+	type StorageDepositPerByte = StorageDepositPerByte;
+	type ReserveIdentifier = StorageReserveIdentifier;
 }
 
 impl peaq_pallet_mor::Config for Runtime {
@@ -943,6 +980,33 @@ impl zenlink_protocol::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const DefaultTotalIssuanceNum: Balance = 400_000_000 * DOLLARS;
+	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
+		inflation_parameters: InflationParameters {
+			inflation_rate: Perbill::from_perthousand(25u32),
+			disinflation_rate: Perbill::from_percent(10),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 10,
+	};
+	pub const InitializeInflationAt: BlockNumber = 0;
+	pub const BlockRewardBeforeInitialize: Balance = 0;
+}
+
+impl inflation_manager::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BoundedDataLen = ConstU32<262144>;
+	type PotId = InfaltionPot;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
+	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
+	type DoInitializeAt = InitializeInflationAt;
+	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -969,6 +1033,7 @@ construct_runtime!(
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
+		InflationManager: inflation_manager::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
@@ -1054,8 +1119,9 @@ mod benches {
 		[peaq_pallet_mor, PeaqMor]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
-		[xc_asset_config, XCAssetConfig]
-		[address_unification, AddressUnification]
+		[xc_asset_config, XcAssetConfig]
+		// [address_unification, AddressUnification]
+		[inflation_manager, InflationManager]
 	);
 }
 
@@ -2016,8 +2082,8 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
-	// #[cfg(feature = "runtime-benchmarks")]
-	// type BenchmarkHelper = primitives::benchmarks::AssetsBenchmarkHelper;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl address_unification::Config for Runtime {

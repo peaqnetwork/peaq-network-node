@@ -136,6 +136,7 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
+		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
@@ -146,10 +147,8 @@ fn configure_genesis(
 				depin_staking_percent: Perbill::from_percent(5),
 				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			block_issue_reward: DOLLARS,
-			max_currency_supply: 4_200_000_000 * DOLLARS,
+			_phantom: Default::default(),
 		},
-
 		vesting: peaq_dev_runtime::VestingConfig { vesting: vec![] },
 		aura: Default::default(),
 		sudo: SudoConfig {
