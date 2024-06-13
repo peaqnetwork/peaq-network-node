@@ -121,6 +121,7 @@ pallet-evm-precompile-xcm-utils = { path = "../../precompiles/xcm-utils", defaul
 pallet-evm-precompile-parachain-staking = { path = "../../precompiles/parachain-staking", default-features = false }
 pallet-evm-precompile-vesting = { path = "../../precompiles/vesting", default-features = false }
 pallet-evm-precompile-balances-erc20 = { path = "../../precompiles/balances-erc20", default-features = false}
+pallet-evm-precompile-vesting = { path = "../../precompiles/vesting", default-features = false }
 runtime-common = { path = "../common", default-features = false }
 pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
