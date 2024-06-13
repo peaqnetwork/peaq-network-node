@@ -21,7 +21,6 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
-use parachain_staking::reward_rate::RewardRateInfo;
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_rbac::{
@@ -49,7 +48,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
 	},
-	ApplyExtrinsicResult, Perbill, Percent, Permill, Perquintill,
+	ApplyExtrinsicResult, Perbill, Percent, Permill,
 };
 use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
@@ -391,13 +390,17 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
+	pub const ExistentialDeposit: u128 = DOLLARS;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
+	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
+	pub const StorageReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b's', b't', b'o', b'r'];
+	pub const RBACReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'r', b'b', b'a', b'c'];
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -496,6 +499,7 @@ impl peaq_pallet_did::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = DidStorageDepositBase;
 	type StorageDepositPerByte = DidStorageDepositPerByte;
+	type ReserveIdentifier = DIDReserveIdentifier;
 }
 
 /// Config the utility in pallets/utility
@@ -751,15 +755,6 @@ pub mod staking {
 
 	pub const MAX_COLLATOR_STAKE: Balance = 10_000 * MinCollatorStake::get();
 
-	/// Reward rate configuration which is used at genesis
-	pub fn reward_rate_config() -> RewardRateInfo {
-		RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70))
-	}
-
-	pub fn coefficient() -> u8 {
-		8
-	}
-
 	parameter_types! {
 			/// Minimum round length is 1 hour
 			pub const MinBlocksPerRound: BlockNumber = HOURS;
@@ -816,12 +811,6 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
-	type BlockRewardCalculator = StakingCoefficientRewardCalculator;
-}
-
-impl staking_coefficient_reward::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = staking_coefficient_reward::weights::WeightInfo<Runtime>;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
@@ -930,6 +919,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = StorageDepositBase;
 	type StorageDepositPerByte = StorageDepositPerByte;
+	type ReserveIdentifier = RBACReserveIdentifier;
 }
 
 // Config the storage in pallets/storage
@@ -940,6 +930,7 @@ impl peaq_pallet_storage::Config for Runtime {
 	type Currency = Balances;
 	type StorageDepositBase = StorageDepositBase;
 	type StorageDepositPerByte = StorageDepositPerByte;
+	type ReserveIdentifier = StorageReserveIdentifier;
 }
 
 // Zenlink-DEX Parameter definitions
@@ -985,6 +976,8 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
+	pub const InitializeInflationAt: BlockNumber = 0;
+	pub const BlockRewardBeforeInitialize: Balance = 0;
 }
 
 impl inflation_manager::Config for Runtime {
@@ -995,6 +988,8 @@ impl inflation_manager::Config for Runtime {
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
+	type DoInitializeAt = InitializeInflationAt;
+	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1031,7 +1026,7 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
-		StakingCoefficientRewardCalculator: staking_coefficient_reward::{Pallet, Call, Storage, Config, Event<T>} = 27,
+		// Remove StakingCoefficientRewardCalculator: 27
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
@@ -1100,7 +1095,6 @@ mod benches {
 		[pallet_multisig, Multisig]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[parachain_staking, ParachainStaking]
-		[staking_coefficient_reward, StakingCoefficientRewardCalculator]
 		[pallet_block_reward, BlockReward]
 		[peaq_pallet_transaction, Transaction]
 		[peaq_pallet_did, PeaqDid]

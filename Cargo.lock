@@ -4381,7 +4381,7 @@ dependencies = [
 
 [[package]]
 name = "inflation-manager"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7948,7 +7948,7 @@ dependencies = [
 
 [[package]]
 name = "parachain-staking"
-version = "1.7.0"
+version = "1.8.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8236,7 +8236,6 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
- "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xc-asset-config",
  "xcm",
@@ -8371,7 +8370,6 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
- "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xc-asset-config",
  "xcm",
@@ -8498,7 +8496,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#ade75b3be76eeddc0f1e2b18104844016f20dd03"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8518,7 +8516,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#ade75b3be76eeddc0f1e2b18104844016f20dd03"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8538,7 +8536,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#93f451707c374e5483e87b20527bf4f2a1252f21"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#ade75b3be76eeddc0f1e2b18104844016f20dd03"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -8549,7 +8547,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#47d8849ab0737172212860c6e592c1c6586e0e20"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#cec31e4b4e1bec4de7928008e9c301b317f62c5d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8568,7 +8566,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#a27fdd1bbb08418f2b20ae25db95d96f4b43032e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#de26d5f6b6a171282a7a95c861af6810e0b8b87a"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8588,7 +8586,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#a27fdd1bbb08418f2b20ae25db95d96f4b43032e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#de26d5f6b6a171282a7a95c861af6810e0b8b87a"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8606,7 +8604,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#a27fdd1bbb08418f2b20ae25db95d96f4b43032e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#de26d5f6b6a171282a7a95c861af6810e0b8b87a"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -8617,7 +8615,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e340d6f1db27ae1e4a1e42b7b0fe4a9d53adac12"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#5d082ff6187aadef60a68927974735ca44be6b99"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8634,7 +8632,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e340d6f1db27ae1e4a1e42b7b0fe4a9d53adac12"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#5d082ff6187aadef60a68927974735ca44be6b99"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8654,7 +8652,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e340d6f1db27ae1e4a1e42b7b0fe4a9d53adac12"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#5d082ff6187aadef60a68927974735ca44be6b99"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -8988,7 +8986,6 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
- "staking-coefficient-reward",
  "substrate-wasm-builder",
  "xc-asset-config",
  "xcm",
@@ -14008,58 +14005,6 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
-
-[[package]]
-name = "staking-coefficient-reward"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal 0.3.4",
- "log",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-session",
- "pallet-timestamp",
- "parachain-staking",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-consensus-aura",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
-]
-
-[[package]]
-name = "staking-fixed-percentage-reward"
-version = "0.0.1"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal 0.3.4",
- "log",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-session",
- "pallet-timestamp",
- "parachain-staking",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-consensus-aura",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
-]
 
 [[package]]
 name = "static_assertions"

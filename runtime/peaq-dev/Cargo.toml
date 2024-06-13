@@ -108,7 +108,6 @@ peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-fea
 frame-support = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
-staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward", default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
@@ -168,7 +167,6 @@ runtime-benchmarks = [
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
 	"peaq-pallet-mor/runtime-benchmarks",
-	"staking-coefficient-reward/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
 ]
 
@@ -253,7 +251,6 @@ std = [
     "pallet-authorship/std",
 
     "parachain-staking/std",
-	"staking-coefficient-reward/std",
     "pallet-block-reward/std",
 
 	# XCM
@@ -349,8 +346,7 @@ try-runtime = [
 	"parachain-info/try-runtime",
 	"xc-asset-config/try-runtime",
 	"address-unification/try-runtime",
-
-	"staking-coefficient-reward/try-runtime",
+	"inflation-manager/try-runtime",
 
 	"zenlink-protocol/try-runtime",
 ]
