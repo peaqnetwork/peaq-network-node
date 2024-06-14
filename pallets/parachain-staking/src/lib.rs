@@ -163,7 +163,7 @@ pub use weightinfo::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use core::marker::PhantomData;
+	use core::{marker::PhantomData, ops::Mul};
 	use frame_support::{
 		assert_ok,
 		pallet_prelude::*,
@@ -2664,6 +2664,11 @@ pub mod pallet {
 				.checked_mul(&stake.total.checked_sub(&delegator_sum).unwrap_or_else(Zero::zero))
 				.unwrap_or_else(Zero::zero);
 			let percentage = Perquintill::from_rational(nominator, total_staking_in_session);
+			let delegator_nominator = T::CurrencyBalance::from(block_num)
+				.checked_mul(&delegator_sum)
+				.unwrap_or_else(Zero::zero);
+			let delegator_percentage =
+				Perquintill::from_rational(delegator_nominator, total_staking_in_session);
 			if percentage.is_zero() {
 				log::error!(
 					"Error in collator calculation: block_num {:?} stake.total {:?} delegator_sum
@@ -2680,7 +2685,11 @@ pub mod pallet {
 				);
 				Reward { owner: stake.id.clone(), amount: Zero::zero() }
 			} else {
-				Reward { owner: stake.id.clone(), amount: percentage * issue_number }
+				Reward {
+					owner: stake.id.clone(),
+					amount: percentage * issue_number +
+						stake.commission.mul(delegator_percentage * issue_number),
+				}
 			}
 		}
 
@@ -2713,7 +2722,11 @@ pub mod pallet {
 						);
 						Reward { owner: x.owner.clone(), amount: Zero::zero() }
 					} else {
-						Reward { owner: x.owner.clone(), amount: percentage * issue_number }
+						Reward {
+							owner: x.owner.clone(),
+							amount: percentage * issue_number -
+								stake.commission.mul(percentage * issue_number),
+						}
 					}
 				})
 				.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();

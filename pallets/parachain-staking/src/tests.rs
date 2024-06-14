@@ -3701,19 +3701,11 @@ fn check_total_collator_staking_num() {
 }
 
 #[test]
-fn collator_reward_per_block_with_delegator_with_commission() {
-	let col_rate = 30;
-	let del_rate = 70;
-	let reward_rate = RewardRateInfo::new(
-		Perquintill::from_percent(col_rate),
-		Perquintill::from_percent(del_rate),
-	);
-
+fn collator_reward_per_session_with_delegator_and_commission() {
 	ExtBuilder::default()
 		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
 		.with_collators(vec![(1, 500)])
 		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
-		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
@@ -3726,31 +3718,22 @@ fn collator_reward_per_block_with_delegator_with_commission() {
 				1000,
 			));
 
-			let (_reads, _writes, reward) =
-				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					&state, 100,
-				);
-			let c_rewards: BalanceOf<Test> =
-				reward_rate.compute_collator_reward::<Test>(100, Permill::from_percent(10));
-			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
-
-			let (_reards, _writes, reward_vec) =
-				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					&state, 100,
-				);
-
-			let d_1_rewards: BalanceOf<Test> = reward_rate.compute_delegator_reward::<Test>(
-				100,
-				Perquintill::from_float(6. / 10.),
-				Permill::from_percent(10),
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(reward, Reward { owner: 1, amount: 120 });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(
+				rewards[0],
+				Reward {
+					owner: 2,
+					amount: (Perquintill::from_rational(10u64 * 600, 50000) * 1000) * 90 / 100
+				}
 			);
-			let d_2_rewards: BalanceOf<Test> = reward_rate.compute_delegator_reward::<Test>(
-				100,
-				Perquintill::from_float(4. / 10.),
-				Permill::from_percent(10),
+			assert_eq!(
+				rewards[1],
+				Reward {
+					owner: 3,
+					amount: (Perquintill::from_rational(10u64 * 400, 50000) * 1000) * 90 / 100
+				}
 			);
-			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
-			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
-			assert_eq!(c_rewards + d_1_rewards + d_2_rewards, 100);
 		});
 }
