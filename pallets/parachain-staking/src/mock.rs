@@ -32,16 +32,12 @@ use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill, Perquintill,
+	Perbill,
 };
-use sp_std::{cell::RefCell, fmt::Debug};
+use sp_std::fmt::Debug;
 
 use super::*;
-use crate::{
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-	{self as stake},
-};
+use crate::{self as stake};
 
 pub(crate) type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -52,6 +48,11 @@ pub(crate) type BlockNumber = u64;
 pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
+pub(crate) const BLOCK_REWARD_PER_BLOCK: Balance = 1000;
+pub(crate) const BLOCK_REWARD_IN_GENESIS_SESSION: Balance =
+	BLOCK_REWARD_PER_BLOCK * (BLOCKS_PER_ROUND as u128 - 1);
+pub(crate) const BLOCK_REWARD_IN_NORMAL_SESSION: Balance =
+	BLOCK_REWARD_PER_BLOCK * (BLOCKS_PER_ROUND as u128);
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
@@ -174,29 +175,6 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
-	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
-}
-
-// Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
-thread_local! {
-	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = RefCell::new(RewardRateInfo {
-		collator_rate: Perquintill::from_percent(30),
-		delegator_rate: Perquintill::from_percent(70),
-	});
-}
-
-pub struct MockRewardConfig {}
-
-impl RewardRateConfigTrait for MockRewardConfig {
-	fn get_reward_rate_config() -> RewardRateInfo {
-		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| reward_rate.borrow().clone())
-	}
-
-	fn set_reward_rate_config(info: RewardRateInfo) {
-		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| {
-			*reward_rate.borrow_mut() = info;
-		});
-	}
 }
 
 impl_opaque_keys! {
@@ -277,22 +255,6 @@ impl ExtBuilder {
 	}
 
 	#[must_use]
-	pub(crate) fn with_reward_rate(
-		mut self,
-		col_reward: u64,
-		del_reward: u64,
-		blocks_per_round: BlockNumber,
-	) -> Self {
-		MockRewardConfig::set_reward_rate_config(RewardRateInfo::new(
-			Perquintill::from_percent(col_reward),
-			Perquintill::from_percent(del_reward),
-		));
-		self.blocks_per_round = blocks_per_round;
-
-		self
-	}
-
-	#[must_use]
 	pub(crate) fn set_blocks_per_round(mut self, blocks_per_round: BlockNumber) -> Self {
 		self.blocks_per_round = blocks_per_round;
 		self
@@ -352,12 +314,18 @@ pub(crate) fn almost_equal(left: Balance, right: Balance, precision: Perbill) ->
 }
 
 pub(crate) fn roll_to(n: BlockNumber, authors: Vec<Option<AccountId>>) {
+	let pot = &StakePallet::account_id();
 	while System::block_number() < n {
 		if let Some(Some(author)) = authors.get((System::block_number()) as usize) {
-			Balances::make_free_balance_be(
-				&StakePallet::account_id(),
-				1000 + Balances::minimum_balance(),
-			);
+			let now_balance = Balances::free_balance(pot);
+			if now_balance < Balances::minimum_balance() {
+				Balances::make_free_balance_be(
+					pot,
+					Balances::minimum_balance() + BLOCK_REWARD_PER_BLOCK,
+				);
+			} else {
+				Balances::make_free_balance_be(pot, now_balance + BLOCK_REWARD_PER_BLOCK);
+			}
 			StakePallet::note_author(*author);
 		}
 		<AllPalletsWithSystem as OnFinalize<u64>>::on_finalize(System::block_number());
