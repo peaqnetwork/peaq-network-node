@@ -34,16 +34,12 @@ use sp_runtime::{
 	impl_opaque_keys,
 	testing::{Header, UintAuthorityId},
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill, Perquintill,
+	Perbill,
 };
-use sp_std::{cell::RefCell, fmt::Debug};
+use sp_std::fmt::Debug;
 
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use parachain_staking::{
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-	*,
-};
+use parachain_staking::*;
 use precompile_utils::testing::MockPeaqAccount;
 
 use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
@@ -229,29 +225,6 @@ impl parachain_staking::Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = parachain_staking::weights::WeightInfo<Test>;
-	type BlockRewardCalculator = DefaultRewardCalculator<Self, MockRewardConfig>;
-}
-
-// Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
-thread_local! {
-	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = RefCell::new(RewardRateInfo {
-		collator_rate: Perquintill::from_percent(30),
-		delegator_rate: Perquintill::from_percent(70),
-	});
-}
-
-pub struct MockRewardConfig {}
-
-impl RewardRateConfigTrait for MockRewardConfig {
-	fn get_reward_rate_config() -> RewardRateInfo {
-		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| reward_rate.borrow().clone())
-	}
-
-	fn set_reward_rate_config(info: RewardRateInfo) {
-		GLOBAL_MOCK_REWARD_RATE.with(|reward_rate| {
-			*reward_rate.borrow_mut() = info;
-		});
-	}
 }
 
 impl_opaque_keys! {
