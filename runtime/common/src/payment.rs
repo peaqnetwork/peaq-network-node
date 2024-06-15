@@ -199,9 +199,6 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 		if Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee).is_ok() {
 			Ok((native_id, None))
 		} else {
-			// In theory not necessary, but as safety-buffer will add existential deposit.
-			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
-
 			// Prepare ZenlinkAssetId(s) from AssetId(s).
 			let native_zen_id = Self::AssetIdToZenlinkId::convert(native_id)
 				.ok_or(TransactionValidityError::Invalid(InvalidTransaction::Custom(55)))?;

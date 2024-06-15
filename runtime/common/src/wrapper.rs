@@ -212,6 +212,9 @@ where
 		let new_balance = Self::free_balance(who)
 			.checked_sub(&amount)
 			.ok_or(DispatchError::Other("Insufficient balance"))?;
+		let new_balance = new_balance
+			.checked_sub(&Self::minimum_balance())
+			.ok_or(DispatchError::Other("Insufficient balance"))?;
 
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)
 	}
