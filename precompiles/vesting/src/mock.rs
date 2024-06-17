@@ -29,11 +29,12 @@ use frame_system::EnsureRoot;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use precompile_utils::{precompile_set::*, testing::*};
 
-use sp_core::H256;
+use sp_core::{ConstU128, H256};
 
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, Convert, IdentityLookup, Saturating},
+	traits::{BlakeTwo256, Convert, ConvertInto, IdentityLookup, Saturating},
+	Perbill,
 };
 
 pub struct BlockNumberToBalance;
@@ -56,8 +57,11 @@ pub type Block = frame_system::mocking::MockBlock<Runtime>;
 pub type CurrencyId = u128;
 
 parameter_types! {
-	pub const BlockHashCount: u32 = 250;
+	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
+	pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 0);
+	pub const MaximumBlockLength: u32 = 2 * 1024;
+	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
 
 impl frame_system::Config for Runtime {
@@ -172,13 +176,13 @@ parameter_types! {
 }
 
 impl pallet_vesting::Config for Runtime {
-	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
-	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = ();
-	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+	type Currency = Balances;
 	type BlockNumberToBalance = BlockNumberToBalance;
+	type MinVestedTransfer = ConstU128<0>;
+	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
 	const MAX_VESTING_SCHEDULES: u32 = MaxVestingSchedules::get();
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 }
 
 // Configure a mock runtime to test the pallet.

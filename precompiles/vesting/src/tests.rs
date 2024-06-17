@@ -13,32 +13,30 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
-use crate::{
-	mock::{events, ExtBuilder, Precompiles, PrecompilesValue, Runtime},
-	Currency,
-};
+use crate::{mock::*, *};
 use frame_support::{assert_ok, traits::Currency as FrameCurrency};
 use pallet_vesting::VestingInfo;
 use precompile_utils::prelude::*;
 use sp_core::U256;
+use sp_runtime::SaturatedConversion;
 
 use precompile_utils::testing::*;
 
 // Helper function to create a dummy vesting schedule
-fn create_vesting_schedule<Runtime>(
-	locked: u128,
-	per_block: u128,
-	starting_block: u64,
-) -> VestingInfo<<Runtime as frame_system::Config>::BlockNumber, BalanceOf<Runtime>>
-where
-	Runtime: pallet_vesting::Config,
-{
-	VestingInfo::new(
-		BalanceOf::<Runtime>::saturated_from(locked),
-		BalanceOf::<Runtime>::saturated_from(per_block),
-		<Runtime as frame_system::Config>::BlockNumber::from(starting_block),
-	)
-}
+// fn create_vesting_schedule<Runtime>(
+// 	locked: u128,
+// 	per_block: u128,
+// 	starting_block: u64,
+// ) -> VestingInfo<<Runtime as frame_system::Config>::BlockNumber, BalanceOf<Runtime>>
+// where
+// 	Runtime: pallet_vesting::Config,
+// {
+// 	VestingInfo::new(
+// 		BalanceOf::<Runtime>::saturated_from(locked),
+// 		BalanceOf::<Runtime>::saturated_from(per_block),
+// 		<Runtime as frame_system::Config>::BlockNumber::from(starting_block),
+// 	)
+// }
 
 fn precompiles() -> Precompiles<Runtime> {
 	PrecompilesValue::get()
@@ -160,7 +158,7 @@ fn vested_transfer() {
 			// Check for the VestedTransfer event
 			assert!(events().iter().any(|e| matches!(
 				e,
-				RuntimeEvent::Vesting(pallet_vesting::Event::VestingCreated { .. })
+				RuntimeEvent::Vesting(pallet_vesting::Event::VestingUpdated { .. })
 			)));
 
 			// Verify the vesting schedule
