@@ -51,13 +51,13 @@ parameter_types! {
 pub type AccountId = MockPeaqAccount;
 pub type AssetId = MockAssetId;
 pub type Balance = u128;
-pub type BlockNumber = u64;
+pub type BlockNumber = u32;
 pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 pub type CurrencyId = u128;
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 	pub const MaximumBlockWeight: Weight = Weight::from_parts(1024, 0);
 	pub const MaximumBlockLength: u32 = 2 * 1024;
@@ -75,7 +75,7 @@ impl frame_system::Config for Runtime {
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
