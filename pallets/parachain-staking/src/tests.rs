@@ -3735,5 +3735,23 @@ fn collator_reward_per_session_with_delegator_and_commission() {
 					amount: (Perquintill::from_rational(10u64 * 400, 50000) * 1000) * 90 / 100
 				}
 			);
+			state.set_commission(Permill::from_percent(100)); // 10% commission rate
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(reward, Reward { owner: 1, amount: 300 });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(
+				rewards[0],
+				Reward {
+					owner: 2,
+					amount: 0
+				}
+			);
+			assert_eq!(
+				rewards[1],
+				Reward {
+					owner: 3,
+					amount: 0
+				}
+			);
 		});
 }

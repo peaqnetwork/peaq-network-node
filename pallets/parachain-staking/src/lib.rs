@@ -421,6 +421,10 @@ pub mod pallet {
 		StakeNotFound,
 		/// Cannot unlock when Unstaked is empty.
 		UnstakingIsEmpty,
+		/// The account is not part of the collator candidates set.
+		NotACollator,
+		/// The commission is too high.
+		CommissionTooHigh,
 	}
 
 	#[pallet::event]
@@ -505,6 +509,9 @@ pub mod pallet {
 		/// \[round number, first block in the current round, old value, new
 		/// value\]
 		BlocksPerRoundSet(SessionIndex, T::BlockNumber, T::BlockNumber, T::BlockNumber),
+		/// The commission for a collator has been changed.
+		/// \[collator's account, new commission\]
+		CollatorCommissionChanged(T::AccountId, Permill),
 	}
 
 	#[pallet::hooks]
@@ -1914,6 +1921,32 @@ pub mod pallet {
 
 			Ok(Some(<T as crate::pallet::Config>::WeightInfo::unlock_unstaked(unstaking_len))
 				.into())
+		}
+
+		/// Set the commission of the sender collator.
+		///
+		/// The dispatch origin for this call must be _Signed_ and the sender must be a collator.
+		#[pallet::call_index(20)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_commission(
+		T::MaxTopCandidates::get(),
+		Permill::from_percent(100).deconstruct()
+		))]
+		pub fn set_commission(origin: OriginFor<T>, commission: Permill) -> DispatchResult {
+			let collator = ensure_signed(origin)?;
+			CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
+			if commission > Permill::from_percent(100) {
+				return Err(Error::<T>::CommissionTooHigh.into());
+			}
+
+			<crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
+				if let Some(candidate) = maybe_candidate {
+					candidate.set_commission(commission);
+				}
+			});
+
+			// Emit an event that the commission was updated.
+			Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(collator, commission));
+			Ok(().into())
 		}
 	}
 
