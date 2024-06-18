@@ -34,6 +34,7 @@ dependencies = [
 name = "address-unification"
 version = "2.18.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "libsecp256k1",
