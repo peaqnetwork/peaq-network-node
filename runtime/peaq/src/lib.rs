@@ -2040,7 +2040,6 @@ impl pallet_vesting::Config for Runtime {
 
 parameter_types! {
 	pub const AssetDeposit: Balance = DOLLARS;
-	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
 	pub const AssetApprovalDeposit: Balance = 100 * MILLICENTS;
 	pub const AssetsStringLimit: u32 = 50;
 	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
