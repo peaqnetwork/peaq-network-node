@@ -53,7 +53,7 @@ fn vest() {
 			precompiles()
 				.prepare_test(origin, MockPeaqAccount::EVMu1Account, PCall::vest {})
 				.expect_no_logs()
-				.execute_returns(());
+				.execute_returns(true);
 
 			// Check for the Vest event
 			assert!(events().iter().any(|e| matches!(
@@ -82,7 +82,7 @@ fn vest_other() {
 					PCall::vest_other { target: Address(target.into()) },
 				)
 				.expect_no_logs()
-				.execute_returns(());
+				.execute_returns(true);
 
 			// Check for the VestOther event
 			assert!(events().iter().any(|e| matches!(
