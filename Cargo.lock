@@ -7135,6 +7135,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-vesting"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "num_enum 0.5.11",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "pallet-vesting",
+ "parity-scale-codec",
+ "paste",
+ "peaq-primitives-xcm",
+ "precompile-utils",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "slices",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-precompile-xcm-utils"
 version = "0.1.0"
 dependencies = [
@@ -8156,6 +8185,7 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-vesting",
  "pallet-evm-precompile-xcm-utils",
  "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
@@ -8292,6 +8322,7 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-vesting",
  "pallet-evm-precompile-xcm-utils",
  "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
@@ -8907,6 +8938,7 @@ dependencies = [
  "pallet-evm-precompile-peaq-storage",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",
+ "pallet-evm-precompile-vesting",
  "pallet-evm-precompile-xcm-utils",
  "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",

@@ -15,6 +15,7 @@ members = [
 	"precompiles/batch",
 	"precompiles/peaq-rbac",
 	"precompiles/parachain-staking",
+	"precompiles/vesting"
 ]
 resolver = "2"
 

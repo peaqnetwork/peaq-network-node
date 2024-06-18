@@ -12,6 +12,7 @@ use pallet_evm_precompile_peaq_rbac::PeaqRbacPrecompile;
 use pallet_evm_precompile_peaq_storage::PeaqStoragePrecompile;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
+use pallet_evm_precompile_vesting::VestingPrecompile;
 use pallet_evm_precompile_xcm_utils::XcmUtilsPrecompile;
 use pallet_evm_precompile_xtokens::XtokensPrecompile;
 use precompile_utils::precompile_set::*;
@@ -100,6 +101,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2055>,
 					ParachainStakingPrecompile<R>,
+					(AcceptDelegateCall, CallableByContract),
+				>,
+				PrecompileAt<
+					AddressU64<2056>,
+					VestingPrecompile<R>,
 					(AcceptDelegateCall, CallableByContract),
 				>,
 			),
