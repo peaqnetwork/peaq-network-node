@@ -19,21 +19,16 @@ use super::*;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		AsEnsureOriginWithArg, ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait,
-		PalletInfo as PalletInfoTrait, WithdrawReasons,
-	},
+	traits::{Everything, WithdrawReasons},
 	weights::Weight,
 };
-use frame_system::EnsureRoot;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use precompile_utils::{precompile_set::*, testing::*};
 
 use sp_core::{ConstU128, H256};
 
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, Convert, ConvertInto, IdentityLookup, Saturating},
+	traits::{BlakeTwo256, Convert, IdentityLookup},
 	Perbill,
 };
 
@@ -49,12 +44,10 @@ parameter_types! {
 }
 
 pub type AccountId = MockPeaqAccount;
-pub type AssetId = MockAssetId;
 pub type Balance = u128;
 pub type BlockNumber = u32;
 pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
-pub type CurrencyId = u128;
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
