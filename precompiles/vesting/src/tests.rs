@@ -1,4 +1,5 @@
 use crate::{mock::*, *};
+use frame_support::assert_ok;
 use sp_core::U256;
 
 use precompile_utils::testing::*;
@@ -45,14 +46,31 @@ fn selectors() {
 #[test]
 fn vest() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1_000_000)])
+		.with_balances(vec![
+			(MockPeaqAccount::Alice.into(), 1_000_000),
+			(MockPeaqAccount::Bob.into(), 1_000_000),
+		])
 		.build()
 		.execute_with(|| {
 			let origin = MockPeaqAccount::Alice;
+			let locked = 500_000;
+			let per_block = 10;
+			let starting_block = 1;
+			let schedule = VestingInfo::new(locked, per_block, starting_block);
+
+			assert_ok!(Vesting::vested_transfer(
+				RuntimeOrigin::signed(MockPeaqAccount::Bob),
+				origin,
+				schedule
+			));
 
 			precompiles()
 				.prepare_test(origin, MockPeaqAccount::EVMu1Account, PCall::vest {})
-				.expect_no_logs()
+				.expect_log(log1(
+					MockPeaqAccount::EVMu1Account,
+					SELECTOR_LOG_VEST,
+					solidity::encode_event_data(Address(origin.into())),
+				))
 				.execute_returns(true);
 
 			// Check for the Vest event
@@ -75,13 +93,24 @@ fn vest_other() {
 			let origin = MockPeaqAccount::Alice;
 			let target = MockPeaqAccount::Bob;
 
+			let locked = 500_000;
+			let per_block = 10;
+			let starting_block = 1;
+			let schedule = VestingInfo::new(locked, per_block, starting_block);
+
+			assert_ok!(Vesting::vested_transfer(RuntimeOrigin::signed(origin), target, schedule));
+
 			precompiles()
 				.prepare_test(
 					origin,
 					MockPeaqAccount::EVMu1Account,
 					PCall::vest_other { target: Address(target.into()) },
 				)
-				.expect_no_logs()
+				.expect_log(log1(
+					MockPeaqAccount::EVMu1Account,
+					SELECTOR_LOG_VEST_OTHER,
+					solidity::encode_event_data((Address(origin.into()), Address(target.into()))),
+				))
 				.execute_returns(true);
 
 			// Check for the VestOther event
