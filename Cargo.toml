@@ -56,6 +56,7 @@ impl-trait-for-tuples = "0.2.2"
 jsonrpc-core = "18.0.0"
 jsonrpc-pubsub = "18.0.0"
 jsonrpsee = { version = "0.16.2", default-features = false }
+libsecp256k1 = { version = "0.7", default-features = false }
 log = { version = "0.4.17", default-features = false }
 macrotest = { version = "1.0.9", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
