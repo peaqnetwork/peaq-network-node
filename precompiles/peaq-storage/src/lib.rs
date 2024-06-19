@@ -49,12 +49,12 @@ where
 	#[precompile::view]
 	fn get_item(
 		handle: &mut impl PrecompileHandle,
-		did_account: Address,
-		name: BoundedBytes<GetBytesLimit>,
+		account: Address,
+		item_type: BoundedBytes<GetBytesLimit>,
 	) -> EvmResult<UnboundedBytes> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
-		let did_account = Runtime::AddressMapping::into_account_id(did_account.into());
-		match peaq_pallet_storage::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
+		let account = Runtime::AddressMapping::into_account_id(account.into());
+		match peaq_pallet_storage::Pallet::<Runtime>::read(&account, &Vec::<u8>::from(item_type)) {
 			Some(v) => Ok(v.into()),
 			None => Err(Revert::new(RevertReason::custom("Cannot find the item")).into()),
 		}

@@ -113,7 +113,6 @@ fn configure_genesis(
 		parachain_info: ParachainInfoConfig { parachain_id },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
-			// Configure endowed accounts with initial balance of 1 << 62.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
 		session: peaq_runtime::SessionConfig {

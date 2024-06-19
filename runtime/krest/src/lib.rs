@@ -434,8 +434,7 @@ pub struct WeightToFee;
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = Balance;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		// in Rococo, extrinsic base weight (smallest non-zero weight) is mapped to 1 MILLICENTS:
-		// in our template, we map to 1/10 of that, or 1/10 MILLICENTS
+		// We map to 1/1000 of that, or 1/1000 MILLICENTS
 		let p = MILLICENTS / 10;
 		let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 		smallvec![WeightToFeeCoefficient {
@@ -613,7 +612,7 @@ impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
 parameter_types! {
 	pub const EvmChainId: u64 = 2241;
 	pub BlockGasLimit: U256 = U256::from(
-		NORMAL_DISPATCH_RATIO * WEIGHT_REF_TIME_PER_SECOND / WEIGHT_PER_GAS
+		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
 	pub PrecompilesValue: PeaqPrecompiles<Runtime> = PeaqPrecompiles::<_>::new();
 	pub WeightPerGas: Weight = Weight::from_parts(WEIGHT_PER_GAS, 0);
@@ -623,6 +622,9 @@ parameter_types! {
 	/// ceil(
 	///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
 	/// )
+	/// = ceil(max_gas_limit / max_extrinsic.proof_size())
+	/// = ceil(BlockGasLimit / (NORMAL_DISPATCH_RATIO * MAX_POV_SIZE))
+	/// = 4
 	pub const GasLimitPovSizeRatio: u64 = 4;
 	/// In moonbeam, they setup as 366 and follow below formula:
 	/// The amount of gas per storage (in bytes): BLOCK_GAS_LIMIT / BLOCK_STORAGE_LIMIT
@@ -765,7 +767,7 @@ pub mod staking {
 			pub const StakeDuration: BlockNumber = 7 * DAYS;
 			/// Collator exit requests are delayed by 4 hours (2 rounds/sessions)
 			pub const ExitQueueDelay: u32 = 2;
-			/// Minimum 16 collators selected per round, default at genesis and minimum forever after
+			/// Minimum 4 collators selected per round, default at genesis and minimum forever after
 			pub const MinCollators: u32 = 4;
 			/// At least 4 candidates which cannot leave the network if there are no other candidates.
 			pub const MinRequiredCollators: u32 = 4;
@@ -777,7 +779,7 @@ pub mod staking {
 			/// Maximum 1 collator per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 1;
-			/// Minimum stake required to be reserved to be a collator is 1000 KREST
+			/// Minimum stake required to be reserved to be a collator is 50000 KREST
 			pub const MinCollatorStake: Balance = 50_000 * DOLLARS;
 			/// Minimum stake required to be reserved to be a delegator is 100 KREST
 			pub const MinDelegatorStake: Balance = 100 * DOLLARS;
