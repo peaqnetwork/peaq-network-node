@@ -52,10 +52,8 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(RawOrigin::Signed(caller.clone()));
 
-		let evm_address =
-			Pallet::<T>::get_detault_evm_address(&caller);
+		let evm_address = Pallet::<T>::get_detault_evm_address(&caller);
 
 		assert_last_event::<T>(Event::<T>::ClaimAccount { account_id: caller, evm_address }.into());
 	}
-
 }

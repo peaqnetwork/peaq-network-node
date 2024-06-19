@@ -122,17 +122,11 @@ fn evm_get_account_id() {
 #[test]
 fn claim_default_account_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		assert_ok!(AddressUnificationModule::claim_default_account(
-			RuntimeOrigin::signed(ALICE),
-		));
-		let evm_address =
-			AddressUnificationModule::get_detault_evm_address(&ALICE);
+		assert_ok!(AddressUnificationModule::claim_default_account(RuntimeOrigin::signed(ALICE),));
+		let evm_address = AddressUnificationModule::get_detault_evm_address(&ALICE);
 
 		System::assert_last_event(RuntimeEvent::AddressUnificationModule(
-			crate::Event::ClaimAccount {
-				account_id: ALICE,
-				evm_address,
-			},
+			crate::Event::ClaimAccount { account_id: ALICE, evm_address },
 		));
 		assert!(
 			Accounts::<Runtime>::contains_key(evm_address) &&
@@ -150,8 +144,9 @@ fn claim_default_account_no_work() {
 			AddressUnificationModule::eth_sign(&alice(), &ALICE)
 		));
 
-		assert_noop!(AddressUnificationModule::claim_default_account(
-			RuntimeOrigin::signed(ALICE),
-		), Error::<Runtime>::AccountIdHasMapped);
+		assert_noop!(
+			AddressUnificationModule::claim_default_account(RuntimeOrigin::signed(ALICE),),
+			Error::<Runtime>::AccountIdHasMapped
+		);
 	});
 }
