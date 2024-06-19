@@ -50,17 +50,19 @@ mod convert_impl;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+pub mod weightinfo;
+pub mod weights;
+pub use weightinfo::WeightInfo;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 mod traits;
-pub mod weights;
 
 use convert_impl::*;
 pub use module::*;
 pub use traits::EVMAddressMapping;
-pub use weights::WeightInfo;
 
 /// A signature (a 512-bit value, plus 8 bits for recovery ID).
 pub type Eip712Signature = [u8; 65];
