@@ -45,22 +45,17 @@ mod benchmarks {
 		assert_last_event::<T>(Event::<T>::ClaimAccount { account_id: caller, evm_address }.into());
 	}
 
-	/*
-	 *     #[benchmark]
-	 *     fn claim_default_evm_address() {
-	 *         let caller: T::AccountId = whitelisted_caller();
-	 *         let evm_address = T::DefaultMappings::to_default_h160(&caller);
-	 *
-	 *         #[extrinsic_call]
-	 *         _(RawOrigin::Signed(caller.clone()));
-	 *
-	 *         assert_last_event::<T>(
-	 *             Event::<T>::AccountClaimed {
-	 *                 account_id: caller,
-	 *                 evm_address,
-	 *             }
-	 *             .into(),
-	 *         );
-	 *     }
-	 */
+	#[benchmark]
+	fn claim_default_account() {
+		let caller: T::AccountId = whitelisted_caller();
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()));
+
+		let evm_address =
+			Pallet::<T>::get_detault_evm_address(&caller);
+
+		assert_last_event::<T>(Event::<T>::ClaimAccount { account_id: caller, evm_address }.into());
+	}
+
 }
