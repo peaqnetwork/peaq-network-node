@@ -103,6 +103,22 @@ pub enum CandidateStatus {
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
+pub struct OldCandidate<AccountId, Balance, MaxDelegatorsPerCandidate>
+where
+	AccountId: Eq + Ord + Debug,
+	Balance: Eq + Ord + Debug,
+	MaxDelegatorsPerCandidate: Get<u32> + Debug + PartialEq,
+{
+	pub id: AccountId,
+	pub stake: Balance,
+	pub delegators: OrderedSet<Stake<AccountId, Balance>, MaxDelegatorsPerCandidate>,
+	pub total: Balance,
+	pub status: CandidateStatus,
+}
+
+#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
+#[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
 /// Global collator state with commission fee, staked funds, and delegations
 pub struct Candidate<AccountId, Balance, MaxDelegatorsPerCandidate>
 where
@@ -128,7 +144,7 @@ where
 	/// active or leaving the candidate pool
 	pub status: CandidateStatus,
 
-	// Commission of the collator
+	/// Commission of the collator
 	pub commission: Permill,
 }
 
