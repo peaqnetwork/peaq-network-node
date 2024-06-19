@@ -336,7 +336,7 @@ fn transfer_from() {
 						value: 400.into(),
 					},
 				)
-				.expect_cost(172298756) // 1 weight => 1 gas in mock
+				.expect_cost(185308756) // 1 weight => 1 gas in mock
 				.expect_log(log3(
 					Precompile1,
 					SELECTOR_LOG_TRANSFER,
@@ -426,7 +426,7 @@ fn transfer_from_self() {
 						value: 400.into(),
 					},
 				)
-				.expect_cost(172298756) // 1 weight => 1 gas in mock
+				.expect_cost(185308756) // 1 weight => 1 gas in mock
 				.expect_log(log3(
 					Precompile1,
 					SELECTOR_LOG_TRANSFER,
@@ -548,6 +548,9 @@ fn deposit(data: Vec<u8>) {
 						from: CryptoAlith.into(),
 						to: Precompile1.into(),
 						amount: 500
+					}),
+					RuntimeEvent::System(frame_system::Event::KilledAccount {
+						account: Precompile1.into()
 					}),
 					// Precompile1 send it back since deposit should be a no-op.
 					RuntimeEvent::Balances(pallet_balances::Event::Transfer {
