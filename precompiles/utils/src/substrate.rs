@@ -29,7 +29,7 @@ use frame_support::{
 use pallet_evm::GasWeightMapping;
 
 /// System account size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
-/// Blake2_128Concat (16) + AccountId (32) + AccountInfo (4 + 12 + AccountData (4* 16)) = 148
+/// Blake2_128Concat (16) + AccountId (32) + AccountInfo (4 + 12 + AccountData (4* 16)) = 160
 pub const SYSTEM_ACCOUNT_SIZE: u64 = 160;
 
 #[derive(Debug)]
