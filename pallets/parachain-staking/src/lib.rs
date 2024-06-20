@@ -1935,7 +1935,7 @@ pub mod pallet {
 			let collator = ensure_signed(origin)?;
 			CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
 			if commission > Permill::from_percent(100) {
-				return Err(Error::<T>::CommissionTooHigh.into());
+				return Err(Error::<T>::CommissionTooHigh.into())
 			}
 
 			<crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
@@ -1945,8 +1945,10 @@ pub mod pallet {
 			});
 
 			// Emit an event that the commission was updated.
-			Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(collator, commission));
-			Ok(().into())
+			Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(
+				collator, commission,
+			));
+			Ok(())
 		}
 	}
 
