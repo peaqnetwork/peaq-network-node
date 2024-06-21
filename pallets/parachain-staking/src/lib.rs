@@ -150,8 +150,6 @@ pub(crate) mod mock;
 pub(crate) mod tests;
 
 mod migrations;
-pub mod reward_config_calc;
-pub mod reward_rate;
 mod set;
 pub mod types;
 pub mod weightinfo;
@@ -203,7 +201,7 @@ pub mod pallet {
 	pub(crate) const STAKING_ID: LockIdentifier = *b"peaqstak";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(9);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(10);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]

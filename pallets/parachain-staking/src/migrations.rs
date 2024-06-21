@@ -1,16 +1,13 @@
 //! Storage migrations for the parachain-staking  pallet.
 
-use crate::{
-	pallet::{Config, Pallet},
-	reward_rate::RewardRateInfo,
-};
 use frame_support::{
 	dispatch::GetStorageVersion,
-	pallet_prelude::{StorageVersion, ValueQuery},
-	storage_alias,
+	pallet_prelude::StorageVersion,
 	traits::Get,
 	weights::Weight,
 };
+
+use crate::pallet::{Config, Pallet};
 
 // History of storage versions
 #[derive(Default)]
@@ -27,17 +24,16 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 }
 
 mod upgrade {
-	use super::*;
-	use crate::{
-		pallet::{CandidatePool, OLD_STAKING_ID, STAKING_ID},
-		types::{Candidate, OldCandidate},
-	};
 	use frame_support::traits::{LockableCurrency, WithdrawReasons};
 	use pallet_balances::Locks;
 	use sp_runtime::Permill;
 
-	#[storage_alias]
-	type RewardRateConfig<T: Config> = StorageValue<Pallet<T>, RewardRateInfo, ValueQuery>;
+	use crate::{
+		pallet::{CandidatePool, OLD_STAKING_ID, STAKING_ID},
+		types::{Candidate, OldCandidate},
+	};
+
+	use super::*;
 
 	/// Migration implementation that deletes the old reward rate config and changes the staking ID.
 	pub struct Migrate<T>(sp_std::marker::PhantomData<T>);
