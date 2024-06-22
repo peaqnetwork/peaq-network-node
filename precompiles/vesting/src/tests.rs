@@ -66,11 +66,7 @@ fn vest() {
 
 			precompiles()
 				.prepare_test(origin, MockPeaqAccount::EVMu1Account, PCall::vest {})
-				.expect_log(log1(
-					MockPeaqAccount::EVMu1Account,
-					SELECTOR_LOG_VEST,
-					solidity::encode_event_data(Address(origin.into())),
-				))
+				.expect_log(log2(MockPeaqAccount::EVMu1Account, SELECTOR_LOG_VEST, origin, []))
 				.execute_returns(true);
 
 			// Check for the Vest event
@@ -106,10 +102,12 @@ fn vest_other() {
 					MockPeaqAccount::EVMu1Account,
 					PCall::vest_other { target: Address(target.into()) },
 				)
-				.expect_log(log1(
+				.expect_log(log3(
 					MockPeaqAccount::EVMu1Account,
 					SELECTOR_LOG_VEST_OTHER,
-					solidity::encode_event_data((Address(origin.into()), Address(target.into()))),
+					origin,
+					target,
+					[],
 				))
 				.execute_returns(true);
 
@@ -147,14 +145,16 @@ fn vested_transfer() {
 						starting_block,
 					},
 				)
-				.expect_log(log1(
+				.expect_log(log3(
 					MockPeaqAccount::EVMu1Account,
 					SELECTOR_LOG_VESTED_TRANSFER,
-					solidity::encode_event_data((
-						Address(origin.into()),
-						Address(target.into()),
-						VestingParams { locked, per_block, starting_block },
-					)),
+					origin,
+					target,
+					solidity::encode_event_data((VestingParams {
+						locked,
+						per_block,
+						starting_block,
+					},)),
 				))
 				.execute_returns(true);
 

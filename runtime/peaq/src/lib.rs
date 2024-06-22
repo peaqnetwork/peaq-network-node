@@ -1094,9 +1094,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		cumulus_pallet_parachain_system::migration::Migration<Runtime>,
-	),
+	(cumulus_pallet_parachain_system::migration::Migration<Runtime>,),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
