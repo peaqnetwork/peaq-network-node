@@ -90,7 +90,7 @@ fn test_executor_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
 		let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
-		let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
+		let input = PCall::xcm_execute { message: xcm_to_execute.into(), max_weight: 10000u64 };
 
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
@@ -114,7 +114,7 @@ fn test_executor_send() {
 		]))
 		.encode();
 
-		let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
+		let input = PCall::xcm_execute { message: xcm_to_execute.into(), max_weight: 10000u64 };
 
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
@@ -158,7 +158,7 @@ fn test_executor_transact() {
 			}]))
 			.encode();
 			let input =
-				PCall::xcm_execute { message: xcm_to_execute.into(), weight: 2_000_000_000u64 };
+				PCall::xcm_execute { message: xcm_to_execute.into(), max_weight: 2_000_000_000u64 };
 
 			precompiles()
 				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
@@ -207,7 +207,7 @@ fn execute_fails_if_called_by_smart_contract() {
 
 			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
 
-			let input = PCall::xcm_execute { message: xcm_to_execute.into(), weight: 10000u64 };
+			let input = PCall::xcm_execute { message: xcm_to_execute.into(), max_weight: 10000u64 };
 
 			PrecompilesValue::get()
 				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)

@@ -108,7 +108,6 @@ peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-fea
 frame-support = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
-staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward", default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 precompile-utils = { path = "../../precompiles/utils", default-features = false }
@@ -120,6 +119,8 @@ pallet-evm-precompile-peaq-storage = { path = "../../precompiles/peaq-storage", 
 pallet-evm-precompile-xtokens = { path = "../../precompiles/xtokens", default-features = false }
 pallet-evm-precompile-xcm-utils = { path = "../../precompiles/xcm-utils", default-features = false }
 pallet-evm-precompile-parachain-staking = { path = "../../precompiles/parachain-staking", default-features = false }
+pallet-evm-precompile-vesting = { path = "../../precompiles/vesting", default-features = false }
+pallet-evm-precompile-balances-erc20 = { path = "../../precompiles/balances-erc20", default-features = false}
 runtime-common = { path = "../common", default-features = false }
 pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 peaq-pallet-mor = { workspace = true, default-features = false }
@@ -166,7 +167,6 @@ runtime-benchmarks = [
 	"peaq-pallet-did/runtime-benchmarks",
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
-	"staking-coefficient-reward/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
 ]
 
@@ -250,7 +250,6 @@ std = [
     "pallet-authorship/std",
 
     "parachain-staking/std",
-	"staking-coefficient-reward/std",
     "pallet-block-reward/std",
 
 	# XCM
@@ -274,6 +273,7 @@ std = [
 
 	"pallet-evm-precompile-assets-erc20/std",
 	"pallet-evm-precompile-assets-factory/std",
+	"pallet-evm-precompile-balances-erc20/std",
 	"pallet-evm-precompile-batch/std",
 	"pallet-evm-precompile-peaq-did/std",
 	"pallet-evm-precompile-peaq-storage/std",
@@ -281,6 +281,7 @@ std = [
 	"pallet-evm-precompile-xcm-utils/std",
 	"pallet-evm-precompile-peaq-rbac/std",
 	"pallet-evm-precompile-parachain-staking/std",
+	"pallet-evm-precompile-vesting/std",
 	"pallet-xcm/std",
 	"inflation-manager/std",
 
@@ -345,8 +346,6 @@ try-runtime = [
 	"xc-asset-config/try-runtime",
 	"address-unification/try-runtime",
 	"inflation-manager/try-runtime",
-
-	"staking-coefficient-reward/try-runtime",
 
 	"zenlink-protocol/try-runtime",
 ]

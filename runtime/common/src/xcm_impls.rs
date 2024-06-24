@@ -3,10 +3,10 @@ use sp_std::marker::PhantomData;
 use xc_asset_config::ExecutionPaymentRate;
 use xcm::latest::{
 	prelude::{Fungibility, MultiAsset, MultiLocation, XcmError},
-	MultiAssets, Weight,
+	Weight,
 };
 use xcm_builder::TakeRevenue;
-use xcm_executor::traits::{FeeManager, FeeReason, WeightTrader};
+use xcm_executor::traits::WeightTrader;
 
 /// Used as weight trader for foreign assets.
 ///
@@ -118,12 +118,4 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T
 			}
 		}
 	}
-}
-
-pub struct FeeManagerNotWaived;
-impl FeeManager for FeeManagerNotWaived {
-	fn is_waived(_: Option<&MultiLocation>, _: FeeReason) -> bool {
-		false
-	}
-	fn handle_fee(_: MultiAssets) {}
 }

@@ -4,7 +4,7 @@ use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
-	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	Runtime, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
@@ -113,7 +113,6 @@ fn configure_genesis(
 		parachain_info: ParachainInfoConfig { parachain_id },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
-			// Configure endowed accounts with initial balance of 1 << 62.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
 		session: peaq_runtime::SessionConfig {
@@ -125,9 +124,6 @@ fn configure_genesis(
 		parachain_staking: ParachainStakingConfig {
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
-		},
-		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
-			coefficient: staking::coefficient(),
 		},
 		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
