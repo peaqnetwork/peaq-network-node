@@ -410,8 +410,6 @@ pub mod pallet {
 		/// The number of selected candidates per staking round is
 		/// below the minimum value allowed.
 		CannotSetBelowMin,
-		/// An invalid reward rate configuration is trying to be set.
-		InvalidSchedule,
 		/// The staking reward being unlocked does not exist.
 		/// Max unlocking requests reached.
 		NoMoreUnstaking,
@@ -867,6 +865,12 @@ pub mod pallet {
 		pub fn set_max_candidate_stake(origin: OriginFor<T>, new: BalanceOf<T>) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(new >= T::MinCollatorCandidateStake::get(), Error::<T>::CannotSetBelowMin);
+
+			// Go through all candidates and check if the candidate staking over new max
+			let candidate_over_new_max: bool =
+				CandidatePool::<T>::iter().any(|(_, state)| state.stake > new);
+
+			ensure!(!candidate_over_new_max, Error::<T>::ValStakeAboveMax);
 
 			// *** No Fail beyond this point ***
 
@@ -2572,7 +2576,6 @@ pub mod pallet {
 			ensure!(!unstaking.is_empty(), Error::<T>::UnstakingIsEmpty);
 
 			let mut total_unlocked: BalanceOf<T> = Zero::zero();
-			let mut total_locked: BalanceOf<T> = Zero::zero();
 			let mut expired = Vec::new();
 
 			// check potential unlocks
@@ -2580,8 +2583,6 @@ pub mod pallet {
 				if block_number <= now {
 					expired.push(block_number);
 					total_unlocked = total_unlocked.saturating_add(locked_balance);
-				} else {
-					total_locked = total_locked.saturating_add(locked_balance);
 				}
 			}
 			for block_number in expired {
@@ -2590,7 +2591,7 @@ pub mod pallet {
 
 			// iterate balance locks to retrieve amount of locked balance
 			let locks = Locks::<T>::get(who);
-			total_locked = if let Some(BalanceLock { amount, .. }) =
+			let total_locked: BalanceOf<T> = if let Some(BalanceLock { amount, .. }) =
 				locks.iter().find(|l| l.id == STAKING_ID)
 			{
 				amount.saturating_sub(total_unlocked.into()).into()

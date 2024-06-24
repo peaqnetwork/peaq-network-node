@@ -215,7 +215,7 @@ fn get_balances_known_user() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -243,7 +243,7 @@ fn get_balances_unknown_user() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -279,7 +279,7 @@ fn approve() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(500),
+						value: U256::from(500),
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -320,7 +320,7 @@ fn approve_saturating() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::MAX,
+						value: U256::MAX,
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -374,7 +374,7 @@ fn check_allowance_existing() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(500),
+						value: U256::from(500),
 					},
 				)
 				.execute_some();
@@ -451,7 +451,7 @@ fn transfer() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer {
 						to: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(400),
+						value: U256::from(400),
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -466,7 +466,7 @@ fn transfer() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -476,7 +476,7 @@ fn transfer() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -511,7 +511,7 @@ fn transfer_not_enough_founds() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::transfer {
 						to: Address(MockPeaqAccount::Charlie.into()),
-						amount: U256::from(50),
+						value: U256::from(50),
 					},
 				)
 				.execute_reverts(|output| {
@@ -550,7 +550,7 @@ fn transfer_from() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(500),
+						value: U256::from(500),
 					},
 				)
 				.execute_some();
@@ -561,7 +561,7 @@ fn transfer_from() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(500),
+						value: U256::from(500),
 					},
 				)
 				.execute_some();
@@ -573,7 +573,7 @@ fn transfer_from() {
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Charlie.into()),
-						amount: U256::from(400),
+						value: U256::from(400),
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -588,7 +588,7 @@ fn transfer_from() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -598,7 +598,7 @@ fn transfer_from() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -608,7 +608,7 @@ fn transfer_from() {
 				.prepare_test(
 					MockPeaqAccount::Charlie,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Charlie.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Charlie.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -644,7 +644,7 @@ fn transfer_from_non_incremental_approval() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(500),
+						value: U256::from(500),
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -665,7 +665,7 @@ fn transfer_from_non_incremental_approval() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(300),
+						value: U256::from(300),
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -684,7 +684,7 @@ fn transfer_from_non_incremental_approval() {
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(500),
+						value: U256::from(500),
 					},
 				)
 				.execute_reverts(|output| {
@@ -722,7 +722,7 @@ fn transfer_from_above_allowance() {
 					MockPeaqAccount::AssetId(asset_id),
 					PCall::approve {
 						spender: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(300),
+						value: U256::from(300),
 					},
 				)
 				.execute_some();
@@ -734,7 +734,7 @@ fn transfer_from_above_allowance() {
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(400),
+						value: U256::from(400),
 					},
 				)
 				.execute_reverts(|output| {
@@ -774,7 +774,7 @@ fn transfer_from_self() {
 					PCall::transfer_from {
 						from: Address(MockPeaqAccount::Alice.into()),
 						to: Address(MockPeaqAccount::Bob.into()),
-						amount: U256::from(400),
+						value: U256::from(400),
 					},
 				)
 				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
@@ -789,7 +789,7 @@ fn transfer_from_self() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Alice.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Alice.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -799,7 +799,7 @@ fn transfer_from_self() {
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::AssetId(asset_id),
-					PCall::balance_of { owner: Address(MockPeaqAccount::Bob.into()) },
+					PCall::balance_of { who: Address(MockPeaqAccount::Bob.into()) },
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
@@ -909,7 +909,7 @@ fn mint_is_ok() {
 				MockPeaqAccount::Alice,
 				MockPeaqAccount::AssetId(asset_id),
 				PCall::mint {
-					to: Address(MockPeaqAccount::Bob.into()),
+					beneficiary: Address(MockPeaqAccount::Bob.into()),
 					amount: U256::from(mint_amount),
 				},
 			)
@@ -942,7 +942,10 @@ fn mint_non_admin_is_not_ok() {
 			.prepare_test(
 				MockPeaqAccount::Bob,
 				MockPeaqAccount::AssetId(asset_id),
-				PCall::mint { to: Address(MockPeaqAccount::Bob.into()), amount: U256::from(42) },
+				PCall::mint {
+					beneficiary: Address(MockPeaqAccount::Bob.into()),
+					amount: U256::from(42),
+				},
 			)
 			.expect_no_logs()
 			.execute_reverts(|output| from_utf8(output).unwrap().contains("NoPermission"));

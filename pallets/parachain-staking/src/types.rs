@@ -294,11 +294,13 @@ where
 			owner: collator,
 			amount: Balance::zero(),
 		}) {
+			let amount = self.delegations[i].amount.saturating_add(more);
+
 			self.delegations
 				.mutate(|vec| vec[i].amount = vec[i].amount.saturating_add(more));
 			self.total = self.total.saturating_add(more);
 			self.delegations.sort_greatest_to_lowest();
-			Some(self.delegations[i].amount)
+			Some(amount)
 		} else {
 			None
 		}
@@ -316,11 +318,13 @@ where
 			amount: Balance::zero(),
 		}) {
 			if self.delegations[i].amount > less {
+				let amount = self.delegations[i].amount.saturating_sub(less);
+
 				self.delegations
 					.mutate(|vec| vec[i].amount = vec[i].amount.saturating_sub(less));
 				self.total = self.total.saturating_sub(less);
 				self.delegations.sort_greatest_to_lowest();
-				Some(Some(self.delegations[i].amount))
+				Some(Some(amount))
 			} else {
 				// underflow error; should rm entire delegation
 				Some(None)

@@ -3,8 +3,6 @@ use super::{
 	ParachainInfo, ParachainSystem, PeaqPotAccount, PolkadotXcm, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee, XcAssetConfig, XcmpQueue,
 };
-use cumulus_pallet_xcmp_queue::PriceForSiblingDelivery;
-use cumulus_primitives_core::ParaId;
 use frame_support::{
 	dispatch::Weight,
 	match_types, parameter_types,
@@ -15,7 +13,7 @@ use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use runtime_common::{AccountIdToMultiLocation, FeeManagerNotWaived, FixedRateOfForeignAsset};
+use runtime_common::{AccountIdToMultiLocation, FixedRateOfForeignAsset};
 use sp_runtime::traits::ConstU32;
 use xc_asset_config::MultiLocationToAssetId;
 use xcm::latest::{prelude::*, MultiAsset};
@@ -48,7 +46,6 @@ use xcm_builder::{
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use frame_support::pallet_prelude::Get;
-use parity_scale_codec::Encode;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
@@ -56,7 +53,7 @@ use xcm_executor::traits::MatchesFungibles;
 pub type PeaqAssetLocationIdConverter = MultiLocationToAssetId<Runtime>;
 
 parameter_types! {
-	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorMultiLocation =
 	X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into()));
@@ -73,7 +70,7 @@ pub type LocationToAccountId = (
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
-	AccountId32Aliases<RococoNetwork, AccountId>,
+	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
 /// XCM from myself to myself
@@ -173,13 +170,12 @@ pub type XcmOriginToCallOrigin = (
 	ParentAsSuperuser<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<RococoNetwork, RuntimeOrigin>,
+	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 );
 
 parameter_types! {
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	pub const UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 1024);
 	pub const MaxInstructions: u32 = 100;
@@ -273,14 +269,14 @@ impl xcm_executor::Config for XcmConfig {
 	type MaxAssetsIntoHolding = ConstU32<64>;
 	type AssetLocker = ();
 	type AssetExchanger = ();
-	type FeeManager = FeeManagerNotWaived;
+	type FeeManager = ();
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RococoNetwork>;
+pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
 
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
@@ -331,22 +327,6 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
-pub struct ExponentialFee;
-
-impl ExponentialFee {
-	fn calculate_fee(size: usize) -> MultiAssets {
-		let fee = (size * size) as u16;
-		MultiAssets::from((Here, fee))
-	}
-}
-
-impl PriceForSiblingDelivery for ExponentialFee {
-	fn price_for_sibling_delivery(_: ParaId, message: &Xcm<()>) -> MultiAssets {
-		let size = message.using_encoded(|encoded| encoded.len());
-		Self::calculate_fee(size)
-	}
-}
-
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
@@ -356,7 +336,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToCallOrigin;
 	type WeightInfo = ();
-	type PriceForSiblingDelivery = ExponentialFee;
+	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

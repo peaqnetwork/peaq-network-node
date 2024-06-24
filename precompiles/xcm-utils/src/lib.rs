@@ -153,7 +153,7 @@ where
 	fn xcm_execute(
 		handle: &mut impl PrecompileHandle,
 		message: BoundedBytes<GetXcmSizeLimit>,
-		weight: u64,
+		max_weight: u64,
 	) -> EvmResult {
 		let message: Vec<u8> = message.into();
 
@@ -168,7 +168,7 @@ where
 
 		let call = pallet_xcm::Call::<Runtime>::execute {
 			message: Box::new(xcm),
-			max_weight: Weight::from_parts(weight, DEFAULT_PROOF_SIZE),
+			max_weight: Weight::from_parts(max_weight, DEFAULT_PROOF_SIZE),
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
