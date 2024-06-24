@@ -12,7 +12,7 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use pallet_vesting::{self as vesting, VestingInfo};
 use precompile_utils::{keccak256, prelude::*, solidity, EvmResult};
-use sp_core::{H256, U256};
+use sp_core::{H160, H256, U256};
 use sp_std::{convert::TryInto, marker::PhantomData};
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
@@ -66,11 +66,7 @@ where
 			0,
 		)?;
 
-		let event = log1(
-			handle.context().address,
-			SELECTOR_LOG_VEST,
-			solidity::encode_event_data(Address::from(handle.context().caller)),
-		);
+		let event = log2(handle.context().address, SELECTOR_LOG_VEST, handle.context().caller, []);
 		event.record(handle)?;
 
 		Ok(true)
@@ -93,10 +89,13 @@ where
 			0,
 		)?;
 
-		let event = log1(
+		let target: H160 = target.into();
+		let event = log3(
 			handle.context().address,
 			SELECTOR_LOG_VEST_OTHER,
-			solidity::encode_event_data((Address::from(handle.context().caller), target)),
+			handle.context().caller,
+			target,
+			[],
 		);
 		event.record(handle)?;
 
@@ -129,14 +128,13 @@ where
 			0,
 		)?;
 
-		let event = log1(
+		let target: H160 = target.into();
+		let event = log3(
 			handle.context().address,
 			SELECTOR_LOG_VESTED_TRANSFER,
-			solidity::encode_event_data((
-				Address::from(handle.context().caller),
-				target,
-				VestingParams { locked, per_block, starting_block },
-			)),
+			handle.context().caller,
+			target,
+			solidity::encode_event_data((VestingParams { locked, per_block, starting_block },)),
 		);
 		event.record(handle)?;
 
