@@ -8468,7 +8468,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=bug/1207512530452118_without_storage_info#2de0aa6ec3b0cdd6771f8589fd220987dae62fb2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#a36598a6896c988ef4ad4db4c2684bc23d596286"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8488,7 +8488,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=bug/1207512530452118_without_storage_info#2de0aa6ec3b0cdd6771f8589fd220987dae62fb2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#a36598a6896c988ef4ad4db4c2684bc23d596286"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8508,7 +8508,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=bug/1207512530452118_without_storage_info#2de0aa6ec3b0cdd6771f8589fd220987dae62fb2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#a36598a6896c988ef4ad4db4c2684bc23d596286"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -8519,7 +8519,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=bug/1207512530452118_without_storage_info#bb68dc4cabd68f71f718fa964bf1c17891ef9d4a"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#45689a74a81034ee9fe584d692c1f45cdde4f8f6"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8538,7 +8538,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=bug/1207512530452118_without_storage_info#7f2688137e69fcbdb2a70a9bd87c4dd24309b7de"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#4de7f97e83678278ce57d6ea42880634508b46e2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8558,7 +8558,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=bug/1207512530452118_without_storage_info#7f2688137e69fcbdb2a70a9bd87c4dd24309b7de"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#4de7f97e83678278ce57d6ea42880634508b46e2"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8576,7 +8576,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=bug/1207512530452118_without_storage_info#7f2688137e69fcbdb2a70a9bd87c4dd24309b7de"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#4de7f97e83678278ce57d6ea42880634508b46e2"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -8587,7 +8587,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=bug/1207512530452118_without_storage_info#71ca437f9df50e38d8d96cdb37798e4bbb5afd86"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e11e9e1c98e6951127b03f83012b32b5df41f016"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8604,7 +8604,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=bug/1207512530452118_without_storage_info#71ca437f9df50e38d8d96cdb37798e4bbb5afd86"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e11e9e1c98e6951127b03f83012b32b5df41f016"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -8624,7 +8624,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.0"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=bug/1207512530452118_without_storage_info#71ca437f9df50e38d8d96cdb37798e4bbb5afd86"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#e11e9e1c98e6951127b03f83012b32b5df41f016"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
