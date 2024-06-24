@@ -150,8 +150,6 @@ pub(crate) mod mock;
 pub(crate) mod tests;
 
 mod migrations;
-pub mod reward_config_calc;
-pub mod reward_rate;
 mod set;
 pub mod types;
 pub mod weightinfo;
@@ -163,7 +161,7 @@ pub use weightinfo::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use core::marker::PhantomData;
+	use core::{marker::PhantomData, ops::Mul};
 	use frame_support::{
 		assert_ok,
 		pallet_prelude::*,
@@ -203,7 +201,7 @@ pub mod pallet {
 	pub(crate) const STAKING_ID: LockIdentifier = *b"peaqstak";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(9);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(10);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
@@ -419,6 +417,10 @@ pub mod pallet {
 		StakeNotFound,
 		/// Cannot unlock when Unstaked is empty.
 		UnstakingIsEmpty,
+		/// The account is not part of the collator candidates set.
+		NotACollator,
+		/// The commission is too high.
+		CommissionTooHigh,
 	}
 
 	#[pallet::event]
@@ -503,6 +505,9 @@ pub mod pallet {
 		/// \[round number, first block in the current round, old value, new
 		/// value\]
 		BlocksPerRoundSet(SessionIndex, T::BlockNumber, T::BlockNumber, T::BlockNumber),
+		/// The commission for a collator has been changed.
+		/// \[collator's account, new commission\]
+		CollatorCommissionChanged(T::AccountId, Permill),
 	}
 
 	#[pallet::hooks]
@@ -1919,6 +1924,34 @@ pub mod pallet {
 			Ok(Some(<T as crate::pallet::Config>::WeightInfo::unlock_unstaked(unstaking_len))
 				.into())
 		}
+
+		/// Set the commission of the sender collator.
+		///
+		/// The dispatch origin for this call must be _Signed_ and the sender must be a collator.
+		#[pallet::call_index(20)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_commission(
+		T::MaxTopCandidates::get(),
+		Permill::from_percent(100).deconstruct()
+		))]
+		pub fn set_commission(origin: OriginFor<T>, commission: Permill) -> DispatchResult {
+			let collator = ensure_signed(origin)?;
+			CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
+			if commission > Permill::from_percent(100) {
+				return Err(Error::<T>::CommissionTooHigh.into())
+			}
+
+			<crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
+				if let Some(candidate) = maybe_candidate {
+					candidate.set_commission(commission);
+				}
+			});
+
+			// Emit an event that the commission was updated.
+			Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(
+				collator, commission,
+			));
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -2665,6 +2698,11 @@ pub mod pallet {
 				.checked_mul(&stake.total.checked_sub(&delegator_sum).unwrap_or_else(Zero::zero))
 				.unwrap_or_else(Zero::zero);
 			let percentage = Perquintill::from_rational(nominator, total_staking_in_session);
+			let delegator_nominator = T::CurrencyBalance::from(block_num)
+				.checked_mul(&delegator_sum)
+				.unwrap_or_else(Zero::zero);
+			let delegator_percentage =
+				Perquintill::from_rational(delegator_nominator, total_staking_in_session);
 			if percentage.is_zero() {
 				log::error!(
 					"Error in collator calculation: block_num {:?} stake.total {:?} delegator_sum
@@ -2681,7 +2719,11 @@ pub mod pallet {
 				);
 				Reward { owner: stake.id.clone(), amount: Zero::zero() }
 			} else {
-				Reward { owner: stake.id.clone(), amount: percentage * issue_number }
+				Reward {
+					owner: stake.id.clone(),
+					amount: percentage * issue_number +
+						stake.commission.mul(delegator_percentage * issue_number),
+				}
 			}
 		}
 
@@ -2714,7 +2756,11 @@ pub mod pallet {
 						);
 						Reward { owner: x.owner.clone(), amount: Zero::zero() }
 					} else {
-						Reward { owner: x.owner.clone(), amount: percentage * issue_number }
+						Reward {
+							owner: x.owner.clone(),
+							amount: percentage * issue_number -
+								stake.commission.mul(percentage * issue_number),
+						}
 					}
 				})
 				.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();

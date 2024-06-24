@@ -21,7 +21,7 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Saturating, Zero},
-	RuntimeDebug,
+	Permill, RuntimeDebug,
 };
 use sp_staking::SessionIndex;
 use sp_std::{
@@ -103,6 +103,22 @@ pub enum CandidateStatus {
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
+pub struct OldCandidate<AccountId, Balance, MaxDelegatorsPerCandidate>
+where
+	AccountId: Eq + Ord + Debug,
+	Balance: Eq + Ord + Debug,
+	MaxDelegatorsPerCandidate: Get<u32> + Debug + PartialEq,
+{
+	pub id: AccountId,
+	pub stake: Balance,
+	pub delegators: OrderedSet<Stake<AccountId, Balance>, MaxDelegatorsPerCandidate>,
+	pub total: Balance,
+	pub status: CandidateStatus,
+}
+
+#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
+#[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
 /// Global collator state with commission fee, staked funds, and delegations
 pub struct Candidate<AccountId, Balance, MaxDelegatorsPerCandidate>
 where
@@ -127,6 +143,9 @@ where
 	/// The current status of the candidate. Indicates whether a candidate is
 	/// active or leaving the candidate pool
 	pub status: CandidateStatus,
+
+	/// Commission of the collator
+	pub commission: Permill,
 }
 
 impl<A, B, S> Candidate<A, B, S>
@@ -143,6 +162,7 @@ where
 			delegators: OrderedSet::new(),
 			total,
 			status: CandidateStatus::default(), // default active
+			commission: Permill::zero(),
 		}
 	}
 
@@ -203,6 +223,10 @@ where
 
 	pub fn leave_candidates(&mut self, round: SessionIndex) {
 		self.status = CandidateStatus::Leaving(round);
+	}
+
+	pub fn set_commission(&mut self, commission: Permill) {
+		self.commission = commission;
 	}
 }
 
