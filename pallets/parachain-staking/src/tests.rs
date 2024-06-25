@@ -132,6 +132,7 @@ fn genesis() {
 					),
 					total: 700,
 					status: CandidateStatus::Active,
+					commission: Default::default(),
 				})
 			);
 			// 2
@@ -153,6 +154,7 @@ fn genesis() {
 					),
 					total: 400,
 					status: CandidateStatus::Active,
+					commission: Default::default(),
 				})
 			);
 			// Delegators
@@ -623,7 +625,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 240,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			assert_eq!(
@@ -640,7 +643,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 290,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			for collator in 5u64..=10u64 {
@@ -655,7 +659,8 @@ fn execute_leave_candidates_with_delay() {
 						stake: collator as u128 * 10u128,
 						delegators: OrderedSet::from(BoundedVec::default()),
 						total: collator as u128 * 10u128,
-						status: CandidateStatus::Leaving(3)
+						status: CandidateStatus::Leaving(3),
+						commission: Default::default(),
 					})
 				);
 				assert!(StakePallet::is_active_candidate(&collator).is_some());
@@ -730,7 +735,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 240,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			assert_eq!(
@@ -747,7 +753,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 290,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			for collator in 5u64..=10u64 {
@@ -762,7 +769,8 @@ fn execute_leave_candidates_with_delay() {
 						stake: collator as u128 * 10u128,
 						delegators: OrderedSet::from(BoundedVec::default()),
 						total: collator as u128 * 10u128,
-						status: CandidateStatus::Leaving(3)
+						status: CandidateStatus::Leaving(3),
+						commission: Default::default(),
 					})
 				);
 				assert!(StakePallet::is_active_candidate(&collator).is_some());
@@ -2584,9 +2592,9 @@ fn decrease_max_candidate_stake() {
 				)
 			);
 
-			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 50));
-			assert_eq!(StakePallet::max_candidate_stake(), 50);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(50)));
+			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 100));
+			assert_eq!(StakePallet::max_candidate_stake(), 100);
+			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(100)));
 
 			// check collator states, nothing changed
 			assert_eq!(
@@ -3689,5 +3697,97 @@ fn check_total_collator_staking_num() {
 
 			let (_weight, balance) = StakePallet::get_total_collator_staking_num();
 			assert_eq!(balance, 2 * (500 + 600 + 400) + 1 * (100 + 200));
+		});
+}
+
+#[test]
+fn delegated_funds_less_than_min_delegator_stake() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 100),
+			(2, 100),
+			(3, 100),
+			(4, 100),
+			(5, 100),
+			(6, 100),
+			(7, 100),
+			(8, 100),
+			(9, 100),
+			(10, 100),
+		])
+		.with_collators(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 10)])
+		.with_delegators(vec![(6, 1, 10), (7, 1, 10), (8, 2, 10), (9, 2, 10)])
+		.set_blocks_per_round(5)
+		.build()
+		.execute_with(|| {
+			// delegate funds to multiple candidates.
+			roll_to(4, vec![]);
+			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 9));
+			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 3, 8));
+			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 4, 7));
+			// reduce the 6 delegated funds of collator owned by `1`.
+			assert_noop!(
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 8),
+				Error::<Test>::DelegationBelowMin
+			);
+		});
+}
+
+#[test]
+fn max_candidate_stake_over_max_staking() {
+	let max_stake = 160_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, 200_000_000 * DECIMALS)])
+		.with_collators(vec![(1, max_stake)])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), max_stake - 1),
+				Error::<Test>::ValStakeAboveMax
+			);
+		});
+}
+
+#[test]
+fn collator_reward_per_session_with_delegator_and_commission() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let mut state = CandidatePool::<Test>::get(1).unwrap();
+			state.set_commission(Permill::from_percent(10)); // 10% commission rate
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(reward, Reward { owner: 1, amount: 120 });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(
+				rewards[0],
+				Reward {
+					owner: 2,
+					amount: (Perquintill::from_rational(10u64 * 600, 50000) * 1000) * 90 / 100
+				}
+			);
+			assert_eq!(
+				rewards[1],
+				Reward {
+					owner: 3,
+					amount: (Perquintill::from_rational(10u64 * 400, 50000) * 1000) * 90 / 100
+				}
+			);
+			state.set_commission(Permill::from_percent(100)); // 10% commission rate
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(reward, Reward { owner: 1, amount: 300 });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(rewards[0], Reward { owner: 2, amount: 0 });
+			assert_eq!(rewards[1], Reward { owner: 3, amount: 0 });
 		});
 }

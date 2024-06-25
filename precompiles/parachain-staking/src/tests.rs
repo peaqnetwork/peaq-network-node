@@ -157,7 +157,7 @@ fn unlock_unstaked() {
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
 						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-						amount: 100.into(),
+						stake: 100.into(),
 					},
 				)
 				.expect_no_logs()
@@ -244,7 +244,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_more {
 						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-						amount: 50.into(),
+						stake: 50.into(),
 					},
 				)
 				.expect_no_logs()
@@ -262,7 +262,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegator_stake_less {
 						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-						amount: 50.into(),
+						stake: 50.into(),
 					},
 				)
 				.expect_no_logs()
@@ -279,7 +279,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::EVMu1Account,
 					PCall::join_delegators {
 						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-						amount: 50.into(),
+						stake: 50.into(),
 					},
 				)
 				.expect_no_logs()
@@ -297,7 +297,7 @@ fn should_update_total_stake() {
 					MockPeaqAccount::EVMu1Account,
 					PCall::delegate_another_candidate {
 						collator: convert_mock_account_by_u8_list(MockPeaqAccount::ParentAccount),
-						amount: 60.into(),
+						stake: 60.into(),
 					},
 				)
 				.expect_no_logs()
