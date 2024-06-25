@@ -26,7 +26,10 @@ use frame_support::{
 };
 use frame_system::{Pallet as System, RawOrigin};
 use pallet_session::Pallet as Session;
-use sp_runtime::traits::{One, SaturatedConversion, StaticLookup};
+use sp_runtime::{
+	traits::{One, SaturatedConversion, StaticLookup},
+	Permill,
+};
 use sp_std::{convert::TryInto, vec::Vec};
 
 const COLLATOR_ACCOUNT_SEED: u32 = 0;
@@ -555,6 +558,19 @@ benchmarks! {
 	}: _(RawOrigin::Root, new)
 	verify {
 		assert_eq!(<MaxCollatorCandidateStake<T>>::get(), new);
+	}
+
+	set_commission {
+		// we need at least 1 collators
+		let n in 1 .. T::MaxTopCandidates::get();
+		let m in 0 .. Permill::from_percent(100).deconstruct();
+		let candidates = setup_collator_candidates::<T>(1, None);
+		let candidate = candidates[0].clone();
+		let commission = Permill::from_percent(10);
+		assert_ok!(<Pallet<T>>::set_commission(RawOrigin::Signed(candidate.clone()).into(), commission));
+	}: _(RawOrigin::Signed(candidate.clone()), commission)
+	verify {
+		assert_eq!(<CandidatePool<T>>::get(&candidate).unwrap().commission, commission);
 	}
 
 	// [Post-launch TODO]: Activate after increasing MaxCollatorsPerDelegator to at least 2. Expected to throw otherwise.
