@@ -92,6 +92,7 @@ fn claim_account_should_not_work() {
 		);
 	});
 }
+
 #[test]
 fn evm_get_account_id() {
 	ExtBuilder::default().build().execute_with(|| {
@@ -115,5 +116,37 @@ fn evm_get_account_id() {
 		// We don't check whether the evm account is linked to the default account
 		// assert!(AddressUnificationModule::is_linked(&evm_account_to_default, &evm_account));
 		assert!(AddressUnificationModule::is_linked(&ALICE, &evm_account));
+	});
+}
+
+#[test]
+fn claim_default_account_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(AddressUnificationModule::claim_default_account(RuntimeOrigin::signed(ALICE),));
+		let evm_address = AddressUnificationModule::get_detault_evm_address(&ALICE);
+
+		System::assert_last_event(RuntimeEvent::AddressUnificationModule(
+			crate::Event::ClaimAccount { account_id: ALICE, evm_address },
+		));
+		assert!(
+			Accounts::<Runtime>::contains_key(evm_address) &&
+				EvmAddresses::<Runtime>::contains_key(ALICE)
+		);
+	});
+}
+
+#[test]
+fn claim_default_account_no_work() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_ok!(AddressUnificationModule::claim_account(
+			RuntimeOrigin::signed(ALICE),
+			AddressUnificationModule::evm_address(&alice()),
+			AddressUnificationModule::eth_sign(&alice(), &ALICE)
+		));
+
+		assert_noop!(
+			AddressUnificationModule::claim_default_account(RuntimeOrigin::signed(ALICE),),
+			Error::<Runtime>::AccountIdHasMapped
+		);
 	});
 }

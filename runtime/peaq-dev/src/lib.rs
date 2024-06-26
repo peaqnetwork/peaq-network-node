@@ -1121,7 +1121,7 @@ mod benches {
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
-		// [address_unification, AddressUnification]
+		[address_unification, AddressUnification]
 		[inflation_manager, InflationManager]
 	);
 }
@@ -2092,7 +2092,7 @@ impl address_unification::Config for Runtime {
 	type Currency = Balances;
 	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type ChainId = EvmChainId;
-	type WeightInfo = address_unification::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = address_unification::weights::WeightInfo<Runtime>;
 }
 
 impl EVMAddressToAssetId<StorageAssetId> for Runtime {
