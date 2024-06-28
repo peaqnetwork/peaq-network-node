@@ -69,7 +69,7 @@ pub mod pallet {
 
 		/// Block where inflation is applied
 		/// Block rewards will be calculated at this block based on the then total supply or
-		/// DefaultTotalIssuanceNum
+		/// TotalIssuanceNum
 		/// If no delay in TGE is expect this and BlockRewardsBeforeInitialize should be zero
 		type DoInitializeAt: Get<Self::BlockNumber>;
 
@@ -100,6 +100,17 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn do_recalculation_at)]
 	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+
+	/// Flag The initial block of delayTGE
+	/// Setup the new inflation parameters and block rewards
+	#[pallet::storage]
+	#[pallet::getter(fn initialize_block)]
+	pub type InitialBlock<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+
+	// Total issuance to be set at delayed TGE
+	#[pallet::storage]
+	#[pallet::getter(fn total_issuance_num)]
+	pub type TotalIssuanceNum<T: Config> = StorageValue<_, Balance, ValueQuery>;
 
 	/// The current rewards per block
 	#[pallet::storage]
@@ -146,6 +157,8 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			let do_initialize_at = T::DoInitializeAt::get();
+			InitialBlock::<T>::put(do_initialize_at);
+			TotalIssuanceNum::<T>::put(T::DefaultTotalIssuanceNum::get());
 
 			// if DoRecalculationAt was provided as zero,
 			// Then do TGE now and initialize inflation
@@ -182,7 +195,7 @@ pub mod pallet {
 				CurrentYear::<T>::put(new_year);
 
 				// if we're at DoInitializeAt, then we need to adjust total issuance for delayed TGE
-				if now == T::DoInitializeAt::get() {
+				if now == InitialBlock::<T>::get() {
 					Self::fund_difference_balances();
 				}
 
@@ -235,6 +248,48 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight(1000)]
+		pub fn set_delayed_tge(
+			origin: OriginFor<T>,
+			block: T::BlockNumber,
+			issuance: Balance,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			if block < frame_system::Pallet::<T>::block_number() {
+				return Err("Invalid time".into())
+			}
+			if T::BlockNumber::from(0u32) == T::DoInitializeAt::get() {
+				return Err("Not allow to set because the intialized is zero".into())
+			}
+			if issuance <= T::Currency::total_issuance() {
+				return Err("Issuance should be greater than total issuance".into())
+			}
+
+			InitialBlock::<T>::put(block);
+			DoRecalculationAt::<T>::put(block);
+			TotalIssuanceNum::<T>::put(issuance);
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(1000)]
+		pub fn set_recalculation_time(
+			origin: OriginFor<T>,
+			block: T::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			if block < frame_system::Pallet::<T>::block_number() {
+				return Err("Invalid time".into())
+			}
+			DoRecalculationAt::<T>::put(block);
+
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -272,7 +327,7 @@ pub mod pallet {
 		pub fn fund_difference_balances() {
 			let account = T::PotId::get().into_account_truncating();
 			let now_total_issuance = T::Currency::total_issuance();
-			let desired_issuance = T::DefaultTotalIssuanceNum::get();
+			let desired_issuance = TotalIssuanceNum::<T>::get();
 			if now_total_issuance < desired_issuance {
 				let amount = desired_issuance.saturating_sub(now_total_issuance);
 				T::Currency::deposit_creating(&account, amount);
