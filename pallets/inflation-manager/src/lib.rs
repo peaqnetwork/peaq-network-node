@@ -250,7 +250,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(1000)]
+		#[pallet::weight(T::WeightInfo::set_delayed_tge())]
 		pub fn set_delayed_tge(
 			origin: OriginFor<T>,
 			block: T::BlockNumber,
@@ -262,7 +262,7 @@ pub mod pallet {
 				return Err("Invalid time".into())
 			}
 			if T::BlockNumber::from(0u32) == T::DoInitializeAt::get() {
-				return Err("Not allow to set because the intialized is zero".into())
+				return Err("Not allow to set because delayed TGE didn't enable".into())
 			}
 			if issuance <= T::Currency::total_issuance() {
 				return Err("Issuance should be greater than total issuance".into())
@@ -276,7 +276,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(1000)]
+		#[pallet::weight(T::WeightInfo::set_recalculation_time())]
 		pub fn set_recalculation_time(
 			origin: OriginFor<T>,
 			block: T::BlockNumber,
