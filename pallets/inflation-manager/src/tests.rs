@@ -270,6 +270,34 @@ fn check_fund_enough_token_after_delayed_tge_less() {
 }
 
 #[test]
+fn double_set_delayed_tge() {
+	ExternalityBuilder::default()
+		.with_balances(vec![(1, 20)])
+		.build()
+		.execute_with(|| {
+			let new_total_issuance = 200000;
+			assert_ok!(InflationManager::set_delayed_tge(
+				RawOrigin::Root.into(),
+				5,
+				new_total_issuance
+			));
+
+			for i in 1..=5 {
+				assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), 20);
+				// set current block to DoInitializeAt
+				System::set_block_number(i);
+				// run on_finalize
+				InflationManager::on_finalize(i);
+			}
+
+			assert_noop!(
+				InflationManager::set_delayed_tge(RawOrigin::Root.into(), 5, new_total_issuance),
+				Error::<TestRuntime>::DelayedTGEAlreadySet
+			);
+		})
+}
+
+#[test]
 fn check_fund_enough_token_after_delayed_tge_greater() {
 	ExternalityBuilder::default()
 		.with_balances(vec![(1, 20)])

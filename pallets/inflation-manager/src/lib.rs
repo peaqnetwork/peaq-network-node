@@ -139,6 +139,9 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		FiscalYearUninitialized,
+		DelayedTGEAlreadySet,
+		WrongDelayedTGESetting,
+		WrongBlockSetting,
 	}
 
 	#[pallet::genesis_config]
@@ -258,15 +261,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			if block < frame_system::Pallet::<T>::block_number() {
-				return Err("Invalid time".into())
-			}
-			if T::BlockNumber::from(0u32) == T::DoInitializeAt::get() {
-				return Err("Not allow to set because delayed TGE didn't enable".into())
-			}
-			if issuance <= T::Currency::total_issuance() {
-				return Err("Issuance should be greater than total issuance".into())
-			}
+			// Not allow to set if delayed TGE didn't enable
+			ensure!(T::BlockNumber::from(0u32) != T::DoInitializeAt::get(), Error::<T>::WrongDelayedTGESetting);
+			ensure!(InitialBlock::<T>::get() > frame_system::Pallet::<T>::block_number(), Error::<T>::DelayedTGEAlreadySet);
+			ensure!(block > frame_system::Pallet::<T>::block_number(), Error::<T>::WrongBlockSetting);
+			ensure!(issuance > T::Currency::total_issuance(), Error::<T>::WrongDelayedTGESetting);
 
 			InitialBlock::<T>::put(block);
 			DoRecalculationAt::<T>::put(block);
@@ -283,9 +282,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			if block < frame_system::Pallet::<T>::block_number() {
-				return Err("Invalid time".into())
-			}
+			ensure!(block > frame_system::Pallet::<T>::block_number(), Error::<T>::WrongBlockSetting);
 			DoRecalculationAt::<T>::put(block);
 
 			Ok(().into())
