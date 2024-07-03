@@ -262,9 +262,18 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			// Not allow to set if delayed TGE didn't enable
-			ensure!(T::BlockNumber::from(0u32) != T::DoInitializeAt::get(), Error::<T>::WrongDelayedTGESetting);
-			ensure!(InitialBlock::<T>::get() > frame_system::Pallet::<T>::block_number(), Error::<T>::DelayedTGEAlreadySet);
-			ensure!(block > frame_system::Pallet::<T>::block_number(), Error::<T>::WrongBlockSetting);
+			ensure!(
+				T::BlockNumber::from(0u32) != T::DoInitializeAt::get(),
+				Error::<T>::WrongDelayedTGESetting
+			);
+			ensure!(
+				InitialBlock::<T>::get() > frame_system::Pallet::<T>::block_number(),
+				Error::<T>::DelayedTGEAlreadySet
+			);
+			ensure!(
+				block > frame_system::Pallet::<T>::block_number(),
+				Error::<T>::WrongBlockSetting
+			);
 			ensure!(issuance > T::Currency::total_issuance(), Error::<T>::WrongDelayedTGESetting);
 
 			InitialBlock::<T>::put(block);
@@ -282,7 +291,10 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
-			ensure!(block > frame_system::Pallet::<T>::block_number(), Error::<T>::WrongBlockSetting);
+			ensure!(
+				block > frame_system::Pallet::<T>::block_number(),
+				Error::<T>::WrongBlockSetting
+			);
 			DoRecalculationAt::<T>::put(block);
 
 			Ok(().into())
