@@ -270,6 +270,16 @@ fn check_fund_enough_token_after_delayed_tge_less() {
 }
 
 #[test]
+fn set_delayed_tge_fail() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			InflationManager::set_delayed_tge(RuntimeOrigin::signed(1).into(), 1, 100),
+			BadOrigin
+		);
+	})
+}
+
+#[test]
 fn double_set_delayed_tge() {
 	ExternalityBuilder::default()
 		.with_balances(vec![(1, 20)])
@@ -354,6 +364,20 @@ fn recaluclation_change() {
 		assert_eq!(no_change_snapshots[1], change_snapshots[0]);
 		assert_ne!(change_snapshots[0], change_snapshots[1]);
 		assert_eq!(change_snapshots[0].current_year + 1, change_snapshots[1].current_year);
+	})
+}
+
+#[test]
+fn recaluclation_change_fail() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			InflationManager::set_recalculation_time(RawOrigin::Root.into(), 1),
+			Error::<TestRuntime>::WrongBlockSetting
+		);
+		assert_noop!(
+			InflationManager::set_recalculation_time(RuntimeOrigin::signed(1).into(), 5000),
+			BadOrigin
+		);
 	})
 }
 

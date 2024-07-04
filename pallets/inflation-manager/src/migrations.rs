@@ -25,12 +25,11 @@ mod upgrade {
 			let current = Pallet::<T>::current_storage_version();
 
 			if onchain_storage_version < current {
-				InitialBlock::<T>::put(T::DoInitializeAt::get());
+				let do_initialize_at = T::DoInitializeAt::get();
+				DoInitializeAt::<T>::put(do_initialize_at);
 				TotalIssuanceNum::<T>::put(T::DefaultTotalIssuanceNum::get());
 				weight_writes += 2;
 				weight_reads += 2;
-
-				let do_initialize_at = InitialBlock::<T>::get();
 
 				let current_block = frame_system::Pallet::<T>::current_block_number();
 				weight_reads += 1;

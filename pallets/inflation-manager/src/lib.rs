@@ -105,7 +105,7 @@ pub mod pallet {
 	/// Setup the new inflation parameters and block rewards
 	#[pallet::storage]
 	#[pallet::getter(fn initialize_block)]
-	pub type InitialBlock<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+	pub type DoInitializeAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
 
 	// Total issuance to be set at delayed TGE
 	#[pallet::storage]
@@ -160,7 +160,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			let do_initialize_at = T::DoInitializeAt::get();
-			InitialBlock::<T>::put(do_initialize_at);
+			DoInitializeAt::<T>::put(do_initialize_at);
 			TotalIssuanceNum::<T>::put(T::DefaultTotalIssuanceNum::get());
 
 			// if DoRecalculationAt was provided as zero,
@@ -198,7 +198,7 @@ pub mod pallet {
 				CurrentYear::<T>::put(new_year);
 
 				// if we're at DoInitializeAt, then we need to adjust total issuance for delayed TGE
-				if now == InitialBlock::<T>::get() {
+				if now == DoInitializeAt::<T>::get() {
 					Self::fund_difference_balances();
 				}
 
@@ -267,7 +267,7 @@ pub mod pallet {
 				Error::<T>::WrongDelayedTGESetting
 			);
 			ensure!(
-				InitialBlock::<T>::get() > frame_system::Pallet::<T>::block_number(),
+				DoInitializeAt::<T>::get() > frame_system::Pallet::<T>::block_number(),
 				Error::<T>::DelayedTGEAlreadySet
 			);
 			ensure!(
@@ -276,7 +276,7 @@ pub mod pallet {
 			);
 			ensure!(issuance > T::Currency::total_issuance(), Error::<T>::WrongDelayedTGESetting);
 
-			InitialBlock::<T>::put(block);
+			DoInitializeAt::<T>::put(block);
 			DoRecalculationAt::<T>::put(block);
 			TotalIssuanceNum::<T>::put(issuance);
 
@@ -295,6 +295,7 @@ pub mod pallet {
 				block > frame_system::Pallet::<T>::block_number(),
 				Error::<T>::WrongBlockSetting
 			);
+			ensure!(block > DoInitializeAt::<T>::get(), Error::<T>::WrongBlockSetting);
 			DoRecalculationAt::<T>::put(block);
 
 			Ok(().into())

@@ -42,8 +42,8 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 3593))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
-	/// Storage: InflationManager InitialBlock (r:0 w:1)
-	/// Proof: InflationManager InitialBlock (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
+	/// Storage: InflationManager DoInitializeAt (r:0 w:1)
+	/// Proof: InflationManager DoInitializeAt (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
 	/// Storage: InflationManager TotalIssuanceNum (r:0 w:1)
 	/// Proof: InflationManager TotalIssuanceNum (max_values: Some(1), max_size: Some(16), added: 511, mode: MaxEncodedLen)
 	/// Storage: InflationManager DoRecalculationAt (r:0 w:1)

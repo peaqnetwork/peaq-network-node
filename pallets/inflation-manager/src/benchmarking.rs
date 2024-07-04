@@ -24,7 +24,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, delay.into(), supply.into())
 	verify {
 		assert_eq!(DoRecalculationAt::<T>::get(), delay.into());
-		assert_eq!(InitialBlock::<T>::get(), delay.into());
+		assert_eq!(DoInitializeAt::<T>::get(), delay.into());
 		assert_eq!(TotalIssuanceNum::<T>::get(), supply.into());
 	}
 
