@@ -1,5 +1,5 @@
 use super::*;
-use frame_support::assert_noop;
+use frame_support::{assert_noop, assert_ok};
 use frame_system::RawOrigin;
 use mock::*;
 use peaq_primitives_xcm::BlockNumber;
@@ -229,6 +229,155 @@ fn inflation_parameters_correctness_as_expected() {
 				expected_yearly_inflation_parameters[i]
 			);
 		}
+	})
+}
+
+#[test]
+fn check_fund_enough_token_after_delayed_tge_less() {
+	ExternalityBuilder::default()
+		.with_balances(vec![(1, 20)])
+		.build()
+		.execute_with(|| {
+			let new_total_issuance = 200000;
+			assert_ok!(InflationManager::set_delayed_tge(
+				RawOrigin::Root.into(),
+				5,
+				new_total_issuance
+			));
+
+			for i in 1..=5 {
+				assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), 20);
+				// set current block to DoInitializeAt
+				System::set_block_number(i);
+				// run on_finalize
+				InflationManager::on_finalize(i);
+			}
+
+			assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), new_total_issuance);
+			let account: AccountId =
+				<TestRuntime as Config>::PotId::get().into_account_truncating();
+			assert_eq!(Balances::usable_balance(account), new_total_issuance - 20);
+
+			assert_noop!(
+				InflationManager::transfer_all_pot(RuntimeOrigin::signed(1), 2),
+				BadOrigin
+			);
+
+			InflationManager::transfer_all_pot(RawOrigin::Root.into(), 2).unwrap();
+			assert_eq!(Balances::usable_balance(account), 0);
+			assert_eq!(Balances::usable_balance(2), new_total_issuance - 20);
+		})
+}
+
+#[test]
+fn set_delayed_tge_fail() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			InflationManager::set_delayed_tge(RuntimeOrigin::signed(1).into(), 1, 100),
+			BadOrigin
+		);
+	})
+}
+
+#[test]
+fn double_set_delayed_tge() {
+	ExternalityBuilder::default()
+		.with_balances(vec![(1, 20)])
+		.build()
+		.execute_with(|| {
+			let new_total_issuance = 200000;
+			assert_ok!(InflationManager::set_delayed_tge(
+				RawOrigin::Root.into(),
+				5,
+				new_total_issuance
+			));
+
+			for i in 1..=5 {
+				assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), 20);
+				// set current block to DoInitializeAt
+				System::set_block_number(i);
+				// run on_finalize
+				InflationManager::on_finalize(i);
+			}
+
+			assert_noop!(
+				InflationManager::set_delayed_tge(RawOrigin::Root.into(), 5, new_total_issuance),
+				Error::<TestRuntime>::DelayedTGEAlreadySet
+			);
+		})
+}
+
+#[test]
+fn check_fund_enough_token_after_delayed_tge_greater() {
+	ExternalityBuilder::default()
+		.with_balances(vec![(1, 20)])
+		.build()
+		.execute_with(|| {
+			let new_total_issuance = 200000;
+			assert_ok!(InflationManager::set_delayed_tge(
+				RawOrigin::Root.into(),
+				30,
+				new_total_issuance
+			));
+
+			for i in 1..=30 {
+				assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), 20);
+				// set current block to DoInitializeAt
+				System::set_block_number(i);
+				// run on_finalize
+				InflationManager::on_finalize(i);
+			}
+
+			assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), new_total_issuance);
+			let account: AccountId =
+				<TestRuntime as Config>::PotId::get().into_account_truncating();
+			assert_eq!(Balances::usable_balance(account), new_total_issuance - 20);
+
+			assert_noop!(
+				InflationManager::transfer_all_pot(RuntimeOrigin::signed(1), 2),
+				BadOrigin
+			);
+
+			InflationManager::transfer_all_pot(RawOrigin::Root.into(), 2).unwrap();
+			assert_eq!(Balances::usable_balance(account), 0);
+			assert_eq!(Balances::usable_balance(2), new_total_issuance - 20);
+		})
+}
+
+#[test]
+fn recaluclation_change() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		let old_recalculation_at = InflationManager::do_recalculation_at() as u32;
+		assert_ok!(InflationManager::set_recalculation_time(RawOrigin::Root.into(), 500));
+		let new_recalculation_at = InflationManager::do_recalculation_at() as u32;
+
+		let no_change_snapshots: Vec<InflationManagerSnapshot> = vec![
+			InflationManagerSnapshot::take_snapshot_at(old_recalculation_at - 1),
+			InflationManagerSnapshot::take_snapshot_at(old_recalculation_at),
+		];
+		let change_snapshots: Vec<InflationManagerSnapshot> = vec![
+			InflationManagerSnapshot::take_snapshot_at(new_recalculation_at - 1),
+			InflationManagerSnapshot::take_snapshot_at(new_recalculation_at),
+		];
+
+		assert_eq!(no_change_snapshots[0], no_change_snapshots[1]);
+		assert_eq!(no_change_snapshots[1], change_snapshots[0]);
+		assert_ne!(change_snapshots[0], change_snapshots[1]);
+		assert_eq!(change_snapshots[0].current_year + 1, change_snapshots[1].current_year);
+	})
+}
+
+#[test]
+fn recaluclation_change_fail() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			InflationManager::set_recalculation_time(RawOrigin::Root.into(), 1),
+			Error::<TestRuntime>::WrongBlockSetting
+		);
+		assert_noop!(
+			InflationManager::set_recalculation_time(RuntimeOrigin::signed(1).into(), 5000),
+			BadOrigin
+		);
 	})
 }
 
