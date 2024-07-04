@@ -1058,7 +1058,8 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 10,
 	};
-	pub const InitializeInflationAt: BlockNumber = 2_915_990;
+	// Estimation is around 2024-10-15 00:00 in the ideal case
+	pub const InitializeInflationAt: BlockNumber = 3_469_624;
 	pub const BlockRewardBeforeInitialize: Balance = 3_805_175_038_050_000_000;
 }
 
