@@ -138,8 +138,16 @@ inflation-manager ={ path = "../pallets/inflation-manager" }
 [features]
 default = [
 	"aura",
-	"polkadot-cli"
+	"polkadot-cli",
+	"experimental",
+	"parameterized-consensus-hook"
 	]
+experimental = [
+	"peaq-dev-runtime/experimental",
+]
+parameterized-consensus-hook = [
+	"peaq-dev-runtime/parameterized-consensus-hook",
+]
 aura = [
 	"peaq-dev-runtime/aura",
 	"peaq-krest-runtime/aura"
