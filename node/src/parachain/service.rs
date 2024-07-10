@@ -1,6 +1,6 @@
 //! Parachain Service and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::collators::basic as basic_aura;
+use cumulus_client_consensus_aura::collators::lookahead as async_aura;
 use cumulus_client_consensus_common::ParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::start_relay_chain_tasks;
@@ -312,7 +312,8 @@ where
 		+ peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
-		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
+		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
+		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
@@ -333,6 +334,7 @@ where
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	BIC: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
+		Arc<FullBackend>,
 		ParachainBlockImport<
 			Block,
 			FrontierBlockImport<
@@ -587,6 +589,7 @@ where
 	if is_authority {
 		fn_build_consensus(
 			client.clone(),
+			backend.clone(),
 			parachain_block_import,
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
@@ -709,7 +712,8 @@ where
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
-		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
+		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
+		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(
@@ -753,6 +757,7 @@ where
 			.map_err(Into::into)
 		},
 		|client,
+		 backend,
 		 block_import,
 		 prometheus_registry,
 		 telemetry,
@@ -791,11 +796,15 @@ where
 				client.clone(),
 			);
 
-			let fut = basic_aura::run::<Block, AuraPair, _, _, _, _, _, _, _>(basic_aura::Params {
+			let fut = async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _, _>(async_aura::Params {
 				create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 				block_import: block_import.clone(),
 				para_client: client.clone(),
+				para_backend: backend.clone(),
 				relay_client: relay_chain_interface.clone(),
+			    code_hash_provider: move |block_hash| {
+			        client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
+			    },
 				sync_oracle: sync_oracle.clone(),
 				keystore,
 				collator_key,

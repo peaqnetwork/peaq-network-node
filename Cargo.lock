@@ -8982,6 +8982,7 @@ dependencies = [
  "cumulus-client-service",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-aura",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-inprocess-interface",
