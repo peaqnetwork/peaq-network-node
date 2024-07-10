@@ -68,9 +68,10 @@ pub use frame_support::{
 	dispatch::{DispatchClass, GetDispatchInfo},
 	parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, ConstU64, Contains, Currency, EitherOfDiverse,
-		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
-		OnFinalize, OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
+		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, ConstU64, Contains, Currency,
+		EitherOfDiverse, EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance,
+		KeyOwnerProofSystem, Nothing, OnFinalize, OnUnbalanced, Randomness, StorageInfo,
+		WithdrawReasons,
 	},
 	weights::{
 		constants::{
@@ -749,17 +750,17 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	#[cfg(feature = "parameterized-consensus-hook")]
-    type ConsensusHook = ConsensusHook;
+	type ConsensusHook = ConsensusHook;
 	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
 }
 
 #[cfg(feature = "parameterized-consensus-hook")]
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
-	    Runtime,
-	    RELAY_CHAIN_SLOT_DURATION_MILLIS,
-	    BLOCK_PROCESSING_VELOCITY,
-	    UNINCLUDED_SEGMENT_CAPACITY,
-	>;
+	Runtime,
+	RELAY_CHAIN_SLOT_DURATION_MILLIS,
+	BLOCK_PROCESSING_VELOCITY,
+	UNINCLUDED_SEGMENT_CAPACITY,
+>;
 
 impl parachain_info::Config for Runtime {}
 
@@ -2033,11 +2034,11 @@ impl_runtime_apis! {
 	#[cfg(feature = "parameterized-consensus-hook")]
 	impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
 		fn can_build_upon(
-    	    included_hash: <Block as BlockT>::Hash,
-    	    slot: cumulus_primitives_aura::Slot,
-    	) -> bool {
-    	    ConsensusHook::can_build_upon(included_hash, slot)
-    	}
+			included_hash: <Block as BlockT>::Hash,
+			slot: cumulus_primitives_aura::Slot,
+		) -> bool {
+			ConsensusHook::can_build_upon(included_hash, slot)
+		}
 	}
 }
 

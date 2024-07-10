@@ -1,25 +1,17 @@
 //! Parachain Service and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::collators::basic as basic_aura;
-use cumulus_client_consensus_common::{ParachainBlockImport};
+use cumulus_client_consensus_common::ParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
-use cumulus_client_service::{
-	prepare_node_config,
-    BuildNetworkParams,
-	// start_collator,
-	// start_full_node,
-	// StartCollatorParams,
-	// StartFullNodeParams,
-};
 use cumulus_client_service::start_relay_chain_tasks;
-use cumulus_client_service::StartRelayChainTasksParams;
 use cumulus_client_service::DARecoveryProfile;
+use cumulus_client_service::StartRelayChainTasksParams;
+use cumulus_client_service::{prepare_node_config, BuildNetworkParams};
 use cumulus_primitives_core::{
-    relay_chain::{CollatorPair, ValidationCode},
-	ParaId
+	relay_chain::{CollatorPair, ValidationCode},
+	ParaId,
 };
-use sp_consensus_aura::{sr25519::AuthorityPair as AuraPair,
-};
+use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
@@ -357,8 +349,8 @@ where
 		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>>,
 		Arc<SyncingService<Block>>,
 		KeystorePtr,
-        ParaId,
-        CollatorPair,
+		ParaId,
+		CollatorPair,
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -389,37 +381,29 @@ where
 	)
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
-	// let block_announce_validator = RequireSecondedInBlockAnnounce::new(relay_chain_interface.clone(), id);
 
 	let is_authority = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 	let network_config = FullNetworkConfiguration::new(&parachain_config.network);
-    let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
-        cumulus_client_service::build_network(BuildNetworkParams {
-            parachain_config: &parachain_config,
-            net_config: network_config,
-            para_id: id,
-            client: client.clone(),
-            transaction_pool: transaction_pool.clone(),
-            spawn_handle: task_manager.spawn_handle(),
-            import_queue: params.import_queue,
-            relay_chain_interface: relay_chain_interface.clone(),
-            sybil_resistance_level: cumulus_client_service::CollatorSybilResistance::Resistant,
-        })
-        .await?;
+	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
+		cumulus_client_service::build_network(BuildNetworkParams {
+			parachain_config: &parachain_config,
+			net_config: network_config,
+			para_id: id,
+			client: client.clone(),
+			transaction_pool: transaction_pool.clone(),
+			spawn_handle: task_manager.spawn_handle(),
+			import_queue: params.import_queue,
+			relay_chain_interface: relay_chain_interface.clone(),
+			sybil_resistance_level: cumulus_client_service::CollatorSybilResistance::Resistant,
+		})
+		.await?;
 
 	let fee_history_limit = rpc_config.fee_history_limit;
 
 	let overrides = fc_storage::overrides_handle(client.clone());
-
-	/*
-     * let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-     *     fc_mapping_sync::EthereumBlockNotification<Block>,
-     * > = Default::default();
-     * let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
-	 */
 
 	let pubsub_notification_sinks: Arc<
 		fc_mapping_sync::EthereumBlockNotificationSinks<
@@ -583,38 +567,38 @@ where
 		.overseer_handle()
 		.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
-    start_relay_chain_tasks(StartRelayChainTasksParams {
-        client: client.clone(),
-        announce_block: announce_block.clone(),
-        task_manager: &mut task_manager,
-        para_id: id,
-        relay_chain_interface: relay_chain_interface.clone(),
-        relay_chain_slot_duration,
-        import_queue: import_queue_service,
-        recovery_handle: Box::new(overseer_handle.clone()),
-        sync_service: sync_service.clone(),
-        da_recovery_profile: if is_authority {
-            DARecoveryProfile::Collator
-        } else {
-            DARecoveryProfile::FullNode
-        },
-    })?;
+	start_relay_chain_tasks(StartRelayChainTasksParams {
+		client: client.clone(),
+		announce_block: announce_block.clone(),
+		task_manager: &mut task_manager,
+		para_id: id,
+		relay_chain_interface: relay_chain_interface.clone(),
+		relay_chain_slot_duration,
+		import_queue: import_queue_service,
+		recovery_handle: Box::new(overseer_handle.clone()),
+		sync_service: sync_service.clone(),
+		da_recovery_profile: if is_authority {
+			DARecoveryProfile::Collator
+		} else {
+			DARecoveryProfile::FullNode
+		},
+	})?;
 
-    if is_authority {
-        fn_build_consensus(
-            client.clone(),
-            parachain_block_import,
-            prometheus_registry.as_ref(),
+	if is_authority {
+		fn_build_consensus(
+			client.clone(),
+			parachain_block_import,
+			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
-            &task_manager,
-            relay_chain_interface.clone(),
-            transaction_pool,
-            sync_service.clone(),
-            params.keystore_container.keystore(),
-            id,
-            collator_key.expect("Command line arguments do not allow this. qed"),
-        )?;
-    }
+			&task_manager,
+			relay_chain_interface.clone(),
+			transaction_pool,
+			sync_service.clone(),
+			params.keystore_container.keystore(),
+			id,
+			collator_key.expect("Command line arguments do not allow this. qed"),
+		)?;
+	}
 
 	start_network.start_network();
 
@@ -777,8 +761,8 @@ where
 		 transaction_pool,
 		 sync_oracle,
 		 keystore,
-         para_id,
-         collator_key| {
+		 para_id,
+		 collator_key| {
 			let spawn_handle = task_manager.spawn_handle();
 
 			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
@@ -791,47 +775,44 @@ where
 				telemetry.clone(),
 			);
 
-		    let overseer_handle = relay_chain_interface
-		        .overseer_handle()
-		        .map_err(|e| sc_service::Error::Application(Box::new(e)))?;
+			let overseer_handle = relay_chain_interface
+				.overseer_handle()
+				.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
+			let announce_block = {
+				let sync_service = sync_oracle.clone();
+				Arc::new(move |hash, data| sync_service.announce_block(hash, data))
+			};
 
-		    let announce_block = {
-		        let sync_service = sync_oracle.clone();
-		        Arc::new(move |hash, data| sync_service.announce_block(hash, data))
-		    };
+			let collator_service = cumulus_client_collator::service::CollatorService::new(
+				client.clone(),
+				Arc::new(task_manager.spawn_handle()),
+				announce_block,
+				client.clone(),
+			);
 
-		    let collator_service = cumulus_client_collator::service::CollatorService::new(
-		        client.clone(),
-		        Arc::new(task_manager.spawn_handle()),
-		        announce_block,
-		        client.clone(),
-		    );
+			let fut = basic_aura::run::<Block, AuraPair, _, _, _, _, _, _, _>(basic_aura::Params {
+				create_inherent_data_providers: move |_, ()| async move { Ok(()) },
+				block_import: block_import.clone(),
+				para_client: client.clone(),
+				relay_client: relay_chain_interface.clone(),
+				sync_oracle: sync_oracle.clone(),
+				keystore,
+				collator_key,
+				para_id,
+				overseer_handle,
+				slot_duration,
+				relay_chain_slot_duration: Duration::from_secs(6),
+				proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
+				collator_service,
+				// We got around 500ms for proposing
+				authoring_duration: Duration::from_millis(500),
+				// collation_request_receiver: None,
+			});
 
-		    let fut = basic_aura::run::<Block, AuraPair, _, _, _, _, _, _, _>(basic_aura::Params {
-		        create_inherent_data_providers: move |_, ()| async move { Ok(()) },
-		        block_import: block_import.clone(),
-		        para_client: client.clone(),
-		        relay_client: relay_chain_interface.clone(),
-		        sync_oracle: sync_oracle.clone(),
-		        keystore,
-		        collator_key,
-		        para_id,
-		        overseer_handle,
-		        slot_duration,
-		        relay_chain_slot_duration: Duration::from_secs(6),
-		        proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
-		        collator_service,
-		        // We got around 500ms for proposing
-		        authoring_duration: Duration::from_millis(500),
-		        // collation_request_receiver: None,
-		    });
+			task_manager.spawn_essential_handle().spawn("aura", None, fut);
 
-		    task_manager
-		        .spawn_essential_handle()
-		        .spawn("aura", None, fut);
-
-		    Ok(())
+			Ok(())
 		},
 	)
 	.await
