@@ -78,7 +78,8 @@ pallet-evm-precompile-simple = { workspace = true, default-features = false }
 cumulus-primitives-core = { workspace = true, default-features = false }
 cumulus-primitives-utility = { workspace = true, default-features = false }
 cumulus-primitives-timestamp = { workspace = true, default-features = false }
-cumulus-pallet-parachain-system = { workspace = true, default-features = false }
+cumulus-primitives-aura = { workspace = true, default-features = false }
+cumulus-pallet-parachain-system = { workspace = true, default-features = false, features = ["parameterized-consensus-hook"] }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
@@ -134,7 +135,16 @@ log = {workspace = true, default-features = false}
 ethereum = {workspace = true, default-features = false}
 
 [features]
-default = ["std", "aura"]
+default = ["std", "aura", "parameterized-consensus-hook", "experimental"]
+
+parameterized-consensus-hook = [
+	"cumulus-pallet-parachain-system/parameterized-consensus-hook",
+]
+
+experimental = [
+	"pallet-aura/experimental",
+]
+
 aura = []
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
@@ -235,6 +245,7 @@ std = [
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-utility/std",
 	"cumulus-primitives-timestamp/std",
+	"cumulus-primitives-aura/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
 	"parachain-info/std",

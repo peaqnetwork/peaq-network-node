@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -68,7 +68,7 @@ pub use frame_support::{
 	dispatch::{DispatchClass, GetDispatchInfo},
 	parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
+		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, ConstU64, Contains, Currency, EitherOfDiverse,
 		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
 		OnFinalize, OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
 	},
@@ -139,6 +139,15 @@ type Hash = peaq_primitives_xcm::Hash;
 /// Block type as expected by this runtime.
 /// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+/// Maximum number of blocks simultaneously accepted by the Runtime, not yet included into the
+/// relay chain.
+pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
+/// How many parachain blocks are processed by the relay chain per parent. Limits the number of
+/// blocks authored per slot.
+pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
+/// Relay chain slot duration, in milliseconds.
+pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
 
 pub type PeaqAssetLocationIdConverter = AssetLocationIdConverter<StorageAssetId, XcAssetConfig>;
 
@@ -343,6 +352,9 @@ impl pallet_aura::Config for Runtime {
 	// Should be only enabled (`true`) when async backing is enabled
 	// otherwise set to `false`
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+
+	#[cfg(feature = "experimental")]
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
 // For ink
@@ -744,8 +756,18 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
+	#[cfg(feature = "parameterized-consensus-hook")]
+    type ConsensusHook = ConsensusHook;
+	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
 }
+
+#[cfg(feature = "parameterized-consensus-hook")]
+type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
+	    Runtime,
+	    RELAY_CHAIN_SLOT_DURATION_MILLIS,
+	    BLOCK_PROCESSING_VELOCITY,
+	    UNINCLUDED_SEGMENT_CAPACITY,
+	>;
 
 impl parachain_info::Config for Runtime {}
 
@@ -1352,7 +1374,9 @@ impl_runtime_apis! {
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+			log::error!("A: Aura slot duration: {:?}", Aura::slot_duration());
+			log::error!("B: Aura slot duration: {:?}", SLOT_DURATION);
+			sp_consensus_aura::SlotDuration::from_millis(SLOT_DURATION)
 		}
 
 		fn authorities() -> Vec<AuraId> {
@@ -2024,6 +2048,16 @@ impl_runtime_apis! {
 			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
+
+	#[cfg(feature = "parameterized-consensus-hook")]
+	impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
+		fn can_build_upon(
+    	    included_hash: <Block as BlockT>::Hash,
+    	    slot: cumulus_primitives_aura::Slot,
+    	) -> bool {
+    	    ConsensusHook::can_build_upon(included_hash, slot)
+    	}
+	}
 }
 
 impl peaq_pallet_transaction::Config for Runtime {
@@ -2048,31 +2082,32 @@ impl pallet_multisig::Config for Runtime {
 	type WeightInfo = ();
 }
 
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-		inherent_data.check_extrinsics(block)
-	}
-}
+/*
+ * struct CheckInherents;
+ *
+ * impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
+ *     fn check_inherents(
+ *         block: &Block,
+ *         relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
+ *     ) -> sp_inherents::CheckInherentsResult {
+ *         let relay_chain_slot = relay_state_proof
+ *             .read_slot()
+ *             .expect("Could not read the relay chain slot from the proof");
+ *         let inherent_data =
+ *             cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+ *                 relay_chain_slot,
+ *                 sp_std::time::Duration::from_secs(6),
+ *             )
+ *             .create_inherent_data()
+ *             .expect("Could not create the timestamp inherent data");
+ *         inherent_data.check_extrinsics(block)
+ *     }
+ * }
+ */
 
 cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
 }
 
 parameter_types! {
