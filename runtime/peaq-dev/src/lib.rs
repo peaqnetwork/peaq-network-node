@@ -102,8 +102,8 @@ use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 pub use peaq_pallet_did;
-use peaq_pallet_mor::mor::MorBalance;
-pub use peaq_pallet_mor::{self, types::MorConfig};
+// use peaq_pallet_mor::mor::MorBalance;
+// pub use peaq_pallet_mor::{self, types::MorConfig};
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
@@ -416,10 +416,6 @@ impl pallet_contracts::Config for Runtime {
 	type Environment = ();
 }
 
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-}
-
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = Moment;
@@ -428,7 +424,7 @@ impl pallet_timestamp::Config for Runtime {
     #[cfg(not(feature = "experimental"))]
     type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
-	type OnTimestampSet = BlockReward;
+	type OnTimestampSet = (Aura, BlockReward);
 }
 
 parameter_types! {
@@ -789,7 +785,7 @@ parameter_types! {
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type EventHandler = ParachainStaking;
+	type EventHandler = (ParachainStaking,);
 }
 
 impl pallet_session::Config for Runtime {
@@ -946,7 +942,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 	fn depin_incentivization(reward: NegativeImbalance) {
 		let amount = reward.peek();
 		ToMachinePot::on_unbalanced(reward);
-		PeaqMor::log_block_rewards(amount);
+		// PeaqMor::log_block_rewards(amount);
 	}
 }
 
@@ -1003,13 +999,13 @@ impl peaq_pallet_storage::Config for Runtime {
 	type ReserveIdentifier = StorageReserveIdentifier;
 }
 
-impl peaq_pallet_mor::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type PotId = PotMorId;
-	type ExistentialDeposit = ExistentialDeposit;
-	type WeightInfo = peaq_pallet_mor::weights::WeightInfo<Runtime>;
-}
+// impl peaq_pallet_mor::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// 	type Currency = Balances;
+// 	type PotId = PotMorId;
+// 	type ExistentialDeposit = ExistentialDeposit;
+// 	type WeightInfo = peaq_pallet_mor::weights::WeightInfo<Runtime>;
+// }
 
 // Zenlink-DEX Parameter definitions
 parameter_types! {
@@ -1074,7 +1070,7 @@ construct_runtime!(
 		System: frame_system = 0,
 		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip::{Pallet, Storage} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
-		Aura: pallet_aura::{Pallet, Config<T>} = 3,
+		Aura: pallet_aura = 3,
 		Balances: pallet_balances = 4,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
@@ -1119,7 +1115,7 @@ construct_runtime!(
 		Multisig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
+		// PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
 	}
 );
 
@@ -1174,7 +1170,7 @@ mod benches {
 		[peaq_pallet_did, PeaqDid]
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
-		[peaq_pallet_mor, PeaqMor]
+		// [peaq_pallet_mor, PeaqMor]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
@@ -1378,8 +1374,6 @@ impl_runtime_apis! {
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			log::error!("A: Aura slot duration: {:?}", Aura::slot_duration());
-			log::error!("B: Aura slot duration: {:?}", SLOT_DURATION);
 			sp_consensus_aura::SlotDuration::from_millis(SLOT_DURATION)
 		}
 

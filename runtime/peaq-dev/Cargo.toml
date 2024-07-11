@@ -122,7 +122,7 @@ pallet-evm-precompile-xtokens = { path = "../../precompiles/xtokens", default-fe
 pallet-evm-precompile-xcm-utils = { path = "../../precompiles/xcm-utils", default-features = false }
 pallet-evm-precompile-parachain-staking = { path = "../../precompiles/parachain-staking", default-features = false }
 runtime-common = { path = "../common", default-features = false }
-peaq-pallet-mor = { workspace = true, default-features = false }
+# peaq-pallet-mor = { workspace = true, default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 inflation-manager = { path = "../../pallets/inflation-manager", default-features = false }
@@ -175,7 +175,7 @@ runtime-benchmarks = [
 	"peaq-pallet-did/runtime-benchmarks",
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
-	"peaq-pallet-mor/runtime-benchmarks",
+	# "peaq-pallet-mor/runtime-benchmarks",
 	"staking-coefficient-reward/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
 ]
@@ -218,7 +218,7 @@ std = [
 	"peaq-pallet-rbac-runtime-api/std",
 	"peaq-pallet-storage/std",
 	"peaq-pallet-storage-runtime-api/std",
-	"peaq-pallet-mor/std",
+	# "peaq-pallet-mor/std",
 	"pallet-utility/std",
 	"pallet-treasury/std",
 	"pallet-collective/std",
@@ -351,7 +351,7 @@ try-runtime = [
 	"peaq-pallet-transaction/try-runtime",
 	"peaq-pallet-storage/try-runtime",
 	"peaq-pallet-rbac/try-runtime",
-	"peaq-pallet-mor/try-runtime",
+	# "peaq-pallet-mor/try-runtime",
 
 	"parachain-staking/try-runtime",
 	"parachain-info/try-runtime",

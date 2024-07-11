@@ -815,7 +815,7 @@ where
 				proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
 				collator_service,
 				// We got around 500ms for proposing
-				authoring_duration: Duration::from_millis(500),
+				authoring_duration: Duration::from_millis(1500),
 				// collation_request_receiver: None,
 			});
 
