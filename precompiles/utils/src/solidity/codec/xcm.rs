@@ -24,7 +24,7 @@ use alloc::string::String;
 use frame_support::{ensure, traits::ConstU32, weights::Weight};
 use sp_core::H256;
 use sp_std::vec::Vec;
-use xcm::latest::{Junction, Junctions, MultiLocation, NetworkId};
+use xcm::latest::{Junction, Junctions, Location, NetworkId};
 
 pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 
@@ -42,64 +42,72 @@ pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 
 pub(crate) fn network_id_to_bytes(network_id: Option<NetworkId>) -> Vec<u8> {
 	let mut encoded: Vec<u8> = Vec::new();
-	match network_id {
+	match network_id.clone() {
 		None => {
 			encoded.push(0u8);
 			encoded
-		},
+		}
 		Some(NetworkId::ByGenesis(id)) => {
 			encoded.push(1u8);
 			encoded.append(&mut id.into());
 			encoded
-		},
+		}
 		Some(NetworkId::Polkadot) => {
 			encoded.push(2u8);
 			encoded.push(2u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Kusama) => {
 			encoded.push(3u8);
 			encoded.push(3u8);
 			encoded
-		},
-		Some(NetworkId::ByFork { block_number, block_hash }) => {
+		}
+		Some(NetworkId::ByFork {
+			block_number,
+			block_hash,
+		}) => {
 			encoded.push(4u8);
 			encoded.push(1u8);
 			encoded.append(&mut block_number.to_be_bytes().into());
 			encoded.append(&mut block_hash.into());
 			encoded
-		},
+		}
 		Some(NetworkId::Westend) => {
 			encoded.push(5u8);
 			encoded.push(4u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Rococo) => {
 			encoded.push(6u8);
 			encoded.push(5u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Wococo) => {
 			encoded.push(7u8);
 			encoded.push(6u8);
 			encoded
-		},
+		}
 		Some(NetworkId::Ethereum { chain_id }) => {
 			encoded.push(8u8);
 			encoded.push(7u8);
 			encoded.append(&mut chain_id.to_be_bytes().into());
 			encoded
-		},
+		}
 		Some(NetworkId::BitcoinCore) => {
 			encoded.push(9u8);
 			encoded.push(8u8);
 			encoded
-		},
+		}
 		Some(NetworkId::BitcoinCash) => {
 			encoded.push(10u8);
 			encoded.push(9u8);
 			encoded
-		},
+		}
+		Some(NetworkId::PolkadotBulletin) => {
+			encoded.push(11u8);
+			encoded.push(10u8);
+			encoded
+		}
 	}
 }
 
@@ -331,10 +339,10 @@ impl Codec for Junctions {
 }
 
 // Cannot used derive macro since it is a foreign struct.
-impl Codec for MultiLocation {
+impl Codec for Location {
 	fn read(reader: &mut Reader) -> MayRevert<Self> {
 		let (parents, interior) = reader.read().map_in_tuple_to_field(&["parents", "interior"])?;
-		Ok(MultiLocation { parents, interior })
+		Ok(Location { parents, interior })
 	}
 
 	fn write(writer: &mut Writer, value: Self) {

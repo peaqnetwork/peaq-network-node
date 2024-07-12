@@ -703,32 +703,40 @@ fn read_complex_solidity_function() {
 
 #[test]
 fn junctions_decoder_works() {
-	let writer_output = Writer::new().write(Junctions::X1(Junction::OnlyChild)).build();
+	let junctions: Junctions = [(Junction::OnlyChild)].into();
+	let writer_output = Writer::new().write(junctions).build();
 
 	let mut reader = Reader::new(&writer_output);
 	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
 
-	assert_eq!(parsed, Junctions::X1(Junction::OnlyChild));
+	assert_eq!(parsed, [Junction::OnlyChild]);
 
-	let writer_output = Writer::new()
-		.write(Junctions::X2(Junction::OnlyChild, Junction::OnlyChild))
-		.build();
+	let junctions: Junctions = [Junction::OnlyChild, Junction::OnlyChild].into();
+	let writer_output = Writer::new().write(junctions).build();
 
 	let mut reader = Reader::new(&writer_output);
 	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
 
-	assert_eq!(parsed, Junctions::X2(Junction::OnlyChild, Junction::OnlyChild));
+	assert_eq!(parsed, [Junction::OnlyChild, Junction::OnlyChild]);
 
-	let writer_output = Writer::new()
-		.write(Junctions::X3(Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild))
-		.build();
+	let junctions: Junctions = [
+		Junction::OnlyChild,
+		Junction::OnlyChild,
+		Junction::OnlyChild,
+	]
+	.into();
+	let writer_output = Writer::new().write(junctions).build();
 
 	let mut reader = Reader::new(&writer_output);
 	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
 
 	assert_eq!(
 		parsed,
-		Junctions::X3(Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild),
+		[
+			Junction::OnlyChild,
+			Junction::OnlyChild,
+			Junction::OnlyChild
+		],
 	);
 }
 
