@@ -17,7 +17,7 @@ git = "https://github.com/peaqnetwork/polkadot-sdk"
 branch = "peaq-polkadot-v1.7.2"
 
 [dependencies]
-# sp-debug-derive = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.1.0", default-features = false, features = ["std", "force-debug"] }
+# sp-debug-derive = { git = "https://github.com/peaqnetwork/polakdot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false, features = ["std", "force-debug"] }
 parity-scale-codec = { workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
@@ -147,6 +147,7 @@ parameterized-consensus-hook = [
 experimental = [
 	"pallet-aura/experimental",
 ]
+
 aura = []
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",

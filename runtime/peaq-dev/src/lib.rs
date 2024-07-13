@@ -629,7 +629,6 @@ impl pallet_treasury::Config for Runtime {
 	type PayoutPeriod = ConstU32<{ 30 * DAYS }>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
-
 }
 
 // Pallet EVM
