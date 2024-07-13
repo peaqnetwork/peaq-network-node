@@ -3,11 +3,11 @@ use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
 use sp_std::marker::PhantomData;
 use xc_asset_config::ExecutionPaymentRate;
 use xcm::latest::{
-	prelude::{Fungibility, MultiAsset, MultiLocation, XcmError},
-	MultiAssets, Weight,
+	prelude::{Fungibility, Asset, Location, XcmError},
+	Weight,
 };
 use xcm_builder::TakeRevenue;
-use xcm_executor::traits::{FeeManager, FeeReason, WeightTrader};
+use xcm_executor::traits::{WeightTrader};
 
 /// Used as weight trader for foreign assets.
 ///
@@ -18,8 +18,8 @@ pub struct FixedRateOfForeignAsset<T: ExecutionPaymentRate, R: TakeRevenue> {
 	weight: Weight,
 	/// Total consumed assets
 	consumed: u128,
-	/// Asset Id (as MultiLocation) and units per second for payment
-	asset_location_and_units_per_second: Option<(MultiLocation, u128)>,
+	/// Asset Id (as Location) and units per second for payment
+	asset_location_and_units_per_second: Option<(Location, u128)>,
 	_pd: PhantomData<(T, R)>,
 }
 
@@ -36,9 +36,9 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 	fn buy_weight(
 		&mut self,
 		weight: Weight,
-		payment: xcm_executor::Assets,
+		payment: xcm_executor::AssetsInHolding,
 		_context: &XcmContext,
-	) -> Result<xcm_executor::Assets, XcmError> {
+	) -> Result<xcm_executor::AssetsInHolding, XcmError> {
 		log::trace!(
 			target: "xcm::weight",
 			"FixedRateOfForeignAsset::buy_weight weight: {:?}, payment: {:?}",
@@ -49,11 +49,11 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		let payment_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
 
 		match payment_asset {
-			MultiAsset {
-				id: xcm::latest::AssetId::Concrete(asset_location),
+			Asset {
+				id: xcm::latest::AssetId(asset_location),
 				fun: Fungibility::Fungible(_),
 			} => {
-				if let Some(units_per_second) = T::get_units_per_second(asset_location) {
+				if let Some(units_per_second) = T::get_units_per_second(asset_location.clone()) {
 					let amount = units_per_second.saturating_mul(weight.ref_time() as u128) // TODO: change this to u64?
                         / (WEIGHT_REF_TIME_PER_SECOND as u128);
 					if amount == 0 {
@@ -61,7 +61,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 					}
 
 					let unused = payment
-						.checked_sub((asset_location, amount).into())
+						.checked_sub((asset_location.clone(), amount).into())
 						.map_err(|_| XcmError::TooExpensive)?;
 
 					self.weight = self.weight.saturating_add(weight);
@@ -70,7 +70,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 					// need to be able to handle that. Current primitive implementation will just
 					// keep total track of consumed asset for the FIRST consumed asset. Others will
 					// just be ignored when refund is concerned.
-					if let Some((old_asset_location, _)) = self.asset_location_and_units_per_second
+					if let Some((old_asset_location, _)) = self.asset_location_and_units_per_second.clone()
 					{
 						if old_asset_location == asset_location {
 							self.consumed = self.consumed.saturating_add(amount);
@@ -90,10 +90,10 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		}
 	}
 
-	fn refund_weight(&mut self, weight: Weight, _context: &XcmContext) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: Weight, _context: &XcmContext) -> Option<Asset> {
 		log::trace!(target: "xcm::weight", "FixedRateOfForeignAsset::refund_weight weight: {:?}", weight);
 
-		if let Some((asset_location, units_per_second)) = self.asset_location_and_units_per_second {
+		if let Some((asset_location, units_per_second)) = self.asset_location_and_units_per_second.clone() {
 			let weight = weight.min(self.weight);
 			let amount = units_per_second.saturating_mul(weight.ref_time() as u128)
 				/ (WEIGHT_REF_TIME_PER_SECOND as u128);
@@ -114,7 +114,7 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 
 impl<T: ExecutionPaymentRate, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T, R> {
 	fn drop(&mut self) {
-		if let Some((asset_location, _)) = self.asset_location_and_units_per_second {
+		if let Some((asset_location, _)) = self.asset_location_and_units_per_second.clone() {
 			if self.consumed > 0 {
 				R::take_revenue((asset_location, self.consumed).into());
 			}
@@ -122,10 +122,11 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T
 	}
 }
 
-pub struct FeeManagerNotWaived;
-impl FeeManager for FeeManagerNotWaived {
-	fn is_waived(_: Option<&MultiLocation>, _: FeeReason) -> bool {
-		false
-	}
-	fn handle_fee(_: MultiAssets) {}
-}
+// [TODO] Comment it out because we won't use that
+// pub struct FeeManagerNotWaived;
+// impl FeeManager for FeeManagerNotWaived {
+// 	fn is_waived(_: Option<&Location>, _: FeeReason) -> bool {
+// 		false
+// 	}
+// 	fn handle_fee(_: Assets, _: Option<&XcmContext>, _: FeeReason) {}
+// }
