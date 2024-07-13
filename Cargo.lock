@@ -9131,7 +9131,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-node"
-version = "3.1.0-polkadot-v1.1.0"
+version = "3.1.0-polkadot-v1.7.2"
 dependencies = [
  "async-trait",
  "clap 4.5.9",
@@ -9171,7 +9171,7 @@ dependencies = [
  "inflation-manager",
  "jsonrpc-core",
  "jsonrpc-pubsub",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "log",
  "orml-xtokens",
  "pallet-base-fee",
@@ -9458,7 +9458,7 @@ version = "0.1.0"
 dependencies = [
  "ethereum-types",
  "futures 0.3.30",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-types",
  "serde",
@@ -9472,7 +9472,7 @@ version = "0.6.0"
 dependencies = [
  "ethereum-types",
  "futures 0.3.30",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-types",
  "serde",
@@ -9486,7 +9486,7 @@ dependencies = [
  "ethereum",
  "ethereum-types",
  "fc-rpc-core",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "serde",
  "serde_json",
 ]
@@ -9506,6 +9506,7 @@ version = "0.1.0"
 dependencies = [
  "ethereum",
  "ethereum-types",
+ "fc-api",
  "fc-consensus",
  "fc-db",
  "fc-rpc",
@@ -9513,7 +9514,7 @@ dependencies = [
  "fp-rpc",
  "futures 0.3.30",
  "hex-literal 0.3.4",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-debug",
  "peaq-rpc-core-types",
@@ -9572,7 +9573,8 @@ dependencies = [
  "fc-storage",
  "fp-rpc",
  "futures 0.3.30",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
+ "log",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-trace",
  "peaq-rpc-core-types",
@@ -9589,6 +9591,7 @@ dependencies = [
  "sp-runtime",
  "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
  "sp-transaction-pool",
+ "substrate-prometheus-endpoint",
  "tokio",
  "tracing",
 ]
@@ -9600,7 +9603,7 @@ dependencies = [
  "ethereum-types",
  "fc-rpc",
  "frame-system",
- "jsonrpsee 0.16.3",
+ "jsonrpsee 0.20.3",
  "peaq-rpc-core-txpool",
  "peaq-rpc-primitives-txpool",
  "rlp",
@@ -17286,7 +17289,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#82499f5832595e3355677351e6b615cc765687bf"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#cd49595b1352c8fdbf87848f8bc837d2f066aab5"
 dependencies = [
  "cumulus-primitives-core",
  "frame-benchmarking",
@@ -17310,10 +17313,11 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol-rpc"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#82499f5832595e3355677351e6b615cc765687bf"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#cd49595b1352c8fdbf87848f8bc837d2f066aab5"
 dependencies = [
  "jsonrpsee 0.16.3",
  "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-api",
  "sp-blockchain",
@@ -17326,7 +17330,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol-runtime-api"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#82499f5832595e3355677351e6b615cc765687bf"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#cd49595b1352c8fdbf87848f8bc837d2f066aab5"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
