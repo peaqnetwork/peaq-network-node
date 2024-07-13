@@ -46,8 +46,8 @@ futures = { version = "0.3.21" }
 evm = { git = "https://github.com/peaqnetwork/evm", branch = "peaq-polkadot-v1.7.2", default-features = false }
 evm-gasometer = { git = "https://github.com/peaqnetwork/evm", branch = "peaq-polkadot-v1.7.2", default-features = false }
 evm-runtime = { git = "https://github.com/peaqnetwork/evm", branch = "peaq-polkadot-v1.7.2", default-features = false }
-ethereum = { version = "0.14.0", default-features = false, features = [ "with-codec" ] }
-ethereum-types = { version = "0.14.1", default-features = false }
+ethereum = { version = "0.15.0", default-features = false, features = [ "with-codec" ] }
+ethereum-types = { version = "0.14", default-features = false }
 flume = "0.10"
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.3.4", default-features = false }
@@ -104,6 +104,7 @@ cumulus-primitives-timestamp = { git = "https://github.com/peaqnetwork/polkadot-
 cumulus-primitives-aura = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 cumulus-test-relay-sproof-builder = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 parachain-info = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", package = "staging-parachain-info", default-features = false }
+parachains-common = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 
 # Frontier
 fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
@@ -143,6 +144,8 @@ xcm = { package = "staging-xcm", git = "https://github.com/peaqnetwork/polkadot-
 xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 pallet-xcm = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+pallet-message-queue = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+
 polkadot-service = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
 polkadot-cli = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
 

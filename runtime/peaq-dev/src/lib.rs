@@ -32,9 +32,12 @@ use peaq_pallet_rbac::{
 		Role2User as RbacRole2User, User2Group as RbacUser2Group,
 	},
 };
+use sp_runtime::traits::IdentityLookup;
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use cumulus_primitives_core::AggregateMessageOrigin;
 
+use frame_support::traits::tokens::{UnityAssetBalanceConversion, PayFromAccount};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -343,6 +346,8 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+
+	type RuntimeTask = RuntimeTask;
 }
 
 impl pallet_aura::Config for Runtime {
@@ -414,6 +419,7 @@ impl pallet_contracts::Config for Runtime {
 	);
 	type Debug = ();
 	type Environment = ();
+	type Xcm = ();
 }
 
 parameter_types! {
@@ -453,9 +459,9 @@ impl pallet_balances::Config for Runtime {
 	type AccountStore = System;
 	type WeightInfo = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 parameter_types! {
@@ -614,6 +620,16 @@ impl pallet_treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 	type SpendOrigin = EnsureRootWithSuccess<AccountId, MaxBalance>; //EnsureWithSuccess<EnsureRoot<AccountId>, AccountId, MaxBalance>;
 	type RuntimeEvent = RuntimeEvent;
+
+	type AssetKind = ();
+	type Beneficiary = AccountId;
+	type BeneficiaryLookup = IdentityLookup<AccountId>;
+	type Paymaster = PayFromAccount<Balances, PeaqTreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	type PayoutPeriod = ConstU32<{ 30 * DAYS }>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
+
 }
 
 // Pallet EVM
@@ -697,6 +713,7 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type SuicideQuickClearLimit = ConstU32<0>;
 }
 
 parameter_types! {
@@ -749,6 +766,7 @@ impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
+    pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -756,13 +774,14 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
-	type DmpMessageHandler = DmpQueue;
+	type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	#[cfg(feature = "parameterized-consensus-hook")]
 	type ConsensusHook = ConsensusHook;
 	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
+	type WeightInfo = ();
 }
 
 #[cfg(feature = "parameterized-consensus-hook")]
@@ -945,7 +964,7 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn depin_incentivization(reward: NegativeImbalance) {
 		let amount = reward.peek();
-		ToMachinePot::on_unbalanced(reward);
+// 		ToMachinePot::on_unbalanced(reward);
 //		PeaqMor::log_block_rewards(amount);
 	}
 }
@@ -1110,6 +1129,7 @@ construct_runtime!(
 		Assets: pallet_assets = 39,
 		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
 		AddressUnification: address_unification::{Pallet, Call, Storage, Event<T>} = 41,
+		MessageQueue: pallet_message_queue::{Pallet, Call, Storage, Event<T>} = 42,
 
 		Vesting: pallet_vesting = 50,
 
@@ -2128,6 +2148,7 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+	type BlockNumberProvider = System;
 }
 
 parameter_types! {

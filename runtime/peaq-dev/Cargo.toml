@@ -1,6 +1,6 @@
 [package]
 name = "peaq-dev-runtime"
-version = "3.1.0-polkadot-v1.1.0"
+version = "3.1.0-polkadot-v1.7.2"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -81,6 +81,7 @@ cumulus-primitives-aura = { workspace = true, default-features = false }
 cumulus-pallet-parachain-system = { workspace = true, default-features = false, features = ["parameterized-consensus-hook"] }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
+parachains-common = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
 polkadot-primitives = { workspace = true, default-features = false }
 polkadot-runtime-common = { workspace = true, default-features = false }
@@ -90,6 +91,7 @@ xcm = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 pallet-xcm = { workspace = true, default-features = false }
+pallet-message-queue = { workspace = true, default-features = false }
 cumulus-pallet-xcm = { workspace = true, default-features = false }
 cumulus-pallet-xcmp-queue = { workspace = true, default-features = false }
 cumulus-pallet-dmp-queue = { workspace = true, default-features = false }
@@ -250,6 +252,7 @@ std = [
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
 	"parachain-info/std",
+	"parachains-common/std",
 
     "polkadot-parachain/std",
     "polkadot-primitives/std",
@@ -293,6 +296,7 @@ std = [
 	"pallet-evm-precompile-parachain-staking/std",
 	"pallet-xcm/std",
 	"inflation-manager/std",
+	"pallet-message-queue/std",
 
 	# try-runtime
 	"frame-try-runtime/std",

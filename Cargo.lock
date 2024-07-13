@@ -936,7 +936,7 @@ name = "binary-merkle-tree"
 version = "13.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
 dependencies = [
- "hash-db 0.16.0",
+ "hash-db",
  "log",
 ]
 
@@ -3129,31 +3129,13 @@ dependencies = [
 
 [[package]]
 name = "ethereum"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a89fb87a9e103f71b903b80b670200b54cc67a07578f070681f1fffb7396fb7"
-dependencies = [
- "bytes",
- "ethereum-types",
- "hash-db 0.15.2",
- "hash256-std-hasher",
- "parity-scale-codec",
- "rlp",
- "scale-info",
- "serde",
- "sha3",
- "triehash",
-]
-
-[[package]]
-name = "ethereum"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e04d24d20b8ff2235cffbf242d5092de3aa45f77c5270ddbfadd2778ca13fea"
 dependencies = [
  "bytes",
  "ethereum-types",
- "hash-db 0.16.0",
+ "hash-db",
  "hash256-std-hasher",
  "parity-scale-codec",
  "rlp",
@@ -3245,7 +3227,7 @@ source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-v1.7.2#3a8
 dependencies = [
  "auto_impl",
  "environmental",
- "ethereum 0.15.0",
+ "ethereum",
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
@@ -3297,7 +3279,7 @@ name = "evm-tracing-events"
 version = "0.1.0"
 dependencies = [
  "environmental",
- "ethereum 0.14.0",
+ "ethereum",
  "ethereum-types",
  "evm",
  "evm-gasometer",
@@ -3473,7 +3455,7 @@ name = "fc-rpc"
 version = "2.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
- "ethereum 0.15.0",
+ "ethereum",
  "ethereum-types",
  "evm",
  "fc-api",
@@ -3528,7 +3510,7 @@ name = "fc-rpc-core"
 version = "1.1.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
- "ethereum 0.15.0",
+ "ethereum",
  "ethereum-types",
  "jsonrpsee 0.20.3",
  "rlp",
@@ -3543,7 +3525,7 @@ name = "fc-storage"
 version = "1.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
- "ethereum 0.15.0",
+ "ethereum",
  "ethereum-types",
  "fp-rpc",
  "fp-storage",
@@ -3731,7 +3713,7 @@ name = "fp-consensus"
 version = "2.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
- "ethereum 0.15.0",
+ "ethereum",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -3753,7 +3735,7 @@ name = "fp-ethereum"
 version = "1.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
- "ethereum 0.15.0",
+ "ethereum",
  "ethereum-types",
  "fp-evm",
  "frame-support",
@@ -3782,7 +3764,7 @@ name = "fp-rpc"
 version = "3.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
- "ethereum 0.15.0",
+ "ethereum",
  "ethereum-types",
  "fp-evm",
  "parity-scale-codec",
@@ -4451,12 +4433,6 @@ dependencies = [
  "serde_json",
  "thiserror",
 ]
-
-[[package]]
-name = "hash-db"
-version = "0.15.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d23bd4e7b5eda0d0f3a307e8b381fdc8ba9000f26fbe912250c0a4cc3956364a"
 
 [[package]]
 name = "hash-db"
@@ -6245,7 +6221,7 @@ version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "808b50db46293432a45e63bc15ea51e0ab4c0a1647b8eb114e31a3e698dd6fbe"
 dependencies = [
- "hash-db 0.16.0",
+ "hash-db",
 ]
 
 [[package]]
@@ -7112,6 +7088,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-asset-tx-payment"
+version = "28.0.0"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
+]
+
+[[package]]
 name = "pallet-assets"
 version = "29.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
@@ -7371,6 +7365,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collator-selection"
+version = "9.0.0"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
+]
+
+[[package]]
 name = "pallet-collective"
 version = "28.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
@@ -7554,7 +7567,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
 dependencies = [
  "environmental",
- "ethereum 0.15.0",
+ "ethereum",
  "ethereum-types",
  "evm",
  "fp-consensus",
@@ -7584,7 +7597,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hash-db 0.16.0",
+ "hash-db",
  "hex",
  "hex-literal 0.4.1",
  "impl-trait-for-tuples",
@@ -8674,6 +8687,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "parachains-common"
+version = "7.0.0"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
+dependencies = [
+ "cumulus-primitives-core",
+ "cumulus-primitives-utility",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-asset-tx-payment",
+ "pallet-assets",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-collator-selection",
+ "pallet-message-queue",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "scale-info",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
+ "staging-parachain-info",
+ "staging-xcm",
+ "staging-xcm-executor",
+ "substrate-wasm-builder",
+]
+
+[[package]]
 name = "parity-db"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8832,7 +8876,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-dev-runtime"
-version = "3.1.0-polkadot-v1.1.0"
+version = "3.1.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -8844,7 +8888,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
- "ethereum 0.14.0",
+ "ethereum",
  "evm-tracing-events",
  "fp-evm",
  "fp-rpc",
@@ -8890,6 +8934,7 @@ dependencies = [
  "pallet-evm-precompile-xcm-utils",
  "pallet-evm-precompile-xtokens",
  "pallet-insecure-randomness-collective-flip",
+ "pallet-message-queue",
  "pallet-multisig",
  "pallet-session",
  "pallet-sudo",
@@ -8901,6 +8946,7 @@ dependencies = [
  "pallet-vesting",
  "pallet-xcm",
  "parachain-staking",
+ "parachains-common",
  "parity-scale-codec",
  "peaq-evm-tracer",
  "peaq-pallet-did",
@@ -8979,7 +9025,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
- "ethereum 0.14.0",
+ "ethereum",
  "evm-tracing-events",
  "fp-evm",
  "fp-rpc",
@@ -9435,7 +9481,7 @@ dependencies = [
 name = "peaq-rpc-core-txpool"
 version = "0.6.0"
 dependencies = [
- "ethereum 0.14.0",
+ "ethereum",
  "ethereum-types",
  "fc-rpc-core",
  "jsonrpsee 0.16.3",
@@ -9456,7 +9502,7 @@ dependencies = [
 name = "peaq-rpc-debug"
 version = "0.1.0"
 dependencies = [
- "ethereum 0.14.0",
+ "ethereum",
  "ethereum-types",
  "fc-consensus",
  "fc-db",
@@ -9486,7 +9532,7 @@ name = "peaq-rpc-primitives-debug"
 version = "0.1.0"
 dependencies = [
  "environmental",
- "ethereum 0.14.0",
+ "ethereum",
  "ethereum-types",
  "hex",
  "parity-scale-codec",
@@ -9503,7 +9549,7 @@ dependencies = [
 name = "peaq-rpc-primitives-txpool"
 version = "0.6.0"
 dependencies = [
- "ethereum 0.14.0",
+ "ethereum",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
@@ -9516,7 +9562,7 @@ dependencies = [
 name = "peaq-rpc-trace"
 version = "0.6.0"
 dependencies = [
- "ethereum 0.14.0",
+ "ethereum",
  "ethereum-types",
  "fc-consensus",
  "fc-rpc",
@@ -9581,7 +9627,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
- "ethereum 0.14.0",
+ "ethereum",
  "evm-tracing-events",
  "fp-evm",
  "fp-rpc",
@@ -11968,7 +12014,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "3.1.0-polkadot-v1.1.0"
+version = "3.1.0-polkadot-v1.7.2"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
@@ -12384,7 +12430,7 @@ name = "sc-client-db"
 version = "0.35.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
 dependencies = [
- "hash-db 0.16.0",
+ "hash-db",
  "kvdb",
  "kvdb-memorydb",
  "kvdb-rocksdb",
@@ -14030,7 +14076,7 @@ name = "sp-api"
 version = "26.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
 dependencies = [
- "hash-db 0.16.0",
+ "hash-db",
  "log",
  "parity-scale-codec",
  "scale-info",
@@ -14263,7 +14309,7 @@ dependencies = [
  "dyn-clonable",
  "ed25519-zebra 3.1.0",
  "futures 0.3.30",
- "hash-db 0.16.0",
+ "hash-db",
  "hash256-std-hasher",
  "impl-serde",
  "itertools 0.10.5",
@@ -14682,7 +14728,7 @@ name = "sp-state-machine"
 version = "0.35.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
 dependencies = [
- "hash-db 0.16.0",
+ "hash-db",
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -14824,7 +14870,7 @@ version = "29.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#cf2e9733f584878cb0987a99c56840165e778bde"
 dependencies = [
  "ahash 0.8.6",
- "hash-db 0.16.0",
+ "hash-db",
  "lazy_static",
  "memory-db",
  "nohash-hasher",
@@ -15954,7 +16000,7 @@ version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff28e0f815c2fea41ebddf148e008b077d2faddb026c9555b29696114d602642"
 dependencies = [
- "hash-db 0.16.0",
+ "hash-db",
  "hashbrown 0.13.2",
  "log",
  "rustc-hex",
@@ -15967,17 +16013,7 @@ version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4ed310ef5ab98f5fa467900ed906cb9232dd5376597e00fd4cba2a449d06c0b"
 dependencies = [
- "hash-db 0.16.0",
-]
-
-[[package]]
-name = "triehash"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1631b201eb031b563d2e85ca18ec8092508e262a3196ce9bd10a67ec87b9f5c"
-dependencies = [
- "hash-db 0.15.2",
- "rlp",
+ "hash-db",
 ]
 
 [[package]]
