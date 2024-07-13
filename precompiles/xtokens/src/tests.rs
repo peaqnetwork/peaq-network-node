@@ -16,18 +16,17 @@
 
 use crate::{
 	mock::{
-		events, CurrencyIdToMultiLocation, ExtBuilder, PCall, Precompiles, PrecompilesValue,
+		events, CurrencyIdToLocation, ExtBuilder, PCall, Precompiles, PrecompilesValue,
 		Runtime,
 	},
-	Currency, EvmMultiAsset,
+	Currency, EvmAsset,
 };
 use orml_xtokens::Event as XtokensEvent;
 use precompile_utils::{prelude::*, testing::*};
 use sp_core::U256;
 use sp_runtime::traits::Convert;
-use xcm::latest::{
-	AssetId, Fungibility, Junction, Junctions, MultiAsset, MultiAssets, MultiLocation,
-};
+use xcm::latest::{Asset, AssetId, Assets, Fungibility, Junction, Location};
+
 
 fn precompiles() -> Precompiles<Runtime> {
 	PrecompilesValue::get()
@@ -91,9 +90,12 @@ fn transfer_self_reserve_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
 			precompiles()
@@ -103,7 +105,7 @@ fn transfer_self_reserve_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(0u128.into()).into()),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -111,11 +113,11 @@ fn transfer_self_reserve_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(0).unwrap()),
+			let expected_asset: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(0).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -133,9 +135,12 @@ fn transfer_to_reserve_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 			// We are transferring asset 1, which we have instructed to be the relay asset
 			precompiles()
@@ -145,7 +150,7 @@ fn transfer_to_reserve_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -153,11 +158,11 @@ fn transfer_to_reserve_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_asset: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -175,9 +180,12 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 			// We are transferring asset 1, which we have instructed to be the relay asset
 			precompiles()
@@ -187,7 +195,7 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: u64::MAX,
 					},
 				)
@@ -195,11 +203,11 @@ fn transfer_to_reserve_with_unlimited_weight_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_asset: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -216,9 +224,12 @@ fn transfer_to_reserve_with_fee_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 			// We are transferring asset 1, which we have instructed to be the relay asset
 			// Fees are not trully charged, so no worries
@@ -230,7 +241,7 @@ fn transfer_to_reserve_with_fee_works() {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						fee: 50.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -238,15 +249,15 @@ fn transfer_to_reserve_with_fee_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_asset: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected_fee: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_fee: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(50),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
@@ -264,9 +275,12 @@ fn transfer_non_reserve_to_non_reserve_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
 			// We are transferring asset 1, which corresponds to another parachain Id asset
@@ -277,7 +291,7 @@ fn transfer_non_reserve_to_non_reserve_works() {
 					PCall::transfer {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -285,11 +299,11 @@ fn transfer_non_reserve_to_non_reserve_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_asset: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -306,9 +320,12 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
 			// We are transferring asset 1, which corresponds to another parachain Id asset
@@ -320,7 +337,7 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 						currency_address: Address(MockPeaqAccount::AssetId(1u128.into()).into()),
 						amount: 500.into(),
 						fee: 50.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -328,15 +345,15 @@ fn transfer_non_reserve_to_non_reserve_with_fee_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_asset: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected_fee: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(1u128).unwrap()),
+			let expected_fee: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(1u128).unwrap()),
 				fun: Fungibility::Fungible(50),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
@@ -353,21 +370,24 @@ fn transfer_multi_asset_to_reserve_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
-			let asset = MultiLocation::parent();
+			let asset = Location::parent();
 
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset {
-						asset,
+						asset: asset.clone(),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -375,9 +395,9 @@ fn transfer_multi_asset_to_reserve_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset =
-				MultiAsset { id: AssetId::Concrete(asset), fun: Fungibility::Fungible(500) };
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected_asset: Asset =
+				Asset { id: AssetId(asset), fun: Fungibility::Fungible(500) };
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -395,9 +415,12 @@ fn transfer_multi_asset_self_reserve_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
 			let self_reserve = crate::mock::SelfReserve::get();
@@ -407,9 +430,9 @@ fn transfer_multi_asset_self_reserve_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset {
-						asset: self_reserve,
+						asset: self_reserve.clone(),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -417,9 +440,9 @@ fn transfer_multi_asset_self_reserve_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset =
-				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(500) };
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected_asset: Asset =
+				Asset { id: AssetId(self_reserve), fun: Fungibility::Fungible(500) };
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -436,9 +459,12 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
 			let self_reserve = crate::mock::SelfReserve::get();
@@ -448,10 +474,10 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset_with_fee {
-						asset: self_reserve,
+						asset: self_reserve.clone(),
 						amount: 500.into(),
 						fee: 50.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -459,11 +485,11 @@ fn transfer_multi_asset_self_reserve_with_fee_works() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset =
-				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(500) };
-			let expected_fee: MultiAsset =
-				MultiAsset { id: AssetId::Concrete(self_reserve), fun: Fungibility::Fungible(50) };
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected_asset: Asset =
+				Asset { id: AssetId(self_reserve.clone()), fun: Fungibility::Fungible(500) };
+			let expected_fee: Asset =
+				Asset { id: AssetId(self_reserve), fun: Fungibility::Fungible(50) };
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
@@ -480,24 +506,25 @@ fn transfer_multi_asset_non_reserve_to_non_reserve() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
-			let asset_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(5u128)),
-			);
+			let asset_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(5u128)]);
 
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset {
-						asset: asset_location,
+						asset: asset_location.clone(),
 						amount: 500.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -505,11 +532,11 @@ fn transfer_multi_asset_non_reserve_to_non_reserve() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(asset_location),
+			let expected_asset: Asset = Asset {
+				id: AssetId(asset_location),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone()].into(),
 				fee: expected_asset,
@@ -526,25 +553,26 @@ fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 
-			let asset_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(5u128)),
-			);
+			let asset_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(5u128)]);
 
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::EVMu1Account,
 					PCall::transfer_multiasset_with_fee {
-						asset: asset_location,
+						asset: asset_location.clone(),
 						amount: 500.into(),
 						fee: 50.into(),
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -552,15 +580,15 @@ fn transfer_multi_asset_non_reserve_to_non_reserve_with_fee() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(asset_location),
+			let expected_asset: Asset = Asset {
+				id: AssetId(asset_location.clone()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected_fee: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(asset_location),
+			let expected_fee: Asset = Asset {
+				id: AssetId(asset_location),
 				fun: Fungibility::Fungible(50),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset.clone(), expected_fee.clone()].into(),
 				fee: expected_fee,
@@ -578,9 +606,12 @@ fn transfer_multi_currencies() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 			let currencies: Vec<Currency> = vec![
 				(Address(MockPeaqAccount::AssetId(2u128.into()).into()), U256::from(500)).into(),
@@ -595,7 +626,7 @@ fn transfer_multi_currencies() {
 					PCall::transfer_multi_currencies {
 						currencies: currencies.into(),
 						fee_item: 0,
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -603,15 +634,15 @@ fn transfer_multi_currencies() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected_asset_1: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(2u128).unwrap()),
+			let expected_asset_1: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(2u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected_asset_2: MultiAsset = MultiAsset {
-				id: AssetId::Concrete(CurrencyIdToMultiLocation::convert(3u128).unwrap()),
+			let expected_asset_2: Asset = Asset {
+				id: AssetId(CurrencyIdToLocation::convert(3u128).unwrap()),
 				fun: Fungibility::Fungible(500),
 			};
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: vec![expected_asset_1.clone(), expected_asset_2].into(),
 				fee: expected_asset_1,
@@ -629,31 +660,27 @@ fn transfer_multi_assets() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X2(
+				[
 					Junction::Parachain(2),
 					Junction::AccountId32 { network: None, id: [1u8; 32] },
-				),
+				],
 			);
 
-			let asset_1_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(0u128)),
-			);
-			let asset_2_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(1u128)),
-			);
+			let asset_1_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(0u128)]);
+			let asset_2_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(1u128)]);
 
-			let assets: Vec<EvmMultiAsset> = vec![
-				(asset_1_location, U256::from(500)).into(),
-				(asset_2_location, U256::from(500)).into(),
+			let assets: Vec<EvmAsset> = vec![
+				(asset_1_location.clone(), U256::from(500)).into(),
+				(asset_2_location.clone(), U256::from(500)).into(),
 			];
 
-			let multiassets = MultiAssets::from_sorted_and_deduplicated(vec![
-				(asset_1_location, 500).into(),
-				(asset_2_location, 500).into(),
+			let multiassets = Assets::from_sorted_and_deduplicated(vec![
+				(asset_1_location.clone(), 500).into(),
+				(asset_2_location.clone(), 500).into(),
 			])
 			.unwrap();
 
@@ -665,7 +692,7 @@ fn transfer_multi_assets() {
 					PCall::transfer_multi_assets {
 						assets: assets.into(),
 						fee_item: 0,
-						destination,
+						destination: destination.clone(),
 						weight: 4_000_000,
 					},
 				)
@@ -673,7 +700,7 @@ fn transfer_multi_assets() {
 				.expect_no_logs()
 				.execute_returns(());
 
-			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredMultiAssets {
+			let expected: crate::mock::RuntimeEvent = XtokensEvent::TransferredAssets {
 				sender: MockPeaqAccount::Alice,
 				assets: multiassets,
 				fee: (asset_1_location, 500).into(),
@@ -693,9 +720,12 @@ fn transfer_multi_currencies_cannot_insert_more_than_max() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X1(Junction::AccountId32 { network: None, id: [1u8; 32] }),
+				[Junction::AccountId32 {
+					network: None,
+					id: [1u8; 32],
+				}],
 			);
 			let currencies: Vec<Currency> = vec![
 				(Address(MockPeaqAccount::AssetId(1u128.into()).into()), U256::from(500)).into(),
@@ -725,29 +755,26 @@ fn transfer_multi_assets_cannot_insert_more_than_max() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X2(
+				[
 					Junction::Parachain(2),
-					Junction::AccountId32 { network: None, id: [1u8; 32] },
-				),
+					Junction::AccountId32 {
+						network: None,
+						id: [1u8; 32],
+					},
+				],
 			);
 
-			let asset_1_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(0u128)),
-			);
-			let asset_2_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(1u128)),
-			);
 
-			let asset_3_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(2u128)),
-			);
+			let asset_1_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(0u128)]);
+			let asset_2_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(1u128)]);
+			let asset_3_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(2u128)]);
 
-			let assets: Vec<EvmMultiAsset> = vec![
+			let assets: Vec<EvmAsset> = vec![
 				(asset_1_location, U256::from(500)).into(),
 				(asset_2_location, U256::from(500)).into(),
 				(asset_3_location, U256::from(500)).into(),
@@ -775,25 +802,21 @@ fn transfer_multi_assets_is_not_sorted_error() {
 		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
-			let destination = MultiLocation::new(
+			let destination = Location::new(
 				1,
-				Junctions::X2(
+				[
 					Junction::Parachain(2),
 					Junction::AccountId32 { network: None, id: [1u8; 32] },
-				),
+				]
 			);
 
 			// Disordered vec creation
-			let asset_1_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(1u128)),
-			);
-			let asset_2_location = MultiLocation::new(
-				1,
-				Junctions::X2(Junction::Parachain(2), Junction::GeneralIndex(0u128)),
-			);
+			let asset_1_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(1u128)]);
+			let asset_2_location =
+				Location::new(1, [Junction::Parachain(2), Junction::GeneralIndex(0u128)]);
 
-			let assets: Vec<EvmMultiAsset> = vec![
+			let assets: Vec<EvmAsset> = vec![
 				(asset_1_location, U256::from(500)).into(),
 				(asset_2_location, U256::from(500)).into(),
 			];

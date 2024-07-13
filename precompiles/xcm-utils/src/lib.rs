@@ -33,7 +33,7 @@ use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 use xcm_executor::traits::{WeightBounds, WeightTrader};
 
-pub type SystemCallOf<Runtime> = <Runtime as frame_system::Config>::RuntimeCall;
+pub type CallOf<Runtime> = <Runtime as pallet_xcm::Config>::RuntimeCall;
 pub const XCM_SIZE_LIMIT: u32 = 2u32.pow(16);
 type GetXcmSizeLimit = ConstU32<XCM_SIZE_LIMIT>;
 
@@ -49,7 +49,8 @@ impl<Runtime, XcmConfig> SelectorFilter for AllExceptXcmExecute<Runtime, XcmConf
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
 	XcmConfig: xcm_executor::Config,
-	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
+	<Runtime as frame_system::Config>::RuntimeCall:
+		Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
@@ -77,7 +78,8 @@ impl<Runtime, XcmConfig> XcmUtilsPrecompile<Runtime, XcmConfig>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
 	XcmConfig: xcm_executor::Config,
-	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
+	<Runtime as frame_system::Config>::RuntimeCall:
+		Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
@@ -89,21 +91,21 @@ where
 	#[precompile::view]
 	fn get_units_per_second(
 		handle: &mut impl PrecompileHandle,
-		multilocation: MultiLocation,
+		location: Location,
 	) -> EvmResult<U256> {
 		// storage item: AssetTypeUnitsPerSecond
 		// max encoded len: hash (16) + Multilocation + u128 (16)
-		handle.record_db_read::<Runtime>(32 + MultiLocation::max_encoded_len())?;
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
 		// We will construct an asset with the max amount, and check how much we
 		// get in return to substract
-		let multiasset: xcm::latest::MultiAsset = (multilocation, u128::MAX).into();
+		let multiasset: xcm::latest::Asset = (location.clone(), u128::MAX).into();
 		let weight_per_second = 1_000_000_000_000u64;
 
 		let mut trader = <XcmConfig as xcm_executor::Config>::Trader::new();
 
 		let ctx =
-			XcmContext { origin: Some(multilocation), message_id: XcmHash::default(), topic: None };
+			XcmContext { origin: Some(location), message_id: XcmHash::default(), topic: None };
 
 		// buy_weight returns unused assets
 		let unused = trader
@@ -166,7 +168,7 @@ where
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		let message: Vec<_> = message.to_vec();
-		let xcm = xcm::VersionedXcm::<SystemCallOf<Runtime>>::decode_all_with_depth_limit(
+		let xcm = xcm::VersionedXcm::<CallOf<Runtime>>::decode_all_with_depth_limit(
 			xcm::MAX_XCM_DECODE_DEPTH,
 			&mut message.as_slice(),
 		)
@@ -186,7 +188,7 @@ where
 	#[precompile::public("xcm_send((uint8,bytes[]),bytes)")]
 	fn xcm_send(
 		handle: &mut impl PrecompileHandle,
-		dest: MultiLocation,
+		dest: Location,
 		message: BoundedBytes<GetXcmSizeLimit>,
 	) -> EvmResult {
 		let message: Vec<u8> = message.into();

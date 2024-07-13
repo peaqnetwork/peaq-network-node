@@ -36,6 +36,7 @@ xcm = { workspace = true, default-features = false }
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
+once_cell = { workspace = true }
 
 # Peaq
 precompile-utils = { path = "../utils", features = [ "testing" ] }

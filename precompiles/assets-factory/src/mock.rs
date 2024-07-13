@@ -101,6 +101,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -130,9 +131,10 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = ();
 }
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
@@ -180,6 +182,7 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type SuicideQuickClearLimit = ();
 }
 
 // These parameters dont matter much as this will only be called by root with the forced arguments

@@ -7882,6 +7882,7 @@ dependencies = [
  "frame-system",
  "log",
  "num_enum 0.5.11",
+ "once_cell",
  "orml-traits",
  "orml-xtokens",
  "pallet-assets",
