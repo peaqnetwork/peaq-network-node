@@ -17,7 +17,9 @@
 // along with Astar. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_xc_asset_config};
-use xcm::latest::prelude::{Junction::GeneralKey, MultiLocation, X1};
+use xcm::latest::prelude::{Junction::GeneralKey};
+use xcm::{v4::Location};
+
 
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
 use sp_core::H256;
@@ -72,6 +74,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -91,17 +94,18 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = ();
 }
 
 type AssetId = u128;
 
 parameter_types! {
 	pub const GetNativeAssetId: AssetId = 0;
-	pub SelfReserveLocation: MultiLocation =
-		MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }));
+	pub SelfReserveLocation: Location =
+		Location::new(0, [GeneralKey { data: [0; 32], length: 2 }]);
 }
 
 impl pallet_xc_asset_config::Config for Test {
