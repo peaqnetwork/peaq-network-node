@@ -34,11 +34,27 @@ use zenlink_protocol::AssetId as ZenlinkAssetId;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
 
+pub struct PeaqEthConfig<C, BE>(std::marker::PhantomData<(C, BE)>);
+
+impl<C, BE> fc_rpc::EthConfig<Block, C> for PeaqEthConfig<C, BE>
+where
+    C: sc_client_api::StorageProvider<Block, BE> + Sync + Send + 'static,
+    BE: Backend<Block> + 'static,
+{
+    // Use to override (adapt) evm call to precompiles for proper gas estimation.
+    // We are not aware of any of our precompile that require this.
+    type EstimateGasAdapter = ();
+    // This assumes the use of HashedMapping<BlakeTwo256> for address mapping
+    type RuntimeStorageOverride =
+        fc_rpc::frontier_backend_client::SystemAccountId32StorageOverride<Block, C, BE>;
+}
+
 pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<BE>,
 	pub frontier_backend: Arc<fc_db::Backend<B>>,
+	// pub frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
 	pub filter_pool: Option<FilterPool>,
 	pub overrides: Arc<OverrideHandle<B>>,
 	pub fee_history_limit: u64,
@@ -68,7 +84,7 @@ pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// The list of optional RPC extensions.
 	pub ethapi_cmd: Vec<EthApiCmd>,
 	/// Frontier Backend.
-	pub frontier_backend: Arc<dyn fc_db::BackendReader<Block> + Send + Sync>,
+	pub frontier_backend: Arc<dyn fc_api::Backend<Block>>,
 	/// Backend.
 	pub backend: Arc<BE>,
 	/// Manual seal command sink
@@ -114,13 +130,13 @@ where
 	C::Api: AuraApi<Block, AuraId>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>,
-	C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>,
+	// C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
-	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
+	// C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -132,13 +148,13 @@ where
 	};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
-	use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
+	// use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
 	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
-	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
+	// use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 
 	let mut io = RpcModule::new(());
 	let FullDeps {
@@ -212,7 +228,7 @@ where
 		Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
 
 	io.merge(
-		Eth::new(
+		Eth::<_, _, _, _, _, _, _, PeaqEthConfig<_, _>>::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
 			graph.clone(),
@@ -230,6 +246,7 @@ where
 			pending_create_inherent_data_providers,
 			Some(pending_consensus_data_provider),
 		)
+		.replace_config::<PeaqEthConfig<C, BE>>()
 		.into_rpc(),
 	)?;
 
@@ -265,8 +282,8 @@ where
 
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
-	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
-	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
+	// io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
+	// io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(

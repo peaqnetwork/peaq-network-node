@@ -88,6 +88,8 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 			relay_chain: "polkadot-local".into(),
 			para_id,
 		},
+		// code
+		wasm_binary,
 	))
 }
 
@@ -107,11 +109,7 @@ fn configure_genesis(
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
 	RuntimeGenesisConfig {
-		system: SystemConfig {
-			// Add Wasm runtime to storage.
-			code: wasm_binary.to_vec(),
-			..Default::default()
-		},
+		system: Default::default(),
 		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.

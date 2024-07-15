@@ -113,7 +113,7 @@ pub enum Subcommand {
 
 	/// Export the genesis state of the parachain.
 	#[clap(name = "export-genesis-state")]
-	ExportGenesisState(ExportGenesisStateCommand),
+	ExportGenesisHead(ExportGenesisHeadCommand),
 
 	/// Export the genesis wasm of the parachain.
 	#[clap(name = "export-genesis-wasm")]
@@ -136,7 +136,7 @@ pub enum Subcommand {
 
 /// Command for exporting the genesis state of the parachain
 #[derive(Debug, clap::Parser)]
-pub struct ExportGenesisStateCommand {
+pub struct ExportGenesisHeadCommand {
 	/// Output file name or stdout if unspecified.
 	#[clap(value_parser)]
 	pub output: Option<PathBuf>,

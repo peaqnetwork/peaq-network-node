@@ -72,6 +72,7 @@ fc-db = { workspace = true, default-features = true }
 fc-mapping-sync = { workspace = true, default-features = true }
 fc-rpc = { workspace = true, default-features = true }
 fc-rpc-core = { workspace = true, default-features = true }
+fc-api = { workspace = true, default-features = true }
 fp-consensus = { workspace = true, default-features = true }
 fp-storage = { workspace = true, default-features = true }
 fp-rpc = { workspace = true, default-features = true }

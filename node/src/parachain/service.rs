@@ -12,6 +12,11 @@ use cumulus_primitives_core::{
 	ParaId,
 };
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_api::{ProvideRuntimeApi};
+use sc_client_api::{
+    AuxStore, Backend, StateBackend, StorageProvider, UsageProvider,
+};
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
@@ -83,32 +88,60 @@ pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::P
 	config.base_path.config_dir(config.chain_spec.id()).join("frontier").join(path)
 }
 
-pub fn open_frontier_backend<C: sp_blockchain::HeaderBackend<Block>>(
+// TODO This is copied from frontier. It should be imported instead after
+// https://github.com/paritytech/frontier/issues/333 is solved
+pub fn open_frontier_backend<C, BE>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<Arc<fc_db::Backend<Block>>, String> {
-	Ok(Arc::new(fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
-		client,
-		&fc_db::kv::DatabaseSettings {
-			source: match config.database {
-				DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
-					path: frontier_database_dir(config, "db"),
-					cache_size: 0,
+) -> Result<fc_db::Backend<Block>, String>
+where
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: Send + Sync + 'static,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	BE: Backend<Block> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+{
+	// let frontier_backend = match rpc_config.frontier_backend_config {
+	//	FrontierBackendConfig::KeyValue => {
+			let frontier_backend = fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
+				client,
+				&fc_db::kv::DatabaseSettings {
+					source: match config.database {
+						DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
+							path: frontier_database_dir(config, "db"),
+							cache_size: 0,
+						},
+						DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
+							path: frontier_database_dir(config, "paritydb"),
+						},
+						DatabaseSource::Auto { .. } => DatabaseSource::Auto {
+							rocksdb_path: frontier_database_dir(config, "db"),
+							paritydb_path: frontier_database_dir(config, "paritydb"),
+							cache_size: 0,
+						},
+						_ => {
+							return Err(
+								"Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()
+							)
+						}
+					},
 				},
-				DatabaseSource::ParityDb { .. } => {
-					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") }
-				},
-				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
-					rocksdb_path: frontier_database_dir(config, "db"),
-					paritydb_path: frontier_database_dir(config, "paritydb"),
-					cache_size: 0,
-				},
-				_ => {
-					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
-				},
-			},
-		},
-	)?)))
+			)?);
+		// }
+		// FrontierBackendConfig::Sql {
+		// 	pool_size,
+		// 	num_ops_timeout,
+		// 	thread_count,
+		// 	cache_size,
+		// } => {
+		// 	return Err(
+		// 		"Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()
+		// 	)
+		// }
+	// };
+
+	Ok(frontier_backend)
 }
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -157,7 +190,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>,
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: sc_client_api::backend::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
@@ -246,7 +279,7 @@ where
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
-			frontier_backend,
+			Arc::new(frontier_backend),
 			fee_history_cache,
 		),
 	};
@@ -314,7 +347,7 @@ where
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: sc_client_api::backend::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, Executor>>,
@@ -464,6 +497,7 @@ where
 		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 			crate::rpc::tracing::spawn_tracing_tasks(
 				&rpc_config,
+				prometheus_registry.clone(),
 				crate::rpc::SpawnTasksParams {
 					task_manager: &task_manager,
 					client: client.clone(),
@@ -637,7 +671,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: sc_client_api::backend::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	let client2 = client.clone();
@@ -817,6 +851,7 @@ where
 				// We got around 500ms for proposing
 				authoring_duration: Duration::from_millis(500),
 				// collation_request_receiver: None,
+				reinitialize: false,
 			});
 
 			task_manager.spawn_essential_handle().spawn("aura", None, fut);

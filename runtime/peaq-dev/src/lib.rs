@@ -429,10 +429,10 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = Moment;
-    #[cfg(feature = "experimental")]
-    type MinimumPeriod = ConstU64<0>;
-    #[cfg(not(feature = "experimental"))]
-    type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
+	#[cfg(feature = "experimental")]
+	type MinimumPeriod = ConstU64<0>;
+	#[cfg(not(feature = "experimental"))]
+	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
 	type OnTimestampSet = BlockReward;
 }
@@ -679,7 +679,7 @@ parameter_types! {
 	/// The amount of gas per pov. A ratio of 4 if we convert ref_time to gas and we compare
 	/// it with the pov_size for a block. E.g.
 	/// ceil(
-	///     (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
+	///	 (max_extrinsic.ref_time() / max_extrinsic.proof_size()) / WEIGHT_PER_GAS
 	/// )
 	pub const GasLimitPovSizeRatio: u64 = 4;
 	/// In moonbeam, they setup as 366 and follow below formula:
@@ -765,7 +765,7 @@ impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
-    pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
+	pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -1415,10 +1415,9 @@ impl_runtime_apis! {
 
 	impl peaq_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
-			#[allow(unused_variables)]
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			#[allow(unused_variables)]
-			traced_transaction: &EthereumTransaction,
+			traced_transaction: &pallet_ethereum::Transaction,
+			header: &<Block as BlockT>::Header,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
@@ -1426,11 +1425,16 @@ impl_runtime_apis! {
 			#[cfg(feature = "evm-tracing")]
 			{
 				use peaq_evm_tracer::tracer::EvmTracer;
+
+				// We need to follow the order when replaying the transactions.
+				// Block initialize happens first then apply_extrinsic.
+				Executive::initialize_block(header);
+
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in extrinsics.into_iter() {
 					let _ = match &ext.0.function {
-						RuntimeCall::Ethereum(transact { transaction }) => {
+						RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => {
 							if transaction == traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
@@ -1441,7 +1445,6 @@ impl_runtime_apis! {
 						_ => Executive::apply_extrinsic(ext),
 					};
 				}
-
 				Err(sp_runtime::DispatchError::Other(
 					"Failed to find Ethereum transaction among the extrinsics.",
 				))
@@ -1452,41 +1455,41 @@ impl_runtime_apis! {
 			))
 		}
 
-		fn trace_block(
-			#[allow(unused_variables)]
-			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			#[allow(unused_variables)]
-			known_transactions: Vec<H256>,
-		) -> Result<
-			(),
-			sp_runtime::DispatchError,
-		> {
+        fn trace_block(
+            extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+            known_transactions: Vec<H256>,
+            header: &<Block as BlockT>::Header,
+        ) -> Result<
+            (),
+            sp_runtime::DispatchError,
+        > {
 			#[cfg(feature = "evm-tracing")]
 			{
-				use peaq_evm_tracer::tracer::EvmTracer;
+            	use peaq_evm_tracer::tracer::EvmTracer;
 
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
+            	// We need to follow the order when replaying the transactions.
+            	// Block initialize happens first then apply_extrinsic.
+            	Executive::initialize_block(header);
 
-				// Apply all extrinsics. Ethereum extrinsics are traced.
-				for ext in extrinsics.into_iter() {
-					match &ext.0.function {
-						RuntimeCall::Ethereum(transact { transaction }) => {
-							if known_transactions.contains(&transaction.hash()) {
-								// Each known extrinsic is a new call stack.
-								EvmTracer::emit_new();
-								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
-							} else {
-								let _ = Executive::apply_extrinsic(ext);
-							}
-						}
-						_ => {
-							let _ = Executive::apply_extrinsic(ext);
-						}
-					};
-				}
+            	// Apply all extrinsics. Ethereum extrinsics are traced.
+            	for ext in extrinsics.into_iter() {
+            	    match &ext.0.function {
+            	        RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => {
+            	            if known_transactions.contains(&transaction.hash()) {
+            	                // Each known extrinsic is a new call stack.
+            	                EvmTracer::emit_new();
+            	                EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+            	            } else {
+            	                let _ = Executive::apply_extrinsic(ext);
+            	            }
+            	        }
+            	        _ => {
+            	            let _ = Executive::apply_extrinsic(ext);
+            	        }
+            	    };
+            	}
 
-				Ok(())
+            	Ok(())
 			}
 			#[cfg(not(feature = "evm-tracing"))]
 			Err(sp_runtime::DispatchError::Other(
@@ -2109,22 +2112,22 @@ impl pallet_multisig::Config for Runtime {
  * struct CheckInherents;
  *
  * impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
- *     fn check_inherents(
- *         block: &Block,
- *         relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
- *     ) -> sp_inherents::CheckInherentsResult {
- *         let relay_chain_slot = relay_state_proof
- *             .read_slot()
- *             .expect("Could not read the relay chain slot from the proof");
- *         let inherent_data =
- *             cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
- *                 relay_chain_slot,
- *                 sp_std::time::Duration::from_secs(6),
- *             )
- *             .create_inherent_data()
- *             .expect("Could not create the timestamp inherent data");
- *         inherent_data.check_extrinsics(block)
- *     }
+ *	 fn check_inherents(
+ *		 block: &Block,
+ *		 relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
+ *	 ) -> sp_inherents::CheckInherentsResult {
+ *		 let relay_chain_slot = relay_state_proof
+ *			 .read_slot()
+ *			 .expect("Could not read the relay chain slot from the proof");
+ *		 let inherent_data =
+ *			 cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+ *				 relay_chain_slot,
+ *				 sp_std::time::Duration::from_secs(6),
+ *			 )
+ *			 .create_inherent_data()
+ *			 .expect("Could not create the timestamp inherent data");
+ *		 inherent_data.check_extrinsics(block)
+ *	 }
  * }
  */
 

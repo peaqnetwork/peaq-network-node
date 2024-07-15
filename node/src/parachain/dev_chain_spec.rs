@@ -2,7 +2,10 @@ use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, MorConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqMorConfig,
+	GenesisAccount, 
+	// MorConfig, 
+	ParachainInfoConfig, ParachainStakingConfig, 
+	// PeaqMorConfig,
 	PeaqPrecompiles, Runtime, RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig,
 	SudoConfig, SystemConfig, WASM_BINARY,
 };
@@ -95,6 +98,8 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		Some(properties),
 		// Extensions
 		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
+		// code
+		wasm_binary,
 	))
 }
 
@@ -118,11 +123,7 @@ fn configure_genesis(
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
 	RuntimeGenesisConfig {
-		system: SystemConfig {
-			// Add Wasm runtime to storage.
-			code: wasm_binary.to_vec(),
-			..Default::default()
-		},
+		system: Default::default(),
 		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
@@ -187,14 +188,14 @@ fn configure_genesis(
 		},
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
-		peaq_mor: PeaqMorConfig {
-			mor_config: MorConfig {
-				registration_reward: 10 * CENTS,
-				machine_usage_fee_min: MILLICENTS,
-				machine_usage_fee_max: 3 * DOLLARS,
-				track_n_block_rewards: 200,
-			},
-		},
+		// peaq_mor: PeaqMorConfig {
+		// 	mor_config: MorConfig {
+		// 		registration_reward: 10 * CENTS,
+		// 		machine_usage_fee_min: MILLICENTS,
+		// 		machine_usage_fee_max: 3 * DOLLARS,
+		// 		track_n_block_rewards: 200,
+		// 	},
+		// },
 		assets: Default::default(),
 	}
 }
