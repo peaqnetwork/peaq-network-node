@@ -11,6 +11,7 @@ use frame_support::{
 	weights::Weight,
 	PalletId,
 };
+use frame_support::traits::ConstU64;
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake};
 use sp_consensus_aura::sr25519::AuthorityId;
@@ -29,6 +30,7 @@ pub(crate) type Balance = u128;
 pub(crate) type AccountId = u64;
 pub(crate) type BlockNumber = u64;
 
+pub const SLOT_DURATION: u64 = 12_000;
 pub(crate) const MILLI_PEAQ: Balance = 10u128.pow(15);
 pub(crate) const BLOCKS_PER_ROUND: BlockNumber = 5;
 pub(crate) const DECIMALS: Balance = 1000 * MILLI_PEAQ;
@@ -107,6 +109,8 @@ impl pallet_aura::Config for Test {
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxCollatorCandidates;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
 impl pallet_authorship::Config for Test {
