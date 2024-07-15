@@ -434,7 +434,7 @@ impl pallet_timestamp::Config for Runtime {
 	#[cfg(not(feature = "experimental"))]
 	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
-	type OnTimestampSet = BlockReward;
+	type OnTimestampSet = (Aura, BlockReward);
 }
 
 parameter_types! {
