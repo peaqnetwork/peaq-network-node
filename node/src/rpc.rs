@@ -130,13 +130,13 @@ where
 	C::Api: AuraApi<Block, AuraId>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: peaq_pallet_did_rpc::PeaqDIDRuntimeApi<Block, AccountId, BlockNumber, Moment>,
-	// C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>,
+	C::Api: peaq_pallet_rbac_rpc::PeaqRBACRuntimeApi<Block, AccountId, RbacEntityId>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
-	// C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
+	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	P: TransactionPool<Block = Block> + 'static,
 	A: ChainApi<Block = Block> + 'static,
 
@@ -148,13 +148,13 @@ where
 	};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use peaq_pallet_did_rpc::{PeaqDID, PeaqDIDApiServer};
-	// use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
+	use peaq_pallet_rbac_rpc::{PeaqRBAC, PeaqRBACApiServer};
 	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
 	use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
-	// use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
+	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 
 	let mut io = RpcModule::new(());
 	let FullDeps {
@@ -282,8 +282,8 @@ where
 
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
-	// io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
-	// io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(
