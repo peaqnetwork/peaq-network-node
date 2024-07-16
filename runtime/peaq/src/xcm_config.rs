@@ -208,8 +208,7 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 >;
 
 pub type Trader = (
-	// [TODO] Just comment it out beacuse I want to test async backing
-	// UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
