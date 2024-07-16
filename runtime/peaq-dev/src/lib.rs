@@ -105,8 +105,8 @@ use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 pub use peaq_pallet_did;
-// use peaq_pallet_mor::mor::MorBalance;
-// pub use peaq_pallet_mor::{self, types::MorConfig};
+use peaq_pallet_mor::mor::MorBalance;
+pub use peaq_pallet_mor::{self, types::MorConfig};
 pub use peaq_pallet_rbac;
 pub use peaq_pallet_storage;
 pub use peaq_pallet_transaction;
@@ -798,7 +798,7 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 parameter_types! {
 	pub const AssetAdminId: PalletId = PalletId(*b"AssetAdm");
 	pub const PotStakeId: PalletId = PalletId(*b"PotStake");
-//	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
+	pub const PotMorId: PalletId = PalletId(*b"PotMchOw");
 	pub const PotTreasuryId: PalletId = TreasuryPalletId::get();
 	pub const PotCoretimeId: PalletId = PalletId(*b"PotCoret");
 	pub const PotSubsidizationId: PalletId = PalletId(*b"PotSubsi");
@@ -919,7 +919,7 @@ macro_rules! impl_to_pot_adapter {
 }
 
 impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
-// impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
+impl_to_pot_adapter!(ToMachinePot, PotMorId, NegativeImbalance);
 impl_to_pot_adapter!(ToCoreTimePot, PotCoretimeId, NegativeImbalance);
 impl_to_pot_adapter!(ToSubsidizationPot, PotSubsidizationId, NegativeImbalance);
 impl_to_pot_adapter!(ToDepinStakingPot, PotDepinStakingId, NegativeImbalance);
@@ -963,8 +963,8 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPa
 
 	fn depin_incentivization(reward: NegativeImbalance) {
 		let amount = reward.peek();
-// 		ToMachinePot::on_unbalanced(reward);
-//		PeaqMor::log_block_rewards(amount);
+ 		ToMachinePot::on_unbalanced(reward);
+		PeaqMor::log_block_rewards(amount);
 	}
 }
 
@@ -975,7 +975,7 @@ parameter_types! {
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![
 		PotStakeId::get().into_account_truncating(),
-//		PotMorId::get().into_account_truncating(),
+		PotMorId::get().into_account_truncating(),
 		PotTreasuryId::get().into_account_truncating(),
 		PotCoretimeId::get().into_account_truncating(),
 		PotSubsidizationId::get().into_account_truncating(),
@@ -1021,13 +1021,13 @@ impl peaq_pallet_storage::Config for Runtime {
 	type ReserveIdentifier = StorageReserveIdentifier;
 }
 
-// impl peaq_pallet_mor::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type Currency = Balances;
-// 	type PotId = PotMorId;
-// 	type ExistentialDeposit = ExistentialDeposit;
-// 	type WeightInfo = peaq_pallet_mor::weights::WeightInfo<Runtime>;
-// }
+impl peaq_pallet_mor::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type PotId = PotMorId;
+	type ExistentialDeposit = ExistentialDeposit;
+	type WeightInfo = peaq_pallet_mor::weights::WeightInfo<Runtime>;
+}
 
 // Zenlink-DEX Parameter definitions
 parameter_types! {
@@ -1138,7 +1138,7 @@ construct_runtime!(
 		Multisig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-//		PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
+		PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
 	}
 );
 
@@ -1193,7 +1193,7 @@ mod benches {
 		[peaq_pallet_did, PeaqDid]
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
-//		[peaq_pallet_mor, PeaqMor]
+		[peaq_pallet_mor, PeaqMor]
 		[pallet_xcm, PolkadotXcm]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]

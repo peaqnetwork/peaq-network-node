@@ -8791,6 +8791,7 @@ dependencies = [
  "peaq-evm-tracer",
  "peaq-pallet-did",
  "peaq-pallet-did-runtime-api",
+ "peaq-pallet-mor",
  "peaq-pallet-rbac",
  "peaq-pallet-rbac-runtime-api",
  "peaq-pallet-storage",
@@ -9133,6 +9134,26 @@ dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
  "sp-api",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
+]
+
+[[package]]
+name = "peaq-pallet-mor"
+version = "0.1.1"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v1.7.2#0bef648cc7ff68d580bd3402655275657a94f597"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num-traits",
+ "parity-scale-codec",
+ "peaq-pallet-did",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
 ]
 

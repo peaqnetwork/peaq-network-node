@@ -3,9 +3,9 @@ use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, 
-	// MorConfig, 
+	MorConfig, 
 	ParachainInfoConfig, ParachainStakingConfig, 
-	// PeaqMorConfig,
+	PeaqMorConfig,
 	PeaqPrecompiles, Runtime, RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig,
 	SudoConfig, SystemConfig, WASM_BINARY,
 };
@@ -188,14 +188,14 @@ fn configure_genesis(
 		},
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
-		// peaq_mor: PeaqMorConfig {
-		// 	mor_config: MorConfig {
-		// 		registration_reward: 10 * CENTS,
-		// 		machine_usage_fee_min: MILLICENTS,
-		// 		machine_usage_fee_max: 3 * DOLLARS,
-		// 		track_n_block_rewards: 200,
-		// 	},
-		// },
+		peaq_mor: PeaqMorConfig {
+			mor_config: MorConfig {
+				registration_reward: 10 * CENTS,
+				machine_usage_fee_min: MILLICENTS,
+				machine_usage_fee_max: 3 * DOLLARS,
+				track_n_block_rewards: 200,
+			},
+		},
 		assets: Default::default(),
 	}
 }
