@@ -23,12 +23,10 @@ branch = "peaq-polkadot-v1.7.2"
 [dependencies]
 structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
-jsonrpc-pubsub = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
 flume = { workspace = true, default-features = true }
 log = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
-jsonrpc-core = { workspace = true, default-features = true }
 url = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }

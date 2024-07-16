@@ -518,7 +518,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94893f1e0c6eeab764ade8dc4c0db24caf4fe7cbbaafc0eba0a9030f447b5185"
 dependencies = [
  "num-traits",
- "rand 0.8.5",
+ "rand",
  "rayon",
 ]
 
@@ -977,7 +977,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93f2635620bf0b9d4576eb7bb9a38a55df78bd1205d26fa994b25911a69f212f"
 dependencies = [
  "bitcoin_hashes",
- "rand 0.8.5",
+ "rand",
  "rand_core 0.6.4",
  "serde",
  "unicode-normalization",
@@ -2121,7 +2121,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-overseer",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "sc-client-api",
  "sc-consensus",
  "sp-consensus",
@@ -2475,7 +2475,7 @@ dependencies = [
  "parity-scale-codec",
  "pin-project",
  "polkadot-overseer",
- "rand 0.8.5",
+ "rand",
  "sc-client-api",
  "sc-rpc-api",
  "sc-service",
@@ -3463,7 +3463,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "prometheus",
- "rand 0.8.5",
+ "rand",
  "rlp",
  "sc-client-api",
  "sc-consensus-aura",
@@ -3612,7 +3612,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835c052cb0c08c1acf6ffd71c022172e18723949c8282f2b9f27efbc51e64534"
 dependencies = [
  "byteorder",
- "rand 0.8.5",
+ "rand",
  "rustc-hex",
  "static_assertions",
 ]
@@ -3838,7 +3838,7 @@ dependencies = [
  "linked-hash-map",
  "log",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "rand_pcg",
  "sc-block-builder",
  "sc-cli",
@@ -4330,7 +4330,7 @@ version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ea1015b5a70616b688dc230cfe50c8af89d972cb132d5a622814d29773b10b9"
 dependencies = [
- "rand 0.8.5",
+ "rand",
  "rand_core 0.6.4",
 ]
 
@@ -5003,36 +5003,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jsonrpc-core"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14f7f76aef2d054868398427f6c54943cf3d1caa9a7ec7d0c38d69df97a965eb"
-dependencies = [
- "futures 0.3.30",
- "futures-executor",
- "futures-util",
- "log",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
-name = "jsonrpc-pubsub"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "240f87695e6c6f62fb37f05c02c04953cf68d6408b8c1c89de85c7a0125b1011"
-dependencies = [
- "futures 0.3.30",
- "jsonrpc-core",
- "lazy_static",
- "log",
- "parking_lot 0.11.2",
- "rand 0.7.3",
- "serde",
-]
-
-[[package]]
 name = "jsonrpsee"
 version = "0.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5083,7 +5053,7 @@ dependencies = [
  "hyper",
  "jsonrpsee-types",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -5362,7 +5332,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "pin-project",
  "quick-protobuf",
- "rand 0.8.5",
+ "rand",
  "rw-stream-sink",
  "smallvec",
  "thiserror",
@@ -5418,7 +5388,7 @@ dependencies = [
  "multiaddr",
  "multihash 0.17.0",
  "quick-protobuf",
- "rand 0.8.5",
+ "rand",
  "sha2 0.10.8",
  "thiserror",
  "zeroize",
@@ -5443,7 +5413,7 @@ dependencies = [
  "libp2p-swarm",
  "log",
  "quick-protobuf",
- "rand 0.8.5",
+ "rand",
  "sha2 0.10.8",
  "smallvec",
  "thiserror",
@@ -5465,7 +5435,7 @@ dependencies = [
  "libp2p-identity",
  "libp2p-swarm",
  "log",
- "rand 0.8.5",
+ "rand",
  "smallvec",
  "socket2 0.4.10",
  "tokio",
@@ -5501,7 +5471,7 @@ dependencies = [
  "log",
  "once_cell",
  "quick-protobuf",
- "rand 0.8.5",
+ "rand",
  "sha2 0.10.8",
  "snow",
  "static_assertions",
@@ -5523,7 +5493,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log",
- "rand 0.8.5",
+ "rand",
  "void",
 ]
 
@@ -5543,7 +5513,7 @@ dependencies = [
  "log",
  "parking_lot 0.12.1",
  "quinn-proto",
- "rand 0.8.5",
+ "rand",
  "rustls 0.20.9",
  "thiserror",
  "tokio",
@@ -5561,7 +5531,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-identity",
  "libp2p-swarm",
- "rand 0.8.5",
+ "rand",
  "smallvec",
 ]
 
@@ -5580,7 +5550,7 @@ dependencies = [
  "libp2p-identity",
  "libp2p-swarm-derive",
  "log",
- "rand 0.8.5",
+ "rand",
  "smallvec",
  "tokio",
  "void",
@@ -5717,7 +5687,7 @@ dependencies = [
  "libsecp256k1-core",
  "libsecp256k1-gen-ecmult",
  "libsecp256k1-gen-genmult",
- "rand 0.8.5",
+ "rand",
  "serde",
  "sha2 0.9.9",
  "typenum",
@@ -6095,7 +6065,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69672161530e8aeca1d1400fbf3f1a1747ff60ea604265a4e906c2442df20532"
 dependencies = [
  "futures 0.3.30",
- "rand 0.8.5",
+ "rand",
  "thrift",
 ]
 
@@ -6142,7 +6112,7 @@ dependencies = [
  "lioness",
  "log",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "rand_distr",
  "subtle 2.4.1",
@@ -6393,7 +6363,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bddcd3bf5144b6392de80e04c347cd7fab2508f6df16a85fc496ecd5cec39bc"
 dependencies = [
- "rand 0.8.5",
+ "rand",
 ]
 
 [[package]]
@@ -6670,7 +6640,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
 dependencies = [
- "proc-macro-crate 3.1.0",
+ "proc-macro-crate 2.0.0",
  "proc-macro2",
  "quote",
  "syn 2.0.71",
@@ -7216,7 +7186,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "scale-info",
  "sp-runtime",
  "sp-staking",
@@ -7256,7 +7226,7 @@ dependencies = [
  "pallet-contracts-proc-macro",
  "pallet-contracts-uapi",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "rand_pcg",
  "scale-info",
  "serde",
@@ -7357,7 +7327,7 @@ dependencies = [
  "log",
  "pallet-election-provider-support-benchmarking",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8201,7 +8171,7 @@ dependencies = [
  "pallet-session",
  "pallet-staking",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "sp-runtime",
  "sp-session",
  "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
@@ -8572,7 +8542,7 @@ dependencies = [
  "lz4",
  "memmap2 0.5.10",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "siphasher",
  "snap",
 ]
@@ -9011,8 +8981,6 @@ dependencies = [
  "futures 0.3.30",
  "hex-literal 0.3.4",
  "inflation-manager",
- "jsonrpc-core",
- "jsonrpc-pubsub",
  "jsonrpsee",
  "log",
  "orml-xtokens",
@@ -9752,7 +9720,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "tracing-gum",
 ]
 
@@ -9768,7 +9736,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "tracing-gum",
 ]
 
@@ -9787,7 +9755,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "schnellru",
  "sp-core",
  "sp-keystore",
@@ -9810,7 +9778,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "sc-network",
  "schnellru",
  "thiserror",
@@ -9930,7 +9898,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "sc-network",
  "sc-network-common",
@@ -10001,7 +9969,7 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "rand_core 0.6.4",
  "sc-keystore",
@@ -10216,7 +10184,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-parachain-primitives",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "slotmap",
  "sp-core",
  "sp-maybe-compressed-blob",
@@ -10338,7 +10306,7 @@ dependencies = [
  "polkadot-node-jaeger",
  "polkadot-node-primitives",
  "polkadot-primitives",
- "rand 0.8.5",
+ "rand",
  "sc-authority-discovery",
  "sc-network",
  "strum 0.24.1",
@@ -10432,7 +10400,7 @@ dependencies = [
  "polkadot-overseer",
  "polkadot-primitives",
  "prioritized-metered-channel",
- "rand 0.8.5",
+ "rand",
  "sc-client-api",
  "schnellru",
  "sp-application-crypto",
@@ -10634,7 +10602,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-metrics",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "rustc-hex",
  "scale-info",
@@ -11316,7 +11284,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94b0b33c13a79f669c85defaf4c275dc86a0c0372807d0ca3d78e0bb87274863"
 dependencies = [
  "bytes",
- "rand 0.8.5",
+ "rand",
  "ring 0.16.20",
  "rustc-hash",
  "rustls 0.20.9",
@@ -11341,19 +11309,6 @@ name = "radium"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
-
-[[package]]
-name = "rand"
-version = "0.7.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
-dependencies = [
- "getrandom 0.1.16",
- "libc",
- "rand_chacha 0.2.2",
- "rand_core 0.5.1",
- "rand_hc",
-]
 
 [[package]]
 name = "rand"
@@ -11411,16 +11366,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32cb0b9bc82b0a0876c2dd994a7e7a2683d3e7390ca40e6886785ef0c7e3ee31"
 dependencies = [
  "num-traits",
- "rand 0.8.5",
-]
-
-[[package]]
-name = "rand_hc"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
-dependencies = [
- "rand_core 0.5.1",
+ "rand",
 ]
 
 [[package]]
@@ -12112,7 +12058,7 @@ dependencies = [
  "parity-scale-codec",
  "prost 0.12.6",
  "prost-build",
- "rand 0.8.5",
+ "rand",
  "sc-client-api",
  "sc-network",
  "sp-api",
@@ -12215,7 +12161,7 @@ dependencies = [
  "log",
  "names",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "regex",
  "rpassword",
  "sc-client-api",
@@ -12492,7 +12438,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "sc-block-builder",
  "sc-chain-spec",
  "sc-client-api",
@@ -12736,7 +12682,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "partial_sort",
  "pin-project",
- "rand 0.8.5",
+ "rand",
  "sc-client-api",
  "sc-network-common",
  "sc-utils",
@@ -12906,7 +12852,7 @@ dependencies = [
  "once_cell",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "sc-client-api",
  "sc-network",
  "sc-network-common",
@@ -13043,7 +12989,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "pin-project",
- "rand 0.8.5",
+ "rand",
  "sc-chain-spec",
  "sc-client-api",
  "sc-client-db",
@@ -13143,7 +13089,7 @@ dependencies = [
  "futures 0.3.30",
  "libc",
  "log",
- "rand 0.8.5",
+ "rand",
  "rand_pcg",
  "regex",
  "sc-telemetry",
@@ -13166,7 +13112,7 @@ dependencies = [
  "log",
  "parking_lot 0.12.1",
  "pin-project",
- "rand 0.8.5",
+ "rand",
  "sc-utils",
  "serde",
  "serde_json",
@@ -13802,7 +13748,7 @@ dependencies = [
  "pbkdf2 0.12.2",
  "pin-project",
  "poly1305",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "ruzstd",
  "schnorrkel 0.10.2",
@@ -13845,7 +13791,7 @@ dependencies = [
  "no-std-net",
  "parking_lot 0.12.1",
  "pin-project",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "serde",
  "serde_json",
@@ -13912,7 +13858,7 @@ dependencies = [
  "http",
  "httparse",
  "log",
- "rand 0.8.5",
+ "rand",
  "sha-1",
 ]
 
@@ -14165,7 +14111,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "paste",
  "primitive-types",
- "rand 0.8.5",
+ "rand",
  "scale-info",
  "schnorrkel 0.11.4",
  "secp256k1",
@@ -14196,7 +14142,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-ec-utils"
 version = "0.10.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-377-ext",
@@ -14258,7 +14204,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -14279,7 +14225,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -14464,7 +14410,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "paste",
- "rand 0.8.5",
+ "rand",
  "scale-info",
  "serde",
  "simple-mermaid",
@@ -14497,7 +14443,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -14529,7 +14475,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "Inflector",
  "expander 2.0.0",
@@ -14577,7 +14523,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "smallvec",
  "sp-core",
  "sp-externalities 0.25.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
@@ -14599,7 +14545,7 @@ dependencies = [
  "ed25519-dalek",
  "hkdf",
  "parity-scale-codec",
- "rand 0.8.5",
+ "rand",
  "scale-info",
  "sha2 0.10.8",
  "sp-api",
@@ -14622,7 +14568,7 @@ source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 
 [[package]]
 name = "sp-storage"
@@ -14640,7 +14586,7 @@ dependencies = [
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -14677,7 +14623,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "parity-scale-codec",
  "tracing",
@@ -14721,7 +14667,7 @@ dependencies = [
  "nohash-hasher",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "scale-info",
  "schnellru",
  "sp-core",
@@ -14777,7 +14723,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#cde2eb42a6b4ed5e930e59ec4dc03b5fa5059bd5"
+source = "git+https://github.com/paritytech/polkadot-sdk#66baa2fb307fe72cb9ddc7c3be16ba57fcb2670a"
 dependencies = [
  "impl-trait-for-tuples",
  "log",
@@ -15129,7 +15075,7 @@ dependencies = [
  "byteorder",
  "crunchy",
  "lazy_static",
- "rand 0.8.5",
+ "rand",
  "rustc-hex",
 ]
 
@@ -15549,7 +15495,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f57eb36ecbe0fc510036adff84824dd3c24bb781e21bfa67b69d556aa85214f"
 dependencies = [
  "pin-project",
- "rand 0.8.5",
+ "rand",
  "tokio",
 ]
 
@@ -15877,7 +15823,7 @@ dependencies = [
  "idna 0.2.3",
  "ipnet",
  "lazy_static",
- "rand 0.8.5",
+ "rand",
  "smallvec",
  "socket2 0.4.10",
  "thiserror",
@@ -15978,7 +15924,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand",
  "static_assertions",
 ]
 
@@ -16141,7 +16087,7 @@ dependencies = [
  "arrayref",
  "constcat",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand",
  "rand_chacha 0.3.1",
  "rand_core 0.6.4",
  "sha2 0.10.8",
@@ -16542,7 +16488,7 @@ dependencies = [
  "memfd",
  "memoffset 0.8.0",
  "paste",
- "rand 0.8.5",
+ "rand",
  "rustix 0.36.17",
  "wasmtime-asm-macros",
  "wasmtime-environ",
@@ -17100,7 +17046,7 @@ dependencies = [
  "log",
  "nohash-hasher",
  "parking_lot 0.12.1",
- "rand 0.8.5",
+ "rand",
  "static_assertions",
 ]
 
@@ -17116,7 +17062,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#e1bd0b4e63e713d77f584e836f874c2e50c0bd11"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#c1d91fb0f0f69c674a8426cc4ecd881f1638b5bc"
 dependencies = [
  "cumulus-primitives-core",
  "frame-benchmarking",
@@ -17140,7 +17086,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol-rpc"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#e1bd0b4e63e713d77f584e836f874c2e50c0bd11"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#c1d91fb0f0f69c674a8426cc4ecd881f1638b5bc"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -17157,7 +17103,7 @@ dependencies = [
 [[package]]
 name = "zenlink-protocol-runtime-api"
 version = "0.4.4"
-source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#e1bd0b4e63e713d77f584e836f874c2e50c0bd11"
+source = "git+https://github.com/peaqnetwork/Zenlink-DEX-Module?branch=peaq-polkadot-v1.7.2#c1d91fb0f0f69c674a8426cc4ecd881f1638b5bc"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
