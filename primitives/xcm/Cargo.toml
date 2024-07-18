@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 log = { workspace = true }
-bstringify = { workspace = true }
 serde = { workspace = true, default-features = false, optional = true }
 parity-scale-codec = { workspace = true }
 num_enum = { workspace = true }

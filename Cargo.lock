@@ -1194,12 +1194,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bstringify"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd769563b4ea2953e2825c9e6b7470a5f55f67e0be00030bf3e390a2a6071f64"
-
-[[package]]
 name = "build-helper"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9249,7 +9243,6 @@ dependencies = [
 name = "peaq-primitives-xcm"
 version = "3.1.0-polkadot-v1.7.2"
 dependencies = [
- "bstringify",
  "evm",
  "frame-support",
  "log",

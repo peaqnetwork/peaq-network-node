@@ -36,8 +36,6 @@ panic = "unwind" # Peaq runtime requires unwinding.
 # Crates
 affix = "0.1.2"
 async-trait = "0.1.59"
-bstringify = "0.1.2"
-case = "1.0"
 parity-scale-codec = { version = "3.6.12", default-features = false }
 clap = { version = "4.0.32"}
 derive_more = "0.99"
@@ -218,7 +216,6 @@ sp-staking = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "pe
 frame-try-runtime = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 try-runtime-cli = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2"}
 
-# [TODO] ...
 zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.7.2", default-features = false }
 zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.7.2", default-features = false }
 zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.7.2", default-features = false }
