@@ -16,9 +16,12 @@
 
 //! Provide checks related to function modifiers (view/payable).
 
-use crate::solidity::revert::{MayRevert, RevertReason};
-use fp_evm::Context;
-use sp_core::U256;
+use {
+	crate::solidity::revert::{MayRevert, RevertReason},
+	fp_evm::Context,
+	sp_core::U256,
+};
+
 
 /// Represents modifiers a Solidity function can be annotated with.
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -32,6 +35,7 @@ pub enum FunctionModifier {
 	Payable,
 }
 
+#[must_use]
 /// Check that a function call is compatible with the context it is
 /// called into.
 pub fn check_function_modifier(

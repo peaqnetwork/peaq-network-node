@@ -108,16 +108,18 @@ pub enum DiscriminantResult<T> {
 	OutOfGas,
 }
 
-impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
-	fn from(val: DiscriminantResult<T>) -> Self {
-		match val {
-			DiscriminantResult::<T>::Some(_, extra_cost) => {
-				IsPrecompileResult::Answer { is_precompile: true, extra_cost }
+impl<T> Into<IsPrecompileResult> for DiscriminantResult<T> {
+	fn into(self) -> IsPrecompileResult {
+		match self {
+			Self::Some(_, extra_cost) => IsPrecompileResult::Answer {
+				is_precompile: true,
+				extra_cost,
 			},
-			DiscriminantResult::<T>::None(extra_cost) => {
-				IsPrecompileResult::Answer { is_precompile: false, extra_cost }
+			Self::None(extra_cost) => IsPrecompileResult::Answer {
+				is_precompile: false,
+				extra_cost,
 			},
-			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
+			Self::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
 	}
 }
@@ -126,6 +128,7 @@ impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
 #[cfg_attr(feature = "testing", derive(serde::Serialize, serde::Deserialize))]
 pub enum PrecompileKind {
 	Single(H160),
+	Multiple(Vec<H160>),
 	Prefixed(Vec<u8>),
 }
 
@@ -334,7 +337,7 @@ pub fn get_address_type<R: pallet_evm::Config>(
 	// check code matches dummy code
 	handle.record_db_read::<R>(code_len as usize)?;
 	let code = pallet_evm::AccountCodes::<R>::get(address);
-	if code == [0x60, 0x00, 0x60, 0x00, 0xfd] {
+	if &code == &[0x60, 0x00, 0x60, 0x00, 0xfd] {
 		return Ok(AddressType::Precompile);
 	}
 
@@ -805,6 +808,68 @@ impl<A> IsActivePrecompile for RevertPrecompile<A> {
 	}
 }
 
+/// Precompiles that were removed from a precompile set.
+/// Still considered precompiles but are inactive and always revert.
+pub struct RemovedPrecompilesAt<A>(PhantomData<A>);
+impl<A> PrecompileSetFragment for RemovedPrecompilesAt<A>
+where
+	A: Get<Vec<H160>>,
+{
+	#[inline(always)]
+	fn new() -> Self {
+		Self(PhantomData)
+	}
+
+	#[inline(always)]
+	fn execute<R: pallet_evm::Config>(
+		&self,
+		handle: &mut impl PrecompileHandle,
+	) -> Option<PrecompileResult> {
+		if A::get().contains(&handle.code_address()) {
+			Some(Err(revert("Removed precompile")))
+		} else {
+			None
+		}
+	}
+
+	#[inline(always)]
+	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer {
+			is_precompile: A::get().contains(&address),
+			extra_cost: 0,
+		}
+	}
+
+	#[inline(always)]
+	fn used_addresses(&self) -> Vec<H160> {
+		A::get()
+	}
+
+	fn summarize_checks(&self) -> Vec<PrecompileCheckSummary> {
+		vec![PrecompileCheckSummary {
+			name: None,
+			precompile_kind: PrecompileKind::Multiple(A::get()),
+			recursion_limit: Some(0),
+			accept_delegate_call: true,
+			callable_by_smart_contract: "Reverts in all cases".into(),
+			callable_by_precompile: "Reverts in all cases".into(),
+		}]
+	}
+}
+
+impl<A> IsActivePrecompile for RemovedPrecompilesAt<A>
+where
+	Self: PrecompileSetFragment,
+{
+	#[inline(always)]
+	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
+		IsPrecompileResult::Answer {
+			is_precompile: false,
+			extra_cost: 0,
+		}
+	}
+}
+
 /// A precompile that was removed from a precompile set.
 /// Still considered a precompile but is inactive and always revert.
 pub struct RemovedPrecompileAt<A>(PhantomData<A>);
@@ -885,17 +950,21 @@ impl PrecompileSetFragment for Tuple {
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			if let IsPrecompileResult::Answer {
-				is_precompile: true,
-				..
-			} = self.Tuple.is_precompile(address, gas) {
-				return IsPrecompileResult::Answer {
+			match self.Tuple.is_precompile(address, gas) {
+				IsPrecompileResult::Answer {
+					is_precompile: true,
+					..
+				} => return IsPrecompileResult::Answer {
 					is_precompile: true,
 					extra_cost: 0,
-				}
+				},
+				_ => {}
 			};
 		)*);
-		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+		IsPrecompileResult::Answer {
+			is_precompile: false,
+			extra_cost: 0,
+		}
 	}
 
 	#[inline(always)]
@@ -927,17 +996,21 @@ impl IsActivePrecompile for Tuple {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			if let IsPrecompileResult::Answer {
-				is_precompile: true,
-				..
-			} = self.Tuple.is_active_precompile(address, gas) {
-				return IsPrecompileResult::Answer {
+			match self.Tuple.is_active_precompile(address, gas) {
+				IsPrecompileResult::Answer {
+					is_precompile: true,
+					..
+				} => return IsPrecompileResult::Answer {
 					is_precompile: true,
 					extra_cost: 0,
-				}
+				},
+				_ => {}
 			};
 		)*);
-		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
+		IsPrecompileResult::Answer {
+			is_precompile: false,
+			extra_cost: 0,
+		}
 	}
 }
 
@@ -1023,12 +1096,6 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSet for Precompi
 impl<R, P: IsActivePrecompile> IsActivePrecompile for PrecompileSetBuilder<R, P> {
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		self.inner.is_active_precompile(address, gas)
-	}
-}
-
-impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
-	fn default() -> Self {
-		Self::new()
 	}
 }
 

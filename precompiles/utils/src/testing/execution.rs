@@ -14,16 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	solidity::codec::Codec,
-	testing::{decode_revert_message, MockHandle, PrettyLog, SubcallHandle, SubcallTrait},
+use {
+	crate::{
+		solidity::codec::Codec,
+		testing::{decode_revert_message, MockHandle, PrettyLog, SubcallHandle, SubcallTrait},
+	},
+	fp_evm::{
+		Context, ExitError, ExitSucceed, Log, PrecompileFailure, PrecompileOutput,
+		PrecompileResult, PrecompileSet,
+	},
+	sp_core::{H160, U256},
+	sp_std::boxed::Box,
 };
-use fp_evm::{
-	Context, ExitError, ExitSucceed, Log, PrecompileFailure, PrecompileOutput, PrecompileResult,
-	PrecompileSet,
-};
-use sp_core::{H160, U256};
-use sp_std::boxed::Box;
 
 #[must_use]
 pub struct PrecompilesTester<'p, P> {
@@ -98,7 +100,7 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 
 	pub fn expect_log(mut self, log: Log) -> Self {
 		self.expected_logs = Some({
-			let mut logs = self.expected_logs.unwrap_or_default();
+			let mut logs = self.expected_logs.unwrap_or_else(Vec::new);
 			logs.push(PrettyLog(log));
 			logs
 		});
@@ -168,10 +170,6 @@ impl<'p, P: PrecompileSet> PrecompilesTester<'p, P> {
 					eprintln!(
 						"Output (bytes): {:?}",
 						sp_core::hexdisplay::HexDisplay::from(&execution_output)
-					);
-					eprintln!(
-						"Output (output): {:?}",
-						sp_core::hexdisplay::HexDisplay::from(&output)
 					);
 					eprintln!(
 						"Output (string): {:?}",

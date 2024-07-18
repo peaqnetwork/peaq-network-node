@@ -10912,7 +10912,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "precompile-utils"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "affix",
  "derive_more",
@@ -10945,7 +10945,7 @@ dependencies = [
 
 [[package]]
 name = "precompile-utils-macro"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "case",
  "fp-evm",

@@ -23,8 +23,11 @@ pub fn main(_: TokenStream, input: TokenStream) -> TokenStream {
 	let ItemType { attrs, vis, type_token, ident, generics, eq_token, ty, semi_token } = item;
 
 	if let Type::Tuple(ref type_tuple) = *ty {
-		let variants: Vec<(Ident, u64)> =
-			type_tuple.elems.iter().filter_map(extract_precompile_name_and_prefix).collect();
+		let variants: Vec<(Ident, u64)> = type_tuple
+			.elems
+			.iter()
+			.filter_map(extract_precompile_name_and_prefix)
+			.collect();
 
 		let ident_expressions: Vec<&Ident> = variants.iter().map(|(ident, _)| ident).collect();
 		let variant_expressions: Vec<&u64> = variants.iter().map(|(_, id)| id).collect();

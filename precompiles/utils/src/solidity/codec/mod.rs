@@ -91,7 +91,7 @@ pub fn decode_arguments<T: Codec>(input: &[u8]) -> MayRevert<T> {
 		let input = writer.build();
 		decode(&input)
 	} else {
-		decode(input)
+		decode(&input)
 	}
 }
 
@@ -219,12 +219,6 @@ struct OffsetChunk {
 	// Inside of arrays, the offset is not from the start of array data (length), but from the
 	// start of the item. This shift allow to correct this.
 	offset_shift: usize,
-}
-
-impl Default for Writer {
-	fn default() -> Writer {
-		Writer::new()
-	}
 }
 
 impl Writer {

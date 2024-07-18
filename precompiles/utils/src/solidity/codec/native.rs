@@ -369,3 +369,9 @@ impl<T, S> Default for BoundedVec<T, S> {
 		Self { inner: Default::default(), _phantom: PhantomData }
 	}
 }
+
+impl<T, S> BoundedVec<T, S> {
+	pub fn len(&self) -> usize {
+		self.inner.len()
+	}
+}

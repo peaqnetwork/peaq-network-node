@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	solidity::codec::Writer,
-	testing::{decode_revert_message, MockHandle},
+use {
+	crate::{
+		solidity::codec::Writer,
+		testing::{decode_revert_message, MockHandle},
+	},
+	fp_evm::{Context, PrecompileFailure, PrecompileSet},
+	sp_core::{H160, U256},
 };
-use fp_evm::{Context, PrecompileFailure, PrecompileSet};
-use sp_core::{H160, U256};
 
 pub struct PrecompilesModifierTester<P> {
 	precompiles: P,

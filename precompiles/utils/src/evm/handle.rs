@@ -14,19 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	solidity::{
-		codec::Reader,
-		modifier::FunctionModifier,
-		revert::{MayRevert, RevertReason},
+use {
+	crate::{
+		solidity::{
+			codec::Reader,
+			modifier::FunctionModifier,
+			revert::{MayRevert, RevertReason},
+		},
+		EvmResult,
 	},
-	EvmResult,
+	fp_evm::{Log, PrecompileHandle},
 };
-use fp_evm::{Log, PrecompileHandle};
 
 pub trait PrecompileHandleExt: PrecompileHandle {
 	/// Record cost of one DB read manually.
 	/// The max encoded lenght of the data that will be read should be provided.
+	#[must_use]
 	fn record_db_read<Runtime: pallet_evm::Config>(
 		&mut self,
 		data_max_encoded_len: usize,
@@ -34,23 +37,29 @@ pub trait PrecompileHandleExt: PrecompileHandle {
 
 	/// Record cost of a log manually.
 	/// This can be useful to record log costs early when their content have static size.
+	#[must_use]
 	fn record_log_costs_manual(&mut self, topics: usize, data_len: usize) -> EvmResult;
 
 	/// Record cost of logs.
+	#[must_use]
 	fn record_log_costs(&mut self, logs: &[&Log]) -> EvmResult;
 
+	#[must_use]
 	/// Check that a function call is compatible with the context it is
 	/// called into.
 	fn check_function_modifier(&self, modifier: FunctionModifier) -> MayRevert;
 
+	#[must_use]
 	/// Read the selector from the input data.
 	fn read_u32_selector(&self) -> MayRevert<u32>;
 
+	#[must_use]
 	/// Returns a reader of the input, skipping the selector.
 	fn read_after_selector(&self) -> MayRevert<Reader>;
 }
 
 impl<T: PrecompileHandle> PrecompileHandleExt for T {
+	#[must_use]
 	fn record_db_read<Runtime: pallet_evm::Config>(
 		&mut self,
 		data_max_encoded_len: usize,
@@ -62,6 +71,7 @@ impl<T: PrecompileHandle> PrecompileHandleExt for T {
 
 	/// Record cost of a log manualy.
 	/// This can be useful to record log costs early when their content have static size.
+	#[must_use]
 	fn record_log_costs_manual(&mut self, topics: usize, data_len: usize) -> EvmResult {
 		self.record_cost(crate::evm::costs::log_costs(topics, data_len)?)?;
 
@@ -69,6 +79,7 @@ impl<T: PrecompileHandle> PrecompileHandleExt for T {
 	}
 
 	/// Record cost of logs.
+	#[must_use]
 	fn record_log_costs(&mut self, logs: &[&Log]) -> EvmResult {
 		for log in logs {
 			self.record_log_costs_manual(log.topics.len(), log.data.len())?;
@@ -77,6 +88,7 @@ impl<T: PrecompileHandle> PrecompileHandleExt for T {
 		Ok(())
 	}
 
+	#[must_use]
 	/// Check that a function call is compatible with the context it is
 	/// called into.
 	fn check_function_modifier(&self, modifier: FunctionModifier) -> MayRevert {
@@ -87,12 +99,14 @@ impl<T: PrecompileHandle> PrecompileHandleExt for T {
 		)
 	}
 
+	#[must_use]
 	/// Read the selector from the input data as u32.
 	fn read_u32_selector(&self) -> MayRevert<u32> {
 		crate::solidity::codec::selector(self.input())
 			.ok_or(RevertReason::read_out_of_bounds("selector").into())
 	}
 
+	#[must_use]
 	/// Returns a reader of the input, skipping the selector.
 	fn read_after_selector(&self) -> MayRevert<Reader> {
 		Reader::new_skip_selector(self.input())
