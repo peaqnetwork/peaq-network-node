@@ -14,7 +14,7 @@ use cumulus_primitives_core::{
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_api::{ProvideRuntimeApi};
 use sc_client_api::{
-    AuxStore, Backend, StateBackend, StorageProvider, UsageProvider,
+    AuxStore, Backend, StateBackend, StorageProvider,
 };
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 

@@ -1,5 +1,6 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
+use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use peaq_dev_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, 
@@ -7,9 +8,8 @@ use peaq_dev_runtime::{
 	ParachainInfoConfig, ParachainStakingConfig, 
 	PeaqMorConfig,
 	PeaqPrecompiles, Runtime, RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	SudoConfig, WASM_BINARY,
 };
-use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -52,55 +52,48 @@ pub fn get_chain_spec() -> Result<ChainSpec, String> {
 }
 
 pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
-	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PEAQ".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-	Ok(ChainSpec::from_genesis(
-		"peaq-dev",
-		"dev-testnet",
-		ChainType::Development,
-		move || {
-			configure_genesis(
-				wasm_binary,
-				// stakers
-				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					None,
-					2 * staking::MinCollatorStake::get(),
-				)],
-				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice")],
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				],
-				para_id.into(),
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// Fork ID
-		None,
-		// Properties
-		Some(properties),
+	sc_service::Result::Ok(ChainSpec::builder(
+		WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
 		// Extensions
-		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
-		// code
-		wasm_binary,
-	))
+		Extensions {
+			bad_blocks: Default::default(),
+			relay_chain: "rococo-local".into(),
+			para_id
+		},
+	)
+	.with_name("peaq-dev")
+	.with_id("dev-testnet")
+	.with_chain_type(ChainType::Local)
+	.with_properties(properties)
+	.with_genesis_config_patch(
+		configure_genesis(
+			// stakers
+			vec![(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				None,
+				2 * staking::MinCollatorStake::get(),
+			)],
+			// Initial PoA authorities
+			vec![authority_keys_from_seed("Alice")],
+			// Sudo account
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			// Pre-funded accounts
+			vec![
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			],
+			para_id.into(),
+		)
+	)
+	.build())
 }
 
 fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
@@ -109,20 +102,19 @@ fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
 
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
-	wasm_binary: &[u8],
 	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	parachain_id: ParaId,
-) -> RuntimeGenesisConfig {
+) -> serde_json::Value {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
 	// within contracts.
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	RuntimeGenesisConfig {
+	let config = RuntimeGenesisConfig {
 		system: Default::default(),
 		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
@@ -197,5 +189,7 @@ fn configure_genesis(
 			},
 		},
 		assets: Default::default(),
-	}
+	};
+
+	serde_json::to_value(&config).expect("Could not build genesis config.")
 }

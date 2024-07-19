@@ -21,6 +21,7 @@ git = "https://github.com/peaqnetwork/polkadot-sdk"
 branch = "peaq-polkadot-v1.7.2"
 
 [dependencies]
+serde_json = { workspace = true, default-features = true }
 structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }

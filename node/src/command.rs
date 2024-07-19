@@ -450,8 +450,6 @@ pub fn run() -> sc_cli::Result<()> {
 						&id,
 					);
 
-				let state_version = Cli::runtime_version(&config.chain_spec).state_version();
-
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
 					&polkadot_cli,
