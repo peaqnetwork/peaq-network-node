@@ -406,6 +406,9 @@ impl pallet_contracts::Config for Runtime {
 	type RuntimeHoldReason = RuntimeHoldReason;
 	// TODO: re-vist to make sure migration sequence is correct
 	type Migrations = (
+		pallet_contracts::migration::v09::Migration<Runtime>,
+		pallet_contracts::migration::v10::Migration<Runtime, Balances>,
+		pallet_contracts::migration::v11::Migration<Runtime>,
 		pallet_contracts::migration::v12::Migration<Runtime, Balances>,
 		pallet_contracts::migration::v13::Migration<Runtime>,
 		pallet_contracts::migration::v14::Migration<Runtime, Balances>,
@@ -1131,6 +1134,7 @@ construct_runtime!(
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -1157,7 +1161,9 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	(cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
+	 pallet_contracts::Migration<Runtime>,
+	),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -1339,7 +1345,7 @@ impl_runtime_apis! {
 						None => 0,
 						Some((_, _, ref signed_extra)) => {
 							// Yuck, this depends on the index of charge transaction in Signed Extra
-							let charge_transaction = &signed_extra.6;
+							let charge_transaction = &signed_extra.7;
 							charge_transaction.tip()
 						}
 					};
@@ -1383,8 +1389,6 @@ impl_runtime_apis! {
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			log::error!("A: Aura slot duration: {:?}", Aura::slot_duration());
-			log::error!("B: Aura slot duration: {:?}", SLOT_DURATION);
 			sp_consensus_aura::SlotDuration::from_millis(SLOT_DURATION)
 		}
 
