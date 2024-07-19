@@ -15,6 +15,7 @@ members = [
 	"precompiles/batch",
 	"precompiles/peaq-rbac",
 	"precompiles/parachain-staking",
+	"precompiles/vesting"
 ]
 resolver = "2"
 
@@ -51,6 +52,7 @@ hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.3.4", default-features = false }
 impl-trait-for-tuples = "0.2.2"
 jsonrpsee = { version = "0.20.3", default-features = false }
+libsecp256k1 = { version = "0.7", default-features = false }
 log = { version = "0.4.17", default-features = false }
 macrotest = { version = "1.0.9", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }

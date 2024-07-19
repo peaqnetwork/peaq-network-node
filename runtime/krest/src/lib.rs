@@ -1054,6 +1054,8 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 10,
 	};
+	pub const InitializeInflationAt: BlockNumber = 2_915_990;
+	pub const BlockRewardBeforeInitialize: Balance = 3_805_175_038_050_000_000;
 }
 
 impl inflation_manager::Config for Runtime {
@@ -1064,6 +1066,8 @@ impl inflation_manager::Config for Runtime {
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
+	type DoInitializeAt = InitializeInflationAt;
+	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

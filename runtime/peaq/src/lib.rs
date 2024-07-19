@@ -1053,6 +1053,8 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
+	pub const InitializeInflationAt: BlockNumber = 0;
+	pub const BlockRewardBeforeInitialize: Balance = 0;
 }
 
 impl inflation_manager::Config for Runtime {
@@ -1063,6 +1065,8 @@ impl inflation_manager::Config for Runtime {
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
+	type DoInitializeAt = InitializeInflationAt;
+	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -1149,7 +1153,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	(cumulus_pallet_parachain_system::migration::Migration<Runtime>,),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
