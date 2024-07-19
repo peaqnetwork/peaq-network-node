@@ -340,6 +340,7 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+
 	type RuntimeTask = RuntimeTask;
 }
 
@@ -755,7 +756,7 @@ impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
-    pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
+	pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -1397,6 +1398,7 @@ impl_runtime_apis! {
 	}
 
 	impl peaq_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
+		#[cfg(feature = "evm-tracing")]
 		fn trace_transaction(
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			traced_transaction: &pallet_ethereum::Transaction,
@@ -1405,7 +1407,6 @@ impl_runtime_apis! {
 			(),
 			sp_runtime::DispatchError,
 		> {
-			#[cfg(feature = "evm-tracing")]
 			{
 				use peaq_evm_tracer::tracer::EvmTracer;
 
@@ -1432,12 +1433,23 @@ impl_runtime_apis! {
 					"Failed to find Ethereum transaction among the extrinsics.",
 				))
 			}
-			#[cfg(not(feature = "evm-tracing"))]
+		}
+
+		#[cfg(not(feature = "evm-tracing"))]
+		fn trace_transaction(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_traced_transaction: &pallet_ethereum::Transaction,
+			_header: &<Block as BlockT>::Header,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
 			))
 		}
 
+		#[cfg(feature = "evm-tracing")]
         fn trace_block(
             extrinsics: Vec<<Block as BlockT>::Extrinsic>,
             known_transactions: Vec<H256>,
@@ -1446,7 +1458,6 @@ impl_runtime_apis! {
             (),
             sp_runtime::DispatchError,
         > {
-			#[cfg(feature = "evm-tracing")]
 			{
             	use peaq_evm_tracer::tracer::EvmTracer;
 
@@ -1474,7 +1485,17 @@ impl_runtime_apis! {
 
             	Ok(())
 			}
-			#[cfg(not(feature = "evm-tracing"))]
+		}
+
+		#[cfg(not(feature = "evm-tracing"))]
+        fn trace_block(
+            _extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+            _known_transactions: Vec<H256>,
+            _header: &<Block as BlockT>::Header,
+        ) -> Result<
+            (),
+            sp_runtime::DispatchError,
+        > {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
 			))

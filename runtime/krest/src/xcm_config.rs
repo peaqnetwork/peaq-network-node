@@ -8,7 +8,7 @@ use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use crate::PeaqAssetLocationIdConverter;
 use frame_support::{
-	match_types, parameter_types,
+	parameter_types,
 	traits::{fungibles, ContainsPair, Everything, Nothing},
 };
 use sp_runtime::Perbill;
@@ -33,11 +33,11 @@ use xcm_builder::{
 	AllowTopLevelPaidExecutionFrom,
 	AllowUnpaidExecutionFrom,
 	ConvertedConcreteId,
-	CurrencyAdapter,
 	// AllowUnpaidExecutionFrom,
 	EnsureXcmOrigin,
 	FixedWeightBounds,
 	FungiblesAdapter,
+	FungibleAdapter,
 	IsConcrete,
 	NoChecking,
 	ParentAsSuperuser,
@@ -56,7 +56,6 @@ use xcm_builder::{
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use frame_support::pallet_prelude::Get;
-use parity_scale_codec::Encode;
 use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
@@ -84,7 +83,7 @@ pub type LocationToAccountId = (
 
 /// XCM from myself to myself
 /// Means for transacting the native currency on this chain.
-pub type CurrencyTransactor = CurrencyAdapter<
+pub type CurrencyTransactor = FungibleAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
