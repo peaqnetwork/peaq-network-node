@@ -31,7 +31,7 @@ mod upgrade {
 				weight_reads += 1;
 
 				// If Config::DoRecalculationAt was 0, then kick off inflation year 1 with TGE
-				if do_initialize_at == T::BlockNumber::from(0u32) {
+				if do_initialize_at == BlockNumberFor::<T>::from(0u32) {
 					// adjust total issuance for TGE
 					Pallet::<T>::fund_difference_balances();
 					calculated_weight = Pallet::<T>::initialize_inflation();

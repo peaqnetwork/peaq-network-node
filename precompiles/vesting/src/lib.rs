@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::PrecompileHandle;
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::Currency,
 };
+use sp_runtime::traits::Dispatchable;
 use pallet_evm::AddressMapping;
 use pallet_vesting::{self as vesting, VestingInfo};
 use precompile_utils::{keccak256, prelude::*, solidity, EvmResult};
 use sp_core::{H160, H256, U256};
 use sp_std::{convert::TryInto, marker::PhantomData};
+use frame_system::pallet_prelude::BlockNumberFor;
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
-type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
 type BalanceOf<Runtime> = <<Runtime as vesting::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
 >>::Balance;
@@ -49,7 +49,6 @@ where
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	AccountIdOf<Runtime>: From<[u8; 32]>,
-	BlockNumberOf<Runtime>: Into<u32>,
 	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
 {
@@ -115,7 +114,7 @@ where
 		let target_account = Runtime::AddressMapping::into_account_id(target.into());
 		let locked_amount = Self::u256_to_amount(locked).in_field("amount")?;
 		let per_block_amount = Self::u256_to_amount(per_block).in_field("amount")?;
-		let starting_block_converted: BlockNumberOf<Runtime> = starting_block.into();
+		let starting_block_converted: BlockNumberFor<Runtime> = starting_block.into();
 		let schedule = VestingInfo::new(locked_amount, per_block_amount, starting_block_converted);
 
 		RuntimeHelper::<Runtime>::try_dispatch(

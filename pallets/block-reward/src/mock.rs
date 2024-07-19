@@ -3,6 +3,7 @@ use crate::{self as pallet_block_reward, NegativeImbalanceOf};
 use frame_support::{
 	construct_runtime, parameter_types, traits::Currency, weights::Weight, PalletId,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 use sp_io::TestExternalities;
 
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
@@ -151,7 +152,7 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
-	pub const InitializeInflationAt: BlockNumber = 0;
+	pub const InitializeInflationAt: BlockNumberFor<TestRuntime> = 0;
 	pub const BlockRewardBeforeInitialize: Balance = 0;
 }
 

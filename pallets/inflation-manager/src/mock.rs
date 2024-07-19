@@ -2,6 +2,7 @@ use crate::{self as inflation_manager, types, weights, Perbill};
 use frame_support::PalletId;
 
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
+use frame_system::pallet_prelude::BlockNumberFor;
 
 use sp_io::TestExternalities;
 
@@ -105,7 +106,7 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
-	pub const InitializeInflationAt: BlockNumber = 10;
+	pub const InitializeInflationAt: BlockNumberFor<TestRuntime> = 10;
 	pub const BlockRewardBeforeInitialize: Balance = 1000;
 }
 
