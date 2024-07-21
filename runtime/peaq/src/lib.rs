@@ -12,6 +12,8 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
+use frame_support::genesis_builder_helper::build_config;
+use frame_support::genesis_builder_helper::create_default_config;
 
 use address_unification::CallKillEVMLinkAccount;
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
@@ -2093,6 +2095,17 @@ impl_runtime_apis! {
 			ConsensusHook::can_build_upon(included_hash, slot)
 		}
 	}
+
+	impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
+		fn create_default_config() -> Vec<u8> {
+			create_default_config::<RuntimeGenesisConfig>()
+		}
+
+		fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
+			build_config::<RuntimeGenesisConfig>(config)
+		}
+	}
+
 }
 
 impl peaq_pallet_transaction::Config for Runtime {
