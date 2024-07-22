@@ -1,12 +1,12 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
-use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_krest_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles, Runtime,
-	RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig, SudoConfig,
+	RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig,
 	WASM_BINARY,
 };
+use peaq_primitives_xcm::{AccountId, Balance};
 use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -31,72 +31,80 @@ pub fn get_chain_spec() -> Result<ChainSpec, String> {
 }
 
 pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "KREST".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-	sc_service::Result::Ok(ChainSpec::builder(
-		WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?,
-		// Extensions
-		Extensions {
-			bad_blocks: Default::default(),
-			relay_chain: "kusama-local".into(),
-			para_id,
+	Ok(ChainSpec::from_genesis(
+		"krest-network",
+		"krest-local",
+		ChainType::Local,
+		move || {
+			configure_genesis(
+				wasm_binary,
+				// stakers
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					None,
+					2 * staking::MinCollatorStake::get(),
+				)],
+				// Initial PoA authorities
+				vec![authority_keys_from_seed("Alice")],
+				// Sudo account
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				// Pre-funded accounts
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				para_id.into(),
+			)
 		},
-	)
-	.with_name("krest-network")
-	.with_id("krest-local")
-	.with_chain_type(ChainType::Local)
-	.with_properties(properties)
-	.with_genesis_config_patch(
-		configure_genesis(
-			// stakers
-			vec![(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				None,
-				2 * staking::MinCollatorStake::get(),
-			)],
-			// Initial PoA authorities
-			vec![authority_keys_from_seed("Alice")],
-			// Sudo account
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
-			// Pre-funded accounts
-			vec![
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				get_account_id_from_seed::<sr25519::Public>("Dave"),
-				get_account_id_from_seed::<sr25519::Public>("Eve"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-			],
-			para_id.into(),
-		)
-	)
-	.build())
+		// Bootnodes
+		vec![],
+		// Telemetry
+		None,
+		// Protocol ID
+		None,
+		// Fork ID
+		None,
+		// Properties
+		Some(properties),
+		// Extensions
+		Extensions { bad_blocks: Default::default(), relay_chain: "kusama-local".into(), para_id },
+		// code
+		wasm_binary,
+	))
 }
 
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
+	wasm_binary: &[u8],
 	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	parachain_id: ParaId,
-) -> serde_json::Value {
+) -> RuntimeGenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
 	// within contracts.
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	let config = RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: Default::default(),
 		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
@@ -163,7 +171,5 @@ fn configure_genesis(
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
 		assets: Default::default(),
-	};
-
-	serde_json::to_value(&config).expect("Could not build genesis config.")
+	}
 }

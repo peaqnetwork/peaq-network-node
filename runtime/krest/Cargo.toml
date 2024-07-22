@@ -108,7 +108,6 @@ peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug", default-featu
 peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-features = false }
 
 frame-support = { workspace = true, default-features = false }
-sp-genesis-builder = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 staking-coefficient-reward = { path = "../../pallets/staking-coefficient-reward", default-features = false }
@@ -189,7 +188,6 @@ std = [
 	"scale-info/std",
 	"frame-executive/std",
 	"frame-support/std",
-	"sp-genesis-builder/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
 	"pallet-aura/std",
