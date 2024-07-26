@@ -3791,3 +3791,37 @@ fn collator_reward_per_session_with_delegator_and_commission() {
 			assert_eq!(rewards[1], Reward { owner: 3, amount: 0 });
 		});
 }
+
+#[test]
+fn collator_set_commission() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(10)
+			));
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			assert_eq!(state.commission, Permill::from_percent(10));
+			assert_eq!(
+				StakePallet::candidate_pool(1).unwrap().commission,
+				Permill::from_percent(10)
+			);
+
+			assert_noop!(
+				StakePallet::set_commission(RuntimeOrigin::signed(2), Permill::from_percent(10)),
+				Error::<Test>::CandidateNotFound
+			);
+		});
+}
