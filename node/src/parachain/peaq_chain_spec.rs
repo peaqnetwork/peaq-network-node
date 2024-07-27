@@ -4,7 +4,7 @@ use peaq_primitives_xcm::{AccountId, Balance};
 use peaq_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles, Runtime,
-	RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig,
+	RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig, SudoConfig,
 	WASM_BINARY,
 };
 use runtime_common::TOKEN_DECIMALS;
@@ -43,7 +43,6 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		ChainType::Local,
 		move || {
 			configure_genesis(
-				wasm_binary,
 				// stakers
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -95,7 +94,6 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
-	wasm_binary: &[u8],
 	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,

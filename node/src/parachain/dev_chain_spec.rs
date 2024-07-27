@@ -2,12 +2,12 @@ use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, 
-	MorConfig, 
-	ParachainInfoConfig, ParachainStakingConfig, 
+	GenesisAccount,
+	MorConfig,
+	ParachainInfoConfig, ParachainStakingConfig,
 	PeaqMorConfig,
 	PeaqPrecompiles, Runtime, RuntimeGenesisConfig, StakingCoefficientRewardCalculatorConfig,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	SudoConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
@@ -64,7 +64,6 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		ChainType::Development,
 		move || {
 			configure_genesis(
-				wasm_binary,
 				// stakers
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -109,7 +108,6 @@ fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
 
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
-	wasm_binary: &[u8],
 	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
