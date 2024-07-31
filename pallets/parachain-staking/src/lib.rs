@@ -1928,7 +1928,7 @@ pub mod pallet {
 		/// Set the commission of the sender collator.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must be a collator.
-		#[pallet::call_index(20)]
+		#[pallet::call_index(19)]
 		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_commission(
 		T::MaxTopCandidates::get(),
 		Permill::from_percent(100).deconstruct()
