@@ -3,10 +3,10 @@ use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::collators::lookahead as async_aura;
 use cumulus_client_consensus_common::ParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
-use cumulus_client_service::start_relay_chain_tasks;
-use cumulus_client_service::DARecoveryProfile;
-use cumulus_client_service::StartRelayChainTasksParams;
-use cumulus_client_service::{prepare_node_config, BuildNetworkParams};
+use cumulus_client_service::{
+	prepare_node_config, start_relay_chain_tasks, BuildNetworkParams, DARecoveryProfile,
+	StartRelayChainTasksParams,
+};
 use cumulus_primitives_core::{
 	relay_chain::{CollatorPair, ValidationCode},
 	ParaId,
@@ -110,17 +110,15 @@ where
 					path: frontier_database_dir(config, "db"),
 					cache_size: 0,
 				},
-				DatabaseSource::ParityDb { .. } => {
-					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") }
-				},
+				DatabaseSource::ParityDb { .. } =>
+					DatabaseSource::ParityDb { path: frontier_database_dir(config, "paritydb") },
 				DatabaseSource::Auto { .. } => DatabaseSource::Auto {
 					rocksdb_path: frontier_database_dir(config, "db"),
 					paritydb_path: frontier_database_dir(config, "paritydb"),
 					cache_size: 0,
 				},
-				_ => {
-					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string())
-				},
+				_ =>
+					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
 			},
 		},
 	)?);

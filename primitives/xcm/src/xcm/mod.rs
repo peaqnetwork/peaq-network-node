@@ -22,13 +22,13 @@
 //!
 //! Collection of common XCM primitives used by runtimes.
 //!
-//! - `AssetLocationIdConverter` - conversion between local asset Id and cross-chain asset multilocation
+//! - `AssetLocationIdConverter` - conversion between local asset Id and cross-chain asset
+//!   multilocation
 //! - `FixedRateOfForeignAsset` - weight trader for execution payment in foreign asset
 //! - `ReserveAssetFilter` - used to check whether asset/origin are a valid reserve location
 //! - `XcmFungibleFeeHandler` - used to handle XCM fee execution fees
 //!
 //! Please refer to implementation below for more info.
-//!
 
 use crate::AccountId;
 
@@ -130,9 +130,10 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 
 					self.weight = self.weight.saturating_add(weight);
 
-					// If there are multiple calls to `BuyExecution` but with different assets, we need to be able to handle that.
-					// Current primitive implementation will just keep total track of consumed asset for the FIRST consumed asset.
-					// Others will just be ignored when refund is concerned.
+					// If there are multiple calls to `BuyExecution` but with different assets, we
+					// need to be able to handle that. Current primitive implementation will just
+					// keep total track of consumed asset for the FIRST consumed asset. Others will
+					// just be ignored when refund is concerned.
 					if let Some((old_asset_location, _)) =
 						self.asset_location_and_units_per_second.clone()
 					{
@@ -161,8 +162,8 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 			self.asset_location_and_units_per_second.clone()
 		{
 			let weight = weight.min(self.weight);
-			let amount = units_per_second.saturating_mul(weight.ref_time() as u128)
-				/ (WEIGHT_REF_TIME_PER_SECOND as u128);
+			let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
+				(WEIGHT_REF_TIME_PER_SECOND as u128);
 
 			self.weight = self.weight.saturating_sub(weight);
 			self.consumed = self.consumed.saturating_sub(amount);
@@ -192,11 +193,11 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T
 ///
 /// Basically, we trust any cross-chain asset from any location to act as a reserve since
 /// in order to support the xc-asset, we need to first register it in the `XcAssetConfig` pallet.
-///
 pub struct ReserveAssetFilter;
 impl ContainsPair<Asset, Location> for ReserveAssetFilter {
 	fn contains(asset: &Asset, origin: &Location) -> bool {
-		// We assume that relay chain and sibling parachain assets are trusted reserves for their assets
+		// We assume that relay chain and sibling parachain assets are trusted reserves for their
+		// assets
 		let AssetId(location) = &asset.id;
 		let reserve_location = match (location.parents, location.first_interior()) {
 			// sibling parachain
@@ -217,8 +218,8 @@ impl ContainsPair<Asset, Location> for ReserveAssetFilter {
 /// Used to deposit XCM fees into a destination account.
 ///
 /// Only handles fungible assets for now.
-/// If for any reason taking of the fee fails, it will be burned and and error trace will be printed.
-///
+/// If for any reason taking of the fee fails, it will be burned and and error trace will be
+/// printed.
 pub struct XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>(
 	sp_std::marker::PhantomData<(AccountId, Matcher, Assets, FeeDestination)>,
 );
@@ -231,7 +232,7 @@ impl<
 {
 	fn take_revenue(revenue: Asset) {
 		match Matcher::matches_fungibles(&revenue) {
-			Ok((asset_id, amount)) => {
+			Ok((asset_id, amount)) =>
 				if amount > Zero::zero() {
 					if let Err(error) =
 						Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
@@ -247,8 +248,7 @@ impl<
 							amount, asset_id,
 						);
 					}
-				}
-			},
+				},
 			Err(_) => {
 				log::error!(
 					target: "xcm::weight",

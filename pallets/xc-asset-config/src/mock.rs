@@ -17,8 +17,7 @@
 // along with Astar. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_xc_asset_config};
-use xcm::latest::prelude::Junction::GeneralKey;
-use xcm::v4::Location;
+use xcm::{latest::prelude::Junction::GeneralKey, v4::Location};
 
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
 use sp_core::H256;

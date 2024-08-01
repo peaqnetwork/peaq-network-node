@@ -4,9 +4,8 @@ use crate::{
 	pallet::{Config, Pallet},
 	reward_rate::RewardRateInfo,
 };
-use frame_support::pallet_prelude::GetStorageVersion;
 use frame_support::{
-	pallet_prelude::{StorageVersion, ValueQuery},
+	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,

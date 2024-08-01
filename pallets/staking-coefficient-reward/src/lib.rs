@@ -186,8 +186,8 @@ pub mod pallet {
 						.filter(|x| x.amount >= min_delegator_stake)
 						.map(|x| Reward {
 							owner: x.owner.clone(),
-							amount: Perquintill::from_rational(x.amount, denominator)
-								* issue_number,
+							amount: Perquintill::from_rational(x.amount, denominator) *
+								issue_number,
 						})
 						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 

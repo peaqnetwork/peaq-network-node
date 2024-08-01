@@ -18,8 +18,7 @@
 
 use super::*;
 use frame_support::{
-	pallet_prelude::GetStorageVersion,
-	pallet_prelude::*,
+	pallet_prelude::{GetStorageVersion, *},
 	traits::{Get, OnRuntimeUpgrade},
 };
 use sp_std::{marker::PhantomData, vec::Vec};

@@ -6,11 +6,9 @@ use super::{
 };
 use crate::PeaqAssetLocationIdConverter;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
-use frame_support::traits::Contains;
-use frame_support::traits::TransformOrigin;
 use frame_support::{
 	parameter_types,
-	traits::{fungibles, ContainsPair, Everything, Nothing},
+	traits::{fungibles, Contains, ContainsPair, Everything, Nothing, TransformOrigin},
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
@@ -20,10 +18,10 @@ use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use runtime_common::{AccountIdToLocation, FixedRateOfForeignAsset};
-use sp_runtime::traits::ConstU32;
-use sp_runtime::traits::Convert;
-use sp_runtime::traits::MaybeEquivalence;
-use sp_runtime::Perbill;
+use sp_runtime::{
+	traits::{ConstU32, Convert, MaybeEquivalence},
+	Perbill,
+};
 use sp_weights::Weight;
 use xcm::latest::{prelude::*, Asset};
 use xcm_builder::{
@@ -113,7 +111,7 @@ impl<
 {
 	fn take_revenue(revenue: Asset) {
 		match Matcher::matches_fungibles(&revenue) {
-			Ok((asset_id, amount)) => {
+			Ok((asset_id, amount)) =>
 				if amount > Zero::zero() {
 					if let Err(error) =
 						Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
@@ -129,8 +127,7 @@ impl<
 							amount, asset_id,
 						);
 					}
-				}
-			},
+				},
 			Err(_) => {
 				log::error!(
 					target: "xcm::weight",
@@ -461,7 +458,8 @@ impl pallet_message_queue::Config for Runtime {
 	type MaxStale = MessageQueueMaxStale;
 	// The XCMP queue pallet is only ever able to handle the `Sibling(ParaId)` origin:
 	type QueueChangeHandler = NarrowOriginToSibling<XcmpQueue>;
-	// NarrowOriginToSibling calls XcmpQueue's is_paused if Origin is sibling. Allows all other origins
+	// NarrowOriginToSibling calls XcmpQueue's is_paused if Origin is sibling. Allows all other
+	// origins
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;

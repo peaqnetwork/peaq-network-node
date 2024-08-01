@@ -19,23 +19,20 @@
 
 #![allow(clippy::from_over_into)]
 
-use frame_support::traits::ConstBool;
-use frame_support::traits::ConstU64;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{ConstBool, ConstU64, Currency, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
 use pallet_authorship::EventHandler;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
-use sp_runtime::BuildStorage;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::UintAuthorityId,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill, Perquintill,
+	BuildStorage, Perbill, Perquintill,
 };
 use sp_std::{cell::RefCell, fmt::Debug};
 

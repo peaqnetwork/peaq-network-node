@@ -182,7 +182,8 @@ fn fixed_rate_of_foreign_asset_buy_is_ok() {
 		panic!("Should have been `Ok` wrapped Assets!");
 	}
 
-	// 3. Buy even more weight, but use a different type of asset now while reusing the old trader instance.
+	// 3. Buy even more weight, but use a different type of asset now while reusing the old trader
+	//    instance.
 	let (old_weight, old_consumed) = (fixed_rate_trader.weight, fixed_rate_trader.consumed);
 
 	// Note that the concrete asset type differs now from previous buys
@@ -208,8 +209,8 @@ fn fixed_rate_of_foreign_asset_buy_is_ok() {
 		));
 
 		assert_eq!(fixed_rate_trader.weight, weight + old_weight);
-		// We don't expect this to change since trader already contains data about previous asset type.
-		// Current rule is not to update in this case.
+		// We don't expect this to change since trader already contains data about previous asset
+		// type. Current rule is not to update in this case.
 		assert_eq!(fixed_rate_trader.consumed, old_consumed);
 		assert_eq!(
 			fixed_rate_trader.asset_location_and_units_per_second,

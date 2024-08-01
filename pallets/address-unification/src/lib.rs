@@ -369,11 +369,10 @@ impl<T: Config> StaticLookup for Pallet<T> {
 
 	fn lookup(a: Self::Source) -> Result<Self::Target, LookupError> {
 		match a {
-			MultiAddress::Address20(i) => {
+			MultiAddress::Address20(i) =>
 				Ok(<Self as PalletEVMAddressMapping<T::AccountId>>::into_account_id(
 					EvmAddress::from_slice(&i),
-				))
-			},
+				)),
 			_ => Err(LookupError),
 		}
 	}

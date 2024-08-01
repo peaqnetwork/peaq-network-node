@@ -984,8 +984,8 @@ pub mod pallet {
 			ensure!(stake >= T::MinCollatorCandidateStake::get(), Error::<T>::ValStakeBelowMin);
 			ensure!(stake <= MaxCollatorCandidateStake::<T>::get(), Error::<T>::ValStakeAboveMax);
 			ensure!(
-				Unstaking::<T>::get(&sender).len().saturated_into::<u32>()
-					< T::MaxUnstakeRequests::get(),
+				Unstaking::<T>::get(&sender).len().saturated_into::<u32>() <
+					T::MaxUnstakeRequests::get(),
 				Error::<T>::CannotJoinBeforeUnlocking
 			);
 
@@ -1401,8 +1401,8 @@ pub mod pallet {
 			// cannot be a collator candidate and delegator with same AccountId
 			ensure!(Self::is_active_candidate(&acc).is_none(), Error::<T>::CandidateExists);
 			ensure!(
-				Unstaking::<T>::get(&acc).len().saturated_into::<u32>()
-					< T::MaxUnstakeRequests::get(),
+				Unstaking::<T>::get(&acc).len().saturated_into::<u32>() <
+					T::MaxUnstakeRequests::get(),
 				Error::<T>::CannotJoinBeforeUnlocking
 			);
 			// cannot delegate if number of delegations in this round exceeds
@@ -1540,16 +1540,16 @@ pub mod pallet {
 
 			// check balance
 			ensure!(
-				pallet_balances::Pallet::<T>::free_balance(acc.clone())
-					>= delegator.total.saturating_add(amount).into(),
+				pallet_balances::Pallet::<T>::free_balance(acc.clone()) >=
+					delegator.total.saturating_add(amount).into(),
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
 
 			// delegation after first
 			ensure!(amount >= T::MinDelegation::get(), Error::<T>::DelegationBelowMin);
 			ensure!(
-				(delegator.delegations.len().saturated_into::<u32>())
-					< T::MaxCollatorsPerDelegator::get(),
+				(delegator.delegations.len().saturated_into::<u32>()) <
+					T::MaxCollatorsPerDelegator::get(),
 				Error::<T>::MaxCollatorsPerDelegatorExceeded
 			);
 			// cannot delegate if number of delegations in this round exceeds
@@ -2254,9 +2254,8 @@ pub mod pallet {
 		/// delegation state if it still contains other delegations.
 		fn update_kicked_delegator_storage(delegator: Option<ReplacedDelegator<T>>) {
 			match delegator {
-				Some(ReplacedDelegator { who, state: Some(state) }) => {
-					DelegatorState::<T>::insert(who, state)
-				},
+				Some(ReplacedDelegator { who, state: Some(state) }) =>
+					DelegatorState::<T>::insert(who, state),
 				Some(ReplacedDelegator { who, .. }) => DelegatorState::<T>::remove(who),
 				_ => (),
 			}
@@ -2505,8 +2504,8 @@ pub mod pallet {
 				.into_iter()
 				.enumerate()
 				.find_map(|(i, id)| {
-					if <T as pallet_session::Config>::ValidatorIdOf::convert(collator.clone())
-						== Some(id)
+					if <T as pallet_session::Config>::ValidatorIdOf::convert(collator.clone()) ==
+						Some(id)
 					{
 						Some(i)
 					} else {

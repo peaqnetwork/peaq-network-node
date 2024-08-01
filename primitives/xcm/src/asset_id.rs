@@ -103,9 +103,9 @@ impl TryFrom<AssetId> for StorageAssetId {
 	fn try_from(asset_id: AssetId) -> Result<Self, Self::Error> {
 		match asset_id {
 			AssetId::Token(symbol) => Ok((symbol as u64) + ((asset_id.type_index() as u64) << 60)),
-			AssetId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) << 32)
-				+ ((symbol1 & TOKEN_MASK) as u64)
-				+ ((asset_id.type_index() as u64) << 60)),
+			AssetId::LPToken(symbol0, symbol1) => Ok((((symbol0 & TOKEN_MASK) as u64) << 32) +
+				((symbol1 & TOKEN_MASK) as u64) +
+				((asset_id.type_index() as u64) << 60)),
 		}
 	}
 }

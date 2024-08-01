@@ -1,9 +1,8 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use super::*;
-use frame_support::pallet_prelude::GetStorageVersion;
 use frame_support::{
-	pallet_prelude::{StorageVersion, ValueQuery},
+	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,

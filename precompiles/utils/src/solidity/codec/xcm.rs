@@ -16,18 +16,16 @@
 
 //! Encoding of XCM types for solidity
 
-use {
-	crate::solidity::{
-		codec::{bytes::*, Codec, Reader, Writer},
-		revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
-	},
-	alloc::string::String,
-	frame_support::{ensure, traits::ConstU32},
-	sp_core::H256,
-	sp_std::vec::Vec,
-	sp_weights::Weight,
-	xcm::latest::{Junction, Junctions, Location, NetworkId},
+use crate::solidity::{
+	codec::{bytes::*, Codec, Reader, Writer},
+	revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
 };
+use alloc::string::String;
+use frame_support::{ensure, traits::ConstU32};
+use sp_core::H256;
+use sp_std::vec::Vec;
+use sp_weights::Weight;
+use xcm::latest::{Junction, Junctions, Location, NetworkId};
 
 pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 

@@ -8,10 +8,9 @@ use sp_io::TestExternalities;
 
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
 use sp_core::{ConstU32, H256};
-use sp_runtime::BuildStorage;
 use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	Perbill,
+	BuildStorage, Perbill,
 };
 
 pub(crate) type AccountId = u64;

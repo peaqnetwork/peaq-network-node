@@ -58,10 +58,9 @@ where
 	fn is_allowed(_caller: H160, selector: Option<u32>) -> bool {
 		match selector {
 			None => true,
-			Some(selector) => {
+			Some(selector) =>
 				!XcmUtilsPrecompileCall::<Runtime, XcmConfig>::xcm_execute_selectors()
-					.contains(&selector)
-			},
+					.contains(&selector),
 		}
 	}
 
@@ -147,9 +146,8 @@ where
 			.map(Xcm::<<XcmConfig as xcm_executor::Config>::RuntimeCall>::try_from);
 
 		let result = match msg {
-			Ok(Ok(mut x)) => {
-				XcmConfig::Weigher::weight(&mut x).map_err(|_| revert("failed weighting"))
-			},
+			Ok(Ok(mut x)) =>
+				XcmConfig::Weigher::weight(&mut x).map_err(|_| revert("failed weighting")),
 			_ => Err(RevertReason::custom("Failed decoding").in_field("message").into()),
 		};
 

@@ -3140,8 +3140,8 @@ fn authorities_per_round() {
 
 			// roll to last block of round 0
 			roll_to(4, authors.clone());
-			let reward_0 = reward_rate.compute_collator_reward::<Test>(1000)
-				+ reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+			let reward_0 = reward_rate.compute_collator_reward::<Test>(1000) +
+				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));

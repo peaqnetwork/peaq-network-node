@@ -288,12 +288,12 @@ impl FreeBalanceSnapshot {
 
 	/// `true` if all free balances equal `Zero`, `false` otherwise
 	fn is_zero(&self) -> bool {
-		self.treasury.is_zero()
-			&& self.collators_delegators.is_zero()
-			&& self.coretime.is_zero()
-			&& self.subsidization_pool.is_zero()
-			&& self.depin_staking.is_zero()
-			&& self.depin_incentivization.is_zero()
+		self.treasury.is_zero() &&
+			self.collators_delegators.is_zero() &&
+			self.coretime.is_zero() &&
+			self.subsidization_pool.is_zero() &&
+			self.depin_staking.is_zero() &&
+			self.depin_incentivization.is_zero()
 	}
 
 	/// Asserts that `post_reward_state` is as expected.

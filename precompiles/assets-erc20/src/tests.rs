@@ -517,8 +517,8 @@ fn transfer_not_enough_founds() {
 				.execute_reverts(|output| {
 					from_utf8(output)
 						.unwrap()
-						.contains("Dispatched call failed with error: Module(ModuleError")
-						&& from_utf8(output).unwrap().contains("BalanceLow")
+						.contains("Dispatched call failed with error: Module(ModuleError") &&
+						from_utf8(output).unwrap().contains("BalanceLow")
 				});
 		});
 }

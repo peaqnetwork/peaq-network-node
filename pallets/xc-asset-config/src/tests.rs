@@ -23,8 +23,7 @@ use super::{
 use frame_support::{assert_noop, assert_ok, WeakBoundedVec};
 use mock::*;
 use sp_runtime::traits::BadOrigin;
-use xcm::latest::prelude::*;
-use xcm::{v4::Location, VersionedLocation};
+use xcm::{latest::prelude::*, v4::Location, VersionedLocation};
 
 #[test]
 fn only_root_as_origin() {

@@ -277,12 +277,11 @@ impl Contains<RuntimeCall> for BaseFilter {
 		match call {
 			// Filter permission-less assets creation/destroying.
 			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
-			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) => {
+			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) =>
 				match <StorageAssetId as TryInto<PeaqAssetId>>::try_into(*id) {
 					Ok(id) => id.is_allow_to_create(),
 					Err(_) => false,
-				}
-			},
+				},
 			// These modules are not allowed to be called by transactions:
 			// To leave collator just shutdown it, next session funds will be released
 			// Other modules should works:
@@ -1217,9 +1216,8 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<TransactionValidity> {
 		match self {
-			RuntimeCall::Ethereum(call) => {
-				call.validate_self_contained(signed_info, dispatch_info, len)
-			},
+			RuntimeCall::Ethereum(call) =>
+				call.validate_self_contained(signed_info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1231,9 +1229,8 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) => {
-				call.pre_dispatch_self_contained(info, dispatch_info, len)
-			},
+			RuntimeCall::Ethereum(call) =>
+				call.pre_dispatch_self_contained(info, dispatch_info, len),
 			_ => None,
 		}
 	}
@@ -1243,11 +1240,10 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) => {
+			call @ RuntimeCall::Ethereum(pallet_ethereum::Call::transact { .. }) =>
 				Some(call.dispatch(RuntimeOrigin::from(
 					pallet_ethereum::RawOrigin::EthereumTransaction(info),
-				)))
-			},
+				))),
 			_ => None,
 		}
 	}
@@ -2130,7 +2126,8 @@ impl pallet_multisig::Config for Runtime {
  *             .read_slot()
  *             .expect("Could not read the relay chain slot from the proof");
  *         let inherent_data =
- *             cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+ *             
+ * cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
  *                 relay_chain_slot,
  *                 sp_std::time::Duration::from_secs(6),
  *             )

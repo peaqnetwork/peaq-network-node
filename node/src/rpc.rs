@@ -8,10 +8,10 @@ use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
 use polkadot_primitives::PersistedValidationData;
-use sc_client_api::UsageProvider;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
+	UsageProvider,
 };
 use sc_consensus_manual_seal::rpc::EngineCommand;
 use sc_network::NetworkService;
@@ -209,8 +209,9 @@ where
 		let (relay_parent_storage_root, relay_chain_state) =
 			RelayStateSproofBuilder::default().into_state_root_and_proof();
 		let vfp = PersistedValidationData {
-			// This is a hack to make `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases`
-			// happy. Relay parent number can't be bigger than u32::MAX.
+			// This is a hack to make
+			// `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases` happy. Relay parent
+			// number can't be bigger than u32::MAX.
 			relay_parent_number: u32::MAX,
 			relay_parent_storage_root,
 			..Default::default()

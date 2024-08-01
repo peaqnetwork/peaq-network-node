@@ -39,20 +39,16 @@ pub fn err2str(error: &RbacError) -> &str {
 	match error {
 		RbacError { typ: RbacErrorType::EntityAlreadyExist, .. } => "RbacError.EntityAlreadyExists",
 		RbacError { typ: RbacErrorType::EntityDoesNotExist, .. } => "RbacError.EntityDoesNotExist",
-		RbacError { typ: RbacErrorType::EntityAuthorizationFailed, .. } => {
-			"RbacError.EntityAuthorizationFailed"
-		},
+		RbacError { typ: RbacErrorType::EntityAuthorizationFailed, .. } =>
+			"RbacError.EntityAuthorizationFailed",
 		RbacError { typ: RbacErrorType::EntityDisabled, .. } => "RbacError.EntityDisabled",
-		RbacError { typ: RbacErrorType::AssignmentAlreadyExist, .. } => {
-			"RbacError.AssignmentAlreadyExist"
-		},
-		RbacError { typ: RbacErrorType::AssignmentDoesNotExist, .. } => {
-			"RbacError.AssignmentDoesNotExist"
-		},
+		RbacError { typ: RbacErrorType::AssignmentAlreadyExist, .. } =>
+			"RbacError.AssignmentAlreadyExist",
+		RbacError { typ: RbacErrorType::AssignmentDoesNotExist, .. } =>
+			"RbacError.AssignmentDoesNotExist",
 		RbacError { typ: RbacErrorType::NameExceedMaxChar, .. } => "RbacError.NameExceedMaxChar",
-		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } => {
-			"RbacError.StorageExceedsMaxBounds"
-		},
+		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } =>
+			"RbacError.StorageExceedsMaxBounds",
 		RbacError { typ: RbacErrorType::EntityDeleted, .. } => "RbacError.EntityDeleted",
 	}
 }

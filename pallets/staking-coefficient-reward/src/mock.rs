@@ -4,11 +4,9 @@
 
 use super::*;
 use crate::{self as reward_calculator, weights::WeightInfo};
-use frame_support::traits::ConstBool;
-use frame_support::traits::ConstU64;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Currency, OnFinalize, OnInitialize},
+	traits::{ConstBool, ConstU64, Currency, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
@@ -16,12 +14,11 @@ use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake};
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
-use sp_runtime::BuildStorage;
 use sp_runtime::{
 	impl_opaque_keys,
 	testing::UintAuthorityId,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	Perbill,
+	BuildStorage, Perbill,
 };
 use sp_std::fmt::Debug;
 

@@ -256,8 +256,8 @@ pub mod pallet {
 			let current_year = CurrentYear::<T>::get();
 
 			// Calculate disinflation rate as disinflation rate(n) = disinflation rate(0) ^ (n-1)
-			let disinflation = Perbill::from_percent(100)
-				- inflation_config.inflation_parameters.disinflation_rate;
+			let disinflation = Perbill::from_percent(100) -
+				inflation_config.inflation_parameters.disinflation_rate;
 			let disinflation_rate =
 				disinflation.saturating_pow((current_year - 1).try_into().unwrap());
 

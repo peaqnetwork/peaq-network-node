@@ -7,8 +7,10 @@ use frame_system::pallet_prelude::BlockNumberFor;
 use sp_io::TestExternalities;
 
 use sp_core::{ConstU32, H256};
-use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
-use sp_runtime::BuildStorage;
+use sp_runtime::{
+	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
+};
 
 pub(crate) type AccountId = u64;
 pub(crate) use peaq_primitives_xcm::Balance;
