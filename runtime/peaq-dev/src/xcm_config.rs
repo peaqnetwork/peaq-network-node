@@ -163,7 +163,7 @@ pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
 /// biases the kind of local `Origin` it will become.
-pub type XcmOriginToCallOrigin = (
+pub type XcmOriginToTransactDispatchOrigin = (
 	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
 	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
 	// foreign chains who want to have a local sovereign account on this chain which they control.
@@ -177,11 +177,11 @@ pub type XcmOriginToCallOrigin = (
 	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
 	// transaction from the Root origin.
 	ParentAsSuperuser<RuntimeOrigin>,
+	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
+	XcmPassthrough<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RococoNetwork, RuntimeOrigin>,
-	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<RuntimeOrigin>,
 );
 
 parameter_types! {
@@ -259,7 +259,7 @@ impl xcm_executor::Config for XcmConfig {
 	type CallDispatcher = RuntimeCall;
 	type XcmSender = XcmRouter;
 	type AssetTransactor = AssetTransactors;
-	type OriginConverter = XcmOriginToCallOrigin;
+	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = ReserveAssetFilter;
 	// type IsReserve = Everything;
 	type IsTeleporter = ();
@@ -338,23 +338,6 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
 
-// [TODO] Need to double check whether it induced the xcm fails only in 1.1.0
-// pub struct ExponentialFee;
-//
-// impl ExponentialFee {
-// 	fn calculate_fee(size: usize) -> Assets {
-// 		let fee = (size * size) as u16;
-// 		Assets::from((Here, fee))
-// 	}
-// }
-//
-// impl PriceForParachainDelivery for ExponentialFee {
-// 	fn price_for_parachain_delivery(_: ParaId, message: &Xcm<()>) -> Assets {
-// 		let size = message.using_encoded(|encoded| encoded.len());
-// 		Self::calculate_fee(size)
-// 	}
-// }
-
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ChannelInfo = ParachainSystem;
@@ -362,8 +345,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmpQueue = TransformOrigin<MessageQueue, AggregateMessageOrigin, ParaId, ParaIdToSibling>;
 	type MaxInboundSuspended = ConstU32<1_000>;
 	type ControllerOrigin = EnsureRoot<AccountId>;
-	// [TODO] Check Astar's XcmOriginToTransactDispatchOrigin
-	type ControllerOriginConverter = XcmOriginToCallOrigin;
+	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
 }
