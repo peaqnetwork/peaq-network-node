@@ -18,15 +18,15 @@ use super::*;
 
 use peaq_rpc_debug::{DebugHandler, DebugRequester};
 use peaq_rpc_trace::{CacheRequester as TraceFilterCacheRequester, CacheTask};
-use tokio::sync::Semaphore;
 use substrate_prometheus_endpoint::Registry as PrometheusRegistry;
+use tokio::sync::Semaphore;
 
 use crate::cli_opt::EthApi as EthApiCmd;
 use fp_rpc::EthereumRuntimeRPCApi;
 // use crate::client::RuntimeApiCollection;
 use sc_client_api::BlockOf;
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, Header as HeaderT};
 use sp_core::H256;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, Header as HeaderT};
 use std::time::Duration;
 
 #[derive(Clone)]

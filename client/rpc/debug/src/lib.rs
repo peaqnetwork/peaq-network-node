@@ -81,10 +81,7 @@ impl DebugServer for Debug {
 		requester
 			.unbounded_send(((RequesterInput::Transaction(transaction_hash), params), tx))
 			.map_err(|err| {
-				internal_err(format!(
-					"failed to send request to debug service : {:?}",
-					err
-				))
+				internal_err(format!("failed to send request to debug service : {:?}", err))
 			})?;
 
 		// Receive a message from the service level task and send the rpc response.
@@ -108,10 +105,7 @@ impl DebugServer for Debug {
 		requester
 			.unbounded_send(((RequesterInput::Block(id), params), tx))
 			.map_err(|err| {
-				internal_err(format!(
-					"failed to send request to debug service : {:?}",
-					err
-				))
+				internal_err(format!("failed to send request to debug service : {:?}", err))
 			})?;
 
 		// Receive a message from the service level task and send the rpc response.
@@ -192,7 +186,7 @@ where
 								.await,
 							);
 						});
-					}
+					},
 					Some(((RequesterInput::Block(request_block_id), params), response_tx)) => {
 						let client = client.clone();
 						let backend = backend.clone();
@@ -226,8 +220,8 @@ where
 								.await,
 							);
 						});
-					}
-					_ => {}
+					},
+					_ => {},
 				}
 			}
 		};
@@ -237,10 +231,7 @@ where
 	fn handle_params(params: Option<TraceParams>) -> RpcResult<(TracerInput, single::TraceType)> {
 		// Set trace input and type
 		match params {
-			Some(TraceParams {
-				tracer: Some(tracer),
-				..
-			}) => {
+			Some(TraceParams { tracer: Some(tracer), .. }) => {
 				const BLOCKSCOUT_JS_CODE_HASH: [u8; 16] =
 					hex_literal::hex!("94d9f08796f91eb13a2e82a6066882f7");
 				const BLOCKSCOUT_JS_CODE_HASH_V2: [u8; 16] =
@@ -262,7 +253,7 @@ where
 						hash
 					)));
 				}
-			}
+			},
 			Some(params) => Ok((
 				TracerInput::None,
 				single::TraceType::Raw {
@@ -296,13 +287,13 @@ where
 			RequestBlockId::Number(n) => Ok(BlockId::Number(n.unique_saturated_into())),
 			RequestBlockId::Tag(RequestBlockTag::Latest) => {
 				Ok(BlockId::Number(client.info().best_number))
-			}
+			},
 			RequestBlockId::Tag(RequestBlockTag::Earliest) => {
 				Ok(BlockId::Number(0u32.unique_saturated_into()))
-			}
+			},
 			RequestBlockId::Tag(RequestBlockTag::Pending) => {
 				Err(internal_err("'pending' blocks are not supported"))
-			}
+			},
 			RequestBlockId::Hash(eth_hash) => {
 				match futures::executor::block_on(frontier_backend_client::load_hash::<B, C>(
 					client.as_ref(),
@@ -313,7 +304,7 @@ where
 					Ok(_) => Err(internal_err("Block hash not found".to_string())),
 					Err(e) => Err(e),
 				}
-			}
+			},
 		}?;
 
 		// Get ApiRef. This handle allow to keep changes between txs in an internal buffer.
@@ -337,15 +328,8 @@ where
 		// Using storage overrides we align with `:ethereum_schema` which will result in proper
 		// SCALE decoding in case of migration.
 		let statuses = match overrides.schemas.get(&schema) {
-			Some(schema) => schema
-				.current_transaction_statuses(hash)
-				.unwrap_or_default(),
-			_ => {
-				return Err(internal_err(format!(
-					"No storage override at {:?}",
-					reference_id
-				)))
-			}
+			Some(schema) => schema.current_transaction_statuses(hash).unwrap_or_default(),
+			_ => return Err(internal_err(format!("No storage override at {:?}", reference_id))),
 		};
 
 		// Known ethereum transaction hashes.
@@ -368,9 +352,7 @@ where
 		{
 			api_version
 		} else {
-			return Err(internal_err(
-				"Runtime api version call failed (trace)".to_string(),
-			));
+			return Err(internal_err("Runtime api version call failed (trace)".to_string()));
 		};
 
 		// Trace the block.
@@ -415,14 +397,12 @@ where
 						peaq_client_evm_tracing::formatters::CallTracer::format(proxy)
 							.ok_or("Trace result is empty.")
 							.map_err(|e| internal_err(format!("{:?}", e)))
-					}
-					_ => Err(internal_err(
-						"Bug: failed to resolve the tracer format.".to_string(),
-					)),
+					},
+					_ => Err(internal_err("Bug: failed to resolve the tracer format.".to_string())),
 				}?;
 
 				Ok(Response::Block(response))
-			}
+			},
 			_ => Err(internal_err(
 				"debug_traceBlock functions currently only support callList mode (enabled
 				by providing `{{'tracer': 'callTracer'}}` in the request)."
@@ -498,9 +478,7 @@ where
 		{
 			api_version
 		} else {
-			return Err(internal_err(
-				"Runtime api version call failed (trace)".to_string(),
-			));
+			return Err(internal_err("Runtime api version call failed (trace)".to_string()));
 		};
 
 		let schema =
@@ -510,12 +488,7 @@ where
 		// with `:ethereum_schema` which will result in proper SCALE decoding in case of migration.
 		let reference_block = match overrides.schemas.get(&schema) {
 			Some(schema) => schema.current_block(reference_hash),
-			_ => {
-				return Err(internal_err(format!(
-					"No storage override at {:?}",
-					reference_hash
-				)))
-			}
+			_ => return Err(internal_err(format!("No storage override at {:?}", reference_hash))),
 		};
 
 		// Get the actual ethereum transaction.
@@ -529,10 +502,9 @@ where
 					} else {
 						// Old "trace_transaction" api did not initialize block before applying transactions,
 						// so we need to do it here before calling "trace_transaction".
-						api.initialize_block(parent_block_hash, &header)
-							.map_err(|e| {
-								internal_err(format!("Runtime api access error: {:?}", e))
-							})?;
+						api.initialize_block(parent_block_hash, &header).map_err(|e| {
+							internal_err(format!("Runtime api access error: {:?}", e))
+						})?;
 
 						if trace_api_version == 4 {
 							// Pre pallet-message-queue
@@ -553,13 +525,13 @@ where
 										exts,
 										&tx,
 									)
-								}
+								},
 								_ => {
 									return Err(internal_err(
 										"Bug: pre-london runtime expects legacy transactions"
 											.to_string(),
 									))
-								}
+								},
 							}
 						}
 					};
@@ -577,11 +549,7 @@ where
 				};
 
 				return match trace_type {
-					single::TraceType::Raw {
-						disable_storage,
-						disable_memory,
-						disable_stack,
-					} => {
+					single::TraceType::Raw { disable_storage, disable_memory, disable_stack } => {
 						let mut proxy = peaq_client_evm_tracing::listeners::Raw::new(
 							disable_storage,
 							disable_memory,
@@ -597,7 +565,7 @@ where
 								),
 							)?,
 						))
-					}
+					},
 					single::TraceType::CallList => {
 						let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
 						proxy.using(f)?;
@@ -607,22 +575,20 @@ where
 								peaq_client_evm_tracing::formatters::Blockscout::format(proxy)
 									.ok_or("Trace result is empty.")
 									.map_err(|e| internal_err(format!("{:?}", e)))
-							}
+							},
 							TracerInput::CallTracer => {
 								let mut res =
-									peaq_client_evm_tracing::formatters::CallTracer::format(
-										proxy,
-									)
-									.ok_or("Trace result is empty.")
-									.map_err(|e| internal_err(format!("{:?}", e)))?;
+									peaq_client_evm_tracing::formatters::CallTracer::format(proxy)
+										.ok_or("Trace result is empty.")
+										.map_err(|e| internal_err(format!("{:?}", e)))?;
 								Ok(res.pop().expect("Trace result is empty."))
-							}
+							},
 							_ => Err(internal_err(
 								"Bug: failed to resolve the tracer format.".to_string(),
 							)),
 						}?;
 						Ok(Response::Single(response))
-					}
+					},
 					not_supported => Err(internal_err(format!(
 						"Bug: `handle_transaction_request` does not support {:?}.",
 						not_supported

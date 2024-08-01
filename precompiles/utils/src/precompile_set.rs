@@ -111,13 +111,11 @@ pub enum DiscriminantResult<T> {
 impl<T> Into<IsPrecompileResult> for DiscriminantResult<T> {
 	fn into(self) -> IsPrecompileResult {
 		match self {
-			Self::Some(_, extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: true,
-				extra_cost,
+			Self::Some(_, extra_cost) => {
+				IsPrecompileResult::Answer { is_precompile: true, extra_cost }
 			},
-			Self::None(extra_cost) => IsPrecompileResult::Answer {
-				is_precompile: false,
-				extra_cost,
+			Self::None(extra_cost) => {
+				IsPrecompileResult::Answer { is_precompile: false, extra_cost }
 			},
 			Self::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
@@ -834,10 +832,7 @@ where
 
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: A::get().contains(&address),
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: A::get().contains(&address), extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -863,10 +858,7 @@ where
 {
 	#[inline(always)]
 	fn is_active_precompile(&self, _address: H160, _gas: u64) -> IsPrecompileResult {
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 }
 
@@ -961,10 +953,7 @@ impl PrecompileSetFragment for Tuple {
 				_ => {}
 			};
 		)*);
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 
 	#[inline(always)]
@@ -1007,10 +996,7 @@ impl IsActivePrecompile for Tuple {
 				_ => {}
 			};
 		)*);
-		IsPrecompileResult::Answer {
-			is_precompile: false,
-			extra_cost: 0,
-		}
+		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
 	}
 }
 

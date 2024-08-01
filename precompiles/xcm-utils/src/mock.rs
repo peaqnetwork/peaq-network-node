@@ -81,13 +81,7 @@ pub struct AccountIdToLocation;
 impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
 	fn convert(account: AccountId) -> Location {
 		let as_h160: H160 = account.into();
-		Location::new(
-			0,
-			[AccountKey20 {
-				network: None,
-				key: as_h160.as_fixed_bytes().clone(),
-			}],
-		)
+		Location::new(0, [AccountKey20 { network: None, key: as_h160.as_fixed_bytes().clone() }])
 	}
 }
 
@@ -302,8 +296,7 @@ impl SendXcm for TestSendXcm {
 		message: &mut Option<opaque::Xcm>,
 	) -> SendResult<Self::Ticket> {
 		SENT_XCM.with(|q| {
-			q.borrow_mut()
-				.push((destination.clone().unwrap(), message.clone().unwrap()))
+			q.borrow_mut().push((destination.clone().unwrap(), message.clone().unwrap()))
 		});
 		Ok(((), Assets::new()))
 	}
@@ -340,8 +333,7 @@ impl WeightTrader for DummyWeightTrader {
 		payment: AssetsInHolding,
 		_context: &XcmContext,
 	) -> Result<AssetsInHolding, XcmError> {
-		let asset_to_charge: Asset =
-			(Location::parent(), weight.ref_time() as u128).into();
+		let asset_to_charge: Asset = (Location::parent(), weight.ref_time() as u128).into();
 		let unused = payment.checked_sub(asset_to_charge).map_err(|_| XcmError::TooExpensive)?;
 
 		Ok(unused)

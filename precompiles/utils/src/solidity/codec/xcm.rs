@@ -49,77 +49,71 @@ pub(crate) fn network_id_to_bytes(network_id: Option<NetworkId>) -> Vec<u8> {
 		None => {
 			encoded.push(0u8);
 			encoded
-		}
+		},
 		Some(NetworkId::ByGenesis(id)) => {
 			encoded.push(1u8);
 			encoded.append(&mut id.into());
 			encoded
-		}
+		},
 		Some(NetworkId::Polkadot) => {
 			encoded.push(2u8);
 			encoded.push(2u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Kusama) => {
 			encoded.push(3u8);
 			encoded.push(3u8);
 			encoded
-		}
-		Some(NetworkId::ByFork {
-			block_number,
-			block_hash,
-		}) => {
+		},
+		Some(NetworkId::ByFork { block_number, block_hash }) => {
 			encoded.push(4u8);
 			encoded.push(1u8);
 			encoded.append(&mut block_number.to_be_bytes().into());
 			encoded.append(&mut block_hash.into());
 			encoded
-		}
+		},
 		Some(NetworkId::Westend) => {
 			encoded.push(5u8);
 			encoded.push(4u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Rococo) => {
 			encoded.push(6u8);
 			encoded.push(5u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Wococo) => {
 			encoded.push(7u8);
 			encoded.push(6u8);
 			encoded
-		}
+		},
 		Some(NetworkId::Ethereum { chain_id }) => {
 			encoded.push(8u8);
 			encoded.push(7u8);
 			encoded.append(&mut chain_id.to_be_bytes().into());
 			encoded
-		}
+		},
 		Some(NetworkId::BitcoinCore) => {
 			encoded.push(9u8);
 			encoded.push(8u8);
 			encoded
-		}
+		},
 		Some(NetworkId::BitcoinCash) => {
 			encoded.push(10u8);
 			encoded.push(9u8);
 			encoded
-		}
+		},
 		Some(NetworkId::PolkadotBulletin) => {
 			encoded.push(11u8);
 			encoded.push(10u8);
 			encoded
-		}
+		},
 	}
 }
 
 // Function to convert bytes to networkId
 pub(crate) fn network_id_from_bytes(encoded_bytes: Vec<u8>) -> MayRevert<Option<NetworkId>> {
-	ensure!(
-		encoded_bytes.len() > 0,
-		RevertReason::custom("Junctions cannot be empty")
-	);
+	ensure!(encoded_bytes.len() > 0, RevertReason::custom("Junctions cannot be empty"));
 	let mut encoded_network_id = Reader::new(&encoded_bytes);
 
 	let network_selector = encoded_network_id
@@ -170,10 +164,7 @@ impl Codec for Junction {
 		let junction = reader.read::<BoundedBytes<ConstU32<JUNCTION_SIZE_LIMIT>>>()?;
 		let junction_bytes: Vec<_> = junction.into();
 
-		ensure!(
-			junction_bytes.len() > 0,
-			RevertReason::custom("Junctions cannot be empty")
-		);
+		ensure!(junction_bytes.len() > 0, RevertReason::custom("Junctions cannot be empty"));
 
 		// For simplicity we use an EvmReader here
 		let mut encoded_junction = Reader::new(&junction_bytes);

@@ -20,13 +20,13 @@
 #![allow(clippy::from_over_into)]
 
 use frame_support::traits::ConstBool;
+use frame_support::traits::ConstU64;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
-use frame_support::traits::ConstU64;
 use pallet_authorship::EventHandler;
 use sp_consensus_aura::sr25519::AuthorityId;
 use sp_core::H256;
@@ -101,7 +101,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-	type RuntimeTask =();
+	type RuntimeTask = ();
 }
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;

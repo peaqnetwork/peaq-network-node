@@ -113,16 +113,10 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		);
 
 		// Atm in pallet, we only support one asset so this should work
-        let payment_asset = payment
-            .fungible_assets_iter()
-            .next()
-            .ok_or(XcmError::TooExpensive)?;
+		let payment_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
 
 		match payment_asset {
-			Asset {
-				id: AssetId(asset_location),
-				fun: Fungibility::Fungible(_),
-			} => {
+			Asset { id: AssetId(asset_location), fun: Fungibility::Fungible(_) } => {
 				if let Some(units_per_second) = T::get_units_per_second(asset_location.clone()) {
 					let amount = units_per_second.saturating_mul(weight.ref_time() as u128) // TODO: change this to u64?
                         / (WEIGHT_REF_TIME_PER_SECOND as u128);
@@ -269,11 +263,7 @@ impl<
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, Location> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> Location {
-        AccountId32 {
-            network: None,
-            id: account.into(),
-        }
-        .into()
+		AccountId32 { network: None, id: account.into() }.into()
 	}
 }
 

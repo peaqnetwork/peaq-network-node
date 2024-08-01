@@ -525,10 +525,7 @@ impl Precompile {
 		let digest = Keccak256::digest(signature.as_bytes());
 		let selector = u32::from_be_bytes([digest[0], digest[1], digest[2], digest[3]]);
 
-		if let Some(previous) = self
-			.selector_to_variant
-			.insert(selector, method_name.clone())
-		{
+		if let Some(previous) = self.selector_to_variant.insert(selector, method_name.clone()) {
 			let msg = format!("Selector collision with method {}", previous.to_string());
 			return Err(syn::Error::new(signature_lit.span(), msg));
 		}

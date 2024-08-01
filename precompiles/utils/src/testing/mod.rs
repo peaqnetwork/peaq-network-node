@@ -28,7 +28,6 @@ pub use {
 	solidity::{check_precompile_implements_solidity_interfaces, compute_selector},
 };
 
-
 use fp_evm::Log;
 
 pub fn decode_revert_message(encoded: &[u8]) -> &[u8] {

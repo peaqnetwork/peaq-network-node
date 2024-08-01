@@ -38,15 +38,15 @@ pub struct PeaqEthConfig<C, BE>(std::marker::PhantomData<(C, BE)>);
 
 impl<C, BE> fc_rpc::EthConfig<Block, C> for PeaqEthConfig<C, BE>
 where
-    C: sc_client_api::StorageProvider<Block, BE> + Sync + Send + 'static,
-    BE: Backend<Block> + 'static,
+	C: sc_client_api::StorageProvider<Block, BE> + Sync + Send + 'static,
+	BE: Backend<Block> + 'static,
 {
-    // Use to override (adapt) evm call to precompiles for proper gas estimation.
-    // We are not aware of any of our precompile that require this.
-    type EstimateGasAdapter = ();
-    // This assumes the use of HashedMapping<BlakeTwo256> for address mapping
-    type RuntimeStorageOverride =
-        fc_rpc::frontier_backend_client::SystemAccountId32StorageOverride<Block, C, BE>;
+	// Use to override (adapt) evm call to precompiles for proper gas estimation.
+	// We are not aware of any of our precompile that require this.
+	type EstimateGasAdapter = ();
+	// This assumes the use of HashedMapping<BlakeTwo256> for address mapping
+	type RuntimeStorageOverride =
+		fc_rpc::frontier_backend_client::SystemAccountId32StorageOverride<Block, C, BE>;
 }
 
 pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {

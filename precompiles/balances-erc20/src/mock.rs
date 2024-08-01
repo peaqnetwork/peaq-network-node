@@ -24,9 +24,7 @@ use precompile_utils::{precompile_set::*, testing::MockAccount};
 use sp_runtime::BuildStorage;
 
 use sp_core::{H256, U256};
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 
 pub type Balance = u128;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;

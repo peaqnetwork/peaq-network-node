@@ -5,13 +5,13 @@
 use super::*;
 use crate::{self as reward_calculator, default_weights::SubstrateWeight};
 use frame_support::traits::ConstBool;
+use frame_support::traits::ConstU64;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Currency, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
-use frame_support::traits::ConstU64;
 use pallet_authorship::EventHandler;
 use parachain_staking::{self as stake, reward_rate::RewardRateInfo};
 use sp_consensus_aura::sr25519::AuthorityId;

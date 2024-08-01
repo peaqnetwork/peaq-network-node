@@ -16,6 +16,7 @@ use frame_system::{
 use address_unification::CallKillEVMLinkAccount;
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
 
+use cumulus_primitives_core::AggregateMessageOrigin;
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
@@ -32,12 +33,11 @@ use peaq_pallet_rbac::{
 		Role2User as RbacRole2User, User2Group as RbacUser2Group,
 	},
 };
-use sp_runtime::traits::IdentityLookup;
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use cumulus_primitives_core::AggregateMessageOrigin;
+use sp_runtime::traits::IdentityLookup;
 
-use frame_support::traits::tokens::{UnityAssetBalanceConversion, PayFromAccount};
+use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -1160,8 +1160,9 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
-	 pallet_contracts::Migration<Runtime>,
+	(
+		cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
+		pallet_contracts::Migration<Runtime>,
 	),
 >;
 
@@ -1456,52 +1457,52 @@ impl_runtime_apis! {
 		}
 
 		#[cfg(feature = "evm-tracing")]
-        fn trace_block(
-            extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-            known_transactions: Vec<H256>,
-            header: &<Block as BlockT>::Header,
-        ) -> Result<
-            (),
-            sp_runtime::DispatchError,
-        > {
+		fn trace_block(
+			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			known_transactions: Vec<H256>,
+			header: &<Block as BlockT>::Header,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
 			{
-            	use peaq_evm_tracer::tracer::EvmTracer;
+				use peaq_evm_tracer::tracer::EvmTracer;
 
-            	// We need to follow the order when replaying the transactions.
-            	// Block initialize happens first then apply_extrinsic.
-            	Executive::initialize_block(header);
+				// We need to follow the order when replaying the transactions.
+				// Block initialize happens first then apply_extrinsic.
+				Executive::initialize_block(header);
 
-            	// Apply all extrinsics. Ethereum extrinsics are traced.
-            	for ext in extrinsics.into_iter() {
-            	    match &ext.0.function {
-            	        RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => {
-            	            if known_transactions.contains(&transaction.hash()) {
-            	                // Each known extrinsic is a new call stack.
-            	                EvmTracer::emit_new();
-            	                EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
-            	            } else {
-            	                let _ = Executive::apply_extrinsic(ext);
-            	            }
-            	        }
-            	        _ => {
-            	            let _ = Executive::apply_extrinsic(ext);
-            	        }
-            	    };
-            	}
+				// Apply all extrinsics. Ethereum extrinsics are traced.
+				for ext in extrinsics.into_iter() {
+					match &ext.0.function {
+						RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => {
+							if known_transactions.contains(&transaction.hash()) {
+								// Each known extrinsic is a new call stack.
+								EvmTracer::emit_new();
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+							} else {
+								let _ = Executive::apply_extrinsic(ext);
+							}
+						}
+						_ => {
+							let _ = Executive::apply_extrinsic(ext);
+						}
+					};
+				}
 
-            	Ok(())
+				Ok(())
 			}
 		}
 
 		#[cfg(not(feature = "evm-tracing"))]
-        fn trace_block(
-            _extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-            _known_transactions: Vec<H256>,
-            _header: &<Block as BlockT>::Header,
-        ) -> Result<
-            (),
-            sp_runtime::DispatchError,
-        > {
+		fn trace_block(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_known_transactions: Vec<H256>,
+			_header: &<Block as BlockT>::Header,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
 			))

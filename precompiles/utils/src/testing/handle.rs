@@ -22,7 +22,6 @@ use {
 	sp_std::boxed::Box,
 };
 
-
 #[derive(Debug, Clone)]
 pub struct Subcall {
 	pub address: H160,

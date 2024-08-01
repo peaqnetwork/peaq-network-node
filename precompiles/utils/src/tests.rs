@@ -721,25 +721,14 @@ fn junctions_decoder_works() {
 
 	assert_eq!(parsed, [Junction::OnlyChild, Junction::OnlyChild]);
 
-	let junctions: Junctions = [
-		Junction::OnlyChild,
-		Junction::OnlyChild,
-		Junction::OnlyChild,
-	]
-	.into();
+	let junctions: Junctions =
+		[Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild].into();
 	let writer_output = Writer::new().write(junctions).build();
 
 	let mut reader = Reader::new(&writer_output);
 	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
 
-	assert_eq!(
-		parsed,
-		[
-			Junction::OnlyChild,
-			Junction::OnlyChild,
-			Junction::OnlyChild
-		],
-	);
+	assert_eq!(parsed, [Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild],);
 }
 
 #[test]

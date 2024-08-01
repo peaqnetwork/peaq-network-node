@@ -41,7 +41,6 @@ use xcm::{
 	VersionedAsset, VersionedAssets, VersionedLocation,
 };
 
-
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -336,11 +335,10 @@ where
 
 		// Since assets sorts them, we need to check whether the index is still correct,
 		// and error otherwise as there is not much we can do other than that
-		let assets =
-			Assets::from_sorted_and_deduplicated(multiasset_vec?).map_err(|_| {
-				RevertReason::custom("Provided assets either not sorted nor deduplicated")
-					.in_field("assets")
-			})?;
+		let assets = Assets::from_sorted_and_deduplicated(multiasset_vec?).map_err(|_| {
+			RevertReason::custom("Provided assets either not sorted nor deduplicated")
+				.in_field("assets")
+		})?;
 
 		let dest_weight_limit = if weight == u64::MAX {
 			WeightLimit::Unlimited

@@ -309,7 +309,8 @@ pub mod pallet {
 			weight_writes += 1;
 
 			// set the flag to calculate inflation parameters after a year(in blocks)
-			let racalculation_target_block = current_block + BlockNumberFor::<T>::from(BLOCKS_PER_YEAR);
+			let racalculation_target_block =
+				current_block + BlockNumberFor::<T>::from(BLOCKS_PER_YEAR);
 
 			// Update recalculation flag
 			DoRecalculationAt::<T>::put(racalculation_target_block);

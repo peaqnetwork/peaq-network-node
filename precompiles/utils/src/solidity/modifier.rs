@@ -22,7 +22,6 @@ use {
 	sp_core::U256,
 };
 
-
 /// Represents modifiers a Solidity function can be annotated with.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum FunctionModifier {

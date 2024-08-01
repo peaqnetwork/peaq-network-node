@@ -33,14 +33,11 @@ use sp_runtime::BuildStorage;
 
 use sp_core::H256;
 
+use once_cell::unsync::Lazy;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use xcm::latest::{prelude::*, Error as XcmError};
 use xcm_builder::{AllowUnpaidExecutionFrom, FixedWeightBounds, IsConcrete};
-use xcm_executor::{
-	traits::{TransactAsset},
-	AssetsInHolding, XcmExecutor,
-};
-use once_cell::unsync::Lazy;
+use xcm_executor::{traits::TransactAsset, AssetsInHolding, XcmExecutor};
 
 pub type AccountId = MockPeaqAccount;
 pub type AssetId = MockAssetId;
@@ -50,18 +47,12 @@ pub type CurrencyId = u128;
 
 /// locations for assetId
 const PARENT: Location = Location::parent();
-const PARACHAIN: Lazy<Location> = Lazy::new(|| Location {
-    parents: 1,
-    interior: [Parachain(10)].into(),
-});
-const GENERAL_INDEX: Lazy<Location> = Lazy::new(|| Location {
-    parents: 1,
-    interior: [Parachain(10), GeneralIndex(20)].into(),
-});
-const LOCAL_ASSET: Lazy<Location> = Lazy::new(|| Location {
-    parents: 0,
-    interior: [GeneralIndex(20)].into(),
-});
+const PARACHAIN: Lazy<Location> =
+	Lazy::new(|| Location { parents: 1, interior: [Parachain(10)].into() });
+const GENERAL_INDEX: Lazy<Location> =
+	Lazy::new(|| Location { parents: 1, interior: [Parachain(10), GeneralIndex(20)].into() });
+const LOCAL_ASSET: Lazy<Location> =
+	Lazy::new(|| Location { parents: 0, interior: [GeneralIndex(20)].into() });
 
 pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
@@ -365,14 +356,7 @@ impl sp_runtime::traits::Convert<CurrencyId, Option<Location>> for CurrencyIdToL
 pub struct AccountIdToLocation;
 impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
 	fn convert(account: AccountId) -> Location {
-		Location::new(
-			1,
-			[AccountId32 {
-				network: None,
-				id: account.into(),
-			}],
-		)
-
+		Location::new(1, [AccountId32 { network: None, id: account.into() }])
 	}
 }
 

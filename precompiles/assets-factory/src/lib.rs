@@ -100,7 +100,8 @@ where
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 
 		// Convert to asset id
-		let check_asset_id: PeaqAssetId = asset_id.clone()
+		let check_asset_id: PeaqAssetId = asset_id
+			.clone()
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 		if !check_asset_id.is_allow_to_create() {
