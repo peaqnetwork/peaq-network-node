@@ -233,7 +233,7 @@ where
 		&self,
 		filter: FilterRequest,
 	) -> jsonrpsee::core::RpcResult<Vec<TransactionTrace>> {
-		self.clone().filter(filter).await.map_err(|e| fc_rpc::internal_err(e))
+		self.clone().filter(filter).await.map_err(fc_rpc::internal_err)
 	}
 }
 
@@ -662,7 +662,7 @@ where
 					tracing::trace!("Pooled block {} is no longer requested.", block);
 					// Remove block from the cache. Drops the value,
 					// closing all the channels contained in it.
-					let _ = self.cached_blocks.remove(&block);
+					let _ = self.cached_blocks.remove(block);
 				}
 			}
 		}

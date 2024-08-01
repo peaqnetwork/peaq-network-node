@@ -81,7 +81,7 @@ pub struct AccountIdToLocation;
 impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
 	fn convert(account: AccountId) -> Location {
 		let as_h160: H160 = account.into();
-		Location::new(0, [AccountKey20 { network: None, key: as_h160.as_fixed_bytes().clone() }])
+		Location::new(0, [AccountKey20 { network: None, key: *as_h160.as_fixed_bytes() }])
 	}
 }
 

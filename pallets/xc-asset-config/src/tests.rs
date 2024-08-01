@@ -359,7 +359,7 @@ fn different_xcm_versions_are_ok() {
 		// Register asset using legacy multilocation
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(VersionedLocation::V3(legacy_asset_location.clone())),
+			Box::new(VersionedLocation::V3(legacy_asset_location)),
 			asset_id
 		));
 

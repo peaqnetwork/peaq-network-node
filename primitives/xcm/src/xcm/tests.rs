@@ -381,7 +381,7 @@ fn hashed_description_sanity_check() {
 
 	let acc_id_32_mul = Location {
 		parents: 1,
-		interior: [Parachain(50), AccountId32 { network: None, id: [3; 32].into() }].into(),
+		interior: [Parachain(50), AccountId32 { network: None, id: [3; 32] }].into(),
 	};
 	// Ensure derived value is same as it would be using `polkadot-v0.9.44` code.
 	let derived_account =

@@ -236,7 +236,7 @@ where
 					hex_literal::hex!("94d9f08796f91eb13a2e82a6066882f7");
 				const BLOCKSCOUT_JS_CODE_HASH_V2: [u8; 16] =
 					hex_literal::hex!("89db13694675692951673a1e6e18ff02");
-				let hash = sp_io::hashing::twox_128(&tracer.as_bytes());
+				let hash = sp_io::hashing::twox_128(tracer.as_bytes());
 				let tracer =
 					if hash == BLOCKSCOUT_JS_CODE_HASH || hash == BLOCKSCOUT_JS_CODE_HASH_V2 {
 						Some(TracerInput::Blockscout)
@@ -248,10 +248,10 @@ where
 				if let Some(tracer) = tracer {
 					Ok((tracer, single::TraceType::CallList))
 				} else {
-					return Err(internal_err(format!(
+					Err(internal_err(format!(
 						"javascript based tracing is not available (hash :{:?})",
 						hash
-					)));
+					)))
 				}
 			},
 			Some(params) => Ok((
@@ -387,7 +387,7 @@ where
 			Ok(peaq_rpc_primitives_debug::Response::Block)
 		};
 
-		return match trace_type {
+		match trace_type {
 			single::TraceType::CallList => {
 				let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
 				proxy.using(f)?;
@@ -408,7 +408,7 @@ where
 				by providing `{{'tracer': 'callTracer'}}` in the request)."
 					.to_string(),
 			)),
-		};
+		}
 	}
 
 	/// Replays a transaction in the Runtime at a given block height.
@@ -498,7 +498,7 @@ where
 				let f = || -> RpcResult<_> {
 					let result = if trace_api_version >= 5 {
 						// The block is initialized inside "trace_transaction"
-						api.trace_transaction(parent_block_hash, exts, &transaction, &header)
+						api.trace_transaction(parent_block_hash, exts, transaction, &header)
 					} else {
 						// Old "trace_transaction" api did not initialize block before applying transactions,
 						// so we need to do it here before calling "trace_transaction".
@@ -512,7 +512,7 @@ where
 							api.trace_transaction_before_version_5(
 								parent_block_hash,
 								exts,
-								&transaction,
+								transaction,
 							)
 						} else {
 							// Pre-london update, legacy transactions.
@@ -523,7 +523,7 @@ where
 									api.trace_transaction_before_version_4(
 										parent_block_hash,
 										exts,
-										&tx,
+										tx,
 									)
 								},
 								_ => {

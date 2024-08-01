@@ -47,8 +47,8 @@ fn selectors() {
 fn vest() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1_000_000),
-			(MockPeaqAccount::Bob.into(), 1_000_000),
+			(MockPeaqAccount::Alice, 1_000_000),
+			(MockPeaqAccount::Bob, 1_000_000),
 		])
 		.build()
 		.execute_with(|| {
@@ -81,8 +81,8 @@ fn vest() {
 fn vest_other() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1_000_000),
-			(MockPeaqAccount::Bob.into(), 1_000_000),
+			(MockPeaqAccount::Alice, 1_000_000),
+			(MockPeaqAccount::Bob, 1_000_000),
 		])
 		.build()
 		.execute_with(|| {
@@ -123,8 +123,8 @@ fn vest_other() {
 fn vested_transfer() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1_000_000),
-			(MockPeaqAccount::Bob.into(), 1_000_000),
+			(MockPeaqAccount::Alice, 1_000_000),
+			(MockPeaqAccount::Bob, 1_000_000),
 		])
 		.build()
 		.execute_with(|| {
