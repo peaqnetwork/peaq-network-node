@@ -2127,7 +2127,7 @@ impl pallet_multisig::Config for Runtime {
  *             .read_slot()
  *             .expect("Could not read the relay chain slot from the proof");
  *         let inherent_data =
- *             
+ *
  * cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
  *                 relay_chain_slot,
  *                 sp_std::time::Duration::from_secs(6),

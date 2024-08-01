@@ -180,10 +180,10 @@ impl Config for Test {
 
 // Only for test, because the test enviroment is multi-threaded, so we need to use thread_local
 thread_local! {
-	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = RefCell::new(RewardRateInfo {
+	static GLOBAL_MOCK_REWARD_RATE: RefCell<RewardRateInfo> = const { RefCell::new(RewardRateInfo {
 		collator_rate: Perquintill::from_percent(30),
 		delegator_rate: Perquintill::from_percent(70),
-	});
+	}) };
 }
 
 pub struct MockRewardConfig {}
