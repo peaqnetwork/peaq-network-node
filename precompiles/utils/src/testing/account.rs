@@ -117,7 +117,8 @@ macro_rules! mock_account {
 	(# $name:ident, $convert:expr) => {
 		impl From<$name> for MockAccount {
 			fn from(value: $name) -> MockAccount {
-				$convert(value)
+				let convert = $convert;
+				convert(value)
 			}
 		}
 
@@ -242,7 +243,7 @@ impl peaq_primitives_xcm::AssetIdExt for MockAssetId {
 		if self.is_native_token() {
 			return false;
 		}
-		return true;
+		true
 	}
 }
 
@@ -296,8 +297,8 @@ impl From<MockPeaqAccount> for u64 {
 			MockPeaqAccount::ParentAccount => 0xEE,
 			MockPeaqAccount::SlibingParaAccount => 0x11,
 			MockPeaqAccount::David => 0x12,
-			MockPeaqAccount::EVMu1Account => 1 as u64,
-			MockPeaqAccount::EVMu2Account => 2 as u64,
+			MockPeaqAccount::EVMu1Account => 1_u64,
+			MockPeaqAccount::EVMu2Account => 2_u64,
 			MockPeaqAccount::AssetId(asset_id) => asset_id.0 as u64,
 			MockPeaqAccount::Bogus => 0,
 		}
@@ -342,7 +343,7 @@ impl AddressMapping<MockPeaqAccount> for MockPeaqAccount {
 			_ => {
 				let mut data = [0u8; 16];
 				let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
-				if prefix_part == &[255u8; 4] {
+				if prefix_part == [255u8; 4] {
 					data.copy_from_slice(id_part);
 
 					return Self::AssetId(MockAssetId(u128::from_be_bytes(data)));

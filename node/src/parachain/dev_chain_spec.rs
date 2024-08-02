@@ -55,6 +55,7 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenSymbol".into(), "PEAQ".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
+	#[allow(deprecated)]
 	Ok(ChainSpec::from_genesis(
 		"peaq-dev",
 		"dev-testnet",

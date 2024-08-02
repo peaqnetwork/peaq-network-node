@@ -108,14 +108,14 @@ pub enum DiscriminantResult<T> {
 	OutOfGas,
 }
 
-impl<T> Into<IsPrecompileResult> for DiscriminantResult<T> {
-	fn into(self) -> IsPrecompileResult {
-		match self {
-			Self::Some(_, extra_cost) =>
+impl<T> From<DiscriminantResult<T>> for IsPrecompileResult {
+	fn from(val: DiscriminantResult<T>) -> Self {
+		match val {
+			DiscriminantResult::<T>::Some(_, extra_cost) =>
 				IsPrecompileResult::Answer { is_precompile: true, extra_cost },
-			Self::None(extra_cost) =>
+			DiscriminantResult::<T>::None(extra_cost) =>
 				IsPrecompileResult::Answer { is_precompile: false, extra_cost },
-			Self::OutOfGas => IsPrecompileResult::OutOfGas,
+			DiscriminantResult::<T>::OutOfGas => IsPrecompileResult::OutOfGas,
 		}
 	}
 }
@@ -333,7 +333,7 @@ pub fn get_address_type<R: pallet_evm::Config>(
 	// check code matches dummy code
 	handle.record_db_read::<R>(code_len as usize)?;
 	let code = pallet_evm::AccountCodes::<R>::get(address);
-	if &code == &[0x60, 0x00, 0x60, 0x00, 0xfd] {
+	if code == [0x60, 0x00, 0x60, 0x00, 0xfd] {
 		return Ok(AddressType::Precompile);
 	}
 
@@ -939,15 +939,13 @@ impl PrecompileSetFragment for Tuple {
 	#[inline(always)]
 	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			match self.Tuple.is_precompile(address, gas) {
-				IsPrecompileResult::Answer {
-					is_precompile: true,
-					..
-				} => return IsPrecompileResult::Answer {
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_precompile(address, gas) { return IsPrecompileResult::Answer {
 					is_precompile: true,
 					extra_cost: 0,
-				},
-				_ => {}
+				}
 			};
 		)*);
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
@@ -982,15 +980,13 @@ impl IsActivePrecompile for Tuple {
 	#[inline(always)]
 	fn is_active_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
 		for_tuples!(#(
-			match self.Tuple.is_active_precompile(address, gas) {
-				IsPrecompileResult::Answer {
-					is_precompile: true,
-					..
-				} => return IsPrecompileResult::Answer {
-					is_precompile: true,
-					extra_cost: 0,
-				},
-				_ => {}
+			if let IsPrecompileResult::Answer {
+				is_precompile: true,
+				..
+			} = self.Tuple.is_active_precompile(address, gas) { return IsPrecompileResult::Answer {
+				is_precompile: true,
+				extra_cost: 0,
+				}
 			};
 		)*);
 		IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 }
@@ -1082,6 +1078,12 @@ impl<R, P: IsActivePrecompile> IsActivePrecompile for PrecompileSetBuilder<R, P>
 	}
 }
 
+impl<R: pallet_evm::Config, P: PrecompileSetFragment> Default for PrecompileSetBuilder<R, P> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P> {
 	/// Create a new instance of the PrecompileSet.
 	pub fn new() -> Self {
@@ -1094,10 +1096,10 @@ impl<R: pallet_evm::Config, P: PrecompileSetFragment> PrecompileSetBuilder<R, P>
 		Self::new().inner.used_addresses().into_iter()
 		/*
 		 * Self::new()
-		 *     .inner
-		 *     .used_addresses()
-		 *     .into_iter()
-		 *     .map(|x| R::AddressMapping::into_account_id(x))
+		 *	 .inner
+		 *	 .used_addresses()
+		 *	 .into_iter()
+		 *	 .map(|x| R::AddressMapping::into_account_id(x))
 		 */
 	}
 

@@ -275,7 +275,7 @@ pub mod pallet {
 			let desired_issuance = T::DefaultTotalIssuanceNum::get();
 			if now_total_issuance < desired_issuance {
 				let amount = desired_issuance.saturating_sub(now_total_issuance);
-				T::Currency::deposit_creating(&account, amount);
+				let _ = T::Currency::deposit_creating(&account, amount);
 				log::info!(
 					"Total issuance was increased from {:?} to {:?}, by {:?} tokens.",
 					now_total_issuance,

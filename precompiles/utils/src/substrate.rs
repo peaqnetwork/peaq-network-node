@@ -114,7 +114,7 @@ where
 		let dispatch_info = call.get_dispatch_info();
 
 		Self::reocrd_external_cost(handle, dispatch_info.weight, storage_growth)
-			.map_err(|e| TryDispatchError::Evm(e))?;
+			.map_err(TryDispatchError::Evm)?;
 
 		// Dispatch call.
 		// It may be possible to not record gas cost if the call returns Pays::No.
