@@ -68,4 +68,15 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	/// Storage: InflationManager BlockRewards (r:0 w:1)
+	/// Proof: InflationManager BlockRewards (max_values: Some(1), max_size: Some(16), added: 511, mode: MaxEncodedLen)
+	fn set_block_reward() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 10_720_000 picoseconds.
+		Weight::from_parts(10_941_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
