@@ -381,6 +381,18 @@ fn recaluclation_change_fail() {
 	})
 }
 
+#[test]
+fn block_reward_change() {
+	ExternalityBuilder::default().build().execute_with(|| {
+		assert_eq!(
+			InflationManager::block_rewards(),
+			<TestRuntime as Config>::BlockRewardBeforeInitialize::get()
+		);
+		assert_ok!(InflationManager::set_block_reward(RawOrigin::Root.into(), 100));
+		assert_eq!(InflationManager::block_rewards(), 100);
+	})
+}
+
 /// Represents inflation manager storage snapshot at current block
 #[derive(PartialEq, Eq, Clone, RuntimeDebug)]
 struct InflationManagerSnapshot {

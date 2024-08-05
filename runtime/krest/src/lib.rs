@@ -970,7 +970,7 @@ impl zenlink_protocol::Config for Runtime {
 
 parameter_types! {
 	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
-	pub const DefaultTotalIssuanceNum: Balance = 320_000_000 * DOLLARS;
+	pub const DefaultTotalIssuanceNum: Balance = 400_000_000 * DOLLARS;
 	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
 		inflation_parameters: InflationParameters {
 			inflation_rate: Perbill::from_perthousand(25u32),
@@ -979,8 +979,8 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 10,
 	};
-	// Estimation is around 2024-10-15 00:00 in the ideal case
-	pub const InitializeInflationAt: BlockNumber = 3_469_624;
+	// Estimation is around 2025-12-31 00:00 in the ideal case
+	pub const InitializeInflationAt: BlockNumber = 6_651_031;
 	pub const BlockRewardBeforeInitialize: Balance = 3_805_175_038_050_000_000;
 }
 

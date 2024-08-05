@@ -300,6 +300,19 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::WeightInfo::set_block_reward())]
+		pub fn set_block_reward(
+			origin: OriginFor<T>,
+			reward: Balance,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			BlockRewards::<T>::put(reward);
+
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
