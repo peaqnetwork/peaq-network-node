@@ -1,14 +1,13 @@
 [package]
 name = "peaq-primitives-xcm"
-version = "3.0.0-polkadot-v0.9.43"
+version = "3.1.0-polkadot-v1.7.2"
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = 'https://peaq.network/'
 edition = "2021"
 
 [dependencies]
 log = { workspace = true }
-bstringify = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, default-features = false, optional = true }
 parity-scale-codec = { workspace = true }
 num_enum = { workspace = true }
 sp-core = { workspace = true }
@@ -17,7 +16,7 @@ sp-std = { workspace = true }
 evm = { workspace = true }
 scale-info = { workspace = true }
 sha3 = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, optional = true }
 frame-support = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
 pallet-assets = { workspace = true, default-features = false }
@@ -26,6 +25,10 @@ pallet-evm = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
+orml-traits = { workspace = true, default-features = false }
+
+[dev-dependencies]
+once_cell = { workspace = true }
 
 [features]
 default = ["std"]
@@ -47,4 +50,7 @@ std = [
 	"xcm/std",
 	"xcm-builder/std",
 	"zenlink-protocol/std",
+	"orml-traits/std",
+	"serde",
+	"serde_json",
 ]

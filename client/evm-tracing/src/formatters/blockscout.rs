@@ -39,7 +39,7 @@ impl super::ResponseFormatter for Formatter {
 					.iter()
 					.map(|(_, value)| Call::Blockscout(Box::new(value.clone())))
 					.collect(),
-			))
+			));
 		}
 		None
 	}

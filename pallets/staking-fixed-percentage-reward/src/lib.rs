@@ -80,20 +80,21 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	#[cfg(feature = "std")]
-	#[derive(Default)]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		pub reward_rate_config: RewardRateInfo,
+		pub _phantom: PhantomData<T>,
 	}
 
-	// #[cfg(feature = "std")]
-	// impl Default for GenesisConfig {
-	// 	fn default() -> Self {
-	// 		Self { reward_rate_config: Default::default() }
-	// 	}
-	// }
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			let config =
+				RewardRateInfo::new(Perquintill::from_percent(30), Perquintill::from_percent(70));
+			Self { reward_rate_config: config, _phantom: Default::default() }
+		}
+	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			assert!(self.reward_rate_config.is_valid(), "Invalid reward_rate configuration");
 

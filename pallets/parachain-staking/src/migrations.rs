@@ -5,8 +5,7 @@ use crate::{
 	reward_rate::RewardRateInfo,
 };
 use frame_support::{
-	dispatch::GetStorageVersion,
-	pallet_prelude::{StorageVersion, ValueQuery},
+	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
 	storage_alias,
 	traits::Get,
 	weights::Weight,

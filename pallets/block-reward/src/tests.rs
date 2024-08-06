@@ -265,24 +265,42 @@ impl FreeBalanceSnapshot {
 	/// Future balance changes won't be reflected in this instance.
 	fn new() -> Self {
 		Self {
-			treasury: <TestRuntime as Config>::Currency::free_balance(
-				&TREASURY_POT.into_account_truncating(),
-			),
-			collators_delegators: <TestRuntime as Config>::Currency::free_balance(
-				&COLLATOR_DELEGATOR_POT.into_account_truncating(),
-			),
-			coretime: <TestRuntime as Config>::Currency::free_balance(
-				&CORETIME_POT.into_account_truncating(),
-			),
-			subsidization_pool: <TestRuntime as Config>::Currency::free_balance(
-				&SUBSIDIZATION_POT.into_account_truncating(),
-			),
-			depin_staking: <TestRuntime as Config>::Currency::free_balance(
-				&DE_PINSTAKING_ACCOUNT.into_account_truncating(),
-			),
-			depin_incentivization: <TestRuntime as Config>::Currency::free_balance(
-				&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(),
-			),
+			treasury:
+				<TestRuntime as Config>::Currency::free_balance(
+					<frame_support::PalletId as sp_runtime::traits::AccountIdConversion<
+						AccountId,
+					>>::into_account_truncating(&TREASURY_POT),
+				),
+			collators_delegators:
+				<TestRuntime as Config>::Currency::free_balance(
+					<frame_support::PalletId as sp_runtime::traits::AccountIdConversion<
+						AccountId,
+					>>::into_account_truncating(&COLLATOR_DELEGATOR_POT),
+				),
+			coretime:
+				<TestRuntime as Config>::Currency::free_balance(
+					<frame_support::PalletId as sp_runtime::traits::AccountIdConversion<
+						AccountId,
+					>>::into_account_truncating(&CORETIME_POT),
+				),
+			subsidization_pool:
+				<TestRuntime as Config>::Currency::free_balance(
+					<frame_support::PalletId as sp_runtime::traits::AccountIdConversion<
+						AccountId,
+					>>::into_account_truncating(&SUBSIDIZATION_POT),
+				),
+			depin_staking:
+				<TestRuntime as Config>::Currency::free_balance(
+					<frame_support::PalletId as sp_runtime::traits::AccountIdConversion<
+						AccountId,
+					>>::into_account_truncating(&DE_PINSTAKING_ACCOUNT),
+				),
+			depin_incentivization:
+				<TestRuntime as Config>::Currency::free_balance(
+					<frame_support::PalletId as sp_runtime::traits::AccountIdConversion<
+						AccountId,
+					>>::into_account_truncating(&DE_PININCENTIVIZATION_ACCOUNT),
+				),
 		}
 	}
 

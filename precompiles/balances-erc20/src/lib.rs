@@ -393,7 +393,7 @@ where
 	fn deposit(handle: &mut impl PrecompileHandle) -> EvmResult {
 		// Deposit only makes sense for the native currency.
 		if !Metadata::is_native_currency() {
-			return Err(RevertReason::UnknownSelector.into())
+			return Err(RevertReason::UnknownSelector.into());
 		}
 
 		let caller: Runtime::AccountId =
@@ -402,7 +402,7 @@ where
 		let amount = Self::u256_to_amount(handle.context().apparent_value)?;
 
 		if amount.into() == U256::from(0u32) {
-			return Err(revert("deposited amount must be non-zero"))
+			return Err(revert("deposited amount must be non-zero"));
 		}
 
 		handle.record_log_costs_manual(2, 32)?;
@@ -433,7 +433,7 @@ where
 	fn withdraw(handle: &mut impl PrecompileHandle, value: U256) -> EvmResult {
 		// Withdraw only makes sense for the native currency.
 		if !Metadata::is_native_currency() {
-			return Err(RevertReason::UnknownSelector.into())
+			return Err(RevertReason::UnknownSelector.into());
 		}
 
 		handle.record_log_costs_manual(2, 32)?;
@@ -445,7 +445,7 @@ where
 		};
 
 		if value > account_amount {
-			return Err(revert("Trying to withdraw more than owned"))
+			return Err(revert("Trying to withdraw more than owned"));
 		}
 
 		log2(

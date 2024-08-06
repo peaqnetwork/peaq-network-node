@@ -4,11 +4,12 @@
 
 // primitives and utils imports
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 	BoundedVec,
 };
 use sp_core::Decode;
+use sp_runtime::traits::Dispatchable;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use fp_evm::PrecompileHandle;

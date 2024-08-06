@@ -119,12 +119,12 @@ fn parameters_update_as_expected_at_tge() {
 		let do_initialize_at = <TestRuntime as Config>::DoInitializeAt::get() as u32;
 		let target_block_at_genesis = do_initialize_at;
 
-		let snapshots_before_tge = vec![
+		let snapshots_before_tge = [
 			InflationManagerSnapshot::take_snapshot_at(target_block_at_genesis - 2),
 			InflationManagerSnapshot::take_snapshot_at(target_block_at_genesis - 1),
 		];
 
-		let snapshots_after_tge = vec![
+		let snapshots_after_tge = [
 			InflationManagerSnapshot::take_snapshot_at(target_block_at_genesis),
 			InflationManagerSnapshot::take_snapshot_at(target_block_at_genesis + 1),
 		];

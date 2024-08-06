@@ -93,8 +93,8 @@ where
 {
 	async fn verify(
 		&mut self,
-		block_import: BlockImportParams<Block, ()>,
-	) -> Result<BlockImportParams<Block, ()>, String> {
+		block_import: BlockImportParams<Block>,
+	) -> Result<BlockImportParams<Block>, String> {
 		let block_hash = *block_import.header.parent_hash();
 
 		if self

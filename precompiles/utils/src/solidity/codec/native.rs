@@ -288,7 +288,7 @@ impl<T: Codec, S: Get<u32>> Codec for BoundedVec<T, S> {
 			.map_err(|_| RevertReason::value_is_too_large("length"))?;
 
 		if array_size > S::get() as usize {
-			return Err(RevertReason::value_is_too_large("length").into())
+			return Err(RevertReason::value_is_too_large("length").into());
 		}
 
 		let mut array = vec![];
@@ -367,5 +367,15 @@ impl<T, S> From<BoundedVec<T, S>> for Vec<T> {
 impl<T, S> Default for BoundedVec<T, S> {
 	fn default() -> Self {
 		Self { inner: Default::default(), _phantom: PhantomData }
+	}
+}
+
+impl<T, S> BoundedVec<T, S> {
+	pub fn len(&self) -> usize {
+		self.inner.len()
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
 	}
 }

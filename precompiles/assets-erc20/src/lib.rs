@@ -35,11 +35,10 @@
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::{ExitError, PrecompileHandle};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{
 		fungibles::{
@@ -58,6 +57,7 @@ use precompile_utils::{
 	},
 	solidity,
 };
+use sp_runtime::traits::Dispatchable;
 
 use precompile_utils::{
 	keccak256,
@@ -148,7 +148,7 @@ where
 	fn discriminant(address: H160, gas: u64) -> DiscriminantResult<AssetIdOf<Runtime, Instance>> {
 		let extra_cost = RuntimeHelper::<Runtime>::db_read_gas_cost();
 		if gas < extra_cost {
-			return DiscriminantResult::OutOfGas
+			return DiscriminantResult::OutOfGas;
 		}
 
 		let asset_id = match Runtime::address_to_asset_id(address) {
