@@ -121,12 +121,3 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T
 		}
 	}
 }
-
-// [TODO] Comment it out because we won't use that
-// pub struct FeeManagerNotWaived;
-// impl FeeManager for FeeManagerNotWaived {
-// 	fn is_waived(_: Option<&Location>, _: FeeReason) -> bool {
-// 		false
-// 	}
-// 	fn handle_fee(_: Assets, _: Option<&XcmContext>, _: FeeReason) {}
-// }

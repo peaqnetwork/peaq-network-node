@@ -100,8 +100,6 @@ where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
 {
-	// let frontier_backend = match rpc_config.frontier_backend_config {
-	//	FrontierBackendConfig::KeyValue => {
 	let frontier_backend = fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
@@ -122,18 +120,6 @@ where
 			},
 		},
 	)?);
-	// }
-	// FrontierBackendConfig::Sql {
-	// 	pool_size,
-	// 	num_ops_timeout,
-	// 	thread_count,
-	// 	cache_size,
-	// } => {
-	// 	return Err(
-	// 		"Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()
-	// 	)
-	// }
-	// };
 
 	Ok(frontier_backend)
 }
