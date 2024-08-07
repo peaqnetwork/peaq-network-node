@@ -35,7 +35,7 @@ use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 use sp_std::cmp::Ordering;
 
-pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
+pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 6_u32;
 const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 #[frame_support::pallet]
