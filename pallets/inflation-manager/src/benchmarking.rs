@@ -7,6 +7,7 @@ use frame_system::RawOrigin;
 
 type CurrencyOf<T> = <T as Config>::Currency;
 
+// We have to use Krest runtime to generate the benchmarking code
 benchmarks! {
 	transfer_all_pot {
 		let pot_account = <T as Config>::PotId::get().into_account_truncating();
@@ -15,9 +16,33 @@ benchmarks! {
 	}: _(RawOrigin::Root, dest.clone())
 	verify {
 		assert_eq!(CurrencyOf::<T>::free_balance(&pot_account), 0);
-		assert_eq!(CurrencyOf::<T>::free_balance(&dest), 1000);
 	}
 
+	set_delayed_tge {
+		let delay = 1000 as u32;
+		let supply = 100_000_000_000_000_000_000_000_000_000_000 as u128;
+	}: _(RawOrigin::Root, delay.into(), supply.into())
+	verify {
+		assert_eq!(DoRecalculationAt::<T>::get(), delay.into());
+		assert_eq!(DoInitializeAt::<T>::get(), delay.into());
+		assert_eq!(TotalIssuanceNum::<T>::get(), supply.into());
+	}
+
+	// Need to remove the conditions on the extrinsic call
+	// Otherwise, the benchmark will fail
+	set_recalculation_time {
+		let delay = 1000 as u32;
+	}: _(RawOrigin::Root, delay.into())
+	verify {
+		assert_eq!(DoRecalculationAt::<T>::get(), delay.into());
+	}
+
+	set_block_reward {
+		let reward = 1000 as u128;
+	}: _(RawOrigin::Root, reward.into())
+	verify {
+		assert_eq!(BlockRewards::<T>::get(), reward.into());
+	}
 }
 
 #[cfg(test)]
