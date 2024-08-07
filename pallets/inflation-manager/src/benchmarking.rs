@@ -28,11 +28,20 @@ benchmarks! {
 		assert_eq!(TotalIssuanceNum::<T>::get(), supply.into());
 	}
 
+	// Need to remove the conditions on the extrinsic call
+	// Otherwise, the benchmark will fail
 	set_recalculation_time {
 		let delay = 1000 as u32;
 	}: _(RawOrigin::Root, delay.into())
 	verify {
 		assert_eq!(DoRecalculationAt::<T>::get(), delay.into());
+	}
+
+	set_block_reward {
+		let reward = 1000 as u128;
+	}: _(RawOrigin::Root, reward.into())
+	verify {
+		assert_eq!(BlockRewards::<T>::get(), reward.into());
 	}
 }
 
