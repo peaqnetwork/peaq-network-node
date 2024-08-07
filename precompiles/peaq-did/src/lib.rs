@@ -15,7 +15,10 @@ use fp_evm::PrecompileHandle;
 
 use pallet_evm::AddressMapping;
 
-use peaq_pallet_did::did::Did as PeaqDidT;
+use peaq_pallet_did::{
+	did::Did as PeaqDidT,
+	pallet::{MAX_NAME_SIZE as MAX_DID_NAME_SIZE, MAX_VALUE_SIZE as MAX_DID_VALUE_SIZE},
+};
 use precompile_utils::{
 	keccak256,
 	prelude::{
@@ -25,6 +28,8 @@ use precompile_utils::{
 	solidity, EvmResult,
 };
 
+type MaxValueSize = ConstU32<{ MAX_DID_VALUE_SIZE as u32 }>;
+type MaxNameSize = ConstU32<{ MAX_DID_NAME_SIZE as u32 }>;
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BlockNumberOf<Runtime> = <Runtime as frame_system::Config>::BlockNumber;
 type MomentOf<Runtime> = <Runtime as pallet_timestamp::Config>::Moment;
@@ -78,8 +83,8 @@ where
 		let did_account = Runtime::AddressMapping::into_account_id(did_account.into());
 		match peaq_pallet_did::Pallet::<Runtime>::read(&did_account, &Vec::<u8>::from(name)) {
 			Some(v) => Ok(EVMAttribute {
-				name: v.name.into(),
-				value: v.value.into(),
+				name: v.name.to_vec().into(),
+				value: v.value.to_vec().into(),
 				validity: v.validity.into(),
 				created: v.created.into(),
 			}),
@@ -107,11 +112,10 @@ where
 			_ => Some(valid_for.into()),
 		};
 
-		let name_vec = BoundedVec::<u8, ConstU32<64>>::try_from(name.as_bytes().to_vec())
+		let name_vec = BoundedVec::<u8, MaxNameSize>::try_from(name.as_bytes().to_vec())
 			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
-		let value_vec =
-			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
+		let value_vec = BoundedVec::<u8, MaxValueSize>::try_from(value.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
@@ -160,11 +164,10 @@ where
 			0 => None,
 			_ => Some(valid_for.into()),
 		};
-		let name_vec = BoundedVec::<u8, ConstU32<64>>::try_from(name.as_bytes().to_vec())
+		let name_vec = BoundedVec::<u8, MaxNameSize>::try_from(name.as_bytes().to_vec())
 			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
-		let value_vec =
-			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(value.as_bytes().to_vec())
-				.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
+		let value_vec = BoundedVec::<u8, MaxValueSize>::try_from(value.as_bytes().to_vec())
+			.map_err(|_| Revert::new(RevertReason::custom("Value too long")))?;
 
 		RuntimeHelper::<Runtime>::try_dispatch(
 			handle,
@@ -206,7 +209,7 @@ where
 		let caller: AccountIdOf<Runtime> =
 			Runtime::AddressMapping::into_account_id(handle.context().caller);
 
-		let name_vec = BoundedVec::<u8, ConstU32<64>>::try_from(name.as_bytes().to_vec())
+		let name_vec = BoundedVec::<u8, MaxNameSize>::try_from(name.as_bytes().to_vec())
 			.map_err(|_| Revert::new(RevertReason::custom("Name too long")))?;
 		let did_account_addr = Runtime::AddressMapping::into_account_id(did_account.into());
 		RuntimeHelper::<Runtime>::try_dispatch(
