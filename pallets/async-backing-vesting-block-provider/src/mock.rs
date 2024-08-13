@@ -4,7 +4,7 @@ use frame_support::{construct_runtime, parameter_types, weights::Weight};
 
 use sp_io::TestExternalities;
 
-use sp_core::{H256};
+use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage,
@@ -59,8 +59,7 @@ impl frame_system::Config for TestRuntime {
 impl async_backing_vesting_block_provider::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 }
-pub struct ExternalityBuilder {
-}
+pub struct ExternalityBuilder {}
 
 impl Default for ExternalityBuilder {
 	fn default() -> ExternalityBuilder {
@@ -74,9 +73,11 @@ impl ExternalityBuilder {
 			frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
 		// This will cause some initial issuance
-		async_backing_vesting_block_provider::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
-			.assimilate_storage(&mut storage)
-			.ok();
+		async_backing_vesting_block_provider::GenesisConfig::<TestRuntime> {
+			_phantom: Default::default(),
+		}
+		.assimilate_storage(&mut storage)
+		.ok();
 
 		let mut ext = TestExternalities::from(storage);
 		ext.execute_with(|| System::set_block_number(1));

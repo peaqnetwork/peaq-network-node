@@ -10,14 +10,12 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use frame_support::{
-	pallet_prelude::*,
-	traits::{IsType},
-};
+use frame_support::{pallet_prelude::*, traits::IsType};
 use frame_system::pallet_prelude::BlockNumberFor;
-use sp_runtime::{traits::BlockNumberProvider};
-use sp_runtime::traits::CheckedDiv;
-use sp_runtime::Saturating;
+use sp_runtime::{
+	traits::{BlockNumberProvider, CheckedDiv},
+	Saturating,
+};
 
 const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
@@ -36,12 +34,10 @@ pub mod pallet {
 	pub type AsyncBackingAt<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	#[pallet::event]
-	pub enum Event<T: Config> {
-	}
+	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -56,8 +52,7 @@ pub mod pallet {
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
-		fn build(&self) {
-		}
+		fn build(&self) {}
 	}
 
 	#[pallet::pallet]
@@ -72,8 +67,7 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-	}
+	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> BlockNumberProvider for Pallet<T> {
 		type BlockNumber = BlockNumberFor<T>;

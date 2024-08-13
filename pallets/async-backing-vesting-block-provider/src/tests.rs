@@ -12,7 +12,6 @@ fn async_backing_vesting_block_provider_same() {
 	})
 }
 
-
 #[test]
 fn async_backing_vesting_block_provider_work() {
 	ExternalityBuilder::default().build().execute_with(|| {
@@ -24,6 +23,5 @@ fn async_backing_vesting_block_provider_work() {
 
 		System::set_block_number(110);
 		assert_eq!(AsyncBackingVestingBlockProvider::current_block_number(), 60);
-
 	})
 }
