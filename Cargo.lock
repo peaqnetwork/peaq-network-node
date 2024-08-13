@@ -8900,6 +8900,7 @@ name = "peaq-krest-runtime"
 version = "3.1.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
+ "async-backing-vesting-block-provider",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
