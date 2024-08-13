@@ -22,6 +22,7 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
+use frame_support::traits::OnRuntimeUpgrade;
 use parachain_staking::reward_rate::RewardRateInfo;
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
@@ -62,6 +63,7 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 
 mod weights;
 pub mod xcm_config;
+mod vesting_migration;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "std")]
@@ -1075,9 +1077,9 @@ impl inflation_manager::Config for Runtime {
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
-impl async_backing_vesting_block_provider::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
+// impl async_backing_vesting_block_provider::Config for Runtime {
+// 	type RuntimeEvent = RuntimeEvent;
+// }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -1132,7 +1134,7 @@ construct_runtime!(
 		Multisig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		AsyncBackingVestingBlockProvider: async_backing_vesting_block_provider = 105,
+		// AsyncBackingVestingBlockProvider: async_backing_vesting_block_provider = 105,
 	}
 );
 
@@ -1168,6 +1170,7 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
 		pallet_contracts::Migration<Runtime>,
+		VestingStorageMigration,
 	),
 >;
 
@@ -1196,7 +1199,7 @@ mod benches {
 		[xc_asset_config, XcAssetConfig]
 		// [address_unification, AddressUnification]
 		[inflation_manager, InflationManager]
-		[async_backing_vesting_block_provider, AsyncBackingVestingBlockProvider]
+		// [async_backing_vesting_block_provider, AsyncBackingVestingBlockProvider]
 	);
 }
 
@@ -1255,6 +1258,27 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 			_ => None,
 		}
 	}
+}
+
+pub struct VestingStorageMigration;
+impl OnRuntimeUpgrade for VestingStorageMigration {
+    fn on_runtime_upgrade() -> frame_support::weights::Weight {
+        vesting_migration::migrate::<Runtime>()
+    }
+
+/*
+ *     #[cfg(feature = "try-runtime")]
+ *     fn pre_upgrade() -> Result<(), &'static str> {
+ *         vesting_migration::pre_migrate::<Runtime>();
+ *         Ok(())
+ *     }
+ *
+ *     #[cfg(feature = "try-runtime")]
+ *     fn post_upgrade() -> Result<(), &'static str> {
+ *         vesting_migration::post_migrate::<Runtime>();
+ *         Ok(())
+ *     }
+ */
 }
 
 impl_runtime_apis! {
@@ -2141,7 +2165,7 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-	type BlockNumberProvider = AsyncBackingVestingBlockProvider;
+	type BlockNumberProvider = System;
 }
 
 parameter_types! {

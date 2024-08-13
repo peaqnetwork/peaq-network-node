@@ -629,6 +629,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-timestamp",
+ "pallet-vesting",
  "parity-scale-codec",
  "peaq-primitives-xcm",
  "scale-info",
