@@ -1,11 +1,13 @@
+#[cfg(feature = "try-runtime")]
+use frame_support::pallet_prelude::Decode;
 use frame_support::{
-	pallet_prelude::Decode,
 	traits::{Currency, Get, OnRuntimeUpgrade},
 	weights::Weight,
 	BoundedVec,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_vesting::VestingInfo;
+#[cfg(feature = "try-runtime")]
 use parity_scale_codec::Encode;
 use sp_runtime::traits::CheckedDiv;
 #[cfg(feature = "try-runtime")]
@@ -27,7 +29,6 @@ impl<T: frame_system::Config + pallet_vesting::Config> OnRuntimeUpgrade
 	fn on_runtime_upgrade() -> Weight {
 		let mut weight_writes = 0;
 		let mut weight_reads = 0;
-		// panic!("This migration is not supported anymore");
 		pallet_vesting::Vesting::<T>::translate::<VestingBoundVec<T>, _>(
 			|_acc_id, vesting_infos| {
 				weight_reads += 1;
@@ -46,6 +47,11 @@ impl<T: frame_system::Config + pallet_vesting::Config> OnRuntimeUpgrade
 					.collect();
 				Some(BoundedVec::try_from(out).unwrap())
 			},
+		);
+		log::info!(
+			"Vesting migration for async backing: reads: {}, writes: {}",
+			weight_reads,
+			weight_writes
 		);
 		T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 	}
