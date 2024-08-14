@@ -22,7 +22,6 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
-use frame_support::traits::OnRuntimeUpgrade;
 use parachain_staking::reward_rate::RewardRateInfo;
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
@@ -1170,7 +1169,7 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
 		pallet_contracts::Migration<Runtime>,
-		VestingStorageMigration,
+		vesting_migration::VestingMigrationToAsyncBacking<Runtime>,
 	),
 >;
 
@@ -1258,27 +1257,6 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 			_ => None,
 		}
 	}
-}
-
-pub struct VestingStorageMigration;
-impl OnRuntimeUpgrade for VestingStorageMigration {
-    fn on_runtime_upgrade() -> frame_support::weights::Weight {
-        vesting_migration::migrate::<Runtime>()
-    }
-
-/*
- *     #[cfg(feature = "try-runtime")]
- *     fn pre_upgrade() -> Result<(), &'static str> {
- *         vesting_migration::pre_migrate::<Runtime>();
- *         Ok(())
- *     }
- *
- *     #[cfg(feature = "try-runtime")]
- *     fn post_upgrade() -> Result<(), &'static str> {
- *         vesting_migration::post_migrate::<Runtime>();
- *         Ok(())
- *     }
- */
 }
 
 impl_runtime_apis! {
