@@ -60,9 +60,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
+mod vesting_migration;
 mod weights;
 pub mod xcm_config;
-mod vesting_migration;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "std")]
@@ -1076,10 +1076,6 @@ impl inflation_manager::Config for Runtime {
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
-// impl async_backing_vesting_block_provider::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// }
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime
@@ -1133,7 +1129,6 @@ construct_runtime!(
 		Multisig:  pallet_multisig::{Pallet, Call, Storage, Event<T>} = 102,
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
-		// AsyncBackingVestingBlockProvider: async_backing_vesting_block_provider = 105,
 	}
 );
 
@@ -1198,7 +1193,6 @@ mod benches {
 		[xc_asset_config, XcAssetConfig]
 		// [address_unification, AddressUnification]
 		[inflation_manager, InflationManager]
-		// [async_backing_vesting_block_provider, AsyncBackingVestingBlockProvider]
 	);
 }
 

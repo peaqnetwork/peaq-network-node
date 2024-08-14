@@ -169,6 +169,5 @@ fn configure_genesis(
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
 		assets: Default::default(),
-		// async_backing_vesting_block_provider: Default::default(),
 	}
 }

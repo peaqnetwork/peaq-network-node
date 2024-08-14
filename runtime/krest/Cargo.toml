@@ -129,7 +129,6 @@ runtime-common = { path = "../common", default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 inflation-manager = { path = "../../pallets/inflation-manager", default-features = false }
-async-backing-vesting-block-provider = { path = "../../pallets/async-backing-vesting-block-provider", default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
@@ -300,7 +299,6 @@ std = [
 	"pallet-evm-precompile-vesting/std",
 	"pallet-xcm/std",
 	"inflation-manager/std",
-	"async-backing-vesting-block-provider/std",
 	"pallet-message-queue/std",
 
 	# try-runtime
@@ -364,7 +362,6 @@ try-runtime = [
 	"xc-asset-config/try-runtime",
 	"address-unification/try-runtime",
 	"inflation-manager/try-runtime",
-	"async-backing-vesting-block-provider/try-runtime",
 
 	"staking-coefficient-reward/try-runtime",
 
