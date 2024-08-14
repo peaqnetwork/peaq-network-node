@@ -3,7 +3,7 @@ use frame_support::{
     weights::Weight,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
-use sp_core::bounded_vec::BoundedVec;
+use frame_support::BoundedVec;
 use frame_support::traits::OnRuntimeUpgrade;
 use frame_support::pallet_prelude::Decode;
 use sp_std::vec::Vec;
@@ -36,13 +36,9 @@ impl<T: frame_system::Config + pallet_vesting::Config> OnRuntimeUpgrade for Vest
 						s.starting_block(),
 					)
 				}).collect();
-				log::error!("Migrating vesting for account {:?} from {:?} to {:?}", _acc_id, vesting_infos, out);
 				Some(BoundedVec::try_from(out).unwrap())
 			}
 		);
-		// pallet_vesting::Vesting::<T>::iter().for_each(|(acc_id, schedules)| {
-		//	log::error!("Account {:?} has vesting schedules: {:?}", acc_id, schedules);
-		//});
 		T::DbWeight::get().reads_writes(weight_reads, weight_writes)
 	}
 
@@ -56,7 +52,6 @@ impl<T: frame_system::Config + pallet_vesting::Config> OnRuntimeUpgrade for Vest
 			old_schedules = schedules.drain(..).collect();
 			break;
 		}
-		log::error!("Old schedules: {:?}", old_schedules);
 		Ok(old_schedules.encode())
 	}
 
