@@ -60,11 +60,10 @@ impl<T: frame_system::Config + pallet_vesting::Config> OnRuntimeUpgrade
 	fn pre_upgrade() -> Result<Vec<u8>, TryRuntimeError> {
 		let mut old_schedules = Vec::new();
 		for (_acc_id, mut schedules) in pallet_vesting::Vesting::<T>::iter() {
-			if schedules.len() == 0 {
-				continue;
+			if schedules.len() != 0 {
+				old_schedules = schedules.drain(..).collect();
+				break;
 			}
-			old_schedules = schedules.drain(..).collect();
-			break;
 		}
 		Ok(old_schedules.encode())
 	}
@@ -77,11 +76,10 @@ impl<T: frame_system::Config + pallet_vesting::Config> OnRuntimeUpgrade
 
 		let mut new_schedules = Vec::new();
 		for (_acc_id, mut schedules) in pallet_vesting::Vesting::<T>::iter() {
-			if schedules.len() == 0 {
-				continue;
+			if schedules.len() != 0 {
+				new_schedules = schedules.drain(..).collect();
+				break;
 			}
-			new_schedules = schedules.drain(..).collect();
-			break;
 		}
 		assert_eq!(old_schedules.len(), new_schedules.len());
 		for i in 0..old_schedules.len() {
