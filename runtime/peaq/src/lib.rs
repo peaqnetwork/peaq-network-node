@@ -153,7 +153,7 @@ pub mod currency {
 	pub const PEAQ: Balance = 1_000_000_000_000_000_000;
 	pub const KILOPEAQ: Balance = 1_000_000_000_000_000_000_000;
 
-	pub const TRANSACTION_BYTE_FEE: Balance = 1 * GIGAWEI * SUPPLY_FACTOR;
+	pub const TRANSACTION_BYTE_FEE: Balance = GIGAWEI * SUPPLY_FACTOR;
 	pub const STORAGE_BYTE_FEE: Balance = 100 * MICROPEAQ * SUPPLY_FACTOR;
 	pub const WEIGHT_FEE: Balance = 40 * KILOWEI * SUPPLY_FACTOR;
 
