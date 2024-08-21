@@ -28,7 +28,7 @@ use peaq_primitives_xcm::*;
 // use polkadot_service::CollatorPair;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
-use sc_executor::NativeElseWasmExecutor;
+use sc_executor::WasmExecutor;
 use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_service::{
@@ -51,25 +51,6 @@ macro_rules! declare_executor {
 	($mod_type:tt, $runtime_ns:tt) => {
 		pub mod $mod_type {
 			pub use $runtime_ns::RuntimeApi;
-
-			pub type HostFunctions = (
-				frame_benchmarking::benchmarking::HostFunctions,
-				peaq_primitives_ext::peaq_ext::HostFunctions,
-			);
-			// Our native executor instance.
-			pub struct Executor;
-
-			impl sc_executor::NativeExecutionDispatch for Executor {
-				type ExtendHostFunctions = HostFunctions;
-
-				fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-					$runtime_ns::api::dispatch(method, data)
-				}
-
-				fn native_version() -> sc_executor::NativeVersion {
-					$runtime_ns::native_version()
-				}
-			}
 		}
 	};
 }
@@ -78,8 +59,15 @@ declare_executor!(dev, peaq_dev_runtime);
 declare_executor!(krest, peaq_krest_runtime);
 declare_executor!(peaq, peaq_runtime);
 
-type FullClient<RuntimeApi, Executor> =
-	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
+type FullClient<RuntimeApi> = TFullClient<
+	Block,
+	RuntimeApi,
+	WasmExecutor<(
+		sp_io::SubstrateHostFunctions,
+		frame_benchmarking::benchmarking::HostFunctions,
+		peaq_primitives_ext::peaq_ext::HostFunctions,
+	)>,
+>;
 type FullBackend = TFullBackend<Block>;
 
 pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
@@ -129,25 +117,21 @@ where
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
 #[allow(clippy::type_complexity)]
-pub fn new_partial<RuntimeApi, Executor, BIQ>(
+pub fn new_partial<RuntimeApi, BIQ>(
 	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
-		FullClient<RuntimeApi, Executor>,
+		FullClient<RuntimeApi>,
 		FullBackend,
 		(),
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi>>,
 		(
 			ParachainBlockImport<
 				Block,
-				FrontierBlockImport<
-					Block,
-					Arc<FullClient<RuntimeApi, Executor>>,
-					FullClient<RuntimeApi, Executor>,
-				>,
+				FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
 				FullBackend,
 			>,
 			Option<FilterPool>,
@@ -160,8 +144,7 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 	sc_service::Error,
 >
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -172,16 +155,11 @@ where
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>,
 	sc_client_api::StateBackendFor<FullBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient<RuntimeApi, Executor>>,
+		Arc<FullClient<RuntimeApi>>,
 		ParachainBlockImport<
 			Block,
-			FrontierBlockImport<
-				Block,
-				Arc<FullClient<RuntimeApi, Executor>>,
-				FullClient<RuntimeApi, Executor>,
-			>,
+			FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
 			FullBackend,
 		>,
 		&Configuration,
@@ -204,7 +182,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_native_or_wasm_executor(config);
+	let executor = sc_service::new_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -296,7 +274,7 @@ async fn build_relay_chain_interface(
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[allow(clippy::too_many_arguments)]
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
+async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
@@ -305,10 +283,9 @@ async fn start_contracts_node_impl<RuntimeApi, Executor, BIQ, BIC>(
 	target_gas_price: u64,
 	fn_build_import_queue: BIQ,
 	fn_build_consensus: BIC,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>)>
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -330,16 +307,11 @@ where
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
 	sc_client_api::StateBackendFor<FullBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient<RuntimeApi, Executor>>,
+		Arc<FullClient<RuntimeApi>>,
 		ParachainBlockImport<
 			Block,
-			FrontierBlockImport<
-				Block,
-				Arc<FullClient<RuntimeApi, Executor>>,
-				FullClient<RuntimeApi, Executor>,
-			>,
+			FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
 			FullBackend,
 		>,
 		&Configuration,
@@ -348,22 +320,18 @@ where
 		u64,
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	BIC: FnOnce(
-		Arc<FullClient<RuntimeApi, Executor>>,
+		Arc<FullClient<RuntimeApi>>,
 		Arc<FullBackend>,
 		ParachainBlockImport<
 			Block,
-			FrontierBlockImport<
-				Block,
-				Arc<FullClient<RuntimeApi, Executor>>,
-				FullClient<RuntimeApi, Executor>,
-			>,
+			FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
 			FullBackend,
 		>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
-		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>>,
+		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi>>>,
 		Arc<SyncingService<Block>>,
 		KeystorePtr,
 		ParaId,
@@ -371,7 +339,7 @@ where
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
-	let params = new_partial::<RuntimeApi, Executor, BIQ>(
+	let params = new_partial::<RuntimeApi, BIQ>(
 		&mut parachain_config,
 		fn_build_import_queue,
 		target_gas_price,
@@ -626,15 +594,11 @@ where
 
 /// Build the import queue.
 #[allow(clippy::type_complexity)]
-pub fn build_import_queue<RuntimeApi, Executor>(
-	client: Arc<FullClient<RuntimeApi, Executor>>,
+pub fn build_import_queue<RuntimeApi>(
+	client: Arc<FullClient<RuntimeApi>>,
 	block_import: ParachainBlockImport<
 		Block,
-		FrontierBlockImport<
-			Block,
-			Arc<FullClient<RuntimeApi, Executor>>,
-			FullClient<RuntimeApi, Executor>,
-		>,
+		FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
 		FullBackend,
 	>,
 	config: &Configuration,
@@ -643,8 +607,7 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 	target_gas_price: u64,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -655,7 +618,6 @@ where
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	sc_client_api::StateBackendFor<FullBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	let client2 = client.clone();
 
@@ -701,17 +663,16 @@ where
 	Ok(BasicQueue::new(verifier, Box::new(block_import), None, &spawner, registry))
 }
 
-pub async fn start_node<RuntimeApi, Executor>(
+pub async fn start_node<RuntimeApi>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>)>
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -731,9 +692,8 @@ where
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
-	start_contracts_node_impl::<RuntimeApi, Executor, _, _>(
+	start_contracts_node_impl::<RuntimeApi, _, _>(
 		parachain_config,
 		polkadot_config,
 		collator_options,
