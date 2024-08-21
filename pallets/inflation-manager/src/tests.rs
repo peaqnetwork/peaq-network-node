@@ -101,13 +101,18 @@ fn sanity_check_storage_migration_for_delayed_tge() {
 		assert_eq!(snapshot.inflation_parameters, expected_inflation_parameters);
 		assert_eq!(
 			snapshot.do_recalculation_at as u64,
-			<TestRuntime as Config>::DoInitializeAt::get()
+			// Because of the Async backing setting
+			1 + (<TestRuntime as Config>::DoInitializeAt::get() - 1) * 2
 		);
 		assert_eq!(snapshot.current_year, 0u128);
+		// We force the migration run
 		assert_eq!(
 			snapshot.block_rewards,
-			<TestRuntime as Config>::BlockRewardBeforeInitialize::get()
+			// Because of the Async backing setting
+			<TestRuntime as Config>::BlockRewardBeforeInitialize::get() / 2
 		);
+		// After delay TGE migration, the DoInitializeAt and DoRecalculationAt should be the same
+		assert_eq!(DoRecalculationAt::<TestRuntime>::get(), DoInitializeAt::<TestRuntime>::get());
 	})
 }
 
