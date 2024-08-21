@@ -15,6 +15,8 @@ mod upgrade {
 	// This migration will trigger for krest runtime, but not peaq runtime
 	// since peaq will have already been migrated to this storage version with pallet version 0.1.0
 	impl<T: Config> MigrateToV2<T> {
+		// [TODO] Once our krest network's previous runtime ugprade, I think we can remove it
+		// because at that moment, all the storage version should be v1
 		fn migrate_to_v1() -> Weight {
 			let mut weight_writes = 0;
 			let mut weight_reads = 0;
