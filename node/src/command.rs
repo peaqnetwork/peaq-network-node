@@ -48,15 +48,15 @@ macro_rules! with_runtime_or_err {
 	($chain_spec:expr, { $( $code:tt )* }) => {
 		if $chain_spec.is_dev() {
 			#[allow(unused_imports)]
-			use dev::{RuntimeApi, Executor};
+			use dev::{RuntimeApi};
 			$( $code )*
 		} else if $chain_spec.is_krest() {
 			#[allow(unused_imports)]
-			use krest::{RuntimeApi, Executor};
+			use krest::{RuntimeApi};
 			$( $code )*
 		} else if $chain_spec.is_peaq() {
 			#[allow(unused_imports)]
-			use peaq::{RuntimeApi, Executor};
+			use peaq::{RuntimeApi};
 			$( $code )*
 		} else {
 			return Err("Wrong chain_spec".into());
@@ -228,7 +228,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, import_queue, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -242,7 +242,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -256,7 +256,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -270,7 +270,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, import_queue, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -303,7 +303,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, backend, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -320,13 +320,13 @@ pub fn run() -> sc_cli::Result<()> {
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							runner.sync_run(|config| cmd.run::<Block, Executor>(config))
+							runner.sync_run(|config| cmd.run::<Block>(config))
 						})
 					},
 					BenchmarkCmd::Block(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							runner.sync_run(|mut config| {
-								let params = service::new_partial::<RuntimeApi, Executor, _>(
+								let params = service::new_partial::<RuntimeApi, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price,
@@ -339,7 +339,7 @@ pub fn run() -> sc_cli::Result<()> {
 					BenchmarkCmd::Storage(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							runner.sync_run(|mut config| {
-								let params = service::new_partial::<RuntimeApi, Executor, _>(
+								let params = service::new_partial::<RuntimeApi, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price,
@@ -461,7 +461,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
-					start_node::<RuntimeApi, Executor>(
+					start_node::<RuntimeApi>(
 						config,
 						polkadot_config,
 						collator_options,
