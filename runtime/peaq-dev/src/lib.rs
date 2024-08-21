@@ -60,6 +60,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
+mod vesting_migration;
 mod weights;
 pub mod xcm_config;
 
@@ -1178,6 +1179,7 @@ pub type Executive = frame_executive::Executive<
 	(
 		cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
 		pallet_contracts::Migration<Runtime>,
+		vesting_migration::VestingMigrationToAsyncBacking<Runtime>,
 	),
 >;
 
