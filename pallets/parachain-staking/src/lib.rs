@@ -189,8 +189,9 @@ pub mod pallet {
 	use crate::{
 		set::OrderedSet,
 		types::{
-			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelegationCounter, Delegator,
-			ReplacedDelegator, Reward, RoundInfo, Stake, StakeOf, TotalStake,
+			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelayedPayoutInfoT,
+			DelegationCounter, Delegator, ReplacedDelegator, Reward, RoundInfo, Stake, StakeOf,
+			TotalStake,
 		},
 		weightinfo::WeightInfo,
 	};
@@ -647,6 +648,24 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn new_round_forced)]
 	pub(crate) type ForceNewRound<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn at_stake)]
+	/// Snapshot of collator delegation stake at the start of the round
+	pub(crate) type AtStake<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		SessionIndex,
+		Twox64Concat,
+		T::AccountId,
+		Candidate<T::AccountId, BalanceOf<T>, T::MaxDelegatorsPerCollator>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn delayed_payout_info)]
+	pub(crate) type DelayedPayoutInfo<T: Config> =
+		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -2865,6 +2884,20 @@ pub mod pallet {
 				log::error!("💥 keeping old session because of empty collator set!");
 				None
 			} else {
+				// take snapshot of these collators' staking info
+				for collator in collators.iter() {
+					let collator_state = CandidatePool::<T>::get(collator).unwrap();
+					<AtStake<T>>::insert(new_index, collator, collator_state);
+				}
+
+				// take snapshot of session staking info
+				let round = Round::<T>::get().current;
+				let info = DelayedPayoutInfoT {
+					round,
+					total_stake: TotalCollatorStake::<T>::get(),
+				};
+				DelayedPayoutInfo::<T>::put(info);
+
 				Some(collators)
 			}
 		}
