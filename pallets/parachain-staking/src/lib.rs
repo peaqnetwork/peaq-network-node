@@ -2791,6 +2791,7 @@ pub mod pallet {
 			T::PotId::get().into_account_truncating()
 		}
 
+		/// Handles staking reward payout for previous session for one collator and their delegators
 		fn payout_collator() {
 			let pot = Self::account_id();
 			// get payout info for the last round
@@ -2801,7 +2802,7 @@ pub mod pallet {
 				CollatorBlock::<T>::iter_prefix(payout_info.round).drain().next()
 			{
 				// get collator's staking info
-				if let Some(state) = AtStake::<T>::get(payout_info.round, author) {
+				if let Some(state) = AtStake::<T>::take(payout_info.round, author) {
 					// calculate reward for collator from previous round
 					let now_reward = Self::get_collator_reward_per_session(
 						&state,
