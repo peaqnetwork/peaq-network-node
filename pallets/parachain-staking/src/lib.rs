@@ -630,8 +630,15 @@ pub mod pallet {
 	/// We use this storage to store collator's block generation
 	#[pallet::storage]
 	#[pallet::getter(fn collator_blocks)]
-	pub(crate) type CollatorBlock<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, u32, ValueQuery>;
+	pub(crate) type CollatorBlock<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		SessionIndex,
+		Twox64Concat,
+		T::AccountId,
+		u32,
+		ValueQuery,
+	>;
 
 	/// The maximum amount a collator candidate can stake.
 	#[pallet::storage]
@@ -2669,23 +2676,15 @@ pub mod pallet {
 			Ok(DelegationCounter { round: round.current, counter: counter.saturating_add(1) })
 		}
 
-		// [Post-launch TODO] Think about Collator stake or total stake?
-		// /// Attempts to add a collator candidate to the set of collator
-		// /// candidates which already reached its maximum size. On success,
-		// /// another collator with the minimum total stake is removed from the
-		// /// set. On failure, an error is returned. removing an already existing
-		// fn check_collator_candidate_inclusion(
-		// 	stake: Stake<T::AccountId, BalanceOf<T>>,
-		// 	mut candidates: OrderedSet<Stake<T::AccountId, BalanceOf<T>>,
-		// T::MaxTopCandidates>, ) -> Result<(), DispatchError> {
-		// 	todo!()
-		// }
-
-		// Public only for testing purpose
-		pub fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {
+		/// [Post-launch TODO] Think about Collator stake or total stake?
+		/// Gives us the total stake of block authors and their delegators in a session
+		/// Public only for testing purpose
+		pub fn get_total_collator_staking_num(
+			session_index: SessionIndex,
+		) -> (Weight, BalanceOf<T>) {
 			let mut total_staking_in_session = BalanceOf::<T>::zero();
 			let mut read: u64 = 0;
-			CollatorBlock::<T>::iter().for_each(|(collator, num)| {
+			CollatorBlock::<T>::iter_prefix(session_index).for_each(|(collator, num)| {
 				if let Some(state) = CandidatePool::<T>::get(collator) {
 					let collator_total = T::CurrencyBalance::from(num)
 						.checked_mul(&state.total)
@@ -2787,59 +2786,45 @@ pub mod pallet {
 			inner.try_into().expect("Did not extend vec q.e.d.")
 		}
 
-		fn peaq_reward_mechanism_impl() {
-			let mut reads = Weight::from_parts(0, 1);
-			let mut writes = Weight::from_parts(0, 1);
-
-			let pot = Self::account_id();
-			let issue_number = T::Currency::free_balance(&pot)
-				.checked_sub(&T::Currency::minimum_balance())
-				.unwrap_or_else(Zero::zero);
-
-			let (in_reads, total_staking_in_session) = Self::get_total_collator_staking_num();
-			reads.saturating_add(in_reads);
-
-			// Here we also remove the all collator block after the iteration
-			CollatorBlock::<T>::iter().drain().for_each(|(collator, block_num)| {
-				// Get the delegator's staking number
-				if let Some(state) = CandidatePool::<T>::get(collator.clone()) {
-					let now_reward = Self::get_collator_reward_per_session(
-						&state,
-						block_num,
-						total_staking_in_session,
-						issue_number,
-					);
-
-					Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-					reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-					writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
-
-					let now_rewards = Self::get_delgators_reward_per_session(
-						&state,
-						block_num,
-						total_staking_in_session,
-						issue_number,
-					);
-
-					let len = now_rewards.len().saturated_into::<u64>();
-					now_rewards.into_iter().for_each(|x| {
-						Self::do_reward(&pot, &x.owner, x.amount);
-					});
-					reads = reads.saturating_add(Weight::from_parts(len, 0));
-					writes = writes.saturating_add(Weight::from_parts(len, 0));
-				}
-				reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-			});
-
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
-		}
-
 		/// Get a unique, inaccessible account id from the `PotId`.
 		pub fn account_id() -> T::AccountId {
 			T::PotId::get().into_account_truncating()
+		}
+
+		fn payout_collator() {
+			let pot = Self::account_id();
+			// get payout info for the last round
+			let payout_info = DelayedPayoutInfo::<T>::get();
+
+			// get one author
+			if let Some((author, block_num)) =
+				CollatorBlock::<T>::iter_prefix(payout_info.round).drain().next()
+			{
+				// get collator's staking info
+				if let Some(state) = AtStake::<T>::get(payout_info.round, author) {
+					// calculate reward for collator from previous round
+					let now_reward = Self::get_collator_reward_per_session(
+						&state,
+						block_num,
+						payout_info.total_stake,
+						payout_info.total_issuance,
+					);
+					Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
+
+					// calculate reward for collator's delegates from previous round
+					let now_rewards = Self::get_delgators_reward_per_session(
+						&state,
+						block_num,
+						payout_info.total_stake,
+						payout_info.total_issuance,
+					);
+					now_rewards.into_iter().for_each(|x| {
+						Self::do_reward(&pot, &x.owner, x.amount);
+					});
+
+					// [TODO] add weights
+				}
+			}
 		}
 	}
 
@@ -2855,8 +2840,11 @@ pub mod pallet {
 		/// - Writes: 1
 		/// # </weight>
 		fn note_author(author: T::AccountId) {
-			let block_num = <CollatorBlock<T>>::get(author.clone());
-			CollatorBlock::<T>::insert(author.clone(), block_num + 1);
+			// Querying will get us the current round, as PalletParachainStaking and PalletSession
+			// have not yet been initialized
+			let round = <Round<T>>::get().current;
+			let block_num = <CollatorBlock<T>>::get(round, author.clone());
+			CollatorBlock::<T>::insert(round, author.clone(), block_num + 1);
 		}
 	}
 
@@ -2890,13 +2878,20 @@ pub mod pallet {
 					<AtStake<T>>::insert(new_index, collator, collator_state);
 				}
 
-				// take snapshot of session staking info
-				let round = Round::<T>::get().current;
-				let info = DelayedPayoutInfoT {
-					round,
-					total_stake: TotalCollatorStake::<T>::get(),
-				};
-				DelayedPayoutInfo::<T>::put(info);
+				let old_index = new_index - 1;
+				// [TODO] what to do with this returned weight?
+				let (_, total_stake) = Self::get_total_collator_staking_num(old_index);
+				let pot = Self::account_id();
+				let total_issuance = T::Currency::free_balance(&pot)
+					.checked_sub(&T::Currency::minimum_balance())
+					.unwrap_or_else(Zero::zero);
+
+				// take snapshot of previous session's staking totals for payout calculation
+				DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
+					round: old_index,
+					total_stake,
+					total_issuance,
+				});
 
 				Some(collators)
 			}
@@ -2916,7 +2911,7 @@ pub mod pallet {
 		/// 2. we need to clean up the state of the pallet.
 		fn end_session(end_index: SessionIndex) {
 			log::debug!("new_session: {:?}", end_index);
-			Self::peaq_reward_mechanism_impl();
+			Self::payout_collator();
 		}
 
 		fn start_session(_start_index: SessionIndex) {

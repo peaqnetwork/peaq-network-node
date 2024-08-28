@@ -417,5 +417,7 @@ pub struct DelayedPayoutInfoT<SessionIndex, Balance: Default> {
 	/// The round index for which payouts should be made
 	pub round: SessionIndex,
 	/// total stake in the round
-	pub total_stake: TotalStake<Balance>,
+	pub total_stake: Balance,
+	/// total issuance for round
+	pub total_issuance: Balance,
 }
