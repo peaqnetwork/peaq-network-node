@@ -4,14 +4,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::PrecompileHandle;
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{ConstU32, OriginTrait},
 };
+use sp_runtime::traits::Dispatchable;
 
 use pallet_evm::AddressMapping;
 use peaq_primitives_xcm::{AssetId as PeaqAssetId, EVMAddressToAssetId};
@@ -101,10 +101,11 @@ where
 
 		// Convert to asset id
 		let check_asset_id: PeaqAssetId = asset_id
+			.clone()
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
 		if !check_asset_id.is_allow_to_create() {
-			return Err(RevertReason::Custom("Invalid asset id".into()).into())
+			return Err(RevertReason::Custom("Invalid asset id".into()).into());
 		}
 
 		let min_balance: BalanceOf<Runtime, Instance> =

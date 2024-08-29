@@ -121,11 +121,11 @@ fn try_lookup_custom_type(word: &str, custom_types: &HashMap<String, SolidityStr
 	match word.strip_suffix("[]") {
 		Some(word) =>
 			if let Some(t) = custom_types.get(word) {
-				return format!("{}[]", t.signature())
+				return format!("{}[]", t.signature());
 			},
 		None =>
 			if let Some(t) = custom_types.get(word) {
-				return t.signature()
+				return t.signature();
 			},
 	};
 
@@ -173,13 +173,13 @@ fn get_selectors_from_reader<R: Read>(reader: R) -> Vec<SolidityFunction> {
 
 		// skip comments
 		if line.starts_with("//") {
-			continue
+			continue;
 		}
 
 		for word in line.split(&[';', ',', '(', ')', ' ']) {
 			// skip whitespace
 			if word.trim().is_empty() {
-				continue
+				continue;
 			}
 			match (stage, pair, word) {
 				// parse custom type enums

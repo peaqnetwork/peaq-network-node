@@ -99,10 +99,10 @@ fn extract_precompile_name_and_prefix_for_precompile_at(
 									if let Some(instance_ident) =
 										precompile_instance_ident(path_segment_2)
 									{
-										return Some((instance_ident, precompile_id))
+										return Some((instance_ident, precompile_id));
 									}
 								} else {
-									return Some((path_segment_2.ident.clone(), precompile_id))
+									return Some((path_segment_2.ident.clone(), precompile_id));
 								}
 							}
 						}
@@ -119,7 +119,7 @@ fn precompile_instance_ident(path_segment: &syn::PathSegment) -> Option<Ident> {
 	if let syn::PathArguments::AngleBracketed(generics_) = &path_segment.arguments {
 		if let Some(GenericArgument::Type(Type::Path(instance_type_path))) = generics_.args.last() {
 			if let Some(instance_type) = instance_type_path.path.segments.last() {
-				return Some(instance_type.ident.clone())
+				return Some(instance_type.ident.clone());
 			}
 		}
 	}

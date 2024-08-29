@@ -2,7 +2,7 @@
 name = "precompile-utils"
 description = "Utils to write EVM precompiles."
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 affix = { workspace = true }
@@ -30,6 +30,7 @@ sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+sp-weights = { workspace = true }
 
 # Frontier
 evm = { workspace = true, features = [ "with-codec" ] }

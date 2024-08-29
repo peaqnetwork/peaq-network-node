@@ -18,14 +18,15 @@ use super::*;
 
 use peaq_rpc_debug::{DebugHandler, DebugRequester};
 use peaq_rpc_trace::{CacheRequester as TraceFilterCacheRequester, CacheTask};
+use substrate_prometheus_endpoint::Registry as PrometheusRegistry;
 use tokio::sync::Semaphore;
 
 use crate::cli_opt::EthApi as EthApiCmd;
 use fp_rpc::EthereumRuntimeRPCApi;
 // use crate::client::RuntimeApiCollection;
 use sc_client_api::BlockOf;
-use sp_api::HeaderT;
 use sp_core::H256;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, Header as HeaderT};
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -37,6 +38,7 @@ pub struct RpcRequesters {
 // Spawn the tasks that are required to run a Moonbeam tracing node.
 pub fn spawn_tracing_tasks<B, C, BE>(
 	rpc_config: &crate::cli_opt::RpcConfig,
+	prometheus: Option<PrometheusRegistry>,
 	params: SpawnTasksParams<B, C, BE>,
 ) -> RpcRequesters
 where
@@ -62,6 +64,7 @@ where
 				Duration::from_secs(rpc_config.ethapi_trace_cache_duration),
 				Arc::clone(&permit_pool),
 				Arc::clone(&params.overrides),
+				prometheus,
 			);
 			(Some(trace_filter_task), Some(trace_filter_requester))
 		} else {

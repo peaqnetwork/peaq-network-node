@@ -29,33 +29,30 @@ use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use precompile_utils::{precompile_set::*, testing::*};
+use sp_runtime::BuildStorage;
 
 use sp_core::H256;
 
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use once_cell::unsync::Lazy;
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use xcm::latest::{prelude::*, Error as XcmError};
 use xcm_builder::{AllowUnpaidExecutionFrom, FixedWeightBounds, IsConcrete};
-use xcm_executor::{traits::TransactAsset, Assets as XCMAssets, XcmExecutor};
+use xcm_executor::{traits::TransactAsset, AssetsInHolding, XcmExecutor};
 
 pub type AccountId = MockPeaqAccount;
 pub type AssetId = MockAssetId;
 pub type Balance = u128;
-pub type BlockNumber = u64;
-pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
 pub type CurrencyId = u128;
 
-/// Multilocations for assetId
-const PARENT: MultiLocation = MultiLocation::parent();
-const PARACHAIN: MultiLocation =
-	MultiLocation { parents: 1, interior: Junctions::X1(Parachain(10)) };
-const GENERAL_INDEX: MultiLocation =
-	MultiLocation { parents: 1, interior: Junctions::X2(Parachain(10), GeneralIndex(20)) };
-const LOCAL_ASSET: MultiLocation =
-	MultiLocation { parents: 0, interior: Junctions::X1(GeneralIndex(20)) };
+/// locations for assetId
+const PARENT: Location = Location::parent();
+const PARACHAIN: Lazy<Location> =
+	Lazy::new(|| Location { parents: 1, interior: [Parachain(10)].into() });
+const GENERAL_INDEX: Lazy<Location> =
+	Lazy::new(|| Location { parents: 1, interior: [Parachain(10), GeneralIndex(20)].into() });
+const LOCAL_ASSET: Lazy<Location> =
+	Lazy::new(|| Location { parents: 0, interior: [GeneralIndex(20)].into() });
 
 pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
@@ -91,14 +88,13 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
 	type RuntimeCall = RuntimeCall;
+	type Nonce = u64;
+	type Block = Block;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -112,6 +108,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -139,10 +136,12 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = ();
 }
 
 pub type Precompiles<R> =
@@ -190,6 +189,7 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type SuicideQuickClearLimit = ();
 }
 
 // These parameters dont matter much as this will only be called by root with the forced arguments
@@ -228,10 +228,10 @@ impl pallet_assets::Config for Runtime {
 
 pub struct ConvertOriginToLocal;
 impl<Origin: OriginTrait> EnsureOrigin<Origin> for ConvertOriginToLocal {
-	type Success = MultiLocation;
+	type Success = Location;
 
-	fn try_origin(_: Origin) -> Result<MultiLocation, Origin> {
-		Ok(MultiLocation::here())
+	fn try_origin(_: Origin) -> Result<Location, Origin> {
+		Ok(Location::here())
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -245,10 +245,10 @@ impl SendXcm for DoNothingRouter {
 	type Ticket = ();
 
 	fn validate(
-		_destination: &mut Option<MultiLocation>,
+		_destination: &mut Option<Location>,
 		_message: &mut Option<Xcm<()>>,
 	) -> SendResult<Self::Ticket> {
-		Ok(((), MultiAssets::new()))
+		Ok(((), Assets::new()))
 	}
 
 	fn deliver(_: Self::Ticket) -> Result<XcmHash, SendError> {
@@ -260,23 +260,23 @@ pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct DummyAssetTransactor;
 impl TransactAsset for DummyAssetTransactor {
-	fn deposit_asset(_what: &MultiAsset, _who: &MultiLocation, _context: &XcmContext) -> XcmResult {
+	fn deposit_asset(_what: &Asset, _who: &Location, _context: Option<&XcmContext>) -> XcmResult {
 		Ok(())
 	}
 
 	fn withdraw_asset(
-		_what: &MultiAsset,
-		_who: &MultiLocation,
+		_what: &Asset,
+		_who: &Location,
 		_maybe_context: Option<&XcmContext>,
-	) -> Result<XCMAssets, XcmError> {
-		Ok(XCMAssets::default())
+	) -> Result<AssetsInHolding, XcmError> {
+		Ok(AssetsInHolding::default())
 	}
 }
 
 parameter_types! {
-	pub UniversalLocation: InteriorMultiLocation = Here;
-	pub MatcherLocation: MultiLocation = MultiLocation::here();
-	pub ReachableDest: Option<MultiLocation> = Some(MultiLocation::here());
+	pub UniversalLocation: InteriorLocation = Here;
+	pub MatcherLocation: Location = Location::here();
+	pub ReachableDest: Option<Location> = Some(Location::here());
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
@@ -335,28 +335,30 @@ impl xcm_executor::Config for XcmConfig {
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
+	type Aliasers = Nothing;
+	type TransactionalProcessor = ();
 }
 
-pub struct CurrencyIdToMultiLocation;
+pub struct CurrencyIdToLocation;
 
-impl sp_runtime::traits::Convert<CurrencyId, Option<MultiLocation>> for CurrencyIdToMultiLocation {
-	fn convert(currency: CurrencyId) -> Option<MultiLocation> {
+impl sp_runtime::traits::Convert<CurrencyId, Option<Location>> for CurrencyIdToLocation {
+	fn convert(currency: CurrencyId) -> Option<Location> {
 		match currency {
 			0u128 => Some(SelfReserve::get()),
 			1u128 => Some(PARENT),
-			2u128 => Some(PARACHAIN),
-			3u128 => Some(GENERAL_INDEX),
-			4u128 => Some(LOCAL_ASSET),
+			2u128 => Some((*PARACHAIN).clone()),
+			3u128 => Some((*GENERAL_INDEX).clone()),
+			4u128 => Some((*LOCAL_ASSET).clone()),
 			_ => None,
 		}
 	}
 }
 
-/// Convert `AccountId` to `MultiLocation`.
-pub struct AccountIdToMultiLocation;
-impl sp_runtime::traits::Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 { network: None, id: account.into() }).into()
+/// Convert `AccountId` to `Location`.
+pub struct AccountIdToLocation;
+impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
+	fn convert(account: AccountId) -> Location {
+		Location::new(1, [AccountId32 { network: None, id: account.into() }])
 	}
 }
 
@@ -365,28 +367,28 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub Ancestry: MultiLocation = Parachain(ParachainId::get().into()).into();
+	pub Ancestry: Location = Parachain(ParachainId::get().into()).into();
 
 	pub const BaseXcmWeight: Weight = Weight::from_parts(1000u64, 1000u64);
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub const MaxAssetsForTransfer: usize = 2;
 
-	pub SelfLocation: MultiLocation =
-		MultiLocation::new(1, Junctions::X1(Parachain(ParachainId::get().into())));
+	pub SelfLocation: Location =
+		Location::new(1, [Parachain(ParachainId::get().into())]);
 
-	pub SelfReserve: MultiLocation = MultiLocation::new(
+	pub SelfReserve: Location = Location::new(
 		1,
-		Junctions::X2(
+		[
 			Parachain(ParachainId::get().into()),
 			PalletInstance(
 				<Runtime as frame_system::Config>::PalletInfo::index::<Balances>().unwrap() as u8
 			)
-		));
+		]);
 	pub MaxInstructions: u32 = 100;
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+	pub ParachainMinFee: |_location: Location| -> Option<u128> {
 		Some(u128::MAX)
 	};
 }
@@ -395,8 +397,8 @@ impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
-	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type CurrencyIdConvert = CurrencyIdToMultiLocation;
+	type AccountIdToLocation = AccountIdToLocation;
+	type CurrencyIdConvert = CurrencyIdToLocation;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type SelfLocation = SelfLocation;
 	type Weigher = xcm_builder::FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
@@ -404,20 +406,19 @@ impl orml_xtokens::Config for Runtime {
 	type UniversalLocation = UniversalLocation;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
-	type MultiLocationsFilter = Everything;
+	type LocationsFilter = Everything;
 	type ReserveProvider = AbsoluteReserveProvider;
+	type RateLimiter = ();
+	type RateLimiterId = ();
 }
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Runtime
 	{
 		System: frame_system,
 		Balances: pallet_balances,
-		Assets: pallet_assets,
+		PalletAssets: pallet_assets,
 		Evm: pallet_evm,
 		Timestamp: pallet_timestamp,
 		PolkadotXcm: pallet_xcm,
@@ -438,8 +439,8 @@ impl ExtBuilder {
 	}
 
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::<Runtime>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
 		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }

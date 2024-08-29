@@ -1,7 +1,8 @@
 //! Storage migrations for the parachain-staking  pallet.
 
 use frame_support::{
-	dispatch::GetStorageVersion, pallet_prelude::StorageVersion, traits::Get, weights::Weight,
+	traits::Get, weights::Weight,
+	pallet_prelude::{GetStorageVersion, StorageVersion},
 };
 
 use crate::pallet::{Config, Pallet};

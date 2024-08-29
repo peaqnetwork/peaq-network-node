@@ -159,12 +159,12 @@ where
 	}
 }
 
-/// A MultiLocation-AccountId converter for XCM, Zenlink-Protocol and similar stuff.
-pub struct AccountIdToMultiLocation;
+/// A Location-AccountId converter for XCM, Zenlink-Protocol and similar stuff.
+pub struct AccountIdToLocation;
 
-impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 { network: None, id: account.into() }).into()
+impl Convert<AccountId, Location> for AccountIdToLocation {
+	fn convert(account: AccountId) -> Location {
+		[AccountId32 { network: None, id: account.into() }].into()
 	}
 }
 

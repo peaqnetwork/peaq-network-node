@@ -86,7 +86,7 @@ fn selectors() {
 #[test]
 fn modifiers() {
 	ExtBuilder::default()
-		.with_balances(vec![(MockPeaqAccount::Alice.into(), 1000)])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1000)])
 		.build()
 		.execute_with(|| {
 			let mut tester = PrecompilesModifierTester::new(

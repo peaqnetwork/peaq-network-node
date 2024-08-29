@@ -130,7 +130,6 @@ pub mod pallet {
 		pub _phantom: PhantomData<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { reward_config: Default::default(), _phantom: PhantomData }
@@ -138,7 +137,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			assert!(self.reward_config.is_consistent());
 			RewardDistributionConfigStorage::<T>::put(self.reward_config.clone());
