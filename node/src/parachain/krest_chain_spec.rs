@@ -3,8 +3,7 @@ use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
 	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
-	Runtime, SudoConfig, SystemConfig, WASM_BINARY,
-	RuntimeGenesisConfig,
+	Runtime, RuntimeGenesisConfig, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance};
 use runtime_common::TOKEN_DECIMALS;

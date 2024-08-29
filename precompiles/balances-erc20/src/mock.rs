@@ -22,9 +22,9 @@ use frame_support::{construct_runtime, parameter_types, traits::Everything, weig
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use sp_runtime::BuildStorage;
 
+use precompile_utils::{precompile_set::*, testing::MockAccount};
 use sp_core::{H256, U256};
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
-use precompile_utils::{precompile_set::*, testing::MockAccount};
 
 pub type Balance = u128;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
