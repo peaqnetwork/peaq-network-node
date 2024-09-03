@@ -53,14 +53,13 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_REG_PARACHAIN }}-test
           tags: |
-            type=ref,event=branch
             type=ref,event=pr
-
+            type=sha
 
       - name: "Build and push"
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: scripts/Dockerfile
+          file: scripts/Dockerfile.parachain-launch
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{github.head_ref}}-${{ steps.meta.outputs.tags }}
