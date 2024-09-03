@@ -1,11 +1,16 @@
 name: Brand new chain test
 # This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: [Pull Request Check]
+  # workflow_dispatch:
+  # workflow_run:
+    # workflows: [Pull Request Check]
     # types: [completed]
     # branches: [dev]
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
 
 jobs:
   brand-new-test:
