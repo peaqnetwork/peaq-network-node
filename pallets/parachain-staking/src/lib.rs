@@ -2827,6 +2827,29 @@ pub mod pallet {
 				}
 			}
 		}
+
+		fn prepare_delayed_rewards(collators: &Vec<T::AccountId>, new_index: SessionIndex) {
+			// take snapshot of these collators' staking info
+			for collator in collators.iter() {
+				let collator_state = CandidatePool::<T>::get(collator).unwrap();
+				<AtStake<T>>::insert(new_index, collator, collator_state);
+			}
+
+			let old_index = new_index - 1;
+			// [TODO] what to do with this returned weight?
+			let (_, total_stake) = Self::get_total_collator_staking_num(old_index);
+			let pot = Self::account_id();
+			let total_issuance = T::Currency::free_balance(&pot)
+				.checked_sub(&T::Currency::minimum_balance())
+				.unwrap_or_else(Zero::zero);
+
+			// take snapshot of previous session's staking totals for payout calculation
+			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
+				round: old_index,
+				total_stake,
+				total_issuance,
+			});
+		}
 	}
 
 	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
@@ -2867,34 +2890,18 @@ pub mod pallet {
 				DispatchClass::Mandatory,
 			);
 
-			let collators = Pallet::<T>::selected_candidates().to_vec();
-			if collators.is_empty() {
+			let selected_candidates = Pallet::<T>::selected_candidates().to_vec();
+			if selected_candidates.is_empty() {
 				// we never want to pass an empty set of collators. This would brick the chain.
 				log::error!("💥 keeping old session because of empty collator set!");
+
+				// TODO get previous session's selected candidates and take prepare delayed rewards
+
+				// return empty collator set to prevent chain from breaking
 				None
 			} else {
-				// take snapshot of these collators' staking info
-				for collator in collators.iter() {
-					let collator_state = CandidatePool::<T>::get(collator).unwrap();
-					<AtStake<T>>::insert(new_index, collator, collator_state);
-				}
-
-				let old_index = new_index - 1;
-				// [TODO] what to do with this returned weight?
-				let (_, total_stake) = Self::get_total_collator_staking_num(old_index);
-				let pot = Self::account_id();
-				let total_issuance = T::Currency::free_balance(&pot)
-					.checked_sub(&T::Currency::minimum_balance())
-					.unwrap_or_else(Zero::zero);
-
-				// take snapshot of previous session's staking totals for payout calculation
-				DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
-					round: old_index,
-					total_stake,
-					total_issuance,
-				});
-
-				Some(collators)
+				Self::prepare_delayed_rewards(&selected_candidates, new_index);
+				Some(selected_candidates)
 			}
 		}
 
