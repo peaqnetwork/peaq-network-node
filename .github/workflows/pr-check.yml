@@ -60,6 +60,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: scripts/Dockerfile.parachain-launch
+          file: scripts/Dockerfile
           push: true
           tags: ${{github.head_ref}}-${{ steps.meta.outputs.tags }}

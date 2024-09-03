@@ -1,0 +1,100 @@
+name: Brand new chain test
+# This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Pull Request Check]
+    # types: [completed]
+    # branches: [dev]
+
+jobs:
+  brand-new-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Clone simple CI
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        working-directory: ../
+        with:
+          branch: main
+          owner: peaqnetwork
+          repository: simple-ci-poc
+
+      - name: Setup ENV for the simple CI
+        working-directory: ../
+        run: |
+          # Need to implement that
+          echo "WORK_DIRECTORY=$(realpath .)" >> $GITHUB_ENV
+          echo "PEAQ_NETWORK_NODE_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "PEAQ_BC_TEST_BRANCH=$(realpath .)" >> $GITHUB_ENV
+          echo "PARACHAIN_LAUNCH_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "RESULT_PATH=(realpath result)" >> $GITHUB_ENV
+          cat $GITHUB_ENV
+          mkdir -p result
+          # echo "FORKED_BINARY_FOLDER=(realpath ../forked-binary)" >> $GITHUB_ENV
+
+      - name: Install dependencies bianry
+        working-directory: ../
+        run: |
+          # Install git, default install
+          which git
+          # Install docker, default install
+          which docker
+          # Install docker-compose, default install?
+          which docker-compose
+          which docker compose
+          # Install nvm
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+          nvm install v16
+          # Install yarn
+          npm install --global yarn
+          # Install jq
+          sudo apt-get install jq
+          # Install try-runtime
+          cargo install --git https://github.com/paritytech/try-runtime-cli --locked
+          # Install subkey
+          cargo install --force subkey --git https://github.com/paritytech/substrate --version 2.0.1 --locked
+
+      - name: Clone peaq-bc-repo
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        working-directory: ..
+        with:
+          depth: 1
+          branch: main # Should change the branch
+          owner: peaqnetwork
+          repository: peaq-bc-test
+
+      - name: Install dependency on peaq-bc-test
+        working-directory: ../peaq-bc-test
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Clone parachain-launch
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        working-directory: ..
+        with:
+          branch: dev # Should change the branch
+          owner: peaqnetwork
+          repository: parachain-launch
+
+      - name: Install dependency on parachain-launch
+        working-directory: ../parachain-launch
+        run: |
+          git submodule update --init --recursive
+          nvm install 16
+          yarn build
+          yarn install
+
+      - name: Install dependency on fork-off-substrate
+        working-directory: ../parachain-launch/fork-off-substrate
+          cd fork-off-substrate
+          npm install
+
+      - name: Run simple CI
+        working-directory: ../simple-ci-poc
+        run: |
+          DATETIME=$(date '+%Y-%m-%d-%H-%M')
+          echo "Current DateTime: ${DATETIME}"
+          export SET_DATETIME=${DATETIME}
+          # [TODO] Use the docker image to regenerate the docker image...
+          bash new.chain.test.bash --chain peaq --test all
