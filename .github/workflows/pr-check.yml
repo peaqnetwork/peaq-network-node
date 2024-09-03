@@ -62,4 +62,4 @@ jobs:
           context: .
           file: scripts/Dockerfile
           push: true
-          tags: ${{github.head_ref}}-${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}

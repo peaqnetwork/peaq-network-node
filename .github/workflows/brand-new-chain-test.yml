@@ -87,7 +87,7 @@ jobs:
 
       - name: Install dependency on fork-off-substrate
         working-directory: ../parachain-launch/fork-off-substrate
-          cd fork-off-substrate
+        run: |
           npm install
 
       - name: Run simple CI
