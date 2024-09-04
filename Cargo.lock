@@ -8738,7 +8738,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-dev-runtime"
-version = "3.1.0-polkadot-v1.7.2"
+version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -8877,7 +8877,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-krest-runtime"
-version = "3.1.0-polkadot-v1.7.2"
+version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -9494,7 +9494,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-runtime"
-version = "3.1.0-polkadot-v1.7.2"
+version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -11859,7 +11859,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "3.1.0-polkadot-v1.7.2"
+version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
