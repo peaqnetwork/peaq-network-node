@@ -61,12 +61,12 @@ jobs:
 
       - name: Clone peaq-bc-repo
         uses: GuillaumeFalourd/clone-github-repo-action@v2.3
-        working-directory: ..
         with:
           depth: 1
           branch: main # Should change the branch
           owner: peaqnetwork
           repository: peaq-bc-test
+          path-to-clone: ../peaq-bc-test
 
       - name: Install dependency on peaq-bc-test
         working-directory: ../peaq-bc-test
@@ -76,11 +76,11 @@ jobs:
 
       - name: Clone parachain-launch
         uses: GuillaumeFalourd/clone-github-repo-action@v2.3
-        working-directory: ..
         with:
           branch: dev # Should change the branch
           owner: peaqnetwork
           repository: parachain-launch
+          path-to-clone: ../parachain-launch
 
       - name: Install dependency on parachain-launch
         working-directory: ../parachain-launch
