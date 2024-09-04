@@ -1,6 +1,6 @@
 [package]
 name = "peaq-krest-runtime"
-version = "3.0.0-polkadot-v0.9.43"
+version = "4.0.0-polkadot-v1.7.2"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -13,11 +13,11 @@ repository = "https://github.com/peaqnetwork/peaq-network-node/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
+git = "https://github.com/peaqnetwork/polkadot-sdk"
+branch = "peaq-polkadot-v1.7.2"
 
 [dependencies]
-# sp-debug-derive = { git = "https://github.com/peaqnetwork/substrate", branch = "peaq-polkadot-v0.9.38", default-features = false, features = ["std", "force-debug"] }
+# sp-debug-derive = { git = "https://github.com/peaqnetwork/polakdot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false, features = ["std", "force-debug"] }
 parity-scale-codec = { workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
@@ -49,7 +49,6 @@ sp-std = { workspace = true, default-features = false }
 sp-transaction-pool = { workspace = true, default-features = false }
 sp-version = { workspace = true, default-features = false }
 pallet-contracts = { workspace = true, default-features = false }
-pallet-contracts-primitives = { workspace = true, default-features = false }
 peaq-pallet-did = { workspace = true, default-features = false }
 peaq-pallet-did-runtime-api = { workspace = true, default-features = false }
 peaq-pallet-transaction = { workspace = true, default-features = false }
@@ -78,9 +77,11 @@ pallet-evm-precompile-simple = { workspace = true, default-features = false }
 cumulus-primitives-core = { workspace = true, default-features = false }
 cumulus-primitives-utility = { workspace = true, default-features = false }
 cumulus-primitives-timestamp = { workspace = true, default-features = false }
-cumulus-pallet-parachain-system = { workspace = true, default-features = false }
+cumulus-primitives-aura = { workspace = true, default-features = false }
+cumulus-pallet-parachain-system = { workspace = true, default-features = false, features = ["parameterized-consensus-hook"] }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
+parachains-common = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
 polkadot-primitives = { workspace = true, default-features = false }
 polkadot-runtime-common = { workspace = true, default-features = false }
@@ -90,6 +91,7 @@ xcm = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 pallet-xcm = { workspace = true, default-features = false }
+pallet-message-queue = { workspace = true, default-features = false }
 cumulus-pallet-xcm = { workspace = true, default-features = false }
 cumulus-pallet-xcmp-queue = { workspace = true, default-features = false }
 cumulus-pallet-dmp-queue = { workspace = true, default-features = false }
@@ -122,7 +124,7 @@ pallet-evm-precompile-parachain-staking = { path = "../../precompiles/parachain-
 pallet-evm-precompile-vesting = { path = "../../precompiles/vesting", default-features = false }
 pallet-evm-precompile-balances-erc20 = { path = "../../precompiles/balances-erc20", default-features = false}
 runtime-common = { path = "../common", default-features = false }
-pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
+
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 inflation-manager = { path = "../../pallets/inflation-manager", default-features = false }
@@ -134,8 +136,19 @@ frame-try-runtime = { workspace = true, default-features = false, optional = tru
 log = {workspace = true, default-features = false}
 ethereum = {workspace = true, default-features = false}
 
+pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
+
 [features]
-default = ["std", "aura"]
+default = ["std", "aura", "parameterized-consensus-hook", "experimental"]
+
+parameterized-consensus-hook = [
+	"cumulus-pallet-parachain-system/parameterized-consensus-hook",
+]
+
+experimental = [
+	"pallet-aura/experimental",
+]
+
 aura = []
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
@@ -198,7 +211,6 @@ std = [
 	"sp-version/std",
 	"sp-weights/std",
 	"pallet-contracts/std",
-	"pallet-contracts-primitives/std",
 	"peaq-pallet-did/std",
 	"peaq-pallet-did-runtime-api/std",
 	"peaq-pallet-transaction/std",
@@ -235,9 +247,11 @@ std = [
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-utility/std",
 	"cumulus-primitives-timestamp/std",
+	"cumulus-primitives-aura/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
 	"parachain-info/std",
+	"parachains-common/std",
 
     "polkadot-parachain/std",
     "polkadot-primitives/std",
@@ -282,6 +296,7 @@ std = [
 	"pallet-evm-precompile-vesting/std",
 	"pallet-xcm/std",
 	"inflation-manager/std",
+	"pallet-message-queue/std",
 
 	# try-runtime
 	"frame-try-runtime/std",

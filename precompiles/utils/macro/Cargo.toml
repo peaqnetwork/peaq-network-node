@@ -2,7 +2,7 @@
 name = "precompile-utils-macro"
 description = ""
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [lib]
 proc-macro = true

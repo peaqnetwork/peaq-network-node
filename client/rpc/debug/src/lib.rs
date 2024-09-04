@@ -13,6 +13,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
+
 #![feature(stmt_expr_attributes)]
 
 use futures::StreamExt;
@@ -32,12 +33,15 @@ use peaq_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use peaq_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
 use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
 use sc_utils::mpsc::TracingUnboundedSender;
-use sp_api::{ApiExt, BlockId, Core, HeaderT, ProvideRuntimeApi};
+use sp_api::{ApiExt, Core, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
+use sp_runtime::{
+	generic::BlockId,
+	traits::{BlakeTwo256, Block as BlockT, Header as HeaderT, UniqueSaturatedInto},
+};
 use std::{future::Future, marker::PhantomData, sync::Arc};
 
 pub enum RequesterInput {
@@ -45,7 +49,6 @@ pub enum RequesterInput {
 	Block(RequestBlockId),
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum Response {
 	Single(single::TransactionTrace),
 	Block(Vec<single::TransactionTrace>),
@@ -139,7 +142,7 @@ where
 	pub fn task(
 		client: Arc<C>,
 		backend: Arc<BE>,
-		frontier_backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
+		frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
 		permit_pool: Arc<Semaphore>,
 		overrides: Arc<OverrideHandle<B>>,
 		raw_max_memory_usage: usize,
@@ -206,7 +209,7 @@ where
 											frontier_backend.clone(),
 											request_block_id,
 											params,
-											overrides,
+											overrides.clone(),
 										)
 									})
 									.await
@@ -276,7 +279,7 @@ where
 	fn handle_block_request(
 		client: Arc<C>,
 		backend: Arc<BE>,
-		frontier_backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
+		frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
 		request_block_id: RequestBlockId,
 		params: Option<TraceParams>,
 		overrides: Arc<OverrideHandle<B>>,
@@ -310,7 +313,7 @@ where
 		let blockchain = backend.blockchain();
 		// Get the header I want to work with.
 		let Ok(hash) = client.expect_block_hash_from_id(&reference_id) else {
-			return Err(internal_err("Block header not found"))
+			return Err(internal_err("Block header not found"));
 		};
 		let header = match client.header(hash) {
 			Ok(Some(h)) => h,
@@ -318,7 +321,7 @@ where
 		};
 
 		// Get parent blockid.
-		let parent_block_id = *header.parent_hash();
+		let parent_block_hash = *header.parent_hash();
 
 		let schema = fc_storage::onchain_storage_schema::<B, C, BE>(client.as_ref(), hash);
 
@@ -334,7 +337,7 @@ where
 
 		// If there are no ethereum transactions in the block return empty trace right away.
 		if eth_tx_hashes.is_empty() {
-			return Ok(Response::Block(vec![]))
+			return Ok(Response::Block(vec![]));
 		}
 
 		// Get block extrinsics.
@@ -343,12 +346,31 @@ where
 			.map_err(|e| internal_err(format!("Fail to read blockchain db: {:?}", e)))?
 			.unwrap_or_default();
 
+		// Get DebugRuntimeApi version
+		let trace_api_version = if let Ok(Some(api_version)) =
+			api.api_version::<dyn DebugRuntimeApi<B>>(parent_block_hash)
+		{
+			api_version
+		} else {
+			return Err(internal_err("Runtime api version call failed (trace)".to_string()));
+		};
+
 		// Trace the block.
 		let f = || -> RpcResult<_> {
-			api.initialize_block(parent_block_id, &header)
-				.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?;
+			let result = if trace_api_version >= 5 {
+				// The block is initialized inside "trace_block"
+				api.trace_block(parent_block_hash, exts, eth_tx_hashes, &header)
+			} else {
+				// Old "trace_block" api did not initialize block before applying transactions,
+				// so we need to do it here before calling "trace_block".
+				api.initialize_block(parent_block_hash, &header)
+					.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?;
 
-			api.trace_block(parent_block_id, exts, eth_tx_hashes)
+				#[allow(deprecated)]
+				api.trace_block_before_version_5(parent_block_hash, exts, eth_tx_hashes)
+			};
+
+			result
 				.map_err(|e| {
 					internal_err(format!(
 						"Blockchain error when replaying block {} : {:?}",
@@ -361,6 +383,7 @@ where
 						reference_id, e
 					))
 				})?;
+
 			Ok(peaq_rpc_primitives_debug::Response::Block)
 		};
 
@@ -397,7 +420,7 @@ where
 	fn handle_transaction_request(
 		client: Arc<C>,
 		backend: Arc<BE>,
-		frontier_backend: Arc<dyn fc_db::BackendReader<B> + Send + Sync>,
+		frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
 		overrides: Arc<OverrideHandle<B>>,
@@ -423,7 +446,7 @@ where
 				frontier_backend.as_ref(),
 				hash,
 			)) {
-				Ok(Some(hash)) => hash,
+				Ok(Some(hash)) => BlockId::Hash(hash),
 				Ok(_) => return Err(internal_err("Block hash not found".to_string())),
 				Err(e) => return Err(e),
 			};
@@ -432,35 +455,39 @@ where
 		// Get Blockchain backend
 		let blockchain = backend.blockchain();
 		// Get the header I want to work with.
-		let header = match client.header(reference_id) {
+		let Ok(reference_hash) = client.expect_block_hash_from_id(&reference_id) else {
+			return Err(internal_err("Block header not found"));
+		};
+		let header = match client.header(reference_hash) {
 			Ok(Some(h)) => h,
 			_ => return Err(internal_err("Block header not found")),
 		};
 		// Get parent blockid.
-		let parent_block_id = *header.parent_hash();
+		let parent_block_hash = *header.parent_hash();
 
 		// Get block extrinsics.
 		let exts = blockchain
-			.body(reference_id)
+			.body(reference_hash)
 			.map_err(|e| internal_err(format!("Fail to read blockchain db: {:?}", e)))?
 			.unwrap_or_default();
 
 		// Get DebugRuntimeApi version
 		let trace_api_version = if let Ok(Some(api_version)) =
-			api.api_version::<dyn DebugRuntimeApi<B>>(parent_block_id)
+			api.api_version::<dyn DebugRuntimeApi<B>>(parent_block_hash)
 		{
 			api_version
 		} else {
-			return Err(internal_err("Runtime api version call failed (trace)".to_string()))
+			return Err(internal_err("Runtime api version call failed (trace)".to_string()));
 		};
 
-		let schema = fc_storage::onchain_storage_schema::<B, C, BE>(client.as_ref(), reference_id);
+		let schema =
+			fc_storage::onchain_storage_schema::<B, C, BE>(client.as_ref(), reference_hash);
 
 		// Get the block that contains the requested transaction. Using storage overrides we align
 		// with `:ethereum_schema` which will result in proper SCALE decoding in case of migration.
 		let reference_block = match overrides.schemas.get(&schema) {
-			Some(schema) => schema.current_block(reference_id),
-			_ => return Err(internal_err(format!("No storage override at {:?}", reference_id))),
+			Some(schema) => schema.current_block(reference_hash),
+			_ => return Err(internal_err(format!("No storage override at {:?}", reference_hash))),
 		};
 
 		// Get the actual ethereum transaction.
@@ -468,38 +495,52 @@ where
 			let transactions = block.transactions;
 			if let Some(transaction) = transactions.get(index) {
 				let f = || -> RpcResult<_> {
-					api.initialize_block(parent_block_id, &header)
-						.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?;
-
-					if trace_api_version >= 4 {
-						api.trace_transaction(parent_block_id, exts, transaction)
-							.map_err(|e| {
-								internal_err(format!(
-									"Runtime api access error (version {:?}): {:?}",
-									trace_api_version, e
-								))
-							})?
-							.map_err(|e| internal_err(format!("DispatchError: {:?}", e)))?;
+					let result = if trace_api_version >= 5 {
+						// The block is initialized inside "trace_transaction"
+						api.trace_transaction(parent_block_hash, exts, transaction, &header)
 					} else {
-						// Pre-london update, legacy transactions.
-						match transaction {
-							ethereum::TransactionV2::Legacy(tx) =>
-								#[allow(deprecated)]
-								api.trace_transaction_before_version_4(parent_block_id, exts, tx)
-									.map_err(|e| {
-										internal_err(format!(
-											"Runtime api access error (legacy): {:?}",
-											e
-										))
-									})?
-									.map_err(|e| internal_err(format!("DispatchError: {:?}", e)))?,
-							_ =>
-								return Err(internal_err(
-									"Bug: pre-london runtime expects legacy transactions"
-										.to_string(),
-								)),
-						};
-					}
+						// Old "trace_transaction" api did not initialize block before applying
+						// transactions, so we need to do it here before calling
+						// "trace_transaction".
+						api.initialize_block(parent_block_hash, &header).map_err(|e| {
+							internal_err(format!("Runtime api access error: {:?}", e))
+						})?;
+
+						if trace_api_version == 4 {
+							// Pre pallet-message-queue
+							#[allow(deprecated)]
+							api.trace_transaction_before_version_5(
+								parent_block_hash,
+								exts,
+								transaction,
+							)
+						} else {
+							// Pre-london update, legacy transactions.
+							match transaction {
+								ethereum::TransactionV2::Legacy(tx) =>
+									#[allow(deprecated)]
+									api.trace_transaction_before_version_4(
+										parent_block_hash,
+										exts,
+										tx,
+									),
+								_ =>
+									return Err(internal_err(
+										"Bug: pre-london runtime expects legacy transactions"
+											.to_string(),
+									)),
+							}
+						}
+					};
+
+					result
+						.map_err(|e| {
+							internal_err(format!(
+								"Runtime api access error (version {:?}): {:?}",
+								trace_api_version, e
+							))
+						})?
+						.map_err(|e| internal_err(format!("DispatchError: {:?}", e)))?;
 
 					Ok(peaq_rpc_primitives_debug::Response::Single)
 				};
@@ -514,13 +555,11 @@ where
 						);
 						proxy.using(f)?;
 						Ok(Response::Single(
-							peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or_else(
-								|| {
-									internal_err(
-										"replayed transaction generated too much data. \
+							peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or(
+								internal_err(
+									"replayed transaction generated too much data. \
 								try disabling memory or storage?",
-									)
-								},
+								),
 							)?,
 						))
 					},
@@ -550,7 +589,7 @@ where
 						"Bug: `handle_transaction_request` does not support {:?}.",
 						not_supported
 					))),
-				}
+				};
 			}
 		}
 		Err(internal_err("Runtime block call failed".to_string()))

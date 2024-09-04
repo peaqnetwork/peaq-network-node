@@ -30,12 +30,13 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{Currency, IsType},
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 use peaq_primitives_xcm::Balance;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
 use sp_std::cmp::Ordering;
 
-pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 12_u32;
-const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+pub const BLOCKS_PER_YEAR: peaq_primitives_xcm::BlockNumber = 365 * 24 * 60 * 60 / 6_u32;
+const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -71,7 +72,7 @@ pub mod pallet {
 		/// Block rewards will be calculated at this block based on the then total supply or
 		/// TotalIssuanceNum
 		/// If no delay in TGE is expect this and BlockRewardsBeforeInitialize should be zero
-		type DoInitializeAt: Get<Self::BlockNumber>;
+		type DoInitializeAt: Get<BlockNumberFor<Self>>;
 
 		/// BlockRewards to distribute till delayed TGE kicks in
 		type BlockRewardBeforeInitialize: Get<Balance>;
@@ -99,13 +100,13 @@ pub mod pallet {
 	/// New inflation parameters kick in from the next block after the recalculation block.
 	#[pallet::storage]
 	#[pallet::getter(fn do_recalculation_at)]
-	pub type DoRecalculationAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+	pub type DoRecalculationAt<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	/// Flag The initial block of delayTGE
 	/// Setup the new inflation parameters and block rewards
 	#[pallet::storage]
 	#[pallet::getter(fn initialize_block)]
-	pub type DoInitializeAt<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+	pub type DoInitializeAt<T: Config> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
 	// Total issuance to be set at delayed TGE
 	#[pallet::storage]
@@ -149,7 +150,6 @@ pub mod pallet {
 		pub _phantom: PhantomData<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self { _phantom: Default::default() }
@@ -157,7 +157,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			let do_initialize_at = T::DoInitializeAt::get();
 			DoInitializeAt::<T>::put(do_initialize_at);
@@ -165,7 +165,7 @@ pub mod pallet {
 
 			// if DoRecalculationAt was provided as zero,
 			// Then do TGE now and initialize inflation
-			if do_initialize_at == T::BlockNumber::from(0u32) {
+			if do_initialize_at == BlockNumberFor::<T>::from(0u32) {
 				Pallet::<T>::fund_difference_balances();
 				Pallet::<T>::initialize_inflation();
 			} else {
@@ -179,12 +179,12 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			migrations::on_runtime_upgrade::<T>()
 		}
 
-		fn on_finalize(now: T::BlockNumber) {
+		fn on_finalize(now: BlockNumberFor<T>) {
 			// if we're at the end of a year or initializing inflation
 			let target_block = DoRecalculationAt::<T>::get();
 			if now == target_block {
@@ -218,7 +218,7 @@ pub mod pallet {
 				}
 
 				// set the flag to calculate inflation parameters after a year(in blocks)
-				let target_block = now + T::BlockNumber::from(BLOCKS_PER_YEAR);
+				let target_block = now + BlockNumberFor::<T>::from(BLOCKS_PER_YEAR);
 				DoRecalculationAt::<T>::put(target_block);
 
 				// calculate block rewards for new year
@@ -256,14 +256,14 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_delayed_tge())]
 		pub fn set_delayed_tge(
 			origin: OriginFor<T>,
-			block: T::BlockNumber,
+			block: BlockNumberFor<T>,
 			issuance: Balance,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
 			// Not allow to set if delayed TGE didn't enable
 			ensure!(
-				T::BlockNumber::from(0u32) != T::DoInitializeAt::get(),
+				BlockNumberFor::<T>::from(0u32) != T::DoInitializeAt::get(),
 				Error::<T>::WrongDelayedTGESetting
 			);
 			ensure!(
@@ -287,7 +287,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_recalculation_time())]
 		pub fn set_recalculation_time(
 			origin: OriginFor<T>,
-			block: T::BlockNumber,
+			block: BlockNumberFor<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 
@@ -353,7 +353,7 @@ pub mod pallet {
 			let desired_issuance = TotalIssuanceNum::<T>::get();
 			if now_total_issuance < desired_issuance {
 				let amount = desired_issuance.saturating_sub(now_total_issuance);
-				T::Currency::deposit_creating(&account, amount);
+				let _ = T::Currency::deposit_creating(&account, amount);
 				log::info!(
 					"Total issuance was increased from {:?} to {:?}, by {:?} tokens.",
 					now_total_issuance,
@@ -387,7 +387,8 @@ pub mod pallet {
 			weight_writes += 1;
 
 			// set the flag to calculate inflation parameters after a year(in blocks)
-			let racalculation_target_block = current_block + T::BlockNumber::from(BLOCKS_PER_YEAR);
+			let racalculation_target_block =
+				current_block + BlockNumberFor::<T>::from(BLOCKS_PER_YEAR);
 
 			// Update recalculation flag
 			DoRecalculationAt::<T>::put(racalculation_target_block);
@@ -403,7 +404,7 @@ pub mod pallet {
 		}
 
 		/// Sets DoRecalculationAt to the given block number where year 1 will kick off
-		pub fn initialize_delayed_inflation(do_recalculation_at: T::BlockNumber) -> Weight {
+		pub fn initialize_delayed_inflation(do_recalculation_at: BlockNumberFor<T>) -> Weight {
 			let mut weight_reads = 0;
 			let mut weight_writes = 0;
 			weight_reads += 1;

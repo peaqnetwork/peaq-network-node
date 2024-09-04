@@ -94,7 +94,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
-			return Ok(())
+			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::transfer(from, to, amount)
@@ -115,7 +115,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(())
+			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::deposit(who, amount)
@@ -135,7 +135,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(())
+			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::withdraw(who, amount)

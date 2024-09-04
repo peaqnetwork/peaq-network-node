@@ -1,22 +1,20 @@
 use crate::{self as inflation_manager, types, weights, Perbill};
 use frame_support::PalletId;
 
-use frame_support::{
-	construct_runtime, parameter_types, sp_io::TestExternalities, traits::GenesisBuild,
-	weights::Weight,
-};
+use frame_support::{construct_runtime, parameter_types, weights::Weight};
+use frame_system::pallet_prelude::BlockNumberFor;
+
+use sp_io::TestExternalities;
 
 use sp_core::{ConstU32, H256};
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
 
 pub(crate) type AccountId = u64;
-pub(crate) type BlockNumber = u64;
 pub(crate) use peaq_primitives_xcm::Balance;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
 
 /// Value shouldn't be less than 2 for testing purposes, otherwise we cannot test certain corner
@@ -24,15 +22,12 @@ type Block = frame_system::mocking::MockBlock<TestRuntime>;
 pub(crate) const EXISTENTIAL_DEPOSIT: Balance = 2;
 
 construct_runtime!(
-	pub enum TestRuntime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum TestRuntime
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		InflationManager: inflation_manager::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Timestamp: pallet_timestamp,
+		InflationManager: inflation_manager,
 	}
 );
 
@@ -44,17 +39,16 @@ parameter_types! {
 
 impl frame_system::Config for TestRuntime {
 	type BaseCallFilter = frame_support::traits::Everything;
+	type Nonce = u64;
+	type Block = Block;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
 	type RuntimeCall = RuntimeCall;
-	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
@@ -67,6 +61,7 @@ impl frame_system::Config for TestRuntime {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -85,9 +80,10 @@ impl pallet_balances::Config for TestRuntime {
 	type AccountStore = System;
 	type WeightInfo = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
-	type HoldIdentifier = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
+	type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
@@ -112,7 +108,7 @@ parameter_types! {
 		inflation_stagnation_rate: Perbill::from_percent(1),
 		inflation_stagnation_year: 13,
 	};
-	pub const InitializeInflationAt: BlockNumber = 10;
+	pub const InitializeInflationAt: BlockNumberFor<TestRuntime> = 10;
 	pub const BlockRewardBeforeInitialize: Balance = 1000;
 }
 
@@ -152,7 +148,7 @@ impl ExternalityBuilder {
 
 	pub fn build(self) -> TestExternalities {
 		let mut storage =
-			frame_system::GenesisConfig::default().build_storage::<TestRuntime>().unwrap();
+			frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
 		// This will cause some initial issuance
 		pallet_balances::GenesisConfig::<TestRuntime> { balances: self.balances }

@@ -60,7 +60,7 @@ fn modifiers() {
 #[test]
 fn test_weight_message() {
 	ExtBuilder::default().build().execute_with(|| {
-		let message: Vec<u8> = xcm::VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
+		let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
 
 		let input = PCall::weight_message { message: message.into() };
 
@@ -75,7 +75,7 @@ fn test_weight_message() {
 #[test]
 fn test_get_units_per_second() {
 	ExtBuilder::default().build().execute_with(|| {
-		let input = PCall::get_units_per_second { multilocation: MultiLocation::parent() };
+		let input = PCall::get_units_per_second { location: Location::parent() };
 
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
@@ -88,7 +88,7 @@ fn test_get_units_per_second() {
 #[test]
 fn test_executor_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
-		let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
+		let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
 
 		let input = PCall::xcm_execute { message: xcm_to_execute.into(), max_weight: 10000u64 };
 
@@ -103,12 +103,12 @@ fn test_executor_clear_origin() {
 #[test]
 fn test_executor_send() {
 	ExtBuilder::default().build().execute_with(|| {
-		let withdrawn_asset: MultiAsset = (MultiLocation::parent(), 1u128).into();
-		let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![
+		let withdrawn_asset: Asset = (Location::parent(), 1u128).into();
+		let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![
 			WithdrawAsset(vec![withdrawn_asset].into()),
 			InitiateReserveWithdraw {
-				assets: MultiAssetFilter::Wild(All),
-				reserve: MultiLocation::parent(),
+				assets: AssetFilter::Wild(All),
+				reserve: Location::parent(),
 				xcm: Xcm(vec![]),
 			},
 		]))
@@ -144,14 +144,14 @@ fn test_executor_transact() {
 			encoded.push(index);
 
 			// Then call bytes
-			let mut call_bytes = pallet_balances::Call::<Runtime>::transfer {
+			let mut call_bytes = pallet_balances::Call::<Runtime>::transfer_allow_death {
 				dest: MockPeaqAccount::Bob,
 				value: 100u32.into(),
 			}
 			.encode();
 
 			encoded.append(&mut call_bytes);
-			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![Transact {
+			let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
 				require_weight_at_most: Weight::from_parts(1_000_000_000u64, 5206u64),
 				call: encoded.into(),
@@ -175,9 +175,9 @@ fn test_executor_transact() {
 #[test]
 fn test_send_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
-		let xcm_to_send = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
+		let xcm_to_send = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
 
-		let input = PCall::xcm_send { dest: MultiLocation::parent(), message: xcm_to_send.into() };
+		let input = PCall::xcm_send { dest: Location::parent(), message: xcm_to_send.into() };
 
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
@@ -205,7 +205,7 @@ fn execute_fails_if_called_by_smart_contract() {
 				vec![10u8],
 			);
 
-			let xcm_to_execute = VersionedXcm::<()>::V3(Xcm(vec![ClearOrigin])).encode();
+			let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
 
 			let input = PCall::xcm_execute { message: xcm_to_execute.into(), max_weight: 10000u64 };
 

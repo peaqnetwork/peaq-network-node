@@ -21,10 +21,11 @@ use crate::solidity::{
 	revert::{BacktraceExt, InjectBacktrace, MayRevert, RevertReason},
 };
 use alloc::string::String;
-use frame_support::{dispatch::Weight, ensure, traits::ConstU32};
+use frame_support::{ensure, traits::ConstU32};
 use sp_core::H256;
 use sp_std::vec::Vec;
-use xcm::latest::{Junction, Junctions, MultiLocation, NetworkId};
+use sp_weights::Weight;
+use xcm::latest::{Junction, Junctions, Location, NetworkId};
 
 pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 
@@ -35,7 +36,7 @@ pub const JUNCTION_SIZE_LIMIT: u32 = 2u32.pow(16);
 // The first byte represents the enum variant to be used.
 // 		- Indexes 0,2,3 represent XCM V2 variants
 // 		- Index 1 changes name in V3 (`ByGenesis`), but is compatible with V2 `Named`
-// 		- Indexes 4~10 represent new XCM V3 variants
+// 		- Indexes 4~11 represent new XCM V3 variants
 // The rest of the bytes (if any), represent the additional data that such enum variant requires
 // In such a case, since NetworkIds will be appended at the end, we will read the buffer until the
 // end to recover the name
@@ -98,6 +99,11 @@ pub(crate) fn network_id_to_bytes(network_id: Option<NetworkId>) -> Vec<u8> {
 		Some(NetworkId::BitcoinCash) => {
 			encoded.push(10u8);
 			encoded.push(9u8);
+			encoded
+		},
+		Some(NetworkId::PolkadotBulletin) => {
+			encoded.push(11u8);
+			encoded.push(10u8);
 			encoded
 		},
 	}
@@ -331,10 +337,10 @@ impl Codec for Junctions {
 }
 
 // Cannot used derive macro since it is a foreign struct.
-impl Codec for MultiLocation {
+impl Codec for Location {
 	fn read(reader: &mut Reader) -> MayRevert<Self> {
 		let (parents, interior) = reader.read().map_in_tuple_to_field(&["parents", "interior"])?;
-		Ok(MultiLocation { parents, interior })
+		Ok(Location { parents, interior })
 	}
 
 	fn write(writer: &mut Writer, value: Self) {

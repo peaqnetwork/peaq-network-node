@@ -46,10 +46,7 @@ fn selectors() {
 #[test]
 fn vest() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1_000_000),
-			(MockPeaqAccount::Bob.into(), 1_000_000),
-		])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1_000_000), (MockPeaqAccount::Bob, 1_000_000)])
 		.build()
 		.execute_with(|| {
 			let origin = MockPeaqAccount::Alice;
@@ -80,10 +77,7 @@ fn vest() {
 #[test]
 fn vest_other() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1_000_000),
-			(MockPeaqAccount::Bob.into(), 1_000_000),
-		])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1_000_000), (MockPeaqAccount::Bob, 1_000_000)])
 		.build()
 		.execute_with(|| {
 			let origin = MockPeaqAccount::Alice;
@@ -122,10 +116,7 @@ fn vest_other() {
 #[test]
 fn vested_transfer() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockPeaqAccount::Alice.into(), 1_000_000),
-			(MockPeaqAccount::Bob.into(), 1_000_000),
-		])
+		.with_balances(vec![(MockPeaqAccount::Alice, 1_000_000), (MockPeaqAccount::Bob, 1_000_000)])
 		.build()
 		.execute_with(|| {
 			let origin = MockPeaqAccount::Alice;

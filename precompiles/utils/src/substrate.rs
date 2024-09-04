@@ -18,11 +18,13 @@
 //! - Substrate call dispatch.
 //! - Substrate DB read and write costs
 
+use sp_runtime::traits::Dispatchable;
+
 use crate::{evm::handle::using_precompile_handle, solidity::revert::revert};
 use core::marker::PhantomData;
 use fp_evm::{ExitError, PrecompileFailure, PrecompileHandle};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	pallet_prelude::*,
 	traits::Get,
 };
@@ -68,7 +70,7 @@ where
 		let remaining_gas = handle.remaining_gas();
 		let required_gas = Runtime::GasWeightMapping::weight_to_gas(weight);
 		if required_gas > remaining_gas {
-			return Err(ExitError::OutOfGas)
+			return Err(ExitError::OutOfGas);
 		}
 
 		// Make sure there is enough remaining weight
