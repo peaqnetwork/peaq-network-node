@@ -18,11 +18,11 @@ jobs:
     steps:
       - name: Clone simple CI
         uses: GuillaumeFalourd/clone-github-repo-action@v2.3
-        working-directory: ../
         with:
           branch: main
           owner: peaqnetwork
           repository: simple-ci-poc
+          path-to-clone: ../simple-ci-poc
 
       - name: Setup ENV for the simple CI
         working-directory: ../
