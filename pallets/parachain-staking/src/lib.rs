@@ -2891,13 +2891,17 @@ pub mod pallet {
 			);
 
 			let selected_candidates = Pallet::<T>::selected_candidates().to_vec();
+			Self::prepare_delayed_rewards(&selected_candidates, new_index);
+
 			if selected_candidates.is_empty() {
 				// we never want to pass an empty set of collators. This would brick the chain.
 				log::error!("💥 keeping old session because of empty collator set!");
 
-				// TODO get previous session's selected candidates and take prepare delayed rewards
-
-				// return empty collator set to prevent chain from breaking
+				// get collators of previous session for snapshot
+				let old_collators = AtStake::<T>::iter_prefix(new_index - 1)
+					.map(|(id, _)| id)
+					.collect::<Vec<T::AccountId>>();
+				Self::prepare_delayed_rewards(&old_collators, new_index);
 				None
 			} else {
 				Self::prepare_delayed_rewards(&selected_candidates, new_index);
