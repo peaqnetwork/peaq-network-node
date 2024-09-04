@@ -199,10 +199,12 @@ pub mod pallet {
 
 	/// Kilt-specific lock for staking rewards.
 	pub(crate) const OLD_STAKING_ID: LockIdentifier = *b"kiltpstk";
+	/// Peaq-specific lock for staking rewards.
 	pub(crate) const STAKING_ID: LockIdentifier = *b"peaqstak";
 
 	/// The current storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(10);
+	const STORAGE_VERSION: StorageVersion =
+		StorageVersion::new(crate::migrations::Versions::V11 as u16);
 
 	/// Pallet for parachain staking.
 	#[pallet::pallet]
@@ -630,7 +632,7 @@ pub mod pallet {
 	/// We use this storage to store collator's block generation
 	#[pallet::storage]
 	#[pallet::getter(fn collator_blocks)]
-	pub(crate) type CollatorBlock<T: Config> = StorageDoubleMap<
+	pub(crate) type CollatorBlocks<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
 		SessionIndex,
@@ -2684,7 +2686,7 @@ pub mod pallet {
 		) -> (Weight, BalanceOf<T>) {
 			let mut total_staking_in_session = BalanceOf::<T>::zero();
 			let mut read: u64 = 0;
-			CollatorBlock::<T>::iter_prefix(session_index).for_each(|(collator, num)| {
+			CollatorBlocks::<T>::iter_prefix(session_index).for_each(|(collator, num)| {
 				if let Some(state) = CandidatePool::<T>::get(collator) {
 					let collator_total = T::CurrencyBalance::from(num)
 						.checked_mul(&state.total)
@@ -2799,7 +2801,7 @@ pub mod pallet {
 
 			// get one author
 			if let Some((author, block_num)) =
-				CollatorBlock::<T>::iter_prefix(payout_info.round).drain().next()
+				CollatorBlocks::<T>::iter_prefix(payout_info.round).drain().next()
 			{
 				// get collator's staking info
 				if let Some(state) = AtStake::<T>::take(payout_info.round, author) {
@@ -2828,7 +2830,18 @@ pub mod pallet {
 			}
 		}
 
-		fn prepare_delayed_rewards(collators: &Vec<T::AccountId>, new_index: SessionIndex) {
+		pub(crate) fn pot_issuance() -> BalanceOf<T> {
+			let pot = Self::account_id();
+			let total_issuance = T::Currency::free_balance(&pot)
+				.checked_sub(&T::Currency::minimum_balance())
+				.unwrap_or_else(Zero::zero);
+			total_issuance
+		}
+
+		pub(crate) fn prepare_delayed_rewards(
+			collators: &Vec<T::AccountId>,
+			new_index: SessionIndex,
+		) {
 			// take snapshot of these collators' staking info
 			for collator in collators.iter() {
 				let collator_state = CandidatePool::<T>::get(collator).unwrap();
@@ -2838,10 +2851,7 @@ pub mod pallet {
 			let old_index = new_index - 1;
 			// [TODO] what to do with this returned weight?
 			let (_, total_stake) = Self::get_total_collator_staking_num(old_index);
-			let pot = Self::account_id();
-			let total_issuance = T::Currency::free_balance(&pot)
-				.checked_sub(&T::Currency::minimum_balance())
-				.unwrap_or_else(Zero::zero);
+			let total_issuance = Self::pot_issuance();
 
 			// take snapshot of previous session's staking totals for payout calculation
 			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
@@ -2867,8 +2877,8 @@ pub mod pallet {
 			// Querying will get us the current round, as PalletParachainStaking and PalletSession
 			// have not yet been initialized
 			let round = <Round<T>>::get().current;
-			let block_num = <CollatorBlock<T>>::get(round, author.clone());
-			CollatorBlock::<T>::insert(round, author.clone(), block_num + 1);
+			let block_num = <CollatorBlocks<T>>::get(round, author.clone());
+			CollatorBlocks::<T>::insert(round, author.clone(), block_num + 1);
 		}
 	}
 
