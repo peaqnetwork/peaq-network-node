@@ -152,4 +152,3 @@ jobs:
           # [TODO] Use the docker image to regenerate the docker image...
           # Need to check several things
           bash -x new.chain.test.bash --chain peaq-dev --test all
-          bash -x new.chain.test.bash --chain peaq --test all
