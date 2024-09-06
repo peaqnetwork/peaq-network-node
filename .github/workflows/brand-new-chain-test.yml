@@ -26,8 +26,7 @@ jobs:
       - name: Clone peaq-bc-repo
         uses: GuillaumeFalourd/clone-github-repo-action@v2.3
         with:
-          depth: 1
-          branch: main # Should change the branch
+          branch: feat/1207852356564241_improve # Should change the branch
           owner: peaqnetwork
           repository: peaq-bc-test
 
