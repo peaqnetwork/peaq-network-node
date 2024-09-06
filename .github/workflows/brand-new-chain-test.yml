@@ -163,5 +163,4 @@ jobs:
           export SET_DATETIME=${DATETIME}
           # [TODO] Use the docker image to regenerate the docker image...
           # Need to check several things
-          bash -x new.chain.test.bash --chain peaq-dev --test "test_booststrap"
-          bash -x new.chain.test.bash --chain peaq-dev --test "test_rbac_bridge"
+          bash -x new.chain.test.bash --chain peaq-dev --test all
