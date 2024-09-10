@@ -178,6 +178,4 @@ jobs:
           export SET_DATETIME=${DATETIME}
           # [TODO] Use the docker image to regenerate the docker image...
           # Need to check several things
-          chain=${{ github.event.inputs.chain }} || "peaq-dev"
-          testcases=${{ github.event.inputs.testcases }} || "all"
-          bash -x new.chain.test.bash --chain $chain --test $testcases
+          bash -x new.chain.test.bash --chain peaq-dev --test all
