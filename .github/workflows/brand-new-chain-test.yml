@@ -27,6 +27,10 @@ jobs:
   brand-new-test:
     runs-on: ubuntu-20.04
     steps:
+      - name: Show the inputs
+        run: |
+          echo "Chain: ${{ github.event.inputs.chain }}"
+          echo "Testcases: ${{ github.event.inputs.testcases }}"
       - name: Clone simple CI
         uses: GuillaumeFalourd/clone-github-repo-action@v2.3
         with:
@@ -174,4 +178,6 @@ jobs:
           export SET_DATETIME=${DATETIME}
           # [TODO] Use the docker image to regenerate the docker image...
           # Need to check several things
-          bash -x new.chain.test.bash --chain ${{ github.event.inputs.chain }} --test ${{ github.event.inputs.testcases }}
+          chain=${{ github.event.inputs.chain }} || "peaq-dev"
+          testcases=${{ github.event.inputs.testcases }} || "all"
+          bash -x new.chain.test.bash --chain $chain --test $testcases
