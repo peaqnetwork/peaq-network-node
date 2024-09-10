@@ -1,7 +1,18 @@
 name: Brand new chain test
 # This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
 on:
-  # workflow_dispatch:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'Chain to test'
+        required: true
+        default: 'peaq-dev'
+        type: string
+      testcases:
+        description: 'Test to run'
+        required: true
+        default: 'all'
+        type: string
   # workflow_run:
     # workflows: [Pull Request Check]
     # types: [completed]
@@ -163,4 +174,4 @@ jobs:
           export SET_DATETIME=${DATETIME}
           # [TODO] Use the docker image to regenerate the docker image...
           # Need to check several things
-          bash -x new.chain.test.bash --chain peaq-dev --test "test_from_relay_to_peaq"
+          bash -x new.chain.test.bash --chain ${{ github.event.inputs.chain }} --test ${{ github.event.inputs.testcases }}
