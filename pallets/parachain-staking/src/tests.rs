@@ -3359,30 +3359,30 @@ fn check_collator_block() {
 				vec![None, Some(1u64), Some(1u64), Some(3u64), Some(4u64), Some(1u64)];
 
 			roll_to(2, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(1), 1);
-			assert_eq!(StakePallet::collator_blocks(2), 0);
-			assert_eq!(StakePallet::collator_blocks(3), 0);
-			assert_eq!(StakePallet::collator_blocks(4), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 1), 1);
+			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 3), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
 
 			roll_to(3, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(1), 2);
-			assert_eq!(StakePallet::collator_blocks(2), 0);
-			assert_eq!(StakePallet::collator_blocks(3), 0);
-			assert_eq!(StakePallet::collator_blocks(4), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 1), 2);
+			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 3), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
 
 			roll_to(4, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(1), 2);
-			assert_eq!(StakePallet::collator_blocks(2), 0);
-			assert_eq!(StakePallet::collator_blocks(3), 1);
-			assert_eq!(StakePallet::collator_blocks(4), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 1), 2);
+			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 3), 1);
+			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
 
 			// Because the new session start, we'll add the counter and clean the all collator
 			// blocks immediately the session number is BLOCKS_PER_ROUND (5)
 			roll_to(5, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(1), 0);
-			assert_eq!(StakePallet::collator_blocks(2), 0);
-			assert_eq!(StakePallet::collator_blocks(3), 0);
-			assert_eq!(StakePallet::collator_blocks(4), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 1), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 3), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
 		});
 }
 
@@ -3695,7 +3695,7 @@ fn check_total_collator_staking_num() {
 
 			roll_to(4, authors.clone());
 
-			let (_weight, balance) = StakePallet::get_total_collator_staking_num();
+			let (_weight, balance) = StakePallet::get_total_collator_staking_num(0);
 			assert_eq!(balance, 2 * (500 + 600 + 400) + 1 * (100 + 200));
 		});
 }
