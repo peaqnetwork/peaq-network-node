@@ -173,7 +173,7 @@ pub mod currency {
 
 	pub const TRANSACTION_BYTE_FEE: Balance = GIGAWEI * SUPPLY_FACTOR;
 	pub const STORAGE_BYTE_FEE: Balance = 100 * MICROPEAQ * SUPPLY_FACTOR;
-	pub const WEIGHT_FEE: Balance = 40 * KILOWEI * SUPPLY_FACTOR;
+	pub const WEIGHT_FEE: Balance = 400 * KILOWEI * SUPPLY_FACTOR;
 
 	// pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	// 	items as Balance * 100 * MILLIPEAQ * SUPPLY_FACTOR + (bytes as Balance) * STORAGE_BYTE_FEE
@@ -206,7 +206,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 101,
+	spec_version: 102,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
