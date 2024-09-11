@@ -538,6 +538,10 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			crate::migrations::on_runtime_upgrade::<T>()
 		}
+
+		fn on_finalize(_n: T::BlockNumber) {
+			Self::payout_collator();
+		}
 	}
 
 	/// The maximum number of collator candidates selected at each round.
@@ -2848,6 +2852,11 @@ pub mod pallet {
 				<AtStake<T>>::insert(new_index, collator, collator_state);
 			}
 
+			if new_index.is_zero() {
+				log::info!("Skipping delayed reward calculations at genesis");
+				return;
+			}
+
 			let old_index = new_index - 1;
 			// [TODO] what to do with this returned weight?
 			let (_, total_stake) = Self::get_total_collator_staking_num(old_index);
@@ -2901,7 +2910,6 @@ pub mod pallet {
 			);
 
 			let selected_candidates = Pallet::<T>::selected_candidates().to_vec();
-			Self::prepare_delayed_rewards(&selected_candidates, new_index);
 
 			if selected_candidates.is_empty() {
 				// we never want to pass an empty set of collators. This would brick the chain.
@@ -2933,7 +2941,6 @@ pub mod pallet {
 		/// 2. we need to clean up the state of the pallet.
 		fn end_session(end_index: SessionIndex) {
 			log::debug!("new_session: {:?}", end_index);
-			Self::payout_collator();
 		}
 
 		fn start_session(_start_index: SessionIndex) {
