@@ -2683,15 +2683,15 @@ pub mod pallet {
 		}
 
 		/// [Post-launch TODO] Think about Collator stake or total stake?
-		/// Gives us the total stake of block authors and their delegators in a session
+		/// Gives us the total stake of block authors and their delegators from previous session
 		/// Public only for testing purpose
 		pub fn get_total_collator_staking_num(
-			session_index: SessionIndex,
 		) -> (Weight, BalanceOf<T>) {
 			let mut total_staking_in_session = BalanceOf::<T>::zero();
-			let mut read: u64 = 0;
-			CollatorBlocks::<T>::iter_prefix(session_index).for_each(|(collator, num)| {
-				if let Some(state) = CandidatePool::<T>::get(collator) {
+			let round = Self::round().current - 1;
+			let mut read: u64 = 1;
+			CollatorBlocks::<T>::iter_prefix(round).for_each(|(collator, num)| {
+				if let Some(state) = AtStake::<T>::get(round, collator.clone()) {
 					let collator_total = T::CurrencyBalance::from(num)
 						.checked_mul(&state.total)
 						.unwrap_or_else(Zero::zero);
@@ -2799,6 +2799,12 @@ pub mod pallet {
 
 		/// Handles staking reward payout for previous session for one collator and their delegators
 		fn payout_collator() {
+
+			// if there's no previous round, i.e, genesis round, then skip
+			if Self::round().current.is_zero() {
+				return;
+			}
+
 			let pot = Self::account_id();
 			// get payout info for the last round
 			let payout_info = DelayedPayoutInfo::<T>::get();
@@ -2851,15 +2857,16 @@ pub mod pallet {
 				let collator_state = CandidatePool::<T>::get(collator).unwrap();
 				<AtStake<T>>::insert(new_index, collator, collator_state);
 			}
-
-			if new_index.is_zero() {
+	
+			// As there's no previous set of collators at genesis, we skip reward calculations for it also
+			if Self::round().current.is_zero(){
 				log::info!("Skipping delayed reward calculations at genesis");
 				return;
 			}
 
 			let old_index = new_index - 1;
 			// [TODO] what to do with this returned weight?
-			let (_, total_stake) = Self::get_total_collator_staking_num(old_index);
+			let (_, total_stake) = Self::get_total_collator_staking_num();
 			let total_issuance = Self::pot_issuance();
 
 			// take snapshot of previous session's staking totals for payout calculation
