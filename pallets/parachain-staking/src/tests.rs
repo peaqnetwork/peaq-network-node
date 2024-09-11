@@ -35,10 +35,13 @@ use crate::{
 		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
 		BLOCKS_PER_ROUND, BLOCK_REWARD_IN_GENESIS_SESSION, BLOCK_REWARD_IN_NORMAL_SESSION,
 		DECIMALS,
-	}, set::OrderedSet, types::{
+	},
+	set::OrderedSet,
+	types::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
 		Stake, StakeOf, TotalStake,
-	}, AtStake, CandidatePool, Config, Error, Event, STAKING_ID
+	},
+	AtStake, CandidatePool, Config, Error, Event, STAKING_ID,
 };
 
 #[test]
@@ -115,26 +118,24 @@ fn genesis() {
 			assert_eq!(Balances::free_balance(1), 1000);
 			assert!(StakePallet::is_active_candidate(&1).is_some());
 			let candidate_1 = StakePallet::candidate_pool(1);
-			let candidate_1_expected = Some(Candidate::<AccountId, Balance, <Test as Config>::MaxDelegatorsPerCollator> {
-				id: 1,
-				stake: 500,
-				delegators: OrderedSet::from_sorted_set(
-					vec![
-						StakeOf::<Test> { owner: 3, amount: 100 },
-						StakeOf::<Test> { owner: 4, amount: 100 }
-					]
-					.try_into()
-					.unwrap()
-				),
-				total: 700,
-				status: CandidateStatus::Active,
-				commission: Default::default(),
-			});
+			let candidate_1_expected =
+				Some(Candidate::<AccountId, Balance, <Test as Config>::MaxDelegatorsPerCollator> {
+					id: 1,
+					stake: 500,
+					delegators: OrderedSet::from_sorted_set(
+						vec![
+							StakeOf::<Test> { owner: 3, amount: 100 },
+							StakeOf::<Test> { owner: 4, amount: 100 },
+						]
+						.try_into()
+						.unwrap(),
+					),
+					total: 700,
+					status: CandidateStatus::Active,
+					commission: Default::default(),
+				});
 
-			assert_eq!(
-				candidate_1,
-				candidate_1_expected,
-			);
+			assert_eq!(candidate_1, candidate_1_expected,);
 			assert_eq!(candidate_1, AtStake::<Test>::get(0, 1));
 
 			// 2
@@ -142,25 +143,23 @@ fn genesis() {
 			assert_eq!(Balances::free_balance(2), 300);
 			assert!(StakePallet::is_active_candidate(&2).is_some());
 			let candidate_2 = StakePallet::candidate_pool(2);
-			let candidate_2_expected = Some(Candidate::<AccountId, Balance, <Test as Config>::MaxDelegatorsPerCollator> {
-				id: 2,
-				stake: 200,
-				delegators: OrderedSet::from_sorted_set(
-					vec![
-						StakeOf::<Test> { owner: 5, amount: 100 },
-						StakeOf::<Test> { owner: 6, amount: 100 }
-					]
-					.try_into()
-					.unwrap()
-				),
-				total: 400,
-				status: CandidateStatus::Active,
-				commission: Default::default(),
-			});
-			assert_eq!(
-				candidate_2,
-				candidate_2_expected,
-			);
+			let candidate_2_expected =
+				Some(Candidate::<AccountId, Balance, <Test as Config>::MaxDelegatorsPerCollator> {
+					id: 2,
+					stake: 200,
+					delegators: OrderedSet::from_sorted_set(
+						vec![
+							StakeOf::<Test> { owner: 5, amount: 100 },
+							StakeOf::<Test> { owner: 6, amount: 100 },
+						]
+						.try_into()
+						.unwrap(),
+					),
+					total: 400,
+					status: CandidateStatus::Active,
+					commission: Default::default(),
+				});
+			assert_eq!(candidate_2, candidate_2_expected,);
 			assert_eq!(candidate_2, AtStake::<Test>::get(0, 2));
 
 			// Delegators
@@ -3361,8 +3360,16 @@ fn check_collator_block() {
 		.with_collators(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
 		.build()
 		.execute_with(|| {
-			let authors: Vec<Option<AccountId>> =
-				vec![None, Some(1u64), Some(1u64), Some(3u64), Some(4u64), Some(1u64), Some(1u64), Some(2u64)];
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(1u64),
+				Some(3u64),
+				Some(4u64),
+				Some(1u64),
+				Some(1u64),
+				Some(2u64),
+			];
 
 			roll_to(2, authors.clone());
 			assert_eq!(StakePallet::collator_blocks(0, 1), 1);
@@ -3382,12 +3389,14 @@ fn check_collator_block() {
 			assert_eq!(StakePallet::collator_blocks(0, 3), 1);
 			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
 
-			// Because the new session start, we start keeping count of collators blocks for new session and draining old collators for payout
+			// Because the new session start, we start keeping count of collators blocks for new
+			// session and draining old collators for payout
 			roll_to(8, authors.clone());
 			assert_eq!(StakePallet::collator_blocks(1, 1), 2);
 			assert_eq!(StakePallet::collator_blocks(1, 2), 1);
 
-			// previous session's CollatorBlocks will be empty as they will have been paid out over 3 blocks
+			// previous session's CollatorBlocks will be empty as they will have been paid out over
+			// 3 blocks
 			let authors_0 = <crate::CollatorBlocks<Test>>::iter_prefix(0).collect::<Vec<_>>();
 			assert_eq!(authors_0.len(), 0);
 		});

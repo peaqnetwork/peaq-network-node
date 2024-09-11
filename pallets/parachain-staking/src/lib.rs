@@ -2685,8 +2685,7 @@ pub mod pallet {
 		/// [Post-launch TODO] Think about Collator stake or total stake?
 		/// Gives us the total stake of block authors and their delegators from previous session
 		/// Public only for testing purpose
-		pub fn get_total_collator_staking_num(
-		) -> (Weight, BalanceOf<T>) {
+		pub fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {
 			let mut total_staking_in_session = BalanceOf::<T>::zero();
 			let round = Self::round().current - 1;
 			let mut read: u64 = 1;
@@ -2799,10 +2798,9 @@ pub mod pallet {
 
 		/// Handles staking reward payout for previous session for one collator and their delegators
 		fn payout_collator() {
-
 			// if there's no previous round, i.e, genesis round, then skip
 			if Self::round().current.is_zero() {
-				return;
+				return
 			}
 
 			let pot = Self::account_id();
@@ -2857,11 +2855,12 @@ pub mod pallet {
 				let collator_state = CandidatePool::<T>::get(collator).unwrap();
 				<AtStake<T>>::insert(new_index, collator, collator_state);
 			}
-	
-			// As there's no previous set of collators at genesis, we skip reward calculations for it also
-			if Self::round().current.is_zero(){
+
+			// As there's no previous set of collators at genesis, we skip reward calculations for
+			// it also
+			if Self::round().current.is_zero() {
 				log::info!("Skipping delayed reward calculations at genesis");
-				return;
+				return
 			}
 
 			let old_index = new_index - 1;
