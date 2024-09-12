@@ -2853,15 +2853,12 @@ pub mod pallet {
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &Vec<T::AccountId>,
 			old_round: SessionIndex,
-			session_index: SessionIndex
+			session_index: SessionIndex,
 		) {
 			// if this is the 1st session, i.e, genesis, old_round will be zero
-			// if this is the 2nd session, old_round will also be 0, <Pallet<T>>::on_initialize has not yet ran to update round
-			let new_round = if session_index.is_zero(){
-				old_round
-			} else {
-				old_round + 1
-			};
+			// if this is the 2nd session, old_round will also be 0, <Pallet<T>>::on_initialize has
+			// not yet ran to update round
+			let new_round = if session_index.is_zero() { old_round } else { old_round + 1 };
 
 			// take snapshot of these new collators' staking info
 			for collator in collators.iter() {
@@ -2869,7 +2866,8 @@ pub mod pallet {
 				<AtStake<T>>::insert(new_round, collator, collator_state);
 			}
 
-			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip this part
+			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
+			// this part
 			if session_index.is_zero() {
 				return
 			}

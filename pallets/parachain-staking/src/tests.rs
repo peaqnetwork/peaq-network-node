@@ -1470,7 +1470,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 
 			assert!(Balances::usable_balance(1) > Balance::zero());
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(2), 2));
-			
+
 			// delegator will receive reward for first round as snapshot was taken
 			let delegator_2_balance = Balances::usable_balance(2);
 			let delegator_2_reward_round_1 = delegator_2_balance - stake;
@@ -1481,11 +1481,7 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		});
 
 	ExtBuilder::default()
-		.with_balances(vec![
-			(1, stake),
-			(2, stake),
-			(3, stake),
-		])
+		.with_balances(vec![(1, stake), (2, stake), (3, stake)])
 		.with_collators(vec![(1, stake)])
 		.with_delegators(vec![(2, 1, stake), (3, 1, stake)])
 		.build()
