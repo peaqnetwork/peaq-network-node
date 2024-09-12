@@ -1674,53 +1674,53 @@ fn coinbase_rewards_many_blocks_simple_check() {
 		});
 }
 
-// // Could only occur if we increase MinDelegatorStakeOf::<Test> via runtime
-// // upgrade and don't migrate delegators which fall below minimum
-// #[test]
-// fn should_reward_delegators_below_min_stake() {
-// 	let stake_num = 10 * DECIMALS;
-// 	ExtBuilder::default()
-// 		.with_balances(vec![(1, stake_num), (2, stake_num), (3, stake_num), (4, stake_num)])
-// 		.with_collators(vec![(1, stake_num), (2, stake_num)])
-// 		.with_delegators(vec![(3, 2, stake_num)])
-// 		.build()
-// 		.execute_with(|| {
-// 			// impossible but lets assume it happened
-// 			let mut state =
-// 				StakePallet::candidate_pool(1).expect("CollatorState cannot be missing");
-// 			let delegator_stake_below_min = <Test as Config>::MinDelegatorStake::get() - 1;
-// 			state.stake += delegator_stake_below_min;
-// 			state.total += delegator_stake_below_min;
-// 			let impossible_bond =
-// 				StakeOf::<Test> { owner: 4u64, amount: delegator_stake_below_min };
-// 			assert_eq!(state.delegators.try_insert(impossible_bond), Ok(true));
-// 			<crate::CandidatePool<Test>>::insert(1u64, state);
+// Could only occur if we increase MinDelegatorStakeOf::<Test> via runtime
+// upgrade and don't migrate delegators which fall below minimum
+#[test]
+fn should_reward_delegators_below_min_stake() {
+	let stake_num = 10 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake_num), (2, stake_num), (3, stake_num), (4, stake_num)])
+		.with_collators(vec![(1, stake_num), (2, stake_num)])
+		.with_delegators(vec![(3, 2, stake_num)])
+		.build()
+		.execute_with(|| {
+			// impossible but lets assume it happened
+			let mut state =
+				StakePallet::candidate_pool(1).expect("CollatorState cannot be missing");
+			let delegator_stake_below_min = <Test as Config>::MinDelegatorStake::get() - 1;
+			state.stake += delegator_stake_below_min;
+			state.total += delegator_stake_below_min;
+			let impossible_bond =
+				StakeOf::<Test> { owner: 4u64, amount: delegator_stake_below_min };
+			assert_eq!(state.delegators.try_insert(impossible_bond), Ok(true));
+			<crate::CandidatePool<Test>>::insert(1u64, state);
 
-// 			let authors: Vec<Option<AccountId>> =
-// 				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
-// 			assert_eq!(Balances::usable_balance(1), Balance::zero());
-// 			assert_eq!(Balances::usable_balance(2), Balance::zero());
-// 			assert_eq!(Balances::usable_balance(3), Balance::zero());
-// 			assert_eq!(Balances::usable_balance(4), stake_num);
+			let authors: Vec<Option<AccountId>> =
+				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
+			assert_eq!(Balances::usable_balance(1), Balance::zero());
+			assert_eq!(Balances::usable_balance(2), Balance::zero());
+			assert_eq!(Balances::usable_balance(3), Balance::zero());
+			assert_eq!(Balances::usable_balance(4), stake_num);
 
-// 			// should only reward 1
-// 			let total_stake_num = stake_num + delegator_stake_below_min;
-// 			roll_to(5, authors);
-// 			assert_eq!(
-// 				Balances::usable_balance(1),
-// 				Perquintill::from_rational(stake_num, total_stake_num) *
-// 					BLOCK_REWARD_IN_GENESIS_SESSION
-// 			);
-// 			assert_eq!(
-// 				Balances::usable_balance(4) - stake_num,
-// 				Perquintill::from_rational(delegator_stake_below_min, total_stake_num) *
-// 					BLOCK_REWARD_IN_GENESIS_SESSION
-// 			);
+			// should only reward 1
+			let total_stake_num = stake_num + delegator_stake_below_min;
+			roll_to(10, authors);
+			assert_eq!(
+				Balances::usable_balance(1),
+				Perquintill::from_rational(stake_num, total_stake_num) *
+					BLOCK_REWARD_IN_GENESIS_SESSION
+			);
+			assert_eq!(
+				Balances::usable_balance(4) - stake_num,
+				Perquintill::from_rational(delegator_stake_below_min, total_stake_num) *
+					BLOCK_REWARD_IN_GENESIS_SESSION
+			);
 
-// 			assert_eq!(Balances::usable_balance(2), Balance::zero());
-// 			assert_eq!(Balances::usable_balance(3), Balance::zero());
-// 		});
-// }
+			assert_eq!(Balances::usable_balance(2), Balance::zero());
+			assert_eq!(Balances::usable_balance(3), Balance::zero());
+		});
+}
 
 #[test]
 #[should_panic]
@@ -3059,51 +3059,51 @@ fn prioritize_delegators() {
 		});
 }
 
-// #[test]
-// fn authorities_per_round() {
-// 	let stake = 100 * DECIMALS;
-// 	ExtBuilder::default()
-// 		.with_balances(vec![
-// 			(1, stake),
-// 			(2, stake),
-// 			(3, stake),
-// 			(4, stake),
-// 			(5, stake),
-// 			(6, stake),
-// 			(7, stake),
-// 			(8, stake),
-// 			(9, stake),
-// 			(10, stake),
-// 			(11, 100 * stake),
-// 		])
-// 		.with_collators(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
-// 		.build()
-// 		.execute_with(|| {
-// 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
-// 			// reward 1 once per round
-// 			let authors: Vec<Option<AccountId>> =
-// 				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
+#[test]
+fn authorities_per_round() {
+	let stake = 100 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, stake),
+			(2, stake),
+			(3, stake),
+			(4, stake),
+			(5, stake),
+			(6, stake),
+			(7, stake),
+			(8, stake),
+			(9, stake),
+			(10, stake),
+			(11, 100 * stake),
+		])
+		.with_collators(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
+		.build()
+		.execute_with(|| {
+			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
+			// reward 1 once per round
+			let authors: Vec<Option<AccountId>> =
+				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
 
-// 			// roll to new round 1
-// 			let reward_0 = 1000;
-// 			roll_to(BLOCKS_PER_ROUND, authors.clone());
-// 			assert_eq!(Balances::free_balance(1), stake + reward_0);
-// 			// increase max selected candidates which will become effective in round 2
-// 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));
+			// roll to new round 1
+			let reward_0 = 1000;
+			roll_to(BLOCKS_PER_ROUND * 2, authors.clone());
+			assert_eq!(Balances::free_balance(1), stake + reward_0);
+			// increase max selected candidates which will become effective in round 2
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));
 
-// 			// roll to new round 2
-// 			roll_to(BLOCKS_PER_ROUND * 2, authors.clone());
-// 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 2);
+			// roll to new round 2
+			roll_to(BLOCKS_PER_ROUND * 3, authors.clone());
+			assert_eq!(Balances::free_balance(1), stake + reward_0 * 2);
 
-// 			// roll to new round 3
-// 			roll_to(BLOCKS_PER_ROUND * 3, authors.clone());
-// 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 3);
+			// roll to new round 3
+			roll_to(BLOCKS_PER_ROUND * 4, authors.clone());
+			assert_eq!(Balances::free_balance(1), stake + reward_0 * 3);
 
-// 			// roll to new round 4
-// 			roll_to(BLOCKS_PER_ROUND * 4, authors);
-// 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 4);
-// 		});
-// }
+			// roll to new round 4
+			roll_to(BLOCKS_PER_ROUND * 5, authors);
+			assert_eq!(Balances::free_balance(1), stake + reward_0 * 4);
+		});
+}
 
 #[test]
 fn force_new_round() {
@@ -3407,6 +3407,7 @@ fn check_collator_block() {
 		});
 }
 
+// TODO: test failing
 // #[test]
 // fn check_claim_block_normal_wo_delegator() {
 // 	let stake = 100 * DECIMALS;
@@ -3483,6 +3484,7 @@ fn check_collator_block() {
 // 		});
 // }
 
+// TODO: test failing
 // #[test]
 // fn check_claim_block_normal_wi_delegator() {
 // 	let stake = 100 * DECIMALS;
