@@ -1453,31 +1453,41 @@ fn round_transitions() {
 
 #[test]
 fn delegator_should_not_receive_rewards_after_revoking() {
+	let stake = 10_000_000 * DECIMALS;
 	// test edge case of 1 delegator
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 10_000_000 * DECIMALS)])
-		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
-		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS)])
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
 			let authors: Vec<Option<AccountId>> = (1u64..100u64).map(|_| Some(1u64)).collect();
 			assert_eq!(Balances::usable_balance(1), Balance::zero());
 			assert_eq!(Balances::usable_balance(2), Balance::zero());
-			roll_to(100, authors);
+			assert_eq!(Balances::usable_balance(3), Balance::zero());
+			roll_to(10, authors.clone());
+
 			assert!(Balances::usable_balance(1) > Balance::zero());
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(2), 2));
-			assert_eq!(Balances::usable_balance(2), 10_000_000 * DECIMALS);
+			
+			// delegator will receive reward for first round as snapshot was taken
+			let delegator_2_balance = Balances::usable_balance(2);
+			let delegator_2_reward_round_1 = delegator_2_balance - stake;
+
+			// delegator will not receive any rewards after round 1 payouts
+			roll_to(100, authors);
+			assert_eq!(Balances::usable_balance(2), stake + delegator_2_reward_round_1);
 		});
 
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 10_000_000 * DECIMALS),
-			(2, 10_000_000 * DECIMALS),
-			(3, 10_000_000 * DECIMALS),
+			(1, stake),
+			(2, stake),
+			(3, stake),
 		])
-		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
-		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS), (3, 1, 10_000_000 * DECIMALS)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake), (3, 1, stake)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(3), 1));
@@ -1485,11 +1495,16 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 			assert_eq!(Balances::usable_balance(1), Balance::zero());
 			assert_eq!(Balances::usable_balance(2), Balance::zero());
 			assert_eq!(Balances::usable_balance(3), Balance::zero());
-			roll_to(100, authors);
-			assert!(Balances::usable_balance(1) > Balance::zero());
-			assert!(Balances::usable_balance(2) > Balance::zero());
+			roll_to(10, authors.clone());
+
+			// delegator gets reward for round 1
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(3), 3));
-			assert_eq!(Balances::usable_balance(3), 10_000_000 * DECIMALS);
+			let delegator_3_balance = Balances::usable_balance(3);
+			let delegator_3_reward_round_1 = delegator_3_balance - stake;
+			assert_eq!(delegator_3_balance, stake + delegator_3_reward_round_1);
+
+			roll_to(100, authors);
+			assert_eq!(Balances::usable_balance(3), delegator_3_reward_round_1 + stake);
 		});
 }
 
@@ -3360,44 +3375,38 @@ fn check_collator_block() {
 		.with_collators(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
 		.build()
 		.execute_with(|| {
-			let authors: Vec<Option<AccountId>> = vec![
-				None,
-				Some(1u64),
-				Some(1u64),
-				Some(3u64),
-				Some(4u64),
-				Some(1u64),
-				Some(1u64),
-				Some(2u64),
-			];
+			let end_block: BlockNumber = 26295;
+			// set round robin authoring
+			let mut authors: Vec<Option<AccountId>> =
+				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
+			authors.insert(0, None);
 
-			roll_to(2, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(0, 1), 1);
-			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
-			assert_eq!(StakePallet::collator_blocks(0, 3), 0);
-			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
-
-			roll_to(3, authors.clone());
+			roll_to(5, authors.clone());
 			assert_eq!(StakePallet::collator_blocks(0, 1), 2);
-			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
-			assert_eq!(StakePallet::collator_blocks(0, 3), 0);
-			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
+			assert_eq!(StakePallet::collator_blocks(0, 2), 2);
 
-			roll_to(4, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(0, 1), 2);
-			assert_eq!(StakePallet::collator_blocks(0, 2), 0);
-			assert_eq!(StakePallet::collator_blocks(0, 3), 1);
-			assert_eq!(StakePallet::collator_blocks(0, 4), 0);
-
-			// Because the new session start, we start keeping count of collators blocks for new
-			// session and draining old collators for payout
-			roll_to(8, authors.clone());
-			assert_eq!(StakePallet::collator_blocks(1, 1), 2);
-			assert_eq!(StakePallet::collator_blocks(1, 2), 1);
-
-			// previous session's CollatorBlocks will be empty as they will have been paid out over
-			// 3 blocks
+			roll_to(10, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(1, 1), 3);
+			assert_eq!(StakePallet::collator_blocks(1, 2), 2);
 			let authors_0 = <crate::CollatorBlocks<Test>>::iter_prefix(0).collect::<Vec<_>>();
+			assert_eq!(authors_0.len(), 0);
+
+			roll_to(15, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(2, 1), 2);
+			assert_eq!(StakePallet::collator_blocks(2, 2), 3);
+			let authors_0 = <crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<_>>();
+			assert_eq!(authors_0.len(), 0);
+
+			roll_to(20, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(3, 1), 3);
+			assert_eq!(StakePallet::collator_blocks(3, 2), 2);
+			let authors_0 = <crate::CollatorBlocks<Test>>::iter_prefix(2).collect::<Vec<_>>();
+			assert_eq!(authors_0.len(), 0);
+
+			roll_to(25, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(4, 1), 2);
+			assert_eq!(StakePallet::collator_blocks(4, 2), 3);
+			let authors_0 = <crate::CollatorBlocks<Test>>::iter_prefix(3).collect::<Vec<_>>();
 			assert_eq!(authors_0.len(), 0);
 		});
 }
@@ -3711,7 +3720,7 @@ fn check_total_collator_staking_num() {
 
 			roll_to(5, authors.clone());
 
-			let (_weight, balance) = StakePallet::get_total_collator_staking_num();
+			let (_weight, balance) = StakePallet::get_total_collator_staking_num(0);
 			assert_eq!(balance, 2 * (500 + 600 + 400) + 2 * (100 + 200));
 		});
 }

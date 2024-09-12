@@ -2683,14 +2683,13 @@ pub mod pallet {
 		}
 
 		/// [Post-launch TODO] Think about Collator stake or total stake?
-		/// Gives us the total stake of block authors and their delegators from previous session
+		/// Gives us the total stake of block authors and their delegators from previous round
 		/// Public only for testing purpose
-		pub fn get_total_collator_staking_num() -> (Weight, BalanceOf<T>) {
+		pub fn get_total_collator_staking_num(old_round: SessionIndex) -> (Weight, BalanceOf<T>) {
 			let mut total_staking_in_session = BalanceOf::<T>::zero();
-			let round = Self::round().current - 1;
-			let mut read: u64 = 1;
-			CollatorBlocks::<T>::iter_prefix(round).for_each(|(collator, num)| {
-				if let Some(state) = AtStake::<T>::get(round, collator.clone()) {
+			let mut read: u64 = 0;
+			CollatorBlocks::<T>::iter_prefix(old_round).for_each(|(collator, num)| {
+				if let Some(state) = AtStake::<T>::get(old_round, collator.clone()) {
 					let collator_total = T::CurrencyBalance::from(num)
 						.checked_mul(&state.total)
 						.unwrap_or_else(Zero::zero);
@@ -2846,31 +2845,42 @@ pub mod pallet {
 			total_issuance
 		}
 
+		/// Prepare delayed rewards for the next session
+		/// 1. By taking snapshot of new collator's staking info
+		/// 2. By calculating DelayedPayoutInfo based on collators of previous round
+		/// Takes a list of collators for new round
+		/// and old round's index
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &Vec<T::AccountId>,
-			new_index: SessionIndex,
+			old_round: SessionIndex,
+			session_index: SessionIndex
 		) {
-			// take snapshot of these collators' staking info
+			// if this is the 1st session, i.e, genesis, old_round will be zero
+			// if this is the 2nd session, old_round will also be 0, <Pallet<T>>::on_initialize has not yet ran to update round
+			let new_round = if session_index.is_zero(){
+				old_round
+			} else {
+				old_round + 1
+			};
+
+			// take snapshot of these new collators' staking info
 			for collator in collators.iter() {
 				let collator_state = CandidatePool::<T>::get(collator).unwrap();
-				<AtStake<T>>::insert(new_index, collator, collator_state);
+				<AtStake<T>>::insert(new_round, collator, collator_state);
 			}
 
-			// As there's no previous set of collators at genesis, we skip reward calculations for
-			// it also
-			if Self::round().current.is_zero() {
-				log::info!("Skipping delayed reward calculations at genesis");
+			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip this part
+			if session_index.is_zero() {
 				return
 			}
 
-			let old_index = new_index - 1;
 			// [TODO] what to do with this returned weight?
-			let (_, total_stake) = Self::get_total_collator_staking_num();
+			let (_, total_stake) = Self::get_total_collator_staking_num(old_round);
 			let total_issuance = Self::pot_issuance();
 
 			// take snapshot of previous session's staking totals for payout calculation
 			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
-				round: old_index,
+				round: old_round,
 				total_stake,
 				total_issuance,
 			});
@@ -2917,18 +2927,21 @@ pub mod pallet {
 
 			let selected_candidates = Pallet::<T>::selected_candidates().to_vec();
 
+			// <Pallet<T>>::on_initialize has not yet ran, so this gives us the previous round info
+			let round = <Round<T>>::get().current;
+
 			if selected_candidates.is_empty() {
 				// we never want to pass an empty set of collators. This would brick the chain.
 				log::error!("💥 keeping old session because of empty collator set!");
 
 				// get collators of previous session for snapshot
-				let old_collators = AtStake::<T>::iter_prefix(new_index - 1)
+				let old_collators = AtStake::<T>::iter_prefix(round)
 					.map(|(id, _)| id)
 					.collect::<Vec<T::AccountId>>();
-				Self::prepare_delayed_rewards(&old_collators, new_index);
+				Self::prepare_delayed_rewards(&old_collators, round, new_index);
 				None
 			} else {
-				Self::prepare_delayed_rewards(&selected_candidates, new_index);
+				Self::prepare_delayed_rewards(&selected_candidates, round, new_index);
 				Some(selected_candidates)
 			}
 		}
