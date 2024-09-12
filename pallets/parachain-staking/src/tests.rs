@@ -1504,175 +1504,175 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		});
 }
 
-// #[test]
-// fn coinbase_rewards_many_blocks_simple_check() {
-// 	ExtBuilder::default()
-// 		.with_balances(vec![
-// 			(1, 40_000_000 * DECIMALS),
-// 			(2, 40_000_000 * DECIMALS),
-// 			(3, 40_000_000 * DECIMALS),
-// 			(4, 20_000_000 * DECIMALS),
-// 			(5, 20_000_000 * DECIMALS),
-// 		])
-// 		.with_collators(vec![(1, 32_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
-// 		.with_delegators(vec![
-// 			(3, 1, 8_000_000 * DECIMALS),
-// 			(4, 1, 16_000_000 * DECIMALS),
-// 			(5, 2, 16_000_000 * DECIMALS),
-// 		])
-// 		.build()
-// 		.execute_with(|| {
-// 			let total_issuance = <Test as Config>::Currency::total_issuance();
-// 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
+#[test]
+fn coinbase_rewards_many_blocks_simple_check() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 40_000_000 * DECIMALS),
+			(2, 40_000_000 * DECIMALS),
+			(3, 40_000_000 * DECIMALS),
+			(4, 20_000_000 * DECIMALS),
+			(5, 20_000_000 * DECIMALS),
+		])
+		.with_collators(vec![(1, 32_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_delegators(vec![
+			(3, 1, 8_000_000 * DECIMALS),
+			(4, 1, 16_000_000 * DECIMALS),
+			(5, 2, 16_000_000 * DECIMALS),
+		])
+		.build()
+		.execute_with(|| {
+			let total_issuance = <Test as Config>::Currency::total_issuance();
+			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
-// 			let end_block: BlockNumber = 26295;
-// 			// set round robin authoring
-// 			let authors: Vec<Option<AccountId>> =
-// 				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
-// 			// adding one is to force the session go next
-// 			roll_to(5, authors.clone());
+			let end_block: BlockNumber = 26295;
+			// set round robin authoring
+			let authors: Vec<Option<AccountId>> =
+				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
+			// adding one is to force the session go next
+			roll_to(10, authors.clone());
 
-// 			let genesis_reward_1 = Perbill::from_float(32. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
-// 			let genesis_reward_3 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
-// 			let genesis_reward_4 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_1 = Perbill::from_float(32. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_3 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_4 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
 
-// 			let genesis_reward_2 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
-// 			let genesis_reward_5 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_2 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_5 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
 
-// 			assert_eq!(Balances::free_balance(1), genesis_reward_1 + 40_000_000 * DECIMALS);
-// 			assert_eq!(Balances::free_balance(2), genesis_reward_2 + 40_000_000 * DECIMALS);
-// 			assert_eq!(Balances::free_balance(3), genesis_reward_3 + 40_000_000 * DECIMALS);
-// 			assert_eq!(Balances::free_balance(4), genesis_reward_4 + 20_000_000 * DECIMALS);
-// 			assert_eq!(Balances::free_balance(5), genesis_reward_5 + 20_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(1), genesis_reward_1 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(2), genesis_reward_2 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(3), genesis_reward_3 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(4), genesis_reward_4 + 20_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(5), genesis_reward_5 + 20_000_000 * DECIMALS);
 
-// 			// 2 is block author for 3 blocks, 1 is block author for 2 block
-// 			roll_to(10, authors.clone());
-// 			let normal_odd_total_stake: u64 = 2 * (32 + 8 + 16) + 3 * (8 + 16);
+			// 2 is block author for 3 blocks, 1 is block author for 2 block
+			roll_to(15, authors.clone());
+			let normal_odd_total_stake: u64 = 2 * (32 + 8 + 16) + 3 * (8 + 16);
 
-// 			let normal_odd_reward_1 = Perbill::from_rational(2 * 32, normal_odd_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_odd_reward_3 = Perbill::from_rational(2 * 8, normal_odd_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_odd_reward_4 = Perbill::from_rational(2 * 16, normal_odd_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_odd_reward_2 = Perbill::from_rational(3 * 8, normal_odd_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_odd_reward_5 = Perbill::from_rational(3 * 16, normal_odd_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_1 = Perbill::from_rational(2 * 32, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_3 = Perbill::from_rational(2 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_4 = Perbill::from_rational(2 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_2 = Perbill::from_rational(3 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_5 = Perbill::from_rational(3 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
 
-// 			assert_eq!(
-// 				Balances::free_balance(1),
-// 				genesis_reward_1 + normal_odd_reward_1 + 40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(2),
-// 				genesis_reward_2 + normal_odd_reward_2 + 40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(3),
-// 				genesis_reward_3 + normal_odd_reward_3 + 40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(4),
-// 				genesis_reward_4 + normal_odd_reward_4 + 20_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(5),
-// 				genesis_reward_5 + normal_odd_reward_5 + 20_000_000 * DECIMALS
-// 			);
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 + normal_odd_reward_1 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 + normal_odd_reward_2 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 + normal_odd_reward_3 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 + normal_odd_reward_4 + 20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 + normal_odd_reward_5 + 20_000_000 * DECIMALS
+			);
 
-// 			// 2 is block author for 3 blocks, 1 is block author for 2 block
-// 			roll_to(15, authors.clone());
-// 			let normal_even_total_stake: u64 = 3 * (32 + 8 + 16) + 2 * (8 + 16);
+			// 2 is block author for 3 blocks, 1 is block author for 2 block
+			roll_to(20, authors.clone());
+			let normal_even_total_stake: u64 = 3 * (32 + 8 + 16) + 2 * (8 + 16);
 
-// 			let normal_even_reward_1 = Perbill::from_rational(3 * 32, normal_even_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_even_reward_3 = Perbill::from_rational(3 * 8, normal_even_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_even_reward_4 = Perbill::from_rational(3 * 16, normal_even_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_even_reward_2 = Perbill::from_rational(2 * 8, normal_even_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
-// 			let normal_even_reward_5 = Perbill::from_rational(2 * 16, normal_even_total_stake) *
-// 				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_1 = Perbill::from_rational(3 * 32, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_3 = Perbill::from_rational(3 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_4 = Perbill::from_rational(3 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_2 = Perbill::from_rational(2 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_5 = Perbill::from_rational(2 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
 
-// 			assert_eq!(
-// 				Balances::free_balance(1),
-// 				genesis_reward_1 +
-// 					normal_odd_reward_1 + normal_even_reward_1 +
-// 					40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(2),
-// 				genesis_reward_2 +
-// 					normal_odd_reward_2 + normal_even_reward_2 +
-// 					40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(3),
-// 				genesis_reward_3 +
-// 					normal_odd_reward_3 + normal_even_reward_3 +
-// 					40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(4),
-// 				genesis_reward_4 +
-// 					normal_odd_reward_4 + normal_even_reward_4 +
-// 					20_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(5),
-// 				genesis_reward_5 +
-// 					normal_odd_reward_5 + normal_even_reward_5 +
-// 					20_000_000 * DECIMALS
-// 			);
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 +
+					normal_odd_reward_1 + normal_even_reward_1 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 +
+					normal_odd_reward_2 + normal_even_reward_2 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 +
+					normal_odd_reward_3 + normal_even_reward_3 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 +
+					normal_odd_reward_4 + normal_even_reward_4 +
+					20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 +
+					normal_odd_reward_5 + normal_even_reward_5 +
+					20_000_000 * DECIMALS
+			);
 
-// 			roll_to(end_block, authors.clone());
-// 			let multiply_factor = (end_block as u128 - 5) / 10;
-// 			assert_eq!(
-// 				Balances::free_balance(1),
-// 				genesis_reward_1 +
-// 					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
-// 					40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(2),
-// 				genesis_reward_2 +
-// 					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
-// 					40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(3),
-// 				genesis_reward_3 +
-// 					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
-// 					40_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(4),
-// 				genesis_reward_4 +
-// 					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
-// 					20_000_000 * DECIMALS
-// 			);
-// 			assert_eq!(
-// 				Balances::free_balance(5),
-// 				genesis_reward_5 +
-// 					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor +
-// 					20_000_000 * DECIMALS
-// 			);
+			roll_to(end_block + 5, authors.clone());
+			let multiply_factor = (end_block as u128 - 5) / 10;
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor +
+					20_000_000 * DECIMALS
+			);
 
-// 			// Check total issue number
-// 			assert!(almost_equal(
-// 				total_issuance +
-// 					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
-// 					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
-// 					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
-// 					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
-// 					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor,
-// 				<Test as Config>::Currency::total_issuance(),
-// 				Perbill::from_perthousand(1)
-// 			));
-// 		});
-// }
+			// Check total issue number
+			assert!(almost_equal(
+				total_issuance +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor,
+				<Test as Config>::Currency::total_issuance(),
+				Perbill::from_perthousand(1)
+			));
+		});
+}
 
 // // Could only occur if we increase MinDelegatorStakeOf::<Test> via runtime
 // // upgrade and don't migrate delegators which fall below minimum
