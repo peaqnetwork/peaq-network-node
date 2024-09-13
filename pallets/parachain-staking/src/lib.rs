@@ -2850,15 +2850,27 @@ pub mod pallet {
 		/// 2. By calculating DelayedPayoutInfo based on collators of previous round
 		/// Takes a list of collators for new round
 		/// and old round's index
+		/// SessionManager::new_session_genesis calls new_session twice, so this function is called
+		/// twice at genesis At SessionManager::new_session_genesis(0) we skip this entirely
+		/// At SessionManager::new_session_genesis(1) we take snapshot of collators for round 0, but
+		/// skip delayed reward calculation
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &Vec<T::AccountId>,
 			old_round: SessionIndex,
 			session_index: SessionIndex,
 		) {
-			// if this is the 1st session, i.e, genesis, old_round will be zero
-			// if this is the 2nd session, old_round will also be 0, <Pallet<T>>::on_initialize has
-			// not yet ran to update round
-			let new_round = if session_index.is_zero() { old_round } else { old_round + 1 };
+			// if this is the 0th session, skip this entirely, we do not want to run this twice at
+			// genesis
+			if session_index.is_zero() {
+				log::info!("skipping prepare_delayed_rewards() at or session 0");
+				return
+			}
+
+			// if this is the 1st session, genesis session, old_round will be 0, so we take snapshot
+			// of collator for round 0 if this is 2nd session and onwards, we take snapshot of
+			// old_round + 1, as <Pallet<T>>::on_initialize has not yet ran to update round
+			// and <Round<T>>::get() will return the previous round's info
+			let new_round = if session_index <= 1 { old_round } else { old_round + 1 };
 
 			// take snapshot of these new collators' staking info
 			for collator in collators.iter() {
@@ -2868,7 +2880,8 @@ pub mod pallet {
 
 			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
 			// this part
-			if session_index.is_zero() {
+			if session_index <= 1 {
+				log::info!("skipping calculation of delayed rewards at session 1");
 				return
 			}
 
