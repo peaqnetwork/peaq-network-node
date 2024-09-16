@@ -539,7 +539,7 @@ pub mod pallet {
 			crate::migrations::on_runtime_upgrade::<T>()
 		}
 
-		fn on_finalize(_n: T::BlockNumber) {
+		fn on_finalize(_n: BlockNumberFor<T>) {
 			Self::payout_collator();
 		}
 	}
