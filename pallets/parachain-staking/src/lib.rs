@@ -2857,7 +2857,7 @@ pub mod pallet {
 		/// At SessionManager::new_session_genesis(1) we take snapshot of collators for round 0, but
 		/// skip delayed reward calculation
 		pub(crate) fn prepare_delayed_rewards(
-			collators: &Vec<T::AccountId>,
+			collators: &[T::AccountId],
 			old_round: SessionIndex,
 			session_index: SessionIndex,
 		) {
