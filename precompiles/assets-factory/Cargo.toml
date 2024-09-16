@@ -6,10 +6,6 @@ edition = "2021"
 authors = [ "Peaq" ]
 
 [dependencies]
-log = { workspace = true }
-num_enum = { workspace = true }
-slices = { workspace = true }
-
 precompile-utils = { path = "../utils", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "../assets-erc20", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
