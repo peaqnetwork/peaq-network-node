@@ -3419,7 +3419,7 @@ fn check_claim_block_normal_wo_delegator() {
 			(3, origin_balance),
 			(4, origin_balance),
 		])
-		.with_collators(vec![(1, 1 * stake), (2, 2 * stake)])
+		.with_collators(vec![(1, stake), (2, 2 * stake)])
 		.build()
 		.execute_with(|| {
 			let authors: Vec<Option<AccountId>> = vec![
@@ -3485,7 +3485,7 @@ fn check_claim_block_normal_wi_delegator() {
 			(9, origin_balance),
 			(10, origin_balance),
 		])
-		.with_collators(vec![(1, 1 * stake), (2, 2 * stake)])
+		.with_collators(vec![(1, stake), (2, 2 * stake)])
 		.with_delegators(vec![(5, 1, 5 * stake), (6, 1, 6 * stake), (7, 2, 7 * stake)])
 		.build()
 		.execute_with(|| {
@@ -3623,17 +3623,11 @@ fn collator_reward_per_session_with_delegator() {
 			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
 			assert_eq!(
 				rewards[0],
-				Reward {
-					owner: 2,
-					amount: Perquintill::from_rational(10 as u64 * 600, 50000) * 1000
-				}
+				Reward { owner: 2, amount: Perquintill::from_rational(10_u64 * 600, 50000) * 1000 }
 			);
 			assert_eq!(
 				rewards[1],
-				Reward {
-					owner: 3,
-					amount: Perquintill::from_rational(10 as u64 * 400, 50000) * 1000
-				}
+				Reward { owner: 3, amount: Perquintill::from_rational(10_u64 * 400, 50000) * 1000 }
 			);
 		});
 }

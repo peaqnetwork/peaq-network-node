@@ -2841,10 +2841,10 @@ pub mod pallet {
 
 		pub(crate) fn pot_issuance() -> BalanceOf<T> {
 			let pot = Self::account_id();
-			let total_issuance = T::Currency::free_balance(&pot)
+
+			T::Currency::free_balance(&pot)
 				.checked_sub(&T::Currency::minimum_balance())
-				.unwrap_or_else(Zero::zero);
-			total_issuance
+				.unwrap_or_else(Zero::zero)
 		}
 
 		/// Prepare delayed rewards for the next session
