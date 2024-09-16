@@ -1,6 +1,6 @@
 [package]
 name = "peaq-node"
-version = "3.0.0-polkadot-v0.9.43"
+version = "4.0.0-polkadot-v1.7.2"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -17,18 +17,17 @@ name = "peaq-node"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
-git = "https://github.com/peaqnetwork/substrate"
-branch = "peaq-polkadot-v0.9.43"
+git = "https://github.com/peaqnetwork/polkadot-sdk"
+branch = "peaq-polkadot-v1.7.2"
 
 [dependencies]
+# serde_json = { workspace = true, default-features = true }
 structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
-jsonrpc-pubsub = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
 flume = { workspace = true, default-features = true }
 log = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
-jsonrpc-core = { workspace = true, default-features = true }
 url = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
@@ -72,6 +71,7 @@ fc-db = { workspace = true, default-features = true }
 fc-mapping-sync = { workspace = true, default-features = true }
 fc-rpc = { workspace = true, default-features = true }
 fc-rpc-core = { workspace = true, default-features = true }
+fc-api = { workspace = true, default-features = true }
 fp-consensus = { workspace = true, default-features = true }
 fp-storage = { workspace = true, default-features = true }
 fp-rpc = { workspace = true, default-features = true }
@@ -84,16 +84,20 @@ sc-tracing = { workspace = true, default-features = true }
 cumulus-client-cli = { workspace = true, default-features = true }
 cumulus-client-network = { workspace = true, default-features = true }
 cumulus-client-service = { workspace = true, default-features = true }
-cumulus-relay-chain-minimal-node = { workspace = true, default-features = true }
 cumulus-client-consensus-aura = { workspace = true, default-features = true }
 cumulus-client-consensus-common = { workspace = true, default-features = true }
 cumulus-client-consensus-relay-chain = { workspace = true, default-features = true }
+cumulus-client-collator = { workspace = true, default-features = true }
+cumulus-client-consensus-proposer = { workspace = true, default-features = true }
+cumulus-relay-chain-minimal-node = { workspace = true, default-features = true }
 cumulus-relay-chain-interface = { workspace = true, default-features = true }
-cumulus-pallet-xcmp-queue = { workspace = true, default-features = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true, default-features = true }
 cumulus-relay-chain-rpc-interface = { workspace = true, default-features = true }
+cumulus-pallet-xcmp-queue = { workspace = true, default-features = true }
 cumulus-primitives-core = { workspace = true, default-features = true }
+cumulus-primitives-aura = { workspace = true, default-features = true }
 cumulus-primitives-parachain-inherent = { workspace = true, default-features = true }
+cumulus-test-relay-sproof-builder = { workspace = true, default-features = true }
 substrate-prometheus-endpoint = { workspace = true, default-features = true }
 polkadot-primitives = { workspace = true, default-features = true }
 polkadot-parachain = { workspace = true, default-features = true }
@@ -134,8 +138,16 @@ inflation-manager ={ path = "../pallets/inflation-manager" }
 [features]
 default = [
 	"aura",
-	"polkadot-cli"
+	"polkadot-cli",
+	"experimental",
+	"parameterized-consensus-hook"
 	]
+experimental = [
+	"peaq-dev-runtime/experimental",
+]
+parameterized-consensus-hook = [
+	"peaq-dev-runtime/parameterized-consensus-hook",
+]
 aura = [
 	"peaq-dev-runtime/aura",
 	"peaq-krest-runtime/aura"

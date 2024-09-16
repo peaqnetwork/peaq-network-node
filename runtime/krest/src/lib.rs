@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -16,6 +16,7 @@ use frame_system::{
 use address_unification::CallKillEVMLinkAccount;
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
 
+use cumulus_primitives_core::AggregateMessageOrigin;
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
@@ -33,7 +34,9 @@ use peaq_pallet_rbac::{
 };
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use sp_runtime::traits::IdentityLookup;
 
+use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -67,9 +70,10 @@ pub use frame_support::{
 	dispatch::{DispatchClass, GetDispatchInfo},
 	parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, Contains, Currency, EitherOfDiverse,
-		EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance, KeyOwnerProofSystem, Nothing,
-		OnFinalize, OnUnbalanced, Randomness, StorageInfo, WithdrawReasons,
+		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, ConstU64, Contains, Currency,
+		EitherOfDiverse, EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance,
+		KeyOwnerProofSystem, Nothing, OnFinalize, OnUnbalanced, Randomness, StorageInfo,
+		WithdrawReasons,
 	},
 	weights::{
 		constants::{
@@ -92,8 +96,9 @@ pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 use peaq_primitives_xcm::{
-	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress, AssetIdToZenlinkId, Balance,
-	EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId, StorageAssetId, NATIVE_ASSET_ID,
+	xcm::AssetLocationIdConverter, Address, AssetId as PeaqAssetId, AssetIdToEVMAddress,
+	AssetIdToZenlinkId, Balance, EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId,
+	StorageAssetId, NATIVE_ASSET_ID,
 };
 use peaq_rpc_primitives_txpool::TxPoolResponse;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
@@ -136,6 +141,17 @@ type Hash = peaq_primitives_xcm::Hash;
 /// Note: this is really wild! You can define it here, but not in peaq_primitives_xcm...?!
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
+/// Maximum number of blocks simultaneously accepted by the Runtime, not yet included into the
+/// relay chain.
+pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
+/// How many parachain blocks are processed by the relay chain per parent. Limits the number of
+/// blocks authored per slot.
+pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
+/// Relay chain slot duration, in milliseconds.
+pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
+
+pub type PeaqAssetLocationIdConverter = AssetLocationIdConverter<StorageAssetId, XcAssetConfig>;
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -162,7 +178,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 10,
+	spec_version: 101,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -175,7 +191,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 // NOTE: Currently it is not possible to change the slot duration after the chain has started.
 //	   Attempting to do so will brick block production.
@@ -211,8 +227,8 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2_u64),
-	polkadot_primitives::v4::MAX_POV_SIZE as u64,
+	WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64),
+	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
 );
 
 /// Base Deposit for occupying storage - 0.002 KREST
@@ -252,7 +268,6 @@ parameter_types! {
 
 	pub const StorageDepositBase: Balance = STORAGE_DEPOSIT_BASE;
 	pub const StorageDepositPerByte: Balance = STORAGE_DEPOSIT_PER_BYTE;
-
 }
 
 pub struct BaseFilter;
@@ -276,6 +291,8 @@ impl Contains<RuntimeCall> for BaseFilter {
 
 // Configure FRAME pallets to include in runtime.
 impl frame_system::Config for Runtime {
+	type Nonce = Nonce;
+	type Block = Block;
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = BaseFilter;
 	/// Block & extrinsics weights: base values and limits.
@@ -289,16 +306,10 @@ impl frame_system::Config for Runtime {
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup =
 		(AccountIdLookup<AccountId, peaq_primitives_xcm::AccountIndex>, AddressUnification);
-	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Nonce;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = peaq_primitives_xcm::Header;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	/// The ubiquitous origin type.
@@ -327,12 +338,21 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+
+	type RuntimeTask = RuntimeTask;
 }
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = staking::MaxCollatorCandidates;
+
+	// Should be only enabled (`true`) when async backing is enabled
+	// otherwise set to `false`
+	type AllowMultipleBlocksPerSlot = ConstBool<true>;
+
+	#[cfg(feature = "experimental")]
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
 // For ink
@@ -345,6 +365,9 @@ parameter_types! {
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const DeletionQueueDepth: u32 = 128;
 	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
+	// TODO: re-vist to make sure values are appropriate
+	pub const MaxDelegateDependencies: u32 = 32;
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -375,6 +398,14 @@ impl pallet_contracts::Config for Runtime {
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 	type UnsafeUnstableInterface = ConstBool<false>;
 	type DefaultDepositLimit = DefaultDepositLimit;
+
+	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+	type MaxDelegateDependencies = MaxDelegateDependencies;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type Migrations = ();
+	type Debug = ();
+	type Environment = ();
+	type Xcm = ();
 }
 
 parameter_types! {
@@ -384,9 +415,12 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = Moment;
-	type MinimumPeriod = MinimumPeriod;
+	#[cfg(feature = "experimental")]
+	type MinimumPeriod = ConstU64<0>;
+	#[cfg(not(feature = "experimental"))]
+	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
-	type OnTimestampSet = BlockReward;
+	type OnTimestampSet = (Aura, BlockReward);
 }
 
 parameter_types! {
@@ -411,9 +445,9 @@ impl pallet_balances::Config for Runtime {
 	type AccountStore = System;
 	type WeightInfo = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
-	type HoldIdentifier = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 parameter_types! {
@@ -489,6 +523,7 @@ parameter_types! {
 	pub const DidStorageDepositBase: Balance = DOLLARS / 10;
 	pub const DidStorageDepositPerByte: Balance = 0;
 }
+
 /// Config the did in pallets/did
 impl peaq_pallet_did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -569,6 +604,15 @@ impl pallet_treasury::Config for Runtime {
 	type MaxApprovals = MaxApprovals;
 	type SpendOrigin = EnsureRootWithSuccess<AccountId, MaxBalance>; //EnsureWithSuccess<EnsureRoot<AccountId>, AccountId, MaxBalance>;
 	type RuntimeEvent = RuntimeEvent;
+
+	type AssetKind = ();
+	type Beneficiary = AccountId;
+	type BeneficiaryLookup = IdentityLookup<AccountId>;
+	type Paymaster = PayFromAccount<Balances, PeaqTreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	type PayoutPeriod = ConstU32<{ 30 * DAYS }>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 // Pallet EVM
@@ -580,7 +624,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]))
+			return Some(H160::from_slice(&authority_id.encode()[4..24]));
 		}
 		None
 	}
@@ -655,6 +699,7 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type SuicideQuickClearLimit = ConstU32<0>;
 }
 
 parameter_types! {
@@ -707,6 +752,7 @@ impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4_u64);
+	pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -714,12 +760,23 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type OutboundXcmpMessageSource = XcmpQueue;
-	type DmpMessageHandler = DmpQueue;
+	type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
+	#[cfg(feature = "parameterized-consensus-hook")]
+	type ConsensusHook = ConsensusHook;
+	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
+	type WeightInfo = ();
 }
+
+#[cfg(feature = "parameterized-consensus-hook")]
+type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
+	Runtime,
+	RELAY_CHAIN_SLOT_DURATION_MILLIS,
+	BLOCK_PROCESSING_VELOCITY,
+	UNINCLUDED_SEGMENT_CAPACITY,
+>;
 
 impl parachain_info::Config for Runtime {}
 
@@ -965,6 +1022,7 @@ impl zenlink_protocol::Config for Runtime {
 	type TargetChains = ();
 	type SelfParaId = SelfParaId;
 	type WeightInfo = ();
+	type ControlOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -997,50 +1055,48 @@ impl inflation_manager::Config for Runtime {
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+	pub enum Runtime
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+		System: frame_system = 0,
 		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip::{Pallet, Storage} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
 		Aura: pallet_aura::{Pallet, Config<T>} = 3,
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Balances: pallet_balances = 4,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
-		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 7,
+		Contracts: pallet_contracts = 7,
 		Utility: pallet_utility::{Pallet, Call, Event} = 8,
 		Treasury: pallet_treasury = 9,
 		Council: pallet_collective::<Instance1> = 10,
 
 		// EVM
-		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin} = 11,
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 12,
-		DynamicFee: pallet_dynamic_fee::{Pallet, Call, Storage, Config, Inherent} = 13,
+		Ethereum: pallet_ethereum = 11,
+		EVM: pallet_evm = 12,
+		DynamicFee: pallet_dynamic_fee = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
 		InflationManager: inflation_manager::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 22,
-		ParachainStaking: parachain_staking::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
+		AuraExt: cumulus_pallet_aura_ext = 22,
+		ParachainStaking: parachain_staking = 23,
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 25,
+		ParachainInfo: parachain_info = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
 		// Remove StakingCoefficientRewardCalculator: 27
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
+		PolkadotXcm: pallet_xcm = 31,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 36,
 		ZenlinkProtocol: zenlink_protocol::{Pallet, Call, Storage, Event<T>} = 38,
-		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 39,
+		Assets: pallet_assets = 39,
 		XcAssetConfig: xc_asset_config::{Pallet, Call, Storage, Event<T>} = 40,
 		AddressUnification: address_unification::{Pallet, Call, Storage, Event<T>} = 41,
+		MessageQueue: pallet_message_queue::{Pallet, Call, Storage, Event<T>} = 42,
 
 		Vesting: pallet_vesting = 50,
 
@@ -1055,6 +1111,7 @@ construct_runtime!(
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -1259,7 +1316,7 @@ impl_runtime_apis! {
 						None => 0,
 						Some((_, _, ref signed_extra)) => {
 							// Yuck, this depends on the index of charge transaction in Signed Extra
-							let charge_transaction = &signed_extra.6;
+							let charge_transaction = &signed_extra.7;
 							charge_transaction.tip()
 						}
 					};
@@ -1303,7 +1360,7 @@ impl_runtime_apis! {
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+			sp_consensus_aura::SlotDuration::from_millis(SLOT_DURATION)
 		}
 
 		fn authorities() -> Vec<AuraId> {
@@ -1318,23 +1375,28 @@ impl_runtime_apis! {
 	}
 
 	impl peaq_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
+
+		#[cfg(feature = "evm-tracing")]
 		fn trace_transaction(
-			#[allow(unused_variables)]
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			#[allow(unused_variables)]
-			traced_transaction: &EthereumTransaction,
+			traced_transaction: &pallet_ethereum::Transaction,
+			header: &<Block as BlockT>::Header,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
 		> {
-			#[cfg(feature = "evm-tracing")]
 			{
 				use peaq_evm_tracer::tracer::EvmTracer;
+
+				// We need to follow the order when replaying the transactions.
+				// Block initialize happens first then apply_extrinsic.
+				Executive::initialize_block(header);
+
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in extrinsics.into_iter() {
 					let _ = match &ext.0.function {
-						RuntimeCall::Ethereum(transact { transaction }) => {
+						RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => {
 							if transaction == traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
@@ -1345,37 +1407,46 @@ impl_runtime_apis! {
 						_ => Executive::apply_extrinsic(ext),
 					};
 				}
-
 				Err(sp_runtime::DispatchError::Other(
 					"Failed to find Ethereum transaction among the extrinsics.",
 				))
 			}
-			#[cfg(not(feature = "evm-tracing"))]
+		}
+
+		#[cfg(not(feature = "evm-tracing"))]
+		fn trace_transaction(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_traced_transaction: &pallet_ethereum::Transaction,
+			_header: &<Block as BlockT>::Header,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
 			))
 		}
 
+		#[cfg(feature = "evm-tracing")]
 		fn trace_block(
-			#[allow(unused_variables)]
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			#[allow(unused_variables)]
 			known_transactions: Vec<H256>,
+			header: &<Block as BlockT>::Header,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
 		> {
-			#[cfg(feature = "evm-tracing")]
 			{
 				use peaq_evm_tracer::tracer::EvmTracer;
 
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
-				config.estimate = true;
+				// We need to follow the order when replaying the transactions.
+				// Block initialize happens first then apply_extrinsic.
+				Executive::initialize_block(header);
 
 				// Apply all extrinsics. Ethereum extrinsics are traced.
 				for ext in extrinsics.into_iter() {
 					match &ext.0.function {
-						RuntimeCall::Ethereum(transact { transaction }) => {
+						RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => {
 							if known_transactions.contains(&transaction.hash()) {
 								// Each known extrinsic is a new call stack.
 								EvmTracer::emit_new();
@@ -1392,7 +1463,17 @@ impl_runtime_apis! {
 
 				Ok(())
 			}
-			#[cfg(not(feature = "evm-tracing"))]
+		}
+
+		#[cfg(not(feature = "evm-tracing"))]
+		fn trace_block(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_known_transactions: Vec<H256>,
+			_header: &<Block as BlockT>::Header,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
 			))
@@ -1653,6 +1734,10 @@ impl_runtime_apis! {
 				pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
 			)
 		}
+
+		fn initialize_pending_block(header: &<Block as BlockT>::Header) {
+			Executive::initialize_block(header)
+		}
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
@@ -1700,7 +1785,7 @@ impl_runtime_apis! {
 			gas_limit: Option<Weight>,
 			storage_deposit_limit: Option<Balance>,
 			input_data: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractExecResult<Balance, EventRecord> {
+		) -> pallet_contracts::ContractExecResult<Balance, EventRecord> {
 			let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
 			Contracts::bare_call(
 				origin,
@@ -1720,10 +1805,10 @@ impl_runtime_apis! {
 			value: Balance,
 			gas_limit: Option<Weight>,
 			storage_deposit_limit: Option<Balance>,
-			code: pallet_contracts_primitives::Code<Hash>,
+			code: pallet_contracts::Code<Hash>,
 			data: Vec<u8>,
 			salt: Vec<u8>,
-		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, Balance, EventRecord> {
+		) -> pallet_contracts::ContractInstantiateResult<AccountId, Balance, EventRecord> {
 			let gas_limit = gas_limit.unwrap_or(RuntimeBlockWeights::get().max_block);
 			Contracts::bare_instantiate(
 				origin,
@@ -1743,7 +1828,7 @@ impl_runtime_apis! {
 			code: Vec<u8>,
 			storage_deposit_limit: Option<Balance>,
 			determinism: pallet_contracts::Determinism,
-		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
+		) -> pallet_contracts::CodeUploadResult<Hash, Balance>
 		{
 			Contracts::bare_upload_code(origin, code, storage_deposit_limit, determinism)
 		}
@@ -1751,11 +1836,10 @@ impl_runtime_apis! {
 		fn get_storage(
 			address: AccountId,
 			key: Vec<u8>,
-		) -> pallet_contracts_primitives::GetStorageResult {
+		) -> pallet_contracts::GetStorageResult {
 			Contracts::get_storage(address, key)
 		}
 	}
-
 
 	impl peaq_pallet_did_runtime_api::PeaqDIDApi<Block, AccountId, BlockNumber, Moment> for Runtime {
 		fn read(did_account: AccountId, name: Vec<u8>) -> Option<
@@ -1972,6 +2056,16 @@ impl_runtime_apis! {
 			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
+
+	#[cfg(feature = "parameterized-consensus-hook")]
+	impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
+		fn can_build_upon(
+			included_hash: <Block as BlockT>::Hash,
+			slot: cumulus_primitives_aura::Slot,
+		) -> bool {
+			ConsensusHook::can_build_upon(included_hash, slot)
+		}
+	}
 }
 
 impl peaq_pallet_transaction::Config for Runtime {
@@ -1996,31 +2090,9 @@ impl pallet_multisig::Config for Runtime {
 	type WeightInfo = ();
 }
 
-struct CheckInherents;
-
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-		inherent_data.check_extrinsics(block)
-	}
-}
-
 cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
 }
 
 parameter_types! {
@@ -2037,6 +2109,7 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 
 	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+	type BlockNumberProvider = System;
 }
 
 parameter_types! {

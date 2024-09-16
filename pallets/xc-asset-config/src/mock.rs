@@ -17,34 +17,25 @@
 // along with Astar. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_xc_asset_config};
-use xcm::latest::prelude::{Junction::GeneralKey, MultiLocation, X1};
+use xcm::{latest::prelude::Junction::GeneralKey, v4::Location};
 
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
 use sp_core::H256;
+use sp_runtime::BuildStorage;
 
 use frame_system::EnsureRoot;
 use sp_io::TestExternalities;
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 
-type BlockNumber = u64;
 type Balance = u128;
 type AccountId = u64;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 const EXISTENTIAL_DEPOSIT: Balance = 2;
 
 construct_runtime!(
-	pub struct Test
-	where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
+	pub struct Test {
 		System: frame_system,
 		Balances: pallet_balances,
 		XcAssetConfig: pallet_xc_asset_config,
@@ -62,14 +53,13 @@ impl frame_system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
 	type RuntimeCall = RuntimeCall;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
+	type Block = Block;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
@@ -82,6 +72,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -101,17 +92,18 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
-	type HoldIdentifier = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = ();
 }
 
 type AssetId = u128;
 
 parameter_types! {
 	pub const GetNativeAssetId: AssetId = 0;
-	pub SelfReserveLocation: MultiLocation =
-		MultiLocation::new(0, X1(GeneralKey { data: [0; 32], length: 2 }));
+	pub SelfReserveLocation: Location =
+		Location::new(0, [GeneralKey { data: [0; 32], length: 2 }]);
 }
 
 impl pallet_xc_asset_config::Config for Test {
@@ -127,7 +119,7 @@ pub struct ExternalityBuilder;
 
 impl ExternalityBuilder {
 	pub fn build() -> TestExternalities {
-		let storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let storage = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 
 		let mut ext = TestExternalities::from(storage);
 		ext.execute_with(|| System::set_block_number(1));

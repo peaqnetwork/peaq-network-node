@@ -5,7 +5,7 @@
 // primitives and utils imports
 use fp_evm::PrecompileHandle;
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
 	BoundedVec,
 };
@@ -14,6 +14,7 @@ use peaq_pallet_rbac::{
 	rbac::{Rbac, Role},
 };
 use sp_core::{Decode, H256};
+use sp_runtime::traits::Dispatchable;
 use sp_std::{marker::PhantomData, vec::Vec};
 
 use pallet_evm::AddressMapping;

@@ -6,8 +6,7 @@ use crate::{
 	AtStake, CandidatePool, CollatorBlocks, ForceNewRound,
 };
 use frame_support::{
-	dispatch::GetStorageVersion,
-	pallet_prelude::{StorageVersion, ValueQuery},
+	pallet_prelude::{GetStorageVersion, ValueQuery, StorageVersion},
 	storage_alias,
 	traits::{Get, LockableCurrency, WithdrawReasons},
 	weights::Weight,

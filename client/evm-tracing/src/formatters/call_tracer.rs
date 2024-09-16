@@ -214,7 +214,7 @@ impl super::ResponseFormatter for Formatter {
 			}
 		}
 		if traces.is_empty() {
-			return None
+			return None;
 		}
 		Some(traces)
 	}
