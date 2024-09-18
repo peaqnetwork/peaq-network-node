@@ -6,9 +6,6 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-log = { workspace = true, default-features = false }
-num_enum = { workspace = true, default-features = false }
-
 # Peaq
 precompile-utils = { path = "../utils", default-features = false, features = [ "codec-xcm" ] }
 # xcm-primitives = { workspace = true }
