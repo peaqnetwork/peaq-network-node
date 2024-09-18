@@ -94,7 +94,6 @@ pallet-xcm = { workspace = true, default-features = false }
 pallet-message-queue = { workspace = true, default-features = false }
 cumulus-pallet-xcm = { workspace = true, default-features = false }
 cumulus-pallet-xcmp-queue = { workspace = true, default-features = false }
-cumulus-pallet-dmp-queue = { workspace = true, default-features = false }
 orml-currencies = { workspace = true, default-features = false }
 orml-traits = { workspace = true, default-features = false }
 orml-xtokens = { workspace = true, default-features = false }
@@ -322,7 +321,6 @@ try-runtime = [
 	"cumulus-pallet-parachain-system/try-runtime",
 	"cumulus-pallet-xcmp-queue/try-runtime",
 	"cumulus-pallet-xcm/try-runtime",
-	"cumulus-pallet-dmp-queue/try-runtime",
 
 	"pallet-aura/try-runtime",
 	"pallet-balances/try-runtime",
