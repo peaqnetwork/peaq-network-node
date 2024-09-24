@@ -4,7 +4,7 @@ use super::{
 	RuntimeBlockWeights, RuntimeCall, RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee,
 	XcAssetConfig, XcmpQueue,
 };
-use crate::PeaqAssetLocationIdConverter;
+use crate::{PeaqAssetLocationIdConverter, Treasury};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
@@ -50,6 +50,8 @@ use xcm_builder::{
 	TakeRevenue,
 	TakeWeightCredit,
 	UsingComponents,
+	XcmFeeManagerFromComponents,
+	XcmFeeToAccount,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
@@ -65,6 +67,7 @@ parameter_types! {
 		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into())].into();
 	pub PeaqLocation: Location = Here.into_location();
 	pub DummyCheckingAccount: AccountId = PolkadotXcm::check_account();
+	pub TreasuryAccount: AccountId = Treasury::account_id();
 }
 
 /// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
@@ -273,7 +276,10 @@ impl xcm_executor::Config for XcmConfig {
 	type MaxAssetsIntoHolding = ConstU32<64>;
 	type AssetLocker = ();
 	type AssetExchanger = ();
-	type FeeManager = ();
+	type FeeManager = XcmFeeManagerFromComponents<
+		(),
+		XcmFeeToAccount<Self::AssetTransactor, AccountId, TreasuryAccount>,
+	>;
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type SafeCallFilter = Everything;
