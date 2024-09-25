@@ -189,7 +189,7 @@ pub mod pallet {
 	use crate::{
 		set::OrderedSet,
 		types::{
-			BalanceOf, Candidate, CandidateOf, CandidateStatus, DelayedPayoutInfoT,
+			AccountIdOf, BalanceOf, Candidate, CandidateOf, CandidateStatus, DelayedPayoutInfoT,
 			DelegationCounter, Delegator, ReplacedDelegator, Reward, RoundInfo, Stake, StakeOf,
 			TotalStake,
 		},
@@ -214,7 +214,9 @@ pub mod pallet {
 	/// Configuration trait of this pallet.
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_balances::Config + pallet_session::Config
+		frame_system::Config
+		+ pallet_balances::Config
+		+ pallet_session::Config<ValidatorId = AccountIdOf<Self>>
 	{
 		/// Overarching event type
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -515,23 +517,9 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(now: BlockNumberFor<T>) -> frame_support::weights::Weight {
-			let mut post_weight =
+		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
+			let post_weight =
 				<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
-			let mut round = <Round<T>>::get();
-
-			// check for round update
-			if round.should_update(now) {
-				// mutate round
-				round.update(now);
-
-				// start next round
-				<Round<T>>::put(round);
-
-				Self::deposit_event(Event::NewRound(round.first, round.current));
-				post_weight =
-					<T as crate::pallet::Config>::WeightInfo::on_initialize_round_update();
-			}
 			post_weight
 		}
 
@@ -2858,45 +2846,30 @@ pub mod pallet {
 		/// skip delayed reward calculation
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &[T::AccountId],
-			old_round: SessionIndex,
 			session_index: SessionIndex,
 		) {
-			// if this is the 0th session, skip this entirely, we do not want to run this twice at
-			// genesis
-			if session_index.is_zero() {
-				log::info!("skipping prepare_delayed_rewards() at or session 0");
-				return
-			}
-
-			// if this is the 1st session, genesis session, old_round will be 0, so we take snapshot
-			// of collator for round 0 if this is 2nd session and onwards, we take snapshot of
-			// old_round + 1, as <Pallet<T>>::on_initialize has not yet ran to update round
-			// and <Round<T>>::get() will return the previous round's info
-			let new_round = if session_index <= 1 { old_round } else { old_round + 1 };
-
 			// take snapshot of these new collators' staking info
 			for collator in collators.iter() {
-				let collator_state = CandidatePool::<T>::get(collator).unwrap();
-				<AtStake<T>>::insert(new_round, collator, collator_state);
+				if let Some(collator_state) = CandidatePool::<T>::get(collator){
+					<AtStake<T>>::insert(session_index, collator, collator_state);
+				}
 			}
 
 			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
 			// this part
-			if session_index <= 1 {
-				log::info!("skipping calculation of delayed rewards at session 1");
+			if session_index.is_zero() {
+				log::info!("skipping calculation of delayed rewards at session 0");
 				return
 			}
 
+			// since RoundIndex equals SessionIndex, this is fine
+			let round = session_index - 1;
 			// [TODO] what to do with this returned weight?
-			let (_, total_stake) = Self::get_total_collator_staking_num(old_round);
+			let (_, total_stake) = Self::get_total_collator_staking_num(round);
 			let total_issuance = Self::pot_issuance();
 
 			// take snapshot of previous session's staking totals for payout calculation
-			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
-				round: old_round,
-				total_stake,
-				total_issuance,
-			});
+			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT { round, total_stake, total_issuance });
 		}
 	}
 
@@ -2921,11 +2894,10 @@ pub mod pallet {
 	}
 
 	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
-		/// 1. A new session starts.
-		/// 2. In hook new_session: Read the current top n candidates from the TopCandidates and
-		///    assign this set to author blocks for the next session.
-		/// 3. AuRa queries the authorities from the session pallet for this session and picks
-		///    authors on round-robin-basis from list of authorities.
+		/// Returns list of collators for next session
+		/// PalletSession::BuildGenesisConfig::build() and
+		/// PalletSession::SessionManager::rotate_session() use it to get collators for the next
+		/// session(s+1), new session is session(s)
 		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
 			log::debug!(
 				"assembling new collators for new session {} at #{:?}",
@@ -2939,44 +2911,42 @@ pub mod pallet {
 			);
 
 			let selected_candidates = Pallet::<T>::selected_candidates().to_vec();
-
-			// <Pallet<T>>::on_initialize has not yet ran, so this gives us the previous round info
-			let round = <Round<T>>::get().current;
-
 			if selected_candidates.is_empty() {
 				// we never want to pass an empty set of collators. This would brick the chain.
 				log::error!("💥 keeping old session because of empty collator set!");
-
-				// get collators of previous session for snapshot
-				let old_collators = AtStake::<T>::iter_prefix(round)
-					.map(|(id, _)| id)
-					.collect::<Vec<T::AccountId>>();
-				Self::prepare_delayed_rewards(&old_collators, round, new_index);
 				None
 			} else {
-				Self::prepare_delayed_rewards(&selected_candidates, round, new_index);
 				Some(selected_candidates)
 			}
 		}
 
-		/// After a session ends,
-		/// 1. We have do the reward mechanism for the collators and delegators.
-		///		1.1. The current distributed way is to get the total staking number
-		///			sum[total generated block number * (collator stake + delegator stake)]
-		///		1.2. Calculate the ratio:
-		///			collator reward ratio = block_num * (collator stake) / total staking number
-		///			delegator reward ratio = block_num * (delegator stake) / total staking number
-		///		1.3. Calcuate the reward:
-		///			collator reward = collator reward ratio * pot balance
-		///			delegator reward = delegator reward ratio * pot balance
-		///		1.4. Transfer the reward to the collator and delegator.
-		/// 2. we need to clean up the state of the pallet.
-		fn end_session(end_index: SessionIndex) {
-			log::debug!("new_session: {:?}", end_index);
+		/// Session is rotating because RoundInfo.should_update(now) or ForceNewRound was true
+		/// so we must update round here
+		fn end_session(_end_index: SessionIndex) {
+			let mut round = <Round<T>>::get();
+			let now = <frame_system::Pallet<T>>::block_number();
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads(2),
+				DispatchClass::Mandatory,
+			);
+
+			round.update(now);
+			<Round<T>>::put(round);
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().writes(1),
+				DispatchClass::Mandatory,
+			);
+
+			Self::deposit_event(Event::NewRound(round.first, round.current));
 		}
 
-		fn start_session(_start_index: SessionIndex) {
-			// we too are not caring.
+		/// After new session collators have been selected and put into storage
+		/// PalletSession::Validators, either by PalletSession::BuildGenesisConfig::build() or
+		/// PalletSession::SessionManager::rotate_session() We take snapshot of their state and
+		/// calculate DelayedPaymentInfo if possible
+		fn start_session(start_index: SessionIndex) {
+			let new_validators: Vec<T::AccountId> = pallet_session::Pallet::<T>::validators();
+			Self::prepare_delayed_rewards(&new_validators, start_index);
 		}
 	}
 
@@ -2987,20 +2957,16 @@ pub mod pallet {
 				DispatchClass::Mandatory,
 			);
 
-			let mut round = <Round<T>>::get();
+			let round = <Round<T>>::get();
 			// always update when a new round should start
 			if round.should_update(now) {
 				true
 			} else if <ForceNewRound<T>>::get() {
+				<ForceNewRound<T>>::put(false);
 				frame_system::Pallet::<T>::register_extra_weight_unchecked(
-					T::DbWeight::get().writes(2),
+					T::DbWeight::get().writes(1),
 					DispatchClass::Mandatory,
 				);
-				// check for forced new round
-				<ForceNewRound<T>>::put(false);
-				round.update(now);
-				<Round<T>>::put(round);
-				Self::deposit_event(Event::NewRound(round.first, round.current));
 				true
 			} else {
 				false
