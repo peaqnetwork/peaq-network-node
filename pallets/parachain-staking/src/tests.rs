@@ -2766,10 +2766,10 @@ fn force_remove_candidate() {
 			assert_eq!(Session::validators(), vec![1, 2]);
 			assert_eq!(Session::disabled_validators(), vec![0]);
 
-			// // session 2: expect validator set to have changed
-			// roll_to(10, vec![]);
-			// assert_eq!(Session::validators(), vec![2, 3]);
-			// assert!(Session::disabled_validators().is_empty());
+			// session 2: expect validator set to have changed
+			roll_to(10, vec![]);
+			assert_eq!(Session::validators(), vec![2, 3]);
+			assert!(Session::disabled_validators().is_empty());
 		});
 }
 
