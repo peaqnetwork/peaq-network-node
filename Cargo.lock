@@ -94,15 +94,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "affix"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e7ea84d3fa2009f355f8429a0b418a96849135a4188fadf384f59127d5d4bc"
-dependencies = [
- "convert_case 0.5.0",
-]
-
-[[package]]
 name = "ahash"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1629,12 +1620,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
-name = "convert_case"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb4a24b1aaf0fd0ce8b45161144d6f42cd91677fd5940fd431183eb023b3a2b8"
-
-[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2180,23 +2165,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cumulus-pallet-dmp-queue"
-version = "0.7.0"
-source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#538d3a370b0f86d5687ee4924585575def12bd96"
-dependencies = [
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
- "staging-xcm",
-]
-
-[[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.7.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#538d3a370b0f86d5687ee4924585575def12bd96"
@@ -2717,7 +2685,7 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
- "convert_case 0.4.0",
+ "convert_case",
  "proc-macro2",
  "quote",
  "rustc_version 0.4.0",
@@ -3318,12 +3286,6 @@ name = "fallible-iterator"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
-
-[[package]]
-name = "faster-hex"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51e2ce894d53b295cf97b05685aa077950ff3e8541af83217fc720a6437169f8"
 
 [[package]]
 name = "fastrand"
@@ -7424,8 +7386,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum 0.5.11",
  "pallet-assets",
  "pallet-balances",
  "pallet-evm",
@@ -7436,7 +7396,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7451,8 +7410,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum 0.5.11",
  "pallet-assets",
  "pallet-balances",
  "pallet-evm",
@@ -7464,7 +7421,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7481,8 +7437,6 @@ dependencies = [
  "frame-system",
  "hex-literal 0.3.4",
  "libsecp256k1",
- "log",
- "num_enum 0.5.11",
  "pallet-balances",
  "pallet-evm",
  "pallet-timestamp",
@@ -7492,7 +7446,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7509,18 +7462,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal 0.3.4",
- "log",
- "num_enum 0.5.11",
  "pallet-balances",
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
- "paste",
  "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7575,8 +7524,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum 0.5.11",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -7590,7 +7537,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-consensus-aura",
  "sp-core",
  "sp-io",
@@ -7605,15 +7551,11 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum 0.5.11",
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
- "paste",
  "peaq-pallet-did",
  "precompile-utils",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7627,16 +7569,11 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "hex",
- "log",
- "num_enum 0.5.11",
  "pallet-evm",
  "parity-scale-codec",
- "paste",
  "peaq-pallet-rbac",
  "peaq-primitives-xcm",
  "precompile-utils",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7650,15 +7587,10 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "hex",
- "log",
- "num_enum 0.5.11",
  "pallet-evm",
  "parity-scale-codec",
- "paste",
  "peaq-pallet-storage",
  "precompile-utils",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7692,21 +7624,16 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "hex",
- "log",
- "num_enum 0.5.11",
  "pallet-balances",
  "pallet-evm",
  "pallet-timestamp",
  "pallet-vesting",
  "parity-scale-codec",
- "paste",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
- "slices",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7723,8 +7650,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum 0.5.11",
  "orml-traits",
  "pallet-balances",
  "pallet-evm",
@@ -7755,8 +7680,6 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "frame-system",
- "log",
- "num_enum 0.5.11",
  "once_cell",
  "orml-traits",
  "orml-xtokens",
@@ -7769,7 +7692,6 @@ dependencies = [
  "parity-scale-codec",
  "peaq-primitives-xcm",
  "precompile-utils",
- "rustc-hex",
  "scale-info",
  "serde",
  "sha3",
@@ -8742,7 +8664,6 @@ version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
@@ -8881,7 +8802,6 @@ version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
@@ -9114,7 +9034,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feat/1207996900912931_merge_async_back#dd526c43c22d7434f9ee6a252e3a9647a2c19556"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9134,7 +9054,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feat/1207996900912931_merge_async_back#dd526c43c22d7434f9ee6a252e3a9647a2c19556"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9151,7 +9071,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=feat/1207996900912931_merge_async_back#dd526c43c22d7434f9ee6a252e3a9647a2c19556"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -9161,8 +9081,8 @@ dependencies = [
 
 [[package]]
 name = "peaq-pallet-mor"
-version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=feat/1207996900912931_merge_async_back#422fde7f8d961c26c5bf9744e7bf461362a7a39c"
+version = "0.1.2"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#fe85e2b89571621c02ffef9e6ec7af95276e3d9f"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9182,7 +9102,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feat/1207996900912931_merge_async_back#0e5c4a5d642b61852b5e3ed469856168892c7e13"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#64a752f598e13e2eae241ec36aad6f0e90262711"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9202,7 +9122,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feat/1207996900912931_merge_async_back#0e5c4a5d642b61852b5e3ed469856168892c7e13"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#64a752f598e13e2eae241ec36aad6f0e90262711"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9217,7 +9137,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=feat/1207996900912931_merge_async_back#0e5c4a5d642b61852b5e3ed469856168892c7e13"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#64a752f598e13e2eae241ec36aad6f0e90262711"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -9228,7 +9148,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feat/1207996900912931_merge_async_back#9741ef909d0d2e68c2f1115fc99f0f4a2294b03a"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#fd2cec13b7ba25de9a3ef118c7015d56bf59c1db"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9245,7 +9165,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feat/1207996900912931_merge_async_back#9741ef909d0d2e68c2f1115fc99f0f4a2294b03a"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#fd2cec13b7ba25de9a3ef118c7015d56bf59c1db"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9262,7 +9182,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=feat/1207996900912931_merge_async_back#9741ef909d0d2e68c2f1115fc99f0f4a2294b03a"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#fd2cec13b7ba25de9a3ef118c7015d56bf59c1db"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -9273,7 +9193,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=feat/1207996900912931_merge_async_back#6a264b5fe6e11f9453feb4432d7eb964f04dd777"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#818fa83f86a98b9fc820f933562deeb767b5c7f9"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9498,7 +9418,6 @@ version = "4.0.0-polkadot-v1.7.2"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
@@ -10968,26 +10887,20 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 name = "precompile-utils"
 version = "0.1.1"
 dependencies = [
- "affix",
  "derive_more",
  "environmental",
  "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
- "hex",
  "hex-literal 0.3.4",
  "impl-trait-for-tuples",
- "log",
- "num_enum 0.5.11",
  "pallet-evm",
  "parity-scale-codec",
- "paste",
  "peaq-primitives-xcm",
  "precompile-utils-macro",
  "scale-info",
  "serde",
- "sha3",
  "similar-asserts",
  "sp-core",
  "sp-io",
@@ -11007,7 +10920,6 @@ dependencies = [
  "macrotest",
  "num_enum 0.5.11",
  "precompile-utils",
- "prettyplease 0.1.25",
  "proc-macro2",
  "quote",
  "sha3",
@@ -13709,18 +13621,6 @@ name = "slice-group-by"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826167069c09b99d56f31e9ae5c99049e932a98c9dc2dac47645b08dbbf76ba7"
-
-[[package]]
-name = "slices"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2086e458a369cdca838e9f6ed04b4cc2e3ce636d99abb80c9e2eada107749cf"
-dependencies = [
- "faster-hex",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
 
 [[package]]
 name = "slot-range-helper"

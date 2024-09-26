@@ -6,10 +6,7 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-log = { workspace = true, default-features = false }
-num_enum = { workspace = true, default-features = false }
 paste = { workspace = true, default-features = false }
-slices = { workspace = true, default-features = false }
 
 #peaq
 precompile-utils = { path = "../utils", default-features = false }

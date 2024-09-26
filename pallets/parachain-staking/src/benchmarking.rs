@@ -24,7 +24,7 @@ use frame_support::{
 	assert_ok,
 	traits::{Currency, Get, OnInitialize},
 };
-use frame_system::{Pallet as System, RawOrigin};
+use frame_system::{pallet_prelude::BlockNumberFor, Pallet as System, RawOrigin};
 use pallet_session::Pallet as Session;
 use sp_runtime::{
 	traits::{One, SaturatedConversion, StaticLookup},
@@ -100,13 +100,13 @@ fn fill_unstaking<T: Config>(
 	delegator: Option<&T::AccountId>,
 	unstaked: u64,
 ) where
-	<T as frame_system::Config>::BlockNumber: TryFrom<u64>,
+	BlockNumberFor<T>: TryFrom<u64>,
 {
 	let who = delegator.unwrap_or(collator);
 	assert_eq!(<Unstaking<T>>::get(who).len(), 0);
 	let unstaked_block = unstaked
 		.try_into()
-		.unwrap_or_else(|_| <T as frame_system::Config>::BlockNumber::from(unstaked as u32));
+		.unwrap_or_else(|_| BlockNumberFor::<T>::from(unstaked as u32));
 	while System::<T>::block_number() < unstaked_block {
 		if let Some(delegator) = delegator {
 			assert_ok!(<Pallet<T>>::delegator_stake_less(
@@ -120,7 +120,7 @@ fn fill_unstaking<T: Config>(
 				T::CurrencyBalance::one()
 			));
 		}
-		System::<T>::set_block_number(System::<T>::block_number() + T::BlockNumber::one());
+		System::<T>::set_block_number(System::<T>::block_number() + BlockNumberFor::<T>::one());
 	}
 	assert_eq!(<Unstaking<T>>::get(who).len() as u64, unstaked);
 	assert!(<Unstaking<T>>::get(who).len() <= T::MaxUnstakeRequests::get().try_into().unwrap());
@@ -128,12 +128,12 @@ fn fill_unstaking<T: Config>(
 
 benchmarks! {
 	where_clause { where
-		<T as frame_system::Config>::BlockNumber: TryFrom<u64>,
+		BlockNumberFor<T>: TryFrom<u64>,
 	}
 
 	on_initialize_no_action {
 		assert_eq!(<Round<T>>::get().current, 0u32);
-		let block = T::BlockNumber::one();
+		let block = BlockNumberFor::<T>::one();
 	}: { Pallet::<T>::on_initialize(block) }
 	verify {
 		assert_eq!(<Round<T>>::get().current, 0u32);
@@ -159,7 +159,7 @@ benchmarks! {
 		assert_eq!(Session::<T>::current_index(), 0);
 
 		// jump to next block to trigger new round
-		let now = now + T::BlockNumber::one();
+		let now = now + BlockNumberFor::<T>::one();
 		System::<T>::set_block_number(now);
 		Session::<T>::on_initialize(now);
 		assert_eq!(Session::<T>::current_index(), 1);
@@ -186,7 +186,7 @@ benchmarks! {
 	}
 
 	set_blocks_per_round {
-		let bpr: T::BlockNumber = T::MinBlocksPerRound::get() + T::BlockNumber::one();
+		let bpr: BlockNumberFor<T> = T::MinBlocksPerRound::get() + BlockNumberFor::<T>::one();
 	}: _(RawOrigin::Root, bpr)
 	verify {
 		assert_eq!(<Round<T>>::get().length, bpr);
