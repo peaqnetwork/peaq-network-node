@@ -518,8 +518,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
-			let post_weight = <T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
-			post_weight
+			<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action()
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
