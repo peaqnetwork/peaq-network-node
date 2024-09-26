@@ -1400,7 +1400,10 @@ fn round_transitions() {
 			// round
 			roll_to(8, vec![]);
 			let event = events().pop().unwrap();
-			assert_eq!(MetaEvent::StakePallet(event), MetaEvent::StakePallet(Event::NewRound(8, 2)));
+			assert_eq!(
+				MetaEvent::StakePallet(event),
+				MetaEvent::StakePallet(Event::NewRound(8, 2))
+			);
 		});
 
 	// if duration of current round is less than new bpr, round waits until new bpr
@@ -1427,7 +1430,10 @@ fn round_transitions() {
 
 			roll_to(8, vec![]);
 			let event = events().pop().unwrap();
-			assert_eq!(MetaEvent::StakePallet(event), MetaEvent::StakePallet(Event::NewRound(8, 2)));
+			assert_eq!(
+				MetaEvent::StakePallet(event),
+				MetaEvent::StakePallet(Event::NewRound(8, 2))
+			);
 		});
 
 	// round_immediately_jumps_if_current_duration_exceeds_new_blocks_per_round
@@ -1451,7 +1457,10 @@ fn round_transitions() {
 
 			// last round startet at 5, so we expect 8 to be the new round
 			let event = events().pop().unwrap();
-			assert_eq!(MetaEvent::StakePallet(event), MetaEvent::StakePallet(Event::NewRound(8, 2)));
+			assert_eq!(
+				MetaEvent::StakePallet(event),
+				MetaEvent::StakePallet(Event::NewRound(8, 2))
+			);
 		});
 }
 

@@ -518,8 +518,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
-			let post_weight =
-				<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
+			let post_weight = <T as crate::pallet::Config>::WeightInfo::on_initialize_no_action();
 			post_weight
 		}
 
@@ -2838,20 +2837,18 @@ pub mod pallet {
 		/// Prepare delayed rewards for the next session
 		/// 1. By taking snapshot of new collator's staking info
 		/// 2. By calculating DelayedPayoutInfo based on collators of previous round
-		/// Takes a list of collators for new round
-		/// and old round's index
-		/// SessionManager::new_session_genesis calls new_session twice, so this function is called
-		/// twice at genesis At SessionManager::new_session_genesis(0) we skip this entirely
-		/// At SessionManager::new_session_genesis(1) we take snapshot of collators for round 0, but
-		/// skip delayed reward calculation
+		/// We skip DelayedPayoutInfo calculation in session 0, as there was no previous round to
+		/// calculate for.
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &[T::AccountId],
 			session_index: SessionIndex,
 		) {
+			// get updated RoundInfo
+			let round = <Round<T>>::get().current;
 			// take snapshot of these new collators' staking info
 			for collator in collators.iter() {
-				if let Some(collator_state) = CandidatePool::<T>::get(collator){
-					<AtStake<T>>::insert(session_index, collator, collator_state);
+				if let Some(collator_state) = CandidatePool::<T>::get(collator) {
+					<AtStake<T>>::insert(round, collator, collator_state);
 				}
 			}
 
@@ -2862,14 +2859,19 @@ pub mod pallet {
 				return
 			}
 
-			// since RoundIndex equals SessionIndex, this is fine
-			let round = session_index - 1;
+			let old_round = round - 1;
 			// [TODO] what to do with this returned weight?
-			let (_, total_stake) = Self::get_total_collator_staking_num(round);
+			// Get total collator staking number of round that is ending
+			let (_, total_stake) = Self::get_total_collator_staking_num(old_round);
+			// Get total issuance of round that is ending
 			let total_issuance = Self::pot_issuance();
 
 			// take snapshot of previous session's staking totals for payout calculation
-			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT { round, total_stake, total_issuance });
+			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
+				round: old_round,
+				total_stake,
+				total_issuance,
+			});
 		}
 	}
 
@@ -2921,7 +2923,7 @@ pub mod pallet {
 		}
 
 		/// Session is rotating because RoundInfo.should_update(now) or ForceNewRound was true
-		/// so we must update round here
+		/// so we must rotate session by updating RoundInfo
 		fn end_session(_end_index: SessionIndex) {
 			let mut round = <Round<T>>::get();
 			let now = <frame_system::Pallet<T>>::block_number();
