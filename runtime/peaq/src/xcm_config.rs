@@ -190,54 +190,52 @@ pub type XcmOriginToTransactDispatchOrigin = (
 /// account for proof size weights.
 pub struct SafeCallFilter;
 impl SafeCallFilter {
-    // 1. RuntimeCall::EVM(..) & RuntimeCall::Ethereum(..) have to be prohibited since we cannot measure PoV size properly
-    // 2. RuntimeCall::Contracts(..) can be allowed, but it hasn't been tested properly yet.
+	// 1. RuntimeCall::EVM(..) & RuntimeCall::Ethereum(..) have to be prohibited since we cannot
+	//    measure PoV size properly
+	// 2. RuntimeCall::Contracts(..) can be allowed, but it hasn't been tested properly yet.
 
-    /// Checks whether the base (non-composite) call is allowed to be executed via `Transact` XCM instruction.
-    pub fn allow_base_call(call: &RuntimeCall) -> bool {
-        match call {
-            RuntimeCall::System(..)
-            | RuntimeCall::Balances(..)
-            | RuntimeCall::Vesting(..)
-            | RuntimeCall::Assets(..)
-            | RuntimeCall::PolkadotXcm(..)
-            | RuntimeCall::Session(..)
-            | RuntimeCall::Multisig(
-                pallet_multisig::Call::approve_as_multi { .. }
-                | pallet_multisig::Call::cancel_as_multi { .. },
-            ) => true,
-            _ => false,
-        }
-    }
-    /// Checks whether composite call is allowed to be executed via `Transact` XCM instruction.
-    ///
-    /// Each composite call's subcalls are checked against base call filter. No nesting of composite calls is allowed.
-    pub fn allow_composite_call(call: &RuntimeCall) -> bool {
-        match call {
-            RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) => {
-                calls.iter().all(|call| Self::allow_base_call(call))
-            }
-            RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) => {
-                calls.iter().all(|call| Self::allow_base_call(call))
-            }
-            RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) => {
-                Self::allow_base_call(call)
-            }
-            RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) => {
-                Self::allow_base_call(call)
-            }
-            RuntimeCall::Multisig(pallet_multisig::Call::as_multi { call, .. }) => {
-                Self::allow_base_call(call)
-            }
-            _ => false,
-        }
-    }
+	/// Checks whether the base (non-composite) call is allowed to be executed via `Transact` XCM
+	/// instruction.
+	pub fn allow_base_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::System(..) |
+			RuntimeCall::Balances(..) |
+			RuntimeCall::Vesting(..) |
+			RuntimeCall::Assets(..) |
+			RuntimeCall::PolkadotXcm(..) |
+			RuntimeCall::Session(..) |
+			RuntimeCall::Multisig(
+				pallet_multisig::Call::approve_as_multi { .. } |
+				pallet_multisig::Call::cancel_as_multi { .. },
+			) => true,
+			_ => false,
+		}
+	}
+	/// Checks whether composite call is allowed to be executed via `Transact` XCM instruction.
+	///
+	/// Each composite call's subcalls are checked against base call filter. No nesting of composite
+	/// calls is allowed.
+	pub fn allow_composite_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) =>
+				calls.iter().all(|call| Self::allow_base_call(call)),
+			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) =>
+				calls.iter().all(|call| Self::allow_base_call(call)),
+			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) =>
+				Self::allow_base_call(call),
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) =>
+				Self::allow_base_call(call),
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi { call, .. }) =>
+				Self::allow_base_call(call),
+			_ => false,
+		}
+	}
 }
 
 impl Contains<RuntimeCall> for SafeCallFilter {
-    fn contains(call: &RuntimeCall) -> bool {
-        Self::allow_base_call(call) || Self::allow_composite_call(call)
-    }
+	fn contains(call: &RuntimeCall) -> bool {
+		Self::allow_base_call(call) || Self::allow_composite_call(call)
+	}
 }
 
 parameter_types! {
