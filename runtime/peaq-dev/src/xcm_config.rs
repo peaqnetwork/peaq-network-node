@@ -218,9 +218,9 @@ impl SafeCallFilter {
 	pub fn allow_composite_call(call: &RuntimeCall) -> bool {
 		match call {
 			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) =>
-				calls.iter().all(|call| Self::allow_base_call(call)),
+				calls.iter().all(Self::allow_base_call),
 			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) =>
-				calls.iter().all(|call| Self::allow_base_call(call)),
+				calls.iter().all(Self::allow_base_call),
 			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) =>
 				Self::allow_base_call(call),
 			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) =>
