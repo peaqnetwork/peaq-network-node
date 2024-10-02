@@ -28,7 +28,7 @@ use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 /// Enum of the different "modes" of tracer for multiple runtime versions and
 /// the kind of EVM events that are emitted.
 enum TracingVersion {
-	/// The first event of the transaction is `EvmEvent::TransactX`. It goes along other events
+	/// The first event of the transaction is `EvmEvent::TransactX`. It goes along with other events
 	/// such as `EvmEvent::Exit`. All contexts should have clear start/end boundaries.
 	EarlyTransact,
 	/// Older version in which the events above didn't existed.
@@ -69,7 +69,7 @@ pub struct Listener {
 	// /// To handle EvmEvent::Exit no emitted by previous runtimes versions,
 	// /// entries are not inserted directly in `self.entries`.
 	// pending_entries: Vec<(u32, Call)>,
-	/// See `RuntimeEvent::StepResult` event explanatioins.
+	/// See `RuntimeEvent::StepResult` event explanations.
 	step_result_entry: Option<(u32, Call)>,
 
 	/// When tracing a block `Event::CallListNew` is emitted before each Ethereum transaction is

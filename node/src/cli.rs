@@ -149,7 +149,7 @@ pub struct ExportGenesisHeadCommand {
 	#[clap(short, long)]
 	pub raw: bool,
 
-	/// The name of the chain for that the genesis state should be exported.
+	/// The name of the chain for the genesis state should be exported.
 	#[clap(long)]
 	pub chain: Option<String>,
 }
