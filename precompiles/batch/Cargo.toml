@@ -1,0 +1,50 @@
+[package]
+name = "pallet-evm-precompile-batch"
+authors = [ "peaq" ]
+description = "A Precompile to batch multiple calls."
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+# Peaq
+precompile-utils = { path = "../utils", default-features = false, features = [ "codec-xcm" ] }
+
+# Substrate
+frame-support = { workspace = true, default-features = false }
+parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ] }
+sp-core = { workspace = true, default-features = false }
+sp-std = { workspace = true, default-features = false }
+frame-system = { workspace = true, default-features = false }
+sp-io = { workspace = true }
+
+# Frontier
+fp-evm = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = [ "forbid-evm-reentrancy" ] }
+evm = { workspace = true, default-features = false, features = [ "with-codec" ] }
+
+[dev-dependencies]
+derive_more = { workspace = true }
+hex-literal = { workspace = true }
+serde = { workspace = true }
+sha3 = { workspace = true }
+
+pallet-balances = { workspace = true, features = [ "insecure_zero_ed", "std" ] }
+pallet-timestamp = { workspace = true, features = [ "std" ] }
+parity-scale-codec = { workspace = true, features = [ "max-encoded-len", "std" ] }
+precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
+scale-info = { workspace = true, features = [ "derive", "std" ] }
+sp-runtime = { workspace = true, features = [ "std" ] }
+
+[features]
+default = [ "std" ]
+std = [
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-evm/std",
+	"parity-scale-codec/std",
+	"precompile-utils/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-std/std",
+]

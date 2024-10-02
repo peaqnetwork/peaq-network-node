@@ -2,11 +2,11 @@ use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_krest_runtime::{
 	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, GenesisConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles,
-	Runtime, StakingCoefficientRewardCalculatorConfig, SudoConfig, SystemConfig, WASM_BINARY,
+	GenesisAccount, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles, Runtime,
+	RuntimeGenesisConfig, SudoConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance};
-use runtime_common::{DOLLARS, NANOCENTS, TOKEN_DECIMALS};
+use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
@@ -16,7 +16,7 @@ use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_
 use sp_core::sr25519;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -36,13 +36,13 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenSymbol".into(), "KREST".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
+	#[allow(deprecated)]
 	Ok(ChainSpec::from_genesis(
 		"krest-network",
 		"krest-local",
 		ChainType::Local,
 		move || {
 			configure_genesis(
-				wasm_binary,
 				// stakers
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -83,30 +83,28 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		Some(properties),
 		// Extensions
 		Extensions { bad_blocks: Default::default(), relay_chain: "kusama-local".into(), para_id },
+		// code
+		wasm_binary,
 	))
 }
 
 /// Configure initial storage state for FRAME modules.
 fn configure_genesis(
-	wasm_binary: &[u8],
 	stakers: Vec<(AccountId, Option<AccountId>, Balance)>,
 	initial_authorities: Vec<(AccountId, AuraId)>,
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	parachain_id: ParaId,
-) -> GenesisConfig {
+) -> RuntimeGenesisConfig {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
 	// within contracts.
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	GenesisConfig {
-		system: SystemConfig {
-			// Add Wasm runtime to storage.
-			code: wasm_binary.to_vec(),
-		},
-		parachain_info: ParachainInfoConfig { parachain_id },
+	RuntimeGenesisConfig {
+		system: Default::default(),
+		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
@@ -121,21 +119,18 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
-		staking_coefficient_reward_calculator: StakingCoefficientRewardCalculatorConfig {
-			coefficient: staking::coefficient(),
-		},
+		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
 			// Make sure sum is 100
 			reward_config: pallet_block_reward::RewardDistributionConfig {
-				treasury_percent: Perbill::from_percent(15),
-				dapps_percent: Perbill::from_percent(15),
-				collators_percent: Perbill::from_percent(30),
-				lp_percent: Perbill::from_percent(15),
-				machines_percent: Perbill::from_percent(15),
-				parachain_lease_fund_percent: Perbill::from_percent(10),
+				treasury_percent: Perbill::from_percent(25),
+				collators_delegators_percent: Perbill::from_percent(40),
+				coretime_percent: Perbill::from_percent(10),
+				subsidization_pool_percent: Perbill::from_percent(5),
+				depin_staking_percent: Perbill::from_percent(5),
+				depin_incentivization_percent: Perbill::from_percent(15),
 			},
-			block_issue_reward: 380_517_503_805 * NANOCENTS,
-			max_currency_supply: 400_000_000 * DOLLARS,
+			_phantom: Default::default(),
 		},
 		vesting: Default::default(),
 		aura: Default::default(),
@@ -158,14 +153,17 @@ fn configure_genesis(
 					)
 				})
 				.collect(),
+			..Default::default()
 		},
-		ethereum: EthereumConfig {},
+		ethereum: EthereumConfig { ..Default::default() },
 		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_krest_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
 		},
 		treasury: Default::default(),
 		council: CouncilConfig::default(),
+		assets: Default::default(),
 	}
 }

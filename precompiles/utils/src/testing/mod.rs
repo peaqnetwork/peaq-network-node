@@ -34,7 +34,7 @@ pub fn decode_revert_message(encoded: &[u8]) -> &[u8] {
 	if encoded_len > 68 {
 		let message_len = encoded[36..68].iter().sum::<u8>();
 		if encoded_len >= 68 + message_len as usize {
-			return &encoded[68..68 + message_len as usize]
+			return &encoded[68..68 + message_len as usize];
 		}
 	}
 	b"decode_revert_message: error"
@@ -71,10 +71,10 @@ macro_rules! assert_event_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					$crate::mock::events().iter().find(|x| *x == e).is_some(),
 					"Event {:?} was not found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			},
 		}
@@ -88,10 +88,10 @@ macro_rules! assert_event_not_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_none(),
+					$crate::mock::events().iter().find(|x| *x == e).is_none(),
 					"Event {:?} was found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			},
 		}

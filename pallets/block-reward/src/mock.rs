@@ -1,24 +1,21 @@
 use crate::{self as pallet_block_reward, NegativeImbalanceOf};
 
 use frame_support::{
-	construct_runtime, parameter_types,
-	sp_io::TestExternalities,
-	traits::{Currency, GenesisBuild},
-	weights::Weight,
-	PalletId,
+	construct_runtime, parameter_types, traits::Currency, weights::Weight, PalletId,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
+use sp_io::TestExternalities;
 
-use sp_core::H256;
+use inflation_manager::types::{InflationConfiguration, InflationParameters};
+use sp_core::{ConstU32, H256};
 use sp_runtime::{
-	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	BuildStorage, Perbill,
 };
 
 pub(crate) type AccountId = u64;
-pub(crate) type BlockNumber = u64;
-pub(crate) type Balance = u128;
+pub(crate) use peaq_primitives_xcm::Balance;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
 
 /// Value shouldn't be less than 2 for testing purposes, otherwise we cannot test certain corner
@@ -26,15 +23,13 @@ type Block = frame_system::mocking::MockBlock<TestRuntime>;
 pub(crate) const EXISTENTIAL_DEPOSIT: Balance = 2;
 
 construct_runtime!(
-	pub enum TestRuntime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum TestRuntime
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Timestamp: pallet_timestamp,
+		InflationManager: inflation_manager,
+		BlockReward: pallet_block_reward,
 	}
 );
 
@@ -49,14 +44,13 @@ impl frame_system::Config for TestRuntime {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
 	type RuntimeCall = RuntimeCall;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
+	type Block = Block;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
@@ -69,6 +63,7 @@ impl frame_system::Config for TestRuntime {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -87,9 +82,10 @@ impl pallet_balances::Config for TestRuntime {
 	type AccountStore = System;
 	type WeightInfo = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
-	type HoldIdentifier = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
@@ -103,17 +99,13 @@ impl pallet_timestamp::Config for TestRuntime {
 	type WeightInfo = ();
 }
 
-// A fairly high block reward so we can detect slight changes in reward distribution
-pub(crate) const BLOCK_REWARD: Balance = 1_000_000;
-pub(crate) const MAX_CURRENCY_SUPPLY: Balance = 900_000_000;
-
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
-pub(crate) const COLLATOR_POT: PalletId = PalletId(*b"mokcolat");
-pub(crate) const DAPPS_POT: PalletId = PalletId(*b"mokdapps");
-pub(crate) const LP_POT: PalletId = PalletId(*b"lpreward");
-pub(crate) const MACHINE_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const PARACHAIN_LEASE_FUND: PalletId = PalletId(*b"parlease");
+pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
+pub(crate) const CORETIME_POT: PalletId = PalletId(*b"lpreward");
+pub(crate) const SUBSIDIZATION_POT: PalletId = PalletId(*b"machiner");
+pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"destakin");
+pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"deincent");
 
 // Type used as beneficiary payout handle
 pub struct BeneficiaryPayout();
@@ -124,25 +116,55 @@ impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
 		Balances::resolve_creating(&TREASURY_POT.into_account_truncating(), reward);
 	}
 
-	fn collators(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&COLLATOR_POT.into_account_truncating(), reward);
+	fn collators_delegators(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&COLLATOR_DELEGATOR_POT.into_account_truncating(), reward);
 	}
 
-	fn dapps_staking(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&DAPPS_POT.into_account_truncating(), reward);
+	fn coretime(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&CORETIME_POT.into_account_truncating(), reward);
 	}
 
-	fn lp_users(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&LP_POT.into_account_truncating(), reward);
+	fn subsidization_pool(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&SUBSIDIZATION_POT.into_account_truncating(), reward);
 	}
 
-	fn machines(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&MACHINE_POT.into_account_truncating(), reward);
+	fn depin_staking(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(&DE_PINSTAKING_ACCOUNT.into_account_truncating(), reward);
 	}
 
-	fn parachain_lease_fund(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&PARACHAIN_LEASE_FUND.into_account_truncating(), reward);
+	fn depin_incentivization(reward: NegativeImbalanceOf<TestRuntime>) {
+		Balances::resolve_creating(
+			&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(),
+			reward,
+		);
 	}
+}
+
+parameter_types! {
+	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const DefaultTotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
+	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
+		inflation_parameters: InflationParameters {
+			inflation_rate: Perbill::from_perthousand(35u32),
+			disinflation_rate: Perbill::from_percent(90),
+		},
+		inflation_stagnation_rate: Perbill::from_percent(1),
+		inflation_stagnation_year: 13,
+	};
+	pub const InitializeInflationAt: BlockNumberFor<TestRuntime> = 0;
+	pub const BlockRewardBeforeInitialize: Balance = 0;
+}
+
+impl inflation_manager::Config for TestRuntime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type PotId = InfaltionPot;
+	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
+	type DefaultInflationConfiguration = DefaultInflationConfiguration;
+	type BoundedDataLen = ConstU32<1024>;
+	type WeightInfo = inflation_manager::weights::WeightInfo<TestRuntime>;
+	type DoInitializeAt = InitializeInflationAt;
+	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
 impl pallet_block_reward::Config for TestRuntime {
@@ -157,7 +179,7 @@ pub struct ExternalityBuilder;
 impl ExternalityBuilder {
 	pub fn build() -> TestExternalities {
 		let mut storage =
-			frame_system::GenesisConfig::default().build_storage::<TestRuntime>().unwrap();
+			frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
 		// This will cause some initial issuance
 		pallet_balances::GenesisConfig::<TestRuntime> {
@@ -165,10 +187,12 @@ impl ExternalityBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.ok();
+		inflation_manager::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
+			.assimilate_storage(&mut storage)
+			.ok();
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
 			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
-			block_issue_reward: BLOCK_REWARD,
-			max_currency_supply: MAX_CURRENCY_SUPPLY,
+			_phantom: Default::default(),
 		}
 		.assimilate_storage(&mut storage)
 		.ok();

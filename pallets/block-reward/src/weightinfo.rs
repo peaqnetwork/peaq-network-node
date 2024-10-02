@@ -4,6 +4,4 @@ use frame_support::weights::Weight;
 
 pub trait WeightInfo {
 	fn set_configuration() -> Weight;
-	fn set_block_issue_reward() -> Weight;
-	fn set_max_currency_supply() -> Weight;
 }

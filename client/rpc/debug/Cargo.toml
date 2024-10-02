@@ -36,3 +36,4 @@ fc-db = { workspace = true, default-features = true }
 fc-rpc = { workspace = true, default-features = true, features = [ "rpc-binary-search-estimate" ] }
 fp-rpc = { workspace = true, default-features = true }
 fc-storage = { workspace = true, default-features = true }
+fc-api = { workspace = true }

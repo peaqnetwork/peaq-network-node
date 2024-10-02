@@ -26,6 +26,7 @@ use sp_runtime::{
 
 pub mod asset_id;
 pub mod evm;
+pub mod xcm;
 
 pub use crate::{asset_id::*, evm::*};
 

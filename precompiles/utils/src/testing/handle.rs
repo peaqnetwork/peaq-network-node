@@ -119,7 +119,7 @@ impl PrecompileHandle for MockHandle {
 			))
 			.is_err()
 		{
-			return (ExitReason::Error(ExitError::OutOfGas), vec![])
+			return (ExitReason::Error(ExitError::OutOfGas), vec![]);
 		}
 
 		match &mut self.subcall_handle {
@@ -134,7 +134,7 @@ impl PrecompileHandle for MockHandle {
 				});
 
 				if self.record_cost(cost).is_err() {
-					return (ExitReason::Error(ExitError::OutOfGas), vec![])
+					return (ExitReason::Error(ExitError::OutOfGas), vec![]);
 				}
 
 				for log in logs {

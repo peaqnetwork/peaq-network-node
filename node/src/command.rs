@@ -1,4 +1,3 @@
-use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 #[cfg(feature = "frame-benchmarking-cli")]
 use frame_benchmarking_cli::BenchmarkCmd;
@@ -14,19 +13,21 @@ use sc_service::{
 	DatabaseSource, PartialComponents,
 };
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+use sp_runtime::{
+	traits::{AccountIdConversion, Block as BlockT, Hash as HashT, Header as HeaderT, Zero},
+	StateVersion,
+};
 use std::io::Write;
 
 use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
-	parachain::service::{self, agung, dev, frontier_database_dir, krest, peaq, start_node},
+	parachain::service::{self, dev, frontier_database_dir, krest, peaq, start_node},
 };
 
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;
-	fn is_agung(&self) -> bool;
 	fn is_krest(&self) -> bool;
 	fn is_peaq(&self) -> bool;
 }
@@ -34,9 +35,6 @@ trait IdentifyChain {
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_dev(&self) -> bool {
 		self.id().starts_with("dev")
-	}
-	fn is_agung(&self) -> bool {
-		self.id().starts_with("agung")
 	}
 	fn is_krest(&self) -> bool {
 		self.id().starts_with("krest")
@@ -50,19 +48,15 @@ macro_rules! with_runtime_or_err {
 	($chain_spec:expr, { $( $code:tt )* }) => {
 		if $chain_spec.is_dev() {
 			#[allow(unused_imports)]
-			use dev::{RuntimeApi, Executor};
-			$( $code )*
-		} else if $chain_spec.is_agung() {
-			#[allow(unused_imports)]
-			use agung::{RuntimeApi, Executor};
+			use dev::{RuntimeApi};
 			$( $code )*
 		} else if $chain_spec.is_krest() {
 			#[allow(unused_imports)]
-			use krest::{RuntimeApi, Executor};
+			use krest::{RuntimeApi};
 			$( $code )*
 		} else if $chain_spec.is_peaq() {
 			#[allow(unused_imports)]
-			use peaq::{RuntimeApi, Executor};
+			use peaq::{RuntimeApi};
 			$( $code )*
 		} else {
 			return Err("Wrong chain_spec".into());
@@ -73,9 +67,6 @@ macro_rules! with_runtime_or_err {
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
-	}
-	fn is_agung(&self) -> bool {
-		<dyn sc_service::ChainSpec>::is_agung(self)
 	}
 	fn is_krest(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_krest(self)
@@ -120,9 +111,6 @@ impl SubstrateCli for Cli {
 			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
-			"agung-local" => Box::new(parachain::agung_chain_spec::get_chain_spec_local_testnet(
-				self.run.parachain_id,
-			)?),
 			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec()?),
 			"krest-local" => Box::new(parachain::krest_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
@@ -132,15 +120,11 @@ impl SubstrateCli for Cli {
 				self.run.parachain_id,
 			)?),
 			path => {
-				let chain_spec = parachain::agung_chain_spec::ChainSpec::from_json_file(
+				let chain_spec = parachain::dev_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),
 				)?;
 				if chain_spec.is_dev() {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
-						std::path::PathBuf::from(path),
-					)?)
-				} else if chain_spec.is_agung() {
-					Box::new(parachain::agung_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
 				} else if chain_spec.is_krest() {
@@ -152,16 +136,17 @@ impl SubstrateCli for Cli {
 						std::path::PathBuf::from(path),
 					)?)
 				} else {
-					return Err(format!("Wrong chain_spec, {}", path))
+					return Err(format!("Wrong chain_spec, {}", path));
 				}
 			},
 		})
 	}
+}
 
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		if chain_spec.is_agung() {
-			&peaq_agung_runtime::VERSION
-		} else if chain_spec.is_krest() {
+impl Cli {
+	#[allow(clippy::borrowed_box)]
+	fn runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		if chain_spec.is_krest() {
 			&peaq_krest_runtime::VERSION
 		} else if chain_spec.is_peaq() {
 			&peaq_runtime::VERSION
@@ -178,7 +163,7 @@ fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
 		return Err(
 			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
 				.into(),
-		)
+		);
 	}
 	Ok(())
 }
@@ -215,10 +200,6 @@ impl SubstrateCli for RelayChainCli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
 	}
-
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		polkadot_cli::Cli::native_runtime_version(chain_spec)
-	}
 }
 
 #[allow(clippy::borrowed_box)]
@@ -247,7 +228,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, import_queue, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -261,7 +242,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -275,7 +256,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -289,7 +270,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, import_queue, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -322,7 +303,7 @@ pub fn run() -> sc_cli::Result<()> {
 			with_runtime_or_err!(runner.config().chain_spec, {
 				runner.async_run(|mut config| {
 					let PartialComponents { client, task_manager, backend, .. } =
-						service::new_partial::<RuntimeApi, Executor, _>(
+						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
 							cli.run.target_gas_price,
@@ -339,13 +320,13 @@ pub fn run() -> sc_cli::Result<()> {
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							runner.sync_run(|config| cmd.run::<Block, Executor>(config))
+							runner.sync_run(|config| cmd.run::<Block>(config))
 						})
 					},
 					BenchmarkCmd::Block(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							runner.sync_run(|mut config| {
-								let params = service::new_partial::<RuntimeApi, Executor, _>(
+								let params = service::new_partial::<RuntimeApi, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price,
@@ -358,7 +339,7 @@ pub fn run() -> sc_cli::Result<()> {
 					BenchmarkCmd::Storage(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							runner.sync_run(|mut config| {
-								let params = service::new_partial::<RuntimeApi, Executor, _>(
+								let params = service::new_partial::<RuntimeApi, _>(
 									&mut config,
 									parachain::build_import_queue,
 									cli.run.target_gas_price,
@@ -385,13 +366,13 @@ pub fn run() -> sc_cli::Result<()> {
 					 `--features runtime-benchmarks`."
 					.into())
 			},
-		Some(Subcommand::ExportGenesisState(params)) => {
+		Some(Subcommand::ExportGenesisHead(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
 			let spec = cli.load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&spec).state_version();
+			let state_version = Cli::runtime_version(&spec).state_version();
 
 			let block: Block = generate_genesis_block(&*spec, state_version)?;
 			let raw_header = block.header().encode();
@@ -463,12 +444,9 @@ pub fn run() -> sc_cli::Result<()> {
 				let id = ParaId::from(cli.run.parachain_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v4::AccountId>::into_account_truncating(&id);
-
-				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
-					.map_err(|e| format!("{:?}", e))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(
+						&id,
+					);
 
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
@@ -479,12 +457,11 @@ pub fn run() -> sc_cli::Result<()> {
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
-				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
-					start_node::<RuntimeApi, Executor>(
+					start_node::<RuntimeApi>(
 						config,
 						polkadot_config,
 						collator_options,
@@ -608,4 +585,40 @@ impl CliConfiguration<Self> for RelayChainCli {
 	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
 		self.base.base.telemetry_endpoints(chain_spec)
 	}
+}
+
+/// Generate the genesis block from a given ChainSpec.
+pub fn generate_genesis_block<Block: BlockT>(
+	chain_spec: &dyn ChainSpec,
+	genesis_state_version: StateVersion,
+) -> std::result::Result<Block, String> {
+	let storage = chain_spec.build_storage()?;
+
+	let child_roots = storage.children_default.iter().map(|(sk, child_content)| {
+		let state_root = <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(
+			child_content.data.clone().into_iter().collect(),
+			genesis_state_version,
+		);
+		(sk.clone(), state_root.encode())
+	});
+	let state_root = <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(
+		storage.top.clone().into_iter().chain(child_roots).collect(),
+		genesis_state_version,
+	);
+
+	let extrinsics_root = <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(
+		Vec::new(),
+		genesis_state_version,
+	);
+
+	Ok(Block::new(
+		<<Block as BlockT>::Header as HeaderT>::new(
+			Zero::zero(),
+			extrinsics_root,
+			state_root,
+			Default::default(),
+			Default::default(),
+		),
+		Default::default(),
+	))
 }

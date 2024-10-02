@@ -1,4 +1,4 @@
-use crate::{EoTFeeFactor, PaymentConvertInfo};
+use crate::PaymentConvertInfo;
 use frame_support::{
 	pallet_prelude::{
 		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
@@ -9,13 +9,16 @@ use frame_support::{
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
-use sp_runtime::traits::{
-	Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
-	Saturating, Zero,
+use sp_runtime::{
+	traits::{
+		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
+		Saturating, Zero,
+	},
+	Perbill,
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
-use peaq_primitives_xcm::AssetIdExt;
+use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
@@ -27,16 +30,20 @@ type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
 
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC>(PhantomData<(C, OU, PCPC)>);
+pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>(
+	PhantomData<(C, OU, PCPC, FEE)>,
+);
 
-impl<T, C, OU, PCPC> OnChargeTransaction<T> for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC>
+impl<T, C, OU, PCPC, FEE> OnChargeTransaction<T>
+	for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>
 where
 	T: SysConfig + TransPayConfig + ZenProtConfig,
 	C: Currency<T::AccountId>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 	PCPC: PeaqMultiCurrenciesPaymentConvert<AccountId = T::AccountId, Currency = C>,
-	PCPC::AssetId: AssetIdExt,
+	PCPC::AssetId: TryFrom<PeaqAssetId>,
 	AssetBalance: From<BalanceOf<C, T>>,
+	FEE: Get<Perbill>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
 	type Balance = <C as Currency<T::AccountId>>::Balance;
@@ -51,7 +58,7 @@ where
 		tip: Self::Balance,
 	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
 		if total_fee.is_zero() {
-			return Ok(None)
+			return Ok(None);
 		}
 		let inclusion_fee = total_fee - tip;
 
@@ -62,12 +69,13 @@ where
 		};
 
 		// Apply Peaq Economy-of-Things Fee adjustment.
-		let eot_fee = EoTFeeFactor::get() * inclusion_fee;
+		let eot_fee = FEE::get() * inclusion_fee;
 		let tx_fee = total_fee.saturating_add(eot_fee);
 
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
-		if !currency_id.is_native_token() {
+		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
+		if currency_id != native_currency_id {
 			log!(
 				info,
 				PeaqMultiCurrenciesOnChargeTransaction,
@@ -97,7 +105,7 @@ where
 		if let Some(paid) = already_withdrawn {
 			// Apply same Peaq Economy-of-Things Fee adjustment as above
 			let cor_inclusion_fee = cor_total_fee - tip;
-			let cor_eot_fee = EoTFeeFactor::get() * cor_inclusion_fee;
+			let cor_eot_fee = FEE::get() * cor_inclusion_fee;
 			let cor_tx_fee = cor_total_fee.saturating_add(cor_eot_fee);
 
 			// Calculate how much refund we should return
@@ -191,9 +199,6 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 		if Self::MultiCurrency::ensure_can_withdraw(native_id, who, tx_fee).is_ok() {
 			Ok((native_id, None))
 		} else {
-			// In theory not necessary, but as safety-buffer will add existential deposit.
-			let tx_fee = tx_fee.saturating_add(Self::ExistentialDeposit::get());
-
 			// Prepare ZenlinkAssetId(s) from AssetId(s).
 			let native_zen_id = Self::AssetIdToZenlinkId::convert(native_id)
 				.ok_or(TransactionValidityError::Invalid(InvalidTransaction::Custom(55)))?;
@@ -214,7 +219,7 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 					if Self::MultiCurrency::ensure_can_withdraw(local_id, who, amount_in).is_ok() {
 						let info =
 							PaymentConvertInfo { amount_in: amounts[0], amount_out, zen_path };
-						return Ok((local_id, Some(info)))
+						return Ok((local_id, Some(info)));
 					}
 				}
 			}

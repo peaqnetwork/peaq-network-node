@@ -6,11 +6,6 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-log = { workspace = true, default-features = false }
-num_enum = { workspace = true, default-features = false }
-paste = { workspace = true, default-features = false }
-slices = { workspace = true, default-features = false }
-
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
 
@@ -21,6 +16,7 @@ frame-system = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
+sp-runtime = { workspace = true, default-features = false }
 
 # Frontier
 fp-evm = { workspace = true, default-features = false }
@@ -41,6 +37,7 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
+	"sp-runtime/std",
 	"peaq-pallet-did/std",
 	"pallet-timestamp/std",
 ]

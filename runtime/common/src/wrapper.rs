@@ -94,7 +94,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
-			return Ok(())
+			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::transfer(from, to, amount)
@@ -115,7 +115,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(())
+			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::deposit(who, amount)
@@ -135,7 +135,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if amount.is_zero() {
-			return Ok(())
+			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
 			NativeCurrency::withdraw(who, amount)
@@ -211,6 +211,9 @@ where
 	fn ensure_can_withdraw(who: &AccountId, amount: Self::Balance) -> DispatchResult {
 		let new_balance = Self::free_balance(who)
 			.checked_sub(&amount)
+			.ok_or(DispatchError::Other("Insufficient balance"))?;
+		let new_balance = new_balance
+			.checked_sub(&Self::minimum_balance())
 			.ok_or(DispatchError::Other("Insufficient balance"))?;
 
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)

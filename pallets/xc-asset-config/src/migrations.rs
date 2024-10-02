@@ -18,9 +18,7 @@
 
 use super::*;
 use frame_support::{
-	dispatch::GetStorageVersion,
-	log,
-	pallet_prelude::*,
+	pallet_prelude::{GetStorageVersion, *},
 	traits::{Get, OnRuntimeUpgrade},
 };
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -32,7 +30,7 @@ impl<T: Config> OnRuntimeUpgrade for MigrationXcmV3<T> {
 		let version = Pallet::<T>::on_chain_storage_version();
 		let mut consumed_weight = Weight::zero();
 		if version >= 2 {
-			return consumed_weight
+			return consumed_weight;
 		}
 
 		// 1st map //
@@ -101,8 +99,8 @@ impl<T: Config> OnRuntimeUpgrade for MigrationXcmV3<T> {
 	fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
 		assert_eq!(Pallet::<T>::on_chain_storage_version(), 2);
 
-		use xcm::VersionedMultiLocation;
-		let legacy_id_to_location_entries: Vec<(T::AssetId, VersionedMultiLocation)> =
+		use xcm::VersionedLocation;
+		let legacy_id_to_location_entries: Vec<(T::AssetId, VersionedLocation)> =
 			Decode::decode(&mut state.as_ref())
 				.map_err(|_| "Cannot decode data from pre_upgrade")?;
 
