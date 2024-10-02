@@ -6,10 +6,6 @@ edition = "2021"
 authors = [ "Peaq" ]
 
 [dependencies]
-log = { workspace = true }
-num_enum = { workspace = true }
-slices = { workspace = true }
-
 # Peaq
 precompile-utils = { path = "../utils", default-features = false }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
