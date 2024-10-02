@@ -20,11 +20,6 @@
 
 use std::{convert::TryInto, iter};
 
-use crate::{
-	mock::MockRewardConfig,
-	reward_config_calc::{DefaultRewardCalculator, RewardRateConfigTrait},
-	reward_rate::RewardRateInfo,
-};
 use frame_support::{
 	assert_noop, assert_ok, storage::bounded_btree_map::BoundedBTreeMap,
 	traits::EstimateNextSessionRotation, BoundedVec,
@@ -38,9 +33,9 @@ use crate::{
 	mock::{
 		almost_equal, events, last_event, roll_to, AccountId, Balance, Balances, BlockNumber,
 		ExtBuilder, RuntimeEvent as MetaEvent, RuntimeOrigin, Session, StakePallet, System, Test,
-		BLOCKS_PER_ROUND, DECIMALS,
+		BLOCKS_PER_ROUND, BLOCK_REWARD_IN_GENESIS_SESSION, BLOCK_REWARD_IN_NORMAL_SESSION,
+		DECIMALS,
 	},
-	reward_config_calc::CollatorDelegatorBlockRewardCalculator,
 	set::OrderedSet,
 	types::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
@@ -119,11 +114,11 @@ fn genesis() {
 			assert_eq!(CandidatePool::<Test>::count(), 2);
 
 			// 1
-			assert_eq!(Balances::usable_balance(&1), 500);
-			assert_eq!(Balances::free_balance(&1), 1000);
+			assert_eq!(Balances::usable_balance(1), 500);
+			assert_eq!(Balances::free_balance(1), 1000);
 			assert!(StakePallet::is_active_candidate(&1).is_some());
 			assert_eq!(
-				StakePallet::candidate_pool(&1),
+				StakePallet::candidate_pool(1),
 				Some(Candidate::<AccountId, Balance, <Test as Config>::MaxDelegatorsPerCollator> {
 					id: 1,
 					stake: 500,
@@ -137,14 +132,15 @@ fn genesis() {
 					),
 					total: 700,
 					status: CandidateStatus::Active,
+					commission: Default::default(),
 				})
 			);
 			// 2
-			assert_eq!(Balances::usable_balance(&2), 100);
-			assert_eq!(Balances::free_balance(&2), 300);
+			assert_eq!(Balances::usable_balance(2), 100);
+			assert_eq!(Balances::free_balance(2), 300);
 			assert!(StakePallet::is_active_candidate(&2).is_some());
 			assert_eq!(
-				StakePallet::candidate_pool(&2),
+				StakePallet::candidate_pool(2),
 				Some(Candidate::<AccountId, Balance, <Test as Config>::MaxDelegatorsPerCollator> {
 					id: 2,
 					stake: 200,
@@ -158,6 +154,7 @@ fn genesis() {
 					),
 					total: 400,
 					status: CandidateStatus::Active,
+					commission: Default::default(),
 				})
 			);
 			// Delegators
@@ -167,19 +164,19 @@ fn genesis() {
 			);
 			for x in 3..7 {
 				assert!(StakePallet::is_delegator(&x));
-				assert_eq!(Balances::usable_balance(&x), 0);
-				assert_eq!(Balances::free_balance(&x), 100);
+				assert_eq!(Balances::usable_balance(x), 0);
+				assert_eq!(Balances::free_balance(x), 100);
 			}
 			// Uninvolved
 			for x in 7..10 {
 				assert!(!StakePallet::is_delegator(&x));
 			}
-			assert_eq!(Balances::free_balance(&7), 100);
-			assert_eq!(Balances::usable_balance(&7), 100);
-			assert_eq!(Balances::free_balance(&8), 9);
-			assert_eq!(Balances::usable_balance(&8), 9);
-			assert_eq!(Balances::free_balance(&9), 4);
-			assert_eq!(Balances::usable_balance(&9), 4);
+			assert_eq!(Balances::free_balance(7), 100);
+			assert_eq!(Balances::usable_balance(7), 100);
+			assert_eq!(Balances::free_balance(8), 9);
+			assert_eq!(Balances::usable_balance(8), 9);
+			assert_eq!(Balances::free_balance(9), 4);
+			assert_eq!(Balances::usable_balance(9), 4);
 
 			// Safety first checks
 			assert_eq!(
@@ -229,17 +226,17 @@ fn genesis() {
 			);
 			for x in 1..5 {
 				assert!(StakePallet::is_active_candidate(&x).is_some());
-				assert_eq!(Balances::free_balance(&x), 100);
-				assert_eq!(Balances::usable_balance(&x), 80);
+				assert_eq!(Balances::free_balance(x), 100);
+				assert_eq!(Balances::usable_balance(x), 80);
 			}
 			assert!(StakePallet::is_active_candidate(&5).is_some());
-			assert_eq!(Balances::free_balance(&5), 100);
-			assert_eq!(Balances::usable_balance(&5), 90);
+			assert_eq!(Balances::free_balance(5), 100);
+			assert_eq!(Balances::usable_balance(5), 90);
 			// Delegators
 			for x in 6..11 {
 				assert!(StakePallet::is_delegator(&x));
-				assert_eq!(Balances::free_balance(&x), 100);
-				assert_eq!(Balances::usable_balance(&x), 90);
+				assert_eq!(Balances::free_balance(x), 100);
+				assert_eq!(Balances::usable_balance(x), 90);
 			}
 
 			// Safety first checks
@@ -375,7 +372,7 @@ fn collator_exit_executes_after_delay() {
 			);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 7]);
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::CollatorScheduledExit(2, 2, 4)));
-			let info = StakePallet::candidate_pool(&2).unwrap();
+			let info = StakePallet::candidate_pool(2).unwrap();
 			assert_eq!(info.status, CandidateStatus::Leaving(4));
 
 			roll_to(21, vec![]);
@@ -486,7 +483,6 @@ fn exit_queue_with_events() {
 			(9, 33),
 		])
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
-		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert_eq!(CandidatePool::<Test>::count(), 6);
@@ -583,7 +579,6 @@ fn execute_leave_candidates_with_delay() {
 			(10, 100),
 		])
 		.with_delegators(vec![(11, 1, 110), (12, 1, 120), (13, 2, 130), (14, 2, 140)])
-		.with_reward_rate(30, 70, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert_eq!(CandidatePool::<Test>::count(), 10);
@@ -609,7 +604,7 @@ fn execute_leave_candidates_with_delay() {
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(8)));
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(2)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![4, 3]);
-			for owner in vec![1, 2, 5, 6, 7, 8, 9, 10].iter() {
+			for owner in [1, 2, 5, 6, 7, 8, 9, 10].iter() {
 				assert!(StakePallet::candidate_pool(owner)
 					.unwrap()
 					.can_exit(1 + <Test as Config>::ExitQueueDelay::get()));
@@ -630,7 +625,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 240,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			assert_eq!(
@@ -647,7 +643,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 290,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			for collator in 5u64..=10u64 {
@@ -662,7 +659,8 @@ fn execute_leave_candidates_with_delay() {
 						stake: collator as u128 * 10u128,
 						delegators: OrderedSet::from(BoundedVec::default()),
 						total: collator as u128 * 10u128,
-						status: CandidateStatus::Leaving(3)
+						status: CandidateStatus::Leaving(3),
+						commission: Default::default(),
 					})
 				);
 				assert!(StakePallet::is_active_candidate(&collator).is_some());
@@ -713,7 +711,7 @@ fn execute_leave_candidates_with_delay() {
 			roll_to(10, vec![]);
 			assert_eq!(StakePallet::total_collator_stake(), total_stake);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![4, 3]);
-			for owner in vec![1, 2, 5, 6, 7, 8, 9, 10].iter() {
+			for owner in [1, 2, 5, 6, 7, 8, 9, 10].iter() {
 				assert!(StakePallet::candidate_pool(owner)
 					.unwrap()
 					.can_exit(1 + <Test as Config>::ExitQueueDelay::get()));
@@ -737,7 +735,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 240,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			assert_eq!(
@@ -754,7 +753,8 @@ fn execute_leave_candidates_with_delay() {
 						.unwrap()
 					),
 					total: 290,
-					status: CandidateStatus::Leaving(3)
+					status: CandidateStatus::Leaving(3),
+					commission: Default::default(),
 				})
 			);
 			for collator in 5u64..=10u64 {
@@ -769,7 +769,8 @@ fn execute_leave_candidates_with_delay() {
 						stake: collator as u128 * 10u128,
 						delegators: OrderedSet::from(BoundedVec::default()),
 						total: collator as u128 * 10u128,
-						status: CandidateStatus::Leaving(3)
+						status: CandidateStatus::Leaving(3),
+						commission: Default::default(),
 					})
 				);
 				assert!(StakePallet::is_active_candidate(&collator).is_some());
@@ -820,7 +821,7 @@ fn execute_leave_candidates_with_delay() {
 			roll_to(15, vec![]);
 			assert_eq!(StakePallet::total_collator_stake(), total_stake);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![4, 3]);
-			for collator in vec![1u64, 2u64, 5u64, 6u64, 7u64].iter() {
+			for collator in [1u64, 2u64, 5u64, 6u64, 7u64].iter() {
 				assert_ok!(StakePallet::execute_leave_candidates(
 					RuntimeOrigin::signed(*collator),
 					*collator
@@ -844,7 +845,7 @@ fn execute_leave_candidates_with_delay() {
 					RuntimeOrigin::signed(collator),
 					collator
 				));
-				assert!(StakePallet::candidate_pool(&collator).is_none());
+				assert!(StakePallet::candidate_pool(collator).is_none());
 				assert!(StakePallet::is_active_candidate(&collator).is_none());
 				assert_eq!(StakePallet::unstaking(collator).len(), 1);
 			}
@@ -978,10 +979,10 @@ fn multiple_delegations() {
 			assert_eq!(StakePallet::delegator_state(11).unwrap().total, 11);
 			assert_eq!(StakePallet::delegator_state(11).unwrap().delegations.len(), 1usize);
 			// 6 already has 10 in
-			assert_eq!(Balances::usable_balance(&7), 10);
-			assert_eq!(Balances::usable_balance(&11), 89);
-			assert_eq!(Balances::free_balance(&7), 100);
-			assert_eq!(Balances::free_balance(&11), 100);
+			assert_eq!(Balances::usable_balance(7), 10);
+			assert_eq!(Balances::usable_balance(11), 89);
+			assert_eq!(Balances::free_balance(7), 100);
+			assert_eq!(Balances::free_balance(11), 100);
 
 			roll_to(35, vec![]);
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(2), 2));
@@ -1014,10 +1015,10 @@ fn multiple_delegations() {
 				StakePallet::unlock_unstaked(RuntimeOrigin::signed(12), 12),
 				Error::<Test>::UnstakingIsEmpty
 			);
-			assert_eq!(Balances::usable_balance(&11), 100);
-			assert_eq!(Balances::usable_balance(&7), 90);
-			assert_eq!(Balances::free_balance(&11), 100);
-			assert_eq!(Balances::free_balance(&7), 100);
+			assert_eq!(Balances::usable_balance(11), 100);
+			assert_eq!(Balances::usable_balance(7), 90);
+			assert_eq!(Balances::free_balance(11), 100);
+			assert_eq!(Balances::free_balance(7), 100);
 		});
 }
 
@@ -1301,7 +1302,7 @@ fn delegators_bond() {
 			);
 
 			roll_to(9, vec![]);
-			assert_eq!(Balances::usable_balance(&6), 80);
+			assert_eq!(Balances::usable_balance(6), 80);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(1)));
 			assert!(StakePallet::candidate_pool(1)
 				.unwrap()
@@ -1311,8 +1312,8 @@ fn delegators_bond() {
 			assert!(StakePallet::is_delegator(&6));
 			assert_ok!(StakePallet::execute_leave_candidates(RuntimeOrigin::signed(1), 1));
 			assert!(!StakePallet::is_delegator(&6));
-			assert_eq!(Balances::usable_balance(&6), 80);
-			assert_eq!(Balances::free_balance(&6), 100);
+			assert_eq!(Balances::usable_balance(6), 80);
+			assert_eq!(Balances::free_balance(6), 100);
 		});
 }
 
@@ -1371,23 +1372,14 @@ fn revoke_delegation_or_leave_delegators() {
 
 #[test]
 fn round_transitions() {
-	let col_rate = 40;
-	let del_rate = 60;
-	let reward_rate = RewardRateInfo::new(
-		Perquintill::from_percent(col_rate),
-		Perquintill::from_percent(del_rate),
-	);
-
 	// round_immediately_jumps_if_current_duration_exceeds_new_blocks_per_round
 	// change from 5 bpr to 3 in block 5 -> 8 should be new round
 	ExtBuilder::default()
 		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
 		.with_collators(vec![(1, 20)])
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
-		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 			roll_to(5, vec![]);
 			let init = vec![Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
@@ -1397,9 +1389,6 @@ fn round_transitions() {
 				Error::<Test>::CannotSetBelowMin
 			);
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
-
-			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			// last round startet at 5 but we are already at 9, so we expect 9 to be the new
 			// round
@@ -1414,10 +1403,8 @@ fn round_transitions() {
 		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
 		.with_collators(vec![(1, 20)])
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
-		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
 			roll_to(6, vec![]);
@@ -1426,9 +1413,6 @@ fn round_transitions() {
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
-
-			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			// there should not be a new event
 			roll_to(7, vec![]);
@@ -1444,20 +1428,15 @@ fn round_transitions() {
 		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
 		.with_collators(vec![(1, 20)])
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
-		.with_reward_rate(col_rate, del_rate, 5)
 		.build()
 		.execute_with(|| {
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 			roll_to(7, vec![]);
 			// chooses top MaxSelectedCandidates (5), in order
 			let init = vec![Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
-
-			// reward_rate config should be untouched after per_block update
-			assert_eq!(reward_rate, MockRewardConfig::get_reward_rate_config());
 
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
 			roll_to(8, vec![]);
@@ -1468,116 +1447,22 @@ fn round_transitions() {
 }
 
 #[test]
-fn coinbase_rewards_few_blocks_detailed_check() {
-	ExtBuilder::default()
-		.with_balances(vec![
-			(1, 40_000_000 * DECIMALS),
-			(2, 40_000_000 * DECIMALS),
-			(3, 40_000_000 * DECIMALS),
-			(4, 20_000_000 * DECIMALS),
-			(5, 20_000_000 * DECIMALS),
-		])
-		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
-		.with_delegators(vec![
-			(3, 1, 32_000_000 * DECIMALS),
-			(4, 1, 16_000_000 * DECIMALS),
-			(5, 2, 16_000_000 * DECIMALS),
-		])
-		.with_reward_rate(30, 70, 5)
-		.build()
-		.execute_with(|| {
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
-			let total_issuance = <Test as Config>::Currency::total_issuance();
-			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
-
-			// compute rewards
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
-
-			let c_total_rewards = c_rewards + d_rewards;
-			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(2. / 3.));
-			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(1000, Perquintill::from_float(1. / 3.));
-
-			// set 1 to be author for blocks 1-3, then 2 for blocks 4-5
-			let authors: Vec<Option<AccountId>> =
-				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(2u64), Some(2u64)];
-			let user_1 = Balances::usable_balance(&1);
-			let user_2 = Balances::usable_balance(&2);
-			let user_3 = Balances::usable_balance(&3);
-			let user_4 = Balances::usable_balance(&4);
-			let user_5 = Balances::usable_balance(&5);
-
-			assert_eq!(Balances::usable_balance(&1), user_1);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3);
-			assert_eq!(Balances::usable_balance(&4), user_4);
-			assert_eq!(Balances::usable_balance(&5), user_5);
-
-			// 1 is block author for 1st block
-			roll_to(2, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5);
-
-			// 1 is block author for 2nd block
-			roll_to(3, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + 2 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 2 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 2 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5);
-
-			// 1 is block author for 3rd block
-			roll_to(4, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5);
-
-			// 2 is block author for 4th block
-			roll_to(5, authors.clone());
-			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
-			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
-			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(5), 2));
-
-			// 2 is block author for 5th block
-			roll_to(6, authors);
-			assert_eq!(Balances::usable_balance(&1), user_1 + 3 * c_rewards);
-			assert_eq!(Balances::usable_balance(&2), user_2 + c_rewards + c_total_rewards);
-			assert_eq!(Balances::usable_balance(&3), user_3 + 3 * d_1_rewards);
-			assert_eq!(Balances::usable_balance(&4), user_4 + 3 * d_2_rewards);
-			// should not receive rewards due to revoked delegation
-			assert_eq!(Balances::usable_balance(&5), user_5 + d_rewards);
-		});
-}
-
-#[test]
 fn delegator_should_not_receive_rewards_after_revoking() {
 	// test edge case of 1 delegator
 	ExtBuilder::default()
 		.with_balances(vec![(1, 10_000_000 * DECIMALS), (2, 10_000_000 * DECIMALS)])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
 			let authors: Vec<Option<AccountId>> = (1u64..100u64).map(|_| Some(1u64)).collect();
-			assert_eq!(Balances::usable_balance(&1), Balance::zero());
-			assert_eq!(Balances::usable_balance(&2), Balance::zero());
+			assert_eq!(Balances::usable_balance(1), Balance::zero());
+			assert_eq!(Balances::usable_balance(2), Balance::zero());
 			roll_to(100, authors);
-			assert!(Balances::usable_balance(&1) > Balance::zero());
+			assert!(Balances::usable_balance(1) > Balance::zero());
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(2), 2));
-			assert_eq!(Balances::usable_balance(&2), 10_000_000 * DECIMALS);
+			assert_eq!(Balances::usable_balance(2), 10_000_000 * DECIMALS);
 		});
 
 	ExtBuilder::default()
@@ -1588,24 +1473,23 @@ fn delegator_should_not_receive_rewards_after_revoking() {
 		])
 		.with_collators(vec![(1, 10_000_000 * DECIMALS)])
 		.with_delegators(vec![(2, 1, 10_000_000 * DECIMALS), (3, 1, 10_000_000 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
 			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(3), 1));
 			let authors: Vec<Option<AccountId>> = (1u64..100u64).map(|_| Some(1u64)).collect();
-			assert_eq!(Balances::usable_balance(&1), Balance::zero());
-			assert_eq!(Balances::usable_balance(&2), Balance::zero());
-			assert_eq!(Balances::usable_balance(&3), Balance::zero());
+			assert_eq!(Balances::usable_balance(1), Balance::zero());
+			assert_eq!(Balances::usable_balance(2), Balance::zero());
+			assert_eq!(Balances::usable_balance(3), Balance::zero());
 			roll_to(100, authors);
-			assert!(Balances::usable_balance(&1) > Balance::zero());
-			assert!(Balances::usable_balance(&2) > Balance::zero());
+			assert!(Balances::usable_balance(1) > Balance::zero());
+			assert!(Balances::usable_balance(2) > Balance::zero());
 			assert_ok!(StakePallet::unlock_unstaked(RuntimeOrigin::signed(3), 3));
-			assert_eq!(Balances::usable_balance(&3), 10_000_000 * DECIMALS);
+			assert_eq!(Balances::usable_balance(3), 10_000_000 * DECIMALS);
 		});
 }
+
 #[test]
 fn coinbase_rewards_many_blocks_simple_check() {
-	let num_of_years: Perquintill = Perquintill::from_perthousand(2);
 	ExtBuilder::default()
 		.with_balances(vec![
 			(1, 40_000_000 * DECIMALS),
@@ -1614,136 +1498,211 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			(4, 20_000_000 * DECIMALS),
 			(5, 20_000_000 * DECIMALS),
 		])
-		.with_collators(vec![(1, 8_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
+		.with_collators(vec![(1, 32_000_000 * DECIMALS), (2, 8_000_000 * DECIMALS)])
 		.with_delegators(vec![
-			(3, 1, 32_000_000 * DECIMALS),
+			(3, 1, 8_000_000 * DECIMALS),
 			(4, 1, 16_000_000 * DECIMALS),
 			(5, 2, 16_000_000 * DECIMALS),
 		])
-		.with_reward_rate(30, 70, 5)
 		.build()
 		.execute_with(|| {
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
-
 			let total_issuance = <Test as Config>::Currency::total_issuance();
 			assert_eq!(total_issuance, 160_000_000 * DECIMALS);
 
-			const BLOCKS_PER_YEAR: BlockNumber = 5 * 60 * 24 * 36525 / 100;
-
-			let end_block: BlockNumber = num_of_years * BLOCKS_PER_YEAR as BlockNumber;
+			let end_block: BlockNumber = 26295;
 			// set round robin authoring
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=end_block).map(|i| Some(i % 2 + 1)).collect();
-			roll_to(end_block, authors);
+			// adding one is to force the session go next
+			roll_to(5, authors.clone());
 
-			let rewards_1 = Balances::free_balance(&1).saturating_sub(40_000_000 * DECIMALS);
-			let rewards_2 = Balances::free_balance(&2).saturating_sub(40_000_000 * DECIMALS);
-			let rewards_3 = Balances::free_balance(&3).saturating_sub(40_000_000 * DECIMALS);
-			let rewards_4 = Balances::free_balance(&4).saturating_sub(20_000_000 * DECIMALS);
-			let rewards_5 = Balances::free_balance(&5).saturating_sub(20_000_000 * DECIMALS);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(1000);
-			let d_rewards: BalanceOf<Test> =
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
-			let expected_collator_rewards = end_block as u128 * c_rewards;
-			let expected_delegator_rewards = end_block as u128 * d_rewards;
+			let genesis_reward_1 = Perbill::from_float(32. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_3 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_4 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
 
-			// collator rewards should be about the same
-			assert!(almost_equal(rewards_1, rewards_2, Perbill::from_perthousand(1)));
-			assert!(
-				almost_equal(
-					rewards_1,
-					c_rewards * end_block as u128 / 2,
-					Perbill::from_perthousand(1)
-				),
-				"left {:?}, right {:?}",
-				rewards_1,
-				c_rewards * end_block as u128 / 2,
+			let genesis_reward_2 = Perbill::from_float(8. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+			let genesis_reward_5 = Perbill::from_float(16. / 80.) * BLOCK_REWARD_IN_GENESIS_SESSION;
+
+			assert_eq!(Balances::free_balance(1), genesis_reward_1 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(2), genesis_reward_2 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(3), genesis_reward_3 + 40_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(4), genesis_reward_4 + 20_000_000 * DECIMALS);
+			assert_eq!(Balances::free_balance(5), genesis_reward_5 + 20_000_000 * DECIMALS);
+
+			// 2 is block author for 3 blocks, 1 is block author for 2 block
+			roll_to(10, authors.clone());
+			let normal_odd_total_stake: u64 = 2 * (32 + 8 + 16) + 3 * (8 + 16);
+
+			let normal_odd_reward_1 = Perbill::from_rational(2 * 32, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_3 = Perbill::from_rational(2 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_4 = Perbill::from_rational(2 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_2 = Perbill::from_rational(3 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_5 = Perbill::from_rational(3 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 + normal_odd_reward_1 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 + normal_odd_reward_2 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 + normal_odd_reward_3 + 40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 + normal_odd_reward_4 + 20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 + normal_odd_reward_5 + 20_000_000 * DECIMALS
 			);
 
-			// delegator rewards should be about the same
-			assert!(
-				almost_equal(rewards_3 + rewards_4, rewards_5, Perbill::from_perthousand(1)),
-				"left {:?}, right {:?}",
-				rewards_3 + rewards_4,
-				rewards_5
+			// 2 is block author for 3 blocks, 1 is block author for 2 block
+			roll_to(15, authors.clone());
+			let normal_even_total_stake: u64 = 3 * (32 + 8 + 16) + 2 * (8 + 16);
+
+			let normal_even_reward_1 = Perbill::from_rational(3 * 32, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_3 = Perbill::from_rational(3 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_4 = Perbill::from_rational(3 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_2 = Perbill::from_rational(2 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_5 = Perbill::from_rational(2 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 +
+					normal_odd_reward_1 + normal_even_reward_1 +
+					40_000_000 * DECIMALS
 			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 +
+					normal_odd_reward_2 + normal_even_reward_2 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 +
+					normal_odd_reward_3 + normal_even_reward_3 +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 +
+					normal_odd_reward_4 + normal_even_reward_4 +
+					20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 +
+					normal_odd_reward_5 + normal_even_reward_5 +
+					20_000_000 * DECIMALS
+			);
+
+			roll_to(end_block, authors.clone());
+			let multiply_factor = (end_block as u128 - 5) / 10;
+			assert_eq!(
+				Balances::free_balance(1),
+				genesis_reward_1 +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				genesis_reward_2 +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				genesis_reward_3 +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					40_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				genesis_reward_4 +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					20_000_000 * DECIMALS
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				genesis_reward_5 +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor +
+					20_000_000 * DECIMALS
+			);
+
+			// Check total issue number
 			assert!(almost_equal(
-				rewards_5,
-				d_rewards * end_block as u128 / 2,
+				total_issuance +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor,
+				<Test as Config>::Currency::total_issuance(),
 				Perbill::from_perthousand(1)
 			));
-
-			// check rewards in total
-			assert!(
-				almost_equal(
-					rewards_1 + rewards_2,
-					expected_collator_rewards,
-					Perbill::from_perthousand(1),
-				),
-				"left {:?}, right {:?}",
-				rewards_1 + rewards_2,
-				expected_collator_rewards,
-			);
-			assert!(
-				almost_equal(
-					rewards_3 + rewards_4 + rewards_5,
-					expected_delegator_rewards,
-					Perbill::from_perthousand(1),
-				),
-				"left {:?}, right {:?}",
-				rewards_3 + rewards_4 + rewards_5,
-				expected_delegator_rewards,
-			);
-
-			// old issuance + rewards should equal new issuance
-			assert!(
-				almost_equal(
-					total_issuance + expected_collator_rewards + expected_delegator_rewards,
-					<Test as Config>::Currency::total_issuance(),
-					Perbill::from_perthousand(1),
-				),
-				"left {:?}, right {:?}",
-				total_issuance + expected_collator_rewards + expected_delegator_rewards,
-				<Test as Config>::Currency::total_issuance(),
-			);
 		});
 }
 
-// Could only occur if we increase MinDelegatorStakeOf::<Test>via runtime
+// Could only occur if we increase MinDelegatorStakeOf::<Test> via runtime
 // upgrade and don't migrate delegators which fall below minimum
 #[test]
-fn should_not_reward_delegators_below_min_stake() {
+fn should_reward_delegators_below_min_stake() {
+	let stake_num = 10 * DECIMALS;
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS), (3, 10 * DECIMALS), (4, 5)])
-		.with_collators(vec![(1, 10 * DECIMALS), (2, 10 * DECIMALS)])
-		.with_delegators(vec![(3, 2, 10 * DECIMALS)])
-		.with_reward_rate(30, 70, 5)
+		.with_balances(vec![(1, stake_num), (2, stake_num), (3, stake_num), (4, stake_num)])
+		.with_collators(vec![(1, stake_num), (2, stake_num)])
+		.with_delegators(vec![(3, 2, stake_num)])
 		.build()
 		.execute_with(|| {
 			// impossible but lets assume it happened
 			let mut state =
-				StakePallet::candidate_pool(&1).expect("CollatorState cannot be missing");
+				StakePallet::candidate_pool(1).expect("CollatorState cannot be missing");
 			let delegator_stake_below_min = <Test as Config>::MinDelegatorStake::get() - 1;
 			state.stake += delegator_stake_below_min;
 			state.total += delegator_stake_below_min;
 			let impossible_bond =
 				StakeOf::<Test> { owner: 4u64, amount: delegator_stake_below_min };
 			assert_eq!(state.delegators.try_insert(impossible_bond), Ok(true));
-			<crate::CandidatePool<Test>>::insert(&1u64, state);
+			<crate::CandidatePool<Test>>::insert(1u64, state);
 
 			let authors: Vec<Option<AccountId>> =
-				vec![Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
-			assert_eq!(Balances::usable_balance(&1), Balance::zero());
-			assert_eq!(Balances::usable_balance(&2), Balance::zero());
-			assert_eq!(Balances::usable_balance(&3), Balance::zero());
-			assert_eq!(Balances::usable_balance(&4), 5);
+				vec![None, Some(1u64), Some(1u64), Some(1u64), Some(1u64)];
+			assert_eq!(Balances::usable_balance(1), Balance::zero());
+			assert_eq!(Balances::usable_balance(2), Balance::zero());
+			assert_eq!(Balances::usable_balance(3), Balance::zero());
+			assert_eq!(Balances::usable_balance(4), stake_num);
 
 			// should only reward 1
-			roll_to(4, authors);
-			assert!(Balances::usable_balance(&1) > Balance::zero());
-			assert_eq!(Balances::usable_balance(&4), 5);
-			assert_eq!(Balances::usable_balance(&2), Balance::zero());
-			assert_eq!(Balances::usable_balance(&3), Balance::zero());
+			let total_stake_num = stake_num + delegator_stake_below_min;
+			roll_to(5, authors);
+			assert_eq!(
+				Balances::usable_balance(1),
+				Perquintill::from_rational(stake_num, total_stake_num) *
+					BLOCK_REWARD_IN_GENESIS_SESSION
+			);
+			assert_eq!(
+				Balances::usable_balance(4) - stake_num,
+				Perquintill::from_rational(delegator_stake_below_min, total_stake_num) *
+					BLOCK_REWARD_IN_GENESIS_SESSION
+			);
+
+			assert_eq!(Balances::usable_balance(2), Balance::zero());
+			assert_eq!(Balances::usable_balance(3), Balance::zero());
 		});
 }
 
@@ -2057,34 +2016,6 @@ fn set_max_selected_candidates_total_stake() {
 			);
 		});
 }
-
-/*
- * #[test]
- * fn update_reward_rate() {
- *     ExtBuilder::default()
- *         .with_balances(vec![(1, 10)])
- *         .with_collators(vec![(1, 10)])
- *         .build()
- *         .execute_with(|| {
- *             let invalid_reward_rate = RewardRateInfo {
- *                 collator_rate: Perquintill::one(),
- *                 delegator_rate: Perquintill::one(),
- *             };
- *             assert!(!invalid_reward_rate.is_valid());
- *
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 RuntimeOrigin::root(),
- *                 Perquintill::from_percent(0),
- *                 Perquintill::from_percent(100),
- *             ));
- *             assert_ok!(StakePallet::set_reward_rate(
- *                 RuntimeOrigin::root(),
- *                 Perquintill::from_percent(100),
- *                 Perquintill::from_percent(0),
- *             ));
- *         });
- * }
- */
 
 #[test]
 fn unlock_unstaked() {
@@ -2661,9 +2592,9 @@ fn decrease_max_candidate_stake() {
 				)
 			);
 
-			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 50));
-			assert_eq!(StakePallet::max_candidate_stake(), 50);
-			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(50)));
+			assert_ok!(StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), 100));
+			assert_eq!(StakePallet::max_candidate_stake(), 100);
+			assert_eq!(last_event(), MetaEvent::StakePallet(Event::MaxCandidateStakeChanged(100)));
 
 			// check collator states, nothing changed
 			assert_eq!(
@@ -3136,30 +3067,24 @@ fn authorities_per_round() {
 			// reward 1 once per round
 			let authors: Vec<Option<AccountId>> =
 				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
-			let reward_rate = MockRewardConfig::get_reward_rate_config();
 
-			// roll to last block of round 0
-			roll_to(4, authors.clone());
-			let reward_0 = reward_rate.compute_collator_reward::<Test>(1000) +
-				reward_rate.compute_delegator_reward::<Test>(1000, Perquintill::one());
+			// roll to new round 1
+			let reward_0 = 1000;
+			roll_to(BLOCKS_PER_ROUND, authors.clone());
 			assert_eq!(Balances::free_balance(1), stake + reward_0);
 			// increase max selected candidates which will become effective in round 2
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 10));
 
-			// roll to last block of round 1
-			// should still multiply with 2 because the Authority set was chosen at start of
-			// round 1
-			roll_to(9, authors.clone());
+			// roll to new round 2
+			roll_to(BLOCKS_PER_ROUND * 2, authors.clone());
 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 2);
 
-			// roll to last block of round 2
-			// should multiply with 4 because there are only 4 candidates
-			roll_to(14, authors.clone());
+			// roll to new round 3
+			roll_to(BLOCKS_PER_ROUND * 3, authors.clone());
 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 3);
 
-			// roll to last block of round 3
-			// should multiply with 4 because there are only 4 candidates
-			roll_to(19, authors);
+			// roll to new round 4
+			roll_to(BLOCKS_PER_ROUND * 4, authors);
 			assert_eq!(Balances::free_balance(1), stake + reward_0 * 4);
 		});
 }
@@ -3423,11 +3348,285 @@ fn update_total_stake_no_collator_changes() {
 }
 
 #[test]
-fn collator_reward_per_block_only_collator() {
+fn check_collator_block() {
+	let stake = 100 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
+		.with_collators(vec![(1, stake), (2, stake), (3, stake), (4, stake)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> =
+				vec![None, Some(1u64), Some(1u64), Some(3u64), Some(4u64), Some(1u64)];
+
+			roll_to(2, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(1), 1);
+			assert_eq!(StakePallet::collator_blocks(2), 0);
+			assert_eq!(StakePallet::collator_blocks(3), 0);
+			assert_eq!(StakePallet::collator_blocks(4), 0);
+
+			roll_to(3, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(1), 2);
+			assert_eq!(StakePallet::collator_blocks(2), 0);
+			assert_eq!(StakePallet::collator_blocks(3), 0);
+			assert_eq!(StakePallet::collator_blocks(4), 0);
+
+			roll_to(4, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(1), 2);
+			assert_eq!(StakePallet::collator_blocks(2), 0);
+			assert_eq!(StakePallet::collator_blocks(3), 1);
+			assert_eq!(StakePallet::collator_blocks(4), 0);
+
+			// Because the new session start, we'll add the counter and clean the all collator
+			// blocks immediately the session number is BLOCKS_PER_ROUND (5)
+			roll_to(5, authors.clone());
+			assert_eq!(StakePallet::collator_blocks(1), 0);
+			assert_eq!(StakePallet::collator_blocks(2), 0);
+			assert_eq!(StakePallet::collator_blocks(3), 0);
+			assert_eq!(StakePallet::collator_blocks(4), 0);
+		});
+}
+
+#[test]
+fn check_claim_block_normal_wo_delegator() {
+	let stake = 100 * DECIMALS;
+	let origin_balance = 100 * stake;
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, origin_balance),
+			(2, origin_balance),
+			(3, origin_balance),
+			(4, origin_balance),
+		])
+		.with_collators(vec![(1, 1 * stake), (2, 2 * stake), (3, 3 * stake), (4, 4 * stake)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(2u64),
+				Some(3u64),
+				Some(4u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+			];
+
+			roll_to(5, authors.clone());
+
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			// Cross session but only 1 is selected
+			roll_to(10, authors.clone());
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 10.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+		});
+}
+
+#[test]
+fn check_claim_block_normal_wi_delegator() {
+	let stake = 100 * DECIMALS;
+	let origin_balance = 100 * stake;
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, origin_balance),
+			(2, origin_balance),
+			(3, origin_balance),
+			(4, origin_balance),
+			(5, origin_balance),
+			(6, origin_balance),
+			(7, origin_balance),
+			(8, origin_balance),
+			(9, origin_balance),
+			(10, origin_balance),
+		])
+		.with_collators(vec![(1, 1 * stake), (2, 2 * stake), (3, 3 * stake), (4, 4 * stake)])
+		.with_delegators(vec![
+			(5, 1, 5 * stake),
+			(6, 1, 6 * stake),
+			(7, 2, 7 * stake),
+			(8, 3, 8 * stake),
+			(9, 4, 9 * stake),
+			(10, 4, 10 * stake),
+		])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = vec![
+				None,
+				Some(1u64),
+				Some(2u64),
+				Some(3u64),
+				Some(4u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+				Some(1u64),
+			];
+
+			roll_to(5, authors.clone());
+
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				Perquintill::from_float(5. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(6),
+				Perquintill::from_float(6. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(7),
+				Perquintill::from_float(7. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(8),
+				Perquintill::from_float(8. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(9),
+				Perquintill::from_float(9. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(10),
+				Perquintill::from_float(10. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			// Cross session but only 1 is selected
+			roll_to(10, authors.clone());
+
+			assert_eq!(
+				Balances::free_balance(1),
+				Perquintill::from_float(1. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_float(1. / 12.) * BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(5),
+				Perquintill::from_float(5. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_float(5. / 12.) * BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(6),
+				Perquintill::from_float(6. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_float(6. / 12.) * BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
+			);
+
+			// Nothing change
+			assert_eq!(
+				Balances::free_balance(2),
+				Perquintill::from_float(2. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(7),
+				Perquintill::from_float(7. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			assert_eq!(
+				Balances::free_balance(3),
+				Perquintill::from_float(3. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(8),
+				Perquintill::from_float(8. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+
+			assert_eq!(
+				Balances::free_balance(4),
+				Perquintill::from_float(4. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(9),
+				Perquintill::from_float(9. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+			assert_eq!(
+				Balances::free_balance(10),
+				Perquintill::from_float(10. / 55.) * BLOCK_REWARD_IN_GENESIS_SESSION +
+					origin_balance
+			);
+		});
+}
+
+#[test]
+fn collator_reward_per_session_only_collator() {
 	ExtBuilder::default()
 		.with_balances(vec![(1, 1000)])
 		.with_collators(vec![(1, 500)])
-		.with_delegators(vec![])
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
@@ -3440,28 +3639,17 @@ fn collator_reward_per_block_only_collator() {
 				1000,
 			));
 
-			let (_reads, _writes, reward) =
-				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					&state, 100,
-				);
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
 			assert_eq!(reward, Reward { owner: 1, amount: 100 });
 		});
 }
 
 #[test]
-fn collator_reward_per_block_with_delegator() {
-	let col_rate = 30;
-	let del_rate = 70;
-	let reward_rate = RewardRateInfo::new(
-		Perquintill::from_percent(col_rate),
-		Perquintill::from_percent(del_rate),
-	);
-
+fn collator_reward_per_session_with_delegator() {
 	ExtBuilder::default()
 		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
 		.with_collators(vec![(1, 500)])
 		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
-		.with_reward_rate(col_rate, del_rate, BLOCKS_PER_ROUND)
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
@@ -3474,22 +3662,166 @@ fn collator_reward_per_block_with_delegator() {
 				1000,
 			));
 
-			let (_reads, _writes, reward) =
-				DefaultRewardCalculator::<Test, MockRewardConfig>::collator_reward_per_block(
-					&state, 100,
-				);
-			let c_rewards: BalanceOf<Test> = reward_rate.compute_collator_reward::<Test>(100);
-			assert_eq!(reward, Reward { owner: 1, amount: c_rewards });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(
+				rewards[0],
+				Reward {
+					owner: 2,
+					amount: Perquintill::from_rational(10 as u64 * 600, 50000) * 1000
+				}
+			);
+			assert_eq!(
+				rewards[1],
+				Reward {
+					owner: 3,
+					amount: Perquintill::from_rational(10 as u64 * 400, 50000) * 1000
+				}
+			);
+		});
+}
 
-			let (_reards, _writes, reward_vec) =
-				DefaultRewardCalculator::<Test, MockRewardConfig>::delegator_reward_per_block(
-					&state, 100,
-				);
-			let d_1_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(100, Perquintill::from_float(6. / 10.));
-			let d_2_rewards: BalanceOf<Test> = reward_rate
-				.compute_delegator_reward::<Test>(100, Perquintill::from_float(4. / 10.));
-			assert_eq!(reward_vec[0], Reward { owner: 2, amount: d_1_rewards });
-			assert_eq!(reward_vec[1], Reward { owner: 3, amount: d_2_rewards });
+#[test]
+fn check_total_collator_staking_num() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000), (4, 1000), (5, 1000)])
+		.with_collators(vec![(1, 500), (4, 100)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400), (5, 4, 200)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let authors: Vec<Option<AccountId>> =
+				vec![None, Some(1u64), Some(1u64), Some(4u64), Some(4u64), Some(1u64)];
+
+			roll_to(4, authors.clone());
+
+			let (_weight, balance) = StakePallet::get_total_collator_staking_num();
+			assert_eq!(balance, 2 * (500 + 600 + 400) + 1 * (100 + 200));
+		});
+}
+
+#[test]
+fn delegated_funds_less_than_min_delegator_stake() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 100),
+			(2, 100),
+			(3, 100),
+			(4, 100),
+			(5, 100),
+			(6, 100),
+			(7, 100),
+			(8, 100),
+			(9, 100),
+			(10, 100),
+		])
+		.with_collators(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 10)])
+		.with_delegators(vec![(6, 1, 10), (7, 1, 10), (8, 2, 10), (9, 2, 10)])
+		.set_blocks_per_round(5)
+		.build()
+		.execute_with(|| {
+			// delegate funds to multiple candidates.
+			roll_to(4, vec![]);
+			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 2, 9));
+			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 3, 8));
+			assert_ok!(StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 4, 7));
+			// reduce the 6 delegated funds of collator owned by `1`.
+			assert_noop!(
+				StakePallet::delegator_stake_less(RuntimeOrigin::signed(6), 1, 8),
+				Error::<Test>::DelegationBelowMin
+			);
+		});
+}
+
+#[test]
+fn max_candidate_stake_over_max_staking() {
+	let max_stake = 160_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, 200_000_000 * DECIMALS)])
+		.with_collators(vec![(1, max_stake)])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				StakePallet::set_max_candidate_stake(RuntimeOrigin::root(), max_stake - 1),
+				Error::<Test>::ValStakeAboveMax
+			);
+		});
+}
+
+#[test]
+fn collator_reward_per_session_with_delegator_and_commission() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			let mut state = CandidatePool::<Test>::get(1).unwrap();
+			state.set_commission(Permill::from_percent(10)); // 10% commission rate
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(reward, Reward { owner: 1, amount: 120 });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(
+				rewards[0],
+				Reward {
+					owner: 2,
+					amount: (Perquintill::from_rational(10u64 * 600, 50000) * 1000) * 90 / 100
+				}
+			);
+			assert_eq!(
+				rewards[1],
+				Reward {
+					owner: 3,
+					amount: (Perquintill::from_rational(10u64 * 400, 50000) * 1000) * 90 / 100
+				}
+			);
+			state.set_commission(Permill::from_percent(100)); // 10% commission rate
+			let reward = StakePallet::get_collator_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(reward, Reward { owner: 1, amount: 300 });
+			let rewards = StakePallet::get_delgators_reward_per_session(&state, 10, 50000, 1000);
+			assert_eq!(rewards[0], Reward { owner: 2, amount: 0 });
+			assert_eq!(rewards[1], Reward { owner: 3, amount: 0 });
+		});
+}
+
+#[test]
+fn collator_set_commission() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(10)
+			));
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			assert_eq!(state.commission, Permill::from_percent(10));
+			assert_eq!(
+				StakePallet::candidate_pool(1).unwrap().commission,
+				Permill::from_percent(10)
+			);
+
+			assert_noop!(
+				StakePallet::set_commission(RuntimeOrigin::signed(2), Permill::from_percent(10)),
+				Error::<Test>::CandidateNotFound
+			);
 		});
 }

@@ -24,29 +24,44 @@ use crate::Pallet as XcAssetConfig;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use sp_std::boxed::Box;
-use xcm::v3::MultiLocation;
+use xcm::{v3::MultiLocation, v4::Location, VersionedLocation};
+
+/// Assert that the last event equals the provided one.
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
+	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+}
 
 benchmarks! {
 
 	register_asset_location {
 		let asset_location = MultiLocation::parent();
 		let asset_id = T::AssetId::default();
+		let v4_asset_loc = Location::try_from(asset_location).unwrap();
+		let asset_location_v4 = VersionedLocation::V4(v4_asset_loc);
 
 	}: _(RawOrigin::Root, Box::new(asset_location.clone().into_versioned()), asset_id)
 	verify {
-		assert_eq!(AssetIdToLocation::<T>::get(&asset_id), Some(asset_location.into_versioned()));
+		assert_last_event::<T>(Event::<T>::AssetRegistered {
+			asset_id,
+			asset_location: asset_location_v4,
+		}.into());
 	}
 
 	set_asset_units_per_second {
 		let asset_location = MultiLocation::parent();
 		let asset_id = T::AssetId::default();
 		let units = 123;
+		let v4_asset_loc = Location::try_from(asset_location).unwrap();
+		let asset_location_v4 = VersionedLocation::V4(v4_asset_loc);
 
 		XcAssetConfig::<T>::register_asset_location(RawOrigin::Root.into(), Box::new(asset_location.clone().into_versioned()), asset_id)?;
 
 	}: _(RawOrigin::Root, Box::new(asset_location.clone().into_versioned()), units)
 	verify {
-		assert_eq!(AssetLocationUnitsPerSecond::<T>::get(&asset_location.into_versioned()), Some(units));
+		assert_last_event::<T>(Event::<T>::UnitsPerSecondChanged {
+			asset_location: asset_location_v4,
+			units_per_second: units
+		}.into());
 	}
 
 	change_existing_asset_location {
@@ -56,14 +71,21 @@ benchmarks! {
 
 		XcAssetConfig::<T>::register_asset_location(RawOrigin::Root.into(), Box::new(asset_location.clone().into_versioned()), asset_id)?;
 		XcAssetConfig::<T>::set_asset_units_per_second(RawOrigin::Root.into(), Box::new(asset_location.clone().into_versioned()), units)?;
+		let previous_asset_location =
+				AssetIdToLocation::<T>::get(asset_id).unwrap();
 
 		let new_asset_location = MultiLocation::here();
+		let v4_asset_loc = Location::try_from(new_asset_location).unwrap();
+		let asset_location_v4 = VersionedLocation::V4(v4_asset_loc);
 
 	}: _(RawOrigin::Root, Box::new(new_asset_location.clone().into_versioned()), asset_id)
 	verify {
 		assert!(!AssetLocationToId::<T>::contains_key(&asset_location.clone().into_versioned()));
-		assert_eq!(AssetLocationToId::<T>::get(&new_asset_location.clone().into_versioned()), Some(asset_id));
-		assert_eq!(AssetLocationUnitsPerSecond::<T>::get(&new_asset_location.into_versioned()), Some(units));
+		assert_last_event::<T>(Event::<T>::AssetLocationChanged {
+			previous_asset_location,
+			asset_id,
+			new_asset_location: asset_location_v4,
+		}.into());
 	}
 
 	remove_payment_asset {

@@ -69,6 +69,7 @@ impl<K: Kind, S: Get<u32>> Clone for BoundedBytesString<K, S> {
 	}
 }
 
+#[allow(clippy::unconditional_recursion)]
 impl<K1, S1, K2, S2> PartialEq<BoundedBytesString<K2, S2>> for BoundedBytesString<K1, S1> {
 	fn eq(&self, other: &BoundedBytesString<K2, S2>) -> bool {
 		self.data.eq(&other.data)
@@ -99,7 +100,7 @@ impl<K: Kind, S: Get<u32>> Codec for BoundedBytesString<K, S> {
 			.map_err(|_| RevertReason::value_is_too_large("length"))?;
 
 		if array_size > S::get() as usize {
-			return Err(RevertReason::value_is_too_large("length").into())
+			return Err(RevertReason::value_is_too_large("length").into());
 		}
 
 		// Get valid range over the bytes data.

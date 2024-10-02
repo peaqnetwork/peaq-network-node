@@ -43,7 +43,7 @@ fn u256_repeat_byte(byte: u8) -> U256 {
 fn display_bytes(bytes: &[u8]) {
 	bytes
 		.chunks_exact(32)
-		.map(|chunk| H256::from_slice(chunk))
+		.map(H256::from_slice)
 		.for_each(|hash| println!("{:?}", hash));
 }
 
@@ -553,7 +553,7 @@ fn write_vec_bytes() {
 
 	writer_output
 		.chunks_exact(32)
-		.map(|chunk| H256::from_slice(chunk))
+		.map(H256::from_slice)
 		.for_each(|hash| println!("{:?}", hash));
 
 	// We pad data to a multiple of 32 bytes.
@@ -606,7 +606,7 @@ fn read_vec_of_bytes() {
 
 	writer_output
 		.chunks_exact(32)
-		.map(|chunk| H256::from_slice(chunk))
+		.map(H256::from_slice)
 		.for_each(|hash| println!("{:?}", hash));
 
 	let mut reader = Reader::new(&writer_output);
@@ -621,7 +621,7 @@ fn read_vec_of_bytes() {
 //
 // It also provides an example on how to impl `solidity::Codec` for Solidity structs.
 //
-// struct MultiLocation {
+// struct Location {
 // 	   uint8 parents;
 // 	   bytes [] interior;
 // }
@@ -629,12 +629,12 @@ fn read_vec_of_bytes() {
 // function transfer(
 //     address currency_address,
 //     uint256 amount,
-//     MultiLocation memory destination,
+//     Location memory destination,
 //     uint64 weight
 // ) external;
 
 #[derive(Clone, Debug, Eq, PartialEq, solidity::Codec)]
-struct MultiLocation {
+struct Location {
 	parents: u8,
 	interior: Vec<UnboundedBytes>,
 }
@@ -673,8 +673,8 @@ fn read_complex_solidity_function() {
 	assert_eq!(selector, Some(0xb38c60fa));
 	// asset
 	assert_eq!(
-		reader.read::<MultiLocation>().unwrap(),
-		MultiLocation {
+		reader.read::<Location>().unwrap(),
+		Location {
 			parents: 1,
 			interior: vec![
 				UnboundedBytes::from(&hex!("00000003e8")[..]),
@@ -688,8 +688,8 @@ fn read_complex_solidity_function() {
 
 	// destination
 	assert_eq!(
-		reader.read::<MultiLocation>().unwrap(),
-		MultiLocation {
+		reader.read::<Location>().unwrap(),
+		Location {
 			parents: 1,
 			interior: vec![UnboundedBytes::from(
 				&hex!("01010101010101010101010101010101010101010101010101010101010101010100")[..]
@@ -703,33 +703,30 @@ fn read_complex_solidity_function() {
 
 #[test]
 fn junctions_decoder_works() {
-	let writer_output = Writer::new().write(Junctions::X1(Junction::OnlyChild)).build();
+	let junctions: Junctions = [(Junction::OnlyChild)].into();
+	let writer_output = Writer::new().write(junctions).build();
 
 	let mut reader = Reader::new(&writer_output);
 	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
 
-	assert_eq!(parsed, Junctions::X1(Junction::OnlyChild));
+	assert_eq!(parsed, [Junction::OnlyChild]);
 
-	let writer_output = Writer::new()
-		.write(Junctions::X2(Junction::OnlyChild, Junction::OnlyChild))
-		.build();
-
-	let mut reader = Reader::new(&writer_output);
-	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
-
-	assert_eq!(parsed, Junctions::X2(Junction::OnlyChild, Junction::OnlyChild));
-
-	let writer_output = Writer::new()
-		.write(Junctions::X3(Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild))
-		.build();
+	let junctions: Junctions = [Junction::OnlyChild, Junction::OnlyChild].into();
+	let writer_output = Writer::new().write(junctions).build();
 
 	let mut reader = Reader::new(&writer_output);
 	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
 
-	assert_eq!(
-		parsed,
-		Junctions::X3(Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild),
-	);
+	assert_eq!(parsed, [Junction::OnlyChild, Junction::OnlyChild]);
+
+	let junctions: Junctions =
+		[Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild].into();
+	let writer_output = Writer::new().write(junctions).build();
+
+	let mut reader = Reader::new(&writer_output);
+	let parsed: Junctions = reader.read::<Junctions>().expect("to correctly parse Junctions");
+
+	assert_eq!(parsed, [Junction::OnlyChild, Junction::OnlyChild, Junction::OnlyChild],);
 }
 
 #[test]
@@ -1021,5 +1018,5 @@ fn evm_data_solidity_types() {
 	assert_eq!(Vec::<(bool, Vec<Address>)>::signature(), "(bool,address[])[]");
 
 	// Struct encode like tuples
-	assert_eq!(MultiLocation::signature(), "(uint8,bytes[])");
+	assert_eq!(Location::signature(), "(uint8,bytes[])");
 }

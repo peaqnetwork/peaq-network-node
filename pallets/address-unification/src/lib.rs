@@ -47,15 +47,22 @@ use sp_runtime::{
 use sp_std::{marker::PhantomData, vec::Vec};
 
 mod convert_impl;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+pub mod weightinfo;
+pub mod weights;
+pub use weightinfo::WeightInfo;
+
+#[cfg(test)]
 mod mock;
+#[cfg(test)]
 mod tests;
 mod traits;
-pub mod weights;
 
 use convert_impl::*;
 pub use module::*;
 pub use traits::EVMAddressMapping;
-pub use weights::WeightInfo;
 
 /// A signature (a 512-bit value, plus 8 bits for recovery ID).
 pub type Eip712Signature = [u8; 65];
@@ -133,7 +140,7 @@ pub mod module {
 	pub struct Pallet<T>(_);
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -280,7 +287,7 @@ impl<T: Config> Pallet<T> {
 		domain_seperator_msg.extend_from_slice(&keccak256!("1")); // version
 		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
 		domain_seperator_msg.extend_from_slice(
-			frame_system::Pallet::<T>::block_hash(T::BlockNumber::zero()).as_ref(),
+			frame_system::Pallet::<T>::block_hash(BlockNumberFor::<T>::zero()).as_ref(),
 		); // genesis block hash
 		keccak_256(domain_seperator_msg.as_slice())
 	}

@@ -35,11 +35,10 @@
 // along with AssetsERC20.  If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::{ExitError, PrecompileHandle};
 use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::StaticLookup,
 	traits::{
 		fungibles::{
@@ -49,14 +48,17 @@ use frame_support::{
 	},
 };
 use pallet_evm::AddressMapping;
+use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
 	evm::logs::LogsBuilder,
 	prelude::{
 		Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
-		RevertReason, RuntimeHelper, UnboundedBytes, SYSTEM_ACCOUNT_SIZE,
+		RevertReason, RuntimeHelper, UnboundedBytes,
 	},
 	solidity,
 };
+use sp_runtime::traits::Dispatchable;
+
 use precompile_utils::{
 	keccak256,
 	// succeed,
@@ -96,16 +98,6 @@ pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<I
 
 /// Alias for the Asset Id type for the provided Runtime and Instance.
 pub type AssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
-
-/// This trait ensure we can convert EVM address to AssetIds
-/// We will require Runtime to have this trait implemented
-pub trait EVMAddressToAssetId<AssetId> {
-	// Get assetId from address
-	fn address_to_asset_id(address: H160) -> Option<AssetId>;
-
-	// Get address from AssetId
-	fn asset_id_to_address(asset_id: AssetId) -> H160;
-}
 
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
@@ -156,7 +148,7 @@ where
 	fn discriminant(address: H160, gas: u64) -> DiscriminantResult<AssetIdOf<Runtime, Instance>> {
 		let extra_cost = RuntimeHelper::<Runtime>::db_read_gas_cost();
 		if gas < extra_cost {
-			return DiscriminantResult::OutOfGas
+			return DiscriminantResult::OutOfGas;
 		}
 
 		let asset_id = match Runtime::address_to_asset_id(address) {
@@ -174,6 +166,7 @@ where
 	}
 
 	#[precompile::public("totalSupply()")]
+	#[precompile::public("total_supply()")]
 	#[precompile::view]
 	fn total_supply(
 		asset_id: AssetIdOf<Runtime, Instance>,
@@ -185,20 +178,21 @@ where
 	}
 
 	#[precompile::public("balanceOf(address)")]
+	#[precompile::public("balance_of(address)")]
 	#[precompile::view]
 	fn balance_of(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-		owner: Address,
+		who: Address,
 	) -> EvmResult<U256> {
 		handle.record_cost(RuntimeHelper::<Runtime>::db_read_gas_cost())?;
 
-		let owner: H160 = owner.into();
+		let who: H160 = who.into();
 
 		// Fetch info.
 		let amount: U256 = {
-			let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner);
-			pallet_assets::Pallet::<Runtime, Instance>::balance(asset_id, &owner).into()
+			let who: Runtime::AccountId = Runtime::AddressMapping::into_account_id(who);
+			pallet_assets::Pallet::<Runtime, Instance>::balance(asset_id, &who).into()
 		};
 
 		Ok(amount)
@@ -235,7 +229,7 @@ where
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
 		spender: Address,
-		amount: U256,
+		value: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
@@ -245,8 +239,8 @@ where
 			let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 			let spender: Runtime::AccountId = Runtime::AddressMapping::into_account_id(spender);
 			// Amount saturate if too high.
-			let amount: BalanceOf<Runtime, Instance> =
-				amount.try_into().unwrap_or_else(|_| Bounded::max_value());
+			let value: BalanceOf<Runtime, Instance> =
+				value.try_into().unwrap_or_else(|_| Bounded::max_value());
 
 			// Storage item: Approvals:
 			// Blake2_128(16) + AssetId(16) + (2 * Blake2_128(16) + AccountId(20)) + Approval(32)
@@ -276,7 +270,7 @@ where
 				pallet_assets::Call::<Runtime, Instance>::approve_transfer {
 					id: asset_id.into(),
 					delegate: Runtime::Lookup::unlookup(spender),
-					amount,
+					amount: value,
 				},
 				0,
 			)?;
@@ -287,7 +281,7 @@ where
 				SELECTOR_LOG_APPROVAL,
 				handle.context().caller,
 				spender,
-				solidity::encode_event_data(amount),
+				solidity::encode_event_data(value),
 			)
 			.record(handle)?;
 
@@ -299,12 +293,12 @@ where
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
 		to: Address,
-		amount: U256,
+		value: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
 		let to: H160 = to.into();
-		let amount = Self::u256_to_amount(amount).in_field("value")?;
+		let value = Self::u256_to_amount(value).in_field("value")?;
 
 		// Build call with origin.
 		{
@@ -318,9 +312,9 @@ where
 				pallet_assets::Call::<Runtime, Instance>::transfer {
 					id: asset_id.into(),
 					target: Runtime::Lookup::unlookup(to),
-					amount,
+					amount: value,
 				},
-				SYSTEM_ACCOUNT_SIZE,
+				0,
 			)?;
 		}
 
@@ -329,7 +323,7 @@ where
 				SELECTOR_LOG_TRANSFER,
 				handle.context().caller,
 				to,
-				solidity::encode_event_data(amount),
+				solidity::encode_event_data(value),
 			)
 			.record(handle)?;
 
@@ -337,18 +331,19 @@ where
 	}
 
 	#[precompile::public("transferFrom(address,address,uint256)")]
+	#[precompile::public("transfer_from(address,address,uint256)")]
 	fn transfer_from(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
 		from: Address,
 		to: Address,
-		amount: U256,
+		value: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
 		let from: H160 = from.into();
 		let to: H160 = to.into();
-		let amount = Self::u256_to_amount(amount).in_field("value")?;
+		let value = Self::u256_to_amount(value).in_field("value")?;
 
 		{
 			let caller: Runtime::AccountId =
@@ -366,9 +361,9 @@ where
 						id: asset_id.into(),
 						owner: Runtime::Lookup::unlookup(from),
 						destination: Runtime::Lookup::unlookup(to),
-						amount,
+						amount: value,
 					},
-					SYSTEM_ACCOUNT_SIZE,
+					0,
 				)?;
 			} else {
 				// Dispatch call (if enough gas).
@@ -378,15 +373,15 @@ where
 					pallet_assets::Call::<Runtime, Instance>::transfer {
 						id: asset_id.into(),
 						target: Runtime::Lookup::unlookup(to),
-						amount,
+						amount: value,
 					},
-					SYSTEM_ACCOUNT_SIZE,
+					0,
 				)?;
 			}
 		}
 
 		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(amount))
+			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(value))
 			.record(handle)?;
 
 		// Build output.
@@ -431,6 +426,7 @@ where
 	}
 
 	#[precompile::public("minimumBalance()")]
+	#[precompile::public("minimum_balance()")]
 	#[precompile::view]
 	fn minimum_balance(
 		asset_id: AssetIdOf<Runtime, Instance>,
@@ -445,12 +441,12 @@ where
 	fn mint(
 		asset_id: AssetIdOf<Runtime, Instance>,
 		handle: &mut impl PrecompileHandle,
-		to: Address,
+		beneficiary: Address,
 		amount: U256,
 	) -> EvmResult<bool> {
 		handle.record_log_costs_manual(3, 32)?;
 
-		let addr: H160 = to.into();
+		let addr: H160 = beneficiary.into();
 		let amount = Self::u256_to_amount(amount).in_field("value")?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
@@ -465,7 +461,7 @@ where
 				beneficiary: Runtime::Lookup::unlookup(beneficiary),
 				amount,
 			},
-			SYSTEM_ACCOUNT_SIZE,
+			0,
 		)?;
 
 		LogsBuilder::new(handle.context().address)

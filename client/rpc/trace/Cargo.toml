@@ -8,6 +8,7 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.6.0"
 
 [dependencies]
+log = { workspace = true }
 ethereum = { workspace = true, default-features = true, features = [ "with-codec" ] }
 ethereum-types = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
@@ -16,6 +17,7 @@ serde = { workspace = true, default-features = true, features = [ "derive" ] }
 sha3 = { workspace = true, default-features = true }
 tokio = { workspace = true, default-features = true, features = [ "sync", "time" ] }
 tracing = { workspace = true, default-features = true }
+substrate-prometheus-endpoint = { workspace = true }
 
 peaq-client-evm-tracing = { path = "../../evm-tracing" }
 peaq-rpc-core-trace = { path = "../../rpc-core/trace" }

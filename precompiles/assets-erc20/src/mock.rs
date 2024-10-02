@@ -42,74 +42,21 @@ use frame_support::{
 	traits::{AsEnsureOriginWithArg, Everything},
 	weights::Weight,
 };
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use precompile_utils::testing::*;
 
 use frame_system::EnsureRoot;
-use pallet_evm::{AddressMapping, EnsureAddressNever, EnsureAddressRoot};
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
+use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
+
 use sp_core::{ConstU32, H160, H256};
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
 
-pub type AccountId = Account;
-pub type AssetId = u128;
+pub type AccountId = MockPeaqAccount;
+pub type AssetId = MockAssetId;
 pub type Balance = u128;
-pub type BlockNumber = u64;
-pub type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
-
-/// A simple account type.
-#[derive(
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	Clone,
-	Encode,
-	Decode,
-	Debug,
-	MaxEncodedLen,
-	Serialize,
-	Deserialize,
-	derive_more::Display,
-	TypeInfo,
-)]
-pub enum Account {
-	Alice,
-	Bob,
-	Charlie,
-	Bogus,
-	AssetId(AssetId),
-}
-
-impl Default for Account {
-	fn default() -> Self {
-		Self::Bogus
-	}
-}
-
-impl AddressMapping<Account> for Account {
-	fn into_account_id(h160_account: H160) -> Account {
-		match h160_account {
-			a if a == H160::repeat_byte(0xAA) => Self::Alice,
-			a if a == H160::repeat_byte(0xBB) => Self::Bob,
-			a if a == H160::repeat_byte(0xCC) => Self::Charlie,
-			_ => {
-				let mut data = [0u8; 16];
-				let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(4);
-				if prefix_part == &[255u8; 4] {
-					data.copy_from_slice(id_part);
-
-					return Self::AssetId(u128::from_be_bytes(data))
-				}
-				Self::Bogus
-			},
-		}
-	}
-}
 
 pub const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 
@@ -122,42 +69,17 @@ impl EVMAddressToAssetId<AssetId> for Runtime {
 		let address_bytes: [u8; 20] = address.into();
 		if ASSET_PRECOMPILE_ADDRESS_PREFIX.eq(&address_bytes[0..4]) {
 			data.copy_from_slice(&address_bytes[4..20]);
-			Some(u128::from_be_bytes(data))
+			Some(u128::from_be_bytes(data).into())
 		} else {
 			None
 		}
 	}
 
-	fn asset_id_to_address(asset_id: AssetId) -> H160 {
+	fn asset_id_to_address(asset_id: AssetId) -> Option<H160> {
 		let mut data = [0u8; 20];
 		data[0..4].copy_from_slice(ASSET_PRECOMPILE_ADDRESS_PREFIX);
-		data[4..20].copy_from_slice(&asset_id.to_be_bytes());
-		H160::from(data)
-	}
-}
-
-impl From<Account> for H160 {
-	fn from(x: Account) -> H160 {
-		match x {
-			Account::Alice => H160::repeat_byte(0xAA),
-			Account::Bob => H160::repeat_byte(0xBB),
-			Account::Charlie => H160::repeat_byte(0xCC),
-			Account::AssetId(asset_id) => {
-				let mut data = [0u8; 20];
-				let id_as_bytes = asset_id.to_be_bytes();
-				data[0..4].copy_from_slice(&[255u8; 4]);
-				data[4..20].copy_from_slice(&id_as_bytes);
-				H160::from_slice(&data)
-			},
-			Account::Bogus => Default::default(),
-		}
-	}
-}
-
-impl From<Account> for H256 {
-	fn from(x: Account) -> H256 {
-		let x: H160 = x.into();
-		x.into()
+		data[4..20].copy_from_slice(&asset_id.0.to_be_bytes());
+		Some(H160::from(data))
 	}
 }
 
@@ -170,14 +92,13 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
 	type RuntimeCall = RuntimeCall;
+	type Nonce = u64;
+	type Block = Block;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -191,6 +112,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 
 parameter_types! {
@@ -218,10 +140,12 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
+	// type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = ();
 }
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
@@ -266,6 +190,7 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type SuicideQuickClearLimit = ();
 }
 
 // These parameters dont matter much as this will only be called by root with the forced arguments
@@ -302,10 +227,7 @@ impl pallet_assets::Config for Runtime {
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Runtime
 	{
 		System: frame_system,
 		Balances: pallet_balances,
@@ -315,15 +237,10 @@ construct_runtime!(
 	}
 );
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
 }
 
 impl ExtBuilder {
@@ -333,8 +250,8 @@ impl ExtBuilder {
 	}
 
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut t = frame_system::GenesisConfig::<Runtime>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
 		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }

@@ -6,11 +6,8 @@ edition = "2021"
 authors = [ "Astar" ]
 
 [dependencies]
-log = { workspace = true }
-num_enum = { workspace = true }
-slices = { workspace = true }
-
 precompile-utils = { path = "../utils", default-features = false }
+peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 
 # Substrate
 frame-support = { workspace = true }
@@ -52,4 +49,5 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"peaq-primitives-xcm/std",
 ]

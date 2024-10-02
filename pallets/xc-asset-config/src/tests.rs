@@ -23,14 +23,12 @@ use super::{
 use frame_support::{assert_noop, assert_ok, WeakBoundedVec};
 use mock::*;
 use sp_runtime::traits::BadOrigin;
-use xcm::latest::prelude::*;
-
-use xcm::{v3::MultiLocation, VersionedMultiLocation};
+use xcm::{latest::prelude::*, v4::Location, VersionedLocation};
 
 #[test]
 fn only_root_as_origin() {
 	ExternalityBuilder::build().execute_with(|| {
-		let asset_location = MultiLocation::here().into_versioned();
+		let asset_location = Location::here().into_versioned();
 		let asset_id = 7;
 
 		assert_noop!(
@@ -76,8 +74,7 @@ fn only_root_as_origin() {
 fn register_asset_location_and_units_per_sec_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location and Id
-		let asset_location =
-			MultiLocation::new(1, Junctions::X2(Junction::PalletInstance(17), GeneralIndex(7)));
+		let asset_location = Location::new(1, [Junction::PalletInstance(17), GeneralIndex(7)]);
 		let asset_id = 13;
 
 		// Register asset and ensure it's ok
@@ -93,7 +90,7 @@ fn register_asset_location_and_units_per_sec_is_ok() {
 
 		// Assert storage state after registering asset
 		assert_eq!(
-			AssetIdToLocation::<Test>::get(&asset_id).unwrap(),
+			AssetIdToLocation::<Test>::get(asset_id).unwrap(),
 			asset_location.clone().into_versioned()
 		);
 		assert_eq!(
@@ -118,8 +115,7 @@ fn register_asset_location_and_units_per_sec_is_ok() {
 			},
 		));
 		assert_eq!(
-			AssetLocationUnitsPerSecond::<Test>::get(&asset_location.clone().into_versioned())
-				.unwrap(),
+			AssetLocationUnitsPerSecond::<Test>::get(asset_location.into_versioned()).unwrap(),
 			units
 		);
 	})
@@ -129,8 +125,7 @@ fn register_asset_location_and_units_per_sec_is_ok() {
 fn asset_is_already_registered() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location and Id
-		let asset_location =
-			MultiLocation::new(1, Junctions::X2(Junction::PalletInstance(17), GeneralIndex(7)));
+		let asset_location = Location::new(1, [Junction::PalletInstance(17), GeneralIndex(7)]);
 		let asset_id = 13;
 
 		// Register asset and ensure it's ok
@@ -144,7 +139,7 @@ fn asset_is_already_registered() {
 		assert_noop!(
 			XcAssetConfig::register_asset_location(
 				RuntimeOrigin::root(),
-				Box::new(asset_location.clone().into_versioned()),
+				Box::new(asset_location.into_versioned()),
 				asset_id
 			),
 			Error::<Test>::AssetAlreadyRegistered
@@ -156,7 +151,7 @@ fn asset_is_already_registered() {
 fn change_asset_location_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location, Id and units
-		let asset_location = MultiLocation::new(1, Junctions::X1(Junction::Parachain(2007)));
+		let asset_location = Location::new(1, [Junction::Parachain(2007)]);
 		let asset_id = 17;
 		let units: u128 = 3 * 11 * 13 * 17;
 
@@ -173,8 +168,8 @@ fn change_asset_location_is_ok() {
 		));
 
 		// Change the asset location and assert change was successful
-		let new_asset_location = MultiLocation::new(2, Junctions::X1(Junction::PalletInstance(3)));
-		assert_ne!(new_asset_location, asset_location); // sanity check
+		let new_asset_location = Location::new(2, [Junction::PalletInstance(3)]);
+		assert_ne!(new_asset_location, asset_location.clone()); // sanity check
 
 		assert_ok!(XcAssetConfig::change_existing_asset_location(
 			RuntimeOrigin::root(),
@@ -189,7 +184,7 @@ fn change_asset_location_is_ok() {
 
 		// Assert storage state
 		assert_eq!(
-			AssetIdToLocation::<Test>::get(&asset_id).unwrap(),
+			AssetIdToLocation::<Test>::get(asset_id).unwrap(),
 			new_asset_location.clone().into_versioned()
 		);
 		assert_eq!(
@@ -199,11 +194,10 @@ fn change_asset_location_is_ok() {
 
 		// This should have been deleted
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
-			asset_location.clone().into_versioned()
+			asset_location.into_versioned()
 		));
 		assert_eq!(
-			AssetLocationUnitsPerSecond::<Test>::get(new_asset_location.clone().into_versioned())
-				.unwrap(),
+			AssetLocationUnitsPerSecond::<Test>::get(new_asset_location.into_versioned()).unwrap(),
 			units
 		);
 	})
@@ -213,7 +207,7 @@ fn change_asset_location_is_ok() {
 fn remove_payment_asset_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location, Id and units
-		let asset_location = MultiLocation::new(1, Junctions::X1(Junction::Parachain(2007)));
+		let asset_location = Location::new(1, [Junction::Parachain(2007)]);
 		let asset_id = 17;
 		let units: u128 = 3 * 11 * 13 * 17;
 
@@ -246,7 +240,7 @@ fn remove_payment_asset_is_ok() {
 		// Repeated calls don't do anything
 		assert_ok!(XcAssetConfig::remove_payment_asset(
 			RuntimeOrigin::root(),
-			Box::new(asset_location.clone().into_versioned()),
+			Box::new(asset_location.into_versioned()),
 		));
 	})
 }
@@ -255,7 +249,7 @@ fn remove_payment_asset_is_ok() {
 fn remove_asset_is_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location, Id and units
-		let asset_location = MultiLocation::new(1, Junctions::X1(Junction::Parachain(2007)));
+		let asset_location = Location::new(1, [Junction::Parachain(2007)]);
 		let asset_id = 17;
 		let units: u128 = 3 * 11 * 13 * 17;
 
@@ -282,7 +276,7 @@ fn remove_asset_is_ok() {
 		assert!(!AssetIdToLocation::<Test>::contains_key(asset_id));
 		assert!(!AssetLocationToId::<Test>::contains_key(asset_location.clone().into_versioned()));
 		assert!(!AssetLocationUnitsPerSecond::<Test>::contains_key(
-			asset_location.clone().into_versioned()
+			asset_location.into_versioned()
 		));
 	})
 }
@@ -291,7 +285,7 @@ fn remove_asset_is_ok() {
 fn not_registered_asset_is_not_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location, Id and units
-		let asset_location = MultiLocation::parent();
+		let asset_location = Location::parent();
 		let asset_id = 17;
 		let units: u128 = 3 * 11 * 13 * 17;
 
@@ -307,7 +301,7 @@ fn not_registered_asset_is_not_ok() {
 		assert_noop!(
 			XcAssetConfig::change_existing_asset_location(
 				RuntimeOrigin::root(),
-				Box::new(asset_location.clone().into_versioned()),
+				Box::new(asset_location.into_versioned()),
 				asset_id
 			),
 			Error::<Test>::AssetDoesNotExist
@@ -324,7 +318,7 @@ fn not_registered_asset_is_not_ok() {
 fn public_interfaces_are_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location, Id and units
-		let asset_location = MultiLocation::parent();
+		let asset_location = Location::parent();
 		let asset_id = 17;
 		let units: u128 = 3 * 11 * 13 * 17;
 
@@ -349,7 +343,7 @@ fn public_interfaces_are_ok() {
 			Box::new(asset_location.clone().into_versioned()),
 			units
 		));
-		assert_eq!(XcAssetConfig::get_units_per_second(asset_location.clone()), Some(units));
+		assert_eq!(XcAssetConfig::get_units_per_second(asset_location), Some(units));
 	})
 }
 
@@ -357,29 +351,27 @@ fn public_interfaces_are_ok() {
 fn different_xcm_versions_are_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Prepare location and Id
-		let legacy_asset_location = xcm::v2::MultiLocation::parent();
-		let new_asset_location = xcm::v3::MultiLocation::parent();
+		let legacy_asset_location = xcm::v3::MultiLocation::parent();
+		let new_asset_location = xcm::v4::Location::parent();
 		let asset_id = 17;
 
 		// Register asset using legacy multilocation
 		assert_ok!(XcAssetConfig::register_asset_location(
 			RuntimeOrigin::root(),
-			Box::new(VersionedMultiLocation::V2(legacy_asset_location.clone())),
+			Box::new(VersionedLocation::V3(legacy_asset_location)),
 			asset_id
 		));
 
 		// Ensure that the new format is properly returned
-		assert_eq!(
-			XcAssetConfig::get_xc_asset_location(asset_id),
-			Some(new_asset_location.clone())
-		);
+		assert_eq!(XcAssetConfig::get_xc_asset_location(asset_id), Some(new_asset_location));
 	})
 }
 
 #[test]
 fn incompatible_versioned_multilocations_are_not_ok() {
 	ExternalityBuilder::build().execute_with(|| {
-		// MultiLocation that cannot be converted from v2 to v3
+		// Location that cannot be converted from v2 to v4
+		// all v3 are compatible with v4
 		let incompatible_asset_location = xcm::v2::MultiLocation {
 			parents: 1,
 			interior: xcm::v2::Junctions::X1(xcm::v2::Junction::GeneralKey(
@@ -391,36 +383,36 @@ fn incompatible_versioned_multilocations_are_not_ok() {
 		assert_noop!(
 			XcAssetConfig::register_asset_location(
 				RuntimeOrigin::root(),
-				Box::new(VersionedMultiLocation::V2(incompatible_asset_location.clone())),
+				Box::new(VersionedLocation::V2(incompatible_asset_location.clone())),
 				asset_id
 			),
-			Error::<Test>::MultiLocationNotSupported
+			Error::<Test>::LocationNotSupported
 		);
 
 		assert_noop!(
 			XcAssetConfig::set_asset_units_per_second(
 				RuntimeOrigin::root(),
-				Box::new(VersionedMultiLocation::V2(incompatible_asset_location.clone())),
+				Box::new(VersionedLocation::V2(incompatible_asset_location.clone())),
 				12345,
 			),
-			Error::<Test>::MultiLocationNotSupported
+			Error::<Test>::LocationNotSupported
 		);
 
 		assert_noop!(
 			XcAssetConfig::change_existing_asset_location(
 				RuntimeOrigin::root(),
-				Box::new(VersionedMultiLocation::V2(incompatible_asset_location.clone())),
+				Box::new(VersionedLocation::V2(incompatible_asset_location.clone())),
 				12345,
 			),
-			Error::<Test>::MultiLocationNotSupported
+			Error::<Test>::LocationNotSupported
 		);
 
 		assert_noop!(
 			XcAssetConfig::remove_payment_asset(
 				RuntimeOrigin::root(),
-				Box::new(VersionedMultiLocation::V2(incompatible_asset_location.clone())),
+				Box::new(VersionedLocation::V2(incompatible_asset_location.clone())),
 			),
-			Error::<Test>::MultiLocationNotSupported
+			Error::<Test>::LocationNotSupported
 		);
 	})
 }
