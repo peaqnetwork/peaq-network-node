@@ -278,7 +278,7 @@ fn check_fund_enough_token_after_delayed_tge_less() {
 fn set_delayed_tge_fail() {
 	ExternalityBuilder::default().build().execute_with(|| {
 		assert_noop!(
-			InflationManager::set_delayed_tge(RuntimeOrigin::signed(1).into(), 1, 100),
+			InflationManager::set_delayed_tge(RuntimeOrigin::signed(1), 1, 100),
 			BadOrigin
 		);
 	})
@@ -380,7 +380,7 @@ fn recaluclation_change_fail() {
 			Error::<TestRuntime>::WrongBlockSetting
 		);
 		assert_noop!(
-			InflationManager::set_recalculation_time(RuntimeOrigin::signed(1).into(), 5000),
+			InflationManager::set_recalculation_time(RuntimeOrigin::signed(1), 5000),
 			BadOrigin
 		);
 	})
