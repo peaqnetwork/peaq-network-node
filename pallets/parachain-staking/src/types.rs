@@ -410,3 +410,14 @@ pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::B
 pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
 pub type MaxDelegatorsPerCollator<T> = <T as Config>::MaxDelegatorsPerCollator;
 pub type StakeOf<T> = Stake<AccountIdOf<T>, BalanceOf<T>>;
+
+#[derive(Default, Clone, Encode, Decode, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+/// Info needed to make delayed payments to stakers after round end
+pub struct DelayedPayoutInfoT<SessionIndex, Balance: Default> {
+	/// The round index for which payouts should be made
+	pub round: SessionIndex,
+	/// total stake in the round
+	pub total_stake: Balance,
+	/// total issuance for round
+	pub total_issuance: Balance,
+}
