@@ -197,7 +197,7 @@ impl SafeCallFilter {
 	/// Checks whether the base (non-composite) call is allowed to be executed via `Transact` XCM
 	/// instruction.
 	pub fn allow_base_call(call: &RuntimeCall) -> bool {
-		match call {
+		matches!(call,
 			RuntimeCall::System(..) |
 			RuntimeCall::Balances(..) |
 			RuntimeCall::Vesting(..) |
@@ -207,9 +207,8 @@ impl SafeCallFilter {
 			RuntimeCall::Multisig(
 				pallet_multisig::Call::approve_as_multi { .. } |
 				pallet_multisig::Call::cancel_as_multi { .. },
-			) => true,
-			_ => false,
-		}
+			)
+		)
 	}
 	/// Checks whether composite call is allowed to be executed via `Transact` XCM instruction.
 	///
