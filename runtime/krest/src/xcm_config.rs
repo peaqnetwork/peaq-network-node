@@ -14,7 +14,10 @@ use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::DisabledParachainFee;
 use pallet_xcm::XcmPassthrough;
-use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
+use parachains_common::{
+	message_queue::{NarrowOriginToSibling, ParaIdToSibling},
+	xcm_config::ParentRelayOrSiblingParachains,
+};
 use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use runtime_common::{AccountIdToLocation, FixedRateOfForeignAsset};
@@ -25,33 +28,14 @@ use sp_runtime::{
 use sp_weights::Weight;
 use xcm::latest::{prelude::*, Asset};
 use xcm_builder::{
-	AccountId32Aliases,
-	AllowKnownQueryResponses,
-	AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom,
-	AllowUnpaidExecutionFrom,
-	ConvertedConcreteId,
-	// AllowUnpaidExecutionFrom,
-	EnsureXcmOrigin,
-	FixedWeightBounds,
-	FrameTransactionalProcessor,
-	FungibleAdapter,
-	FungiblesAdapter,
-	IsConcrete,
-	NoChecking,
-	ParentAsSuperuser,
-	ParentIsPreset,
-	RelayChainAsNative,
-	SiblingParachainAsNative,
-	SiblingParachainConvertsVia,
-	SignedAccountId32AsNative,
-	SignedToAccountId32,
-	SovereignSignedViaLocation,
-	TakeRevenue,
-	TakeWeightCredit,
-	UsingComponents,
-	XcmFeeManagerFromComponents,
-	XcmFeeToAccount,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, ConvertedConcreteId, DescribeAllTerminal, DescribeFamily,
+	EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter,
+	FungiblesAdapter, HashedDescription, IsConcrete, NoChecking, ParentAsSuperuser, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
+	TakeWeightCredit, TrailingSetTopicAsId, UsingComponents, WithComputedOrigin,
+	XcmFeeManagerFromComponents, XcmFeeToAccount,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
@@ -80,6 +64,8 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
+	// Generate remote accounts according to polkadot standards
+	HashedDescription<AccountId, DescribeFamily<DescribeAllTerminal>>,
 );
 
 /// XCM from myself to myself
@@ -177,8 +163,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
 	// transaction from the Root origin.
 	ParentAsSuperuser<RuntimeOrigin>,
-	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
@@ -264,16 +248,23 @@ pub type Trader = (
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
-pub type Barrier = (
+pub type Barrier = TrailingSetTopicAsId<(
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	// Parent and its plurality get free execution
-	AllowUnpaidExecutionFrom<ParentOrParentsPlurality>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
-	// Subscriptions for version tracking are OK.
-	AllowSubscriptionsFrom<Everything>,
-);
+	// Allow XCMs with some computed origins to pass through.
+	WithComputedOrigin<
+		(
+			// If the message is one that immediately attempts to pay for execution, then
+			// allow it.
+			AllowTopLevelPaidExecutionFrom<Everything>,
+			// Subscriptions for version tracking are OK.
+			AllowSubscriptionsFrom<ParentRelayOrSiblingParachains>,
+		),
+		UniversalLocation,
+		ConstU32<8>,
+	>,
+)>;
 
 /// Used to determine whether the cross-chain asset is coming from a trusted reserve or not
 ///
