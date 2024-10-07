@@ -12,7 +12,7 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
-use orml_xcm_support::DisabledParachainFee;
+use orml_xcm_support::{DisabledParachainFee, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use parachains_common::{
 	message_queue::{NarrowOriginToSibling, ParaIdToSibling},
@@ -266,32 +266,6 @@ pub type Barrier = TrailingSetTopicAsId<(
 	>,
 )>;
 
-/// Used to determine whether the cross-chain asset is coming from a trusted reserve or not
-///
-/// Basically, we trust any cross-chain asset from any location to act as a reserve since
-/// in order to support the xc-asset, we need to first register it in the `XcAssetConfig` pallet.
-pub struct ReserveAssetFilter;
-impl ContainsPair<Asset, Location> for ReserveAssetFilter {
-	fn contains(asset: &Asset, origin: &Location) -> bool {
-		// We assume that relay chain and sibling parachain assets are trusted reserves for their
-		// assets
-		let AssetId(location) = &asset.id;
-		let reserve_location = match (location.parents, location.first_interior()) {
-			// sibling parachain
-			(1, Some(Parachain(id))) => Some(Location::new(1, [Parachain(*id)])),
-			// relay chain
-			(1, _) => Some(Location::parent()),
-			_ => None,
-		};
-
-		if let Some(ref reserve) = reserve_location {
-			origin == reserve
-		} else {
-			false
-		}
-	}
-}
-
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
 pub struct XcmConfig;
@@ -302,7 +276,7 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = XcmRouter;
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = ReserveAssetFilter;
+	type IsReserve = MultiNativeAsset<AbsoluteAndRelativeReserveProvider<PeaqLocationAbsolute>>;
 	// type IsReserve = Everything;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
