@@ -8,7 +8,7 @@ use crate::{PeaqAssetLocationIdConverter, Treasury};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
-	traits::{fungibles, Contains, ContainsPair, Everything, Nothing, TransformOrigin},
+	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
@@ -26,7 +26,6 @@ use sp_runtime::{
 	Perbill,
 };
 use sp_weights::Weight;
-use xc_asset_config::XcAssetLocation;
 use xcm::latest::{prelude::*, Asset};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,

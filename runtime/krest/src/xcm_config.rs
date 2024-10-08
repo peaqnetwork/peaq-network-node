@@ -8,7 +8,7 @@ use crate::{PeaqAssetLocationIdConverter, Treasury};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
-	traits::{fungibles, Contains, ContainsPair, Everything, Nothing, TransformOrigin},
+	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
