@@ -702,14 +702,6 @@ impl pallet_ethereum::Config for Runtime {
 }
 
 frame_support::parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
-
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
-}
-
-frame_support::parameter_types! {
 	pub DefaultBaseFeePerGas: U256 = U256::from(1024);
 	pub DefaultElasticity: Permill = Permill::zero();
 }
@@ -1060,8 +1052,7 @@ construct_runtime!(
 		// EVM
 		Ethereum: pallet_ethereum = 11,
 		EVM: pallet_evm = 12,
-		// [TODO] Disable the fee evm calculator pallet because we didn't use that
-		DynamicFee: pallet_dynamic_fee = 13,
+		// DynamicFee: pallet_dynamic_fee = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain

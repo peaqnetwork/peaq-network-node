@@ -171,7 +171,6 @@ fn configure_genesis(
 			..Default::default()
 		},
 		ethereum: EthereumConfig { ..Default::default() },
-		dynamic_fee: Default::default(),
 		base_fee: Default::default(),
 		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),

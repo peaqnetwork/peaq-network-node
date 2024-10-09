@@ -749,39 +749,6 @@ impl pallet_ethereum::Config for Runtime {
 	type ExtraDataLength = ConstU32<30>;
 }
 
-frame_support::parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
-
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
-}
-
-frame_support::parameter_types! {
-	pub DefaultBaseFeePerGas: U256 = U256::from(1024);
-	pub DefaultElasticity: Permill = Permill::zero();
-}
-
-pub struct BaseFeeThreshold;
-impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
-	fn lower() -> Permill {
-		Permill::zero()
-	}
-	fn ideal() -> Permill {
-		Permill::from_parts(500_000)
-	}
-	fn upper() -> Permill {
-		Permill::from_parts(1_000_000)
-	}
-}
-
-impl pallet_base_fee::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Threshold = BaseFeeThreshold;
-	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
-	type DefaultElasticity = DefaultElasticity;
-}
-
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 // Parachain
@@ -1107,9 +1074,8 @@ construct_runtime!(
 		// EVM
 		Ethereum: pallet_ethereum = 11,
 		EVM: pallet_evm = 12,
-		// [TODO] We should disable the fee evm calculator pallet because we didn't use that anymore
-		DynamicFee: pallet_dynamic_fee = 13,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
+		// DynamicFee: pallet_dynamic_fee = 13,
+		// BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
 		InflationManager: inflation_manager::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
