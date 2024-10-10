@@ -28,7 +28,6 @@ use frame_system::RawOrigin;
 use pallet_balances::{BalanceLock, Error as BalancesError, Reasons};
 use pallet_session::{SessionManager, ShouldEndSession};
 use sp_runtime::{traits::Zero, Perbill, Permill, Perquintill, SaturatedConversion};
-use sp_staking::SessionIndex;
 
 use crate::{
 	mock::{
@@ -39,8 +38,8 @@ use crate::{
 	},
 	set::OrderedSet,
 	types::{
-		BalanceOf, Candidate, CandidateStatus, DelayedPayoutInfoT, DelegationCounter, Delegator,
-		Reward, RoundInfo, Stake, StakeOf, TotalStake,
+		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
+		Stake, StakeOf, TotalStake,
 	},
 	AtStake, CandidatePool, Config, Error, Event, STAKING_ID,
 };
