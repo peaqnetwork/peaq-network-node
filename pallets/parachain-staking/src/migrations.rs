@@ -3,7 +3,7 @@
 use crate::{
 	pallet::{Config, Pallet, OLD_STAKING_ID, STAKING_ID},
 	types::{AccountIdOf, Candidate, OldCandidate},
-	AtStake, CandidatePool, CollatorBlocks, ForceNewRound,
+	CandidatePool, ForceNewRound,
 };
 use frame_support::{
 	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
@@ -93,21 +93,6 @@ mod upgrade {
 					onchain_storage_version,
 					Versions::default() as u16
 				);
-
-				let round = <Pallet<T>>::round();
-
-				// drain CollatorBlock StorageMap item
-				for (collator, blocknum) in <CollatorBlock<T>>::iter().drain() {
-					// migrate to CollatorBlocks StorageDoubleMap
-					<CollatorBlocks<T>>::insert(round.current, collator.clone(), blocknum);
-
-					// Backup collator staking stake for delayed rewards payment
-					let state = <CandidatePool<T>>::get(&collator).unwrap();
-					<AtStake<T>>::insert(round.current, collator.clone(), state);
-
-					weight_reads += 2;
-					weight_writes += 2;
-				}
 
 				// force start new session
 				<ForceNewRound<T>>::put(true);
