@@ -3163,6 +3163,8 @@ fn force_new_round() {
 			assert_eq!(Session::validators(), vec![3, 1]);
 
 			// force new round 3
+			// skip blocks to ensure payouts are made so force_new_round doesn't fail
+			roll_to(8, vec![]);
 			assert_ok!(StakePallet::force_new_round(RuntimeOrigin::root()));
 			assert_eq!(StakePallet::round(), round);
 			assert_eq!(Session::current_index(), 2);
@@ -3171,8 +3173,8 @@ fn force_new_round() {
 			assert!(StakePallet::new_round_forced());
 
 			// force new round should become active by starting next block
-			roll_to(8, vec![]);
-			round = RoundInfo { current: 3, first: 8, length: 5 };
+			roll_to(9, vec![]);
+			round = RoundInfo { current: 3, first: 9, length: 5 };
 			assert_eq!(Session::current_index(), 3);
 			assert_eq!(StakePallet::round(), round);
 			assert_eq!(Session::validators(), vec![3, 4]);
@@ -3815,10 +3817,7 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(0, 1).unwrap(), candidate_1);
 			assert_eq!(StakePallet::at_stake(0, 2).unwrap(), candidate_2);
 			// check delayed payout info
-			assert_eq!(
-				StakePallet::delayed_payout_info(),
-				DelayedPayoutInfoT::<SessionIndex, Balance>::default()
-			);
+			assert_eq!(StakePallet::delayed_payout_info(), None);
 
 			let author_blocks = 2;
 			let author_blocks_alt = 3;
@@ -3836,7 +3835,7 @@ fn check_snapshot() {
 			// check delayed payout info
 			let total_stake = author_1_total_stake * author_blocks as u128 +
 				author_2_total_stake * author_blocks as u128;
-			let delayed_payout_info = StakePallet::delayed_payout_info();
+			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_GENESIS_SESSION);
 			assert_eq!(delayed_payout_info.round, 0);
@@ -3852,7 +3851,7 @@ fn check_snapshot() {
 			// check delayed payout info
 			let total_stake = author_blocks as u128 * author_1_total_stake +
 				author_blocks_alt as u128 * author_2_total_stake;
-			let delayed_payout_info = StakePallet::delayed_payout_info();
+			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);
 			assert_eq!(delayed_payout_info.round, 1);
@@ -3866,7 +3865,7 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(2, 1).unwrap(), candidate_1);
 			assert_eq!(StakePallet::at_stake(2, 2).unwrap(), candidate_2);
 			// check delayed payout info
-			let delayed_payout_info = StakePallet::delayed_payout_info();
+			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
 			let total_stake = author_blocks_alt as u128 * author_1_total_stake +
 				author_blocks as u128 * author_2_total_stake;
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
@@ -3883,12 +3882,111 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(3, 1).unwrap(), candidate_1);
 			assert_eq!(StakePallet::at_stake(3, 2).unwrap(), candidate_2);
 			// check delayed payout info
-			let delayed_payout_info = StakePallet::delayed_payout_info();
+			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
 			let total_stake = author_blocks as u128 * author_1_total_stake +
 				author_blocks_alt as u128 * author_2_total_stake;
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			// TODO total issuance is 1 token more than expected
 			// assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);
 			assert_eq!(delayed_payout_info.round, 3);
+		});
+}
+
+#[test]
+fn force_new_round_fails_payouts_ongoing() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 100), (2, 100)])
+		.build()
+		.execute_with(|| {
+			// set round robin authoring
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(collator_blocks.len(), 2);
+
+			// roll to round 2's 1'st block
+			// 1 Collator of round 1 is paid and 1 is left
+			roll_to(11, authors.clone());
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(collator_blocks.len(), 1);
+
+			// forcestart round 3 - should fail as payouts are still left
+			assert_noop!(
+				StakePallet::force_new_round(RuntimeOrigin::root()),
+				Error::<Test>::PayoutsOngoing
+			);
+			roll_to(13, authors);
+
+			// payouts should be finished
+			assert_eq!(StakePallet::delayed_payout_info(), None);
+		});
+}
+
+/// After payouts are finished, snapshot still contains info of collators that didn't
+/// produce blocks,  this snapshot will be removed in the block following the block where last
+/// payout happened
+#[test]
+fn check_snapshot_is_cleared() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 100), (2, 100), (3, 100)])
+		.build()
+		.execute_with(|| {
+			// set round robin authoring
+			let mut authors: Vec<Option<AccountId>> =
+				(0u64..=10).map(|i| Some(i % 3 + 1)).collect();
+			let mut authors_skip: Vec<Option<AccountId>> =
+				(0u64..=10).map(|i| Some(i % 2 + 1)).collect();
+			authors.append(&mut authors_skip);
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let mut round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(collator_blocks.len(), 3);
+
+			// roll to round 3, only 2 of 3 collators produced blocks in round 2
+			roll_to(15, authors.clone());
+			round = RoundInfo { current: 3, first: 15, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 3);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(2).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(collator_blocks.len(), 2);
+
+			// roll to block 2 of round 3
+			// 2 collators will be paid out, and 1 collator info will be left in snapshot
+			roll_to(17, authors.clone());
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(collator_blocks.len(), 0);
+			let at_stake = <crate::AtStake<Test>>::iter_prefix(2).collect::<Vec<_>>();
+			assert_eq!(at_stake.len(), 1);
+
+			// roll to block 3 of round 3
+			// residual storage in snapshot will be cleared
+			roll_to(18, authors);
+			let at_stake = <crate::AtStake<Test>>::iter_prefix(2).collect::<Vec<_>>();
+			assert_eq!(at_stake.len(), 0);
 		});
 }

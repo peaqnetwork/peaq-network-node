@@ -426,6 +426,8 @@ pub mod pallet {
 		NotACollator,
 		/// The commission is too high.
 		CommissionTooHigh,
+		/// Sudo cannot force new round if payouts are ongoing
+		PayoutsOngoing,
 	}
 
 	#[pallet::event]
@@ -664,7 +666,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn delayed_payout_info)]
 	pub(crate) type DelayedPayoutInfo<T: Config> =
-		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, ValueQuery>;
+		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -732,6 +734,9 @@ pub mod pallet {
 		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::force_new_round())]
 		pub fn force_new_round(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
+
+			// If payouts are left, we cannot force new round
+			ensure!(<DelayedPayoutInfo<T>>::get().is_none(), Error::<T>::PayoutsOngoing);
 
 			// set force_new_round handle which, at the start of the next block, will
 			// trigger `should_end_session` in `Session::on_initialize` and update the
@@ -2790,37 +2795,56 @@ pub mod pallet {
 				return
 			}
 
-			let pot = Self::account_id();
-			// get payout info for the last round
-			let payout_info = DelayedPayoutInfo::<T>::get();
+			if let Some(payout_info) = DelayedPayoutInfo::<T>::get() {
+				let pot = Self::account_id();
 
-			// get one author
-			if let Some((author, block_num)) =
-				CollatorBlocks::<T>::iter_prefix(payout_info.round).drain().next()
-			{
-				// get collator's staking info
-				if let Some(state) = AtStake::<T>::take(payout_info.round, author) {
-					// calculate reward for collator from previous round
-					let now_reward = Self::get_collator_reward_per_session(
-						&state,
-						block_num,
-						payout_info.total_stake,
-						payout_info.total_issuance,
-					);
-					Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
+				if let Some((author, block_num)) =
+					CollatorBlocks::<T>::iter_prefix(payout_info.round).drain().next()
+				{
+					// get collator's staking info
+					if let Some(state) = AtStake::<T>::take(payout_info.round, author) {
+						// calculate reward for collator from previous round
+						let now_reward = Self::get_collator_reward_per_session(
+							&state,
+							block_num,
+							payout_info.total_stake,
+							payout_info.total_issuance,
+						);
+						Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
 
-					// calculate reward for collator's delegates from previous round
-					let now_rewards = Self::get_delgators_reward_per_session(
-						&state,
-						block_num,
-						payout_info.total_stake,
-						payout_info.total_issuance,
-					);
-					now_rewards.into_iter().for_each(|x| {
-						Self::do_reward(&pot, &x.owner, x.amount);
-					});
+						// calculate reward for collator's delegates from previous round
+						let now_rewards = Self::get_delgators_reward_per_session(
+							&state,
+							block_num,
+							payout_info.total_stake,
+							payout_info.total_issuance,
+						);
+						now_rewards.into_iter().for_each(|x| {
+							Self::do_reward(&pot, &x.owner, x.amount);
+						});
 
-					// [TODO] add weights
+						// [TODO] add weights
+					}
+				} else {
+					// Kill storage
+					DelayedPayoutInfo::<T>::kill();
+
+					// If there were no more bock authors left, we should clean up shapshot of
+					// remaining collators that didn't author blocks
+					// we do this in the block after the last payout is done to reduce computational
+					// cost for block with last payout
+					let cursor = AtStake::<T>::clear_prefix(payout_info.round, u32::MAX, None);
+					if cursor.maybe_cursor.is_none() {
+						log::debug!("snapshot cleared for round {:?}", payout_info.round);
+					} else {
+						// This is an ambiguous case
+						// We cannot just iterate till maybe_cursor is none, as each time the time
+						// complexity is O(n)
+						log::error!(
+							"snapshot not entirely cleared for round {:?}",
+							payout_info.round
+						);
+					}
 				}
 			}
 		}
