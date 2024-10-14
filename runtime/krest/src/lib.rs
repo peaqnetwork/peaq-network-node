@@ -640,18 +640,6 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PER_SECOND);
 
-pub struct PeaqGasWeightMapping;
-impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
-	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		let weight = gas.saturating_mul(WEIGHT_PER_GAS);
-		Weight::from_parts(weight, 0)
-	}
-
-	fn weight_to_gas(weight: Weight) -> u64 {
-		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
-	}
-}
-
 parameter_types! {
 	pub const EvmChainId: u64 = 2241;
 	pub BlockGasLimit: U256 = U256::from(
@@ -680,7 +668,7 @@ parameter_types! {
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = BaseFee;
 	type WeightPerGas = WeightPerGas;
-	type GasWeightMapping = PeaqGasWeightMapping;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -711,14 +699,6 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
-}
-
-frame_support::parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
-
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
 }
 
 frame_support::parameter_types! {
@@ -1072,7 +1052,7 @@ construct_runtime!(
 		// EVM
 		Ethereum: pallet_ethereum = 11,
 		EVM: pallet_evm = 12,
-		DynamicFee: pallet_dynamic_fee = 13,
+		// DynamicFee: pallet_dynamic_fee = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain

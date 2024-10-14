@@ -64,8 +64,6 @@ sp-io = { workspace = true, default-features = false }
 fp-evm = { workspace = true, default-features = false }
 fp-rpc = { workspace = true, default-features = false }
 fp-self-contained = { workspace = true, default-features = false }
-pallet-base-fee = { workspace = true, default-features = false }
-pallet-dynamic-fee = { workspace = true, default-features = false }
 pallet-ethereum = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
 pallet-evm = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
 pallet-evm-precompile-blake2 = { workspace = true, default-features = false }
@@ -226,8 +224,6 @@ std = [
 	"sp-io/std",
 	"fp-evm/std",
 	"fp-self-contained/std",
-	"pallet-base-fee/std",
-	"pallet-dynamic-fee/std",
 	"pallet-ethereum/std",
 	"pallet-evm/std",
 	"pallet-evm-precompile-simple/std",
@@ -328,8 +324,6 @@ try-runtime = [
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-evm/try-runtime",
-	"pallet-dynamic-fee/try-runtime",
-	"pallet-base-fee/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-contracts/try-runtime",
 	"pallet-utility/try-runtime",

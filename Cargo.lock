@@ -7257,22 +7257,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-dynamic-fee"
-version = "4.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-v1.7.2#db24e66117c0b23e3e57374a78e90979c370fffa"
-dependencies = [
- "fp-dynamic-fee",
- "fp-evm",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-inherents",
- "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
-]
-
-[[package]]
 name = "pallet-election-provider-multi-phase"
 version = "27.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#538d3a370b0f86d5687ee4924585575def12bd96"
@@ -8698,7 +8682,6 @@ dependencies = [
  "pallet-block-reward",
  "pallet-collective",
  "pallet-contracts",
- "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
@@ -8836,7 +8819,6 @@ dependencies = [
  "pallet-block-reward",
  "pallet-collective",
  "pallet-contracts",
- "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
@@ -8961,7 +8943,6 @@ dependencies = [
  "pallet-base-fee",
  "pallet-block-reward",
  "pallet-contracts",
- "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-transaction-payment-rpc",
@@ -9448,11 +9429,9 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
- "pallet-base-fee",
  "pallet-block-reward",
  "pallet-collective",
  "pallet-contracts",
- "pallet-dynamic-fee",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-precompile-assets-erc20",
