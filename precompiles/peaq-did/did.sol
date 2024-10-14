@@ -53,7 +53,7 @@ interface DID {
         bytes value,
         uint32 validity
     );
-    event RemoveAttribte(
+    event RemoveAttribute(
         address did_account,
         bytes name
     );
