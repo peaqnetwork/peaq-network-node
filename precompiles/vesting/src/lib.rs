@@ -113,8 +113,8 @@ where
 	) -> EvmResult<bool> {
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let target_account = Runtime::AddressMapping::into_account_id(target.into());
-		let locked_amount = Self::u256_to_amount(locked).in_field("amount")?;
-		let per_block_amount = Self::u256_to_amount(per_block).in_field("amount")?;
+		let locked_amount = Self::u256_to_amount(locked).in_field("locked")?;
+		let per_block_amount = Self::u256_to_amount(per_block).in_field("per_block")?;
 		let starting_block_converted: BlockNumberFor<Runtime> = starting_block.into();
 		let schedule = VestingInfo::new(locked_amount, per_block_amount, starting_block_converted);
 
