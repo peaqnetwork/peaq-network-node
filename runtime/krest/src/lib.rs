@@ -179,7 +179,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 101,
+	spec_version: 102,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -841,9 +841,9 @@ pub mod staking {
 			/// Maximum 25 delegators per collator at launch, might be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxDelegatorsPerCollator: u32 = 25;
-			/// Maximum 1 collator per delegator at launch, will be increased later
+			/// Maximum 8 collators per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorsPerDelegator: u32 = 1;
+			pub const MaxCollatorsPerDelegator: u32 = 8;
 			/// Minimum stake required to be reserved to be a collator is 1000 KREST
 			pub const MinCollatorStake: Balance = 50_000 * DOLLARS;
 			/// Minimum stake required to be reserved to be a delegator is 100 KREST
