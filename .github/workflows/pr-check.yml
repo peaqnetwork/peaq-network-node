@@ -2,11 +2,13 @@
 name: Pull Request Check
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - closed
+  workflow_dispatch:
+# on:
+#   pull_request:
+#     types:
+#       - opened
+#       - synchronize
+#       - closed
 
 jobs:
   check:
@@ -29,7 +31,7 @@ jobs:
       - name: Checkout Sources (actions/checkout)
         uses: actions/checkout@v3
 
-      - name: "[Ceck] cargo fmt"
+      - name: "[Check] cargo fmt"
         run: |
           cargo fmt --check
 
@@ -40,3 +42,26 @@ jobs:
       - name: "[Check] cargo clippy"
         run: |
           cargo clippy --release -- -Dwarnings
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: "Extract metadata (tags, labels) for Docker"
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ secrets.DOCKER_REG_PARACHAIN }}-test
+          tags: |
+            type=ref,event=pr
+            type=sha
+
+      - name: "Build and push"
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: scripts/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}

@@ -1,0 +1,181 @@
+name: Brand new chain test
+# This workflow is triggered on dev branch manually or automatically after the Build and Publish workflow is completed
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'Chain to test'
+        required: true
+        default: 'peaq-dev'
+        type: string
+      testcases:
+        description: 'Test to run'
+        required: true
+        default: 'all'
+        type: string
+  # workflow_run:
+    # workflows: [Pull Request Check]
+    # types: [completed]
+    # branches: [dev]
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
+
+jobs:
+  brand-new-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Show the inputs
+        run: |
+          echo "Chain: ${{ github.event.inputs.chain }}"
+          echo "Testcases: ${{ github.event.inputs.testcases }}"
+      - name: Clone simple CI
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        with:
+          branch: main
+          owner: sfffaaa
+          repository: simple-ci-poc
+
+      - name: Clone peaq-bc-repo
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        with:
+          branch: feat/1207852356564241_improve # Should change the branch
+          owner: peaqnetwork
+          repository: peaq-bc-test
+
+      - name: Clone parachain-launch
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+        with:
+          branch: dev # Should change the branch
+          owner: peaqnetwork
+          repository: parachain-launch
+
+      - name: Move to project to correct place
+        run: |
+          mv simple-ci-poc ../
+          mv peaq-bc-test ../
+          mv parachain-launch ../
+
+      - name: Setup ENV for the simple CI
+        working-directory: ../
+        run: |
+          mkdir -p result
+          pwd
+          ls .
+          # Need to implement that
+          echo "WORK_DIRECTORY=$(pwd)" >> $GITHUB_ENV
+          echo "PEAQ_NETWORK_NODE_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "PEAQ_BC_TEST_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "PARACHAIN_LAUNCH_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "RESULT_PATH=$(realpath result)" >> $GITHUB_ENV
+          echo "GLOBAL_VENV=true" >> $GITHUB_ENV
+          cat $GITHUB_ENV
+          # echo "FORKED_BINARY_FOLDER=(realpath ../forked-binary)" >> $GITHUB_ENV
+
+      - name: Install dependencies bianry
+        working-directory: ../
+        shell: bash
+        run: |
+          # Install git, default install
+          git --version
+          # Install docker, default install
+          docker --version
+
+          # Install docker-compose, default install?
+          sudo apt-get update
+          sudo apt-get install ca-certificates curl
+          sudo install -m 0755 -d /etc/apt/keyrings
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+          # Add the repository to Apt sources:
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install docker-compose-plugin
+
+          alias docker-compose='docker compose'
+          docker compose version
+
+          # Install nvm
+          # Already installed
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+          nvm install v16
+          nvm use v16
+
+          # Install yarn
+          npm install --global yarn
+          # Install jq
+          sudo apt-get install jq
+          # # Install try-runtime, in this test, we won't use that
+          # cargo install --git https://github.com/paritytech/try-runtime-cli --locked
+          # # Install subkey, in this test, we won't use that
+          # cargo install --force subkey --git https://github.com/paritytech/substrate --version 2.0.1 --locked
+
+      - name: Install dependency on peaq-bc-test
+        working-directory: ../peaq-bc-test
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install eth-typing==3.5.2
+
+      - name: Install dependency on parachain-launch
+        working-directory: ../parachain-launch
+        run: |
+          git submodule update --init --recursive
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+          nvm use v16
+          yarn install
+          yarn build
+
+      - name: Install dependency on fork-off-substrate
+        working-directory: ../parachain-launch/fork-off-substrate
+        run: |
+          npm install
+
+      # - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
+      #   uses: insightsengineering/disk-space-reclaimer@v1.1.0
+
+      - name: "Linux Tools"
+        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
+
+      - name: "Rust"
+        run: |
+          TLCHN=nightly-2024-01-21
+          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHN
+          rustup target add wasm32-unknown-unknown --toolchain $TLCHN
+          cargo install cargo-expand --locked --version 1.0.71
+
+      - name: Checkout Sources (actions/checkout)
+        uses: actions/checkout@v3
+
+      # - name: Set up cargo cache
+      #   uses: actions/cache@v3
+      #   continue-on-error: false
+      #   with:
+      #     path: |
+      #       ~/.cargo/bin/
+      #       ~/.cargo/registry/index/
+      #       ~/.cargo/registry/cache/
+      #       ~/.cargo/git/db/
+      #       target/
+      #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      #     restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Run simple CI
+        working-directory: ../simple-ci-poc
+        run: |
+          DATETIME=$(date '+%Y-%m-%d-%H-%M')
+          echo "Current DateTime: ${DATETIME}"
+          export SET_DATETIME=${DATETIME}
+          # [TODO] Use the docker image to regenerate the docker image...
+          # Need to check several things
+          bash -x new.chain.test.bash --chain peaq-dev --test all
