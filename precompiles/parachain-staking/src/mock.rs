@@ -206,6 +206,7 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 }
 
 impl parachain_staking::Config for Test {
@@ -229,6 +230,7 @@ impl parachain_staking::Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = parachain_staking::weights::WeightInfo<Test>;
+	type TreasuryPalletId = TreasuryPalletId;
 }
 
 impl_opaque_keys! {

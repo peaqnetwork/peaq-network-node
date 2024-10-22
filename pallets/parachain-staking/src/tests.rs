@@ -3989,3 +3989,35 @@ fn check_snapshot_is_cleared() {
 			assert_eq!(at_stake.len(), 0);
 		});
 }
+
+#[test]
+fn check_data_collator_no_block() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 100), (2, 100), (3, 100)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 3);
+			assert_eq!(collator_blocks.len(), 2);
+			assert!(events().contains(&Event::CollatorSlashed(3, 10)));
+			roll_to(20, authors.clone());
+
+			assert_eq!(Balances::locks(1).first().unwrap().amount, 100);
+			assert_eq!(Balances::locks(2).first().unwrap().amount, 100);
+			assert_eq!(Balances::locks(3).first().unwrap().amount, 70);
+		});
+}

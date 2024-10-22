@@ -178,7 +178,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, Convert, One,
+			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Convert, One,
 			SaturatedConversion, Saturating, StaticLookup, Zero,
 		},
 		Permill,
@@ -333,6 +333,9 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type TreasuryPalletId: Get<PalletId>;
 	}
 
 	#[pallet::error]
@@ -515,6 +518,9 @@ pub mod pallet {
 		/// The commission for a collator has been changed.
 		/// \[collator's account, new commission\]
 		CollatorCommissionChanged(T::AccountId, Permill),
+		/// A collator have been slashed
+		/// \[collator's account, amount slashed\]
+		CollatorSlashed(T::AccountId, BalanceOf<T>),
 	}
 
 	#[pallet::hooks]
@@ -528,6 +534,12 @@ pub mod pallet {
 		}
 
 		fn on_finalize(_n: BlockNumberFor<T>) {
+			// Check if it's the first block of the round
+			let current_round = Self::round();
+			if current_round.first == _n {
+				// Slash any collators that didn't author blocks in previous round
+				Self::get_collators_without_blocks(current_round.current - 1);
+			}
 			Self::payout_collator();
 		}
 	}
@@ -2786,6 +2798,59 @@ pub mod pallet {
 		/// Get a unique, inaccessible account id from the `PotId`.
 		pub fn account_id() -> T::AccountId {
 			T::PotId::get().into_account_truncating()
+		}
+
+		fn calculate_slash_amount(
+			stake: BalanceOf<T>,
+			number_faulty_collators: usize,
+		) -> BalanceOf<T> {
+			stake
+				.checked_mul(&(number_faulty_collators as u128 * 10).into())
+				.unwrap_or_else(Zero::zero)
+				.checked_div(&100u128.into())
+				.unwrap_or_else(Zero::zero)
+		}
+
+		fn slash_collator(collator: T::AccountId, number_faulty_collators: usize) {
+			let pot = T::TreasuryPalletId::get().into_account_truncating();
+			let stake = CandidatePool::<T>::get(&collator).map_or_else(Zero::zero, |x| x.total);
+			let slash_amount = Self::calculate_slash_amount(stake, number_faulty_collators);
+
+			// Retrieve the current lock amount
+			let current_lock = Locks::<T>::get(&collator)
+				.into_iter()
+				.find(|lock| lock.id == STAKING_ID)
+				.map_or_else(Zero::zero, |lock| lock.amount);
+
+			// Calculate the new lock amount
+			let new_lock_amount = current_lock.saturating_sub(slash_amount.into());
+
+			// Set the new lock amount
+			T::Currency::set_lock(
+				STAKING_ID,
+				&collator,
+				new_lock_amount.into(),
+				WithdrawReasons::all(),
+			);
+
+			// Transfer the tokens to the pot
+			let result = T::Currency::transfer(&collator, &pot, slash_amount, KeepAlive);
+
+			if result.is_ok() {
+				Self::deposit_event(Event::CollatorSlashed(collator, slash_amount));
+			}
+		}
+
+		// Get collators that didn't author blocks in previous round
+		fn get_collators_without_blocks(round: SessionIndex) {
+			let number_candidate = CandidatePool::<T>::iter().count();
+			let number_block_producer = CollatorBlocks::<T>::iter_prefix(round).count();
+			let number_faulty_collators = number_candidate - number_block_producer;
+			CandidatePool::<T>::iter().for_each(|(collator, _)| {
+				if !CollatorBlocks::<T>::contains_key(round, &collator) {
+					Self::slash_collator(collator, number_faulty_collators);
+				}
+			});
 		}
 
 		/// Handles staking reward payout for previous session for one collator and their delegators

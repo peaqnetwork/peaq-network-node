@@ -876,6 +876,7 @@ impl parachain_staking::Config for Runtime {
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
+	type TreasuryPalletId = TreasuryPalletId;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
