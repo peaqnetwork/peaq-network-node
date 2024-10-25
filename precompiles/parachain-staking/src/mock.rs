@@ -34,7 +34,7 @@ use sp_runtime::{
 	impl_opaque_keys,
 	testing::UintAuthorityId,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	BuildStorage, Perbill,
+	BuildStorage, Perbill, Permill,
 };
 use sp_std::fmt::Debug;
 
@@ -335,6 +335,7 @@ impl ExtBuilder {
 		parachain_staking::GenesisConfig::<Test> {
 			stakers,
 			max_candidate_stake: 160_000_000 * DECIMALS,
+			slashing_factor: Permill::from_percent(10),
 		}
 		.assimilate_storage(&mut t)
 		.expect("Parachain Staking's storage can be assimilated");

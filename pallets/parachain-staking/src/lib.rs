@@ -178,7 +178,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Convert, One,
+			AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, Convert, One,
 			SaturatedConversion, Saturating, StaticLookup, Zero,
 		},
 		Permill,
@@ -521,6 +521,9 @@ pub mod pallet {
 		/// A collator have been slashed
 		/// \[collator's account, amount slashed\]
 		CollatorSlashed(T::AccountId, BalanceOf<T>),
+		/// Slashing factor has been changed
+		/// \[new slashing factor\]
+		SlashingFactorChanged(Permill),
 	}
 
 	#[pallet::hooks]
@@ -680,15 +683,24 @@ pub mod pallet {
 	pub(crate) type DelayedPayoutInfo<T: Config> =
 		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn slashing_factor)]
+	pub(crate) type SlashingFactor<T> = StorageValue<_, Permill, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
 		pub max_candidate_stake: BalanceOf<T>,
+		pub slashing_factor: Permill,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { stakers: Default::default(), max_candidate_stake: Default::default() }
+			Self {
+				stakers: Default::default(),
+				max_candidate_stake: Default::default(),
+				slashing_factor: Permill::from_percent(10),
+			}
 		}
 	}
 
@@ -696,6 +708,7 @@ pub mod pallet {
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
+			SlashingFactor::<T>::put(self.slashing_factor);
 
 			// Setup delegate & collators
 			for &(ref actor, ref opt_val, balance) in &self.stakers {
@@ -1989,6 +2002,17 @@ pub mod pallet {
 			));
 			Ok(())
 		}
+
+		#[pallet::call_index(20)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_slashing_factor(
+		Permill::from_percent(100).deconstruct()
+		))]
+		pub fn set_slashing_factor(origin: OriginFor<T>, factor: Permill) -> DispatchResult {
+			ensure_root(origin)?;
+			SlashingFactor::<T>::put(factor);
+			Self::deposit_event(Event::SlashingFactorChanged(factor));
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -2804,11 +2828,8 @@ pub mod pallet {
 			stake: BalanceOf<T>,
 			number_faulty_collators: usize,
 		) -> BalanceOf<T> {
-			stake
-				.checked_mul(&(number_faulty_collators as u128 * 10).into())
-				.unwrap_or_else(Zero::zero)
-				.checked_div(&100u128.into())
-				.unwrap_or_else(Zero::zero)
+			let slashing_factor = SlashingFactor::<T>::get();
+			slashing_factor.mul(stake).mul(number_faulty_collators.saturated_into()) % stake
 		}
 
 		fn slash_collator(collator: T::AccountId, number_faulty_collators: usize) {

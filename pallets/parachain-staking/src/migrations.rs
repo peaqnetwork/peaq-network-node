@@ -22,8 +22,9 @@ pub enum Versions {
 	_V8 = 8,
 	V9 = 9,
 	V10 = 10,
-	#[default]
 	V11 = 11,
+	#[default]
+	V12 = 12,
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
@@ -31,8 +32,8 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 }
 
 mod upgrade {
-
 	use super::*;
+	use crate::pallet::SlashingFactor;
 
 	#[storage_alias]
 	type CollatorBlock<T: Config> =
@@ -100,6 +101,21 @@ mod upgrade {
 
 				log::info!("V11 Migrating Done.");
 			}
+
+			if onchain_storage_version < StorageVersion::new(Versions::V12 as u16) {
+				log::info!(
+					"Running storage migration from version {:?} to {:?}",
+					onchain_storage_version,
+					Versions::default() as u16
+				);
+
+				// remove old storage
+				SlashingFactor::<T>::put(Permill::from_percent(10));
+				weight_writes += 1;
+
+				log::info!("V12 Migrating Done.");
+			}
+
 			// update onchain storage version
 			StorageVersion::new(Versions::default() as u16).put::<Pallet<T>>();
 			weight_writes += 1;

@@ -1164,6 +1164,8 @@ fn collators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_factor(RuntimeOrigin::root(), Permill::from_percent(0))
+				.expect("Failed to set slashing factor");
 			roll_to(4, vec![]);
 			assert_noop!(
 				StakePallet::candidate_stake_more(RuntimeOrigin::signed(6), 50),
@@ -2238,6 +2240,8 @@ fn unlock_unstaked() {
 			// should be able to decrease more often than MaxUnstakeRequests because it's
 			// the same block and thus unstaking is increased at block 3 instead of having
 			// multiple entries for the same block
+			StakePallet::set_slashing_factor(RuntimeOrigin::root(), Permill::from_percent(0))
+				.expect("Failed to set slashing factor");
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
 			assert_ok!(StakePallet::candidate_stake_less(RuntimeOrigin::signed(1), 10));
@@ -3435,6 +3439,8 @@ fn check_claim_block_normal_wo_delegator() {
 		.with_collators(vec![(1, stake), (2, 2 * stake)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_factor(RuntimeOrigin::root(), Permill::from_percent(0))
+				.expect("Failed to set slashing factor");
 			let authors: Vec<Option<AccountId>> = vec![
 				None,
 				Some(1u64),
@@ -3502,6 +3508,8 @@ fn check_claim_block_normal_wi_delegator() {
 		.with_delegators(vec![(5, 1, 5 * stake), (6, 1, 6 * stake), (7, 2, 7 * stake)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_factor(RuntimeOrigin::root(), Permill::from_percent(0))
+				.expect("Failed to set slashing factor");
 			let authors: Vec<Option<AccountId>> = vec![
 				None,
 				Some(1u64),
@@ -3997,6 +4005,7 @@ fn check_data_collator_no_block() {
 		.with_collators(vec![(1, 100), (2, 100), (3, 100)])
 		.build()
 		.execute_with(|| {
+			assert_eq!(StakePallet::slashing_factor(), Permill::from_percent(10));
 			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
 
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
