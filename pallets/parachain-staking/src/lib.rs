@@ -524,6 +524,9 @@ pub mod pallet {
 		/// Slashing factor has been changed
 		/// \[new slashing factor\]
 		SlashingFactorChanged(Permill),
+		/// Slashing has been enabled/disabled
+		/// \[new slashing status\]
+		SlashingEnabledChanged(bool),
 	}
 
 	#[pallet::hooks]
@@ -536,10 +539,10 @@ pub mod pallet {
 			crate::migrations::on_runtime_upgrade::<T>()
 		}
 
-		fn on_finalize(_n: BlockNumberFor<T>) {
+		fn on_finalize(n: BlockNumberFor<T>) {
 			// Check if it's the first block of the round
 			let current_round = Self::round();
-			if current_round.first == _n {
+			if SlashingEnabled::<T>::get() && current_round.first == n {
 				// Slash any collators that didn't author blocks in previous round
 				Self::get_collators_without_blocks(current_round.current - 1);
 			}
@@ -687,11 +690,16 @@ pub mod pallet {
 	#[pallet::getter(fn slashing_factor)]
 	pub(crate) type SlashingFactor<T> = StorageValue<_, Permill, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn slashing_enabled)]
+	pub(crate) type SlashingEnabled<T> = StorageValue<_, bool, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
 		pub max_candidate_stake: BalanceOf<T>,
 		pub slashing_factor: Permill,
+		pub slashing_enabled: bool,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -700,6 +708,7 @@ pub mod pallet {
 				stakers: Default::default(),
 				max_candidate_stake: Default::default(),
 				slashing_factor: Permill::from_percent(10),
+				slashing_enabled: true,
 			}
 		}
 	}
@@ -709,6 +718,7 @@ pub mod pallet {
 		fn build(&self) {
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
 			SlashingFactor::<T>::put(self.slashing_factor);
+			SlashingEnabled::<T>::put(self.slashing_enabled);
 
 			// Setup delegate & collators
 			for &(ref actor, ref opt_val, balance) in &self.stakers {
@@ -2011,6 +2021,15 @@ pub mod pallet {
 			ensure_root(origin)?;
 			SlashingFactor::<T>::put(factor);
 			Self::deposit_event(Event::SlashingFactorChanged(factor));
+			Ok(())
+		}
+
+		#[pallet::call_index(21)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_slashing_enabled())]
+		pub fn set_slashing_enabled(origin: OriginFor<T>, enabled: bool) -> DispatchResult {
+			ensure_root(origin)?;
+			SlashingEnabled::<T>::put(enabled);
+			Self::deposit_event(Event::SlashingEnabledChanged(enabled));
 			Ok(())
 		}
 	}

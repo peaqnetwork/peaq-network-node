@@ -284,6 +284,7 @@ impl ExtBuilder {
 			stakers,
 			max_candidate_stake: 160_000_000 * DECIMALS,
 			slashing_factor: Permill::from_percent(10),
+			slashing_enabled: true,
 		}
 		.assimilate_storage(&mut t)
 		.expect("Parachain Staking's storage can be assimilated");

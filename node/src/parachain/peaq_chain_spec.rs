@@ -123,6 +123,7 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 			slashing_factor: Permill::from_percent(10),
+			slashing_enabled: true,
 		},
 		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {

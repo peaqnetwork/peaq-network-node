@@ -33,7 +33,7 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 
 mod upgrade {
 	use super::*;
-	use crate::pallet::SlashingFactor;
+	use crate::pallet::{SlashingEnabled, SlashingFactor};
 
 	#[storage_alias]
 	type CollatorBlock<T: Config> =
@@ -109,8 +109,12 @@ mod upgrade {
 					Versions::default() as u16
 				);
 
-				// remove old storage
+				// set slashing factor to 10%
 				SlashingFactor::<T>::put(Permill::from_percent(10));
+				weight_writes += 1;
+
+				// enable slashing
+				SlashingEnabled::<T>::put(true);
 				weight_writes += 1;
 
 				log::info!("V12 Migrating Done.");
