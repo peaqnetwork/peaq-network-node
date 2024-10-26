@@ -138,6 +138,11 @@ pub mod pallet {
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
+			log::error!("Number of delegators {:?}", (&stake.delegators)
+				.into_iter()
+				.filter(|x| x.amount >= min_delegator_stake)
+				.count());
+			log::error!("delegator_sum {:?}", delegator_sum);
 
 			if let Some(coefficient_collator) =
 				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
@@ -176,11 +181,17 @@ pub mod pallet {
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
+			log::error!("Number of delegators 2 {:?}", (&stake.delegators)
+				.into_iter()
+				.filter(|x| x.amount >= min_delegator_stake)
+				.count());
+			log::error!("delegator_sum 2 {:?}", delegator_sum);
 
 			if let Some(coefficient_collator) =
 				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
 			{
 				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
+					log::error!("denominator {:?}", denominator);
 					let inner = (&stake.delegators)
 						.into_iter()
 						.filter(|x| x.amount >= min_delegator_stake)
@@ -190,6 +201,8 @@ pub mod pallet {
 								issue_number,
 						})
 						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
+					log::error!("inner {:?}", inner);
+					log::error!("inner len {:?}", inner.len());
 
 					return (
 						Weight::from_parts(1_u64 + 4_u64, 0),

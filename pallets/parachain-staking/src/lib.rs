@@ -2584,6 +2584,7 @@ pub mod pallet {
 		/// - Writes: Balance
 		/// # </weight>
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
+			log::error!("Rewarding {} with {:?}", who, reward);
 			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
 				Self::deposit_event(Event::Rewarded(who.clone(), reward));
 			}
@@ -2630,12 +2631,15 @@ pub mod pallet {
 			let mut reads = Weight::from_parts(0, 1);
 			let mut writes = Weight::from_parts(0, 1);
 
+			log::error!("Potaabb");
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
 				let issue_number = T::Currency::free_balance(&pot)
 					.checked_sub(&T::Currency::minimum_balance())
 					.unwrap_or_else(Zero::zero);
 
+				log::error!("Issue number: {:?}", issue_number);
+				log::error!("State: {:?}", state);
 				let (now_read, now_write, now_reward) =
 					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::collator_reward_per_block(&state, issue_number);
 				Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
@@ -2644,6 +2648,7 @@ pub mod pallet {
 
 				let (now_read, now_write, now_rewards) =
 					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::delegator_reward_per_block(&state, issue_number);
+				log::error!("Delegator rewards: {:?}", now_rewards);
 				now_rewards.into_iter().for_each(|x| {
 					Self::do_reward(&pot, &x.owner, x.amount);
 				});
