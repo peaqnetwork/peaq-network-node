@@ -843,7 +843,7 @@ pub mod staking {
 			/// At least 4 candidates which cannot leave the network if there are no other candidates.
 			pub const MinRequiredCollators: u32 = 4;
 			/// We only allow one delegation per round.
-			pub const MaxDelegationsPerRound: u32 = 1;
+			pub const MaxDelegationsPerRound: u32 = 0;
 			/// Maximum 25 delegators per collator at launch, might be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxDelegatorsPerCollator: u32 = 25;

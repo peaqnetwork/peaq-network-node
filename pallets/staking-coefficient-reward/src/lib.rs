@@ -17,6 +17,8 @@ pub(crate) mod tests;
 pub use crate::{pallet::*, weightinfo::WeightInfo};
 use frame_support::pallet;
 use sp_runtime::traits::{CheckedAdd, CheckedMul};
+use sp_runtime::FixedU128;
+use sp_runtime::FixedPointNumber;
 
 const DEFAULT_COEFFICIENT: u8 = 8;
 
@@ -148,11 +150,12 @@ pub mod pallet {
 				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
 			{
 				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
-					let percentage = Perquintill::from_rational(coefficient_collator, denominator);
+					let percentage = FixedU128::saturating_from_rational(coefficient_collator, denominator);
+
 					return (
 						Weight::from_parts(1_u64, 0),
 						Weight::from_parts(1_u64, 0),
-						Reward { owner: stake.id.clone(), amount: percentage * issue_number },
+						Reward { owner: stake.id.clone(), amount: percentage.saturating_mul_int(issue_number) },
 					);
 				}
 			}
@@ -197,8 +200,8 @@ pub mod pallet {
 						.filter(|x| x.amount >= min_delegator_stake)
 						.map(|x| Reward {
 							owner: x.owner.clone(),
-							amount: Perquintill::from_rational(x.amount, denominator) *
-								issue_number,
+							amount: FixedU128::saturating_from_rational(x.amount, denominator).saturating_mul_int(
+								issue_number),
 						})
 						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 					log::error!("inner {:?}", inner);

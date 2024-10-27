@@ -163,6 +163,9 @@ pub use weightinfo::WeightInfo;
 #[frame_support::pallet]
 pub mod pallet {
 
+	use frame_support::traits::tokens::Fortitude;
+	use frame_support::traits::tokens::Preservation;
+	use frame_support::traits::tokens::fungible::Inspect;
 	use core::marker::PhantomData;
 	use frame_support::{
 		assert_ok,
@@ -225,6 +228,7 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ ReservableCurrency<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ LockableCurrency<Self::AccountId, Balance = Self::CurrencyBalance>
+			+ Inspect<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ Eq;
 
 		/// Just the `Currency::Balance` type; we have this item to allow us to
@@ -2586,7 +2590,7 @@ pub mod pallet {
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
 			log::error!("Rewarding {} with {:?}", who, reward);
 			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
-				Self::deposit_event(Event::Rewarded(who.clone(), reward));
+			 	Self::deposit_event(Event::Rewarded(who.clone(), reward));
 			}
 		}
 
@@ -2634,26 +2638,33 @@ pub mod pallet {
 			log::error!("Potaabb");
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
-				let issue_number = T::Currency::free_balance(&pot)
-					.checked_sub(&T::Currency::minimum_balance())
-					.unwrap_or_else(Zero::zero);
-
-				log::error!("Issue number: {:?}", issue_number);
-				log::error!("State: {:?}", state);
-				let (now_read, now_write, now_reward) =
-					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::collator_reward_per_block(&state, issue_number);
-				Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-				reads = reads.saturating_add(now_read);
-				writes = writes.saturating_add(now_write);
+				let issue_number = T::Currency::reducible_balance(&pot, Preservation::Expendable, Fortitude::Polite);
+					// For avoid percession issue
+					// .checked_sub(&T::CurrencyBalance::from(T::MaxDelegatorsPerCollator::get() + 1))
+					// .unwrap_or_else(Zero::zero);
 
 				let (now_read, now_write, now_rewards) =
 					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::delegator_reward_per_block(&state, issue_number);
 				log::error!("Delegator rewards: {:?}", now_rewards);
-				now_rewards.into_iter().for_each(|x| {
+				now_rewards.iter().for_each(|x| {
 					Self::do_reward(&pot, &x.owner, x.amount);
 				});
 				reads = reads.saturating_add(now_read);
 				writes = writes.saturating_add(now_write);
+
+				log::error!("Issue number: {:?}", issue_number);
+				log::error!("State: {:?}", state);
+
+				let total_collator_reward = if state.delegators.is_empty() {
+					issue_number
+				} else {
+					let total_delegator_reward = now_rewards
+						.iter()
+						.fold(BalanceOf::<T>::zero(), |acc, x| acc.saturating_add(x.amount));
+					issue_number.saturating_sub(total_delegator_reward)
+				};
+
+				// Self::do_reward(&pot, &state.id, total_collator_reward);
 			}
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
