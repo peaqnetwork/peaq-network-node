@@ -6,7 +6,7 @@ use frame_support::{
 use mock::*;
 use pallet_balances::NegativeImbalance;
 use sp_runtime::{
-	traits::{AccountIdConversion, BadOrigin, Zero},
+	traits::{BadOrigin, Zero},
 	Perbill,
 };
 

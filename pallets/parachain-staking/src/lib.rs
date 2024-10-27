@@ -183,7 +183,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, Convert, One,
+			AccountIdConversion, CheckedAdd, CheckedMul, Convert, One,
 			SaturatedConversion, Saturating, StaticLookup, Zero,
 		},
 		Permill,
@@ -2588,8 +2588,6 @@ pub mod pallet {
 		/// - Writes: Balance
 		/// # </weight>
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
-			log::error!("do_reward {:?}", reward);
-			log::error!("do_reward asdfsadf {:?}", who);
 			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
 			 	Self::deposit_event(Event::Rewarded(who.clone(), reward));
 			}
@@ -2636,25 +2634,17 @@ pub mod pallet {
 			let mut reads = Weight::from_parts(0, 1);
 			let mut writes = Weight::from_parts(0, 1);
 
-			log::error!("Potaabb");
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
 				let issue_number = T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite);
-					// For avoid percession issue
-					// .checked_sub(&T::CurrencyBalance::from(T::MaxDelegatorsPerCollator::get() + 1))
-					// .unwrap_or_else(Zero::zero);
 
 				let (now_read, now_write, now_rewards) =
 					<T::BlockRewardCalculator as CollatorDelegatorBlockRewardCalculator<T>>::delegator_reward_per_block(&state, issue_number);
-				log::error!("Delegator rewards: {:?}", now_rewards);
 				now_rewards.iter().for_each(|x| {
 					Self::do_reward(&pot, &x.owner, x.amount);
 				});
 				reads = reads.saturating_add(now_read);
 				writes = writes.saturating_add(now_write);
-
-				log::error!("Issue number: {:?}", issue_number);
-				log::error!("State: {:?}", state);
 
 				let total_collator_reward = if state.delegators.is_empty() {
 					issue_number

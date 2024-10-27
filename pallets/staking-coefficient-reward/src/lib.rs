@@ -17,8 +17,6 @@ pub(crate) mod tests;
 pub use crate::{pallet::*, weightinfo::WeightInfo};
 use frame_support::pallet;
 use sp_runtime::traits::{CheckedAdd, CheckedMul};
-use sp_runtime::FixedU128;
-use sp_runtime::FixedPointNumber;
 
 const DEFAULT_COEFFICIENT: u8 = 8;
 
@@ -140,22 +138,16 @@ pub mod pallet {
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-			log::error!("Number of delegators {:?}", (&stake.delegators)
-				.into_iter()
-				.filter(|x| x.amount >= min_delegator_stake)
-				.count());
-			log::error!("delegator_sum {:?}", delegator_sum);
 
 			if let Some(coefficient_collator) =
 				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
 			{
 				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
-					let percentage = FixedU128::saturating_from_rational(coefficient_collator, denominator);
-
+					let percentage = Perquintill::from_rational(coefficient_collator, denominator);
 					return (
 						Weight::from_parts(1_u64, 0),
 						Weight::from_parts(1_u64, 0),
-						Reward { owner: stake.id.clone(), amount: percentage.saturating_mul_int(issue_number) },
+						Reward { owner: stake.id.clone(), amount: percentage * issue_number },
 					);
 				}
 			}
@@ -184,28 +176,20 @@ pub mod pallet {
 				.into_iter()
 				.filter(|x| x.amount >= min_delegator_stake)
 				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
-			log::error!("Number of delegators 2 {:?}", (&stake.delegators)
-				.into_iter()
-				.filter(|x| x.amount >= min_delegator_stake)
-				.count());
-			log::error!("delegator_sum 2 {:?}", delegator_sum);
 
 			if let Some(coefficient_collator) =
 				T::CurrencyBalance::from(Self::coefficient()).checked_mul(&stake.stake)
 			{
 				if let Some(denominator) = delegator_sum.checked_add(&coefficient_collator) {
-					log::error!("denominator {:?}", denominator);
 					let inner = (&stake.delegators)
 						.into_iter()
 						.filter(|x| x.amount >= min_delegator_stake)
 						.map(|x| Reward {
 							owner: x.owner.clone(),
-							amount: FixedU128::saturating_from_rational(x.amount, denominator).saturating_mul_int(
-								issue_number),
+							amount: Perquintill::from_rational(x.amount, denominator) *
+								issue_number,
 						})
 						.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
-					log::error!("inner {:?}", inner);
-					log::error!("inner len {:?}", inner.len());
 
 					return (
 						Weight::from_parts(1_u64 + 4_u64, 0),
