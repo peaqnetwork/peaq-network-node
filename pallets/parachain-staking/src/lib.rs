@@ -2588,7 +2588,8 @@ pub mod pallet {
 		/// - Writes: Balance
 		/// # </weight>
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
-			log::error!("Rewarding {} with {:?}", who, reward);
+			log::error!("do_reward {:?}", reward);
+			log::error!("do_reward asdfsadf {:?}", who);
 			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
 			 	Self::deposit_event(Event::Rewarded(who.clone(), reward));
 			}
@@ -2638,7 +2639,7 @@ pub mod pallet {
 			log::error!("Potaabb");
 			if let Some(state) = CandidatePool::<T>::get(author) {
 				let pot = Self::account_id();
-				let issue_number = T::Currency::reducible_balance(&pot, Preservation::Expendable, Fortitude::Polite);
+				let issue_number = T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite);
 					// For avoid percession issue
 					// .checked_sub(&T::CurrencyBalance::from(T::MaxDelegatorsPerCollator::get() + 1))
 					// .unwrap_or_else(Zero::zero);
@@ -2664,7 +2665,7 @@ pub mod pallet {
 					issue_number.saturating_sub(total_delegator_reward)
 				};
 
-				// Self::do_reward(&pot, &state.id, total_collator_reward);
+				Self::do_reward(&pot, &state.id, total_collator_reward);
 			}
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
