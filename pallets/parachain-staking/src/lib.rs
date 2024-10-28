@@ -2014,9 +2014,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(20)]
-		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_slashing_factor(
-		Permill::from_percent(100).deconstruct()
-		))]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_slashing_factor())]
 		pub fn set_slashing_factor(origin: OriginFor<T>, factor: Permill) -> DispatchResult {
 			ensure_root(origin)?;
 			SlashingFactor::<T>::put(factor);
