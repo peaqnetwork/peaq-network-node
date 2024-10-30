@@ -334,6 +334,7 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// The pallet id of the treasury pallet.
 		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
 	}
@@ -686,10 +687,12 @@ pub mod pallet {
 	pub(crate) type DelayedPayoutInfo<T: Config> =
 		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, OptionQuery>;
 
+	// Slashing factor that is going to be applied on the collator stake
 	#[pallet::storage]
 	#[pallet::getter(fn slashing_factor)]
 	pub(crate) type SlashingFactor<T> = StorageValue<_, Permill, ValueQuery>;
 
+	// Slashing enabled/disabled option
 	#[pallet::storage]
 	#[pallet::getter(fn slashing_enabled)]
 	pub(crate) type SlashingEnabled<T> = StorageValue<_, bool, ValueQuery>;
@@ -2849,13 +2852,40 @@ pub mod pallet {
 			slashing_factor.mul(stake).mul(number_faulty_collators.saturated_into()) % stake
 		}
 
-		fn slash_collator(collator: T::AccountId, number_faulty_collators: usize) {
-			let pot = T::TreasuryPalletId::get().into_account_truncating();
-			let stake = CandidatePool::<T>::get(&collator).map_or_else(Zero::zero, |x| x.total);
-			let slash_amount = Self::calculate_slash_amount(stake, number_faulty_collators);
+		fn apply_slash_delegators(collator_account: &T::AccountId, number_faulty_collators: usize) {
+			let mut collator =
+				CandidatePool::<T>::get(collator_account).expect("Collator must exist");
+			for i in 0..collator.delegators.len() {
+				let stake = collator.delegators[i].amount;
+				let slash_amount = Self::calculate_slash_amount(stake, number_faulty_collators);
+				let new_stake = stake.saturating_sub(slash_amount);
+				Self::reduce_lock(&collator.delegators[i].owner, slash_amount);
 
+				collator
+					.delegators
+					.try_upsert(Stake {
+						owner: collator.delegators[i].owner.clone(),
+						amount: new_stake,
+					})
+					.expect("Delegator must exist");
+				collator.total = collator.total.saturating_sub(slash_amount);
+
+				let mut new_delegator =
+					DelegatorState::<T>::get(collator.delegators[i].owner.clone())
+						.expect("Delegator must exist");
+				new_delegator.total = new_delegator.total.saturating_sub(slash_amount);
+				new_delegator
+					.delegations
+					.try_upsert(Stake { owner: collator_account.clone(), amount: new_stake })
+					.expect("Delegator must exist");
+				DelegatorState::<T>::insert(collator.delegators[i].owner.clone(), new_delegator);
+			}
+			CandidatePool::<T>::insert(collator_account, collator);
+		}
+
+		fn reduce_lock(account: &T::AccountId, slash_amount: BalanceOf<T>) {
 			// Retrieve the current lock amount
-			let current_lock = Locks::<T>::get(&collator)
+			let current_lock = Locks::<T>::get(account)
 				.into_iter()
 				.find(|lock| lock.id == STAKING_ID)
 				.map_or_else(Zero::zero, |lock| lock.amount);
@@ -2866,10 +2896,25 @@ pub mod pallet {
 			// Set the new lock amount
 			T::Currency::set_lock(
 				STAKING_ID,
-				&collator,
+				account,
 				new_lock_amount.into(),
 				WithdrawReasons::all(),
 			);
+		}
+
+		fn slash_collator(collator: T::AccountId, number_faulty_collators: usize) {
+			let pot = T::TreasuryPalletId::get().into_account_truncating();
+			let mut candidate = CandidatePool::<T>::get(&collator).expect("Collator must exist");
+			let slash_amount =
+				Self::calculate_slash_amount(candidate.stake, number_faulty_collators);
+
+			Self::reduce_lock(&collator, slash_amount);
+			// Update Candidate Pool
+			candidate.stake = candidate.stake.saturating_sub(slash_amount);
+			candidate.total = candidate.total.saturating_sub(slash_amount);
+			CandidatePool::<T>::insert(&collator, candidate);
+
+			Self::apply_slash_delegators(&collator, number_faulty_collators);
 
 			// Transfer the tokens to the pot
 			let result = T::Currency::transfer(&collator, &pot, slash_amount, KeepAlive);
