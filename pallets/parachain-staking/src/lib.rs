@@ -2852,9 +2852,14 @@ pub mod pallet {
 			slashing_factor.mul(stake).mul(number_faulty_collators.saturated_into()) % stake
 		}
 
-		fn apply_slash_delegators(collator_account: &T::AccountId, number_faulty_collators: usize) {
+		fn apply_slash_delegators(
+			collator_account: &T::AccountId,
+			number_faulty_collators: usize,
+			stake_before_slash: &BalanceOf<T>,
+		) {
 			let mut collator =
 				CandidatePool::<T>::get(collator_account).expect("Collator must exist");
+			let collator_stake_before_slash = collator.total - collator.stake;
 			for i in 0..collator.delegators.len() {
 				let stake = collator.delegators[i].amount;
 				let slash_amount = Self::calculate_slash_amount(stake, number_faulty_collators);
@@ -2880,6 +2885,13 @@ pub mod pallet {
 					.expect("Delegator must exist");
 				DelegatorState::<T>::insert(collator.delegators[i].owner.clone(), new_delegator);
 			}
+			Self::update_top_candidates(
+				collator_account.clone(),
+				*stake_before_slash,
+				collator_stake_before_slash,
+				collator.stake,
+				collator.total - collator.stake,
+			);
 			CandidatePool::<T>::insert(collator_account, collator);
 		}
 
@@ -2909,12 +2921,12 @@ pub mod pallet {
 				Self::calculate_slash_amount(candidate.stake, number_faulty_collators);
 
 			Self::reduce_lock(&collator, slash_amount);
+			let stake_before_slash = candidate.stake;
 			// Update Candidate Pool
 			candidate.stake = candidate.stake.saturating_sub(slash_amount);
 			candidate.total = candidate.total.saturating_sub(slash_amount);
 			CandidatePool::<T>::insert(&collator, candidate);
-
-			Self::apply_slash_delegators(&collator, number_faulty_collators);
+			Self::apply_slash_delegators(&collator, number_faulty_collators, &stake_before_slash);
 
 			// Transfer the tokens to the pot
 			let result = T::Currency::transfer(&collator, &pot, slash_amount, KeepAlive);

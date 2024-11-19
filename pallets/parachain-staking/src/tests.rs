@@ -36,7 +36,7 @@ use crate::{
 		BLOCKS_PER_ROUND, BLOCK_REWARD_IN_GENESIS_SESSION, BLOCK_REWARD_IN_NORMAL_SESSION,
 		DECIMALS,
 	},
-	pallet::DelegatorState,
+	pallet::{DelegatorState, TopCandidates},
 	set::OrderedSet,
 	types::{
 		BalanceOf, Candidate, CandidateStatus, DelegationCounter, Delegator, Reward, RoundInfo,
@@ -600,6 +600,7 @@ fn execute_leave_candidates_with_delay() {
 		.with_delegators(vec![(11, 1, 110), (12, 1, 120), (13, 2, 130), (14, 2, 140)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_eq!(CandidatePool::<Test>::count(), 10);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -1067,6 +1068,7 @@ fn should_update_total_stake() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			let mut old_stake = StakePallet::total_collator_stake();
 			assert_eq!(old_stake, TotalStake { collators: 40, delegators: 30 });
 			assert_ok!(StakePallet::candidate_stake_more(RuntimeOrigin::signed(1), 50));
@@ -3152,6 +3154,7 @@ fn force_new_round() {
 		.with_collators(vec![(1, 100), (2, 100), (3, 100), (4, 100)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			let mut round = RoundInfo { current: 0, first: 0, length: 5 };
 			assert_eq!(StakePallet::round(), round);
 			assert_eq!(Session::validators(), vec![1, 2]);
@@ -4053,6 +4056,7 @@ fn check_data_collator_no_block() {
 			assert_eq!(Balances::locks(2).first().unwrap().amount, 100);
 			assert_eq!(Balances::locks(3).first().unwrap().amount, 73);
 			assert_eq!(CandidatePool::<Test>::get(3).unwrap().total, 73);
+			assert!(TopCandidates::<Test>::get().contains(&Stake { owner: 3, amount: 73 }));
 		});
 }
 
@@ -4085,6 +4089,7 @@ fn check_no_slashing() {
 			assert_eq!(Balances::locks(1).first().unwrap().amount, 100);
 			assert_eq!(Balances::locks(2).first().unwrap().amount, 100);
 			assert_eq!(Balances::locks(3).first().unwrap().amount, 100);
+			assert!(TopCandidates::<Test>::get().contains(&Stake { owner: 3, amount: 100 }));
 		});
 }
 
@@ -4122,5 +4127,6 @@ fn check_slashing_delegator() {
 			assert_eq!(CandidatePool::<Test>::get(3).unwrap().total, 37 * 2);
 			assert_eq!(DelegatorState::<Test>::get(6).unwrap().total, 37);
 			assert_eq!(CandidatePool::<Test>::get(3).unwrap().delegators[0].amount, 37);
+			assert!(TopCandidates::<Test>::get().contains(&Stake { owner: 3, amount: 37 }));
 		});
 }
