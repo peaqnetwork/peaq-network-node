@@ -12,6 +12,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
+use peaq_pallet_did::NamedReservableCurrency;
 
 use address_unification::CallKillEVMLinkAccount;
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
@@ -119,6 +120,7 @@ use runtime_common::{
 	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
 	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
 	MILLICENTS,
+	ReserveDeposit,
 };
 
 /// An index to a block.
@@ -505,10 +507,58 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 	type AssetIdToZenlinkId = AssetIdToZenlinkId<SelfParaId>;
 }
 
+// Force to deposit the security reserve from fee because of the esitmation gas fee fail
+pub struct PeaqReserveDeposit<T, C>(PhantomData<(T, C)>);
+
+impl<T, C> ReserveDeposit<T> for PeaqReserveDeposit<T, C>
+where
+	T: frame_system::Config<RuntimeCall = RuntimeCall, AccountId = AccountId>
+		+ pallet_transaction_payment::Config,
+	C: Currency<<T as frame_system::Config>::AccountId>,
+{
+	type Balance = Balance;
+
+	fn deposit_reserve(
+		who: &T::AccountId,
+		call: &T::RuntimeCall,
+		total_fee: Self::Balance,
+	) -> Result<Self::Balance, TransactionValidityError> {
+		let (identifier, reserve) = match call {
+			RuntimeCall::PeaqDid(peaq_pallet_did::Call::add_attribute { .. }) =>
+				(DIDReserveIdentifier::get(), DidStorageDepositBase::get()),
+			| RuntimeCall::PeaqStorage(peaq_pallet_storage::Call::add_item { .. }) =>
+				(StorageReserveIdentifier::get(), StorageDepositBase::get()),
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_role { .. })
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_user { .. })
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_permission { .. })
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_permission_to_role { .. })
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_group { .. })
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_group { .. })
+			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_user_to_group { .. }) =>
+				(RBACReserveIdentifier::get(), RBACStorageDepositBase::get()),
+			_ => (DIDReserveIdentifier::get(), 0),
+		};
+		if total_fee < reserve {
+			return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into()));
+		}
+		if reserve == 0 {
+			return Ok(total_fee);
+		}
+		match Balances::reserve_named(&identifier, &who, reserve)
+		{
+			Ok(_) => Ok(total_fee.saturating_sub(reserve)),
+			Err(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into())),
+		}
+	}
+}
+
+type PeaqSecurityDeposit = PeaqReserveDeposit<Runtime, Balances>;
+
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction =
-		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC, EoTFeeFactor>;
+		PeaqMultiCurrenciesOnChargeTransaction<Balances, BlockReward, PeaqCPC, EoTFeeFactor,
+		PeaqSecurityDeposit>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;

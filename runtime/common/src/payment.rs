@@ -29,13 +29,41 @@ type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
 type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
 
+pub trait ReserveDeposit<T: TransPayConfig> {
+	type Balance: frame_support::traits::tokens::Balance;
+
+	fn deposit_reserve(
+		who: &T::AccountId,
+		call: &T::RuntimeCall,
+		total_fee: Self::Balance,
+	) -> Result<Self::Balance, TransactionValidityError>;
+}
+
+pub struct NoReserveDeposit<T, C>(PhantomData<(T, C)>);
+
+impl<T, C> ReserveDeposit<T> for NoReserveDeposit<T, C>
+where
+	T: TransPayConfig,
+	C: Currency<<T as SysConfig>::AccountId>,
+{
+	type Balance = <C as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	fn deposit_reserve(
+		_who: &T::AccountId,
+		_call: &T::RuntimeCall,
+		total_fee: Self::Balance,
+	) -> Result<Self::Balance, TransactionValidityError> {
+		Ok(total_fee)
+	}
+}
+
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
-pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>(
-	PhantomData<(C, OU, PCPC, FEE)>,
+pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE, RD>(
+	PhantomData<(C, OU, PCPC, FEE, RD)>,
 );
 
-impl<T, C, OU, PCPC, FEE> OnChargeTransaction<T>
-	for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>
+impl<T, C, OU, PCPC, FEE, RD> OnChargeTransaction<T>
+	for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE, RD>
 where
 	T: SysConfig + TransPayConfig + ZenProtConfig,
 	C: Currency<T::AccountId>,
@@ -44,15 +72,16 @@ where
 	PCPC::AssetId: TryFrom<PeaqAssetId>,
 	AssetBalance: From<BalanceOf<C, T>>,
 	FEE: Get<Perbill>,
+	RD: ReserveDeposit<T, Balance = BalanceOf<C, T>>,
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
-	type Balance = <C as Currency<T::AccountId>>::Balance;
+	type Balance = BalanceOf<C, T>;
 
 	/// Withdraw the predicted fee from the transaction origin.
 	/// Note: The `fee` already includes the `tip`.
 	fn withdraw_fee(
 		who: &T::AccountId,
-		_call: &T::RuntimeCall,
+		call: &T::RuntimeCall,
 		_info: &DispatchInfoOf<T::RuntimeCall>,
 		total_fee: Self::Balance,
 		tip: Self::Balance,
@@ -84,7 +113,9 @@ where
 			);
 		}
 
-		match C::withdraw(who, tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath) {
+		let remaining_tx_fee = RD::deposit_reserve(who, call, total_fee)?;
+		match C::withdraw(who, remaining_tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath)
+		{
 			Ok(imbalance) => Ok(Some(imbalance)),
 			Err(_) => Err(InvalidTransaction::Payment.into()),
 		}
