@@ -225,9 +225,9 @@ zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Modul
 zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-v1.7.2", default-features = false }
 
 # Peaq's own developments
-peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v1.7.2", default-features = false }
-peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-v1.7.2" }
-peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch ="peaq-polkadot-v1.7.2", default-features = false }
+peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "jay-disable-deposit-test", default-features = false }
+peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "jay-disable-deposit-test" }
+peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch ="jay-disable-deposit-test", default-features = false }
 peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "peaq-polkadot-v1.7.2", default-features = false }
 peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v1.7.2", default-features = false }
 peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-v1.7.2" }
