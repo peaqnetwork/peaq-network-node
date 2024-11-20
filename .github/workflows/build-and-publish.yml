@@ -6,7 +6,7 @@ on:
   release:
     types:
       - published
-      
+
   workflow_dispatch:
 
 env:
@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    
+
     - name: Compile node
       uses: addnab/docker-run-action@v2
       with:
@@ -31,16 +31,16 @@ jobs:
         options: -v ${{ github.workspace }}:/work
         run: |
           cd /work
-          
+
           echo "Building tracing enabled wasm"
-          cargo build --release -p peaq-node-runtime --features "std aura evm-tracing"
-          
+          cargo build --release -p peaq-node-runtime --features "std aura evm-tracing on-chain-release-build"
+
           echo "Building network node"
-          cargo build --release
+          cargo build --release --features on-chain-release-build
 
     - uses: tenhaus/get-release-or-tag@v2
       id: tag
-        
+
     - name: Compress peaq node
       uses: a7ul/tar-action@v1.1.0
       with:

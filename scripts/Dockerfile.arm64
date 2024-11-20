@@ -8,7 +8,7 @@ RUN apt-get update \
 
 WORKDIR /node
 COPY . .
-RUN cargo build --release
+RUN cargo build --release --features on-chain-release-build
 
 FROM --platform=linux/arm64 docker.io/library/ubuntu:22.04
 

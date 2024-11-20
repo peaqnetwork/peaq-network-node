@@ -35,8 +35,8 @@ jobs:
 
       - name: "[Check] cargo test"
         run: |
-          cargo test --release
+          cargo test --release --features on-chain-release-build
 
       - name: "[Check] cargo clippy"
         run: |
-          cargo clippy --release -- -Dwarnings
+          cargo clippy --release --features on-chain-release-build -- -Dwarnings

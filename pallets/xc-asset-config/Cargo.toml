@@ -24,7 +24,7 @@ xcm-executor = { workspace = true, default-features = false }
 frame-benchmarking = { workspace = true, optional = true }
 
 [dev-dependencies]
-pallet-balances = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, default-features = false, features = ["insecure_zero_ed"] }
 pallet-timestamp = { workspace = true, default-features = false }
 sp-core = { workspace = true, default-features = false }
 

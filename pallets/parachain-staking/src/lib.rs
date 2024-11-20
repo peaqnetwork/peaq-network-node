@@ -167,8 +167,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, ExistenceRequirement::KeepAlive, Get,
-			LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion, WithdrawReasons,
+			Currency, EstimateNextSessionRotation,
+			ExistenceRequirement::KeepAlive,
+			Get, LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion,
+			WithdrawReasons,
 		},
 		BoundedVec, PalletId,
 	};

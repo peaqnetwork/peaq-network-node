@@ -14,7 +14,7 @@ precompile-utils = { path = "../utils", default-features = false }
 # Substrate
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-pallet-balances = { workspace = true }
+pallet-balances = { workspace = true, features = ["insecure_zero_ed"] }
 pallet-timestamp = { workspace = true }
 parity-scale-codec = { workspace = true, features = [ "max-encoded-len" ] }
 sp-core = { workspace = true }

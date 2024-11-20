@@ -77,11 +77,11 @@ where
 	) -> EvmResult<Address> {
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		match Runtime::asset_id_to_address(asset_id) {
 			Some(address) => Ok(address.into()),
-			None => Err(RevertReason::Custom("Invalid asset id".into()).into()),
+			None => Err(RevertReason::Custom("Invalid id".into()).into()),
 		}
 	}
 
@@ -97,13 +97,13 @@ where
 		let admin: H160 = admin.into();
 		let asset_id: AssetIdParameterOf<Runtime, Instance> = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		// Convert to asset id
 		let check_asset_id: PeaqAssetId = asset_id
 			.clone()
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 		if !check_asset_id.is_allow_to_create() {
 			return Err(RevertReason::Custom("Invalid asset id".into()).into());
 		}
@@ -145,7 +145,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 		let name: Vec<_> = name.into();
 		let symbol: Vec<_> = symbol.into();
 
@@ -181,7 +181,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		let min_balance: BalanceOf<Runtime, Instance> =
 			min_balance.try_into().unwrap_or_else(|_| Bounded::max_value());
@@ -218,7 +218,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 		let issuer: H160 = issuer.into();
 		let admin: H160 = admin.into();
 		let freezer: H160 = freezer.into();
@@ -258,7 +258,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 		let owner: H160 = owner.into();
 
 		// Build call with origin.
@@ -288,7 +288,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		// Build call with origin.
 		{
@@ -313,7 +313,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		// Build call with origin.
 		{
@@ -338,7 +338,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		// Build call with origin.
 		{
@@ -362,7 +362,7 @@ where
 
 		let asset_id = id
 			.try_into()
-			.map_err(|_| RevertReason::value_is_too_large("asset id").in_field("id"))?;
+			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
 
 		// Build call with origin.
 		{
