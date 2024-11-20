@@ -3574,12 +3574,13 @@ fn check_claim_block_normal_wi_delegator() {
 			// 	Perquintill::from_rational(5 * 5 * stake, total_stake_in_round_1) *
 			// BLOCK_REWARD_IN_NORMAL_SESSION + 		origin_balance
 			// );
-			// assert_eq!(
-			// 	Balances::free_balance(6),
-			// 	delegator_6_percentage * BLOCK_REWARD_IN_GENESIS_SESSION +
-			// 	Perquintill::from_rational(5 * 6 * stake, total_stake_in_round_1) *
-			// BLOCK_REWARD_IN_NORMAL_SESSION + 		origin_balance
-			// );
+			assert_eq!(
+				Balances::free_balance(6),
+				delegator_6_percentage * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_rational(5 * 6 * stake, total_stake_in_round_1) *
+						BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
+			);
 
 			// Nothing change
 			assert_eq!(
