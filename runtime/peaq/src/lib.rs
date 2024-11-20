@@ -597,7 +597,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DidStorageDepositBase: Balance = 0;
+	pub const DidStorageDepositBase: Balance = MILLICENTS * 500;
 	pub const DidStorageDepositPerByte: Balance = 0;
 }
 
@@ -1083,7 +1083,7 @@ parameter_types! {
 }
 
 parameter_types! {
-	pub const RBACStorageDepositBase: Balance = 0;
+	pub const RBACStorageDepositBase: Balance = MILLICENTS * 500;
 	pub const RBACStorageDepositPerByte: Balance = 0;
 }
 
@@ -1099,7 +1099,7 @@ impl peaq_pallet_rbac::Config for Runtime {
 }
 
 parameter_types! {
-	pub const StorageStorageDepositBase: Balance = 0;
+	pub const StorageStorageDepositBase: Balance = MILLICENTS * 500;
 	pub const StorageStorageDepositPerByte: Balance = 0;
 }
 

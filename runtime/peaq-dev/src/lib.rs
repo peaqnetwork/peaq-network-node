@@ -240,11 +240,11 @@ const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
 );
 
-/// Base Deposit for occupying storage - 0 PEAQ
-const STORAGE_DEPOSIT_BASE: Balance = 0;
+/// Base Deposit for occupying storage - 0.01 PEAQ
+const STORAGE_DEPOSIT_BASE: Balance = CENTS;
 
-/// Deposit per byte for occupying storage - 0 PEAQ
-const STORAGE_DEPOSIT_PER_BYTE: Balance = 0;
+/// Deposit per byte for occupying storage - 0.001 PEAQ
+const STORAGE_DEPOSIT_PER_BYTE: Balance = CENTS / 10;
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -578,7 +578,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DidStorageDepositBase: Balance = 0;
+	pub const DidStorageDepositBase: Balance = DOLLARS / 10;
 	pub const DidStorageDepositPerByte: Balance = 0;
 }
 
