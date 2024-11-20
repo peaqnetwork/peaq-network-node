@@ -552,7 +552,7 @@ where
 			RuntimeCall::PeaqDid(peaq_pallet_did::Call::add_attribute { .. }) =>
 				(DIDReserveIdentifier::get(), DidStorageDepositBase::get()),
 			| RuntimeCall::PeaqStorage(peaq_pallet_storage::Call::add_item { .. }) =>
-				(StorageReserveIdentifier::get(), StorageDepositBase::get()),
+				(StorageReserveIdentifier::get(), StorageStorageDepositBase::get()),
 			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_role { .. })
 			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_user { .. })
 			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_permission { .. })

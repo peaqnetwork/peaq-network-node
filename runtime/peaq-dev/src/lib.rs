@@ -541,7 +541,7 @@ where
 			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_group { .. })
 			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_group { .. })
 			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_user_to_group { .. }) =>
-				(RBACReserveIdentifier::get(), RBACStorageDepositBase::get()),
+				(RBACReserveIdentifier::get(), StorageDepositBase::get()),
 			_ => (DIDReserveIdentifier::get(), 0),
 		};
 		if total_fee < reserve {
