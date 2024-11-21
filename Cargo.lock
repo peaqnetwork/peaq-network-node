@@ -9208,7 +9208,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.7.2#69e66f76c26387903251583458ef72ac083c30bf"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=jay-disable-deposit-test#2a308d46584f5cd046940182f1f65d420834a229"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9228,7 +9228,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.7.2#69e66f76c26387903251583458ef72ac083c30bf"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=jay-disable-deposit-test#2a308d46584f5cd046940182f1f65d420834a229"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9245,7 +9245,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=peaq-polkadot-v1.7.2#69e66f76c26387903251583458ef72ac083c30bf"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=jay-disable-deposit-test#2a308d46584f5cd046940182f1f65d420834a229"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -9256,7 +9256,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=peaq-polkadot-v1.7.2#0bef648cc7ff68d580bd3402655275657a94f597"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=jay-disable-deposit-test#72ef9cfb1d392a50f102d84ce76cbd936639b1f0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

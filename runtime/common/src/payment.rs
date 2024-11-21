@@ -114,6 +114,12 @@ where
 		}
 
 		let remaining_tx_fee = RD::deposit_reserve(who, call, total_fee)?;
+		log::error!(
+			"withdraw_fee: remaining_tx_fee: {:?}, total_fee: {:?}, tip: {:?}",
+			remaining_tx_fee,
+			total_fee,
+			tip
+		);
 		match C::withdraw(who, remaining_tx_fee, withdraw_reason, ExistenceRequirement::AllowDeath)
 		{
 			Ok(imbalance) => Ok(Some(imbalance)),

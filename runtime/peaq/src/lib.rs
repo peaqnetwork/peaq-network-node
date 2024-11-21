@@ -303,6 +303,14 @@ pub struct BaseFilter;
 impl Contains<RuntimeCall> for BaseFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		match call {
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls }) |
+			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls }) => {
+				calls.iter().all(|call| BaseFilter::contains(call))
+			},
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi { call, .. }) |
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) => {
+				BaseFilter::contains(call)
+			},
 			// Filter permission-less assets creation/destroying.
 			// Custom asset's `id` should fit in `u32` as not to mix with service assets.
 			RuntimeCall::Assets(pallet_assets::Call::create { id, .. }) =>
@@ -535,6 +543,58 @@ impl PeaqMultiCurrenciesPaymentConvert for PeaqCPC {
 // Force to deposit the security reserve from fee because of the esitmation gas fee fail
 pub struct PeaqReserveDeposit<T, C>(PhantomData<(T, C)>);
 
+impl<T, C> PeaqReserveDeposit<T, C>
+where
+	T: frame_system::Config<RuntimeCall = RuntimeCall, AccountId = AccountId>
+		+ pallet_transaction_payment::Config,
+	C: Currency<<T as frame_system::Config>::AccountId>,
+{
+	pub fn get_identifier_balance(call: &T::RuntimeCall) -> Vec<([u8; 8], Balance)> {
+		log::error!("get_identifier_balance call: {:?}", call);
+		let mut out = Vec::new();
+		match call {
+			RuntimeCall::Utility(pallet_utility::Call::batch {calls}) |
+			RuntimeCall::Utility(pallet_utility::Call::batch_all {calls}) => {
+				for call in calls {
+					let info = Self::get_identifier_balance(call);
+					if info.len() == 0 {
+						continue;
+					}
+					out.extend(info);
+				}
+			},
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi {call, maybe_timepoint, ..}) => {
+				match maybe_timepoint {
+					Some(_) => {
+						out.extend(Self::get_identifier_balance(call));
+					},
+					None => {}
+				}
+			},
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 {call, ..}) => {
+				out.extend(Self::get_identifier_balance(call));
+			},
+			RuntimeCall::PeaqDid(peaq_pallet_did::Call::add_attribute { .. }) => {
+				out.push((DIDReserveIdentifier::get(), DidStorageDepositBase::get()));
+			},
+			RuntimeCall::PeaqStorage(peaq_pallet_storage::Call::add_item { .. }) => {
+				out.push((StorageReserveIdentifier::get(), StorageDepositBase::get()));
+			},
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_role { .. }) |
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_user { .. }) |
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_permission { .. }) |
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_permission_to_role { .. }) |
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_group { .. }) |
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_group { .. }) |
+			RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_user_to_group { .. }) => {
+				out.push((RBACReserveIdentifier::get(), StorageDepositBase::get()));
+			},
+			_ => {},
+		}
+		out
+	}
+}
+
 impl<T, C> ReserveDeposit<T> for PeaqReserveDeposit<T, C>
 where
 	T: frame_system::Config<RuntimeCall = RuntimeCall, AccountId = AccountId>
@@ -548,32 +608,23 @@ where
 		call: &T::RuntimeCall,
 		total_fee: Self::Balance,
 	) -> Result<Self::Balance, TransactionValidityError> {
-		let (identifier, reserve) = match call {
-			RuntimeCall::PeaqDid(peaq_pallet_did::Call::add_attribute { .. }) =>
-				(DIDReserveIdentifier::get(), DidStorageDepositBase::get()),
-			| RuntimeCall::PeaqStorage(peaq_pallet_storage::Call::add_item { .. }) =>
-				(StorageReserveIdentifier::get(), StorageStorageDepositBase::get()),
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_role { .. })
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_user { .. })
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_permission { .. })
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_permission_to_role { .. })
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::add_group { .. })
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_role_to_group { .. })
-			| RuntimeCall::PeaqRbac(peaq_pallet_rbac::Call::assign_user_to_group { .. }) =>
-				(RBACReserveIdentifier::get(), RBACStorageDepositBase::get()),
-			_ => (DIDReserveIdentifier::get(), 0),
-		};
-		if total_fee < reserve {
-			return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into()));
+		let mut total_fee = total_fee;
+		for call_info in Self::get_identifier_balance(call) {
+			let (identifier, reserve) = call_info;
+			if total_fee < reserve {
+				return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into()));
+			}
+			if reserve == 0 {
+				continue;
+			}
+			match Balances::reserve_named(&identifier, who, reserve) {
+				Ok(_) => {
+					total_fee = total_fee.saturating_sub(reserve);
+				},
+				Err(_) => return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into())),
+			}
 		}
-		if reserve == 0 {
-			return Ok(total_fee);
-		}
-		match Balances::reserve_named(&identifier, &who, reserve)
-		{
-			Ok(_) => Ok(total_fee.saturating_sub(reserve)),
-			Err(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into())),
-		}
+		Ok(total_fee)
 	}
 }
 
@@ -597,7 +648,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DidStorageDepositBase: Balance = MILLICENTS * 500;
+	pub const DidStorageDepositBase: Balance = MILLICENTS / 10000000 * 555;
 	pub const DidStorageDepositPerByte: Balance = 0;
 }
 
