@@ -2950,17 +2950,20 @@ pub mod pallet {
 
 		/// Handles staking reward payout for previous session for one collator and their delegators
 		fn payout_collator() {
+			let mut reads = Weight::from_parts(0, 1);
+			let mut writes = Weight::from_parts(0, 1);
+
 			// if there's no previous round, i.e, genesis round, then skip
+			reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
 			if Self::round().current.is_zero() {
 				return
 			}
 
 			if let Some(payout_info) = DelayedPayoutInfo::<T>::get() {
-				let pot = Self::account_id();
-
 				if let Some((author, block_num)) =
 					CollatorBlocks::<T>::iter_prefix(payout_info.round).drain().next()
 				{
+					let pot = Self::account_id();
 					// get collator's staking info
 					if let Some(state) = AtStake::<T>::take(payout_info.round, author) {
 						// calculate reward for collator from previous round
@@ -2971,6 +2974,8 @@ pub mod pallet {
 							payout_info.total_issuance,
 						);
 						Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
+						reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
+						writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
 						// calculate reward for collator's delegates from previous round
 						let now_rewards = Self::get_delgators_reward_per_session(
@@ -2979,11 +2984,13 @@ pub mod pallet {
 							payout_info.total_stake,
 							payout_info.total_issuance,
 						);
+
+						let len = now_rewards.len().saturated_into::<u64>();
 						now_rewards.into_iter().for_each(|x| {
 							Self::do_reward(&pot, &x.owner, x.amount);
 						});
-
-						// [TODO] add weights
+						reads = reads.saturating_add(Weight::from_parts(len, 0));
+						writes = writes.saturating_add(Weight::from_parts(len, 0));
 					}
 				} else {
 					// Kill storage
@@ -3007,14 +3014,20 @@ pub mod pallet {
 					}
 				}
 			}
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
+				DispatchClass::Mandatory,
+			);
 		}
 
-		pub(crate) fn pot_issuance() -> BalanceOf<T> {
+		pub(crate) fn pot_issuance() -> (Weight, BalanceOf<T>) {
 			let pot = Self::account_id();
-
-			T::Currency::free_balance(&pot)
+			let weight = Weight::from_parts(1, 0);
+			let issuance = T::Currency::free_balance(&pot)
 				.checked_sub(&T::Currency::minimum_balance())
-				.unwrap_or_else(Zero::zero)
+				.unwrap_or_else(Zero::zero);
+
+			(weight, issuance)
 		}
 
 		/// Prepare delayed rewards for the next session
@@ -3026,28 +3039,38 @@ pub mod pallet {
 			collators: &[T::AccountId],
 			session_index: SessionIndex,
 		) {
+			let mut reads = Weight::from_parts(1_u64, 0);
+			let mut writes = Weight::from_parts(1_u64, 0);
+
 			// get updated RoundInfo
 			let round = <Round<T>>::get().current;
+
 			// take snapshot of these new collators' staking info
 			for collator in collators.iter() {
 				if let Some(collator_state) = CandidatePool::<T>::get(collator) {
 					<AtStake<T>>::insert(round, collator, collator_state);
+					reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
+					writes = reads.saturating_add(Weight::from_parts(1_u64, 0));
 				}
 			}
 
 			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
 			// this part
 			if session_index.is_zero() {
+				frame_system::Pallet::<T>::register_extra_weight_unchecked(
+					T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
+					DispatchClass::Mandatory,
+				);
 				log::info!("skipping calculation of delayed rewards at session 0");
-				return
+				return;
 			}
 
 			let old_round = round - 1;
-			// [TODO] what to do with this returned weight?
 			// Get total collator staking number of round that is ending
-			let (_, total_stake) = Self::get_total_collator_staking_num(old_round);
+			let (in_reads, total_stake) = Self::get_total_collator_staking_num(old_round);
 			// Get total issuance of round that is ending
-			let total_issuance = Self::pot_issuance();
+			let (issuance_weight, total_issuance) = Self::pot_issuance();
+			reads = reads.saturating_add(in_reads).saturating_add(issuance_weight);
 
 			// take snapshot of previous session's staking totals for payout calculation
 			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
@@ -3055,6 +3078,12 @@ pub mod pallet {
 				total_stake,
 				total_issuance,
 			});
+			writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
+
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
+				DispatchClass::Mandatory,
+			);
 		}
 	}
 

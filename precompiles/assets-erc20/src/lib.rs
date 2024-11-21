@@ -447,7 +447,7 @@ where
 		handle.record_log_costs_manual(3, 32)?;
 
 		let addr: H160 = beneficiary.into();
-		let amount = Self::u256_to_amount(amount).in_field("value")?;
+		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let beneficiary = Runtime::AddressMapping::into_account_id(addr);
@@ -481,7 +481,7 @@ where
 		handle.record_log_costs_manual(3, 32)?;
 
 		let addr: H160 = who.into();
-		let amount = Self::u256_to_amount(amount).in_field("value")?;
+		let amount = Self::u256_to_amount(amount).in_field("amount")?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let who = Runtime::AddressMapping::into_account_id(addr);

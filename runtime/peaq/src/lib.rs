@@ -171,7 +171,7 @@ pub mod currency {
 
 	pub const TRANSACTION_BYTE_FEE: Balance = GIGAWEI * SUPPLY_FACTOR;
 	pub const STORAGE_BYTE_FEE: Balance = 100 * MICROPEAQ * SUPPLY_FACTOR;
-	pub const WEIGHT_FEE: Balance = 40 * KILOWEI * SUPPLY_FACTOR;
+	pub const WEIGHT_FEE: Balance = 400 * KILOWEI * SUPPLY_FACTOR;
 
 	// pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	// 	items as Balance * 100 * MILLIPEAQ * SUPPLY_FACTOR + (bytes as Balance) * STORAGE_BYTE_FEE
@@ -204,7 +204,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 101,
+	spec_version: 104,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -273,6 +273,7 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+		// Explicit setup the block weights for the runtime.
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
 			weights.base_extrinsic = ExtrinsicBaseWeight::get();
@@ -450,7 +451,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = DOLLARS;
+	pub const ExistentialDeposit: u128 = 0;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
@@ -546,7 +547,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DidStorageDepositBase: Balance = DOLLARS / 10;
+	pub const DidStorageDepositBase: Balance = MILLICENTS * 500;
 	pub const DidStorageDepositPerByte: Balance = 0;
 }
 
@@ -666,18 +667,6 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PER_SECOND);
 
-pub struct PeaqGasWeightMapping;
-impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
-	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		let weight = gas.saturating_mul(WEIGHT_PER_GAS);
-		Weight::from_parts(weight, 0)
-	}
-
-	fn weight_to_gas(weight: Weight) -> u64 {
-		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
-	}
-}
-
 parameter_types! {
 	pub const EvmChainId: u64 = 3338;
 	pub BlockGasLimit: U256 = U256::from(
@@ -728,7 +717,7 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = TransactionPaymentAsGasPrice;
 	type WeightPerGas = WeightPerGas;
-	type GasWeightMapping = PeaqGasWeightMapping;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -759,39 +748,6 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
-}
-
-frame_support::parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
-
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
-}
-
-frame_support::parameter_types! {
-	pub DefaultBaseFeePerGas: U256 = U256::from(1024);
-	pub DefaultElasticity: Permill = Permill::zero();
-}
-
-pub struct BaseFeeThreshold;
-impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
-	fn lower() -> Permill {
-		Permill::zero()
-	}
-	fn ideal() -> Permill {
-		Permill::from_parts(500_000)
-	}
-	fn upper() -> Permill {
-		Permill::from_parts(1_000_000)
-	}
-}
-
-impl pallet_base_fee::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Threshold = BaseFeeThreshold;
-	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
-	type DefaultElasticity = DefaultElasticity;
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
@@ -880,9 +836,9 @@ pub mod staking {
 			/// Maximum number of delegators per collator at launch
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxDelegatorsPerCollator: u32 = 32;
-			/// Maximum 1 collator per delegator at launch, will be increased later
+			/// Maximum 8 collators per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorsPerDelegator: u32 = 1;
+			pub const MaxCollatorsPerDelegator: u32 = 8;
 			/// Minimum stake required to be reserved to be a collator is 50_000 * DOLLARS
 			pub const MinCollatorStake: Balance = 50_000 * DOLLARS;
 			/// Minimum stake required to be reserved to be a delegator is 100 * DOLLARS
@@ -1019,15 +975,25 @@ parameter_types! {
 	pub PeaqDepinIncentivisationAccount: AccountId = PotDepinIncentivisationId::get().into_account_truncating();
 }
 
+parameter_types! {
+	pub const RBACStorageDepositBase: Balance = MILLICENTS * 500;
+	pub const RBACStorageDepositPerByte: Balance = 0;
+}
+
 impl peaq_pallet_rbac::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type EntityId = RbacEntityId;
 	type BoundedDataLen = ConstU32<262144>;
 	type WeightInfo = peaq_pallet_rbac::weights::WeightInfo<Runtime>;
 	type Currency = Balances;
-	type StorageDepositBase = StorageDepositBase;
-	type StorageDepositPerByte = StorageDepositPerByte;
+	type StorageDepositBase = RBACStorageDepositBase;
+	type StorageDepositPerByte = RBACStorageDepositPerByte;
 	type ReserveIdentifier = RBACReserveIdentifier;
+}
+
+parameter_types! {
+	pub const StorageStorageDepositBase: Balance = MILLICENTS * 500;
+	pub const StorageStorageDepositPerByte: Balance = 0;
 }
 
 // Config the storage in pallets/storage
@@ -1036,8 +1002,8 @@ impl peaq_pallet_storage::Config for Runtime {
 	type WeightInfo = peaq_pallet_storage::weights::WeightInfo<Runtime>;
 	type BoundedDataLen = ConstU32<256>;
 	type Currency = Balances;
-	type StorageDepositBase = StorageDepositBase;
-	type StorageDepositPerByte = StorageDepositPerByte;
+	type StorageDepositBase = StorageStorageDepositBase;
+	type StorageDepositPerByte = StorageStorageDepositPerByte;
 	type ReserveIdentifier = StorageReserveIdentifier;
 }
 
@@ -1120,8 +1086,8 @@ construct_runtime!(
 		// EVM
 		Ethereum: pallet_ethereum = 11,
 		EVM: pallet_evm = 12,
-		DynamicFee: pallet_dynamic_fee = 13,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
+		// DynamicFee: pallet_dynamic_fee = 13,
+		// BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
 		InflationManager: inflation_manager::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
@@ -1167,6 +1133,7 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 type EventRecord = frame_system::EventRecord<
 	<Runtime as frame_system::Config>::RuntimeEvent,
@@ -1763,7 +1730,7 @@ impl_runtime_apis! {
 		}
 
 		fn elasticity() -> Option<Permill> {
-			Some(pallet_base_fee::Elasticity::<Runtime>::get())
+			None
 		}
 
 		fn gas_limit_multiplier_support() {}
