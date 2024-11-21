@@ -552,15 +552,12 @@ where
 	pub fn get_identifier_balance(call: &T::RuntimeCall) -> Vec<([u8; 8], Balance)> {
 		log::error!("get_identifier_balance call: {:?}", call);
 		let mut out = Vec::new();
+		// Should call related pallet's deposit directly, instead of putting here
 		match call {
 			RuntimeCall::Utility(pallet_utility::Call::batch {calls}) |
 			RuntimeCall::Utility(pallet_utility::Call::batch_all {calls}) => {
 				for call in calls {
-					let info = Self::get_identifier_balance(call);
-					if info.len() == 0 {
-						continue;
-					}
-					out.extend(info);
+					out.extend(Self::get_identifier_balance(call));
 				}
 			},
 			RuntimeCall::Multisig(pallet_multisig::Call::as_multi {call, maybe_timepoint, ..}) => {
@@ -575,7 +572,7 @@ where
 				out.extend(Self::get_identifier_balance(call));
 			},
 			RuntimeCall::PeaqDid(peaq_pallet_did::Call::add_attribute { .. }) => {
-				out.push((DIDReserveIdentifier::get(), DidStorageDepositBase::get()));
+				out.push((DIDReserveIdentifier::get(), PeaqDid::deposit_amount()));
 			},
 			RuntimeCall::PeaqStorage(peaq_pallet_storage::Call::add_item { .. }) => {
 				out.push((StorageReserveIdentifier::get(), StorageDepositBase::get()));
@@ -611,15 +608,17 @@ where
 		let mut total_fee = total_fee;
 		for call_info in Self::get_identifier_balance(call) {
 			let (identifier, reserve) = call_info;
-			if total_fee < reserve {
-				return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into()));
-			}
-			if reserve == 0 {
-				continue;
-			}
+			/*
+			 * if total_fee < reserve {
+			 *     return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into()));
+			 * }
+			 * if reserve == 0 {
+			 *     continue;
+			 * }
+			 */
 			match Balances::reserve_named(&identifier, who, reserve) {
 				Ok(_) => {
-					total_fee = total_fee.saturating_sub(reserve);
+					// total_fee = total_fee.saturating_sub(reserve);
 				},
 				Err(_) => return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment.into())),
 			}
@@ -648,7 +647,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DidStorageDepositBase: Balance = MILLICENTS / 10000000 * 555;
+	pub const DidStorageDepositBase: Balance = MILLICENTS * 500;
 	pub const DidStorageDepositPerByte: Balance = 0;
 }
 
