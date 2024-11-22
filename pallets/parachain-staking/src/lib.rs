@@ -167,8 +167,11 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, ExistenceRequirement::KeepAlive, Get,
-			LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion, WithdrawReasons,
+			tokens::{fungible::Inspect, Fortitude, Preservation},
+			Currency, EstimateNextSessionRotation,
+			ExistenceRequirement::KeepAlive,
+			Get, LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion,
+			WithdrawReasons,
 		},
 		BoundedVec, PalletId,
 	};
@@ -228,6 +231,7 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ ReservableCurrency<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ LockableCurrency<Self::AccountId, Balance = Self::CurrencyBalance>
+			+ Inspect<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ Eq;
 
 		/// Just the `Currency::Balance` type; we have this item to allow us to
@@ -2863,9 +2867,15 @@ pub mod pallet {
 		pub(crate) fn pot_issuance() -> (Weight, BalanceOf<T>) {
 			let pot = Self::account_id();
 			let weight = Weight::from_parts(1, 0);
-			let issuance = T::Currency::free_balance(&pot)
-				.checked_sub(&T::Currency::minimum_balance())
-				.unwrap_or_else(Zero::zero);
+			let ed = <T::Currency as frame_support::traits::fungible::Inspect<T::AccountId>>::minimum_balance();
+			let issuance = if ed == T::CurrencyBalance::from(0_u32) {
+				T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
+					// Avoid the pot complaint no balance there
+					.checked_sub(&T::CurrencyBalance::from(10_u32))
+					.unwrap_or_else(Zero::zero)
+			} else {
+				T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
+			};
 
 			(weight, issuance)
 		}
