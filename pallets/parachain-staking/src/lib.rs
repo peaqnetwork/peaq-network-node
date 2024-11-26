@@ -2938,10 +2938,11 @@ pub mod pallet {
 
 		// Get collators that didn't author blocks in previous round
 		fn get_collators_without_blocks(round: SessionIndex) {
-			let number_candidate = CandidatePool::<T>::iter().count();
+			let selected_candidates = Self::selected_candidates();
+			let number_candidate = selected_candidates.len();
 			let number_block_producer = CollatorBlocks::<T>::iter_prefix(round).count();
 			let number_faulty_collators = number_candidate - number_block_producer;
-			CandidatePool::<T>::iter().for_each(|(collator, _)| {
+			selected_candidates.into_iter().for_each(|collator| {
 				if !CollatorBlocks::<T>::contains_key(round, &collator) {
 					Self::slash_collator(collator, number_faulty_collators);
 				}
