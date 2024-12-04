@@ -148,9 +148,14 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v0.0.102 \
+1. Download the peaq-dev-raw chain spec file from the following link:
+https://drive.google.com/file/d/1LGpheKV2u2YcUOJxvraOzAusOScY1N-J/view?usp=drive_link
+2. Download the westend-local chain spec file from the following link:
+https://drive.google.com/file/d/1FitxoD4sxmcVugBz3MddxEHOGjrrBfFf/view?usp=drive_link
+3. Run command
+docker run -v peaq-dev-storage/chain-data -v "$(pwd)":/my-etc -p 9944:9944 peaq/parachain:peaq-dev-v0.0.102 \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-raw.json \
+--chain /my-etc/peaq-dev-raw.json \
 --base-path chain-data \
 --port 30333 \
 --rpc-port 9944 \
@@ -158,7 +163,7 @@ docker run -v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v
 --execution wasm \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-raw.json \
+--chain /my-etc/westend-local.json \
 --port 30343 \
 --rpc-port 9977
  ```
@@ -243,19 +248,20 @@ The folder .local is needed because that is where data such as session keys are 
 
 5. Now run the following script to start a peaq-network-node parachain that will connect to the polkadot relay chain running in peaq development environment:
 
+However, if you want to run the peaq-dev (agung) network, please remember to download the chain spec first
 ```bash
 # PEAQ-Dev env
 ./scripts/docker_run.sh \
 ./target/release/peaq-node \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-raw.json \
+--chain peaq-dev-raw.json \
 --base-path chain-data \
 --port 30333 \
 --rpc-port 9944 \
 --execution wasm \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-raw.json \
+--chain westend-local.json \
 --port 30343 \
 --rpc-port 9977
 ```
