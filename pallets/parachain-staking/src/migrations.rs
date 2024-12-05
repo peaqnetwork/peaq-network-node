@@ -2,15 +2,13 @@
 
 use crate::{
 	pallet::{Config, Pallet, OLD_STAKING_ID, STAKING_ID},
-	types::{AccountIdOf, Candidate, OldCandidate},
+	types::{Candidate, OldCandidate},
 	CandidatePool, ForceNewRound, Round,
 };
 use frame_support::{
-	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
-	storage_alias,
+	pallet_prelude::{GetStorageVersion, StorageVersion},
 	traits::{Get, LockableCurrency, WithdrawReasons},
 	weights::Weight,
-	Twox64Concat,
 };
 use pallet_balances::Locks;
 use sp_runtime::Permill;
@@ -34,9 +32,6 @@ mod upgrade {
 
 	use super::*;
 
-	#[storage_alias]
-	type CollatorBlock<T: Config> =
-		StorageMap<Pallet<T>, Twox64Concat, AccountIdOf<T>, u32, ValueQuery>;
 	/// Migration implementation that deletes the old reward rate config and changes the staking ID.
 	pub struct Migrate<T>(sp_std::marker::PhantomData<T>);
 
