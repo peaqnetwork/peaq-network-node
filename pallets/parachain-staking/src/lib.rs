@@ -524,7 +524,10 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
-			<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action()
+			// on_finalize weight
+			// At worst, we have to make 'MaxSelectedCandidates + 1' number of deletions from
+			// AtStake
+			T::DbWeight::get().reads_writes(5u64, (MaxSelectedCandidates::<T>::get() + 1).into())
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -2793,12 +2796,10 @@ pub mod pallet {
 		}
 
 		/// Handles staking reward payout for previous session for one collator and their delegators
+		/// At Worst: 5 DB Reads and 'MaxSelectedCandidate + 1' DB Writes
+		/// Complexity: O(n)
 		fn payout_collator() {
-			let mut reads = Weight::from_parts(0, 1);
-			let mut writes = Weight::from_parts(0, 1);
-
 			// if there's no previous round, i.e, genesis round, then skip
-			reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
 			if Self::round().current.is_zero() {
 				return
 			}
@@ -2818,8 +2819,6 @@ pub mod pallet {
 							payout_info.total_issuance,
 						);
 						Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-						reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-						writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
 						// calculate reward for collator's delegates from previous round
 						let now_rewards = Self::get_delgators_reward_per_session(
@@ -2829,12 +2828,9 @@ pub mod pallet {
 							payout_info.total_issuance,
 						);
 
-						let len = now_rewards.len().saturated_into::<u64>();
 						now_rewards.into_iter().for_each(|x| {
 							Self::do_reward(&pot, &x.owner, x.amount);
 						});
-						reads = reads.saturating_add(Weight::from_parts(len, 0));
-						writes = writes.saturating_add(Weight::from_parts(len, 0));
 					}
 				} else {
 					// Kill storage
@@ -2844,11 +2840,15 @@ pub mod pallet {
 					// remaining collators that didn't author blocks
 					// we do this in the block after the last payout is done to reduce computational
 					// cost for block with last payout
-					let cursor = AtStake::<T>::clear_prefix(payout_info.round, u32::MAX, None);
+					let cursor = AtStake::<T>::clear_prefix(
+						payout_info.round,
+						MaxSelectedCandidates::<T>::get(),
+						None,
+					);
 					if cursor.maybe_cursor.is_none() {
 						log::debug!("snapshot cleared for round {:?}", payout_info.round);
 					} else {
-						// This is an ambiguous case
+						// This is an obfuscated case
 						// We cannot just iterate till maybe_cursor is none, as each time the time
 						// complexity is O(n)
 						log::error!(
@@ -2858,10 +2858,6 @@ pub mod pallet {
 					}
 				}
 			}
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
 		}
 
 		pub(crate) fn pot_issuance() -> (Weight, BalanceOf<T>) {
@@ -2888,7 +2884,7 @@ pub mod pallet {
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &[T::AccountId],
 			session_index: SessionIndex,
-		) {
+		) -> Weight {
 			let mut reads = Weight::from_parts(1_u64, 0);
 			let mut writes = Weight::from_parts(1_u64, 0);
 
@@ -2907,12 +2903,7 @@ pub mod pallet {
 			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
 			// this part
 			if session_index.is_zero() {
-				frame_system::Pallet::<T>::register_extra_weight_unchecked(
-					T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-					DispatchClass::Mandatory,
-				);
-				log::info!("skipping calculation of delayed rewards at session 0");
-				return;
+				return T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time());
 			}
 
 			let old_round = round - 1;
@@ -2956,10 +2947,7 @@ pub mod pallet {
 			});
 			writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
+			T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time())
 		}
 	}
 
@@ -3015,15 +3003,11 @@ pub mod pallet {
 		fn end_session(_end_index: SessionIndex) {
 			let mut round = <Round<T>>::get();
 			let now = <frame_system::Pallet<T>>::block_number();
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads(2),
-				DispatchClass::Mandatory,
-			);
 
 			round.update(now);
 			<Round<T>>::put(round);
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().writes(1),
+				T::DbWeight::get().reads_writes(2, 1),
 				DispatchClass::Mandatory,
 			);
 
@@ -3036,7 +3020,11 @@ pub mod pallet {
 		/// calculate DelayedPaymentInfo if possible
 		fn start_session(start_index: SessionIndex) {
 			let new_validators: Vec<T::AccountId> = pallet_session::Pallet::<T>::validators();
-			Self::prepare_delayed_rewards(&new_validators, start_index);
+			let weight = Self::prepare_delayed_rewards(&new_validators, start_index);
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				weight.saturating_add(Weight::from_parts(1, 0)),
+				DispatchClass::Mandatory,
+			);
 		}
 	}
 
