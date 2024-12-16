@@ -525,9 +525,9 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
 			// on_finalize weight
-			// At worst, we have to make 'MaxSelectedCandidates + 1' number of deletions from
+			// At worst, we have to make 'MaxSelectedCandidates + 2' number of deletions from
 			// AtStake
-			T::DbWeight::get().reads_writes(5u64, (MaxSelectedCandidates::<T>::get() + 1).into())
+			T::DbWeight::get().reads_writes(6u64, (MaxSelectedCandidates::<T>::get() + 2).into())
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
