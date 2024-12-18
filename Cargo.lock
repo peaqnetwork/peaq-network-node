@@ -8796,6 +8796,8 @@ dependencies = [
  "pallet-insecure-randomness-collective-flip",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-preimage",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
