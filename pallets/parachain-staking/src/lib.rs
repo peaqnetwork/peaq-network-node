@@ -528,6 +528,9 @@ pub mod pallet {
 		/// Slashing has been enabled/disabled
 		/// \[new slashing status\]
 		SlashingEnabledChanged(bool),
+		/// A collator was kicked out of the candidate pool because of malicious behavior
+		/// \[collator's account]
+		CollatorKicked(T::AccountId),
 	}
 
 	#[pallet::hooks]
@@ -2844,109 +2847,38 @@ pub mod pallet {
 			T::PotId::get().into_account_truncating()
 		}
 
-		fn calculate_slash_amount(
-			stake: BalanceOf<T>,
-			number_faulty_collators: usize,
-		) -> BalanceOf<T> {
-			let slashing_factor = SlashingFactor::<T>::get();
-			slashing_factor.mul(stake).mul(number_faulty_collators.saturated_into()) % stake
-		}
-
-		fn apply_slash_delegators(
-			collator_account: &T::AccountId,
-			number_faulty_collators: usize,
-			stake_before_slash: &BalanceOf<T>,
-		) {
-			let mut collator =
-				CandidatePool::<T>::get(collator_account).expect("Collator must exist");
-			let collator_stake_before_slash = collator.total - collator.stake;
-			for i in 0..collator.delegators.len() {
-				let stake = collator.delegators[i].amount;
-				let slash_amount = Self::calculate_slash_amount(stake, number_faulty_collators);
-				let new_stake = stake.saturating_sub(slash_amount);
-				Self::reduce_lock(&collator.delegators[i].owner, slash_amount);
-
-				collator
-					.delegators
-					.try_upsert(Stake {
-						owner: collator.delegators[i].owner.clone(),
-						amount: new_stake,
-					})
-					.expect("Delegator must exist");
-				collator.total = collator.total.saturating_sub(slash_amount);
-
-				let mut new_delegator =
-					DelegatorState::<T>::get(collator.delegators[i].owner.clone())
-						.expect("Delegator must exist");
-				new_delegator.total = new_delegator.total.saturating_sub(slash_amount);
-				new_delegator
-					.delegations
-					.try_upsert(Stake { owner: collator_account.clone(), amount: new_stake })
-					.expect("Delegator must exist");
-				DelegatorState::<T>::insert(collator.delegators[i].owner.clone(), new_delegator);
-			}
-			Self::update_top_candidates(
-				collator_account.clone(),
-				*stake_before_slash,
-				collator_stake_before_slash,
-				collator.stake,
-				collator.total - collator.stake,
-			);
-			CandidatePool::<T>::insert(collator_account, collator);
-		}
-
-		fn reduce_lock(account: &T::AccountId, slash_amount: BalanceOf<T>) {
-			// Retrieve the current lock amount
-			let current_lock = Locks::<T>::get(account)
-				.into_iter()
-				.find(|lock| lock.id == STAKING_ID)
-				.map_or_else(Zero::zero, |lock| lock.amount);
-
-			// Calculate the new lock amount
-			let new_lock_amount = current_lock.saturating_sub(slash_amount.into());
-
-			// Set the new lock amount
-			T::Currency::set_lock(
-				STAKING_ID,
-				account,
-				new_lock_amount.into(),
-				WithdrawReasons::all(),
-			);
-		}
-
-		fn slash_collator(collator: T::AccountId, number_faulty_collators: usize) {
-			let pot = T::TreasuryPalletId::get().into_account_truncating();
-			let mut candidate = CandidatePool::<T>::get(&collator).expect("Collator must exist");
-			let slash_amount =
-				Self::calculate_slash_amount(candidate.stake, number_faulty_collators);
-
-			Self::reduce_lock(&collator, slash_amount);
-			let stake_before_slash = candidate.stake;
-			// Update Candidate Pool
-			candidate.stake = candidate.stake.saturating_sub(slash_amount);
-			candidate.total = candidate.total.saturating_sub(slash_amount);
-			CandidatePool::<T>::insert(&collator, candidate);
-			Self::apply_slash_delegators(&collator, number_faulty_collators, &stake_before_slash);
-
-			// Transfer the tokens to the pot
-			let result = T::Currency::transfer(&collator, &pot, slash_amount, KeepAlive);
-
-			if result.is_ok() {
-				Self::deposit_event(Event::CollatorSlashed(collator, slash_amount));
-			}
-		}
-
 		// Get collators that didn't author blocks in previous round
 		fn get_collators_without_blocks(round: SessionIndex) {
 			let selected_candidates = Self::selected_candidates();
-			let number_candidate = selected_candidates.len();
-			let number_block_producer = CollatorBlocks::<T>::iter_prefix(round).count();
-			let number_faulty_collators = number_candidate - number_block_producer;
 			selected_candidates.into_iter().for_each(|collator| {
 				if !CollatorBlocks::<T>::contains_key(round, &collator) {
-					Self::slash_collator(collator, number_faulty_collators);
+					Self::kickout_faulty_collator(collator);
 				}
 			});
+		}
+
+		fn kickout_faulty_collator(collator: T::AccountId) {
+			let state = CandidatePool::<T>::get(&collator).expect("Collator must exist");
+			let mut candidates = TopCandidates::<T>::get();
+			if (candidates.len() as u32) <= T::MinRequiredCollators::get() {
+				return;
+			}
+
+			if Self::remove_candidate(&collator, &state).is_err() {
+				log::error!("Failed to remove collator {:?}", collator);
+			}
+
+			if candidates
+				.remove(&Stake { owner: collator.clone(), amount: state.total })
+				.is_some()
+			{
+				// update top candidates
+				TopCandidates::<T>::put(candidates);
+				// update total amount at stake from scratch
+				Self::update_total_stake();
+			};
+
+			Self::deposit_event(Event::CollatorKicked(collator));
 		}
 
 		/// Handles staking reward payout for previous session for one collator and their delegators
