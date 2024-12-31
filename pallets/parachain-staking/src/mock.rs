@@ -128,7 +128,6 @@ impl pallet_aura::Config for Test {
 	type MaxAuthorities = MaxCollatorCandidates;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 
-	#[cfg(feature = "experimental")]
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 

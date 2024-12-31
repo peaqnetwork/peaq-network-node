@@ -352,7 +352,6 @@ impl pallet_aura::Config for Runtime {
 	// otherwise set to `false`
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 
-	#[cfg(feature = "experimental")]
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
@@ -416,10 +415,7 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = Moment;
-	#[cfg(feature = "experimental")]
 	type MinimumPeriod = ConstU64<0>;
-	#[cfg(not(feature = "experimental"))]
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
 	type OnTimestampSet = (Aura, BlockReward);
 }
@@ -745,13 +741,11 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
-	#[cfg(feature = "parameterized-consensus-hook")]
 	type ConsensusHook = ConsensusHook;
 	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
 	type WeightInfo = ();
 }
 
-#[cfg(feature = "parameterized-consensus-hook")]
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	Runtime,
 	RELAY_CHAIN_SLOT_DURATION_MILLIS,
@@ -2040,7 +2034,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	#[cfg(feature = "parameterized-consensus-hook")]
 	impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
 		fn can_build_upon(
 			included_hash: <Block as BlockT>::Hash,

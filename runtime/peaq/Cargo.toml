@@ -77,7 +77,7 @@ cumulus-primitives-core = { workspace = true, default-features = false }
 cumulus-primitives-utility = { workspace = true, default-features = false }
 cumulus-primitives-timestamp = { workspace = true, default-features = false }
 cumulus-primitives-aura = { workspace = true, default-features = false }
-cumulus-pallet-parachain-system = { workspace = true, default-features = false, features = ["parameterized-consensus-hook"] }
+cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 parachains-common = { workspace = true, default-features = false }
@@ -137,15 +137,7 @@ ethereum = {workspace = true, default-features = false}
 pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 
 [features]
-default = ["std", "aura", "parameterized-consensus-hook", "experimental"]
-
-parameterized-consensus-hook = [
-	"cumulus-pallet-parachain-system/parameterized-consensus-hook",
-]
-
-experimental = [
-	"pallet-aura/experimental",
-]
+default = ["std", "aura"]
 
 aura = []
 runtime-benchmarks = [
