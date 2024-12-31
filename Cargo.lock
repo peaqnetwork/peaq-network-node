@@ -3404,7 +3404,7 @@ dependencies = [
 
 [[package]]
 name = "evm-tracing-events"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "environmental",
  "ethereum",
@@ -10030,7 +10030,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-rpc-primitives-txpool"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "ethereum",
  "parity-scale-codec",

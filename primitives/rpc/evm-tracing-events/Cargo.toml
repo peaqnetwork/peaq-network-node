@@ -5,7 +5,7 @@ edition = "2021"
 homepage = 'https://peaq.network/'
 license = "GPL-3.0-only"
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 environmental = { workspace = true, default-features = false }
