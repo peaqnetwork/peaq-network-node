@@ -8229,7 +8229,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-peaq-did"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm",
  "frame-support",
