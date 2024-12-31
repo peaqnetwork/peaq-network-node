@@ -3,7 +3,7 @@ name = "pallet-evm-precompile-peaq-storage"
 authors = [ "Peaq" ]
 description = "A Precompile Module for Frontier EVM that implements the PEAQ Storage standard."
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 # Peaq
