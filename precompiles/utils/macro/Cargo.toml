@@ -2,7 +2,7 @@
 name = "precompile-utils-macro"
 description = ""
 edition = "2021"
-version = "0.1.1"
+version = "0.1.2"
 
 [lib]
 proc-macro = true
@@ -13,7 +13,7 @@ path = "tests/tests.rs"
 
 [dependencies]
 case = "1.0"
-num_enum = { version = "0.5.3", default-features = false }
+num_enum = { version = "0.5.11", default-features = false }
 proc-macro2 = "1.0"
 quote = "1.0"
 sha3 = "0.10"
