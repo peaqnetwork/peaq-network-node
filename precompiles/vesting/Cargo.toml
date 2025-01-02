@@ -3,7 +3,7 @@ name = "pallet-evm-precompile-vesting"
 authors = [ "peaq" ]
 description = "A Precompile Module for Frontier EVM that implements the PEAQ Vesting standard."
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 # Peaq
