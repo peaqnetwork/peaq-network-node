@@ -8356,7 +8356,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-xtokens"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cumulus-primitives-core",
  "derive_more 0.99.17",
