@@ -144,6 +144,7 @@ where
 				asset_id,
 				who,
 				amount,
+				Preservation::Preserve,
 				Precision::Exact,
 				Fortitude::Polite,
 			);
@@ -173,7 +174,7 @@ where
 		} else {
 			// We cannot slash the token because it didn't implemnt that...
 			// If error happens, will return 0
-			MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite)
+			MultiCurrencies::burn_from(asset_id, who, amount, Preservation::Preserve, Precision::Exact, Fortitude::Polite)
 				.unwrap_or(Zero::zero())
 		}
 	}

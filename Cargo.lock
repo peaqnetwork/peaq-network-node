@@ -12620,7 +12620,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "4.0.0-polkadot-v1.7.2"
+version = "4.0.1-polkadot-stable2407"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
