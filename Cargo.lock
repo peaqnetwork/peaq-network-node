@@ -9464,7 +9464,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-evm-tracer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum-types",
  "evm",
