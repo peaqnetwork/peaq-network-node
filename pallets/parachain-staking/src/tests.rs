@@ -4018,3 +4018,106 @@ fn check_snapshot_is_cleared() {
 			assert_eq!(at_stake.len(), 0);
 		});
 }
+
+#[test]
+fn check_collator_kickout_without_slash() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10), (4, 10), (5, 10), (6, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 5);
+			assert_eq!(collator_blocks.len(), 2);
+			assert!(events().contains(&Event::CollatorKicked(3)));
+			roll_to(20, authors.clone());
+
+			assert_eq!(StakePallet::selected_candidates().contains(&1), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&2), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&3), false);
+			assert_eq!(StakePallet::selected_candidates().contains(&4), false);
+			assert_eq!(StakePallet::selected_candidates().contains(&5), false);
+			assert_eq!(StakePallet::selected_candidates().contains(&6), true);
+		});
+}
+
+#[test]
+fn check_no_slashing() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 3 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 3);
+			assert_eq!(collator_blocks.len(), 3);
+			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorKicked(_)) }));
+			roll_to(20, authors.clone());
+
+			assert_eq!(StakePallet::selected_candidates().contains(&1), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&2), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&3), true);
+		});
+}
+
+#[test]
+fn check_disable_slashing() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10), (4, 10), (5, 10), (6, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+			assert_ok!(StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 6);
+			assert_eq!(collator_blocks.len(), 2);
+			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorKicked(_)) }));
+			roll_to(20, authors.clone());
+
+			assert_eq!(StakePallet::selected_candidates().contains(&1), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&2), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&3), true);
+			assert_eq!(StakePallet::selected_candidates().contains(&4), false);
+			assert_eq!(StakePallet::selected_candidates().contains(&5), false);
+			assert_eq!(StakePallet::selected_candidates().contains(&6), false);
+		});
+}
