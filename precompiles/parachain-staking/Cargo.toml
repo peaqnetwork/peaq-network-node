@@ -10,6 +10,7 @@ authors = [ "Peaq" ]
 precompile-utils = { path = "../utils", default-features = false }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
+pallet-session = { workspace = true, default-features = false }
 
 # Substrate
 parity-scale-codec = { workspace = true, features = ["max-encoded-len"] }
@@ -36,7 +37,6 @@ precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
 pallet-timestamp = { workspace = true, features = [ "std" ] }
 scale-info = { workspace = true }
 pallet-authorship = { workspace = true, default-features = false }
-pallet-session = { workspace = true, default-features = false }
 
 [features]
 default = ["std", "experimental"]

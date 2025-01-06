@@ -167,8 +167,11 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
-			Currency, EstimateNextSessionRotation, ExistenceRequirement::KeepAlive, Get,
-			LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion, WithdrawReasons,
+			tokens::{fungible::Inspect, Fortitude, Preservation},
+			Currency, EstimateNextSessionRotation,
+			ExistenceRequirement::KeepAlive,
+			Get, LockIdentifier, LockableCurrency, ReservableCurrency, StorageVersion,
+			WithdrawReasons,
 		},
 		BoundedVec, PalletId,
 	};
@@ -228,6 +231,7 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ ReservableCurrency<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ LockableCurrency<Self::AccountId, Balance = Self::CurrencyBalance>
+			+ Inspect<Self::AccountId, Balance = Self::CurrencyBalance>
 			+ Eq;
 
 		/// Just the `Currency::Balance` type; we have this item to allow us to
@@ -533,7 +537,10 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
-			<T as crate::pallet::Config>::WeightInfo::on_initialize_no_action()
+			// on_finalize weight
+			// At worst, we have to make 'MaxSelectedCandidates + 2' number of deletions from
+			// AtStake
+			T::DbWeight::get().reads_writes(6u64, (MaxSelectedCandidates::<T>::get() + 2).into())
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -552,9 +559,10 @@ pub mod pallet {
 	}
 
 	/// The maximum number of collator candidates selected at each round.
+	/// precompiles will call this
 	#[pallet::storage]
 	#[pallet::getter(fn max_selected_candidates)]
-	pub(crate) type MaxSelectedCandidates<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type MaxSelectedCandidates<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// Current round number and next round scheduled transition.
 	#[pallet::storage]
@@ -588,9 +596,10 @@ pub mod pallet {
 	///
 	/// It maps from an account to its information.
 	/// Moreover, it counts the number of candidates.
+	/// Precompiles will call this structure to list all
 	#[pallet::storage]
 	#[pallet::getter(fn candidate_pool)]
-	pub(crate) type CandidatePool<T: Config> = CountedStorageMap<
+	pub type CandidatePool<T: Config> = CountedStorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -696,7 +705,6 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
 		pub max_candidate_stake: BalanceOf<T>,
-		pub slashing_factor: Permill,
 		pub slashing_enabled: bool,
 	}
 
@@ -705,7 +713,6 @@ pub mod pallet {
 			Self {
 				stakers: Default::default(),
 				max_candidate_stake: Default::default(),
-				slashing_factor: Permill::from_percent(10),
 				slashing_enabled: true,
 			}
 		}
@@ -2864,12 +2871,10 @@ pub mod pallet {
 		}
 
 		/// Handles staking reward payout for previous session for one collator and their delegators
+		/// At Worst: 5 DB Reads and 'MaxSelectedCandidate + 1' DB Writes
+		/// Complexity: O(n)
 		fn payout_collator() {
-			let mut reads = Weight::from_parts(0, 1);
-			let mut writes = Weight::from_parts(0, 1);
-
 			// if there's no previous round, i.e, genesis round, then skip
-			reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
 			if Self::round().current.is_zero() {
 				return
 			}
@@ -2889,8 +2894,6 @@ pub mod pallet {
 							payout_info.total_issuance,
 						);
 						Self::do_reward(&pot, &now_reward.owner, now_reward.amount);
-						reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-						writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
 						// calculate reward for collator's delegates from previous round
 						let now_rewards = Self::get_delgators_reward_per_session(
@@ -2900,12 +2903,9 @@ pub mod pallet {
 							payout_info.total_issuance,
 						);
 
-						let len = now_rewards.len().saturated_into::<u64>();
 						now_rewards.into_iter().for_each(|x| {
 							Self::do_reward(&pot, &x.owner, x.amount);
 						});
-						reads = reads.saturating_add(Weight::from_parts(len, 0));
-						writes = writes.saturating_add(Weight::from_parts(len, 0));
 					}
 				} else {
 					// Kill storage
@@ -2915,11 +2915,15 @@ pub mod pallet {
 					// remaining collators that didn't author blocks
 					// we do this in the block after the last payout is done to reduce computational
 					// cost for block with last payout
-					let cursor = AtStake::<T>::clear_prefix(payout_info.round, u32::MAX, None);
+					let cursor = AtStake::<T>::clear_prefix(
+						payout_info.round,
+						MaxSelectedCandidates::<T>::get(),
+						None,
+					);
 					if cursor.maybe_cursor.is_none() {
 						log::debug!("snapshot cleared for round {:?}", payout_info.round);
 					} else {
-						// This is an ambiguous case
+						// This is an obfuscated case
 						// We cannot just iterate till maybe_cursor is none, as each time the time
 						// complexity is O(n)
 						log::error!(
@@ -2929,18 +2933,20 @@ pub mod pallet {
 					}
 				}
 			}
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
 		}
 
 		pub(crate) fn pot_issuance() -> (Weight, BalanceOf<T>) {
 			let pot = Self::account_id();
 			let weight = Weight::from_parts(1, 0);
-			let issuance = T::Currency::free_balance(&pot)
-				.checked_sub(&T::Currency::minimum_balance())
-				.unwrap_or_else(Zero::zero);
+			let ed = <T::Currency as frame_support::traits::fungible::Inspect<T::AccountId>>::minimum_balance();
+			let issuance = if ed == T::CurrencyBalance::from(0_u32) {
+				T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
+					// Avoid the pot complaint no balance there
+					.checked_sub(&T::CurrencyBalance::from(10_u32))
+					.unwrap_or_else(Zero::zero)
+			} else {
+				T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
+			};
 
 			(weight, issuance)
 		}
@@ -2953,7 +2959,7 @@ pub mod pallet {
 		pub(crate) fn prepare_delayed_rewards(
 			collators: &[T::AccountId],
 			session_index: SessionIndex,
-		) {
+		) -> Weight {
 			let mut reads = Weight::from_parts(1_u64, 0);
 			let mut writes = Weight::from_parts(1_u64, 0);
 
@@ -2972,17 +2978,38 @@ pub mod pallet {
 			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
 			// this part
 			if session_index.is_zero() {
-				frame_system::Pallet::<T>::register_extra_weight_unchecked(
-					T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-					DispatchClass::Mandatory,
-				);
-				log::info!("skipping calculation of delayed rewards at session 0");
-				return;
+				return T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time());
 			}
 
 			let old_round = round - 1;
 			// Get total collator staking number of round that is ending
-			let (in_reads, total_stake) = Self::get_total_collator_staking_num(old_round);
+			let (in_reads, mut total_stake) = Self::get_total_collator_staking_num(old_round);
+
+			// Total stake cannot be zero if there are any authors noted for previous round.
+			// We expect this is the case when runtime upgrade for token-economy-v2 is done.
+			// As there was no snapshot for the collators of that round.
+			// TODO this case can be removed in later upgrades, after token-economy-v2 is installed.
+			if total_stake.is_zero() {
+				// there will be only 1 unfortunate author, as we force new round in runtime
+				// upgrade. But we iterate through all possible entities just in case.
+				CollatorBlocks::<T>::iter_prefix(old_round).for_each(|(collator, num)| {
+					// get author's state
+					if let Some(state) = CandidatePool::<T>::get(collator.clone()) {
+						let collator_total = T::CurrencyBalance::from(num)
+							.checked_mul(&state.total)
+							.unwrap_or_else(Zero::zero);
+						// calculate total stake in session
+						total_stake = total_stake.saturating_add(collator_total);
+						reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
+
+						// snapshot these collators
+						AtStake::<T>::insert(old_round, collator, state);
+						writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
+					};
+					reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
+				});
+			}
+
 			// Get total issuance of round that is ending
 			let (issuance_weight, total_issuance) = Self::pot_issuance();
 			reads = reads.saturating_add(in_reads).saturating_add(issuance_weight);
@@ -2995,10 +3022,7 @@ pub mod pallet {
 			});
 			writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time()),
-				DispatchClass::Mandatory,
-			);
+			T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time())
 		}
 	}
 
@@ -3054,15 +3078,11 @@ pub mod pallet {
 		fn end_session(_end_index: SessionIndex) {
 			let mut round = <Round<T>>::get();
 			let now = <frame_system::Pallet<T>>::block_number();
-			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().reads(2),
-				DispatchClass::Mandatory,
-			);
 
 			round.update(now);
 			<Round<T>>::put(round);
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::DbWeight::get().writes(1),
+				T::DbWeight::get().reads_writes(2, 1),
 				DispatchClass::Mandatory,
 			);
 
@@ -3075,7 +3095,11 @@ pub mod pallet {
 		/// calculate DelayedPaymentInfo if possible
 		fn start_session(start_index: SessionIndex) {
 			let new_validators: Vec<T::AccountId> = pallet_session::Pallet::<T>::validators();
-			Self::prepare_delayed_rewards(&new_validators, start_index);
+			let weight = Self::prepare_delayed_rewards(&new_validators, start_index);
+			frame_system::Pallet::<T>::register_extra_weight_unchecked(
+				weight.saturating_add(Weight::from_parts(1, 0)),
+				DispatchClass::Mandatory,
+			);
 		}
 	}
 

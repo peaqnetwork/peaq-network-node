@@ -12,7 +12,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
-	Perbill, Permill,
+	Perbill,
 };
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
@@ -133,7 +133,6 @@ fn configure_genesis(
 		parachain_staking: ParachainStakingConfig {
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
-			slashing_factor: Permill::from_percent(10),
 			slashing_enabled: true,
 		},
 		inflation_manager: Default::default(),

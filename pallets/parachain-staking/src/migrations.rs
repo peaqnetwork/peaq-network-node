@@ -2,13 +2,13 @@
 
 use crate::{
 	pallet::{Config, Pallet, OLD_STAKING_ID, STAKING_ID},
-	types::{AccountIdOf, Candidate, OldCandidate},
-	CandidatePool, ForceNewRound,
+	types::{Candidate, OldCandidate, AccountIdOf},
+	CandidatePool, ForceNewRound, Round,
 };
 use frame_support::{
 	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
-	storage_alias,
 	traits::{Get, LockableCurrency, WithdrawReasons},
+	storage_alias,
 	weights::Weight,
 	Twox64Concat,
 };
@@ -32,6 +32,7 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 }
 
 mod upgrade {
+
 	use super::*;
 	use crate::pallet::SlashingEnabled;
 
@@ -95,9 +96,16 @@ mod upgrade {
 					Versions::default() as u16
 				);
 
-				// force start new session
-				<ForceNewRound<T>>::put(true);
-				weight_writes += 1;
+				let round = Round::<T>::get();
+				let now = <frame_system::Pallet<T>>::block_number();
+				weight_reads += 2;
+				// Force new round if round wasn't about to be rotated anyway
+				if !round.should_update(now) {
+					// force start new session
+					<ForceNewRound<T>>::put(true);
+					weight_writes += 1;
+					log::info!("Will force new round for token economy V2.");
+				}
 
 				log::info!("V11 Migrating Done.");
 			}

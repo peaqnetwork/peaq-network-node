@@ -818,17 +818,17 @@ pub mod staking {
 			pub const MaxDelegationsPerRound: u32 = 1;
 			/// Maximum 25 delegators per collator at launch, might be increased later
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxDelegatorsPerCollator: u32 = 25;
+			pub const MaxDelegatorsPerCollator: u32 = 48;
 			/// Maximum 8 collators per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
 			pub const MaxCollatorsPerDelegator: u32 = 8;
-			/// Minimum stake required to be reserved to be a collator is 32_000
+			/// Minimum stake required to be reserved to be a collator is 32000
 			pub const MinCollatorStake: Balance = 32_000;
 			/// Minimum stake required to be reserved to be a delegator is 20000
 			pub const MinDelegatorStake: Balance = 20_000;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 64;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
