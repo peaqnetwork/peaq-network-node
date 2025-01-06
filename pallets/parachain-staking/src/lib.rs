@@ -522,9 +522,6 @@ pub mod pallet {
 		/// A collator have been slashed
 		/// \[collator's account, amount slashed\]
 		CollatorSlashed(T::AccountId, BalanceOf<T>),
-		/// Slashing factor has been changed
-		/// \[new slashing factor\]
-		SlashingFactorChanged(Permill),
 		/// Slashing has been enabled/disabled
 		/// \[new slashing status\]
 		SlashingEnabledChanged(bool),
@@ -690,11 +687,6 @@ pub mod pallet {
 	pub(crate) type DelayedPayoutInfo<T: Config> =
 		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, OptionQuery>;
 
-	// Slashing factor that is going to be applied on the collator stake
-	#[pallet::storage]
-	#[pallet::getter(fn slashing_factor)]
-	pub(crate) type SlashingFactor<T> = StorageValue<_, Permill, ValueQuery>;
-
 	// Slashing enabled/disabled option
 	#[pallet::storage]
 	#[pallet::getter(fn slashing_enabled)]
@@ -723,7 +715,6 @@ pub mod pallet {
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			MaxCollatorCandidateStake::<T>::put(self.max_candidate_stake);
-			SlashingFactor::<T>::put(self.slashing_factor);
 			SlashingEnabled::<T>::put(self.slashing_enabled);
 
 			// Setup delegate & collators
@@ -2016,15 +2007,6 @@ pub mod pallet {
 			Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(
 				collator, commission,
 			));
-			Ok(())
-		}
-
-		#[pallet::call_index(20)]
-		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_slashing_factor())]
-		pub fn set_slashing_factor(origin: OriginFor<T>, factor: Permill) -> DispatchResult {
-			ensure_root(origin)?;
-			SlashingFactor::<T>::put(factor);
-			Self::deposit_event(Event::SlashingFactorChanged(factor));
 			Ok(())
 		}
 

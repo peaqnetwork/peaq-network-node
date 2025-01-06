@@ -33,7 +33,7 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 
 mod upgrade {
 	use super::*;
-	use crate::pallet::{SlashingEnabled, SlashingFactor};
+	use crate::pallet::SlashingEnabled;
 
 	#[storage_alias]
 	type CollatorBlock<T: Config> =
@@ -108,10 +108,6 @@ mod upgrade {
 					onchain_storage_version,
 					Versions::default() as u16
 				);
-
-				// set slashing factor to 10%
-				SlashingFactor::<T>::put(Permill::from_percent(10));
-				weight_writes += 1;
 
 				// enable slashing
 				SlashingEnabled::<T>::put(true);
