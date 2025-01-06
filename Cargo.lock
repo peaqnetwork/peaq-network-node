@@ -9345,7 +9345,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-dev-runtime"
-version = "4.0.0-polkadot-v1.7.2"
+version = "4.0.1-polkadot-stable2407"
 dependencies = [
  "address-unification",
  "cumulus-pallet-aura-ext",
@@ -9456,7 +9456,7 @@ dependencies = [
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
- "substrate-wasm-builder 17.0.0",
+ "substrate-wasm-builder 24.0.0",
  "xc-asset-config",
  "zenlink-protocol",
  "zenlink-protocol-runtime-api",
@@ -16637,13 +16637,22 @@ name = "substrate-wasm-builder"
 version = "24.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-stable2407#ec2dae1e932d19a6476b02e8da81b451232ceac2"
 dependencies = [
+ "array-bytes",
  "build-helper",
  "cargo_metadata",
  "console",
  "filetime",
+ "frame-metadata",
+ "merkleized-metadata",
+ "parity-scale-codec",
  "parity-wasm",
  "polkavm-linker",
+ "sc-executor 0.40.0",
+ "sp-core 34.0.0",
+ "sp-io 38.0.0",
  "sp-maybe-compressed-blob 11.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-stable2407)",
+ "sp-tracing 17.0.0",
+ "sp-version 37.0.0",
  "strum 0.26.3",
  "tempfile",
  "toml 0.8.8",

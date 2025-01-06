@@ -175,7 +175,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 pub struct SafeCallFilter;
 impl SafeCallFilter {
 	// 1. RuntimeCall::EVM(..) & RuntimeCall::Ethereum(..) have to be prohibited since we cannot
-	//    measure PoV size properly
+	//	measure PoV size properly
 	// 2. RuntimeCall::Contracts(..) can be allowed, but it hasn't been tested properly yet.
 
 	/// Checks whether the base (non-composite) call is allowed to be executed via `Transact` XCM
@@ -303,6 +303,11 @@ impl xcm_executor::Config for XcmConfig {
 	type Aliasers = Nothing;
 
 	type TransactionalProcessor = FrameTransactionalProcessor;
+
+	type HrmpNewChannelOpenRequestHandler = ();
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = PolkadotXcm;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -365,6 +370,11 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
+
+	type MaxActiveOutboundChannels = ConstU32<128>;
+	// Most on-chain HRMP channels are configured to use 102400 bytes of max message size, so we
+	// need to set the page size larger than that until we reduce the channel size on-chain.
+	type MaxPageSize = MessageQueueHeapSize;
 }
 
 parameter_types! {
@@ -473,4 +483,5 @@ impl pallet_message_queue::Config for Runtime {
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;
+	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }
