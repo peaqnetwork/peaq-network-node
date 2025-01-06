@@ -178,7 +178,6 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
-	type TreasuryPalletId = TreasuryPalletId;
 }
 
 impl_opaque_keys! {

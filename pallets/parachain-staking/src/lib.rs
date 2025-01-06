@@ -337,10 +337,6 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
-
-		/// The pallet id of the treasury pallet.
-		#[pallet::constant]
-		type TreasuryPalletId: Get<PalletId>;
 	}
 
 	#[pallet::error]
