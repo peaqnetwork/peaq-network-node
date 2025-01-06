@@ -34,7 +34,7 @@ use sp_runtime::{
 	impl_opaque_keys,
 	testing::UintAuthorityId,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	BuildStorage, Perbill, Permill,
+	BuildStorage, Perbill,
 };
 use sp_std::fmt::Debug;
 
@@ -206,7 +206,6 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 }
 
 impl parachain_staking::Config for Test {
@@ -230,7 +229,6 @@ impl parachain_staking::Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = parachain_staking::weights::WeightInfo<Test>;
-	type TreasuryPalletId = TreasuryPalletId;
 }
 
 impl_opaque_keys! {
@@ -335,7 +333,6 @@ impl ExtBuilder {
 		parachain_staking::GenesisConfig::<Test> {
 			stakers,
 			max_candidate_stake: 160_000_000 * DECIMALS,
-			slashing_factor: Permill::from_percent(10),
 			slashing_enabled: true,
 		}
 		.assimilate_storage(&mut t)
