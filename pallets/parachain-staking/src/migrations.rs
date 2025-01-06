@@ -2,13 +2,13 @@
 
 use crate::{
 	pallet::{Config, Pallet, OLD_STAKING_ID, STAKING_ID},
-	types::{Candidate, OldCandidate, AccountIdOf},
+	types::{AccountIdOf, Candidate, OldCandidate},
 	CandidatePool, ForceNewRound, Round,
 };
 use frame_support::{
 	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
-	traits::{Get, LockableCurrency, WithdrawReasons},
 	storage_alias,
+	traits::{Get, LockableCurrency, WithdrawReasons},
 	weights::Weight,
 	Twox64Concat,
 };
