@@ -5,7 +5,7 @@ edition = "2021"
 homepage = 'https://peaq.network/'
 license = "GPL-3.0-only"
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 ethereum-types = { workspace = true, default-features = true }
@@ -13,6 +13,7 @@ serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true, features = ["compat"] }
 jsonrpsee = { workspace = true, default-features = false, features = ["macros", "server"] }
+tower = { workspace = true, features = ["util"] }
 
 peaq-client-evm-tracing = { path = "../../evm-tracing" }
 peaq-rpc-core-types = { path = "../types" }
