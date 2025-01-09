@@ -9576,7 +9576,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-rpc-debug"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "ethereum-types",
