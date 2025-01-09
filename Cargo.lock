@@ -8922,7 +8922,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-client-evm-tracing"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum-types",
  "evm-tracing-events",
@@ -9192,7 +9192,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-node"
-version = "4.0.0-polkadot-v1.7.2"
+version = "4.0.1-polkadot-stable2407"
 dependencies = [
  "async-trait",
  "clap 4.5.18",
