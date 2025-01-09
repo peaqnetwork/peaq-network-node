@@ -5,7 +5,7 @@ edition = "2021"
 homepage = 'https://peaq.network/'
 license = "GPL-3.0-only"
 repository = 'https://github.com/peaqnetwork/peaq-network-node/'
-version = "0.6.0"
+version = "0.6.1"
 
 [dependencies]
 ethereum-types = { workspace = true, default-features = true }
@@ -16,3 +16,4 @@ ethereum = { workspace = true, default-features = true, features = [ "with-codec
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
 
 fc-rpc-core = { workspace = true, default-features = true }
+tower = { workspace = true, features = ["util"] }

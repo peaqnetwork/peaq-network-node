@@ -9554,7 +9554,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-rpc-core-txpool"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -9562,6 +9562,7 @@ dependencies = [
  "jsonrpsee",
  "serde",
  "serde_json",
+ "tower",
 ]
 
 [[package]]
