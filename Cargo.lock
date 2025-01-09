@@ -9637,7 +9637,7 @@ dependencies = [
 
 [[package]]
 name = "peaq-rpc-trace"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "ethereum",
  "ethereum-types",
