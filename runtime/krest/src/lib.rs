@@ -33,6 +33,7 @@ use peaq_pallet_rbac::{
 	},
 };
 use peaq_pallet_storage::traits::Storage;
+use sp_runtime::AccountId32;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use sp_runtime::traits::IdentityLookup;
 
@@ -341,6 +342,12 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 
 	type RuntimeTask = RuntimeTask;
+
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 impl pallet_aura::Config for Runtime {
@@ -406,6 +413,11 @@ impl pallet_contracts::Config for Runtime {
 	type Debug = ();
 	type Environment = ();
 	type Xcm = ();
+
+	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
+	type UploadOrigin = EnsureSigned<AccountId32>;
+	type InstantiateOrigin = EnsureSigned<AccountId32>;
+	type ApiVersion = ();
 }
 
 parameter_types! {
@@ -580,19 +592,10 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EitherOfDiverse<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-	>;
 	type RejectOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 	>;
-	//type RuntimeEvent = RuntimeEvent;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ();
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -620,7 +623,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
+			let authority_id = pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
 			return Some(H160::from_slice(&authority_id.encode()[4..24]));
 		}
 		None
@@ -1211,7 +1214,7 @@ impl_runtime_apis! {
 			Executive::execute_block(block)
 		}
 
-		fn initialize_block(header: &<Block as BlockT>::Header) {
+		fn initialize_block(header: &<Block as BlockT>::Header) -> sp_runtime::ExtrinsicInclusionMode {
 			Executive::initialize_block(header)
 		}
 	}
@@ -1336,11 +1339,11 @@ impl_runtime_apis! {
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 		fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(SLOT_DURATION)
+			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().to_vec()
+			pallet_aura::Authorities::<Runtime>::get().into_inner()
 		}
 	}
 
@@ -1712,7 +1715,7 @@ impl_runtime_apis! {
 		}
 
 		fn initialize_pending_block(header: &<Block as BlockT>::Header) {
-			Executive::initialize_block(header)
+			Executive::initialize_block(header);
 		}
 	}
 

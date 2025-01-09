@@ -348,6 +348,7 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 
 	type RuntimeTask = RuntimeTask;
+	// [TODO] Double check
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
 	type PreInherents = ();
@@ -419,6 +420,7 @@ impl pallet_contracts::Config for Runtime {
 	type Environment = ();
 	type Xcm = ();
 
+	// [TODO] Double check
 	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
 	type UploadOrigin = EnsureSigned<AccountId32>;
 	type InstantiateOrigin = EnsureSigned<AccountId32>;
@@ -599,7 +601,6 @@ impl pallet_treasury::Config for Runtime {
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 	>;
-	//type RuntimeEvent = RuntimeEvent;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
