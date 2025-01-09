@@ -10,6 +10,10 @@ use frame_support::{
 	parameter_types,
 	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
 };
+use frame_support::traits::fungible::Credit;
+use crate::NegativeImbalance;
+use frame_support::traits::Imbalance;
+use frame_support::traits::OnUnbalanced;
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::{DisabledParachainFee, MultiNativeAsset};
@@ -243,8 +247,23 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 	PeaqPotAccount,
 >;
 
+// [TODO] Think whether we can move it to the pallet BlockReward
+// Make the wrapper for the BlockReward
+pub struct BlockRewardWrapper;
+impl OnUnbalanced<Credit<AccountId, Balances>> for BlockRewardWrapper {
+    fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = Credit<AccountId, Balances>>) {
+        if let Some(fees) = fees_then_tips.next() {
+			<BlockReward as OnUnbalanced<_>>::on_unbalanced(NegativeImbalance::new(fees.peek()));
+        }
+    }
+
+    fn on_unbalanced(amount: Credit<AccountId, Balances>) {
+        Self::on_unbalanceds(Some(amount).into_iter());
+    }
+}
+
 pub type Trader = (
-	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockRewardWrapper>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
@@ -303,6 +322,11 @@ impl xcm_executor::Config for XcmConfig {
 	type Aliasers = Nothing;
 
 	type TransactionalProcessor = FrameTransactionalProcessor;
+
+	type HrmpNewChannelOpenRequestHandler = ();
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = PolkadotXcm;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -365,6 +389,11 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
+
+	type MaxActiveOutboundChannels = ConstU32<128>;
+	// Most on-chain HRMP channels are configured to use 102400 bytes of max message size, so we
+	// need to set the page size larger than that until we reduce the channel size on-chain.
+	type MaxPageSize = MessageQueueHeapSize;
 }
 
 parameter_types! {
@@ -473,4 +502,6 @@ impl pallet_message_queue::Config for Runtime {
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;
+
+	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }
