@@ -10,6 +10,7 @@ use sp_consensus_aura::{sr25519::AuthorityId as AuraId, AuraApi};
 use sp_runtime::traits::Header as HeaderT;
 use std::sync::Arc;
 
+// [TODO] Need to check whether we remove it or not
 pub enum BuildOnAccess<R> {
 	Uninitialized(Option<Box<dyn FnOnce() -> R + Send + Sync>>),
 	Initialized(R),
@@ -81,7 +82,7 @@ where
 
 pub struct Verifier<Client> {
 	pub client: Arc<Client>,
-	pub aura_verifier: BuildOnAccess<Box<dyn VerifierT<Block>>>,
+	pub aura_verifier: Box<dyn VerifierT<Block>>,
 	pub relay_chain_verifier: Box<dyn VerifierT<Block>>,
 }
 
@@ -92,7 +93,7 @@ where
 	Client::Api: AuraApi<Block, AuraId>,
 {
 	async fn verify(
-		&mut self,
+		&self,
 		block_import: BlockImportParams<Block>,
 	) -> Result<BlockImportParams<Block>, String> {
 		let block_hash = *block_import.header.parent_hash();

@@ -75,8 +75,8 @@ where
 		let (debug_task, debug_requester) = DebugHandler::task(
 			Arc::clone(&params.client),
 			Arc::clone(&params.substrate_backend),
-			match params.frontier_backend.as_ref() {
-				fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
+			match *params.frontier_backend {
+				fc_db::Backend::KeyValue(ref b) => b.clone(),
 			},
 			Arc::clone(&permit_pool),
 			Arc::clone(&params.overrides),

@@ -7,14 +7,17 @@ use cumulus_client_service::{
 	prepare_node_config, start_relay_chain_tasks, BuildNetworkParams, DARecoveryProfile,
 	StartRelayChainTasksParams,
 };
+use sc_network::NetworkBackend;
 use cumulus_primitives_core::{
 	relay_chain::{CollatorPair, ValidationCode},
 	ParaId,
 };
+use sp_runtime::{traits::Block as BlockT};
 use sc_client_api::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use fc_rpc::StorageOverrideHandler;
 
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
@@ -81,7 +84,7 @@ pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::P
 pub fn open_frontier_backend<C, BE>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<fc_db::Backend<Block>, String>
+) -> Result<fc_db::Backend<Block, C>, String>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
@@ -90,7 +93,7 @@ where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
 {
-	let frontier_backend = fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
+	let frontier_backend = fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block, C>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
 			source: match config.database {
@@ -139,7 +142,7 @@ pub fn new_partial<RuntimeApi, BIQ>(
 			Option<FilterPool>,
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
-			Arc<fc_db::Backend<Block>>,
+			Arc<fc_db::Backend<Block, FullClient<RuntimeApi>>>,
 			FeeHistoryCache,
 		),
 	>,
@@ -276,7 +279,7 @@ async fn build_relay_chain_interface(
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[allow(clippy::too_many_arguments)]
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC>(
+async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC, Net>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
@@ -339,6 +342,7 @@ where
 		ParaId,
 		CollatorPair,
 	) -> Result<(), sc_service::Error>,
+	Net: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
 	let params = new_partial::<RuntimeApi, BIQ>(
@@ -373,7 +377,7 @@ where
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
-	let network_config = FullNetworkConfiguration::new(&parachain_config.network);
+	let network_config = FullNetworkConfiguration::<_, _, Net>::new(&parachain_config.network);
 	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		cumulus_client_service::build_network(BuildNetworkParams {
 			parachain_config: &parachain_config,
@@ -388,9 +392,8 @@ where
 		})
 		.await?;
 
+	let overrides = Arc::new(StorageOverrideHandler::new(client.clone()));
 	let fee_history_limit = rpc_config.fee_history_limit;
-
-	let overrides = fc_storage::overrides_handle(client.clone());
 
 	let pubsub_notification_sinks: Arc<
 		fc_mapping_sync::EthereumBlockNotificationSinks<
@@ -410,7 +413,7 @@ where
 				client.clone(),
 				backend.clone(),
 				overrides.clone(),
-				Arc::new(b.clone()),
+				b.clone(),
 				3,
 				0,
 				fc_mapping_sync::SyncStrategy::Parachain,
@@ -438,7 +441,8 @@ where
 		Some("frontier"),
 		EthTask::fee_history_task(
 			Arc::clone(&client),
-			Arc::clone(&overrides),
+			// [TODO] Double check
+			overrides.clone(),
 			fee_history_cache.clone(),
 			fee_history_limit,
 		),
@@ -499,8 +503,8 @@ where
 				sync: sync.clone(),
 				filter_pool: filter_pool.clone(),
 				ethapi_cmd: ethapi_cmd.clone(),
-				frontier_backend: match frontier_backend.as_ref() {
-					fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
+				frontier_backend: match &*frontier_backend {
+					fc_db::Backend::KeyValue(b) => b.clone(),
 				},
 				backend: backend.clone(),
 				command_sink: None,
@@ -695,7 +699,8 @@ where
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
 {
-	start_contracts_node_impl::<RuntimeApi, _, _>(
+	// [TODO] NetworkBackendType::Litep2p/NetworkBackendType::Libp2p, need to refine
+	start_contracts_node_impl::<RuntimeApi, _, _, sc_network::NetworkWorker<_, _>>(
 		parachain_config,
 		polkadot_config,
 		collator_options,
@@ -775,8 +780,9 @@ where
 				client.clone(),
 			);
 
+			// [TODO] Found other didn't use async_arua::run, need to refine
 			let fut =
-				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _, _>(async_aura::Params {
+				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _>(async_aura::Params {
 					create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 					block_import: block_import.clone(),
 					para_client: client.clone(),
@@ -785,12 +791,10 @@ where
 					code_hash_provider: move |block_hash| {
 						client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
 					},
-					sync_oracle: sync_oracle.clone(),
 					keystore,
 					collator_key,
 					para_id,
 					overseer_handle,
-					slot_duration,
 					relay_chain_slot_duration: Duration::from_secs(6),
 					proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
 					collator_service,
