@@ -10,6 +10,10 @@ use frame_support::{
 	parameter_types,
 	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
 };
+use frame_support::traits::fungible::Credit;
+use crate::NegativeImbalance;
+use frame_support::traits::Imbalance;
+use frame_support::traits::OnUnbalanced;
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::{DisabledParachainFee, MultiNativeAsset};
@@ -243,8 +247,23 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 	PeaqPotAccount,
 >;
 
+// [TODO] Think whether we can move it to the pallet BlockReward
+// Make the wrapper for the BlockReward
+pub struct BlockRewardWrapper;
+impl OnUnbalanced<Credit<AccountId, Balances>> for BlockRewardWrapper {
+    fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = Credit<AccountId, Balances>>) {
+        if let Some(fees) = fees_then_tips.next() {
+			<BlockReward as OnUnbalanced<_>>::on_unbalanced(NegativeImbalance::new(fees.peek()));
+        }
+    }
+
+    fn on_unbalanced(amount: Credit<AccountId, Balances>) {
+        Self::on_unbalanceds(Some(amount).into_iter());
+    }
+}
+
 pub type Trader = (
-	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockRewardWrapper>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
