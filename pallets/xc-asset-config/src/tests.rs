@@ -372,6 +372,7 @@ fn incompatible_versioned_multilocations_are_not_ok() {
 	ExternalityBuilder::build().execute_with(|| {
 		// Location that cannot be converted from v2 to v4
 		// all v3 are compatible with v4
+		#[allow(deprecated)]
 		let incompatible_asset_location = xcm::v2::MultiLocation {
 			parents: 1,
 			interior: xcm::v2::Junctions::X1(xcm::v2::Junction::GeneralKey(
