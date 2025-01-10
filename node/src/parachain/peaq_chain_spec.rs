@@ -36,17 +36,17 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenSymbol".into(), "PEAQ".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-    Ok(ChainSpec::builder(
+	Ok(ChainSpec::builder(
 		wasm_binary,
-        Extensions {
+		Extensions {
 			bad_blocks: Default::default(),
-            relay_chain: "polkadot-local".into(),
-            para_id: para_id,
-        },
-    )
-    .with_name("peaq-network")
-    .with_id("peaq-local")
-    .with_chain_type(ChainType::Local)
+			relay_chain: "polkadot-local".into(),
+			para_id,
+		},
+	)
+	.with_name("peaq-network")
+	.with_id("peaq-local")
+	.with_chain_type(ChainType::Local)
 	.with_genesis_config_patch(configure_genesis(
 		// stakers
 		vec![(

@@ -752,12 +752,11 @@ where
 			overrides.current_transaction_statuses(substrate_hash),
 		) {
 			(Some(a), Some(b)) => (a, b),
-			_ => {
+			_ =>
 				return Err(format!(
 					"Failed to get Ethereum block data for Substrate block {}",
 					substrate_hash
-				))
-			}
+				)),
 		};
 
 		let eth_block_hash = eth_block.header.hash();

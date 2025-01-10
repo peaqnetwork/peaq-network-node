@@ -33,9 +33,8 @@ use peaq_pallet_rbac::{
 	},
 };
 use peaq_pallet_storage::traits::Storage;
-use sp_runtime::AccountId32;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use sp_runtime::traits::IdentityLookup;
+use sp_runtime::{traits::IdentityLookup, AccountId32};
 
 use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
 use smallvec::smallvec;
@@ -647,7 +646,8 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
+			let authority_id =
+				pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
 			return Some(H160::from_slice(&authority_id.encode()[4..24]));
 		}
 		None

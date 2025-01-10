@@ -1007,8 +1007,8 @@ fn batch_is_not_callable_by_dummy_code() {
 				Err(DispatchErrorWithPostInfo {
 					error: DispatchError::Module(ModuleError { message: Some(err_msg), .. }),
 					..
-                }) => println!("MESSAGE {:?}", err_msg),
-                _ => println!("expected error 'TransactionMustComeFromEOA'"),
+				}) => println!("MESSAGE {:?}", err_msg),
+				_ => println!("expected error 'TransactionMustComeFromEOA'"),
 			}
 		})
 }

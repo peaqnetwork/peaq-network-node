@@ -54,17 +54,13 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenSymbol".into(), "AGUNG".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-    Ok(ChainSpec::builder(
+	Ok(ChainSpec::builder(
 		wasm_binary,
-        Extensions {
-			bad_blocks: Default::default(),
-            relay_chain: "rococo-local".into(),
-            para_id: para_id,
-        },
-    )
-    .with_name("peaq-dev")
-    .with_id("dev-testnet")
-    .with_chain_type(ChainType::Development)
+		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
+	)
+	.with_name("peaq-dev")
+	.with_id("dev-testnet")
+	.with_chain_type(ChainType::Development)
 	.with_genesis_config_patch(configure_genesis(
 		// stakers
 		vec![(
@@ -86,8 +82,8 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		],
 		para_id.into(),
 	))
-    .with_properties(properties)
-    .build())
+	.with_properties(properties)
+	.build())
 }
 
 fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {

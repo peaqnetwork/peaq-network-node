@@ -7,17 +7,17 @@ use cumulus_client_service::{
 	prepare_node_config, start_relay_chain_tasks, BuildNetworkParams, DARecoveryProfile,
 	StartRelayChainTasksParams,
 };
-use sc_network::NetworkBackend;
 use cumulus_primitives_core::{
 	relay_chain::{CollatorPair, ValidationCode},
 	ParaId,
 };
-use sp_runtime::{traits::Block as BlockT};
+use fc_rpc::StorageOverrideHandler;
 use sc_client_api::{AuxStore, Backend, StateBackend, StorageProvider};
+use sc_network::NetworkBackend;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
-use fc_rpc::StorageOverrideHandler;
+use sp_runtime::traits::Block as BlockT;
 
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
@@ -628,40 +628,36 @@ where
 	let client2 = client.clone();
 
 	let aura_verifier = Box::new(cumulus_client_consensus_aura::build_verifier::<
-			sp_consensus_aura::sr25519::AuthorityPair,
-			_,
-			_,
-			_,
-		>(cumulus_client_consensus_aura::BuildVerifierParams {
-			client: client2.clone(),
-			create_inherent_data_providers: move |parent_hash, _| {
-				let cidp_client = client2.clone();
-				async move {
-					let time = sp_timestamp::InherentDataProvider::from_system_time();
-                	let slot_duration =
-                	    cumulus_client_consensus_aura::slot_duration_at(&*cidp_client, parent_hash)?;
-					let slot =
+		sp_consensus_aura::sr25519::AuthorityPair,
+		_,
+		_,
+		_,
+	>(cumulus_client_consensus_aura::BuildVerifierParams {
+		client: client2.clone(),
+		create_inherent_data_providers: move |parent_hash, _| {
+			let cidp_client = client2.clone();
+			async move {
+				let time = sp_timestamp::InherentDataProvider::from_system_time();
+				let slot_duration =
+					cumulus_client_consensus_aura::slot_duration_at(&*cidp_client, parent_hash)?;
+				let slot =
 						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 							*time,
 							slot_duration,
 							);
-					let dynamic_fee =
-						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+				let dynamic_fee =
+					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-					Ok((slot, time, dynamic_fee))
-				}
-			},
-			telemetry: telemetry_handle,
-		}));
+				Ok((slot, time, dynamic_fee))
+			}
+		},
+		telemetry: telemetry_handle,
+	}));
 
 	let relay_chain_verifier =
 		Box::new(RelayChainVerifier::new(client.clone(), |_, _| async { Ok(()) })) as Box<_>;
 
-	let verifier = Verifier {
-		client,
-		relay_chain_verifier,
-		aura_verifier,
-	};
+	let verifier = Verifier { client, relay_chain_verifier, aura_verifier };
 
 	let registry = config.prometheus_registry();
 	let spawner = task_manager.spawn_essential_handle();

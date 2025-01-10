@@ -206,10 +206,7 @@ fn execute_fails_if_called_by_smart_contract() {
 			);
 			pallet_evm::AccountCodesMetadata::<Runtime>::insert(
 				H160::from(MockPeaqAccount::Alice),
-				pallet_evm::CodeMetadata {
-					size: 10,
-					hash: sp_core::H256::default(),
-				},
+				pallet_evm::CodeMetadata { size: 10, hash: sp_core::H256::default() },
 			);
 
 			let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();

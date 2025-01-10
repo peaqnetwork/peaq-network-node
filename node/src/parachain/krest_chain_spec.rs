@@ -36,17 +36,13 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	properties.insert("tokenSymbol".into(), "KREST".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-    Ok(ChainSpec::builder(
+	Ok(ChainSpec::builder(
 		wasm_binary,
-        Extensions {
-			bad_blocks: Default::default(),
-            relay_chain: "kusama-local".into(),
-            para_id: para_id,
-        },
-    )
-    .with_name("krest-network")
-    .with_id("krest-local")
-    .with_chain_type(ChainType::Local)
+		Extensions { bad_blocks: Default::default(), relay_chain: "kusama-local".into(), para_id },
+	)
+	.with_name("krest-network")
+	.with_id("krest-local")
+	.with_chain_type(ChainType::Local)
 	.with_genesis_config_patch(configure_genesis(
 		// stakers
 		vec![(
@@ -75,8 +71,8 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 		],
 		para_id.into(),
 	))
-    .with_properties(properties)
-    .build())
+	.with_properties(properties)
+	.build())
 }
 
 /// Configure initial storage state for FRAME modules.
@@ -94,44 +90,44 @@ fn configure_genesis(
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
 	serde_json::json!({
-        "parachainInfo": {
-            "parachainId": parachain_id,
-        },
-        "balances": {
-            "balances": endowed_accounts.iter().cloned().map(|k| (k, 1u128 << 78)).collect::<Vec<_>>(),
-        },
-        "session": {
-            "keys": initial_authorities.iter().map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone()))).collect::<Vec<_>>(),
-        },
-        "parachainStaking": {
-            "stakers": stakers,
-            "maxCandidateStake": staking::MAX_COLLATOR_STAKE,
-        },
-        "blockReward": {
-            "rewardConfig": {
-                "treasuryPercent": Perbill::from_percent(25),
-                "collatorsDelegatorsPercent": Perbill::from_percent(40),
-                "coretimePercent": Perbill::from_percent(10),
-                "subsidizationPoolPercent": Perbill::from_percent(5),
-                "depinStakingPercent": Perbill::from_percent(5),
-                "depinIncentivizationPercent": Perbill::from_percent(15),
-            },
-        },
-        "sudo": {
-            "key": Some(root_key),
-        },
-        "evm": {
-            "accounts": PeaqPrecompiles::<Runtime>::used_addresses().map(|addr| {
-                (addr, GenesisAccount {
-                    nonce: Default::default(),
-                    balance: Default::default(),
-                    storage: Default::default(),
-                    code: revert_bytecode.clone(),
-                })
-            }).collect::<Vec<_>>(),
-        },
-        "polkadotXcm": {
-            "safeXcmVersion": Some(SAFE_XCM_VERSION),
-        },
+		"parachainInfo": {
+			"parachainId": parachain_id,
+		},
+		"balances": {
+			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u128 << 78)).collect::<Vec<_>>(),
+		},
+		"session": {
+			"keys": initial_authorities.iter().map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone()))).collect::<Vec<_>>(),
+		},
+		"parachainStaking": {
+			"stakers": stakers,
+			"maxCandidateStake": staking::MAX_COLLATOR_STAKE,
+		},
+		"blockReward": {
+			"rewardConfig": {
+				"treasuryPercent": Perbill::from_percent(25),
+				"collatorsDelegatorsPercent": Perbill::from_percent(40),
+				"coretimePercent": Perbill::from_percent(10),
+				"subsidizationPoolPercent": Perbill::from_percent(5),
+				"depinStakingPercent": Perbill::from_percent(5),
+				"depinIncentivizationPercent": Perbill::from_percent(15),
+			},
+		},
+		"sudo": {
+			"key": Some(root_key),
+		},
+		"evm": {
+			"accounts": PeaqPrecompiles::<Runtime>::used_addresses().map(|addr| {
+				(addr, GenesisAccount {
+					nonce: Default::default(),
+					balance: Default::default(),
+					storage: Default::default(),
+					code: revert_bytecode.clone(),
+				})
+			}).collect::<Vec<_>>(),
+		},
+		"polkadotXcm": {
+			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		},
 	})
 }

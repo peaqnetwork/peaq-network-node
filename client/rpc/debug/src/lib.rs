@@ -27,8 +27,8 @@ use tokio::{
 
 use ethereum_types::H256;
 use fc_rpc::{frontier_backend_client, internal_err};
-use fp_rpc::EthereumRuntimeRPCApi;
 use fc_storage::StorageOverride;
+use fp_rpc::EthereumRuntimeRPCApi;
 use peaq_client_evm_tracing::{formatters::ResponseFormatter, types::single};
 use peaq_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use peaq_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
@@ -324,9 +324,7 @@ where
 		// Get parent blockid.
 		let parent_block_hash = *header.parent_hash();
 
-		let statuses = overrides
-			.current_transaction_statuses(hash)
-			.unwrap_or_default();
+		let statuses = overrides.current_transaction_statuses(hash).unwrap_or_default();
 
 		// Known ethereum transaction hashes.
 		let eth_tx_hashes: Vec<_> = statuses.iter().map(|t| t.transaction_hash).collect();
