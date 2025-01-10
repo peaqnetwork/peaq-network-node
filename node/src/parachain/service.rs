@@ -93,7 +93,7 @@ where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
 {
-	let frontier_backend = fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block, C>::new(
+	let frontier_backend = fc_db::Backend::KeyValue(Arc::new(fc_db::kv::Backend::<Block, C>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
 			source: match config.database {
@@ -112,7 +112,7 @@ where
 					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
 			},
 		},
-	)?);
+	)?));
 
 	Ok(frontier_backend)
 }
@@ -627,32 +627,32 @@ where
 {
 	let client2 = client.clone();
 
-	let aura_verifier = move || {
-		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client2).unwrap();
-
-		Box::new(cumulus_client_consensus_aura::build_verifier::<
+	let aura_verifier = Box::new(cumulus_client_consensus_aura::build_verifier::<
 			sp_consensus_aura::sr25519::AuthorityPair,
 			_,
 			_,
 			_,
 		>(cumulus_client_consensus_aura::BuildVerifierParams {
 			client: client2.clone(),
-			create_inherent_data_providers: move |_, _| async move {
-				let time = sp_timestamp::InherentDataProvider::from_system_time();
+			create_inherent_data_providers: move |parent_hash, _| {
+				let cidp_client = client2.clone();
+				async move {
+					let time = sp_timestamp::InherentDataProvider::from_system_time();
+                	let slot_duration =
+                	    cumulus_client_consensus_aura::slot_duration_at(&*cidp_client, parent_hash)?;
+					let slot =
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+							*time,
+							slot_duration,
+							);
+					let dynamic_fee =
+						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-				let slot =
-					sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-						*time,
-						slot_duration,
-						);
-				let dynamic_fee =
-					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-				Ok((slot, time, dynamic_fee))
+					Ok((slot, time, dynamic_fee))
+				}
 			},
 			telemetry: telemetry_handle,
-		})) as Box<_>
-	};
+		}));
 
 	let relay_chain_verifier =
 		Box::new(RelayChainVerifier::new(client.clone(), |_, _| async { Ok(()) })) as Box<_>;
@@ -660,7 +660,7 @@ where
 	let verifier = Verifier {
 		client,
 		relay_chain_verifier,
-		aura_verifier: BuildOnAccess::Uninitialized(Some(Box::new(aura_verifier))),
+		aura_verifier,
 	};
 
 	let registry = config.prometheus_registry();

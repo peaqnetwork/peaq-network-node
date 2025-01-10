@@ -104,7 +104,7 @@ where
 			.has_api::<dyn AuraApi<Block, AuraId>>(block_hash)
 			.unwrap_or(false)
 		{
-			self.aura_verifier.get_mut().verify(block_import).await
+			self.aura_verifier.verify(block_import).await
 		} else {
 			self.relay_chain_verifier.verify(block_import).await
 		}

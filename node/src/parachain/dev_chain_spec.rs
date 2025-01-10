@@ -16,7 +16,7 @@ use sp_runtime::{
 };
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -51,52 +51,43 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "PEAQ".into());
+	properties.insert("tokenSymbol".into(), "AGUNG".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-	#[allow(deprecated)]
-	Ok(ChainSpec::from_genesis(
-		"peaq-dev",
-		"dev-testnet",
-		ChainType::Development,
-		move || {
-			configure_genesis(
-				// stakers
-				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					None,
-					2 * staking::MinCollatorStake::get(),
-				)],
-				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice")],
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				],
-				para_id.into(),
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// Fork ID
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
-		// code
+    Ok(ChainSpec::builder(
 		wasm_binary,
+        Extensions {
+			bad_blocks: Default::default(),
+            relay_chain: "rococo-local".into(),
+            para_id: para_id,
+        },
+    )
+    .with_name("peaq-dev")
+    .with_id("dev-testnet")
+    .with_chain_type(ChainType::Development)
+	.with_genesis_config_patch(configure_genesis(
+		// stakers
+		vec![(
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			None,
+			2 * staking::MinCollatorStake::get(),
+		)],
+		// Initial PoA authorities
+		vec![authority_keys_from_seed("Alice")],
+		// Sudo account
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
+		// Pre-funded accounts
+		vec![
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+		],
+		para_id.into(),
 	))
+    .with_properties(properties)
+    .build())
 }
 
 fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
@@ -110,82 +101,58 @@ fn configure_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	parachain_id: ParaId,
-) -> RuntimeGenesisConfig {
+) -> serde_json::Value {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
 	// within contracts.
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	RuntimeGenesisConfig {
-		system: Default::default(),
-		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
-		balances: BalancesConfig {
-			// Configure endowed accounts with initial balance of 1 << 78.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
+	serde_json::json!({
+		"parachainInfo": {
+			"parachainId": parachain_id,
 		},
-		session: peaq_dev_runtime::SessionConfig {
-			keys: initial_authorities
-				.iter()
-				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
-				.collect::<Vec<_>>(),
+		"balances": {
+			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u128 << 78)).collect::<Vec<_>>(),
 		},
-		parachain_staking: ParachainStakingConfig {
-			stakers,
-			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+		"session": {
+			"keys": initial_authorities.iter().map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone()))).collect::<Vec<_>>(),
 		},
-		inflation_manager: Default::default(),
-		block_reward: BlockRewardConfig {
-			// Make sure sum is 100
-			reward_config: pallet_block_reward::RewardDistributionConfig {
-				treasury_percent: Perbill::from_percent(25),
-				collators_delegators_percent: Perbill::from_percent(40),
-				coretime_percent: Perbill::from_percent(10),
-				subsidization_pool_percent: Perbill::from_percent(5),
-				depin_staking_percent: Perbill::from_percent(5),
-				depin_incentivization_percent: Perbill::from_percent(15),
-			},
-			_phantom: Default::default(),
+		"parachainStaking": {
+			"stakers": stakers,
+			"maxCandidateStake": staking::MAX_COLLATOR_STAKE,
 		},
-		vesting: Default::default(),
-		aura: Default::default(),
-		sudo: SudoConfig {
-			// Assign network admin rights.
-			key: Some(root_key),
-		},
-		aura_ext: Default::default(),
-		evm: EVMConfig {
-			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
-				.map(|addr| {
-					(
-						addr,
-						GenesisAccount {
-							nonce: Default::default(),
-							balance: Default::default(),
-							storage: Default::default(),
-							code: revert_bytecode.clone(),
-						},
-					)
-				})
-				.collect(),
-			..Default::default()
-		},
-		ethereum: EthereumConfig { ..Default::default() },
-		base_fee: Default::default(),
-		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
-			safe_xcm_version: Some(SAFE_XCM_VERSION),
-			..Default::default()
-		},
-		treasury: Default::default(),
-		council: CouncilConfig::default(),
-		peaq_mor: PeaqMorConfig {
-			mor_config: MorConfig {
-				registration_reward: 10 * CENTS,
-				machine_usage_fee_min: MILLICENTS,
-				machine_usage_fee_max: 3 * DOLLARS,
-				track_n_block_rewards: 200,
+		"blockReward": {
+			"rewardConfig": {
+				"treasuryPercent": Perbill::from_percent(25),
+				"collatorsDelegatorsPercent": Perbill::from_percent(40),
+				"coretimePercent": Perbill::from_percent(10),
+				"subsidizationPoolPercent": Perbill::from_percent(5),
+				"depinStakingPercent": Perbill::from_percent(5),
+				"depinIncentivizationPercent": Perbill::from_percent(15),
 			},
 		},
-		assets: Default::default(),
-	}
+		"sudo": {
+			"key": Some(root_key),
+		},
+		"evm": {
+			"accounts": PeaqPrecompiles::<Runtime>::used_addresses().map(|addr| (addr, GenesisAccount {
+				nonce: Default::default(),
+				balance: Default::default(),
+				storage: Default::default(),
+				code: revert_bytecode.clone(),
+			})).collect::<Vec<_>>(),
+		},
+		"polkadotXcm": {
+			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		},
+		"peaqMor": {
+			"morConfig": {
+				"registrationReward": 10 * CENTS,
+				"machineUsageFeeMin": MILLICENTS,
+				"machineUsageFeeMax": 3 * DOLLARS,
+				"trackNBlockRewards": 200,
+			},
+		},
+	})
 }
