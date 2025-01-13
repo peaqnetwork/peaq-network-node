@@ -28,6 +28,7 @@ use pallet_evm::Call as EvmCall;
 use precompile_utils::{
 	evm::costs::call_cost, prelude::*, solidity::revert::revert_as_bytes, testing::*,
 };
+use peaq_precompile_test_utils::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::Dispatchable, DispatchError, DispatchErrorWithPostInfo, ModuleError};
 
