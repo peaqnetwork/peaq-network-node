@@ -37,7 +37,7 @@ hex-literal = { workspace = true }
 xcm = { workspace = true }
 
 [features]
-default = [ "std", "testing" ]
+default = [ "std" ]
 std = [
 	"environmental/std",
 	"fp-evm/std",

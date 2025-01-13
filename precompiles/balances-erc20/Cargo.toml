@@ -8,8 +8,8 @@ version = "0.1.1"
 [dependencies]
 paste = { workspace = true, default-features = false }
 
-#peaq
-precompile-utils = { path = "../utils", default-features = false }
+precompile-utils = { workspace = true, default-features = false }
+peaq-precompile-test-utils = { path = "../test-utils", default-features = false }
 
 # Substrate
 frame-support = { workspace = true }
@@ -34,7 +34,8 @@ serde = { workspace = true }
 sha3 = { workspace = true }
 
 # peaq
-precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
+precompile-utils = { workspace = true, features = [ "std", "testing" ] }
+peaq-precompile-test-utils = { path = "../test-utils", features = [ "std", "testing" ] }
 
 pallet-timestamp = { workspace = true, features = [ "std" ] }
 scale-info = { workspace = true, features = [ "derive" ] }
@@ -50,6 +51,7 @@ std = [
 	"pallet-evm/std",
 	"parity-scale-codec/std",
 	"precompile-utils/std",
+	"peaq-precompile-test-utils/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",

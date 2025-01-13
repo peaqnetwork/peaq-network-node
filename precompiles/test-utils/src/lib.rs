@@ -16,5 +16,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+
+#[cfg(feature = "testing")]
 pub mod account;
+#[cfg(feature = "testing")]
 pub use account::*;
+
+pub const SYSTEM_ACCOUNT_SIZE: u64 = 160;
