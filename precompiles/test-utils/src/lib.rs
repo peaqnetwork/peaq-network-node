@@ -23,3 +23,4 @@ pub mod account;
 pub use account::*;
 
 pub const SYSTEM_ACCOUNT_SIZE: u64 = 160;
+pub const DEFAULT_PROOF_SIZE: u64 = 256 * 1024;

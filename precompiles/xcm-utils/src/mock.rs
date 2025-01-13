@@ -18,11 +18,12 @@
 use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait, PalletInfo as _},
+	traits::{ConstU32, Everything, Nothing, PalletInfo as _},
 	weights::{RuntimeDbWeight, Weight},
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
-use precompile_utils::{precompile_set::*, testing::*};
+use precompile_utils::precompile_set::*;
+use peaq_precompile_test_utils::*;
 use sp_core::{H256, U256};
 use sp_runtime::BuildStorage;
 
@@ -76,14 +77,6 @@ pub type LocationToAccountId = (
 	MockParachainMultilocationToAccountConverter,
 	xcm_builder::AccountId32Aliases<LocalNetworkId, AccountId>,
 );
-
-pub struct AccountIdToLocation;
-impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
-	fn convert(account: AccountId) -> Location {
-		let as_h160: H160 = account.into();
-		Location::new(0, [AccountKey20 { network: None, key: *as_h160.as_fixed_bytes() }])
-	}
-}
 
 parameter_types! {
 	pub ParachainId: cumulus_primitives_core::ParaId = 100.into();
@@ -269,20 +262,6 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = ();
 }
 pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
-
-pub struct ConvertOriginToLocal;
-impl<Origin: OriginTrait> EnsureOrigin<Origin> for ConvertOriginToLocal {
-	type Success = Location;
-
-	fn try_origin(_: Origin) -> Result<Location, Origin> {
-		Ok(Location::here())
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<Origin, ()> {
-		Ok(Origin::root())
-	}
-}
 
 use sp_std::cell::RefCell;
 use xcm::latest::opaque;

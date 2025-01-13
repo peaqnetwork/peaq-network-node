@@ -7,8 +7,8 @@ version = "0.1.1"
 
 [dependencies]
 # Peaq
-precompile-utils = { path = "../utils", default-features = false, features = [ "codec-xcm" ] }
-# xcm-primitives = { workspace = true }
+precompile-utils = { workspace = true, default-features = false, features = [ "codec-xcm" ] }
+peaq-precompile-test-utils = { path = "../test-utils", default-features = false }
 
 # Substrate
 frame-support = { workspace = true, default-features = false }
@@ -34,8 +34,8 @@ derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
 
-# Peaq
-precompile-utils = { path = "../utils", features = [ "testing" ] }
+precompile-utils = { workspace = true, features = [ "testing" ] }
+peaq-precompile-test-utils = { path = "../test-utils", features = [ "std", "testing" ] }
 
 # # Substrate
 pallet-balances = { workspace = true, features = ["std", "insecure_zero_ed"] }
@@ -66,6 +66,7 @@ std = [
 	"parity-scale-codec/std",
 	"polkadot-parachain/std",
 	"precompile-utils/std",
+	"peaq-precompile-test-utils/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
