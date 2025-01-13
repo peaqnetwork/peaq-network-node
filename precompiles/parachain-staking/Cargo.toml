@@ -7,7 +7,7 @@ authors = [ "Peaq" ]
 
 [dependencies]
 # Peaq
-precompile-utils = { path = "../utils", default-features = false }
+precompile-utils = { workspace = true, default-features = false }
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 pallet-session = { workspace = true, default-features = false }
@@ -33,7 +33,8 @@ peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false 
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
-precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
+precompile-utils = { workspace = true, features = [ "std", "testing" ] }
+peaq-precompile-test-utils = { path = "../test-utils", features = [ "std", "testing" ] }
 pallet-timestamp = { workspace = true, features = [ "std" ] }
 scale-info = { workspace = true }
 pallet-authorship = { workspace = true, default-features = false }
