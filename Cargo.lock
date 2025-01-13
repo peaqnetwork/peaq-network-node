@@ -7861,7 +7861,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.2",
+ "precompile-utils 0.1.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
