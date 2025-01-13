@@ -44,7 +44,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.2",
+ "precompile-utils",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -756,15 +756,6 @@ name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
-
-[[package]]
-name = "basic-toml"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f2139706359229bfa8f19142ac1155b4b80beafb7a60471ac5dd109d4a19778"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "beef"
@@ -2564,12 +2555,6 @@ dependencies = [
  "quote",
  "syn 2.0.87",
 ]
-
-[[package]]
-name = "diff"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
 name = "difflib"
@@ -6088,21 +6073,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "macrotest"
-version = "1.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7489ae0986ce45414b7b3122c2e316661343ecf396b206e3e15f07c846616f10"
-dependencies = [
- "diff",
- "glob",
- "prettyplease 0.1.25",
- "serde",
- "serde_json",
- "syn 1.0.109",
- "toml 0.5.11",
-]
-
-[[package]]
 name = "match_cfg"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7676,7 +7646,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-precompile-test-utils",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7702,7 +7672,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-precompile-test-utils",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7728,7 +7698,7 @@ dependencies = [
  "parity-scale-codec",
  "paste",
  "peaq-precompile-test-utils",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7753,7 +7723,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "peaq-precompile-test-utils",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7821,7 +7791,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-precompile-test-utils",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7843,7 +7813,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "peaq-pallet-did",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7861,7 +7831,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7878,7 +7848,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "peaq-pallet-storage",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7919,7 +7889,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-precompile-test-utils",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7947,7 +7917,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-precompile-test-utils",
  "polkadot-parachain-primitives",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -7982,7 +7952,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-precompile-test-utils",
  "peaq-primitives-xcm",
- "precompile-utils 0.1.0",
+ "precompile-utils",
  "scale-info",
  "serde",
  "sha3",
@@ -9033,7 +9003,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "precompile-utils 0.1.2",
+ "precompile-utils",
  "rlp",
  "runtime-common",
  "scale-info",
@@ -9172,7 +9142,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "precompile-utils 0.1.2",
+ "precompile-utils",
  "rlp",
  "runtime-common",
  "scale-info",
@@ -9820,7 +9790,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "precompile-utils 0.1.2",
+ "precompile-utils",
  "rlp",
  "runtime-common",
  "scale-info",
@@ -11235,40 +11205,13 @@ dependencies = [
  "num_enum 0.7.2",
  "pallet-evm",
  "parity-scale-codec",
- "precompile-utils-macro 0.1.0",
+ "precompile-utils-macro",
  "scale-info",
  "serde",
  "similar-asserts",
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-weights",
- "staging-xcm",
-]
-
-[[package]]
-name = "precompile-utils"
-version = "0.1.2"
-dependencies = [
- "derive_more 0.99.17",
- "environmental",
- "evm",
- "fp-evm",
- "frame-support",
- "frame-system",
- "hex-literal 0.3.4",
- "impl-trait-for-tuples",
- "pallet-evm",
- "parity-scale-codec",
- "peaq-primitives-xcm",
- "precompile-utils-macro 0.1.2",
- "scale-info",
- "serde",
- "similar-asserts",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
  "sp-weights",
  "staging-xcm",
 ]
@@ -11285,25 +11228,6 @@ dependencies = [
  "quote",
  "sp-crypto-hashing",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "precompile-utils-macro"
-version = "0.1.2"
-dependencies = [
- "case",
- "fp-evm",
- "frame-support",
- "macrotest",
- "num_enum 0.5.11",
- "precompile-utils 0.1.2",
- "proc-macro2",
- "quote",
- "sha3",
- "sp-core",
- "sp-std",
- "syn 1.0.109",
- "trybuild",
 ]
 
 [[package]]
@@ -16312,21 +16236,6 @@ name = "try-lock"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
-
-[[package]]
-name = "trybuild"
-version = "1.0.85"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "196a58260a906cedb9bf6d8034b6379d0c11f552416960452f267402ceeddff1"
-dependencies = [
- "basic-toml",
- "glob",
- "once_cell",
- "serde",
- "serde_derive",
- "serde_json",
- "termcolor",
-]
 
 [[package]]
 name = "tt-call"

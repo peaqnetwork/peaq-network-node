@@ -21,7 +21,7 @@ orml-traits = { workspace = true, default-features = false }
 
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 # module-support = { path = "../support", default-features = false }
-precompile-utils = { path = "../../precompiles/utils", default-features = false }
+precompile-utils = { workspace = true, default-features = false }
 pallet-evm = { workspace = true, default-features = false }
 
 [dev-dependencies]
