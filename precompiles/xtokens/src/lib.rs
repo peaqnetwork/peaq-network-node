@@ -25,9 +25,9 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use pallet_evm_precompile_assets_erc20::AssetIdOf;
+use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::prelude::*;
-use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::{

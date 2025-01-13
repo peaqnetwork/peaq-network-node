@@ -28,8 +28,8 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use precompile_utils::precompile_set::*;
 use peaq_precompile_utils::*;
+use precompile_utils::precompile_set::*;
 use sp_runtime::BuildStorage;
 
 use sp_core::H256;

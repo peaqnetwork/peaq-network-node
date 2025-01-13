@@ -25,6 +25,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use parity_scale_codec::{Decode, DecodeLimit, MaxEncodedLen};
+use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 use precompile_utils::{precompile_set::SelectorFilter, prelude::*};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
@@ -32,7 +33,6 @@ use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
 use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 use xcm_executor::traits::{WeightBounds, WeightTrader};
-use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 
 pub type CallOf<Runtime> = <Runtime as pallet_xcm::Config>::RuntimeCall;
 pub const XCM_SIZE_LIMIT: u32 = 2u32.pow(16);

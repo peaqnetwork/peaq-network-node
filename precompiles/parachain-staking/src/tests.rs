@@ -28,8 +28,8 @@ use frame_support::{
 };
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
-use precompile_utils::testing::{PrecompileTesterExt, PrecompilesModifierTester};
 use peaq_precompile_utils::*;
+use precompile_utils::testing::{PrecompileTesterExt, PrecompilesModifierTester};
 use sp_core::H256;
 
 const STAKING_ID: LockIdentifier = *b"peaqstak";

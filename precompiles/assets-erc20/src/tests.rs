@@ -39,8 +39,8 @@ use std::str::from_utf8;
 
 use crate::{mock::*, *};
 
-use precompile_utils::testing::*;
 use peaq_precompile_utils::*;
+use precompile_utils::testing::*;
 
 // use precompile_utils::{prelude::LogsBuilder, testing::*, EvmDataWriter};
 use sha3::{Digest, Keccak256};

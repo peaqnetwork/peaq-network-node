@@ -2,8 +2,8 @@ use crate::{mock::*, *};
 use frame_support::assert_ok;
 use sp_core::U256;
 
-use precompile_utils::testing::*;
 use peaq_precompile_utils::*;
+use precompile_utils::testing::*;
 
 // Helper function to create a dummy vesting schedule
 fn precompiles() -> Precompiles<Runtime> {
