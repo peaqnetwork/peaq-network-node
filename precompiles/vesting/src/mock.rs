@@ -23,7 +23,8 @@ use frame_support::{
 	weights::Weight,
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use precompile_utils::{precompile_set::*, testing::*};
+use precompile_utils::precompile_set::*;
+use peaq_precompile_test_utils::*;
 use sp_runtime::BuildStorage;
 
 use sp_core::{ConstU128, H256};
