@@ -6,7 +6,6 @@ edition = "2021"
 authors = [ "Astar" ]
 
 [dependencies]
-# peaq-precompile-utils = { path = "../utils", default-features = false, package = "precompile-utils" }
 precompile-utils = { workspace = true, default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
 

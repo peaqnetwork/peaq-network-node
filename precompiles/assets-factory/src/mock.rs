@@ -42,7 +42,8 @@ use frame_support::{
 	traits::{AsEnsureOriginWithArg, Everything},
 	weights::Weight,
 };
-use precompile_utils::{precompile_set::*, testing::*};
+use precompile_utils::precompile_set::*;
+use peaq_precompile_test_utils::*;
 use sp_runtime::BuildStorage;
 
 use frame_system::EnsureRoot;
