@@ -8,6 +8,7 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
+use cumulus_client_cli::extract_genesis_wasm;
 use sc_service::{
 	config::{BasePath, PrometheusConfig},
 	DatabaseSource, PartialComponents,
@@ -202,16 +203,6 @@ impl SubstrateCli for RelayChainCli {
 	}
 }
 
-#[allow(clippy::borrowed_box)]
-fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<Vec<u8>> {
-	let mut storage = chain_spec.build_storage()?;
-
-	storage
-		.top
-		.remove(sp_core::storage::well_known_keys::CODE)
-		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
-}
-
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
@@ -397,8 +388,9 @@ pub fn run() -> sc_cli::Result<()> {
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			let raw_wasm_blob =
-				extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
+			let raw_wasm_blob = extract_genesis_wasm(
+				&*cli.load_spec(params.chain.as_deref().unwrap_or_default())?,
+			)?;
 			let output_buf = if params.raw {
 				raw_wasm_blob
 			} else {

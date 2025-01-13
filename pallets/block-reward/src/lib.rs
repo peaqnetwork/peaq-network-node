@@ -127,12 +127,16 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub reward_config: RewardDistributionConfig,
+		#[serde(skip)]
 		pub _phantom: PhantomData<T>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { reward_config: Default::default(), _phantom: PhantomData }
+			Self {
+				reward_config: Default::default(),
+				_phantom: PhantomData
+			}
 		}
 	}
 

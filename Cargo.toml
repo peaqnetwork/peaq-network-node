@@ -177,6 +177,7 @@ sp-offchain = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "p
 sp-session = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 sp-transaction-pool = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 sp-version = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
+sp-genesis-builder = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 pallet-contracts = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 pallet-multisig = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 pallet-assets = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }

@@ -100,6 +100,7 @@ orml-xtokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }
 pallet-collective = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
+sp-genesis-builder = { workspace = true, default-features = false }
 
 evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", optional = true, default-features = false }
 peaq-evm-tracer = { path = "../evm_tracer", optional = true, default-features = false }
@@ -203,6 +204,8 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	"sp-weights/std",
+	"sp-genesis-builder/std",
+
 	"pallet-contracts/std",
 	"peaq-pallet-did/std",
 	"peaq-pallet-did-runtime-api/std",

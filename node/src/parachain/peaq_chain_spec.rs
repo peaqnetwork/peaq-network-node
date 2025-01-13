@@ -8,6 +8,7 @@ use peaq_runtime::{
 };
 use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
+use std::collections::BTreeMap;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 
@@ -93,45 +94,67 @@ fn configure_genesis(
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	serde_json::json!({
-		"parachainInfo": {
-			"parachainId": parachain_id,
+	let config = RuntimeGenesisConfig {
+		system: Default::default(),
+		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
+		balances: BalancesConfig {
+			// Configure endowed accounts with initial balance of 1 << 78.
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
-		"balances": {
-			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u128 << 78)).collect::<Vec<_>>(),
+		session: peaq_runtime::SessionConfig {
+			keys: initial_authorities
+				.iter()
+				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
+				.collect::<Vec<_>>(),
 		},
-		"session": {
-			"keys": initial_authorities.iter().map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone()))).collect::<Vec<_>>(),
+		parachain_staking: ParachainStakingConfig {
+			stakers,
+			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
-		"parachainStaking": {
-			"stakers": stakers,
-			"maxCandidateStake": staking::MAX_COLLATOR_STAKE,
-		},
-		"blockReward": {
-			"rewardConfig": {
-				"treasuryPercent": Perbill::from_percent(25),
-				"collatorsDelegatorsPercent": Perbill::from_percent(40),
-				"coretimePercent": Perbill::from_percent(10),
-				"subsidizationPoolPercent": Perbill::from_percent(5),
-				"depinStakingPercent": Perbill::from_percent(5),
-				"depinIncentivizationPercent": Perbill::from_percent(15),
+		inflation_manager: Default::default(),
+		block_reward: BlockRewardConfig {
+			// Make sure sum is 100
+			reward_config: pallet_block_reward::RewardDistributionConfig {
+				treasury_percent: Perbill::from_percent(25),
+				collators_delegators_percent: Perbill::from_percent(40),
+				coretime_percent: Perbill::from_percent(10),
+				subsidization_pool_percent: Perbill::from_percent(5),
+				depin_staking_percent: Perbill::from_percent(5),
+				depin_incentivization_percent: Perbill::from_percent(15),
 			},
+			_phantom: Default::default(),
 		},
-		"sudo": {
-			"key": Some(root_key),
+		vesting: Default::default(),
+		aura: Default::default(),
+		sudo: SudoConfig {
+			// Assign network admin rights.
+			key: Some(root_key),
 		},
-		"evm": {
-			"accounts": PeaqPrecompiles::<Runtime>::used_addresses().map(|addr| {
-				(addr, GenesisAccount {
-					nonce: Default::default(),
-					balance: Default::default(),
-					storage: Default::default(),
-					code: revert_bytecode.clone(),
+		aura_ext: Default::default(),
+		evm: EVMConfig {
+			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
+				.map(|addr| {
+					(
+						addr,
+						GenesisAccount {
+							nonce: Default::default(),
+							balance: Default::default(),
+							storage: Default::default(),
+							code: revert_bytecode.clone(),
+						},
+					)
 				})
-			}).collect::<Vec<_>>(),
+				.collect(),
+			..Default::default()
 		},
-		"polkadotXcm": {
-			"safeXcmVersion": Some(SAFE_XCM_VERSION),
+		ethereum: EthereumConfig { ..Default::default() },
+		polkadot_xcm: peaq_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
 		},
-	})
+		treasury: Default::default(),
+		council: CouncilConfig::default(),
+		assets: Default::default(),
+	};
+	serde_json::to_value(&config).expect("Could not build genesis config.")
 }

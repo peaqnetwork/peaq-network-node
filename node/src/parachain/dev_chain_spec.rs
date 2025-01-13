@@ -9,6 +9,7 @@ use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use std::collections::BTreeMap;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
@@ -61,7 +62,7 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	.with_name("peaq-dev")
 	.with_id("dev-testnet")
 	.with_chain_type(ChainType::Development)
-	.with_genesis_config_patch(configure_genesis(
+	.with_genesis_config(configure_genesis(
 		// stakers
 		vec![(
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -104,51 +105,76 @@ fn configure_genesis(
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	serde_json::json!({
-		"parachainInfo": {
-			"parachainId": parachain_id,
+	let config = RuntimeGenesisConfig {
+		system: Default::default(),
+		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
+		balances: BalancesConfig {
+			// Configure endowed accounts with initial balance of 1 << 78.
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
 		},
-		"balances": {
-			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u128 << 78)).collect::<Vec<_>>(),
+		session: peaq_dev_runtime::SessionConfig {
+			keys: initial_authorities
+				.iter()
+				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
+				.collect::<Vec<_>>(),
 		},
-		"session": {
-			"keys": initial_authorities.iter().map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone()))).collect::<Vec<_>>(),
+		parachain_staking: ParachainStakingConfig {
+			stakers,
+			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 		},
-		"parachainStaking": {
-			"stakers": stakers,
-			"maxCandidateStake": staking::MAX_COLLATOR_STAKE,
+		inflation_manager: Default::default(),
+		block_reward: BlockRewardConfig {
+			// Make sure sum is 100
+			reward_config: pallet_block_reward::RewardDistributionConfig {
+				treasury_percent: Perbill::from_percent(25),
+				collators_delegators_percent: Perbill::from_percent(40),
+				coretime_percent: Perbill::from_percent(10),
+				subsidization_pool_percent: Perbill::from_percent(5),
+				depin_staking_percent: Perbill::from_percent(5),
+				depin_incentivization_percent: Perbill::from_percent(15),
+			},
+			_phantom: Default::default(),
 		},
-		"blockReward": {
-			"rewardConfig": {
-				"treasuryPercent": Perbill::from_percent(25),
-				"collatorsDelegatorsPercent": Perbill::from_percent(40),
-				"coretimePercent": Perbill::from_percent(10),
-				"subsidizationPoolPercent": Perbill::from_percent(5),
-				"depinStakingPercent": Perbill::from_percent(5),
-				"depinIncentivizationPercent": Perbill::from_percent(15),
+		vesting: Default::default(),
+		aura: Default::default(),
+		sudo: SudoConfig {
+			// Assign network admin rights.
+			key: Some(root_key),
+		},
+		aura_ext: Default::default(),
+		evm: EVMConfig {
+			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
+				.map(|addr| {
+					(
+						addr,
+						GenesisAccount {
+							nonce: Default::default(),
+							balance: Default::default(),
+							storage: Default::default(),
+							code: revert_bytecode.clone(),
+						},
+					)
+				})
+				.collect(),
+			..Default::default()
+		},
+		ethereum: EthereumConfig { ..Default::default() },
+		base_fee: Default::default(),
+		polkadot_xcm: peaq_dev_runtime::PolkadotXcmConfig {
+			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			..Default::default()
+		},
+		treasury: Default::default(),
+		council: CouncilConfig::default(),
+		peaq_mor: PeaqMorConfig {
+			mor_config: MorConfig {
+				registration_reward: 10 * CENTS,
+				machine_usage_fee_min: MILLICENTS,
+				machine_usage_fee_max: 3 * DOLLARS,
+				track_n_block_rewards: 200,
 			},
 		},
-		"sudo": {
-			"key": Some(root_key),
-		},
-		"evm": {
-			"accounts": PeaqPrecompiles::<Runtime>::used_addresses().map(|addr| (addr, GenesisAccount {
-				nonce: Default::default(),
-				balance: Default::default(),
-				storage: Default::default(),
-				code: revert_bytecode.clone(),
-			})).collect::<Vec<_>>(),
-		},
-		"polkadotXcm": {
-			"safeXcmVersion": Some(SAFE_XCM_VERSION),
-		},
-		"peaqMor": {
-			"morConfig": {
-				"registrationReward": 10 * CENTS,
-				"machineUsageFeeMin": MILLICENTS,
-				"machineUsageFeeMax": 3 * DOLLARS,
-				"trackNBlockRewards": 200,
-			},
-		},
-	})
+		assets: Default::default(),
+	};
+	serde_json::to_value(&config).expect("Could not build genesis config.")
 }
