@@ -7,7 +7,7 @@ version = "0.1.1"
 
 [dependencies]
 precompile-utils = { workspace = true, default-features = false, features = [ "codec-xcm" ] }
-peaq-precompile-test-utils = { path = "../test-utils", default-features = false }
+peaq-precompile-utils = { path = "../utils", default-features = false }
 
 pallet-evm-precompile-assets-erc20 = { path = "../assets-erc20", default-features = false }
 pallet-assets = { workspace = true, default-features = false }
@@ -36,7 +36,7 @@ sha3 = { workspace = true }
 once_cell = { workspace = true }
 
 precompile-utils = { workspace = true, features = [ "testing" ] }
-peaq-precompile-test-utils = { path = "../test-utils", features = [ "std", "testing" ] }
+peaq-precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
 
 # Substrate
 pallet-balances = { workspace = true, features = ["std", "insecure_zero_ed"] }
@@ -63,7 +63,7 @@ std = [
 	"orml-xtokens/std",
 	"pallet-evm/std",
 	"precompile-utils/std",
-	"peaq-precompile-test-utils/std",
+	"peaq-precompile-utils/std",
 	"sp-core/std",
 	"sp-std/std",
 	"pallet-assets/std",

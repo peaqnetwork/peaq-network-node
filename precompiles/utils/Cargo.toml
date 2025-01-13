@@ -1,5 +1,5 @@
 [package]
-name = "peaq-precompile-test-utils"
+name = "peaq-precompile-utils"
 description = "Utils to write EVM precompiles."
 edition = "2021"
 version = "0.1.2"

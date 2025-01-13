@@ -43,7 +43,7 @@ use frame_support::{
 	weights::Weight,
 };
 use precompile_utils::precompile_set::*;
-use peaq_precompile_test_utils::*;
+use peaq_precompile_utils::*;
 use sp_runtime::BuildStorage;
 
 use frame_system::EnsureRoot;

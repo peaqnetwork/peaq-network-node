@@ -7644,7 +7644,7 @@ dependencies = [
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -7670,7 +7670,7 @@ dependencies = [
  "pallet-evm-precompile-assets-erc20",
  "pallet-timestamp",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -7697,7 +7697,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "paste",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "precompile-utils",
  "scale-info",
  "serde",
@@ -7722,7 +7722,7 @@ dependencies = [
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "precompile-utils",
  "scale-info",
  "serde",
@@ -7789,7 +7789,7 @@ dependencies = [
  "pallet-timestamp",
  "parachain-staking",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -7887,7 +7887,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vesting",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -7915,7 +7915,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-xcm",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "polkadot-parachain-primitives",
  "precompile-utils",
  "scale-info",
@@ -7950,7 +7950,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-xcm",
  "parity-scale-codec",
- "peaq-precompile-test-utils",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -9468,7 +9468,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "peaq-precompile-test-utils"
+name = "peaq-precompile-utils"
 version = "0.1.2"
 dependencies = [
  "derive_more 0.99.17",

@@ -40,7 +40,7 @@ use sp_std::fmt::Debug;
 
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use parachain_staking::*;
-use peaq_precompile_test_utils::*;
+use peaq_precompile_utils::*;
 
 use precompile_utils::precompile_set::{AddressU64, PrecompileAt, PrecompileSetBuilder};
 

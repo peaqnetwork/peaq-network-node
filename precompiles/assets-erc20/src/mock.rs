@@ -42,7 +42,7 @@ use frame_support::{
 	traits::{AsEnsureOriginWithArg, Everything},
 	weights::Weight,
 };
-use peaq_precompile_test_utils::*;
+use peaq_precompile_utils::*;
 
 use frame_system::EnsureRoot;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};

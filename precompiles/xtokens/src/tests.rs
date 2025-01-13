@@ -22,7 +22,7 @@ use crate::{
 };
 use orml_xtokens::Event as XtokensEvent;
 use precompile_utils::{prelude::*, testing::*};
-use peaq_precompile_test_utils::*;
+use peaq_precompile_utils::*;
 use sp_core::U256;
 use sp_runtime::traits::Convert;
 use xcm::latest::{Asset, AssetId, Assets, Fungibility, Junction, Location};

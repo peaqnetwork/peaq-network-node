@@ -23,7 +23,7 @@ use frame_support::{
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use precompile_utils::precompile_set::*;
-use peaq_precompile_test_utils::*;
+use peaq_precompile_utils::*;
 use sp_core::{H256, U256};
 use sp_runtime::BuildStorage;
 

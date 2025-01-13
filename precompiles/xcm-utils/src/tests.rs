@@ -30,7 +30,7 @@ use crate::mock::{
 use frame_support::{traits::PalletInfo, weights::Weight};
 use parity_scale_codec::Encode;
 use precompile_utils::testing::*;
-use peaq_precompile_test_utils::*;
+use peaq_precompile_utils::*;
 use sp_core::{H160, U256};
 use xcm::prelude::*;
 
