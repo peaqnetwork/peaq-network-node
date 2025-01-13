@@ -78,6 +78,7 @@ cumulus-primitives-core = { workspace = true, default-features = false }
 cumulus-primitives-utility = { workspace = true, default-features = false }
 cumulus-primitives-timestamp = { workspace = true, default-features = false }
 cumulus-primitives-aura = { workspace = true, default-features = false }
+cumulus-primitives-storage-weight-reclaim = { workspace = true, default-features = false }
 cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
@@ -242,6 +243,7 @@ std = [
 	"cumulus-primitives-utility/std",
 	"cumulus-primitives-timestamp/std",
 	"cumulus-primitives-aura/std",
+	"cumulus-primitives-storage-weight-reclaim/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
 	"parachain-info/std",

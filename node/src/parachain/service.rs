@@ -5,7 +5,7 @@ use cumulus_client_consensus_common::ParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
 	prepare_node_config, start_relay_chain_tasks, BuildNetworkParams, DARecoveryProfile,
-	StartRelayChainTasksParams,
+	ParachainHostFunctions, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::{
 	relay_chain::{CollatorPair, ValidationCode},
@@ -66,11 +66,15 @@ declare_executor!(peaq, peaq_runtime);
 pub type ExtHostFunctions = (
 	frame_benchmarking::benchmarking::HostFunctions,
 	sp_io::SubstrateHostFunctions,
+	ParachainHostFunctions,
 	peaq_primitives_ext::peaq_ext::HostFunctions,
 );
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub type ExtHostFunctions =
-	(sp_io::SubstrateHostFunctions, peaq_primitives_ext::peaq_ext::HostFunctions);
+pub type ExtHostFunctions = (
+	sp_io::SubstrateHostFunctions,
+	ParachainHostFunctions,
+	peaq_primitives_ext::peaq_ext::HostFunctions
+);
 
 type FullClient<RuntimeApi> = TFullClient<Block, RuntimeApi, WasmExecutor<ExtHostFunctions>>;
 type FullBackend = TFullBackend<Block>;
@@ -190,10 +194,11 @@ where
 	let executor = sc_service::new_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts_record_import::<Block, RuntimeApi, _>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
+			true,
 		)?;
 	let client = Arc::new(client);
 
