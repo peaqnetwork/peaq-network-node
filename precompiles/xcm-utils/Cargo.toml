@@ -6,7 +6,6 @@ edition = "2021"
 version = "0.1.1"
 
 [dependencies]
-# Peaq
 precompile-utils = { workspace = true, default-features = false, features = [ "codec-xcm" ] }
 peaq-precompile-test-utils = { path = "../test-utils", default-features = false }
 
