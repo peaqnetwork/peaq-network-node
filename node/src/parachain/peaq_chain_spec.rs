@@ -131,7 +131,7 @@ fn configure_genesis(
 		},
 		aura_ext: Default::default(),
 		evm: EVMConfig {
-			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
+			accounts: PeaqPrecompiles::<Runtime>::used_addresses_h160()
 				.map(|addr| {
 					(
 						addr,
