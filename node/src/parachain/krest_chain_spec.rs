@@ -8,7 +8,6 @@ use peaq_krest_runtime::{
 use peaq_primitives_xcm::{AccountId, Balance};
 use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
-use std::collections::BTreeMap;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
 

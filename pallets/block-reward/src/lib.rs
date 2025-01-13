@@ -133,10 +133,7 @@ pub mod pallet {
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self {
-				reward_config: Default::default(),
-				_phantom: PhantomData
-			}
+			Self { reward_config: Default::default(), _phantom: PhantomData }
 		}
 	}
 

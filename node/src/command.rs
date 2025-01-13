@@ -1,3 +1,4 @@
+use cumulus_client_cli::extract_genesis_wasm;
 use cumulus_primitives_core::ParaId;
 #[cfg(feature = "frame-benchmarking-cli")]
 use frame_benchmarking_cli::BenchmarkCmd;
@@ -8,7 +9,6 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use cumulus_client_cli::extract_genesis_wasm;
 use sc_service::{
 	config::{BasePath, PrometheusConfig},
 	DatabaseSource, PartialComponents,
