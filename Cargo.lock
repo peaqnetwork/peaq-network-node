@@ -7878,7 +7878,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "peaq-pallet-storage",
- "precompile-utils 0.1.2",
+ "precompile-utils 0.1.0",
  "sp-core",
  "sp-io",
  "sp-runtime",
