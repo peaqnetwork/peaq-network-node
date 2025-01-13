@@ -40,6 +40,8 @@ use std::str::from_utf8;
 use crate::{mock::*, *};
 
 use precompile_utils::testing::*;
+use peaq_precompile_test_utils::*;
+
 // use precompile_utils::{prelude::LogsBuilder, testing::*, EvmDataWriter};
 use sha3::{Digest, Keccak256};
 
@@ -282,7 +284,8 @@ fn approve() {
 						value: U256::from(500),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -323,7 +326,8 @@ fn approve_saturating() {
 						value: U256::MAX,
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -454,7 +458,8 @@ fn transfer() {
 						value: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_TRANSFER,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -576,7 +581,8 @@ fn transfer_from() {
 						value: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_TRANSFER,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Charlie,
@@ -647,7 +653,8 @@ fn transfer_from_non_incremental_approval() {
 						value: U256::from(500),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -668,7 +675,8 @@ fn transfer_from_non_incremental_approval() {
 						value: U256::from(300),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_APPROVAL,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -777,7 +785,8 @@ fn transfer_from_self() {
 						value: U256::from(400),
 					},
 				)
-				.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+				.expect_log(log3(
+					MockPeaqAccount::AssetId(asset_id),
 					SELECTOR_LOG_TRANSFER,
 					MockPeaqAccount::Alice,
 					MockPeaqAccount::Bob,
@@ -913,7 +922,8 @@ fn mint_is_ok() {
 					amount: U256::from(mint_amount),
 				},
 			)
-			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(asset_id).into()).log3(
+			.expect_log(log3(
+				MockPeaqAccount::AssetId(asset_id),
 				SELECTOR_LOG_TRANSFER,
 				H160::zero(),
 				MockPeaqAccount::Bob,
@@ -985,7 +995,8 @@ fn burn_is_ok() {
 					amount: U256::from(burn_amount),
 				},
 			)
-			.expect_log(LogsBuilder::new(MockPeaqAccount::AssetId(0u128.into()).into()).log3(
+			.expect_log(log3(
+				MockPeaqAccount::AssetId(0u128.into()),
 				SELECTOR_LOG_TRANSFER,
 				MockPeaqAccount::Bob,
 				H160::zero(),

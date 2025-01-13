@@ -4,8 +4,9 @@ members = [
     "pallets/*",
     "runtime/*",
     "primitives/xcm",
-    "precompiles/utils",
-    "precompiles/utils/macro",
+    #  "precompiles/utils",
+    # "precompiles/utils/macro",
+	 "precompiles/test-utils",
 	"precompiles/peaq-did",
 	"precompiles/peaq-storage",
 	"precompiles/assets-erc20",
@@ -56,7 +57,6 @@ log = { version = "0.4.22", default-features = false }
 macrotest = { version = "1.0.9", default-features = false }
 num_enum = { version = "0.5.11", default-features = false }
 paste = { version = "1.0.15", default-features = false }
-prettyplease = "0.1.25"
 proc-macro2 = "1.0"
 quote = "1.0"
 rlp = { version = "0.5", default-features = false }
@@ -129,6 +129,8 @@ pallet-evm-precompile-dispatch = { git = "https://github.com/peaqnetwork/frontie
 pallet-evm-precompile-modexp = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }
 pallet-evm-precompile-sha3fips = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }
 pallet-evm-precompile-simple = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }
+precompile-utils = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }
+precompile-utils-macro = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }
 
 # Open-Runtime-Module-Library
 orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-stable2407", default-features = false }

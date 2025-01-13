@@ -44,7 +44,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -3176,7 +3176,7 @@ dependencies = [
 [[package]]
 name = "fc-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "async-trait",
  "fp-storage",
@@ -3188,7 +3188,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "async-trait",
  "fp-consensus",
@@ -3204,7 +3204,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "async-trait",
  "fc-api",
@@ -3225,7 +3225,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fc-db",
  "fc-storage",
@@ -3246,7 +3246,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3301,7 +3301,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3316,7 +3316,7 @@ dependencies = [
 [[package]]
 name = "fc-storage"
 version = "1.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3501,7 +3501,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3520,7 +3520,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3531,7 +3531,7 @@ dependencies = [
 [[package]]
 name = "fp-dynamic-fee"
 version = "1.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "async-trait",
  "sp-core",
@@ -3541,7 +3541,7 @@ dependencies = [
 [[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3553,7 +3553,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "environmental",
  "evm",
@@ -3569,7 +3569,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3585,7 +3585,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3597,7 +3597,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -4534,7 +4534,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.8",
  "tokio",
  "tower-service",
  "tracing",
@@ -7297,7 +7297,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -7617,7 +7617,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "environmental",
  "ethereum",
@@ -7640,7 +7640,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -7674,8 +7674,9 @@ dependencies = [
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
+ "peaq-precompile-test-utils",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.0",
  "scale-info",
  "serde",
  "sha3",
@@ -7700,7 +7701,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -7725,7 +7726,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "paste",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -7749,7 +7750,7 @@ dependencies = [
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -7762,7 +7763,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-blake2"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
 ]
@@ -7770,7 +7771,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-bn128"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
  "sp-core",
@@ -7780,7 +7781,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-dispatch"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -7792,7 +7793,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
  "num",
@@ -7816,7 +7817,7 @@ dependencies = [
  "parachain-staking",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -7838,7 +7839,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "peaq-pallet-did",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7856,7 +7857,7 @@ dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7873,7 +7874,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "peaq-pallet-storage",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7883,7 +7884,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
  "tiny-keccak",
@@ -7892,7 +7893,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#58e034335b06cfdff5156c0daac1a800d5ee35be"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
 dependencies = [
  "fp-evm",
  "ripemd",
@@ -7913,7 +7914,7 @@ dependencies = [
  "pallet-vesting",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -7940,7 +7941,7 @@ dependencies = [
  "pallet-xcm",
  "parity-scale-codec",
  "polkadot-parachain-primitives",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -7974,7 +7975,7 @@ dependencies = [
  "pallet-xcm",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "scale-info",
  "serde",
  "sha3",
@@ -9025,7 +9026,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "rlp",
  "runtime-common",
  "scale-info",
@@ -9164,7 +9165,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "rlp",
  "runtime-common",
  "scale-info",
@@ -9490,6 +9491,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "peaq-precompile-test-utils"
+version = "0.1.2"
+dependencies = [
+ "derive_more 0.99.17",
+ "environmental",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.3.4",
+ "impl-trait-for-tuples",
+ "pallet-evm",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "scale-info",
+ "serde",
+ "similar-asserts",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+ "staging-xcm",
+]
+
+[[package]]
 name = "peaq-primitives-ext"
 version = "0.1.1"
 dependencies = [
@@ -9786,7 +9813,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "rlp",
  "runtime-common",
  "scale-info",
@@ -11185,6 +11212,35 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "precompile-utils"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
+dependencies = [
+ "derive_more 0.99.17",
+ "environmental",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "hex-literal 0.4.1",
+ "impl-trait-for-tuples",
+ "log",
+ "num_enum 0.7.2",
+ "pallet-evm",
+ "parity-scale-codec",
+ "precompile-utils-macro 0.1.0",
+ "scale-info",
+ "serde",
+ "similar-asserts",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-weights",
+ "staging-xcm",
+]
+
+[[package]]
+name = "precompile-utils"
 version = "0.1.2"
 dependencies = [
  "derive_more 0.99.17",
@@ -11198,7 +11254,7 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "peaq-primitives-xcm",
- "precompile-utils-macro",
+ "precompile-utils-macro 0.1.2",
  "scale-info",
  "serde",
  "similar-asserts",
@@ -11212,6 +11268,20 @@ dependencies = [
 
 [[package]]
 name = "precompile-utils-macro"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
+dependencies = [
+ "case",
+ "num_enum 0.7.2",
+ "prettyplease 0.2.15",
+ "proc-macro2",
+ "quote",
+ "sp-crypto-hashing",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "precompile-utils-macro"
 version = "0.1.2"
 dependencies = [
  "case",
@@ -11219,7 +11289,7 @@ dependencies = [
  "frame-support",
  "macrotest",
  "num_enum 0.5.11",
- "precompile-utils",
+ "precompile-utils 0.1.2",
  "proc-macro2",
  "quote",
  "sha3",

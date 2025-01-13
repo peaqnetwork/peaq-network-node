@@ -50,10 +50,9 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
-	evm::logs::LogsBuilder,
 	prelude::{
 		Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
-		RevertReason, RuntimeHelper, UnboundedBytes,
+		RevertReason, RuntimeHelper, UnboundedBytes, log3,
 	},
 	solidity,
 };
@@ -276,14 +275,14 @@ where
 			)?;
 		}
 
-		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_APPROVAL,
-				handle.context().caller,
-				spender,
-				solidity::encode_event_data(value),
-			)
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_APPROVAL,
+			handle.context().caller,
+			spender,
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
 
 		Ok(true)
 	}
@@ -318,14 +317,14 @@ where
 			)?;
 		}
 
-		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_TRANSFER,
-				handle.context().caller,
-				to,
-				solidity::encode_event_data(value),
-			)
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER,
+			handle.context().caller,
+			to,
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
 
 		Ok(true)
 	}
@@ -380,8 +379,7 @@ where
 			}
 		}
 
-		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(value))
+		log3(handle.context().address, SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(value))
 			.record(handle)?;
 
 		// Build output.
@@ -464,8 +462,7 @@ where
 			0,
 		)?;
 
-		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, H160::default(), addr, solidity::encode_event_data(amount))
+		log3(handle.context().address, SELECTOR_LOG_TRANSFER, H160::default(), addr, solidity::encode_event_data(amount))
 			.record(handle)?;
 
 		Ok(true)
@@ -498,8 +495,7 @@ where
 			0,
 		)?;
 
-		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, addr, H160::default(), solidity::encode_event_data(amount))
+		log3(handle.context().address, SELECTOR_LOG_TRANSFER, addr, H160::default(), solidity::encode_event_data(amount))
 			.record(handle)?;
 
 		Ok(true)
