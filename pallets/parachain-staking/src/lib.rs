@@ -337,6 +337,14 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// The maximum permill that a commission can change in one go.
+		#[pallet::constant]
+		type MaxCommissionChange: Get<Permill>;
+
+		/// The minimum interval between two commission changes.
+		#[pallet::constant]
+		type CommissionChangeInterval: Get<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::error]
@@ -432,6 +440,10 @@ pub mod pallet {
 		CommissionTooHigh,
 		/// Sudo cannot force new round if payouts are ongoing
 		PayoutsOngoing,
+		/// The commission change is too high.
+		CommissionChangeTooHigh,
+		/// The commission change is too frequent.
+		CommissionChangeTooEarly,
 	}
 
 	#[pallet::event]
@@ -676,6 +688,11 @@ pub mod pallet {
 	#[pallet::getter(fn delayed_payout_info)]
 	pub(crate) type DelayedPayoutInfo<T: Config> =
 		StorageValue<_, DelayedPayoutInfoT<SessionIndex, BalanceOf<T>>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn last_commission_change)]
+	pub type LastCommissionChange<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BlockNumberFor<T>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -1969,22 +1986,54 @@ pub mod pallet {
 		))]
 		pub fn set_commission(origin: OriginFor<T>, commission: Permill) -> DispatchResult {
 			let collator = ensure_signed(origin)?;
-			CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
-			if commission > Permill::from_percent(100) {
-				return Err(Error::<T>::CommissionTooHigh.into())
-			}
+			let current_block = <frame_system::Pallet<T>>::block_number();
 
-			<crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
-				if let Some(candidate) = maybe_candidate {
-					candidate.set_commission(commission);
-				}
-			});
+			// Check if the collator exists
+			let mut candidate =
+				CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
 
-			// Emit an event that the commission was updated.
-			Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(
-				collator, commission,
-			));
+			// Check the time since the last commission change
+			let last_change = LastCommissionChange::<T>::get(&collator);
+			ensure!(
+				current_block >= last_change + T::CommissionChangeInterval::get(),
+				Error::<T>::CommissionChangeTooEarly
+			);
+
+			// Check the maximum change commission
+			let max_change = T::MaxCommissionChange::get();
+			let current_commission = candidate.commission;
+			let change = if commission > current_commission {
+				commission - current_commission
+			} else {
+				current_commission - commission
+			};
+			ensure!(change <= max_change, Error::<T>::CommissionChangeTooHigh);
+
+			// Update the commission and the last change time
+			candidate.set_commission(commission);
+			CandidatePool::<T>::insert(&collator, candidate);
+			LastCommissionChange::<T>::insert(&collator, current_block);
+
+			// Emit an event that the commission was updated
+			Self::deposit_event(Event::CollatorCommissionChanged(collator, commission));
 			Ok(())
+			// let collator = ensure_signed(origin)?;
+			// CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
+			// if commission > Permill::from_percent(100) {
+			// 	return Err(Error::<T>::CommissionTooHigh.into())
+			// }
+
+			// <crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
+			// 	if let Some(candidate) = maybe_candidate {
+			// 		candidate.set_commission(commission);
+			// 	}
+			// });
+
+			// // Emit an event that the commission was updated.
+			// Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(
+			// 	collator, commission,
+			// ));
+			// Ok(())
 		}
 	}
 

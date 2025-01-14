@@ -3990,3 +3990,122 @@ fn check_snapshot_is_cleared() {
 			assert_eq!(at_stake.len(), 0);
 		});
 }
+
+#[test]
+fn change_commission_too_frequently() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(10)
+			));
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			assert_eq!(state.commission, Permill::from_percent(10));
+			assert_eq!(
+				StakePallet::candidate_pool(1).unwrap().commission,
+				Permill::from_percent(10)
+			);
+
+			// change commission too frequently
+			assert_noop!(
+				StakePallet::set_commission(RuntimeOrigin::signed(1), Permill::from_percent(20)),
+				Error::<Test>::CommissionChangeTooEarly
+			);
+			// change commission too frequently
+			assert_noop!(
+				StakePallet::set_commission(RuntimeOrigin::signed(1), Permill::from_percent(30)),
+				Error::<Test>::CommissionChangeTooEarly
+			);
+		});
+}
+
+#[test]
+fn change_commission_after_while() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(10)
+			));
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			assert_eq!(state.commission, Permill::from_percent(10));
+			assert_eq!(
+				StakePallet::candidate_pool(1).unwrap().commission,
+				Permill::from_percent(10)
+			);
+
+			// change commission after a while
+			roll_to(10, vec![]);
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(20)
+			));
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			assert_eq!(state.commission, Permill::from_percent(20));
+			assert_eq!(
+				StakePallet::candidate_pool(1).unwrap().commission,
+				Permill::from_percent(20)
+			);
+		});
+}
+
+#[test]
+fn change_commission_by_too_much() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(10)
+			));
+			let state = CandidatePool::<Test>::get(1).unwrap();
+			assert_eq!(state.commission, Permill::from_percent(10));
+			assert_eq!(
+				StakePallet::candidate_pool(1).unwrap().commission,
+				Permill::from_percent(10)
+			);
+
+			roll_to(10, vec![]);
+
+			// change commission by too much
+			assert_noop!(
+				StakePallet::set_commission(RuntimeOrigin::signed(1), Permill::from_percent(30)),
+				Error::<Test>::CommissionChangeTooHigh
+			);
+		});
+}
