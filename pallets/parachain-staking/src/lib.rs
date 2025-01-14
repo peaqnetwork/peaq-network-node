@@ -2017,23 +2017,6 @@ pub mod pallet {
 			// Emit an event that the commission was updated
 			Self::deposit_event(Event::CollatorCommissionChanged(collator, commission));
 			Ok(())
-			// let collator = ensure_signed(origin)?;
-			// CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
-			// if commission > Permill::from_percent(100) {
-			// 	return Err(Error::<T>::CommissionTooHigh.into())
-			// }
-
-			// <crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
-			// 	if let Some(candidate) = maybe_candidate {
-			// 		candidate.set_commission(commission);
-			// 	}
-			// });
-
-			// // Emit an event that the commission was updated.
-			// Self::deposit_event(crate::pallet::Event::CollatorCommissionChanged(
-			// 	collator, commission,
-			// ));
-			// Ok(())
 		}
 	}
 
