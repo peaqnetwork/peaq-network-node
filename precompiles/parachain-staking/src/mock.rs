@@ -34,7 +34,7 @@ use sp_runtime::{
 	impl_opaque_keys,
 	testing::UintAuthorityId,
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup, OpaqueKeys},
-	BuildStorage, Perbill,
+	BuildStorage, Perbill, Permill,
 };
 use sp_std::fmt::Debug;
 
@@ -206,6 +206,8 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
+	pub const MaxCommissionChange: Permill = Permill::from_percent(10);
+	pub const CommissionChangeInterval: BlockNumber = 1;
 }
 
 impl parachain_staking::Config for Test {
@@ -229,6 +231,8 @@ impl parachain_staking::Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = parachain_staking::weights::WeightInfo<Test>;
+	type CommissionChangeInterval = CommissionChangeInterval;
+	type MaxCommissionChange = MaxCommissionChange;
 }
 
 impl_opaque_keys! {
