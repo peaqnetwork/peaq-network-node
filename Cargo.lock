@@ -9360,7 +9360,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-stable2407#ab1dbfe14ff21a35d2c87251049244c447455499"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-stable2407#ee15a057b86dae336e1d674259567adbd9774aec"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9380,7 +9380,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-stable2407#ab1dbfe14ff21a35d2c87251049244c447455499"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-stable2407#ee15a057b86dae336e1d674259567adbd9774aec"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9396,7 +9396,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-stable2407#ab1dbfe14ff21a35d2c87251049244c447455499"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=peaq-polkadot-stable2407#ee15a057b86dae336e1d674259567adbd9774aec"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
@@ -11480,7 +11480,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.11.0",
  "log",
  "multimap",
