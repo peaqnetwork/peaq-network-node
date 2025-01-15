@@ -232,7 +232,6 @@ impl parachain_staking::Config for Test {
 	type PotId = PotId;
 	type WeightInfo = parachain_staking::weights::WeightInfo<Test>;
 	type CommissionChangeInterval = CommissionChangeInterval;
-	type MaxCommissionChange = MaxCommissionChange;
 }
 
 impl_opaque_keys! {
@@ -337,6 +336,7 @@ impl ExtBuilder {
 		parachain_staking::GenesisConfig::<Test> {
 			stakers,
 			max_candidate_stake: 160_000_000 * DECIMALS,
+			max_commission_change: Permill::from_percent(100),
 		}
 		.assimilate_storage(&mut t)
 		.expect("Parachain Staking's storage can be assimilated");

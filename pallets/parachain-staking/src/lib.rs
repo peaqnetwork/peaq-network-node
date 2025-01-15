@@ -338,10 +338,6 @@ pub mod pallet {
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
-		/// The maximum permill that a commission can change in one go.
-		#[pallet::constant]
-		type MaxCommissionChange: Get<Permill>;
-
 		/// The minimum interval between two commission changes.
 		#[pallet::constant]
 		type CommissionChangeInterval: Get<BlockNumberFor<Self>>;
@@ -531,6 +527,9 @@ pub mod pallet {
 		/// The commission for a collator has been changed.
 		/// \[collator's account, new commission\]
 		CollatorCommissionChanged(T::AccountId, Permill),
+		/// The commission maximum change has been changed.
+		/// \[new value\]
+		MaxCommissionChangeUpdated(Permill),
 	}
 
 	#[pallet::hooks]
@@ -694,15 +693,24 @@ pub mod pallet {
 	pub type LastCommissionChange<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, BlockNumberFor<T>, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn max_commission_change)]
+	pub type MaxCommissionChange<T> = StorageValue<_, Permill, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
 		pub max_candidate_stake: BalanceOf<T>,
+		pub max_commission_change: Permill,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { stakers: Default::default(), max_candidate_stake: Default::default() }
+			Self {
+				stakers: Default::default(),
+				max_candidate_stake: Default::default(),
+				max_commission_change: Permill::from_percent(100),
+			}
 		}
 	}
 
@@ -739,6 +747,8 @@ pub mod pallet {
 			let round: RoundInfo<BlockNumberFor<T>> =
 				RoundInfo::new(0u32, 0u32.into(), T::DefaultBlocksPerRound::get());
 			<Round<T>>::put(round);
+
+			MaxCommissionChange::<T>::put(self.max_commission_change);
 		}
 	}
 
@@ -2000,7 +2010,7 @@ pub mod pallet {
 			);
 
 			// Check the maximum change commission
-			let max_change = T::MaxCommissionChange::get();
+			let max_change = MaxCommissionChange::<T>::get();
 			let current_commission = candidate.commission;
 			let change = if commission > current_commission {
 				commission - current_commission
@@ -2016,6 +2026,22 @@ pub mod pallet {
 
 			// Emit an event that the commission was updated
 			Self::deposit_event(Event::CollatorCommissionChanged(collator, commission));
+			Ok(())
+		}
+
+		#[pallet::call_index(20)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_max_commission_change(
+		Permill::from_percent(100).deconstruct()
+		))]
+		pub fn set_max_commission_change(
+			origin: OriginFor<T>,
+			new_max_commission_change: Permill,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			MaxCommissionChange::<T>::put(new_max_commission_change);
+
+			Self::deposit_event(Event::MaxCommissionChangeUpdated(new_max_commission_change));
 			Ok(())
 		}
 	}

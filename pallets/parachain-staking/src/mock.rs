@@ -154,7 +154,6 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const MaxCommissionChange: Permill = Permill::from_percent(10);
 	pub const CommissionChangeInterval: BlockNumber = 1;
 
 }
@@ -181,7 +180,6 @@ impl Config for Test {
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
 	type CommissionChangeInterval = CommissionChangeInterval;
-	type MaxCommissionChange = MaxCommissionChange;
 }
 
 impl_opaque_keys! {
@@ -283,9 +281,13 @@ impl ExtBuilder {
 		for delegator in self.delegators.clone() {
 			stakers.push((delegator.0, Some(delegator.1), delegator.2));
 		}
-		stake::GenesisConfig::<Test> { stakers, max_candidate_stake: 160_000_000 * DECIMALS }
-			.assimilate_storage(&mut t)
-			.expect("Parachain Staking's storage can be assimilated");
+		stake::GenesisConfig::<Test> {
+			stakers,
+			max_candidate_stake: 160_000_000 * DECIMALS,
+			max_commission_change: Permill::from_percent(10),
+		}
+		.assimilate_storage(&mut t)
+		.expect("Parachain Staking's storage can be assimilated");
 
 		// stashes are the AccountId
 		let session_keys: Vec<_> = self

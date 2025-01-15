@@ -9,7 +9,7 @@ use peaq_runtime::{
 use runtime_common::TOKEN_DECIMALS;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, Permill};
 
 use crate::parachain::dev_chain_spec::{authority_keys_from_seed, get_account_id_from_seed};
 
@@ -122,6 +122,7 @@ fn configure_genesis(
 		parachain_staking: ParachainStakingConfig {
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+			max_commission_change: Permill::from_percent(100),
 		},
 		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {

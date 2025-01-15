@@ -848,7 +848,7 @@ pub mod staking {
 			pub const MaxCollatorCandidates: u32 = 64;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
-			pub const MaxCommissionChange: Permill = Permill::from_percent(10); // Maximum 10% change
+			/// Minimum time between commission changes
 			pub const CommissionChangeInterval: BlockNumber = DAYS; // 24 hours
 	}
 }
@@ -877,7 +877,6 @@ impl parachain_staking::Config for Runtime {
 
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
 	type CommissionChangeInterval = staking::CommissionChangeInterval;
-	type MaxCommissionChange = staking::MaxCommissionChange;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
