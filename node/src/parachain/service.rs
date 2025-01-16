@@ -755,8 +755,6 @@ where
 		 collator_key| {
 			let spawn_handle = task_manager.spawn_handle();
 
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
-
 			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 				spawn_handle,
 				client.clone(),
@@ -764,6 +762,7 @@ where
 				prometheus_registry,
 				telemetry.clone(),
 			);
+			// [TODO] proposer_block_size_limit
 
 			let overseer_handle = relay_chain_interface
 				.overseer_handle()
@@ -781,7 +780,6 @@ where
 				client.clone(),
 			);
 
-			// [TODO] Found other didn't use async_arua::run, need to refine
 			let fut =
 				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _>(async_aura::Params {
 					create_inherent_data_providers: move |_, ()| async move { Ok(()) },

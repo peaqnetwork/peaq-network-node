@@ -2,7 +2,7 @@ use cumulus_client_cli::extract_genesis_wasm;
 use cumulus_primitives_core::ParaId;
 #[cfg(feature = "frame-benchmarking-cli")]
 use frame_benchmarking_cli::BenchmarkCmd;
-use log::info;
+use log::{info, warn};
 use parity_scale_codec::Encode;
 use peaq_primitives_xcm::*;
 use sc_cli::{
@@ -407,8 +407,8 @@ pub fn run() -> sc_cli::Result<()> {
 		},
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err("TryRuntime will not be supported anymore by the \
-            peaq-node. Instead please use the provided CLI tool by Substrate! Have a look at crate \
-            `try-runtime-cli`."
+			peaq-node. Instead please use the provided CLI tool by Substrate! Have a look at crate \
+			`try-runtime-cli`."
 			.into()),
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(_)) => Ok(()),
@@ -452,6 +452,14 @@ pub fn run() -> sc_cli::Result<()> {
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
+
+				if !rpc_config.relay_chain_rpc_urls.is_empty() && cli.relaychain_args.len() > 0 {
+					warn!(
+						"Detected relay chain node arguments together with \
+					--relay-chain-rpc-url. This command starts a minimal Polkadot node that only \
+					uses a network-related subset of all relay chain CLI options."
+					);
+				}
 
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
