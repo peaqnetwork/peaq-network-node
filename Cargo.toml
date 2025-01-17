@@ -199,6 +199,7 @@ sc-keystore = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "p
 sc-rpc = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }
 sc-rpc-api = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }
 sc-service = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }
+sc-sysinfo = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }
 sc-telemetry = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }
 sc-transaction-pool = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }
 sc-transaction-pool-api = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407" }

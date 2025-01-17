@@ -55,6 +55,23 @@ pub struct RunCmd {
 	/// The dynamic-fee pallet target gas price set by block author
 	#[clap(long, default_value = "1")]
 	pub target_gas_price: u64,
+
+	#[clap(long, default_value = sc_basic_authorship::DEFAULT_BLOCK_SIZE_LIMIT.to_string())]
+	pub proposer_block_size_limit: usize,
+
+	/// Proposer's soft deadline in percents of block size
+	#[clap(long, default_value = "50")]
+	pub proposer_soft_deadline_percent: u8,
+
+	/// Disable automatic hardware benchmarks.
+	///
+	/// By default these benchmarks are automatically ran at startup and measure
+	/// the CPU speed, the memory bandwidth and the disk speed.
+	///
+	/// The results are then printed out in the logs, and also sent as part of
+	/// telemetry, if telemetry is enabled.
+	#[arg(long, default_value = "true")]
+	pub no_hardware_benchmarks: bool,
 }
 
 impl std::ops::Deref for RunCmd {

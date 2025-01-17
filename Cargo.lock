@@ -9232,6 +9232,7 @@ dependencies = [
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sc-transaction-pool",

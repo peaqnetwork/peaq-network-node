@@ -32,3 +32,17 @@ pub struct RpcConfig {
 	pub relay_chain_rpc_urls: Vec<url::Url>,
 	pub tracing_raw_max_memory_usage: usize,
 }
+
+#[derive(Clone)]
+/// To add additional config to start_xyz_node functions
+pub struct AdditionalConfig {
+	// We don't need to have evm_tracing_config because we are already get from other place
+	// We don't need to have enable_evm_rpc because we are always enabling it
+	/// Maxium allowed block size limit to propose
+	pub proposer_block_size_limit: usize,
+
+	/// Soft deadline limit used by `Proposer`
+	pub proposer_soft_deadline_percent: u8,
+	/// Hardware benchmarks score
+	pub hwbench: Option<sc_sysinfo::HwBench>,
+}

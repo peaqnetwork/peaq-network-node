@@ -17,7 +17,7 @@ use sc_network::{config::NetworkBackendType, NetworkBackend};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{traits::Block as BlockT, Percent};
 
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
@@ -48,7 +48,7 @@ use substrate_prometheus_endpoint::Registry;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
 use super::shell_upgrade::*;
-use crate::cli_opt::{EthApi as EthApiCmd, RpcConfig};
+use crate::cli_opt::{AdditionalConfig, EthApi as EthApiCmd, RpcConfig};
 
 macro_rules! declare_executor {
 	($mod_type:tt, $runtime_ns:tt) => {
@@ -262,6 +262,7 @@ async fn build_relay_chain_interface(
 	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	task_manager: &mut TaskManager,
 	collator_options: CollatorOptions,
+	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
 	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
 		collator_options.relay_chain_mode
@@ -274,7 +275,7 @@ async fn build_relay_chain_interface(
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
-			None,
+			hwbench,
 		)
 	}
 }
@@ -291,6 +292,7 @@ async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC, Net>(
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
+	additional_config: AdditionalConfig,
 	fn_build_import_queue: BIQ,
 	fn_build_consensus: BIC,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
@@ -374,6 +376,7 @@ where
 		telemetry_worker_handle,
 		&mut task_manager,
 		collator_options.clone(),
+		additional_config.hwbench.clone(),
 	)
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
@@ -553,6 +556,22 @@ where
 		telemetry: telemetry.as_mut(),
 	})?;
 
+	if let Some(hwbench) = additional_config.hwbench.clone() {
+		sc_sysinfo::print_hwbench(&hwbench);
+		if is_authority {
+			warn_if_slow_hardware(&hwbench);
+		}
+
+		if let Some(ref mut telemetry) = telemetry {
+			let telemetry_handle = telemetry.handle();
+			task_manager.spawn_handle().spawn(
+				"telemetry_hwbench",
+				None,
+				sc_sysinfo::initialize_hwbench_telemetry(telemetry_handle, hwbench),
+			);
+		}
+	}
+
 	let announce_block = {
 		let sync_service = sync_service.clone();
 		Arc::new(move |hash, data| sync_service.announce_block(hash, data))
@@ -669,6 +688,19 @@ where
 	Ok(BasicQueue::new(verifier, Box::new(block_import), None, &spawner, registry))
 }
 
+/// Checks that the hardware meets the requirements and print a warning otherwise.
+fn warn_if_slow_hardware(hwbench: &sc_sysinfo::HwBench) {
+	// Polkadot para-chains should generally use these requirements to ensure that the relay-chain
+	// will not take longer than expected to import its blocks.
+	if let Err(err) = frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.check_hardware(hwbench) {
+		log::warn!(
+            "⚠️  The hardware does not meet the minimal requirements {} for role 'Authority' find out more at:\n\
+            https://wiki.polkadot.network/docs/maintain-guides-how-to-validate-polkadot#reference-hardware",
+            err
+        );
+	}
+}
+
 pub async fn start_node<RuntimeApi>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -676,6 +708,7 @@ pub async fn start_node<RuntimeApi>(
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
+	additional_config: AdditionalConfig,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
@@ -762,14 +795,17 @@ where
 	                           collator_key: CollatorPair| {
 		let spawn_handle = task_manager.spawn_handle();
 
-		let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+		let mut proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 			spawn_handle,
 			client.clone(),
 			transaction_pool,
 			prometheus_registry,
 			telemetry.clone(),
 		);
-		// [TODO] proposer_block_size_limit
+		proposer_factory.set_default_block_size_limit(additional_config.proposer_block_size_limit);
+		proposer_factory.set_soft_deadline(Percent::from_percent(
+			additional_config.proposer_soft_deadline_percent,
+		));
 
 		let overseer_handle = relay_chain_interface
 			.overseer_handle()
@@ -823,6 +859,7 @@ where
 				id,
 				rpc_config,
 				target_gas_price,
+				additional_config.clone(),
 				fn_import_queue_builder,
 				fn_collator_builder,
 			)
@@ -835,6 +872,7 @@ where
 				id,
 				rpc_config,
 				target_gas_price,
+				additional_config.clone(),
 				fn_import_queue_builder,
 				fn_collator_builder,
 			)

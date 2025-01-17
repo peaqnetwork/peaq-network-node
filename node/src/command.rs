@@ -22,7 +22,7 @@ use std::io::Write;
 
 use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
-	cli_opt::{EthApi, RpcConfig},
+	cli_opt::{AdditionalConfig, EthApi, RpcConfig},
 	parachain,
 	parachain::service::{self, dev, frontier_database_dir, krest, peaq, start_node},
 };
@@ -461,6 +461,18 @@ pub fn run() -> sc_cli::Result<()> {
 					);
 				}
 
+				let hwbench = (!cli.run.no_hardware_benchmarks)
+					.then_some(config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					}))
+					.flatten();
+
+				let additional_config = AdditionalConfig {
+					proposer_block_size_limit: cli.run.proposer_block_size_limit,
+					proposer_soft_deadline_percent: cli.run.proposer_soft_deadline_percent,
+					hwbench,
+				};
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
 					start_node::<RuntimeApi>(
@@ -470,6 +482,7 @@ pub fn run() -> sc_cli::Result<()> {
 						id,
 						rpc_config,
 						cli.run.target_gas_price,
+						additional_config,
 					)
 					.await
 					.map(|r| r.0)

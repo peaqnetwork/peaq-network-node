@@ -34,7 +34,7 @@ fc-storage = { workspace = true, default-features = true }
 
 parity-scale-codec = { workspace = true, default-features = true }
 frame-benchmarking = { workspace = true, default-features = true }
-frame-benchmarking-cli = { workspace = true, optional = true }
+frame-benchmarking-cli = { workspace = true }
 pallet-transaction-payment-rpc = { workspace = true, default-features = true }
 sc-basic-authorship = { workspace = true, default-features = true }
 sc-cli = { workspace = true, default-features = true }
@@ -47,6 +47,7 @@ sc-keystore = { workspace = true, default-features = true }
 sc-rpc = { workspace = true, default-features = true }
 sc-rpc-api = { workspace = true, default-features = true }
 sc-service = { workspace = true, default-features = true }
+sc-sysinfo = { workspace = true, default-features = true }
 sc-telemetry = { workspace = true, default-features = true }
 sc-transaction-pool = { workspace = true, default-features = true }
 sc-transaction-pool-api = { workspace = true, default-features = true }
@@ -143,7 +144,7 @@ aura = [
 	"peaq-krest-runtime/aura"
 ]
 runtime-benchmarks = [
-	"frame-benchmarking-cli",
+	"frame-benchmarking-cli/runtime-benchmarks",
 	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"peaq-runtime/runtime-benchmarks",
