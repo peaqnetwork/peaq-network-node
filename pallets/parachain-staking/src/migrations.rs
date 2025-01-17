@@ -33,7 +33,7 @@ mod upgrade {
 
 	use crate::MaxCommissionChange;
 
-use super::*;
+	use super::*;
 
 	/// Migration implementation that deletes the old reward rate config and changes the staking ID.
 	pub struct Migrate<T>(sp_std::marker::PhantomData<T>);
