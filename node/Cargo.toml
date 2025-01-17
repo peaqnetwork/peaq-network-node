@@ -22,7 +22,6 @@ branch = "peaq-polkadot-stable2407"
 
 [dependencies]
 serde_json = { workspace = true, default-features = true }
-structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
 flume = { workspace = true, default-features = true }
@@ -118,8 +117,6 @@ zenlink-protocol = { workspace = true, default-features = true }
 zenlink-protocol-rpc = { workspace = true, default-features = true }
 zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 
-# [TODO] Remove this once the runtime is stable
-# try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
 
 peaq-dev-runtime = { path = "../runtime/peaq-dev" }
@@ -156,6 +153,4 @@ try-runtime = [
 	"peaq-dev-runtime/try-runtime",
 	"peaq-krest-runtime/try-runtime",
 	"peaq-runtime/try-runtime",
-	# [TODO] Remove this once the runtime is stable
-	# "try-runtime-cli/try-runtime"
 ]

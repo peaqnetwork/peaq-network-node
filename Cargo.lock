@@ -1276,21 +1276,6 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "2.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0610544180c38b88101fecf2dd634b174a62eef6946f84dfc6a7127512b381c"
-dependencies = [
- "ansi_term",
- "atty",
- "bitflags 1.3.2",
- "strsim 0.8.0",
- "textwrap",
- "unicode-width",
- "vec_map",
-]
-
-[[package]]
-name = "clap"
 version = "4.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0956a43b323ac1afaffc053ed5c4b7c1f1800bacd1683c353aabbb752515dd3"
@@ -1308,7 +1293,7 @@ dependencies = [
  "anstream",
  "anstyle",
  "clap_lex",
- "strsim 0.11.1",
+ "strsim",
  "terminal_size",
 ]
 
@@ -1738,7 +1723,7 @@ name = "cumulus-client-cli"
 version = "0.17.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-stable2407#ec2dae1e932d19a6476b02e8da81b451232ceac2"
 dependencies = [
- "clap 4.5.18",
+ "clap",
  "parity-scale-codec",
  "sc-chain-spec",
  "sc-cli",
@@ -3626,7 +3611,7 @@ dependencies = [
  "Inflector",
  "array-bytes",
  "chrono",
- "clap 4.5.18",
+ "clap",
  "comfy-table",
  "frame-benchmarking",
  "frame-support",
@@ -4304,15 +4289,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8094feaf31ff591f651a2664fb9cfd92bba7a60ce3197265e9482ebe753c8f7"
 dependencies = [
  "hashbrown 0.14.3",
-]
-
-[[package]]
-name = "heck"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
-dependencies = [
- "unicode-segmentation",
 ]
 
 [[package]]
@@ -9177,7 +9153,7 @@ name = "peaq-node"
 version = "4.0.1-polkadot-stable2407"
 dependencies = [
  "async-trait",
- "clap 4.5.18",
+ "clap",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
@@ -9277,7 +9253,6 @@ dependencies = [
  "sp-timestamp",
  "sp-transaction-pool",
  "staging-xcm",
- "structopt",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -10054,7 +10029,7 @@ version = "17.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-stable2407#ec2dae1e932d19a6476b02e8da81b451232ceac2"
 dependencies = [
  "cfg-if",
- "clap 4.5.18",
+ "clap",
  "frame-benchmarking-cli",
  "futures 0.3.30",
  "log",
@@ -12616,7 +12591,7 @@ source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-s
 dependencies = [
  "array-bytes",
  "chrono",
- "clap 4.5.18",
+ "clap",
  "fdlimit",
  "futures 0.3.30",
  "itertools 0.11.0",
@@ -13547,7 +13522,7 @@ name = "sc-storage-monitor"
 version = "0.22.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-stable2407#ec2dae1e932d19a6476b02e8da81b451232ceac2"
 dependencies = [
- "clap 4.5.18",
+ "clap",
  "fs4",
  "log",
  "sp-core",
@@ -15347,39 +15322,9 @@ dependencies = [
 
 [[package]]
 name = "strsim"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
-
-[[package]]
-name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
-
-[[package]]
-name = "structopt"
-version = "0.3.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c6b5c64445ba8094a6ab0c3cd2ad323e07171012d9c98b0b15651daf1787a10"
-dependencies = [
- "clap 2.34.0",
- "lazy_static",
- "structopt-derive",
-]
-
-[[package]]
-name = "structopt-derive"
-version = "0.4.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
-dependencies = [
- "heck 0.3.3",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
 
 [[package]]
 name = "strum"
@@ -15683,15 +15628,6 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
-
-[[package]]
-name = "textwrap"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
-dependencies = [
- "unicode-width",
-]
 
 [[package]]
 name = "thiserror"
@@ -16428,12 +16364,6 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
-
-[[package]]
-name = "vec_map"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "version_check"

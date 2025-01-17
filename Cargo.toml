@@ -65,13 +65,9 @@ serde_json = { version = "1.0" }
 serde = { version = "1.0.210", default-features = false }
 slices = { version = "0.2.0", default-features = false }
 smallvec = { version = "1.13.2", default-features = false }
-# [TODO] ???
-structopt = "0.3.8"
 similar-asserts = { version = "1.6.0" }
 syn = { version = "1.0" }
 tokio = { version = "1.40.0" }
-# [TODO] ???
-trybuild = { version = "1.0", default-features = false }
 tracing = "0.1.40"
 url = "2.5.2"
 once_cell = { version = "1.19.0", default-features = false }
@@ -220,9 +216,6 @@ sc-chain-spec = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = 
 sc-utils = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 sp-staking = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
 frame-try-runtime = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407", default-features = false }
-
-# [TODO] Remove this once the runtime is stable
-# try-runtime-cli = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2407"}
 
 zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-stable2407", default-features = false }
 zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-stable2407", default-features = false }
