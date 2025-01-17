@@ -13,7 +13,7 @@ use cumulus_primitives_core::{
 };
 use fc_rpc::StorageOverrideHandler;
 use sc_client_api::{AuxStore, Backend, StateBackend, StorageProvider};
-use sc_network::NetworkBackend;
+use sc_network::{config::NetworkBackendType, NetworkBackend};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
@@ -73,7 +73,7 @@ pub type ExtHostFunctions = (
 pub type ExtHostFunctions = (
 	sp_io::SubstrateHostFunctions,
 	ParachainHostFunctions,
-	peaq_primitives_ext::peaq_ext::HostFunctions
+	peaq_primitives_ext::peaq_ext::HostFunctions,
 );
 
 type FullClient<RuntimeApi> = TFullClient<Block, RuntimeApi, WasmExecutor<ExtHostFunctions>>;
@@ -446,7 +446,6 @@ where
 		Some("frontier"),
 		EthTask::fee_history_task(
 			Arc::clone(&client),
-			// [TODO] Double check
 			overrides.clone(),
 			fee_history_cache.clone(),
 			fee_history_limit,
@@ -700,113 +699,145 @@ where
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
 {
-	// [TODO] NetworkBackendType::Litep2p/NetworkBackendType::Libp2p, need to refine
-	start_contracts_node_impl::<RuntimeApi, _, _, sc_network::NetworkWorker<_, _>>(
-		parachain_config,
-		polkadot_config,
-		collator_options,
-		id,
-		rpc_config,
-		target_gas_price,
-		|client, block_import, config, telemetry, task_manager, target_gas_price| {
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+	let fn_import_queue_builder = |client: Arc<FullClient<RuntimeApi>>,
+	                               block_import: ParachainBlockImport<
+		Block,
+		FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
+		FullBackend,
+	>,
+	                               config: &Configuration,
+	                               telemetry: Option<TelemetryHandle>,
+	                               task_manager: &TaskManager,
+	                               target_gas_price: u64| {
+		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
-			cumulus_client_consensus_aura::import_queue::<
-				sp_consensus_aura::sr25519::AuthorityPair,
-				_,
-				_,
-				_,
-				_,
-				_,
-			>(cumulus_client_consensus_aura::ImportQueueParams {
-				block_import,
-				client,
-				create_inherent_data_providers: move |_, _| async move {
-					let time = sp_timestamp::InherentDataProvider::from_system_time();
+		cumulus_client_consensus_aura::import_queue::<
+			sp_consensus_aura::sr25519::AuthorityPair,
+			_,
+			_,
+			_,
+			_,
+			_,
+		>(cumulus_client_consensus_aura::ImportQueueParams {
+			block_import,
+			client,
+			create_inherent_data_providers: move |_, _| async move {
+				let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-					let slot =
+				let slot =
 						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 							*time,
 							slot_duration,
 						);
 
-					let dynamic_fee =
-						fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
+				let dynamic_fee =
+					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
 
-					Ok((slot, time, dynamic_fee))
-				},
-				registry: config.prometheus_registry(),
-				spawner: &task_manager.spawn_essential_handle(),
-				telemetry,
-			})
-			.map_err(Into::into)
-		},
-		|client,
-		 backend,
-		 block_import,
-		 prometheus_registry,
-		 telemetry,
-		 task_manager,
-		 relay_chain_interface,
-		 transaction_pool,
-		 sync_oracle,
-		 keystore,
-		 para_id,
-		 collator_key| {
-			let spawn_handle = task_manager.spawn_handle();
+				Ok((slot, time, dynamic_fee))
+			},
+			registry: config.prometheus_registry(),
+			spawner: &task_manager.spawn_essential_handle(),
+			telemetry,
+		})
+		.map_err(Into::into)
+	};
 
-			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
-				spawn_handle,
-				client.clone(),
-				transaction_pool,
-				prometheus_registry,
-				telemetry.clone(),
-			);
-			// [TODO] proposer_block_size_limit
+	let fn_collator_builder = |client: Arc<FullClient<RuntimeApi>>,
+	                           backend: Arc<FullBackend>,
+	                           block_import: ParachainBlockImport<
+		Block,
+		FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
+		FullBackend,
+	>,
+	                           prometheus_registry: Option<&Registry>,
+	                           telemetry: Option<TelemetryHandle>,
+	                           task_manager: &TaskManager,
+	                           relay_chain_interface: Arc<dyn RelayChainInterface>,
+	                           transaction_pool: Arc<
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi>>,
+	>,
+	                           sync_oracle: Arc<SyncingService<Block>>,
+	                           keystore: KeystorePtr,
+	                           para_id: ParaId,
+	                           collator_key: CollatorPair| {
+		let spawn_handle = task_manager.spawn_handle();
 
-			let overseer_handle = relay_chain_interface
-				.overseer_handle()
-				.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
+		let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+			spawn_handle,
+			client.clone(),
+			transaction_pool,
+			prometheus_registry,
+			telemetry.clone(),
+		);
+		// [TODO] proposer_block_size_limit
 
-			let announce_block = {
-				let sync_service = sync_oracle.clone();
-				Arc::new(move |hash, data| sync_service.announce_block(hash, data))
-			};
+		let overseer_handle = relay_chain_interface
+			.overseer_handle()
+			.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
-			let collator_service = cumulus_client_collator::service::CollatorService::new(
-				client.clone(),
-				Arc::new(task_manager.spawn_handle()),
-				announce_block,
-				client.clone(),
-			);
+		let announce_block = {
+			let sync_service = sync_oracle.clone();
+			Arc::new(move |hash, data| sync_service.announce_block(hash, data))
+		};
 
-			let fut =
-				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _>(async_aura::Params {
-					create_inherent_data_providers: move |_, ()| async move { Ok(()) },
-					block_import: block_import.clone(),
-					para_client: client.clone(),
-					para_backend: backend.clone(),
-					relay_client: relay_chain_interface.clone(),
-					code_hash_provider: move |block_hash| {
-						client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
-					},
-					keystore,
-					collator_key,
-					para_id,
-					overseer_handle,
-					relay_chain_slot_duration: Duration::from_secs(6),
-					proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
-					collator_service,
-					// We got around 1500ms for proposing
-					authoring_duration: Duration::from_millis(1500),
-					// collation_request_receiver: None,
-					reinitialize: false,
-				});
+		let collator_service = cumulus_client_collator::service::CollatorService::new(
+			client.clone(),
+			Arc::new(task_manager.spawn_handle()),
+			announce_block,
+			client.clone(),
+		);
 
-			task_manager.spawn_essential_handle().spawn("aura", None, fut);
+		let fut = async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _>(async_aura::Params {
+			create_inherent_data_providers: move |_, ()| async move { Ok(()) },
+			block_import: block_import.clone(),
+			para_client: client.clone(),
+			para_backend: backend.clone(),
+			relay_client: relay_chain_interface.clone(),
+			code_hash_provider: move |block_hash| {
+				client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
+			},
+			keystore,
+			collator_key,
+			para_id,
+			overseer_handle,
+			relay_chain_slot_duration: Duration::from_secs(6),
+			proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
+			collator_service,
+			// We got around 1500ms for proposing
+			authoring_duration: Duration::from_millis(1500),
+			// collation_request_receiver: None,
+			reinitialize: false,
+		});
 
-			Ok(())
-		},
-	)
-	.await
+		task_manager.spawn_essential_handle().spawn("aura", None, fut);
+
+		Ok(())
+	};
+
+	match parachain_config.network.network_backend {
+		NetworkBackendType::Libp2p =>
+			start_contracts_node_impl::<RuntimeApi, _, _, sc_network::NetworkWorker<_, _>>(
+				parachain_config,
+				polkadot_config,
+				collator_options,
+				id,
+				rpc_config,
+				target_gas_price,
+				fn_import_queue_builder,
+				fn_collator_builder,
+			)
+			.await,
+		NetworkBackendType::Litep2p =>
+			start_contracts_node_impl::<RuntimeApi, _, _, sc_network::Litep2pNetworkBackend>(
+				parachain_config,
+				polkadot_config,
+				collator_options,
+				id,
+				rpc_config,
+				target_gas_price,
+				fn_import_queue_builder,
+				fn_collator_builder,
+			)
+			.await,
+	}
 }
