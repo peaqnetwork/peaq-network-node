@@ -56,9 +56,12 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub substrate_backend: Arc<BE>,
 	pub frontier_backend: Arc<fc_db::Backend<B, C>>,
 	// pub frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
+	#[allow(dead_code)]
 	pub filter_pool: Option<FilterPool>,
 	pub overrides: Arc<dyn StorageOverride<B>>,
+	#[allow(dead_code)]
 	pub fee_history_limit: u64,
+	#[allow(dead_code)]
 	pub fee_history_cache: FeeHistoryCache,
 }
 
@@ -87,8 +90,10 @@ pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// Frontier Backend.
 	pub frontier_backend: Arc<dyn fc_api::Backend<Block>>,
 	/// Backend.
+	#[allow(dead_code)]
 	pub backend: Arc<BE>,
 	/// Manual seal command sink
+	#[allow(dead_code)]
 	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
@@ -97,6 +102,7 @@ pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Channels for manual xcm messages (downward, hrmp)
+	#[allow(dead_code)]
 	pub xcm_senders: XcmSenders,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<dyn StorageOverride<Block>>,
@@ -183,6 +189,7 @@ where
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
+	#[allow(dead_code)]
 	enum Never {}
 	impl<T> fp_rpc::ConvertTransaction<T> for Never {
 		fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
