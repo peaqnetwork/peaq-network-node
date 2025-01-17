@@ -20,8 +20,9 @@ pub enum Versions {
 	_V8 = 8,
 	V9 = 9,
 	V10 = 10,
-	#[default]
 	V11 = 11,
+	#[default]
+	V12 = 12,
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
@@ -30,7 +31,9 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 
 mod upgrade {
 
-	use super::*;
+	use crate::MaxCommissionChange;
+
+use super::*;
 
 	/// Migration implementation that deletes the old reward rate config and changes the staking ID.
 	pub struct Migrate<T>(sp_std::marker::PhantomData<T>);
@@ -101,6 +104,11 @@ mod upgrade {
 				}
 
 				log::info!("V11 Migrating Done.");
+			}
+
+			if onchain_storage_version < StorageVersion::new(Versions::V12 as u16) {
+				// Set the value of MaxCommissionChange to 10%
+				MaxCommissionChange::<T>::put(Permill::from_percent(10));
 			}
 			// update onchain storage version
 			StorageVersion::new(Versions::default() as u16).put::<Pallet<T>>();
