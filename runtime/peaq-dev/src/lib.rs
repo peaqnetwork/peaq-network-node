@@ -1202,7 +1202,7 @@ mod benches {
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
 		[peaq_pallet_mor, PeaqMor]
-		[pallet_xcm, PolkadotXcm]
+		// [pallet_xcm, PalletXcmExtrinsicsBenchmark::<Runtime>]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
 		[address_unification, AddressUnification]
@@ -2060,7 +2060,8 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
+			use frame_support::traits::TrackedStorageKey;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 
@@ -2082,7 +2083,7 @@ impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
-
+			log::info!("try-runtime::on_runtime_upgrade polkadot.");
 			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}

@@ -9110,7 +9110,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#68b89b8e55806ddb6b84bc5fd6e4accf1a583503"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9130,7 +9130,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#68b89b8e55806ddb6b84bc5fd6e4accf1a583503"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9147,7 +9147,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-did-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#d4021c704d47806a99f0f02a460dc95ec0d4271e"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-did.git?branch=dev#68b89b8e55806ddb6b84bc5fd6e4accf1a583503"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-did",
@@ -9224,7 +9224,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#fd2cec13b7ba25de9a3ef118c7015d56bf59c1db"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#a7ed9d41e79603023110464b343eaf0519d21dd1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9241,7 +9241,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-rpc"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#fd2cec13b7ba25de9a3ef118c7015d56bf59c1db"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#a7ed9d41e79603023110464b343eaf0519d21dd1"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9258,7 +9258,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-storage-runtime-api"
 version = "0.2.1"
-source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#fd2cec13b7ba25de9a3ef118c7015d56bf59c1db"
+source = "git+https://github.com/peaqnetwork/peaq-storage-pallet.git?branch=dev#a7ed9d41e79603023110464b343eaf0519d21dd1"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-storage",
@@ -9269,7 +9269,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-transaction"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#818fa83f86a98b9fc820f933562deeb767b5c7f9"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-transaction.git?branch=dev#d0772b7e8ed4776e8f73601b2fab5f08e23fd391"
 dependencies = [
  "frame-benchmarking",
  "frame-support",

@@ -50,12 +50,13 @@ pub struct ParachainStakingPrecompile<Runtime>(PhantomData<Runtime>);
 pub struct CollatorInfo {
 	owner: H256,
 	amount: U256,
+	commission: U256,
 }
 
 #[precompile_utils::precompile]
 impl<Runtime> ParachainStakingPrecompile<Runtime>
 where
-	Runtime: parachain_staking::Config + pallet_evm::Config,
+	Runtime: parachain_staking::Config + pallet_evm::Config + pallet_session::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<parachain_staking::Call<Runtime>>,
@@ -73,13 +74,45 @@ where
 
 		handle.record_db_read::<Runtime>(7200)?;
 
-		Ok(parachain_staking::Pallet::<Runtime>::top_candidates()
-			.into_iter()
-			.map(|stake_info| CollatorInfo {
-				owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.owner)),
-				amount: stake_info.amount.into(),
+		let all_collators = parachain_staking::CandidatePool::<Runtime>::iter()
+			.map(|(_id, stake_info)| CollatorInfo {
+				owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.id)),
+				amount: stake_info.total.into(),
+				commission: U256::from(stake_info.commission.deconstruct() as u128),
 			})
-			.collect::<Vec<CollatorInfo>>())
+			.collect::<Vec<CollatorInfo>>();
+		let top_candiate = parachain_staking::Pallet::<Runtime>::top_candidates()
+			.into_iter()
+			.map(|stake_info| {
+				H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.owner))
+			})
+			.collect::<Vec<H256>>();
+		let candidate_list = all_collators.into_iter().filter(|x| top_candiate.contains(&x.owner));
+		Ok(candidate_list.collect::<Vec<CollatorInfo>>())
+	}
+
+	#[precompile::public("getWaitList()")]
+	#[precompile::public("get_wait_list()")]
+	#[precompile::view]
+	fn get_wait_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
+		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
+		// we account for a theoretical 150 pool.
+
+		handle.record_db_read::<Runtime>(7200)?;
+
+		let all_collators = parachain_staking::CandidatePool::<Runtime>::iter()
+			.map(|(_id, stake_info)| CollatorInfo {
+				owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.id)),
+				amount: stake_info.total.into(),
+				commission: U256::from(stake_info.commission.deconstruct() as u128),
+			})
+			.collect::<Vec<CollatorInfo>>();
+		let validators = pallet_session::Pallet::<Runtime>::validators()
+			.into_iter()
+			.map(|info| H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(info)))
+			.collect::<Vec<H256>>();
+		let candidate_list = all_collators.into_iter().filter(|x| !validators.contains(&x.owner));
+		Ok(candidate_list.collect::<Vec<CollatorInfo>>())
 	}
 
 	#[precompile::public("joinDelegators(bytes32,uint256)")]

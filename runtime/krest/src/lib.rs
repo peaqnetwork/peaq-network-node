@@ -1142,7 +1142,7 @@ mod benches {
 		[peaq_pallet_did, PeaqDid]
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
-		[pallet_xcm, PolkadotXcm]
+		// [pallet_xcm, PalletXcmExtrinsicsBenchmark::<Runtime>]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
 		[address_unification, AddressUnification]
@@ -2000,7 +2000,8 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
+			use frame_support::traits::TrackedStorageKey;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 

@@ -102,10 +102,12 @@ fn collator_list_test() {
 					CollatorInfo {
 						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
 						amount: U256::from(110),
+						commission: U256::from(0),
 					},
 					CollatorInfo {
 						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
 						amount: U256::from(20),
+						commission: U256::from(0),
 					},
 				]);
 		});

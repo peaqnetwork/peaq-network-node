@@ -16,11 +16,16 @@ interface ParachainStaking {
     struct CollatorInfo {
         bytes32 owner;
         uint256 amount;
+        uint256 commission;
     }
 
     /// Get all collator informations
     // selector: 0xaaacb283
     function getCollatorList() external view returns (CollatorInfo[] memory);
+
+    /// Get all wait informations
+    // selector: 0x83d2afed
+    function getWaitList() external view returns (CollatorInfo[] memory);
 
     /// Join the set of delegators by delegating to a collator candidate
     /// selector: 0xd9f511cd
