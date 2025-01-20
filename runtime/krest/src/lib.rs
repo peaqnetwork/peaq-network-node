@@ -36,7 +36,10 @@ use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use sp_runtime::traits::IdentityLookup;
 
-use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
+use frame_support::traits::{
+	tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
+	EqualPrivilegeOnly, LinearStoragePrice,
+};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -1034,6 +1037,43 @@ impl inflation_manager::Config for Runtime {
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = NORMAL_DISPATCH_RATIO * RuntimeBlockWeights::get().max_block;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = ConstU32<50>;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
+	pub const PreimageBaseDeposit: Balance = DOLLARS / 10;
+	pub const PreimageByteDeposit: Balance = DOLLARS;
+	pub const PreimageHoldReason: RuntimeHoldReason =
+		RuntimeHoldReason::Preimage(pallet_preimage::HoldReason::Preimage);
+}
+
+impl pallet_preimage::Config for Runtime {
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type Consideration = HoldConsideration<
+		AccountId,
+		Balances,
+		PreimageHoldReason,
+		LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
+	>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime
@@ -1066,6 +1106,10 @@ construct_runtime!(
 		ParachainInfo: parachain_info = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
 		// Remove StakingCoefficientRewardCalculator: 27
+
+		// Governance stuff
+		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>, Call} = 27,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>, HoldReason} = 28,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
