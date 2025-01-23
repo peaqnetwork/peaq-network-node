@@ -122,6 +122,8 @@ pallet-evm-precompile-parachain-staking = { path = "../../precompiles/parachain-
 pallet-evm-precompile-vesting = { path = "../../precompiles/vesting", default-features = false }
 pallet-evm-precompile-balances-erc20 = { path = "../../precompiles/balances-erc20", default-features = false}
 runtime-common = { path = "../common", default-features = false }
+pallet-scheduler = { workspace = true, default-features = false }
+pallet-preimage = { workspace = true, default-features = false }
 
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
@@ -177,6 +179,8 @@ runtime-benchmarks = [
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks"
 ]
 
 std = [
@@ -221,6 +225,8 @@ std = [
 	"pallet-treasury/std",
 	"pallet-collective/std",
 	"pallet-vesting/std",
+	"pallet-scheduler/std",
+	"pallet-preimage/std",
 
 	# ETH support
 	"sp-io/std",
@@ -339,6 +345,8 @@ try-runtime = [
 	"pallet-vesting/try-runtime",
 	"pallet-multisig/try-runtime",
 	"pallet-assets/try-runtime",
+	"pallet-scheduler/try-runtime",
+	"pallet-preimage/try-runtime",
 
 	"orml-currencies/try-runtime",
 	"orml-xtokens/try-runtime",

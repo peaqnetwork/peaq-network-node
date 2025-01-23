@@ -127,6 +127,8 @@ peaq-pallet-mor = { workspace = true, default-features = false }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
 inflation-manager = { path = "../../pallets/inflation-manager", default-features = false }
+pallet-scheduler = { workspace = true, default-features = false }
+pallet-preimage = { workspace = true, default-features = false }
 
 zenlink-protocol = { workspace = true, default-features = false }
 zenlink-protocol-runtime-api = { workspace = true, default-features = false }
@@ -179,6 +181,8 @@ runtime-benchmarks = [
 	"peaq-pallet-storage/runtime-benchmarks",
 	"peaq-pallet-mor/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks"
 ]
 
 std = [
@@ -198,6 +202,8 @@ std = [
 	"pallet-transaction-payment/std",
 	"pallet-multisig/std",
 	"pallet-assets/std",
+	"pallet-scheduler/std",
+	"pallet-preimage/std",
 
 	"sp-api/std",
 	"sp-block-builder/std",
@@ -344,6 +350,8 @@ try-runtime = [
 	"pallet-vesting/try-runtime",
 	"pallet-multisig/try-runtime",
 	"pallet-assets/try-runtime",
+	"pallet-scheduler/try-runtime",
+	"pallet-preimage/try-runtime",
 
 	"orml-currencies/try-runtime",
 	"orml-xtokens/try-runtime",
