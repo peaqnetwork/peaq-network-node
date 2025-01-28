@@ -322,7 +322,6 @@ impl xcm_executor::Config for XcmConfig {
 
 	type TransactionalProcessor = FrameTransactionalProcessor;
 
-	// [TODO] Double check the following types
 	type HrmpNewChannelOpenRequestHandler = ();
 	type HrmpChannelAcceptedHandler = ();
 	type HrmpChannelClosingHandler = ();
@@ -390,7 +389,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
 
-	// [TODO] Double check the following types
 	type MaxActiveOutboundChannels = ConstU32<128>;
 	// Most on-chain HRMP channels are configured to use 102400 bytes of max message size, so we
 	// need to set the page size larger than that until we reduce the channel size on-chain.
@@ -504,6 +502,5 @@ impl pallet_message_queue::Config for Runtime {
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;
 
-	// [TODO] Double check the following types
 	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }

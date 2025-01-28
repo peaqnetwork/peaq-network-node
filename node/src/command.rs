@@ -405,13 +405,6 @@ pub fn run() -> sc_cli::Result<()> {
 
 			Ok(())
 		},
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => Err("TryRuntime will not be supported anymore by the \
-			peaq-node. Instead please use the provided CLI tool by Substrate! Have a look at crate \
-			`try-runtime-cli`."
-			.into()),
-		#[cfg(feature = "try-runtime")]
-		Some(Subcommand::TryRuntime(_)) => Ok(()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();

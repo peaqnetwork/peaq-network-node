@@ -34,7 +34,7 @@ use peaq_pallet_rbac::{
 };
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use sp_runtime::{traits::IdentityLookup, AccountId32};
+use sp_runtime::traits::IdentityLookup;
 
 use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
 use smallvec::smallvec;
@@ -372,7 +372,6 @@ parameter_types! {
 	pub const DeletionQueueDepth: u32 = 128;
 	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
 	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
-	// TODO: re-vist to make sure values are appropriate
 	pub const MaxDelegateDependencies: u32 = 32;
 }
 
@@ -414,8 +413,8 @@ impl pallet_contracts::Config for Runtime {
 	type Xcm = ();
 
 	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
-	type UploadOrigin = EnsureSigned<AccountId32>;
-	type InstantiateOrigin = EnsureSigned<AccountId32>;
+	type UploadOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
+	type InstantiateOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
 	type ApiVersion = ();
 }
 
