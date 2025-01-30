@@ -109,7 +109,6 @@ fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-
 fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407" }
 fp-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407" }
 fp-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407" }
-fp-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407" }
 fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407" }
 fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }
 fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2407", default-features = false }

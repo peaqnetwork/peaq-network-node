@@ -222,7 +222,6 @@ pub fn run() -> sc_cli::Result<()> {
 						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
-							cli.run.target_gas_price,
 						)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
@@ -236,7 +235,6 @@ pub fn run() -> sc_cli::Result<()> {
 						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
-							cli.run.target_gas_price,
 						)?;
 					Ok((cmd.run(client, config.database), task_manager))
 				})
@@ -250,7 +248,6 @@ pub fn run() -> sc_cli::Result<()> {
 						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
-							cli.run.target_gas_price,
 						)?;
 					Ok((cmd.run(client, config.chain_spec), task_manager))
 				})
@@ -264,7 +261,6 @@ pub fn run() -> sc_cli::Result<()> {
 						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
-							cli.run.target_gas_price,
 						)?;
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
@@ -297,7 +293,6 @@ pub fn run() -> sc_cli::Result<()> {
 						service::new_partial::<RuntimeApi, _>(
 							&mut config,
 							parachain::build_import_queue,
-							cli.run.target_gas_price,
 						)?;
 					Ok((cmd.run(client, backend, None), task_manager))
 				})
@@ -322,7 +317,6 @@ pub fn run() -> sc_cli::Result<()> {
 								let params = service::new_partial::<RuntimeApi, _>(
 									&mut config,
 									parachain::build_import_queue,
-									cli.run.target_gas_price,
 								)?;
 
 								cmd.run(params.client)
@@ -335,7 +329,6 @@ pub fn run() -> sc_cli::Result<()> {
 								let params = service::new_partial::<RuntimeApi, _>(
 									&mut config,
 									parachain::build_import_queue,
-									cli.run.target_gas_price,
 								)?;
 
 								let db = params.backend.expose_db();
@@ -474,7 +467,6 @@ pub fn run() -> sc_cli::Result<()> {
 						collator_options,
 						id,
 						rpc_config,
-						cli.run.target_gas_price,
 						additional_config,
 					)
 					.await

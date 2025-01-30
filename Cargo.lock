@@ -3499,16 +3499,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fp-dynamic-fee"
-version = "1.0.0"
-source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
-dependencies = [
- "async-trait",
- "sp-core",
- "sp-inherents",
-]
-
-[[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2407#a99421725cb57a16b2d6d3c66d5896d2aae1eda4"
@@ -9181,7 +9171,6 @@ dependencies = [
  "fc-storage",
  "flume",
  "fp-consensus",
- "fp-dynamic-fee",
  "fp-rpc",
  "fp-storage",
  "frame-benchmarking",

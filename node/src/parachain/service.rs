@@ -40,7 +40,6 @@ use sc_service::{
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::U256;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
@@ -129,7 +128,6 @@ where
 pub fn new_partial<RuntimeApi, BIQ>(
 	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
-	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi>,
@@ -174,7 +172,6 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-		u64,
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 {
 	// Use ethereum style for subscription ids
@@ -232,7 +229,6 @@ where
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
-		target_gas_price,
 	)?;
 
 	let params = PartialComponents {
@@ -291,7 +287,6 @@ async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC, Net>(
 	collator_options: CollatorOptions,
 	id: ParaId,
 	rpc_config: RpcConfig,
-	target_gas_price: u64,
 	additional_config: AdditionalConfig,
 	fn_build_import_queue: BIQ,
 	fn_build_consensus: BIC,
@@ -329,7 +324,6 @@ where
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
-		u64,
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	BIC: FnOnce(
 		Arc<FullClient<RuntimeApi>>,
@@ -352,11 +346,7 @@ where
 	Net: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
-	let params = new_partial::<RuntimeApi, BIQ>(
-		&mut parachain_config,
-		fn_build_import_queue,
-		target_gas_price,
-	)?;
+	let params = new_partial::<RuntimeApi, BIQ>(&mut parachain_config, fn_build_import_queue)?;
 	let (
 		parachain_block_import,
 		filter_pool,
@@ -633,7 +623,6 @@ pub fn build_import_queue<RuntimeApi>(
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-	target_gas_price: u64,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
@@ -668,10 +657,7 @@ where
 							*time,
 							slot_duration,
 							);
-				let dynamic_fee =
-					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-				Ok((slot, time, dynamic_fee))
+				Ok((slot, time))
 			}
 		},
 		telemetry: telemetry_handle,
@@ -707,7 +693,6 @@ pub async fn start_node<RuntimeApi>(
 	collator_options: CollatorOptions,
 	id: ParaId,
 	rpc_config: RpcConfig,
-	target_gas_price: u64,
 	additional_config: AdditionalConfig,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
 where
@@ -740,8 +725,7 @@ where
 	>,
 	                               config: &Configuration,
 	                               telemetry: Option<TelemetryHandle>,
-	                               task_manager: &TaskManager,
-	                               target_gas_price: u64| {
+	                               task_manager: &TaskManager| {
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 		cumulus_client_consensus_aura::import_queue::<
@@ -763,10 +747,7 @@ where
 							slot_duration,
 						);
 
-				let dynamic_fee =
-					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-				Ok((slot, time, dynamic_fee))
+				Ok((slot, time))
 			},
 			registry: config.prometheus_registry(),
 			spawner: &task_manager.spawn_essential_handle(),
@@ -858,7 +839,6 @@ where
 				collator_options,
 				id,
 				rpc_config,
-				target_gas_price,
 				additional_config.clone(),
 				fn_import_queue_builder,
 				fn_collator_builder,
@@ -871,7 +851,6 @@ where
 				collator_options,
 				id,
 				rpc_config,
-				target_gas_price,
 				additional_config.clone(),
 				fn_import_queue_builder,
 				fn_collator_builder,

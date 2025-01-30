@@ -52,10 +52,6 @@ pub struct RunCmd {
 	#[clap(long, default_value = "2048")]
 	pub fee_history_limit: u64,
 
-	/// The dynamic-fee pallet target gas price set by block author
-	#[clap(long, default_value = "1")]
-	pub target_gas_price: u64,
-
 	#[clap(long, default_value = sc_basic_authorship::DEFAULT_BLOCK_SIZE_LIMIT.to_string())]
 	pub proposer_block_size_limit: usize,
 
