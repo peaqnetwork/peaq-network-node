@@ -23,7 +23,7 @@ use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::{Bounded, CheckedSub, Dispatchable, StaticLookup},
 	storage::types::{StorageDoubleMap, StorageMap, ValueQuery},
-	traits::StorageInstance,
+	traits::{IsType, StorageInstance},
 	Blake2_128Concat,
 };
 use pallet_balances::pallet::{
@@ -33,6 +33,7 @@ use pallet_balances::pallet::{
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_core::{H160, H256, U256};
+use sp_runtime::AccountId32;
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	marker::PhantomData,
@@ -57,6 +58,10 @@ pub const SELECTOR_LOG_DEPOSIT: [u8; 32] = keccak256!("Deposit(address,uint256)"
 
 /// Solidity selector of the Withdraw log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_WITHDRAWAL: [u8; 32] = keccak256!("Withdrawal(address,uint256)");
+
+/// Solidity selector of the TransferToAccountId log, which is the Keccak of the Log signature.
+pub const SELECTOR_LOG_TRANSFER_TO_ACCOUNTID: [u8; 32] =
+	keccak256!("TransferToAccountId(account,bytes32,uint256)");
 
 /// Associates pallet Instance to a prefix used for the Approves storage.
 /// This trait is implemented for () and the 16 substrate Instance.
@@ -187,6 +192,7 @@ where
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256>,
 	Metadata: Erc20Metadata,
 	Instance: InstanceToPrefix + 'static,
+	Runtime::AccountId: IsType<AccountId32>,
 {
 	#[precompile::public("totalSupply()")]
 	#[precompile::view]
@@ -457,6 +463,59 @@ where
 		.record(handle)?;
 
 		Ok(())
+	}
+
+	#[precompile::public("transferToAccountId(bytes32,uint256)")]
+	fn transfer_to_account_id(
+		handle: &mut impl PrecompileHandle,
+		id: H256,
+		value: U256,
+	) -> EvmResult<bool> {
+		handle.record_log_costs_manual(3, 32)?;
+
+		// Transfer is available for native currency only
+		if !Metadata::is_native_currency() {
+			return Err(RevertReason::UnknownSelector.into());
+		}
+
+		let owner: Runtime::AccountId =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+
+		let account_amount: U256 =
+			pallet_balances::Pallet::<Runtime, Instance>::usable_balance(&owner).into();
+
+		if value > account_amount {
+			return Err(revert("Trying to transfer more than owned"));
+		}
+
+		// Build call
+		{
+			let value = Self::u256_to_amount(value).in_field("value")?;
+			let target: Runtime::AccountId = AccountId32::from(id.0).into();
+
+			// Build call with origin. Here origin is the "from"/owner field.
+			// Dispatch call (if enough gas).
+			RuntimeHelper::<Runtime>::try_dispatch(
+				handle,
+				Some(owner).into(),
+				pallet_balances::Call::<Runtime, Instance>::transfer_allow_death {
+					dest: Runtime::Lookup::unlookup(target),
+					value,
+				},
+				SYSTEM_ACCOUNT_SIZE,
+			)?;
+		}
+
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER_TO_ACCOUNTID,
+			handle.context().caller,
+			id,
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
+
+		Ok(true)
 	}
 
 	#[allow(clippy::too_many_arguments)]
