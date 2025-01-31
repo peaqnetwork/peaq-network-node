@@ -246,8 +246,9 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 	PeaqPotAccount,
 >;
 
-// [TODO] Think whether we can move it to the pallet BlockReward
 // Make the wrapper for the BlockReward
+// Put here because NegativeImbalance::new is not implemented in the standard NegativeImbalance
+// trait
 pub struct BlockRewardWrapper;
 impl OnUnbalanced<Credit<AccountId, Balances>> for BlockRewardWrapper {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = Credit<AccountId, Balances>>) {
