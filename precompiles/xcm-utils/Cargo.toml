@@ -28,7 +28,7 @@ xcm = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 
 [dev-dependencies]
-env_logger = "0.9"
+env_logger = "0.10"
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
