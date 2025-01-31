@@ -3998,7 +3998,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35bd3cf68c183738046838e300353e4716c674dc5e56890de4826801a6622a28"
 dependencies = [
  "futures-io",
- "rustls 0.21.9",
+ "rustls 0.21.12",
 ]
 
 [[package]]
@@ -4522,7 +4522,7 @@ dependencies = [
  "http 0.2.11",
  "hyper 0.14.32",
  "log",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "rustls-native-certs 0.6.3",
  "tokio",
  "tokio-rustls 0.24.1",
@@ -5552,7 +5552,7 @@ dependencies = [
  "quinn 0.10.2",
  "rand",
  "ring 0.16.20",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "socket2 0.5.8",
  "thiserror",
  "tokio",
@@ -5641,7 +5641,7 @@ dependencies = [
  "libp2p-identity",
  "rcgen",
  "ring 0.16.20",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "rustls-webpki 0.101.7",
  "thiserror",
  "x509-parser 0.15.1",
@@ -11585,7 +11585,7 @@ dependencies = [
  "quinn-proto 0.10.6",
  "quinn-udp 0.4.1",
  "rustc-hash",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "thiserror",
  "tokio",
  "tracing",
@@ -11619,7 +11619,7 @@ dependencies = [
  "rand",
  "ring 0.16.20",
  "rustc-hash",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "slab",
  "thiserror",
  "tinyvec",
@@ -12275,9 +12275,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.21.9"
+version = "0.21.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "629648aced5775d558af50b2b4c7b02983a04b312126d45eeead26e7caa498b9"
+checksum = "3f56a14d1f48b391359b22f731fd4bd7e43c97f3c50eee276f3aa09c94784d3e"
 dependencies = [
  "log",
  "ring 0.17.6",
@@ -15816,7 +15816,7 @@ version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c28327cf380ac148141087fbfb9de9d7bd4e84ab5d2c28fbc911d753de8a7081"
 dependencies = [
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "tokio",
 ]
 
@@ -15850,7 +15850,7 @@ checksum = "212d5dcb2a1ce06d81107c3d0ffa3121fe974b73f068c8282cb1c32328113b6c"
 dependencies = [
  "futures-util",
  "log",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "rustls-native-certs 0.6.3",
  "tokio",
  "tokio-rustls 0.24.1",
@@ -16182,7 +16182,7 @@ dependencies = [
  "httparse",
  "log",
  "rand",
- "rustls 0.21.9",
+ "rustls 0.21.12",
  "sha1",
  "thiserror",
  "url",
