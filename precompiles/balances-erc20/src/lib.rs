@@ -61,7 +61,7 @@ pub const SELECTOR_LOG_WITHDRAWAL: [u8; 32] = keccak256!("Withdrawal(address,uin
 
 /// Solidity selector of the TransferToAccountId log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_TRANSFER_TO_ACCOUNTID: [u8; 32] =
-	keccak256!("TransferToAccountId(account,bytes32,uint256)");
+	keccak256!("TransferToAccountId(address,bytes32,uint256)");
 
 /// Associates pallet Instance to a prefix used for the Approves storage.
 /// This trait is implemented for () and the 16 substrate Instance.
