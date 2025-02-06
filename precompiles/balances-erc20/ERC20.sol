@@ -91,18 +91,23 @@ interface IERC20 {
         address indexed spender,
         uint256 value
     );
+}
 
+/// @title Wrapper for token withdrawl from H160 to SS58
+/// Peaq address : 0x0000000000000000000000000000000000000809
+interface TransferToAccountIdNative {
     /// @dev Transfer Native token from EVM to Substrate Address
+    /// @custom:selector f088d916
     /// @param id The ss58 address to transfer to.
     /// @param value The amount to be transferred.
     /// @return true if the transfer was succesful, revert otherwise.
     function transferToAccountId(bytes32 id, uint256 value) external returns (bool);
 
     /// @dev Event emited when a transfer to accountId has been performed.
-    /// @param from address The address sending the tokens
-    /// @param to address The address receiving the tokens.
+    /// @param from address The evm address sending the tokens
+    /// @param to address The ss58 address receiving the tokens.
     /// @param value uint256 The amount of tokens transfered.
-    event TransferToAccountId(address indexed from, address indexed to, uint256 value);
+    event TransferToAccountId(address indexed from, bytes32 indexed to, uint256 value);
 }
 
 /// @title Native currency wrapper interface.

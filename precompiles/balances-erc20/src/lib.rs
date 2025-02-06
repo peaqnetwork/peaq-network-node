@@ -23,7 +23,7 @@ use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::traits::{Bounded, CheckedSub, Dispatchable, StaticLookup},
 	storage::types::{StorageDoubleMap, StorageMap, ValueQuery},
-	traits::{IsType, StorageInstance},
+	traits::StorageInstance,
 	Blake2_128Concat,
 };
 use pallet_balances::pallet::{
@@ -32,8 +32,7 @@ use pallet_balances::pallet::{
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_core::{H160, H256, U256};
-use sp_runtime::AccountId32;
+use sp_core::{Decode, H160, H256, U256};
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	marker::PhantomData,
@@ -192,7 +191,6 @@ where
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256>,
 	Metadata: Erc20Metadata,
 	Instance: InstanceToPrefix + 'static,
-	Runtime::AccountId: IsType<AccountId32>,
 {
 	#[precompile::public("totalSupply()")]
 	#[precompile::view]
@@ -491,10 +489,8 @@ where
 		// Build call
 		{
 			let value = Self::u256_to_amount(value).in_field("value")?;
-			let target: Runtime::AccountId = AccountId32::from(id.0).into();
+			let target: Runtime::AccountId = Runtime::AccountId::decode(&mut &id.0[..]).unwrap();
 
-			// Build call with origin. Here origin is the "from"/owner field.
-			// Dispatch call (if enough gas).
 			RuntimeHelper::<Runtime>::try_dispatch(
 				handle,
 				Some(owner).into(),
