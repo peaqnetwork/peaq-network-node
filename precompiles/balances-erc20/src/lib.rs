@@ -489,7 +489,10 @@ where
 		// Build call
 		{
 			let value = Self::u256_to_amount(value).in_field("value")?;
-			let target: Runtime::AccountId = Runtime::AccountId::decode(&mut &id.0[..]).unwrap();
+			let target: Runtime::AccountId = match Runtime::AccountId::decode(&mut &id.0[..]) {
+				Ok(acc) => acc,
+				Err(e) => return Err(revert(e.to_string())),
+			};
 
 			RuntimeHelper::<Runtime>::try_dispatch(
 				handle,
