@@ -491,7 +491,7 @@ where
 			let value = Self::u256_to_amount(value).in_field("value")?;
 			let target: Runtime::AccountId = match Runtime::AccountId::decode(&mut &id.0[..]) {
 				Ok(acc) => acc,
-				Err(e) => return Err(revert(e.to_string())),
+				Err(_) => return Err(revert("id couldn't be decoded into AccountId")),
 			};
 
 			RuntimeHelper::<Runtime>::try_dispatch(
