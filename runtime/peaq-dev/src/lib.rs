@@ -13,8 +13,9 @@ use frame_system::{
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
 
-use address_unification::CallKillEVMLinkAccount;
+use address_unification::{CallKillEVMLinkAccount, EVMAddressMapping};
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
+use sp_core::crypto::AccountId32;
 
 use cumulus_primitives_core::AggregateMessageOrigin;
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
@@ -634,7 +635,11 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]));
+			let encoded = authority_id.encode();
+			let bytes: [u8; 32] =
+				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
+
+			return Some(AddressUnification::get_evm_address_or_default(&AccountId32::from(bytes)));
 		}
 		None
 	}
