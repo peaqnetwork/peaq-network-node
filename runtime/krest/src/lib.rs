@@ -690,7 +690,7 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
-	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = crate::weights::pallet_evm::WeightInfo<Runtime>;
 	type SuicideQuickClearLimit = ConstU32<0>;
 }
 
@@ -1189,6 +1189,7 @@ mod benches {
 		[peaq_pallet_did, PeaqDid]
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
+		[pallet_evm, EVM]
 		// [pallet_xcm, PalletXcmExtrinsicsBenchmark::<Runtime>]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
