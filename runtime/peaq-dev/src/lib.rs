@@ -22,7 +22,6 @@ use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTra
 use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
-    OnChargeEVMTransaction as OnChargeEVMTransactionT,
 };
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
@@ -34,7 +33,6 @@ use peaq_pallet_rbac::{
 		Role2User as RbacRole2User, User2Group as RbacUser2Group,
 	},
 };
-use pallet_evm::EVMCurrencyAdapter;
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use sp_runtime::traits::IdentityLookup;
@@ -76,7 +74,6 @@ pub use frame_support::{
 	dispatch::{DispatchClass, GetDispatchInfo},
 	parameter_types,
 	traits::{
-        fungible::{Balanced, Credit},
 		AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, ConstU64, Contains, Currency,
 		EitherOfDiverse, EnsureOrigin, ExistenceRequirement, FindAuthor, Imbalance,
 		KeyOwnerProofSystem, Nothing, OnFinalize, OnUnbalanced, Randomness, StorageInfo,
@@ -123,10 +120,10 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
-	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
-	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
-	MILLICENTS,
+	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
+	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
+	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -645,48 +642,6 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 			return Some(AddressUnification::get_evm_address_or_default(&AccountId32::from(bytes)));
 		}
 		None
-	}
-}
-
-type CurrencyAccountId<T> = <T as frame_system::Config>::AccountId;
-type BalanceFor<T> =
-			<<T as pallet_evm::Config>::Currency as Currency<CurrencyAccountId<T>>>::Balance;
-type NegativeImbalanceOf<C, T> = <C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-
-
-pub struct OnChargeEVMTransaction<OU>(sp_std::marker::PhantomData<OU>);
-impl<T, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<OU>
-where
-	T: pallet_evm::Config + frame_system::Config,
-	T::Currency: Balanced<T::AccountId>,
-    OU: OnUnbalanced<NegativeImbalanceOf<T::Currency, T>>,
-	U256: UniqueSaturatedInto<BalanceFor<T>>
-{
-	type LiquidityInfo = Option<NegativeImbalanceOf<T::Currency, T>>;
-
-    fn can_withdraw(who: &H160, amount: U256) -> Result<(), pallet_evm::Error<T>> {
-        EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::can_withdraw(who, amount)
-    }
-
-	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::withdraw_fee(who, fee)
-	}
-
-	fn correct_and_deposit_fee(
-		who: &H160,
-		corrected_fee: U256,
-		base_fee: U256,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-        <EVMCurrencyAdapter<<T as pallet_evm::Config>::Currency, OU> as OnChargeEVMTransactionT<
-            T,
-		>>::correct_and_deposit_fee(who, corrected_fee, base_fee, already_withdrawn)
-	}
-
-	fn pay_priority_fee(tip: Self::LiquidityInfo) {
-		if let Some(tip) = tip {
-			OU::on_unbalanced(tip);
-		}
 	}
 }
 

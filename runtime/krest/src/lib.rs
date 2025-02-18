@@ -119,10 +119,10 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
-	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
-	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
-	MILLICENTS,
+	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
+	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
+	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -690,7 +690,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
+	type OnChargeTransaction = OnChargeEVMTransaction<BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
