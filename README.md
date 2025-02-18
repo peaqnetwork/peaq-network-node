@@ -152,7 +152,9 @@ Please use following command to run peaq-network-node parachian in the docker co
  wget https://github.com/peaqnetwork/async-agung-chain-specs/releases/download/async-agung-chain-specs-01-2025/async-agung-parachain-specs.json
  wget https://github.com/peaqnetwork/async-agung-chain-specs/releases/download/async-agung-chain-specs-01-2025/async-agung-relaychain-specs.json
 
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v0.0.103 \
+docker run -v $(pwd)/async-agung-parachain-specs.json:/async-agung-parachain-specs.json \
+-v $(pwd)/async-agung-relaychain-specs.json:/async-agung-relaychain-specs.json \
+-v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v0.0.103 \
 --parachain-id 2000 \
 --chain ./async-agung-parachain-specs.json \
 --base-path chain-data \
