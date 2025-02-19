@@ -43,6 +43,7 @@ fn selectors() {
 	assert!(PCall::eip2612_nonces_selectors().contains(&0x7ecebe00));
 	assert!(PCall::eip2612_permit_selectors().contains(&0xd505accf));
 	assert!(PCall::eip2612_domain_separator_selectors().contains(&0x3644e515));
+	assert!(PCall::transfer_to_account_id_selectors().contains(&0xf088d916));
 
 	assert_eq!(
 		crate::SELECTOR_LOG_TRANSFER,
@@ -59,6 +60,11 @@ fn selectors() {
 	assert_eq!(
 		crate::SELECTOR_LOG_WITHDRAWAL,
 		&Keccak256::digest(b"Withdrawal(address,uint256)")[..]
+	);
+
+	assert_eq!(
+		crate::SELECTOR_LOG_TRANSFER_TO_ACCOUNTID,
+		&Keccak256::digest(b"TransferToAccountId(address,bytes32,uint256)")[..]
 	);
 }
 
@@ -85,6 +91,7 @@ fn modifiers() {
 			tester.test_view_modifier(PCall::eip2612_nonces_selectors());
 			tester.test_default_modifier(PCall::eip2612_permit_selectors());
 			tester.test_view_modifier(PCall::eip2612_domain_separator_selectors());
+			tester.test_default_modifier(PCall::transfer_to_account_id_selectors());
 		});
 }
 
@@ -1226,4 +1233,43 @@ fn test_solidity_interface_has_all_function_selectors_documented_and_implemented
 		&["ERC20.sol", "Permit.sol"],
 		PCall::supports_selector,
 	)
+}
+
+#[test]
+fn transfer_to_account_id() {
+	ExtBuilder::default()
+		.with_balances(vec![(CryptoAlith.into(), 1000)])
+		.build()
+		.execute_with(|| {
+			precompiles()
+				.prepare_test(
+					CryptoAlith, /* CryptoAlith sending transferToAccountId to Bob's accountId */
+					Precompile1,
+					PCall::transfer_to_account_id {
+						id: MockPeaqAccount::Bob.into(),
+						value: (500.into()),
+					},
+				)
+				.expect_log(log3(
+					Precompile1,
+					SELECTOR_LOG_TRANSFER_TO_ACCOUNTID,
+					CryptoAlith,
+					Bob,
+					solidity::encode_event_data(U256::from(500)),
+				))
+				.execute_returns(true);
+
+			// transfer too much
+			precompiles()
+				.prepare_test(
+					CryptoAlith,
+					Precompile1,
+					PCall::transfer_to_account_id {
+						id: MockPeaqAccount::Bob.into(),
+						value: (1001.into()),
+					},
+				)
+				.expect_no_logs()
+				.execute_reverts(|output| output == b"Trying to transfer more than owned");
+		});
 }
