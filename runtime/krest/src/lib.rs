@@ -633,8 +633,15 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 			let encoded = authority_id.encode();
 			let bytes: [u8; 32] =
 				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
+			let sub_addr = AccountId32::from(bytes);
 
-			return Some(AddressUnification::get_evm_address_or_default(&AccountId32::from(bytes)));
+			let evm_addr = AddressUnification::get_evm_address_or_default(&sub_addr);
+			if AddressUnification::is_linked(&sub_addr, &evm_addr) {
+				return Some(evm_addr);
+			} else {
+				// Return withdrawable addr
+				return Some(H160::from_slice(&sub_addr.encode()[0..20]));
+			}
 		}
 		None
 	}

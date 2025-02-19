@@ -302,11 +302,6 @@ impl<T: Config> Pallet<T> {
 	 *         Ok(evm_address)
 	 *     }
 	 */
-
-	fn get_withdrawable_evm_addr(account_id: &T::AccountId) -> EvmAddress {
-		// This should be the same as the EnsureAddressTruncated's setting
-		EvmAddress::from_slice(&account_id.encode()[0..20])
-	}
 }
 
 fn recover_signer(sig: &[u8; 65], msg_hash: &[u8; 32]) -> Option<H160> {
@@ -340,13 +335,15 @@ where
 		UnifyAddressMapper::<T>::to_default_account_id(address)
 	}
 
-	// For backward compatibility, we should return the withdrawable EvmAddress
+	// Returns the EvmAddress associated with a given AccountId or the
+	// underlying EvmAddress of the AccountId.
+	// Returns None if there is no EvmAddress associated with the AccountId
+	// and there is no underlying EvmAddress in the AccountId.
+	// For testing
 	fn get_evm_address_or_default(account_id: &T::AccountId) -> EvmAddress {
 		UnifyAddressMapper::<T>::to_set_evm_address(account_id).unwrap_or_else(|| {
-			// If no mapping exists, return the withdrawable EvmAddress
-			// Otherwise, if we convert it to the default address,
-			// which hasn't linked
-			return Self::get_withdrawable_evm_addr(account_id);
+			// If no mapping exists, return the default EvmAddress
+			UnifyAddressMapper::<T>::to_default_evm_address(account_id)
 		})
 	}
 
