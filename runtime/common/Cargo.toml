@@ -28,6 +28,7 @@ xcm = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
+pallet-evm = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 
 
@@ -46,6 +47,7 @@ std = [
 	"pallet-block-reward/std",
 	"peaq-primitives-xcm/std",
 	"scale-info/std",
+	"pallet-evm/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",

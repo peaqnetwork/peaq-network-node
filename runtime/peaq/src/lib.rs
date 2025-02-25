@@ -12,10 +12,12 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
+use sp_core::crypto::AccountId32;
 
 use address_unification::CallKillEVMLinkAccount;
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
 
+use address_unification::EVMAddressMapping;
 use cumulus_primitives_core::AggregateMessageOrigin;
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
 use pallet_evm::{
@@ -118,10 +120,10 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
-	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
-	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
-	MILLICENTS,
+	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
+	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
+	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -655,7 +657,18 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]));
+			let encoded = authority_id.encode();
+			let bytes: [u8; 32] =
+				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
+			let sub_addr = AccountId32::from(bytes);
+
+			let evm_addr = AddressUnification::get_evm_address_or_default(&sub_addr);
+			if AddressUnification::is_linked(&sub_addr, &evm_addr) {
+				return Some(evm_addr);
+			} else {
+				// Return withdrawable addr
+				return Some(H160::from_slice(&sub_addr.encode()[0..20]));
+			}
 		}
 		None
 	}
@@ -733,7 +746,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
+	type OnChargeTransaction = OnChargeEVMTransaction<BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
