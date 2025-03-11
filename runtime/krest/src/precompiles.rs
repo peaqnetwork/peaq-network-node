@@ -138,7 +138,7 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2057>,
 					Erc20BalancesPrecompile<R, NativeErc20Metadata>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 			),
 		>,
