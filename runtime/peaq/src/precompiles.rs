@@ -87,22 +87,22 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2048>,
 					PeaqDIDPrecompile<R>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2049>,
 					PeaqStoragePrecompile<R>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2050>,
 					PeaqRbacPrecompile<R>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2051>,
 					XtokensPrecompile<R>,
-					(SubcallWithMaxNesting<1>, AcceptDelegateCall, CallableByContract),
+					(SubcallWithMaxNesting<1>, CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2052>,
@@ -123,17 +123,17 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<2054>,
 					AssetsFactoryPrecompile<R>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2055>,
 					ParachainStakingPrecompile<R>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2056>,
 					VestingPrecompile<R>,
-					(AcceptDelegateCall, CallableByContract),
+					(CallableByPrecompile, CallableByContract),
 				>,
 				PrecompileAt<
 					AddressU64<2057>,
