@@ -117,7 +117,7 @@ impl pallet_xc_asset_config::Config for Test {
 	type NativeAssetId = GetNativeAssetId;
 	type NativeAssetLocation = SelfReserveLocation;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = crate::weights::SubstrateWeight<Self>;
+	type WeightInfo = ();
 }
 
 pub struct ExternalityBuilder;

@@ -30,7 +30,7 @@ use core::marker::PhantomData;
 
 /// Weight functions for `pallet_block_reward`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> pallet_block_reward::WeightInfo for WeightInfo<T> {
 	/// Storage: `BlockReward::RewardDistributionConfigStorage` (r:0 w:1)
 	/// Proof: `BlockReward::RewardDistributionConfigStorage` (`max_values`: Some(1), `max_size`: Some(24), added: 519, mode: `MaxEncodedLen`)
 	fn set_configuration() -> Weight {

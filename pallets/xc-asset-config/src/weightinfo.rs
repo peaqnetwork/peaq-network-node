@@ -36,9 +36,8 @@ pub trait WeightInfo {
 	fn remove_asset() -> Weight;
 }
 
-/// Weights for pallet_xc_asset_config using the Substrate node and recommended hardware.
-pub struct SubstrateWeight<T>(PhantomData<T>);
-impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+// For backwards compatibility and tests
+impl WeightInfo for () {
 	/// Storage: `XcAssetConfig::AssetIdToLocation` (r:1 w:1)
 	/// Proof: `XcAssetConfig::AssetIdToLocation` (`max_values`: None, `max_size`: None, mode: `Measured`)
 	/// Storage: `XcAssetConfig::AssetLocationToId` (r:0 w:1)
@@ -50,8 +49,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Minimum execution time: 17_980_000 picoseconds.
 		Weight::from_parts(18_871_000, 0)
 			.saturating_add(Weight::from_parts(0, 3471))
-			.saturating_add(T::DbWeight::get().reads(1))
-			.saturating_add(T::DbWeight::get().writes(2))
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(2))
 	}
 	/// Storage: `XcAssetConfig::AssetLocationToId` (r:1 w:0)
 	/// Proof: `XcAssetConfig::AssetLocationToId` (`max_values`: None, `max_size`: None, mode: `Measured`)
@@ -64,8 +63,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Minimum execution time: 17_590_000 picoseconds.
 		Weight::from_parts(18_101_000, 0)
 			.saturating_add(Weight::from_parts(0, 3550))
-			.saturating_add(T::DbWeight::get().reads(1))
-			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	/// Storage: `XcAssetConfig::AssetIdToLocation` (r:1 w:1)
 	/// Proof: `XcAssetConfig::AssetIdToLocation` (`max_values`: None, `max_size`: None, mode: `Measured`)
@@ -80,8 +79,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Minimum execution time: 29_071_000 picoseconds.
 		Weight::from_parts(29_551_000, 0)
 			.saturating_add(Weight::from_parts(0, 3597))
-			.saturating_add(T::DbWeight::get().reads(2))
-			.saturating_add(T::DbWeight::get().writes(5))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(5))
 	}
 	/// Storage: `XcAssetConfig::AssetLocationUnitsPerSecond` (r:0 w:1)
 	/// Proof: `XcAssetConfig::AssetLocationUnitsPerSecond` (`max_values`: None, `max_size`: None, mode: `Measured`)
@@ -92,7 +91,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Minimum execution time: 11_621_000 picoseconds.
 		Weight::from_parts(11_840_000, 0)
 			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	/// Storage: `XcAssetConfig::AssetIdToLocation` (r:1 w:1)
 	/// Proof: `XcAssetConfig::AssetIdToLocation` (`max_values`: None, `max_size`: None, mode: `Measured`)
@@ -107,7 +106,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Minimum execution time: 21_121_000 picoseconds.
 		Weight::from_parts(22_181_000, 0)
 			.saturating_add(Weight::from_parts(0, 3584))
-			.saturating_add(T::DbWeight::get().reads(1))
-			.saturating_add(T::DbWeight::get().writes(3))
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(3))
 	}
 }

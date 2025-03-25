@@ -30,7 +30,7 @@ use core::marker::PhantomData;
 
 /// Weight functions for `inflation_manager`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> inflation_manager::WeightInfo for WeightInfo<T> {
 	/// Storage: `System::Account` (r:2 w:2)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
 	/// Storage: `AddressUnification::EvmAddresses` (r:1 w:0)

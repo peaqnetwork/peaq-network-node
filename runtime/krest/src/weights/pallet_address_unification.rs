@@ -30,7 +30,7 @@ use core::marker::PhantomData;
 
 /// Weight functions for `address_unification`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> address_unification::WeightInfo for WeightInfo<T> {
 	/// Storage: `AddressUnification::EvmAddresses` (r:1 w:1)
 	/// Proof: `AddressUnification::EvmAddresses` (`max_values`: None, `max_size`: Some(60), added: 2535, mode: `MaxEncodedLen`)
 	/// Storage: `AddressUnification::Accounts` (r:1 w:1)

@@ -98,7 +98,7 @@ impl Config for Runtime {
 	type Currency = Balances;
 	type ChainId = ();
 	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
-	type WeightInfo = weights::WeightInfo<Runtime>;
+	type WeightInfo = ();
 }
 
 type Block = frame_system::mocking::MockBlock<Runtime>;

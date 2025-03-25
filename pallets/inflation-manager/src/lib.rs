@@ -16,7 +16,6 @@ pub use types::{
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weightinfo;
-pub mod weights;
 pub use weightinfo::WeightInfo;
 
 mod migrations;

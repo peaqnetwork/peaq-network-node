@@ -69,14 +69,14 @@ pub mod mock;
 pub mod tests;
 
 pub mod migrations;
+pub mod weightinfo;
 
-pub mod weights;
-pub use weights::WeightInfo;
+pub use weightinfo::WeightInfo;
 
 #[pallet]
 pub mod pallet {
 
-	use crate::weights::WeightInfo;
+	use crate::weightinfo::WeightInfo;
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin};
 	use frame_system::pallet_prelude::*;
 	use parity_scale_codec::HasCompact;

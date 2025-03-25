@@ -51,7 +51,6 @@ mod convert_impl;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod weightinfo;
-pub mod weights;
 pub use weightinfo::WeightInfo;
 
 #[cfg(test)]

@@ -167,7 +167,7 @@ impl inflation_manager::Config for TestRuntime {
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
-	type WeightInfo = inflation_manager::weights::WeightInfo<TestRuntime>;
+	type WeightInfo = ();
 	type DoInitializeAt = InitializeInflationAt;
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
@@ -176,7 +176,7 @@ impl pallet_block_reward::Config for TestRuntime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
-	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
+	type WeightInfo = ();
 }
 
 pub struct ExternalityBuilder;

@@ -845,7 +845,7 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegatorStake = staking::MinDelegatorStake;
 	type MaxUnstakeRequests = staking::MaxUnstakeRequests;
 
-	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
 }
 
 /// Implements the adapters for depositing unbalanced tokens on pots
@@ -884,7 +884,7 @@ impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_block_reward::weights::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_block_reward::WeightInfo<Runtime>;
 }
 
 pub struct BeneficiaryPayout();
@@ -1024,7 +1024,7 @@ impl inflation_manager::Config for Runtime {
 	type PotId = InfaltionPot;
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
-	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_inflation_manager::WeightInfo<Runtime>;
 	type DoInitializeAt = InitializeInflationAt;
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
@@ -2146,7 +2146,7 @@ impl address_unification::Config for Runtime {
 	type Currency = Balances;
 	type OriginAddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type ChainId = EvmChainId;
-	type WeightInfo = address_unification::weights::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_address_unification::WeightInfo<Runtime>;
 }
 
 impl EVMAddressToAssetId<StorageAssetId> for Runtime {
