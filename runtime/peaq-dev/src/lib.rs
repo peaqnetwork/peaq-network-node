@@ -890,7 +890,7 @@ impl pallet_block_reward::Config for Runtime {
 	type Currency = Balances;
 	type BeneficiaryPayout = BeneficiaryPayout;
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_block_reward::weights::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_block_reward::WeightInfo<Runtime>;
 }
 
 pub struct BeneficiaryPayout();

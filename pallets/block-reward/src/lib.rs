@@ -61,7 +61,6 @@ pub mod types;
 pub use types::*;
 
 pub mod weightinfo;
-pub mod weights;
 pub use weightinfo::WeightInfo;
 
 #[macro_export]
