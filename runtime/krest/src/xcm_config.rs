@@ -47,6 +47,8 @@ use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
+use crate::weights;
+
 parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
@@ -467,7 +469,7 @@ impl xc_asset_config::Config for Runtime {
 	type NativeAssetId = GetNativeAssetId;
 	type NativeAssetLocation = SelfReserveLocation;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = xc_asset_config::weights::SubstrateWeight<Self>;
+	type WeightInfo = weights::pallet_xc_asset_config::SubstrateWeight<Self>;
 }
 
 parameter_types! {
