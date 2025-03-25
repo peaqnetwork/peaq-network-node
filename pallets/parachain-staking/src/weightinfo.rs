@@ -1,6 +1,6 @@
 //! The trait definition for the weights of extrinsics.
 
-use frame_support::weights::Weight;
+use frame_support::weights::{constants::RocksDbWeight, Weight};
 
 /// Weight functions needed for parachain_staking.
 pub trait WeightInfo {
@@ -24,4 +24,522 @@ pub trait WeightInfo {
 	fn unlock_unstaked(u: u32) -> Weight;
 	fn set_max_candidate_stake() -> Weight;
 	fn set_commission(n: u32, m: u32) -> Weight;
+}
+
+// For backwards compatibility and tests
+impl WeightInfo for () {
+	/// Storage: `ParachainStaking::Round` (r:1 w:0)
+	/// Proof: `ParachainStaking::Round` (`max_values`: Some(1), `max_size`: Some(12), added: 507,
+	/// mode: `MaxEncodedLen`)
+	fn on_initialize_no_action() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `328`
+		//  Estimated: `1497`
+		// Minimum execution time: 5_850_000 picoseconds.
+		Weight::from_parts(5_990_000, 0)
+			.saturating_add(Weight::from_parts(0, 1497))
+			.saturating_add(RocksDbWeight::get().reads(1))
+	}
+	/// Storage: `ParachainStaking::Round` (r:1 w:1)
+	/// Proof: `ParachainStaking::Round` (`max_values`: Some(1), `max_size`: Some(12), added: 507,
+	/// mode: `MaxEncodedLen`)
+	fn on_initialize_round_update() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `328`
+		//  Estimated: `1497`
+		// Minimum execution time: 10_720_000 picoseconds.
+		Weight::from_parts(10_960_000, 0)
+			.saturating_add(Weight::from_parts(0, 1497))
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: `ParachainStaking::ForceNewRound` (r:0 w:1)
+	/// Proof: `ParachainStaking::ForceNewRound` (`max_values`: Some(1), `max_size`: Some(1), added:
+	/// 496, mode: `MaxEncodedLen`)
+	fn force_new_round() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 4_220_000 picoseconds.
+		Weight::from_parts(4_410_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: `ParachainStaking::MaxSelectedCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::CandidatePool` (r:12 w:0)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake` (r:1 w:1)
+	/// Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`: Some(32),
+	/// added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[4, 16]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn set_max_selected_candidates(n: u32, _m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0 + m * (576 ±0) + n * (1367 ±0)`
+		//  Estimated: `4779 + n * (2879 ±11)`
+		// Minimum execution time: 24_380_000 picoseconds.
+		Weight::from_parts(24_930_000, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 21_963
+			.saturating_add(Weight::from_parts(4_431_800, 0).saturating_mul(n.into()))
+			.saturating_add(RocksDbWeight::get().reads(3))
+			.saturating_add(RocksDbWeight::get().reads((1_u64).saturating_mul(n.into())))
+			.saturating_add(RocksDbWeight::get().writes(2))
+			.saturating_add(Weight::from_parts(0, 2879).saturating_mul(n.into()))
+	}
+	/// Storage: `ParachainStaking::Round` (r:1 w:1)
+	/// Proof: `ParachainStaking::Round` (`max_values`: Some(1), `max_size`: Some(12), added: 507,
+	/// mode: `MaxEncodedLen`)
+	fn set_blocks_per_round() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `328`
+		//  Estimated: `1497`
+		// Minimum execution time: 14_991_000 picoseconds.
+		Weight::from_parts(15_390_000, 0)
+			.saturating_add(Weight::from_parts(0, 1497))
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:5 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:26 w:26)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::DelegatorState` (r:25 w:25)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `Session::Validators` (r:1 w:0)
+	/// Proof: `Session::Validators` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `Session::DisabledValidators` (r:1 w:1)
+	/// Proof: `Session::DisabledValidators` (`max_values`: Some(1), `max_size`: None, mode:
+	/// `Measured`) Storage: `System::Digest` (r:1 w:1)
+	/// Proof: `System::Digest` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `ParachainStaking::CounterForCandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CounterForCandidatePool` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`)
+	/// Storage: `ParachainStaking::MaxSelectedCandidates` (r:1 w:0)
+	/// Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[5, 16]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn force_remove_candidate(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0 + m * (955 ±0) + n * (787 ±0)`
+		//  Estimated: `19935 + m * (2716 ±0) + n * (192 ±8)`
+		// Minimum execution time: 81_932_000 picoseconds.
+		Weight::from_parts(7_423_732, 0)
+			.saturating_add(Weight::from_parts(0, 19935))
+			// Standard Error: 42_950
+			.saturating_add(Weight::from_parts(5_114_861, 0).saturating_mul(n.into()))
+			// Standard Error: 19_539
+			.saturating_add(Weight::from_parts(19_232_502, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(13))
+			.saturating_add(RocksDbWeight::get().reads((2_u64).saturating_mul(m.into())))
+			.saturating_add(RocksDbWeight::get().writes(7))
+			.saturating_add(RocksDbWeight::get().writes((2_u64).saturating_mul(m.into())))
+			.saturating_add(Weight::from_parts(0, 2716).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(n.into()))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::DelegatorState` (r:1 w:0)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxCollatorCandidateStake` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxCollatorCandidateStake` (`max_values`: Some(1),
+	/// `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
+	/// Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode:
+	/// `MaxEncodedLen`) Storage: `Balances::Locks` (r:1 w:1)
+	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode:
+	/// `MaxEncodedLen`) Storage: `Balances::Freezes` (r:1 w:0)
+	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(49), added: 2524, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`)
+	/// Storage: `ParachainStaking::CounterForCandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CounterForCandidatePool` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 15]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn join_candidates(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `884 + m * (63 ±0) + n * (165 ±0)`
+		//  Estimated: `4779 + m * (61 ±0)`
+		// Minimum execution time: 90_733_000 picoseconds.
+		Weight::from_parts(87_380_528, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 15_692
+			.saturating_add(Weight::from_parts(702_274, 0).saturating_mul(n.into()))
+			// Standard Error: 8_959
+			.saturating_add(Weight::from_parts(471_858, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(11))
+			.saturating_add(RocksDbWeight::get().writes(7))
+			.saturating_add(Weight::from_parts(0, 61).saturating_mul(m.into()))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:5 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Round` (r:1 w:0)
+	/// Proof: `ParachainStaking::Round` (`max_values`: Some(1), `max_size`: Some(12), added: 507,
+	/// mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1 w:0)
+	/// Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[5, 15]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn init_leave_candidates(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `815 + m * (240 ±0) + n * (82 ±0)`
+		//  Estimated: `19935`
+		// Minimum execution time: 65_141_000 picoseconds.
+		Weight::from_parts(57_829_380, 0)
+			.saturating_add(Weight::from_parts(0, 19935))
+			// Standard Error: 10_520
+			.saturating_add(Weight::from_parts(822_977, 0).saturating_mul(n.into()))
+			// Standard Error: 4_358
+			.saturating_add(Weight::from_parts(400_475, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(9))
+			.saturating_add(RocksDbWeight::get().writes(3))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:2 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[5, 15]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn cancel_leave_candidates(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `516 + m * (96 ±0) + n * (70 ±0)`
+		//  Estimated: `8568`
+		// Minimum execution time: 43_711_000 picoseconds.
+		Weight::from_parts(39_980_393, 0)
+			.saturating_add(Weight::from_parts(0, 8568))
+			// Standard Error: 6_214
+			.saturating_add(Weight::from_parts(437_842, 0).saturating_mul(n.into()))
+			// Standard Error: 2_574
+			.saturating_add(Weight::from_parts(274_897, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().writes(3))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Round` (r:1 w:0)
+	/// Proof: `ParachainStaking::Round` (`max_values`: Some(1), `max_size`: Some(12), added: 507,
+	/// mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:26 w:26)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::DelegatorState` (r:25 w:25)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `Session::Validators` (r:1 w:0)
+	/// Proof: `Session::Validators` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `Session::DisabledValidators` (r:1 w:1)
+	/// Proof: `Session::DisabledValidators` (`max_values`: Some(1), `max_size`: None, mode:
+	/// `Measured`) Storage: `System::Digest` (r:1 w:1)
+	/// Proof: `System::Digest` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `ParachainStaking::CounterForCandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CounterForCandidatePool` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) The range of component `n` is `[5, 15]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn execute_leave_candidates(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0 + m * (742 ±0) + n * (750 ±0)`
+		//  Estimated: `4779 + m * (2716 ±0) + n * (176 ±7)`
+		// Minimum execution time: 55_411_000 picoseconds.
+		Weight::from_parts(55_681_000, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 45_040
+			.saturating_add(Weight::from_parts(1_284_325, 0).saturating_mul(n.into()))
+			// Standard Error: 28_281
+			.saturating_add(Weight::from_parts(17_740_285, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(7))
+			.saturating_add(RocksDbWeight::get().reads((2_u64).saturating_mul(m.into())))
+			.saturating_add(RocksDbWeight::get().writes(5))
+			.saturating_add(RocksDbWeight::get().writes((2_u64).saturating_mul(m.into())))
+			.saturating_add(Weight::from_parts(0, 2716).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 176).saturating_mul(n.into()))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxCollatorCandidateStake` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxCollatorCandidateStake` (`max_values`: Some(1),
+	/// `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`) Storage: `System::Account` (r:1
+	/// w:1) Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `Balances::Locks` (r:1 w:1)
+	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode:
+	/// `MaxEncodedLen`) Storage: `Balances::Freezes` (r:1 w:0)
+	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(49), added: 2524, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 15]`.
+	/// The range of component `m` is `[0, 25]`.
+	/// The range of component `u` is `[0, 9]`.
+	fn candidate_stake_more(n: u32, m: u32, u: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `460 + m * (105 ±0) + n * (158 ±0) + u * (20 ±0)`
+		//  Estimated: `4779`
+		// Minimum execution time: 84_762_000 picoseconds.
+		Weight::from_parts(69_486_042, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 7_316
+			.saturating_add(Weight::from_parts(1_035_460, 0).saturating_mul(n.into()))
+			// Standard Error: 4_177
+			.saturating_add(Weight::from_parts(588_466, 0).saturating_mul(m.into()))
+			// Standard Error: 11_083
+			.saturating_add(Weight::from_parts(480_341, 0).saturating_mul(u.into()))
+			.saturating_add(RocksDbWeight::get().reads(9))
+			.saturating_add(RocksDbWeight::get().writes(6))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 15]`.
+	/// The range of component `m` is `[0, 25]`.
+	fn candidate_stake_less(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `625 + m * (63 ±0) + n * (107 ±0)`
+		//  Estimated: `4779`
+		// Minimum execution time: 45_901_000 picoseconds.
+		Weight::from_parts(39_022_190, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 6_281
+			.saturating_add(Weight::from_parts(647_606, 0).saturating_mul(n.into()))
+			// Standard Error: 3_586
+			.saturating_add(Weight::from_parts(367_656, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().writes(4))
+	}
+	/// Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::DelegatorState` (r:1 w:1)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `ParachainStaking::CandidatePool` (r:2 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::LastDelegation` (r:1 w:1)
+	/// Proof: `ParachainStaking::LastDelegation` (`max_values`: None, `max_size`: Some(48), added:
+	/// 2523, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Round` (r:1 w:0)
+	/// Proof: `ParachainStaking::Round` (`max_values`: Some(1), `max_size`: Some(12), added: 507,
+	/// mode: `MaxEncodedLen`) Storage: `Balances::Locks` (r:1 w:1)
+	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode:
+	/// `MaxEncodedLen`) Storage: `Balances::Freezes` (r:1 w:0)
+	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(49), added: 2524, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 16]`.
+	/// The range of component `m` is `[1, 24]`.
+	fn join_delegators(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `1235 + m * (131 ±0) + n * (192 ±0)`
+		//  Estimated: `8568`
+		// Minimum execution time: 110_553_000 picoseconds.
+		Weight::from_parts(94_219_260, 0)
+			.saturating_add(Weight::from_parts(0, 8568))
+			// Standard Error: 13_714
+			.saturating_add(Weight::from_parts(1_136_100, 0).saturating_mul(n.into()))
+			// Standard Error: 9_056
+			.saturating_add(Weight::from_parts(860_716, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(12))
+			.saturating_add(RocksDbWeight::get().writes(8))
+	}
+	/// Storage: `ParachainStaking::DelegatorState` (r:1 w:1)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `Balances::Locks` (r:1 w:1)
+	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode:
+	/// `MaxEncodedLen`) Storage: `Balances::Freezes` (r:1 w:0)
+	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(49), added: 2524, mode:
+	/// `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 16]`.
+	/// The range of component `m` is `[1, 24]`.
+	/// The range of component `u` is `[1, 9]`.
+	fn delegator_stake_more(n: u32, m: u32, u: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `1028 + m * (110 ±0) + n * (168 ±0) + u * (20 ±0)`
+		//  Estimated: `4779`
+		// Minimum execution time: 96_263_000 picoseconds.
+		Weight::from_parts(86_920_766, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 6_754
+			.saturating_add(Weight::from_parts(670_231, 0).saturating_mul(n.into()))
+			// Standard Error: 4_462
+			.saturating_add(Weight::from_parts(474_799, 0).saturating_mul(m.into()))
+			// Standard Error: 12_215
+			.saturating_add(Weight::from_parts(261_482, 0).saturating_mul(u.into()))
+			.saturating_add(RocksDbWeight::get().reads(9))
+			.saturating_add(RocksDbWeight::get().writes(7))
+	}
+	/// Storage: `ParachainStaking::DelegatorState` (r:1 w:1)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 16]`.
+	/// The range of component `m` is `[1, 24]`.
+	fn delegator_stake_less(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `943 + m * (81 ±0) + n * (122 ±0)`
+		//  Estimated: `4779`
+		// Minimum execution time: 62_152_000 picoseconds.
+		Weight::from_parts(54_307_292, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 5_523
+			.saturating_add(Weight::from_parts(624_372, 0).saturating_mul(n.into()))
+			// Standard Error: 3_647
+			.saturating_add(Weight::from_parts(434_073, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(6))
+			.saturating_add(RocksDbWeight::get().writes(5))
+	}
+	/// Storage: `ParachainStaking::DelegatorState` (r:1 w:1)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 16]`.
+	/// The range of component `m` is `[1, 24]`.
+	fn revoke_delegation(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `943 + m * (81 ±0) + n * (122 ±0)`
+		//  Estimated: `4779`
+		// Minimum execution time: 66_132_000 picoseconds.
+		Weight::from_parts(59_254_892, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 5_692
+			.saturating_add(Weight::from_parts(638_247, 0).saturating_mul(n.into()))
+			// Standard Error: 3_759
+			.saturating_add(Weight::from_parts(380_102, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(6))
+			.saturating_add(RocksDbWeight::get().writes(5))
+	}
+	/// Storage: `ParachainStaking::DelegatorState` (r:1 w:1)
+	/// Proof: `ParachainStaking::DelegatorState` (`max_values`: None, `max_size`: Some(105), added:
+	/// 2580, mode: `MaxEncodedLen`) Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TopCandidates` (r:1 w:1)
+	/// Proof: `ParachainStaking::TopCandidates` (`max_values`: Some(1), `max_size`: Some(769),
+	/// added: 1264, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxSelectedCandidates` (r:1
+	/// w:0) Proof: `ParachainStaking::MaxSelectedCandidates` (`max_values`: Some(1), `max_size`:
+	/// Some(4), added: 499, mode: `MaxEncodedLen`) Storage: `ParachainStaking::TotalCollatorStake`
+	/// (r:1 w:1) Proof: `ParachainStaking::TotalCollatorStake` (`max_values`: Some(1), `max_size`:
+	/// Some(32), added: 527, mode: `MaxEncodedLen`) The range of component `n` is `[1, 16]`.
+	/// The range of component `m` is `[1, 24]`.
+	fn leave_delegators(n: u32, m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `943 + m * (81 ±0) + n * (122 ±0)`
+		//  Estimated: `4779`
+		// Minimum execution time: 65_962_000 picoseconds.
+		Weight::from_parts(58_592_903, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			// Standard Error: 4_803
+			.saturating_add(Weight::from_parts(651_104, 0).saturating_mul(n.into()))
+			// Standard Error: 3_172
+			.saturating_add(Weight::from_parts(385_479, 0).saturating_mul(m.into()))
+			.saturating_add(RocksDbWeight::get().reads(6))
+			.saturating_add(RocksDbWeight::get().writes(5))
+	}
+	/// Storage: `ParachainStaking::Unstaking` (r:1 w:1)
+	/// Proof: `ParachainStaking::Unstaking` (`max_values`: None, `max_size`: Some(241), added:
+	/// 2716, mode: `MaxEncodedLen`) Storage: `Balances::Locks` (r:1 w:1)
+	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode:
+	/// `MaxEncodedLen`) Storage: `Balances::Freezes` (r:1 w:0)
+	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(49), added: 2524, mode:
+	/// `MaxEncodedLen`) Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode:
+	/// `MaxEncodedLen`) The range of component `u` is `[1, 9]`.
+	fn unlock_unstaked(u: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `668 + u * (20 ±0)`
+		//  Estimated: `4764`
+		// Minimum execution time: 54_121_000 picoseconds.
+		Weight::from_parts(56_474_376, 0)
+			.saturating_add(Weight::from_parts(0, 4764))
+			// Standard Error: 19_030
+			.saturating_add(Weight::from_parts(395_414, 0).saturating_mul(u.into()))
+			.saturating_add(RocksDbWeight::get().reads(4))
+			.saturating_add(RocksDbWeight::get().writes(3))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:2 w:0)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) Storage: `ParachainStaking::MaxCollatorCandidateStake` (r:0
+	/// w:1) Proof: `ParachainStaking::MaxCollatorCandidateStake` (`max_values`: Some(1),
+	/// `max_size`: Some(16), added: 511, mode: `MaxEncodedLen`)
+	fn set_max_candidate_stake() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `396`
+		//  Estimated: `8568`
+		// Minimum execution time: 23_500_000 picoseconds.
+		Weight::from_parts(23_771_000, 0)
+			.saturating_add(Weight::from_parts(0, 8568))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	/// Storage: `ParachainStaking::CandidatePool` (r:1 w:1)
+	/// Proof: `ParachainStaking::CandidatePool` (`max_values`: None, `max_size`: Some(1314), added:
+	/// 3789, mode: `MaxEncodedLen`) The range of component `n` is `[1, 16]`.
+	/// The range of component `m` is `[0, 1000000]`.
+	fn set_commission(_n: u32, _m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `393`
+		//  Estimated: `4779`
+		// Minimum execution time: 19_960_000 picoseconds.
+		Weight::from_parts(20_647_875, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			.saturating_add(RocksDbWeight::get().reads(1))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
 }

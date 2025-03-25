@@ -153,7 +153,6 @@ mod migrations;
 mod set;
 pub mod types;
 pub mod weightinfo;
-pub mod weights;
 
 pub use pallet::*;
 pub use weightinfo::WeightInfo;

@@ -232,7 +232,7 @@ impl parachain_staking::Config for Test {
 	type MinDelegation = MinDelegation;
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
-	type WeightInfo = parachain_staking::weights::WeightInfo<Test>;
+	type WeightInfo = ();
 }
 
 impl_opaque_keys! {
