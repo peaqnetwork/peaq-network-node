@@ -1,4 +1,4 @@
-use crate::{self as inflation_manager, types, weights, Perbill};
+use crate::{self as inflation_manager, types, Perbill};
 use frame_support::PalletId;
 
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
@@ -124,7 +124,7 @@ impl inflation_manager::Config for TestRuntime {
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
 	type BoundedDataLen = ConstU32<1024>;
-	type WeightInfo = weights::WeightInfo<TestRuntime>;
+	type WeightInfo = ();
 	type DoInitializeAt = InitializeInflationAt;
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }

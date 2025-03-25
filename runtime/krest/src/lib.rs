@@ -1024,7 +1024,7 @@ impl inflation_manager::Config for Runtime {
 	type PotId = InfaltionPot;
 	type DefaultTotalIssuanceNum = DefaultTotalIssuanceNum;
 	type DefaultInflationConfiguration = DefaultInflationConfiguration;
-	type WeightInfo = inflation_manager::weights::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_inflation_manager::WeightInfo<Runtime>;
 	type DoInitializeAt = InitializeInflationAt;
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
