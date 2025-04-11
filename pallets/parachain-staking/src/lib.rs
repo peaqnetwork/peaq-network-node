@@ -2968,32 +2968,7 @@ pub mod pallet {
 
 			let old_round = round - 1;
 			// Get total collator staking number of round that is ending
-			let (in_reads, mut total_stake) = Self::get_total_collator_staking_num(old_round);
-
-			// Total stake cannot be zero if there are any authors noted for previous round.
-			// We expect this is the case when runtime upgrade for token-economy-v2 is done.
-			// As there was no snapshot for the collators of that round.
-			// TODO this case can be removed in later upgrades, after token-economy-v2 is installed.
-			if total_stake.is_zero() {
-				// there will be only 1 unfortunate author, as we force new round in runtime
-				// upgrade. But we iterate through all possible entities just in case.
-				CollatorBlocks::<T>::iter_prefix(old_round).for_each(|(collator, num)| {
-					// get author's state
-					if let Some(state) = CandidatePool::<T>::get(collator.clone()) {
-						let collator_total = T::CurrencyBalance::from(num)
-							.checked_mul(&state.total)
-							.unwrap_or_else(Zero::zero);
-						// calculate total stake in session
-						total_stake = total_stake.saturating_add(collator_total);
-						reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-
-						// snapshot these collators
-						AtStake::<T>::insert(old_round, collator, state);
-						writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
-					};
-					reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-				});
-			}
+			let (in_reads, total_stake) = Self::get_total_collator_staking_num(old_round);
 
 			// Get total issuance of round that is ending
 			let (issuance_weight, total_issuance) = Self::pot_issuance();

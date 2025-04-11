@@ -11873,6 +11873,7 @@ dependencies = [
  "orml-traits",
  "pallet-assets",
  "pallet-block-reward",
+ "pallet-evm",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "peaq-primitives-xcm",

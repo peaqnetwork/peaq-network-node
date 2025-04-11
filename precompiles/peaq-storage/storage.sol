@@ -23,14 +23,24 @@ interface Storage {
         bytes memory item
     ) external returns (bool);
 
+    function removeItem(
+        bytes memory item_type
+    ) external returns (bool);
+
     event ItemAdded(
         address sender,
         bytes item_type,
         bytes item
     );
+
     event ItemUpdated(
         address sender,
         bytes item_type,
         bytes item
+    );
+    
+    event ItemRemoved(
+        address sender,
+        bytes item_type
     );
 }

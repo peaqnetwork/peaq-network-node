@@ -33,6 +33,8 @@ pub(crate) const SELECTOR_LOG_ITEM_ADDED: [u8; 32] = keccak256!("ItemAdded(addre
 pub(crate) const SELECTOR_LOG_ITEM_UPDATED: [u8; 32] =
 	keccak256!("ItemUpdated(address,bytes,bytes)");
 
+pub(crate) const SELECTOR_LOG_ITEM_REMOVED: [u8; 32] = keccak256!("ItemRemoved(address,bytes)");
+
 pub struct PeaqStoragePrecompile<Runtime>(PhantomData<Runtime>);
 
 #[precompile_utils::precompile]
@@ -131,6 +133,37 @@ where
 			handle.context().address,
 			SELECTOR_LOG_ITEM_UPDATED,
 			solidity::encode_event_data((Address::from(handle.context().caller), item_type, item)),
+		);
+		event.record(handle)?;
+
+		Ok(true)
+	}
+
+	#[precompile::public("removeItem(bytes)")]
+	#[precompile::public("remove_item(bytes)")]
+	fn remove_item(
+		handle: &mut impl PrecompileHandle,
+		item_type: BoundedBytes<GetBytesLimit>,
+	) -> EvmResult<bool> {
+		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
+
+		let caller: AccountIdOf<Runtime> =
+			Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let item_type_bounded =
+			BoundedVec::<u8, <Runtime>::BoundedDataLen>::try_from(item_type.as_bytes().to_vec())
+				.map_err(|_| Revert::new(RevertReason::custom("Item type too long")))?;
+
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(caller.clone()).into(),
+			peaq_pallet_storage::Call::<Runtime>::remove_item { item_type: item_type_bounded },
+			0,
+		)?;
+
+		let event = log1(
+			handle.context().address,
+			SELECTOR_LOG_ITEM_REMOVED,
+			solidity::encode_event_data((Address::from(handle.context().caller), item_type)),
 		);
 		event.record(handle)?;
 
