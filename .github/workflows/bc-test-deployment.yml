@@ -10,7 +10,7 @@ on:
 jobs:
   bc-test:
     # NOTE: Python3 comes preinstalled in ubuntu, so no need to install it
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Clone peaq-bc-repo
@@ -43,6 +43,6 @@ jobs:
 
   # We redeploy the autotest env as to clear the state of the parachain
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: ./workflows/ManualPublish_and_Deployment.yml/trigger-deploy
