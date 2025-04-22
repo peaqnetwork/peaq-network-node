@@ -1,11 +1,11 @@
-name: Manual Build, Deploy and Autotest 
+name: Manual Build, Deploy and Autotest
 on:
   workflow_dispatch:
 
 jobs:
   trigger-build_and_publish:
     name: Build and Publish Docker image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Check out the repo
       uses: actions/checkout@v3
@@ -21,7 +21,7 @@ jobs:
         wait_workflow: true
   trigger-deploy:
     name: Deploy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: trigger-build_and_publish
     steps:
     - name: Trigger Deployment workflow
@@ -36,7 +36,7 @@ jobs:
         wait_workflow: true
   trigger-autotest:
     name: Autotest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: trigger-deploy
     steps:
     - name: Trigger Autotest workflow
@@ -49,6 +49,6 @@ jobs:
         ref: ${{ github.ref_name }}
         trigger_workflow: true
         wait_workflow: true
-  
 
-  
+
+
