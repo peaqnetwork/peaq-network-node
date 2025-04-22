@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   push_to_registry:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: Build and Push Peaq Docker Image to Docker Hub
     steps:
       - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
