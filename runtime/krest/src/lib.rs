@@ -1121,8 +1121,8 @@ construct_runtime!(
 		// Remove StakingCoefficientRewardCalculator: 27
 
 		// Governance stuff
-		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>, Call} = 28,
-		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>, HoldReason} = 29,
+		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>, Call} = 27,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>, HoldReason} = 28,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
