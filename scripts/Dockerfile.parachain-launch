@@ -3,6 +3,10 @@ FROM ubuntu:24.04
 WORKDIR /opt/network
 ADD target/release/peaq-node /usr/local/bin
 
+# This is a temporary workarround to tackle a bug. See:
+# https://bugs.launchpad.net/cloud-images/+bug/2005129
+RUN userdel -r ubuntu
+# Our default behavior:
 RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq-node peaq-node && \
 	mkdir -p /chain-data /peaq-node/.local/share/peaq-node && \
 	chown -R peaq-node:peaq-node /chain-data && \
