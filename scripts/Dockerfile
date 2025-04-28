@@ -10,6 +10,8 @@ FROM docker.io/library/ubuntu:24.04
 COPY --from=builder /node/target/release/peaq-node /usr/local/bin
 COPY --from=builder /node/node/src/chain-specs/  /node/src/chain-specs
 
+# This is a temporary workarround to tackle a bug. See:
+# https://bugs.launchpad.net/cloud-images/+bug/2005129
 RUN userdel -r ubuntu
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /peaq peaq && \
