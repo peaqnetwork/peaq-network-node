@@ -9160,7 +9160,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-mor"
 version = "0.1.2"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#fe85e2b89571621c02ffef9e6ec7af95276e3d9f"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#7b99d8bada565d1766d9e6aab7368536e32dbafa"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9180,7 +9180,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#64a752f598e13e2eae241ec36aad6f0e90262711"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#873c5350299c75893431d8589c1ca27ebce224cf"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9200,7 +9200,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-rpc"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#64a752f598e13e2eae241ec36aad6f0e90262711"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#873c5350299c75893431d8589c1ca27ebce224cf"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -9215,7 +9215,7 @@ dependencies = [
 [[package]]
 name = "peaq-pallet-rbac-runtime-api"
 version = "0.1.1"
-source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#64a752f598e13e2eae241ec36aad6f0e90262711"
+source = "git+https://github.com/peaqnetwork/peaq-pallet-rbac.git?branch=dev#873c5350299c75893431d8589c1ca27ebce224cf"
 dependencies = [
  "parity-scale-codec",
  "peaq-pallet-rbac",
