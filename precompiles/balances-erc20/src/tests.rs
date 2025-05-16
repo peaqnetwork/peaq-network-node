@@ -810,7 +810,7 @@ fn permit_valid() {
 						s: rs.s.b32().into(),
 					},
 				)
-				.expect_cost(0) // TODO: Test db read/write costs
+				.expect_cost(1756)
 				.expect_log(log3(
 					Precompile1,
 					SELECTOR_LOG_APPROVAL,
@@ -1215,7 +1215,7 @@ fn permit_valid_with_metamask_signed_data() {
 						s: s_real.into(),
 					},
 				)
-				.expect_cost(0) // TODO: Test db read/write costs
+				.expect_cost(1756)
 				.expect_log(log3(
 					Precompile1,
 					SELECTOR_LOG_APPROVAL,

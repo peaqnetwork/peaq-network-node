@@ -104,6 +104,14 @@ where
 	) -> EvmResult {
 		// NoncesStorage: Blake2_128(16) + contract(20) + Blake2_128(16) + owner(20) + nonce(32)
 		handle.record_db_read::<Runtime>(104)?;
+		// Following two lines are for writing cost.
+		// Implemented similarly to record_db_read() method above.
+		// NoncesStorage / owner(20) + ApprovesStorage / 2 * owner(20) + amount(32)
+		const STORAGE_WRITE_COSTS: u64 = 92;
+		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
+		handle.record_external_cost(None, Some(STORAGE_WRITE_COSTS), None)?;
+		// Costs for log3 calls
+		handle.record_log_costs_manual(3, 32)?;
 
 		let owner: H160 = owner.into();
 		let spender: H160 = spender.into();
