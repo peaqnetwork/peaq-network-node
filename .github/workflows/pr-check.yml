@@ -29,7 +29,7 @@ jobs:
   test-and-clippy:
     runs-on: ubuntu-latest
     container:
-      image: rust:1.87-slim
+      image: paritytech/ci-linux:production
     
     steps:
       - name: Checkout Sources
