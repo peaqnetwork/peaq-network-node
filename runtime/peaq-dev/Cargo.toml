@@ -14,7 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
 git = "https://github.com/peaqnetwork/polkadot-sdk"
-branch = "peaq-polkadot-v1.7.2"
+branch = "peaq-polkadot-stable2503-4"
 
 [dependencies]
 # sp-debug-derive = { git = "https://github.com/peaqnetwork/polakdot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false, features = ["std", "force-debug"] }
