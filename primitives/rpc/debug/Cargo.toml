@@ -9,7 +9,7 @@ version = "0.1.0"
 
 [dependencies]
 environmental = { workspace = true, default-features = false }
-ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
+ethereum = { workspace = true, default-features = false, features = [ "with-scale" ] }
 ethereum-types = { workspace = true, default-features = false }
 hex = { workspace = true, optional = true, features = [ "serde" ] }
 serde = { workspace = true, optional = true, features = [ "derive" ] }

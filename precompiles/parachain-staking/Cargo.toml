@@ -39,10 +39,7 @@ scale-info = { workspace = true }
 pallet-authorship = { workspace = true, default-features = false }
 
 [features]
-default = ["std", "experimental"]
-experimental = [
-	"pallet-aura/experimental",
-]
+default = ["std"]
 std = [
 	"parity-scale-codec/std",
 	"fp-evm/std",

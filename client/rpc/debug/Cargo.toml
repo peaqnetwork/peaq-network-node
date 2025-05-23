@@ -29,7 +29,7 @@ sp-io = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 
 # Frontier
-ethereum = { workspace = true, default-features = false, features = [ "with-codec" ] }
+ethereum = { workspace = true, default-features = false, features = [ "with-scale" ] }
 ethereum-types = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
 fc-db = { workspace = true, default-features = true }
