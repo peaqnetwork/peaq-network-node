@@ -113,7 +113,8 @@ where
 		let call = Runtime::RuntimeCall::from(call);
 		let dispatch_info = call.get_dispatch_info();
 
-		Self::reocrd_external_cost(handle, dispatch_info.weight, storage_growth)
+		// TODO call_weight vs extension_weight?
+		Self::reocrd_external_cost(handle, dispatch_info.call_weight, storage_growth)
 			.map_err(TryDispatchError::Evm)?;
 
 		// Dispatch call.
@@ -124,7 +125,7 @@ where
 		let post_dispatch_info = using_precompile_handle(handle, || call.dispatch(origin))
 			.map_err(|e| TryDispatchError::Substrate(e.error))?;
 
-		Self::refund_weight_v2_cost(handle, dispatch_info.weight, post_dispatch_info.actual_weight)
+		Self::refund_weight_v2_cost(handle, dispatch_info.call_weight, post_dispatch_info.actual_weight)
 			.map_err(TryDispatchError::Evm)?;
 
 		Ok(post_dispatch_info)

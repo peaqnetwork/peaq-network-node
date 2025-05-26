@@ -123,8 +123,7 @@ fn write_u256() {
 
 	let writer_output = Writer::new().write(value).build();
 
-	let mut expected_output = [0u8; 32];
-	value.to_big_endian(&mut expected_output);
+	let expected_output = value.to_big_endian();
 
 	assert_eq!(writer_output, expected_output);
 }
@@ -353,8 +352,9 @@ fn read_address_array_size_too_big() {
 	];
 	let mut writer_output = Writer::new().write(array).build();
 
-	U256::from(6u32).to_big_endian(&mut writer_output[0x20..0x40]);
-
+	let be_val = U256::from(6u32).to_big_endian();
+	writer_output[0x20..0x40].copy_from_slice(&be_val);
+	
 	let mut reader = Reader::new(&writer_output);
 
 	match reader.read::<Vec<Address>>().in_field("field") {

@@ -92,12 +92,13 @@ where
 		from: &T::AccountId,
 		to: &T::AccountId,
 		amount: Self::Balance,
+		existense_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
 			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
-			NativeCurrency::transfer(from, to, amount)
+			NativeCurrency::transfer(from, to, amount, existense_requirement)
 		} else {
 			// Keep alive setup as true
 			let out = MultiCurrencies::transfer(asset_id, from, to, amount, Preservation::Preserve);
@@ -133,17 +134,19 @@ where
 		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
+		existense_requirement: ExistenceRequirement
 	) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
-			NativeCurrency::withdraw(who, amount)
+			NativeCurrency::withdraw(who, amount, existense_requirement)
 		} else {
 			let out = MultiCurrencies::burn_from(
 				asset_id,
 				who,
 				amount,
+				Preservation::Protect, // TODO What does this do?
 				Precision::Exact,
 				Fortitude::Polite,
 			);
@@ -173,7 +176,7 @@ where
 		} else {
 			// We cannot slash the token because it didn't implemnt that...
 			// If error happens, will return 0
-			MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite)
+			MultiCurrencies::burn_from(asset_id, who, amount, Preservation::Expendable, Precision::Exact, Fortitude::Polite)
 				.unwrap_or(Zero::zero())
 		}
 	}
@@ -219,13 +222,14 @@ where
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)
 	}
 
-	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance) -> DispatchResult {
+	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance, _existence_requirement: ExistenceRequirement) -> DispatchResult {
 		log::debug!(
 			"PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}",
 			from,
 			to,
 			amount
 		);
+		// TODO already set to KeepAlive, do we need to provide function argument also?
 		Currency::transfer(from, to, amount, ExistenceRequirement::KeepAlive)
 	}
 
@@ -238,7 +242,8 @@ where
 		Ok(())
 	}
 
-	fn withdraw(who: &AccountId, amount: Self::Balance) -> DispatchResult {
+	fn withdraw(who: &AccountId, amount: Self::Balance, _existence_requirement: ExistenceRequirement) -> DispatchResult {
+		// TODO already set to KeepAlive, do we need to provide function argument also?
 		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath)
 			.map(|_| ())
 	}

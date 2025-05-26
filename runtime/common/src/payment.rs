@@ -132,6 +132,17 @@ where
 		}
 		Ok(())
 	}
+
+	fn can_withdraw_fee(
+			who: &<T>::AccountId,
+			call: &<T>::RuntimeCall,
+			dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
+			fee: Self::Balance,
+			tip: Self::Balance,
+		) -> Result<(), TransactionValidityError> {
+			// TODO what to do with this?
+		Ok(())
+	}
 }
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
@@ -243,9 +254,9 @@ where
 {
 	type LiquidityInfo = Option<NegativeImbalanceOf<T::Currency, T>>;
 
-	fn can_withdraw(who: &H160, amount: U256) -> Result<(), pallet_evm::Error<T>> {
-		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::can_withdraw(who, amount)
-	}
+	// fn can_withdraw(who: &H160, amount: U256) -> Result<(), pallet_evm::Error<T>> {
+	// 	EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::can_withdraw(who, amount)
+	// }
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::withdraw_fee(who, fee)

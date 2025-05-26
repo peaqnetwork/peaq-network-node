@@ -201,4 +201,16 @@ impl PrecompileHandle for MockHandle {
 	}
 
 	fn refund_external_cost(&mut self, _ref_time: Option<u64>, _proof_size: Option<u64>) {}
+
+	fn origin(&self) -> H160 {
+		// TODO address or caller?
+		self.context.address
+	}
+
+	fn is_contract_being_constructed(&self, address: H160) -> bool {
+		// In the mock handle, we assume that no contract is being constructed.
+		// This can be overridden in tests if needed.
+		false
+	}
+
 }

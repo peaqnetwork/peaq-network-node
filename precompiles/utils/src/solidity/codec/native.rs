@@ -173,8 +173,8 @@ impl Codec for U256 {
 	}
 
 	fn write(writer: &mut Writer, value: Self) {
-		let mut buffer = [0u8; 32];
-		value.to_big_endian(&mut buffer);
+		let buffer: [u8; 32] = value.to_big_endian();
+		// value.to_big_endian(&mut buffer);
 		writer.data.extend_from_slice(&buffer);
 	}
 

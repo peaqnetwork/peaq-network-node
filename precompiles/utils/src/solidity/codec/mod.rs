@@ -266,9 +266,7 @@ impl Writer {
 			// array, which is corrected by `offset_shift`.
 			let free_space_offset = output.len() - offset_chunk.offset_shift;
 
-			// Override dummy offset to the offset it will be in the final output.
-			U256::from(free_space_offset)
-				.to_big_endian(&mut output[offset_position..offset_position_end]);
+			output[offset_position..offset_position_end].copy_from_slice(U256::from(free_space_offset).to_big_endian().as_ref());
 
 			// Append this data at the end of the current output.
 			output.append(&mut offset_chunk.data);
