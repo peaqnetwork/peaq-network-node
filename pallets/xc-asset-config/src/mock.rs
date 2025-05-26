@@ -73,6 +73,12 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PostTransactions = ();
+	type PreInherents = ();
+	type SingleBlockMigrations = ();
 }
 
 parameter_types! {
@@ -96,6 +102,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 type AssetId = u128;
