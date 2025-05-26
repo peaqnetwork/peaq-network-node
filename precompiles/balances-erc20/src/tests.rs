@@ -22,6 +22,7 @@ use libsecp256k1::{sign, Message, SecretKey};
 use precompile_utils::testing::*;
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
+use sp_io::hashing::keccak_256;
 
 // No test of invalid selectors since we have a fallback behavior (deposit).
 fn precompiles() -> Precompiles<Runtime> {
@@ -1272,4 +1273,91 @@ fn transfer_to_account_id() {
 				.expect_no_logs()
 				.execute_reverts(|output| output == b"Trying to transfer more than owned");
 		});
+}
+
+#[test]
+fn verify_const_permit_typehash() {
+	assert_eq!(
+		crate::eip2612::PERMIT_TYPEHASH,
+		[
+			110, 113, 237, 174, 18, 177, 185, 127, 77, 31, 96, 55, 15, 239, 16, 16, 95, 162, 250,
+			174, 1, 38, 17, 74, 22, 156, 100, 132, 93, 97, 38, 201
+		]
+	);
+	assert_eq!(
+		hex::encode(crate::eip2612::PERMIT_TYPEHASH),
+		"6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9"
+	);
+}
+
+#[test]
+fn verify_const_permit_domain() {
+	assert_eq!(
+		crate::eip2612::PERMIT_DOMAIN,
+		[
+			139, 115, 195, 198, 155, 184, 254, 61, 81, 46, 204, 76, 247, 89, 204, 121, 35, 159,
+			123, 23, 155, 15, 250, 202, 169, 167, 93, 82, 43, 57, 64, 15
+		]
+	);
+	assert_eq!(
+		hex::encode(crate::eip2612::PERMIT_DOMAIN),
+		"8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f"
+	);
+}
+
+fn ref_separator_inner(precompile: H160, chain_id: u64, token_name: &str) -> Vec<u8> {
+	let name: H256 = keccak_256(token_name.as_bytes()).into();
+	let version: H256 = keccak_256("1".as_bytes()).into();
+	let chain_id: U256 = chain_id.into();
+
+	solidity::encode_arguments((
+		H256::from(crate::eip2612::PERMIT_DOMAIN),
+		name,
+		version,
+		chain_id,
+		Address(precompile),
+	))
+}
+
+fn ref_domain_separator(precompile: H160, chain_id: u64, token_name: &str) -> [u8; 32] {
+	let separator_inner = ref_separator_inner(precompile, chain_id, token_name);
+	keccak_256(&separator_inner)
+}
+
+#[test]
+fn verify_compute_domain_separator() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_eq!(H160::from(Precompile1), H160::from_low_u64_be(1));
+
+		// Internal comparison test with mockup implementation.
+		let separator = ref_domain_separator(Precompile1.into(), 0, "Mock token");
+		assert_eq!(
+			separator,
+			Eip2612::<Runtime, NativeErc20Metadata>::compute_domain_separator(Precompile1.into())
+		);
+		assert_eq!(
+			hex::encode(separator),
+			"37c71031f70f363085fb448963a9bb9e8b1d017361fe80f3a35aca52adaf8e60"
+		);
+
+		// Reference values for local peaq-dev test network.
+		let precompile = H160::from_low_u64_be(809);
+        let separator_inner = ref_separator_inner(precompile, 2000, "Agung token");
+		assert_eq!(
+			hex::encode(&separator_inner),
+			"8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f7eaa9fdfb50a9bcab5270974a06ca61e19abd41351a98cd36ffdb2b589cd6aaec89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc600000000000000000000000000000000000000000000000000000000000007d00000000000000000000000000000000000000000000000000000000000000329"
+		);
+		let separator = keccak_256(&separator_inner);
+		assert_eq!(
+			separator,
+			[
+				50, 142, 135, 242, 3, 49, 182, 30, 55, 60, 196, 42, 7, 111, 54, 3, 48, 152, 101,
+				219, 254, 186, 35, 218, 92, 125, 255, 28, 138, 157, 88, 251
+			]
+		);
+		assert_eq!(
+			hex::encode(separator),
+			"328e87f20331b61e373cc42a076f3603309865dbfeba23da5c7dff1c8a9d58fb"
+		);
+	});
 }

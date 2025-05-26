@@ -30,7 +30,7 @@ pub const PERMIT_TYPEHASH: [u8; 32] = keccak256!(
 );
 
 /// EIP2612 permit domain used to compute an individualized domain separator.
-const PERMIT_DOMAIN: [u8; 32] = keccak256!(
+pub(crate) const PERMIT_DOMAIN: [u8; 32] = keccak256!(
 	"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
 );
 
