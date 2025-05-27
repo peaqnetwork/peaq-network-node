@@ -35,7 +35,7 @@ jobs:
           cd /work
 
           echo "Building tracing enabled wasm"
-          cargo build --release -p peaq-node-runtime --features "std aura evm-tracing on-chain-release-build"
+          cargo build --release -p peaq-runtime --features "std aura evm-tracing on-chain-release-build"
 
           echo "Building network node"
           cargo build --release --features on-chain-release-build
@@ -56,9 +56,9 @@ jobs:
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
-        cwd: ./target/release/wbuild/peaq-node-runtime/
+        cwd: ./target/release/wbuild/peaq-runtime/
         files: |
-          ./peaq_node_runtime.wasm
+          ./peaq_runtime.compact.compressed.wasm
         outPath: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
 
     - name: Release
