@@ -52,7 +52,7 @@ jobs:
           cd /work
 
           echo "Building tracing enabled wasm"
-          cargo build --release -p peaq-runtime --features "std aura evm-tracing on-chain-release-build"
+          cargo build --release -p peaq-runtime --features "std aura on-chain-release-build"
 
           echo "Building network node"
           cargo build --release --features on-chain-release-build
@@ -81,6 +81,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ steps.tag.outputs.tag }}
         files: |
           peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
           peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
