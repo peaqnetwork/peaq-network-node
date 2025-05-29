@@ -81,7 +81,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.tag.outputs.tag }}
+        tag_name: v${{ github.event.pull_request.number }}
         files: |
           peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
           peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
