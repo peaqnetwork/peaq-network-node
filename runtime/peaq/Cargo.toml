@@ -1,6 +1,6 @@
 [package]
 name = "peaq-runtime"
-version = "4.0.0-polkadot-v1.7.2"
+version = "4.0.1-polkadot-v1.7.2"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -14,10 +14,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
 git = "https://github.com/peaqnetwork/polkadot-sdk"
-branch = "peaq-polkadot-v1.7.2"
+branch = "release-pool-issue"
 
 [dependencies]
-# sp-debug-derive = { git = "https://github.com/peaqnetwork/polakdot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false, features = ["std", "force-debug"] }
+# sp-debug-derive = { git = "https://github.com/peaqnetwork/polakdot-sdk", branch = "release-pool-issue", default-features = false, features = ["std", "force-debug"] }
 parity-scale-codec = { workspace = true, default-features = false }
 smallvec = { workspace = true, default-features = false }
 rlp = { workspace = true, default-features = false, optional = true  }
