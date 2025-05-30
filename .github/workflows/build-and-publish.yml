@@ -20,13 +20,25 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+    - name: Get PR number or target branch
+      id: tag
+      run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "This is a pull request."
+            echo "target_tag=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "This is a push event."
+            echo "target_tag=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          else
+            echo "Unsupported event: ${{ github.event_name }}"
+          fi
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
        path: |
            ~/.cargo/registry
            ~/.cargo/git
-       key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+       key: ${{ runner.os }}-cargo-registry-fe438c63458706e034
        restore-keys: |
            ${{ runner.os }}-cargo-registry-
 
@@ -34,7 +46,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: target
-        key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-target-fe438c63458706e034
         restore-keys: |
            ${{ runner.os }}-cargo-target-
     - name: Checkout code
@@ -51,7 +63,7 @@ jobs:
         run: |
           cd /work
 
-          echo "Building tracing enabled wasm"
+          echo "Building wasm"
           cargo build --release -p peaq-runtime --features "std aura on-chain-release-build"
 
           echo "Building network node"
@@ -81,19 +93,9 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ github.event.pull_request.number }}
+        tag_name: v${{ steps.tag.outputs.target_tag }}
+        draft: true
         files: |
           peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-          peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+          peaq_runtime.compact.compressed-${{ steps.tag.outputs.tag }}.tar.gz
 
-#     - name: Upload peaq-node
-#       uses: actions/upload-artifact@v3
-#       with:
-#         name: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-#         path: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-
-#     - name: Upload peaq-node-runtime-with-tracing
-#       uses: actions/upload-artifact@v3
-#       with:
-#         name: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
-#         path: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
