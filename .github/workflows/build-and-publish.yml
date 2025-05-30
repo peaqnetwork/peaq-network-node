@@ -32,26 +32,18 @@ jobs:
           else
             echo "Unsupported event: ${{ github.event_name }}"
           fi
+    - name: Checkout code
+      uses: actions/checkout@v2
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
-       path: |
-           ~/.cargo/registry
-           ~/.cargo/git
-       key: ${{ runner.os }}-cargo-registry-fe438c63458706e034
-       restore-keys: |
-           ${{ runner.os }}-cargo-registry-
-
-    - name: Cache build artifacts
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-target-fe438c63458706e034
+        path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+        key: ${{ runner.os }}-cargo-fe438c63458706e034
         restore-keys: |
-           ${{ runner.os }}-cargo-target-
-    - name: Checkout code
-      uses: actions/checkout@v2
-
+            ${{ runner.os }}-cargo-
     - name: Compile node
       uses: addnab/docker-run-action@v2
       with:
@@ -59,7 +51,11 @@ jobs:
 #         password: ${{ secrets.DOCKER_PASSWORD }}
         registry: ghcr.io
         image: ghcr.io/peaqnetwork/peaq-node-builder:latest
-        options: -v ${{ github.workspace }}:/work
+        options: 
+          -v ${{ github.workspace }}:/work
+          -v ~/.cargo/registry:/usr/local/cargo/registry
+          -v ~/.cargo/git:/usr/local/cargo/git
+          -v ${{ github.workspace }}/target:/work/target
         run: |
           cd /work
 
@@ -81,14 +77,14 @@ jobs:
           ./peaq-node
         outPath: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
 
-    - name: Compress tracing enabled wasm runtime
+    - name: Compress wasm runtime
       uses: a7ul/tar-action@v1.1.0
       with:
         command: c
         cwd: ./target/release/wbuild/peaq-runtime/
         files: |
           ./peaq_runtime.compact.compressed.wasm
-        outPath: peaq-node-runtime-with-tracing-${{ steps.tag.outputs.tag }}.tar.gz
+        outPath: peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
 
     - name: Release
       uses: softprops/action-gh-release@v1
@@ -97,5 +93,5 @@ jobs:
         draft: true
         files: |
           peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-          peaq_runtime.compact.compressed-${{ steps.tag.outputs.tag }}.tar.gz
+          peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
 
