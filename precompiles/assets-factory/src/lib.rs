@@ -75,6 +75,7 @@ where
 		_handle: &mut impl PrecompileHandle,
 		id: u64,
 	) -> EvmResult<Address> {
+		_handle.record_db_read::<Runtime>(36)?;
 		let asset_id = id
 			.try_into()
 			.map_err(|_| RevertReason::value_is_too_large("asset id type").in_field("id"))?;
