@@ -34,35 +34,30 @@ jobs:
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
+      
+      - name: Fix permissions
+        run: |
+          # Fix permission issues with the rustup directory
+          mkdir -p ~/.cargo ~/.rustup
+          chown -R $(whoami):$(whoami) ~/.cargo ~/.rustup
       
       - name: Cache build outputs
         uses: actions/cache@v3
         with:
           path: |
-            target
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      
-      - name: Run tests and clippy in parallel
+            
+      - name: Run tests
         run: |
-          # Start tests and clippy in parallel
-          cargo test --release --features on-chain-release-build &
-          TEST_PID=$!
-          
-          cargo clippy --release --features on-chain-release-build -- -Dwarnings &
-          CLIPPY_PID=$!
-          
-          # Wait for both processes to complete
-          wait $TEST_PID
-          TEST_EXIT=$?
-          
-          wait $CLIPPY_PID
-          CLIPPY_EXIT=$?
-          
-          # Exit with failure if either process failed
-          if [ $TEST_EXIT -ne 0 ] || [ $CLIPPY_EXIT -ne 0 ]; then
-            exit 1
-          fi
+          RUST_BACKTRACE=1 cargo test --release --features on-chain-release-build -v
+            
+      - name: Run clippy
+        run: |
+          cargo clippy --release --features on-chain-release-build -- -Dwarnings
