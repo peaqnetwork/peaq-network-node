@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+    - uses: actions/checkout@v3
     - name: Get PR number or target branch
       id: tag-title
       run: |
@@ -32,18 +33,30 @@ jobs:
           else
             echo "Unsupported event: ${{ github.event_name }}"
           fi
-    - name: Checkout code
-      uses: actions/checkout@v2
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
-        path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-        key: ${{ runner.os }}-cargo-fe438c63458706e034
+        path: /home/runner/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-            ${{ runner.os }}-cargo-
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache cargo git
+      uses: actions/cache@v4
+      with:
+        path: /home/runner/.cargo/git
+        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-git-
+
+    - name: Cache cargo build target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-target-
+    
     - name: Compile node
       uses: addnab/docker-run-action@v2
       with:
