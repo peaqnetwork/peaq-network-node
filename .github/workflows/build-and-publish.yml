@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Get PR number or target branch
-      id: tag
+      id: tag-title
       run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "This is a pull request."
@@ -93,7 +93,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ steps.tag.outputs.target_tag }}
+        tag_name: v${{ steps.tag-title.outputs.target_tag }}
         draft: true
         files: |
           peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
