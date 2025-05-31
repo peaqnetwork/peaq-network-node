@@ -286,7 +286,7 @@ impl<T: Config> Pallet<T> {
 		domain_seperator_msg.extend_from_slice(&keccak256!("Peaq EVM claim")); // name
 		domain_seperator_msg.extend_from_slice(&keccak256!("1")); // version
 		// TODO ensure this .into() converts into correct endian format
-		domain_seperator_msg.extend_from_slice(T::ChainId::get().into()); // chain id
+		domain_seperator_msg.extend_from_slice(&T::ChainId::get().encode()); // chain id
 		domain_seperator_msg.extend_from_slice(
 			frame_system::Pallet::<T>::block_hash(BlockNumberFor::<T>::zero()).as_ref(),
 		); // genesis block hash

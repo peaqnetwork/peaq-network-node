@@ -27,12 +27,14 @@ use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
+use pallet_evm::{AccountIdOf as EVMAccountIdOf};
 
 use crate::{log, log_icon, log_internal};
 
 type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
 type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
+type EVMNegativeImbalanceOf<C, T> = <C as Currency<EVMAccountIdOf<T>>>::NegativeImbalance;
 
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
 pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>(
@@ -244,19 +246,19 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 	}
 }
 
-pub struct OnChargeEVMTransaction<OU>(sp_std::marker::PhantomData<OU>);
-impl<T, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<OU>
+pub struct OnChargeEVMTransaction<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
+impl<T, C, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<C, OU>
 where
-	T: pallet_evm::Config + frame_system::Config,
-	T::Currency: Balanced<T::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<T::Currency, T>>,
-	U256: UniqueSaturatedInto<BalanceOf<T::Currency, T>>,
+	T: pallet_evm::Config<Currency = C>,
+	C: Currency<EVMAccountIdOf<T>>,
+    C::PositiveImbalance:
+        Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::NegativeImbalance>,
+    C::NegativeImbalance:
+        Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::PositiveImbalance>,
+    OU: OnUnbalanced<EVMNegativeImbalanceOf<C, T>>,
+    U256: UniqueSaturatedInto<<C as Currency<EVMAccountIdOf<T>>>::Balance>,
 {
-	type LiquidityInfo = Option<NegativeImbalanceOf<T::Currency, T>>;
-
-	// fn can_withdraw(who: &H160, amount: U256) -> Result<(), pallet_evm::Error<T>> {
-	// 	EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::can_withdraw(who, amount)
-	// }
+	type LiquidityInfo = Option<EVMNegativeImbalanceOf<T::Currency, T>>;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::withdraw_fee(who, fee)
@@ -267,10 +269,8 @@ where
 		corrected_fee: U256,
 		base_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		<EVMCurrencyAdapter<<T as pallet_evm::Config>::Currency, OU> as OnChargeEVMTransactionT<
-			T,
-		>>::correct_and_deposit_fee(who, corrected_fee, base_fee, already_withdrawn)
+	) -> Self::LiquidityInfo {
+		<EVMCurrencyAdapter<C, OU> as OnChargeEVMTransactionT<T>>::correct_and_deposit_fee(who, corrected_fee, base_fee, already_withdrawn)
 	}
 
 	fn pay_priority_fee(tip: Self::LiquidityInfo) {
