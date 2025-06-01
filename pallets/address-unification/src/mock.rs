@@ -68,6 +68,12 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PostTransactions = ();
+	type SingleBlockMigrations = ();
+	type PreInherents = ();
 }
 
 impl pallet_balances::Config for Runtime {
@@ -86,6 +92,8 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+
+	type DoneSlashHandler = ();
 }
 
 impl Config for Runtime {
@@ -114,7 +122,7 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::<Runtime>::default().build_storage().unwrap();
 
-		pallet_balances::GenesisConfig::<Runtime> { balances: vec![(bob_account_id(), 100000)] }
+		pallet_balances::GenesisConfig::<Runtime> { balances: vec![(bob_account_id(), 100000)], ..Default::default() }
 			.assimilate_storage(&mut t)
 			.unwrap();
 
