@@ -27,7 +27,7 @@ jobs:
          FILE_PATH="$GITHUB_WORKSPACE/runtime/peaq/src/lib.rs"
 
           if [ ! -f "$FILE_PATH" ]; then
-            echo "Error:eeeeeeagaineeeeddeeeeee File not found at $FILE_PATH"
+            echo "Error:eeeeeeagaagainineeeeddeeeeee File not found at $FILE_PATH"
             exit 1
           fi
 
