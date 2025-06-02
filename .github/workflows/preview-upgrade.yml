@@ -75,8 +75,8 @@ jobs:
           echo "Building wasm"
           cargo build --release -p peaq-runtime --features "std aura on-chain-release-build"
 
-          echo "Building network node"
-          cargo build --release --features on-chain-release-build
+        # echo "Building network node"
+        #  cargo build --release --features on-chain-release-build
 
     - uses: tenhaus/get-release-or-tag@v2
       id: tag
