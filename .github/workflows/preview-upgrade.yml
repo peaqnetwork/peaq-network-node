@@ -81,15 +81,6 @@ jobs:
     - uses: tenhaus/get-release-or-tag@v2
       id: tag
 
-    - name: Compress peaq node
-      uses: a7ul/tar-action@v1.1.0
-      with:
-        command: c
-        cwd: ./target/release/
-        files: |
-          ./peaq-node
-        outPath: peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
-
     - name: Compress wasm runtime
       uses: a7ul/tar-action@v1.1.0
       with:
@@ -112,6 +103,5 @@ jobs:
         tag_name: v${{ steps.tag-title.outputs.target_tag }}
         draft: true
         files: |
-          peaq-node-${{ steps.tag.outputs.tag }}.tar.gz
           peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
 
