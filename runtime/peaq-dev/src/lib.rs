@@ -1809,7 +1809,7 @@ impl_runtime_apis! {
 		}
 
 		fn initialize_pending_block(header: &<Block as BlockT>::Header) {
-			Executive::initialize_block(header)
+			Executive::initialize_block(header);
 		}
 	}
 
