@@ -1,4 +1,4 @@
-# Peaq-network-node
+# Peaq-network-nodectest
 
 ## Getting Started
 
