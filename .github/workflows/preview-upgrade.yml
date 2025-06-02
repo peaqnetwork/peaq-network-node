@@ -21,6 +21,42 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Increment spec_version
+      id: version_update
+      run: |
+         FILE_PATH="peaq-network-node/runtime/peaq/src/lib.rs"
+
+          if [ ! -f "$FILE_PATH" ]; then
+            echo "Error: File not found at $FILE_PATH"
+            exit 1
+          fi
+
+          # get current spec_version.
+          current_version=$(grep -oP 'spec_version:\s*\K\d+' "$FILE_PATH")
+
+          if [ -z "$current_version" ]; then
+            echo "Could not find current spec_version from $FILE_PATH"
+            exit 1
+          fi
+          echo "Current spec_version is : $current_version"
+
+          # for testing increment current version, this will not be pushed to repo
+          new_version=$((current_version + 1))
+          echo "New spec_version is set to : $new_version"
+
+          sed_expr="s/\(spec_version:\s*\)$current_version\([,]\)/\1$new_version\2/"
+          sed -i "$sed_expr" "$FILE_PATH"
+          echo "Verify updated version"
+          updated_content=$(grep "spec_version:" "$FILE_PATH")
+          echo "New updated version got from file is $updated_content"
+
+          if ! echo "$updated_content" | grep -q "spec_version:\s*$new_version,"; then
+            echo "spec_version is not updated correctly to $new_version in the file."
+            exit 1
+          fi
+
+          echo "File $FILE_PATH updated successfully to spec_version $new_version."
+
     - name: Get PR number or target branch
       id: tag-title
       run: |
