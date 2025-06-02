@@ -26,7 +26,7 @@ use sp_runtime::{
 	Perbill,
 };
 use sp_weights::Weight;
-use xcm::latest::{prelude::*, Asset};
+use xcm::{latest::{prelude::*, Asset}, v4::NetworkId as OldNetworkId};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, ConvertedConcreteId, DescribeAllTerminal, DescribeFamily,
@@ -35,7 +35,7 @@ use xcm_builder::{
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
 	TakeWeightCredit, TrailingSetTopicAsId, UsingComponents, WithComputedOrigin,
-	XcmFeeManagerFromComponents, XcmFeeToAccount,
+	XcmFeeManagerFromComponents, SendXcmFeeToAccount,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
@@ -45,7 +45,7 @@ use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
 parameter_types! {
-	pub const RelayNetwork: NetworkId = NetworkId::Rococo;
+	pub RelayNetwork: NetworkId = OldNetworkId::Rococo.into();
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorLocation =
 		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into())].into();
@@ -293,9 +293,10 @@ impl xcm_executor::Config for XcmConfig {
 	type MaxAssetsIntoHolding = ConstU32<64>;
 	type AssetLocker = ();
 	type AssetExchanger = ();
+	// TODO Verify generics to SendXcmFeeToAccount
 	type FeeManager = XcmFeeManagerFromComponents<
 		(),
-		XcmFeeToAccount<Self::AssetTransactor, AccountId, TreasuryAccount>,
+		SendXcmFeeToAccount<Self::AssetTransactor, TreasuryAccount>,
 	>;
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
@@ -303,6 +304,12 @@ impl xcm_executor::Config for XcmConfig {
 	type Aliasers = Nothing;
 
 	type TransactionalProcessor = FrameTransactionalProcessor;
+
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type HrmpNewChannelOpenRequestHandler = ();
+	type XcmEventEmitter = ();
+	type XcmRecorder = ();
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -348,6 +355,7 @@ impl pallet_xcm::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
+	type AuthorizedAliasConsideration = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -365,6 +373,8 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
+	type MaxActiveOutboundChannels = ();
+	type MaxPageSize = ();
 }
 
 parameter_types! {
@@ -473,4 +483,5 @@ impl pallet_message_queue::Config for Runtime {
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;
+	type IdleMaxServiceWeight = ();
 }

@@ -188,7 +188,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
-	state_version: 1,
+	system_version: 1,
 };
 
 /// This determines the average expected block time that we are targeting.
@@ -351,6 +351,13 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 
 	type RuntimeTask = RuntimeTask;
+
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type SingleBlockMigrations = ();
+	type PostInherents = ();
+	type PreInherents = ();
+	type PostTransactions = ();
 }
 
 impl pallet_aura::Config for Runtime {
@@ -416,6 +423,11 @@ impl pallet_contracts::Config for Runtime {
 	type Debug = ();
 	type Environment = ();
 	type Xcm = ();
+
+	type ApiVersion = ();
+	type InstantiateOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
+	type MaxTransientStorageSize = ();
+	type UploadOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
 }
 
 parameter_types! {
@@ -455,6 +467,7 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -518,6 +531,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type WeightInfo = ();
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -569,6 +583,9 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 	type SetMembersOrigin = EnsureRoot<Self::AccountId>;
 	type MaxProposalWeight = MaxProposalWeight;
+	type DisapproveOrigin = EnsureRoot<AccountId>;
+	type Consideration = ();
+	type KillOrigin = EnsureRoot<AccountId>;
 }
 
 // Config the treasyry in pallets/treasury
@@ -590,19 +607,19 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EitherOfDiverse<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-	>;
+	// type ApproveOrigin = EitherOfDiverse<
+	// 	EnsureRoot<AccountId>,
+	// 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
+	// >;
 	type RejectOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 	>;
 	//type RuntimeEvent = RuntimeEvent;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ();
+	// type OnSlash = ();
+	// type ProposalBond = ProposalBond;
+	// type ProposalBondMinimum = ProposalBondMinimum;
+	// type ProposalBondMaximum = ();
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -618,6 +635,8 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Balances, PeaqTreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = ConstU32<{ 30 * DAYS }>;
+
+	type BlockNumberProvider = System;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
@@ -630,7 +649,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
+			let authority_id = pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
 			let encoded = authority_id.encode();
 			let bytes: [u8; 32] =
 				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
@@ -705,7 +724,11 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = crate::weights::pallet_evm::WeightInfo<Runtime>;
-	type SuicideQuickClearLimit = ConstU32<0>;
+	// type SuicideQuickClearLimit = ConstU32<0>;
+	// TODO verify this
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateInnerOriginFilter = ();
+	type CreateOriginFilter = ();
 }
 
 parameter_types! {
@@ -714,7 +737,7 @@ parameter_types! {
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<<Self as frame_system::Config>::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
 }
@@ -765,6 +788,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ConsensusHook = ConsensusHook;
 	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
 	type WeightInfo = ();
+	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
 }
 
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
@@ -803,6 +827,7 @@ impl pallet_session::Config for Runtime {
 	type SessionHandler = <opaque::SessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = opaque::SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
+	type DisablingStrategy = ();
 }
 
 pub mod staking {
@@ -1072,6 +1097,7 @@ impl pallet_scheduler::Config for Runtime {
 	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type Preimages = Preimage;
+	type BlockNumberProvider = System;
 }
 
 parameter_types! {
@@ -1119,7 +1145,7 @@ construct_runtime!(
 		// Parachain
 		InflationManager: inflation_manager::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 21,
+		Session: pallet_session::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
 		AuraExt: cumulus_pallet_aura_ext = 22,
 		ParachainStaking: parachain_staking = 23,
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
@@ -1284,7 +1310,7 @@ impl_runtime_apis! {
 			Executive::execute_block(block)
 		}
 
-		fn initialize_block(header: &<Block as BlockT>::Header) {
+		fn initialize_block(header: &<Block as BlockT>::Header) -> sp_runtime::ExtrinsicInclusionMode {
 			Executive::initialize_block(header)
 		}
 	}
@@ -1413,7 +1439,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().to_vec()
+			pallet_aura::Authorities::<Runtime>::get().to_vec()
 		}
 	}
 
@@ -1577,9 +1603,7 @@ impl_runtime_apis! {
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
-			let mut tmp = [0u8; 32];
-			index.to_big_endian(&mut tmp);
-			pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
+			pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&index.to_big_endian()))
 		}
 
 		fn call(
@@ -2137,6 +2161,7 @@ impl pallet_multisig::Config for Runtime {
 	type DepositFactor = DepositFactor;
 	type MaxSignatories = MaxSignatories;
 	type WeightInfo = ();
+	type BlockNumberProvider = System;
 }
 
 cumulus_pallet_parachain_system::register_validate_block! {
@@ -2191,6 +2216,7 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = ConstU32<1000>;
 	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
+	type Holder = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }

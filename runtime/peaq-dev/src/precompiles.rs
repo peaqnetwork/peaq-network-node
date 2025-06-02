@@ -20,31 +20,31 @@ use precompile_utils::precompile_set::*;
 
 type EthereumPrecompilesChecks = (AcceptDelegateCall, CallableByContract, CallableByPrecompile);
 
-/// ERC20 metadata for the native token.
-pub struct NativeErc20Metadata;
+// /// ERC20 metadata for the native token.
+// pub struct NativeErc20Metadata;
 
-impl Erc20Metadata for NativeErc20Metadata {
-	/// Returns the name of the token.
-	fn name() -> &'static str {
-		"Agung token"
-	}
+// impl Erc20Metadata for NativeErc20Metadata {
+// 	/// Returns the name of the token.
+// 	fn name() -> &'static str {
+// 		"Agung token"
+// 	}
 
-	/// Returns the symbol of the token.
-	fn symbol() -> &'static str {
-		"AGNG"
-	}
+// 	/// Returns the symbol of the token.
+// 	fn symbol() -> &'static str {
+// 		"AGNG"
+// 	}
 
-	/// Returns the decimals places of the token.
-	fn decimals() -> u8 {
-		18
-	}
+// 	/// Returns the decimals places of the token.
+// 	fn decimals() -> u8 {
+// 		18
+// 	}
 
-	/// Must return `true` only if it represents the main native currency of
-	/// the network. It must be the currency used in `pallet_evm`.
-	fn is_native_currency() -> bool {
-		true
-	}
-}
+// 	/// Must return `true` only if it represents the main native currency of
+// 	/// the network. It must be the currency used in `pallet_evm`.
+// 	fn is_native_currency() -> bool {
+// 		true
+// 	}
+// }
 
 const ASSET_PRECOMPILE_ADDRESS_PREFIX: &[u8] = &[255u8; 4];
 parameter_types! {
