@@ -1,8 +1,8 @@
-name: Rust
+name: Runtime Upgrade
 
 on:
   push:
-    branches: [ main ]
+    branches: [ dev ]
   pull_request:
    
   release:
