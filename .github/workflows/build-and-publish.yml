@@ -98,6 +98,11 @@ jobs:
         files: |
           ./peaq_runtime.compact.compressed.wasm
         outPath: peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
+    - name: Run runtime-upgrade script
+      working-directory: ./deploy/upgrade
+      run: |
+        npm install
+        npm run runtime-upgrade -- ../../target/release/wbuild/peaq-runtime/peaq_runtime.compact.compressed.wasm
 
     - name: Release
       uses: softprops/action-gh-release@v1
