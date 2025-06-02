@@ -165,7 +165,7 @@ async function performRuntimeUpgrade(api, sudoAccount, wasmPath) {
 
 // Entrypoint
 async function main() {
-    //const wsProvider = new WsProvider('wss://349-peaq-network-node.cisys.xyz');
+    //const wsProvider = new WsProvider('ws://localhost:8000');
     const wsUrl = process.argv[3];
     const wsProvider = new WsProvider(wsUrl);
     const api = await ApiPromise.create({ provider: wsProvider, noInitWarn: true });
