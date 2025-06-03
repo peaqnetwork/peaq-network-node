@@ -35,7 +35,7 @@ use peaq_pallet_rbac::{
 };
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use sp_runtime::traits::IdentityLookup;
+use sp_runtime::{traits::IdentityLookup, generic::Preamble};
 
 use frame_support::traits::{
 	tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
@@ -1387,13 +1387,15 @@ impl_runtime_apis! {
 				RuntimeCall::Ethereum(transact { .. }) => intermediate_valid,
 				_ if dispatch_info.class != DispatchClass::Normal => intermediate_valid,
 				_ => {
-					let tip = match xt.0.signature {
-						None => 0,
-						Some((_, _, ref signed_extra)) => {
-							// Yuck, this depends on the index of charge transaction in Signed Extra
-							let charge_transaction = &signed_extra.7;
-							charge_transaction.tip()
-						}
+					let tip = match &xt.0.preamble {
+						Preamble::Bare(_) => 0,
+						Preamble::Signed(_, _, signed_extra) => {
+							// Yuck, this depends on the index of ChargeTransactionPayment in SignedExtra
+							// Get the 7th item from the tuple
+							let charge_transaction_payment = &signed_extra.7;
+							charge_transaction_payment.tip()
+						},
+						Preamble::General(_, _) => 0,
 					};
 
 					// Calculate the fee that will be taken by pallet transaction payment
@@ -1406,7 +1408,7 @@ impl_runtime_apis! {
 					// Calculate how much gas this effectively uses according to the existing mapping
 					let effective_gas =
 						<Runtime as pallet_evm::Config>::GasWeightMapping::weight_to_gas(
-							dispatch_info.weight
+							dispatch_info.total_weight()
 						);
 
 					// Here we calculate an ethereum-style effective gas price using the
