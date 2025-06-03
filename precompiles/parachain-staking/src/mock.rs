@@ -206,8 +206,6 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const MaxCommissionChange: Permill = Permill::from_percent(10);
-	pub const CommissionChangeInterval: BlockNumber = 1;
 }
 
 impl parachain_staking::Config for Test {

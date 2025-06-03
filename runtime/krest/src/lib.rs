@@ -841,8 +841,6 @@ pub mod staking {
 			pub const MaxCollatorCandidates: u32 = 128;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
-			/// Minimum time between commission changes
-			pub const CommissionChangeInterval: BlockNumber = DAYS; // 24 hours
 	}
 }
 
