@@ -1,4 +1,3 @@
-
 name: Pull Request Check
 
 on:
@@ -8,35 +7,57 @@ on:
       - synchronize
       - closed
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  check:
-    runs-on: ubuntu-24.04
-
+  fmt:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:1.87-slim
+    
     steps:
-      - name: "[Setup] Free Disk Space (insightsengineering/disk-space-reclaimer)"
-        uses: insightsengineering/disk-space-reclaimer@v1.1.0
-
-      - name: "[Setup] Linux Tools"
-        run: sudo apt install -y cmake pkg-config libssl-dev build-essential clang libclang-dev curl protobuf-compiler
-
-      - name: "[Setup] Rust"
-        run: |
-          TLCHN=nightly-2024-01-21
-          curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain $TLCHN
-          rustup target add wasm32-unknown-unknown --toolchain $TLCHN
-          cargo install cargo-expand --locked --version 1.0.71
-
-      - name: Checkout Sources (actions/checkout)
+      - name: Checkout Sources
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      
+      - name: "[Check] cargo fmt"
+        run: cargo fmt --check
 
-      - name: "[Ceck] cargo fmt"
+  test-and-clippy:
+    runs-on: ubuntu-latest
+    container:
+      image: paritytech/ci-linux:production
+    
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v3
+      
+      - name: Fix permissions
         run: |
-          cargo fmt --check
-
-      - name: "[Check] cargo test"
+          # Fix permission issues with the rustup directory
+          mkdir -p ~/.cargo ~/.rustup
+          chown -R $(whoami):$(whoami) ~/.cargo ~/.rustup
+      
+      - name: Cache build outputs
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+            
+      - name: Run tests
         run: |
-          cargo test --release --features on-chain-release-build
-
-      - name: "[Check] cargo clippy"
+          RUST_BACKTRACE=1 cargo test --release --features on-chain-release-build -v
+            
+      - name: Run clippy
         run: |
           cargo clippy --release --features on-chain-release-build -- -Dwarnings
