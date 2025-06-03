@@ -337,10 +337,6 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
-
-		/// The minimum interval between two commission changes.
-		#[pallet::constant]
-		type CommissionChangeInterval: Get<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::error]
@@ -530,6 +526,9 @@ pub mod pallet {
 		/// The commission maximum change has been changed.
 		/// \[new value\]
 		MaxCommissionChangeUpdated(Permill),
+		/// The delay between two commission changes has been changed.
+		/// \[new value\]
+		CommissionChangeIntervalUpdated(BlockNumberFor<T>),
 	}
 
 	#[pallet::hooks]
@@ -697,11 +696,17 @@ pub mod pallet {
 	#[pallet::getter(fn max_commission_change)]
 	pub type MaxCommissionChange<T> = StorageValue<_, Permill, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn min_commission_change_interval)]
+	pub type MinCommissionChangeInterval<T: Config> =
+		StorageValue<_, BlockNumberFor<T>, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
 		pub max_candidate_stake: BalanceOf<T>,
 		pub max_commission_change: Permill,
+		pub min_commission_change_interval: BlockNumberFor<T>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -710,6 +715,7 @@ pub mod pallet {
 				stakers: Default::default(),
 				max_candidate_stake: Default::default(),
 				max_commission_change: Permill::from_percent(100),
+				min_commission_change_interval: 0u32.into(),
 			}
 		}
 	}
@@ -749,6 +755,7 @@ pub mod pallet {
 			<Round<T>>::put(round);
 
 			MaxCommissionChange::<T>::put(self.max_commission_change);
+			MinCommissionChangeInterval::<T>::put(self.min_commission_change_interval);
 		}
 	}
 
@@ -2005,7 +2012,7 @@ pub mod pallet {
 			// Check the time since the last commission change
 			let last_change = LastCommissionChange::<T>::get(&collator);
 			ensure!(
-				current_block >= last_change + T::CommissionChangeInterval::get(),
+				current_block >= last_change + MinCommissionChangeInterval::<T>::get(),
 				Error::<T>::CommissionChangeTooEarly
 			);
 
@@ -2042,6 +2049,22 @@ pub mod pallet {
 			MaxCommissionChange::<T>::put(new_max_commission_change);
 
 			Self::deposit_event(Event::MaxCommissionChangeUpdated(new_max_commission_change));
+			Ok(())
+		}
+
+		#[pallet::call_index(21)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_min_commission_change_interval())]
+		pub fn set_min_commission_change_interval(
+			origin: OriginFor<T>,
+			new_min_commission_change_interval: BlockNumberFor<T>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			MinCommissionChangeInterval::<T>::put(new_min_commission_change_interval);
+
+			Self::deposit_event(Event::CommissionChangeIntervalUpdated(
+				new_min_commission_change_interval,
+			));
 			Ok(())
 		}
 	}

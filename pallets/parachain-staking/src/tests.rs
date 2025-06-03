@@ -3992,6 +3992,27 @@ fn check_snapshot_is_cleared() {
 }
 
 #[test]
+fn change_commission_change_interval() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])
+		.with_collators(vec![(1, 500)])
+		.with_delegators(vec![(2, 1, 600), (3, 1, 400)])
+		.build()
+		.execute_with(|| {
+			assert!(System::events().is_empty());
+
+			assert_ok!(Balances::force_set_balance(
+				RawOrigin::Root.into(),
+				StakePallet::account_id(),
+				1000,
+			));
+
+			assert_ok!(StakePallet::set_min_commission_change_interval(RuntimeOrigin::root(), 10));
+			assert_eq!(StakePallet::min_commission_change_interval(), 10);
+		});
+}
+
+#[test]
 fn change_commission_too_frequently() {
 	ExtBuilder::default()
 		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000)])

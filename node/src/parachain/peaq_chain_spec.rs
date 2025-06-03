@@ -123,6 +123,7 @@ fn configure_genesis(
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
 			max_commission_change: Permill::from_percent(100),
+			min_commission_change_interval: 0,
 		},
 		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {

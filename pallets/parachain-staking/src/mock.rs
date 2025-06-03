@@ -154,7 +154,6 @@ parameter_types! {
 	pub const MinDelegatorStake: Balance = 5;
 	pub const MinDelegation: Balance = 3;
 	pub const MaxUnstakeRequests: u32 = 6;
-	pub const CommissionChangeInterval: BlockNumber = 1;
 
 }
 
@@ -179,7 +178,6 @@ impl Config for Test {
 	type MaxUnstakeRequests = MaxUnstakeRequests;
 	type PotId = PotId;
 	type WeightInfo = crate::weights::WeightInfo<Test>;
-	type CommissionChangeInterval = CommissionChangeInterval;
 }
 
 impl_opaque_keys! {
@@ -285,6 +283,7 @@ impl ExtBuilder {
 			stakers,
 			max_candidate_stake: 160_000_000 * DECIMALS,
 			max_commission_change: Permill::from_percent(10),
+			min_commission_change_interval: 1,
 		}
 		.assimilate_storage(&mut t)
 		.expect("Parachain Staking's storage can be assimilated");

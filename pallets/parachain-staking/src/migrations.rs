@@ -3,13 +3,14 @@
 use crate::{
 	pallet::{Config, Pallet, OLD_STAKING_ID, STAKING_ID},
 	types::{Candidate, OldCandidate},
-	CandidatePool, ForceNewRound, Round,
+	CandidatePool, ForceNewRound, MaxCommissionChange, MinCommissionChangeInterval, Round,
 };
 use frame_support::{
 	pallet_prelude::{GetStorageVersion, StorageVersion},
 	traits::{Get, LockableCurrency, WithdrawReasons},
 	weights::Weight,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 use pallet_balances::Locks;
 use sp_runtime::Permill;
 
@@ -30,8 +31,6 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 }
 
 mod upgrade {
-
-	use crate::MaxCommissionChange;
 
 	use super::*;
 
@@ -109,6 +108,7 @@ mod upgrade {
 			if onchain_storage_version < StorageVersion::new(Versions::V12 as u16) {
 				// Set the value of MaxCommissionChange to 10%
 				MaxCommissionChange::<T>::put(Permill::from_percent(10));
+				MinCommissionChangeInterval::<T>::put(BlockNumberFor::<T>::from(0u32));
 			}
 			// update onchain storage version
 			StorageVersion::new(Versions::default() as u16).put::<Pallet<T>>();
