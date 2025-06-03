@@ -1,7 +1,7 @@
 use crate::AccountId;
 use frame_support::ensure;
 use pallet_assets::AssetsCallback;
-use sp_core::{H160, U256};
+use sp_core::H160;
 use sp_std::marker::PhantomData;
 
 /// Evm Address.

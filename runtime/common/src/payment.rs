@@ -4,7 +4,7 @@ use frame_support::{
 		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
 	},
 	traits::{
-		fungible::Balanced, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
+		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
 		WithdrawReasons,
 	},
 	Parameter,
@@ -136,14 +136,14 @@ where
 	}
 
 	fn can_withdraw_fee(
-			who: &<T>::AccountId,
-			call: &<T>::RuntimeCall,
-			dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
-			fee: Self::Balance,
-			tip: Self::Balance,
+			_who: &<T>::AccountId,
+			_call: &<T>::RuntimeCall,
+			_dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
+			_fee: Self::Balance,
+			_tip: Self::Balance,
 		) -> Result<(), TransactionValidityError> {
 			// TODO what to do with this?
-		Ok(())
+			todo!()
 	}
 }
 

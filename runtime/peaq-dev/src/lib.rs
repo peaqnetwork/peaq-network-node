@@ -46,7 +46,7 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
@@ -57,7 +57,7 @@ use sp_runtime::{
 	},
 	ApplyExtrinsicResult, Perbill, Percent, Permill,
 };
-use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec};
+use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec, borrow::Cow};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -176,8 +176,8 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/origins#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("peaq-node-dev"),
-	impl_name: create_runtime_str!("peaq-node-dev"),
+	spec_name: Cow::Borrowed("peaq-node-dev"),
+	impl_name: Cow::Borrowed("peaq-node-dev"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
