@@ -1,0 +1,22 @@
+{
+  "name": "chopsticks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vesting-transfer": "node vesting-transfer.js",
+    "runtime-upgrade": "node runtime-upgrade.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@acala-network/chopsticks": "^0.6.1",
+    "@peaq-network/types": "^0.9.2",
+    "@polkadot/api": "^12.4.2",
+    "@polkadot/keyring": "^13.5.1",
+    "@polkadot/util": "^13.5.1",
+    "@polkadot/util-crypto": "^13.5.1"
+  }
+}
