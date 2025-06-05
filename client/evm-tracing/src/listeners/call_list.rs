@@ -28,8 +28,8 @@ use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 /// Enum of the different "modes" of tracer for multiple runtime versions and
 /// the kind of EVM events that are emitted.
 enum TracingVersion {
-	/// The first event of the transaction is `EvmEvent::TransactX`. It goes along with other events
-	/// such as `EvmEvent::Exit`. All contexts should have clear start/end boundaries.
+	/// The first event of the transaction is `EvmEvent::TransactX`. It goes along with other
+	/// events such as `EvmEvent::Exit`. All contexts should have clear start/end boundaries.
 	EarlyTransact,
 	/// Older version in which the events above didn't existed.
 	/// It means that we cannot rely on those events to perform any task, and must rely only
