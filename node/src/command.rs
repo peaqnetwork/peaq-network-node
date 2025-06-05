@@ -320,7 +320,9 @@ pub fn run() -> sc_cli::Result<()> {
 				match cmd {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
-							runner.sync_run(|config| cmd.run::<Block>(config))
+							runner.sync_run(|config| {
+								cmd.run::<Block, parachain::ExtHostFunctions>(config)
+							})
 						})
 					},
 					BenchmarkCmd::Block(cmd) => {

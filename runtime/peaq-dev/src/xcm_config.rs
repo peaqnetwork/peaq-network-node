@@ -8,13 +8,16 @@ use crate::{PeaqAssetLocationIdConverter, Treasury};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
-	traits::{fungibles, Contains, ContainsPair, Everything, Nothing, TransformOrigin},
+	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
-use orml_xcm_support::DisabledParachainFee;
+use orml_xcm_support::{DisabledParachainFee, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
-use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
+use parachains_common::{
+	message_queue::{NarrowOriginToSibling, ParaIdToSibling},
+	xcm_config::ParentRelayOrSiblingParachains,
+};
 use polkadot_parachain::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use runtime_common::{AccountIdToLocation, FixedRateOfForeignAsset};
@@ -25,33 +28,14 @@ use sp_runtime::{
 use sp_weights::Weight;
 use xcm::latest::{prelude::*, Asset};
 use xcm_builder::{
-	AccountId32Aliases,
-	AllowKnownQueryResponses,
-	AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom,
-	AllowUnpaidExecutionFrom,
-	ConvertedConcreteId,
-	// AllowUnpaidExecutionFrom,
-	EnsureXcmOrigin,
-	FixedWeightBounds,
-	FrameTransactionalProcessor,
-	FungibleAdapter,
-	FungiblesAdapter,
-	IsConcrete,
-	NoChecking,
-	ParentAsSuperuser,
-	ParentIsPreset,
-	RelayChainAsNative,
-	SiblingParachainAsNative,
-	SiblingParachainConvertsVia,
-	SignedAccountId32AsNative,
-	SignedToAccountId32,
-	SovereignSignedViaLocation,
-	TakeRevenue,
-	TakeWeightCredit,
-	UsingComponents,
-	XcmFeeManagerFromComponents,
-	XcmFeeToAccount,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, ConvertedConcreteId, DescribeAllTerminal, DescribeFamily,
+	EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter,
+	FungiblesAdapter, HashedDescription, IsConcrete, NoChecking, ParentAsSuperuser, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
+	TakeWeightCredit, TrailingSetTopicAsId, UsingComponents, WithComputedOrigin,
+	XcmFeeManagerFromComponents, XcmFeeToAccount,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
@@ -80,6 +64,8 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
+	// Generate remote accounts according to polkadot standards
+	HashedDescription<AccountId, DescribeFamily<DescribeAllTerminal>>,
 );
 
 /// XCM from myself to myself
@@ -177,14 +163,64 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
 	// transaction from the Root origin.
 	ParentAsSuperuser<RuntimeOrigin>,
-	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<RuntimeOrigin>,
 );
+
+/// A call filter for the XCM Transact instruction. This is a temporary measure until we properly
+/// account for proof size weights.
+pub struct SafeCallFilter;
+impl SafeCallFilter {
+	// 1. RuntimeCall::EVM(..) & RuntimeCall::Ethereum(..) have to be prohibited since we cannot
+	//    measure PoV size properly
+	// 2. RuntimeCall::Contracts(..) can be allowed, but it hasn't been tested properly yet.
+
+	/// Checks whether the base (non-composite) call is allowed to be executed via `Transact` XCM
+	/// instruction.
+	pub fn allow_base_call(call: &RuntimeCall) -> bool {
+		matches!(
+			call,
+			RuntimeCall::System(..) |
+				RuntimeCall::Balances(..) |
+				RuntimeCall::Vesting(..) |
+				RuntimeCall::Assets(..) |
+				RuntimeCall::PolkadotXcm(..) |
+				RuntimeCall::Session(..) |
+				RuntimeCall::Multisig(
+					pallet_multisig::Call::approve_as_multi { .. } |
+						pallet_multisig::Call::cancel_as_multi { .. },
+				)
+		)
+	}
+	/// Checks whether composite call is allowed to be executed via `Transact` XCM instruction.
+	///
+	/// Each composite call's subcalls are checked against base call filter. No nesting of composite
+	/// calls is allowed.
+	pub fn allow_composite_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) =>
+				calls.iter().all(Self::allow_base_call),
+			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) =>
+				calls.iter().all(Self::allow_base_call),
+			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) =>
+				Self::allow_base_call(call),
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) =>
+				Self::allow_base_call(call),
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi { call, .. }) =>
+				Self::allow_base_call(call),
+			_ => false,
+		}
+	}
+}
+
+impl Contains<RuntimeCall> for SafeCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		Self::allow_base_call(call) || Self::allow_composite_call(call)
+	}
+}
 
 parameter_types! {
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
@@ -212,42 +248,23 @@ pub type Trader = (
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
-pub type Barrier = (
+pub type Barrier = TrailingSetTopicAsId<(
 	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	// Parent and its plurality get free execution
-	AllowUnpaidExecutionFrom<ParentOrParentsPlurality>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,
-	// Subscriptions for version tracking are OK.
-	AllowSubscriptionsFrom<Everything>,
-);
-
-/// Used to determine whether the cross-chain asset is coming from a trusted reserve or not
-///
-/// Basically, we trust any cross-chain asset from any location to act as a reserve since
-/// in order to support the xc-asset, we need to first register it in the `XcAssetConfig` pallet.
-pub struct ReserveAssetFilter;
-impl ContainsPair<Asset, Location> for ReserveAssetFilter {
-	fn contains(asset: &Asset, origin: &Location) -> bool {
-		// We assume that relay chain and sibling parachain assets are trusted reserves for their
-		// assets
-		let AssetId(location) = &asset.id;
-		let reserve_location = match (location.parents, location.first_interior()) {
-			// sibling parachain
-			(1, Some(Parachain(id))) => Some(Location::new(1, [Parachain(*id)])),
-			// relay chain
-			(1, _) => Some(Location::parent()),
-			_ => None,
-		};
-
-		if let Some(ref reserve) = reserve_location {
-			origin == reserve
-		} else {
-			false
-		}
-	}
-}
+	// Allow XCMs with some computed origins to pass through.
+	WithComputedOrigin<
+		(
+			// If the message is one that immediately attempts to pay for execution, then
+			// allow it.
+			AllowTopLevelPaidExecutionFrom<Everything>,
+			// Subscriptions for version tracking are OK.
+			AllowSubscriptionsFrom<ParentRelayOrSiblingParachains>,
+		),
+		UniversalLocation,
+		ConstU32<8>,
+	>,
+)>;
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
@@ -259,7 +276,7 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = XcmRouter;
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = ReserveAssetFilter;
+	type IsReserve = MultiNativeAsset<AbsoluteAndRelativeReserveProvider<PeaqLocationAbsolute>>;
 	// type IsReserve = Everything;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
@@ -282,7 +299,7 @@ impl xcm_executor::Config for XcmConfig {
 	>;
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
-	type SafeCallFilter = Everything;
+	type SafeCallFilter = SafeCallFilter;
 	type Aliasers = Nothing;
 
 	type TransactionalProcessor = FrameTransactionalProcessor;
@@ -327,8 +344,6 @@ impl pallet_xcm::Config for Runtime {
 	type SovereignAccountOf = LocationToAccountId;
 	type MaxLockers = ConstU32<8>;
 	type WeightInfo = crate::weights::pallet_xcm::WeightInfo<Runtime>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type ReachableDest = ReachableDestBench;
 
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;

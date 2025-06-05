@@ -12,7 +12,7 @@ jobs:
   push_to_registry:
 
     name: Build and Push Peaq Docker Image to Docker Hub
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: "Free Disk Space (insightsengineering/disk-space-reclaimer)"
         uses: insightsengineering/disk-space-reclaimer@v1.1.0
@@ -46,7 +46,7 @@ jobs:
 
   deploy:
     name: Deploy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: push_to_registry
     steps:
       - name: Extract metadata (tags, labels) for Docker
@@ -82,7 +82,7 @@ jobs:
             sudo peaqnode_latest=${{ steps.image-version.outputs.tag }} docker compose up -d --build --remove-orphans
   test:
     name: Run Autotest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: deploy
     steps:
       - name: Wait for Block Generation

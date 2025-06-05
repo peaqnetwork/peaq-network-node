@@ -25,7 +25,7 @@ precompile-utils = { path = "../../precompiles/utils", default-features = false 
 pallet-evm = { workspace = true, default-features = false }
 
 [dev-dependencies]
-pallet-balances = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, default-features = false, features = ["insecure_zero_ed"] }
 
 
 [features]

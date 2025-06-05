@@ -3,16 +3,21 @@ use frame_support::{
 	pallet_prelude::{
 		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
 	},
-	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
+	traits::{
+		fungible::Balanced, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
+		WithdrawReasons,
+	},
 	Parameter,
 };
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
+use pallet_evm::{EVMCurrencyAdapter, OnChargeEVMTransaction as OnChargeEVMTransactionT};
 use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
+use sp_core::{H160, U256};
 use sp_runtime::{
 	traits::{
 		Convert, DispatchInfoOf, MaybeDisplay, Member, PostDispatchInfoOf, SaturatedConversion,
-		Saturating, Zero,
+		Saturating, UniqueSaturatedInto, Zero,
 	},
 	Perbill,
 };
@@ -224,6 +229,42 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 				}
 			}
 			Err(InvalidTransaction::Payment.into())
+		}
+	}
+}
+
+pub struct OnChargeEVMTransaction<OU>(sp_std::marker::PhantomData<OU>);
+impl<T, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<OU>
+where
+	T: pallet_evm::Config + frame_system::Config,
+	T::Currency: Balanced<T::AccountId>,
+	OU: OnUnbalanced<NegativeImbalanceOf<T::Currency, T>>,
+	U256: UniqueSaturatedInto<BalanceOf<T::Currency, T>>,
+{
+	type LiquidityInfo = Option<NegativeImbalanceOf<T::Currency, T>>;
+
+	fn can_withdraw(who: &H160, amount: U256) -> Result<(), pallet_evm::Error<T>> {
+		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::can_withdraw(who, amount)
+	}
+
+	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
+		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::withdraw_fee(who, fee)
+	}
+
+	fn correct_and_deposit_fee(
+		who: &H160,
+		corrected_fee: U256,
+		base_fee: U256,
+		already_withdrawn: Self::LiquidityInfo,
+	) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
+		<EVMCurrencyAdapter<<T as pallet_evm::Config>::Currency, OU> as OnChargeEVMTransactionT<
+			T,
+		>>::correct_and_deposit_fee(who, corrected_fee, base_fee, already_withdrawn)
+	}
+
+	fn pay_priority_fee(tip: Self::LiquidityInfo) {
+		if let Some(tip) = tip {
+			OU::on_unbalanced(tip);
 		}
 	}
 }

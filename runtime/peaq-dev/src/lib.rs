@@ -13,8 +13,9 @@ use frame_system::{
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
 
-use address_unification::CallKillEVMLinkAccount;
+use address_unification::{CallKillEVMLinkAccount, EVMAddressMapping};
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
+use sp_core::crypto::AccountId32;
 
 use cumulus_primitives_core::AggregateMessageOrigin;
 use pallet_ethereum::{Call::transact, PostLogContent, Transaction as EthereumTransaction};
@@ -36,7 +37,10 @@ use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use sp_runtime::traits::IdentityLookup;
 
-use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
+use frame_support::traits::{
+	tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
+	EqualPrivilegeOnly, LinearStoragePrice,
+};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -116,10 +120,10 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	LocalAssetAdaptor, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate,
-	PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert,
-	PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS,
-	MILLICENTS,
+	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
+	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
+	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
 };
 
 /// An index to a block.
@@ -180,7 +184,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 101,
+	spec_version: 104,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -253,6 +257,7 @@ parameter_types! {
 	pub RuntimeBlockLength: BlockLength =
 		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+		// Explicit setup the block weights for the runtime.
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
 			weights.base_extrinsic = ExtrinsicBaseWeight::get();
@@ -430,7 +435,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
+	pub const ExistentialDeposit: u128 = 0;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
 	pub const DIDReserveIdentifier: [u8; 8] = [b'p', b'e', b'a', b'q', b'_', b'd', b'i', b'd'];
@@ -630,7 +635,18 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	{
 		if let Some(author_index) = F::find_author(digests) {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.encode()[4..24]));
+			let encoded = authority_id.encode();
+			let bytes: [u8; 32] =
+				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
+			let sub_addr = AccountId32::from(bytes);
+
+			let evm_addr = AddressUnification::get_evm_address_or_default(&sub_addr);
+			if AddressUnification::is_linked(&sub_addr, &evm_addr) {
+				return Some(evm_addr);
+			} else {
+				// Return withdrawable addr
+				return Some(H160::from_slice(&sub_addr.encode()[0..20]));
+			}
 		}
 		None
 	}
@@ -645,18 +661,6 @@ pub const GAS_PER_SECOND: u64 = 40_000_000;
 /// Approximate ratio of the amount of Weight per Gas.
 /// u64 works for approximations because Weight is a very small unit compared to gas.
 pub const WEIGHT_PER_GAS: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(GAS_PER_SECOND);
-
-pub struct PeaqGasWeightMapping;
-impl pallet_evm::GasWeightMapping for PeaqGasWeightMapping {
-	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		let weight = gas.saturating_mul(WEIGHT_PER_GAS);
-		Weight::from_parts(weight, 0)
-	}
-
-	fn weight_to_gas(weight: Weight) -> u64 {
-		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)
-	}
-}
 
 parameter_types! {
 	pub const EvmChainId: u64 = 9990;
@@ -686,7 +690,7 @@ parameter_types! {
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = BaseFee;
 	type WeightPerGas = WeightPerGas;
-	type GasWeightMapping = PeaqGasWeightMapping;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
@@ -698,13 +702,13 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type ChainId = EvmChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, BlockReward>;
+	type OnChargeTransaction = OnChargeEVMTransaction<BlockReward>;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
-	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = crate::weights::pallet_evm::WeightInfo<Runtime>;
 	type SuicideQuickClearLimit = ConstU32<0>;
 }
 
@@ -717,14 +721,6 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
-}
-
-frame_support::parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
-}
-
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
 }
 
 frame_support::parameter_types! {
@@ -835,19 +831,19 @@ pub mod staking {
 			pub const MinRequiredCollators: u32 = 4;
 			/// We only allow one delegation per round.
 			pub const MaxDelegationsPerRound: u32 = 1;
-			/// Maximum 25 delegators per collator at launch, might be increased later
+			/// Maximum delegators per collator
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxDelegatorsPerCollator: u32 = 25;
-			/// Maximum 1 collator per delegator at launch, will be increased later
+			pub const MaxDelegatorsPerCollator: u32 = 100;
+			/// Maximum 8 collators per delegator at launch, will be increased later
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorsPerDelegator: u32 = 1;
+			pub const MaxCollatorsPerDelegator: u32 = 8;
 			/// Minimum stake required to be reserved to be a collator is 32000
 			pub const MinCollatorStake: Balance = 32_000;
 			/// Minimum stake required to be reserved to be a delegator is 20000
 			pub const MinDelegatorStake: Balance = 20_000;
 			/// Maximum number of collator candidates
 			#[derive(Debug, PartialEq, Eq)]
-			pub const MaxCollatorCandidates: u32 = 16;
+			pub const MaxCollatorCandidates: u32 = 64;
 			/// Maximum number of concurrent requests to unlock unstaked balance
 			pub const MaxUnstakeRequests: u32 = 10;
 	}
@@ -1067,6 +1063,43 @@ impl inflation_manager::Config for Runtime {
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = NORMAL_DISPATCH_RATIO * RuntimeBlockWeights::get().max_block;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = ConstU32<50>;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
+	pub const PreimageBaseDeposit: Balance = DOLLARS / 10;
+	pub const PreimageByteDeposit: Balance = DOLLARS;
+	pub const PreimageHoldReason: RuntimeHoldReason =
+		RuntimeHoldReason::Preimage(pallet_preimage::HoldReason::Preimage);
+}
+
+impl pallet_preimage::Config for Runtime {
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type Consideration = HoldConsideration<
+		AccountId,
+		Balances,
+		PreimageHoldReason,
+		LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
+	>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime
@@ -1086,7 +1119,7 @@ construct_runtime!(
 		// EVM
 		Ethereum: pallet_ethereum = 11,
 		EVM: pallet_evm = 12,
-		DynamicFee: pallet_dynamic_fee = 13,
+		// DynamicFee: pallet_dynamic_fee = 13,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 14,
 
 		// Parachain
@@ -1099,6 +1132,10 @@ construct_runtime!(
 		ParachainInfo: parachain_info = 25,
 		BlockReward: pallet_block_reward::{Pallet, Call, Storage, Config<T>, Event<T>} = 26,
 		// Remove StakingCoefficientRewardCalculator: 27
+
+		// Governance stuff
+		Scheduler: pallet_scheduler::{Pallet, Storage, Event<T>, Call} = 27,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>, HoldReason} = 28,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
@@ -1134,6 +1171,7 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 type EventRecord = frame_system::EventRecord<
 	<Runtime as frame_system::Config>::RuntimeEvent,
@@ -1176,7 +1214,8 @@ mod benches {
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
 		[peaq_pallet_mor, PeaqMor]
-		[pallet_xcm, PolkadotXcm]
+		[pallet_evm, EVM]
+		// [pallet_xcm, PalletXcmExtrinsicsBenchmark::<Runtime>]
 		[pallet_assets, Assets]
 		[xc_asset_config, XcAssetConfig]
 		[address_unification, AddressUnification]
@@ -2034,7 +2073,8 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
+			use frame_support::traits::TrackedStorageKey;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 
@@ -2056,7 +2096,7 @@ impl_runtime_apis! {
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
-
+			log::info!("try-runtime::on_runtime_upgrade polkadot.");
 			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
@@ -2129,8 +2169,8 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = ExistentialDeposit::get();
-	pub const AssetExistentialDeposit: Balance = ExistentialDeposit::get();
+	pub const AssetDeposit: Balance = 20 * CENTS;
+	pub const AssetApprovalDeposit: Balance = 20 * MILLICENTS;
 	pub const AssetsStringLimit: u32 = 50;
 	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
 	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
@@ -2150,7 +2190,7 @@ impl pallet_assets::Config for Runtime {
 	type MetadataDepositBase = MetadataDepositBase;
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type AssetAccountDeposit = AssetAccountDeposit;
-	type ApprovalDeposit = AssetExistentialDeposit;
+	type ApprovalDeposit = AssetApprovalDeposit;
 	type StringLimit = AssetsStringLimit;
 	type Freezer = ();
 	type Extra = ();

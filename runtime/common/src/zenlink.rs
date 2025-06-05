@@ -1,7 +1,7 @@
 use frame_support::traits::{fungibles, Get};
 use frame_system::Config as SysConfig;
 use pallet_assets::Config as AssetsConfig;
-use sp_runtime::traits::Convert;
+use sp_runtime::traits::{Convert, Zero};
 use sp_std::marker::PhantomData;
 use zenlink_protocol::GenerateLpAssetId;
 
@@ -43,16 +43,15 @@ where
 		let asset_id0: PeaqAssetId = (*asset0).try_into().ok()?;
 		let asset_id1: PeaqAssetId = (*asset1).try_into().ok()?;
 
+		let min = if ExistentialDeposit::get().is_zero() {
+			ExistentialDeposit::get() + 1u32.into()
+		} else {
+			ExistentialDeposit::get()
+		};
 		match (asset_id0, asset_id1) {
 			(PeaqAssetId::Token(symbol0), PeaqAssetId::Token(symbol1)) => {
 				let lp_currency = PeaqAssetId::LPToken(symbol0, symbol1);
-				Local::create(
-					lp_currency.try_into().ok()?,
-					AdminAccount::get(),
-					true,
-					ExistentialDeposit::get(),
-				)
-				.ok()?;
+				Local::create(lp_currency.try_into().ok()?, AdminAccount::get(), true, min).ok()?;
 				// Cannot setup the metadata for the LP asset because admin account doesn't have
 				// enough balance.
 				Some(())

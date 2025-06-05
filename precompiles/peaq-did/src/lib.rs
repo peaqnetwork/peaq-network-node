@@ -43,7 +43,7 @@ pub(crate) const SELECTOR_LOG_UPDATE_ATTRIBUTE: [u8; 32] =
 	keccak256!("UpdateAttribute(address,address,bytes,bytes,uint32)");
 
 pub(crate) const SELECTOR_LOG_REMOVE_ATTRIBUTE: [u8; 32] =
-	keccak256!("RemoveAttribte(address,bytes)");
+	keccak256!("RemoveAttribute(address,bytes)");
 
 pub struct PeaqDIDPrecompile<Runtime>(PhantomData<Runtime>);
 

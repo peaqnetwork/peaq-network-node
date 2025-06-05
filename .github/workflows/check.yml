@@ -15,7 +15,7 @@ on:
 jobs:
   check:
     # The type of runner that the job will run on
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -36,7 +36,7 @@ jobs:
 
       - name: Check Build
         run: |
-          SKIP_WASM_BUILD=1 cargo check --release
+          SKIP_WASM_BUILD=1 cargo check --release --features on-chain-release-build
 
       - name: Check Build for Benchmarking
         run: >

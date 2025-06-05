@@ -24,12 +24,13 @@ rlp = { workspace = true, default-features = false, optional = true  }
 sha3 = { workspace = true, default-features = false, optional = true  }
 frame-benchmarking = { workspace = true, default-features = false, optional = true  }
 frame-executive = { workspace = true, default-features = false }
+frame-metadata-hash-extension = { workspace = true }
 frame-system = { workspace = true, default-features = false }
 frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
 frame-system-rpc-runtime-api = { workspace = true, default-features = false }
 hex-literal = { workspace = true, default-features = false, optional = true  }
 pallet-aura = { workspace = true, default-features = false }
-pallet-balances = { workspace = true, default-features = false }
+pallet-balances = { workspace = true, default-features = false, features = ["insecure_zero_ed"] }
 pallet-insecure-randomness-collective-flip = { workspace = true, default-features = false }
 pallet-sudo = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
@@ -65,7 +66,6 @@ fp-evm = { workspace = true, default-features = false }
 fp-rpc = { workspace = true, default-features = false }
 fp-self-contained = { workspace = true, default-features = false }
 pallet-base-fee = { workspace = true, default-features = false }
-pallet-dynamic-fee = { workspace = true, default-features = false }
 pallet-ethereum = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
 pallet-evm = { workspace = true, default-features = false, features = ["forbid-evm-reentrancy"] }
 pallet-evm-precompile-blake2 = { workspace = true, default-features = false }
@@ -123,6 +123,8 @@ pallet-evm-precompile-parachain-staking = { path = "../../precompiles/parachain-
 pallet-evm-precompile-vesting = { path = "../../precompiles/vesting", default-features = false }
 pallet-evm-precompile-balances-erc20 = { path = "../../precompiles/balances-erc20", default-features = false}
 runtime-common = { path = "../common", default-features = false }
+pallet-scheduler = { workspace = true, default-features = false }
+pallet-preimage = { workspace = true, default-features = false }
 
 xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 address-unification = { path = "../../pallets/address-unification", default-features = false }
@@ -178,12 +180,15 @@ runtime-benchmarks = [
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks"
 ]
 
 std = [
 	"parity-scale-codec/std",
 	"scale-info/std",
 	"frame-executive/std",
+	"frame-metadata-hash-extension/std",
 	"frame-support/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
@@ -221,13 +226,14 @@ std = [
 	"pallet-treasury/std",
 	"pallet-collective/std",
 	"pallet-vesting/std",
+	"pallet-scheduler/std",
+	"pallet-preimage/std",
 
 	# ETH support
 	"sp-io/std",
 	"fp-evm/std",
 	"fp-self-contained/std",
 	"pallet-base-fee/std",
-	"pallet-dynamic-fee/std",
 	"pallet-ethereum/std",
 	"pallet-evm/std",
 	"pallet-evm-precompile-simple/std",
@@ -328,7 +334,6 @@ try-runtime = [
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-evm/try-runtime",
-	"pallet-dynamic-fee/try-runtime",
 	"pallet-base-fee/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-contracts/try-runtime",
@@ -343,6 +348,8 @@ try-runtime = [
 	"pallet-vesting/try-runtime",
 	"pallet-multisig/try-runtime",
 	"pallet-assets/try-runtime",
+	"pallet-scheduler/try-runtime",
+	"pallet-preimage/try-runtime",
 
 	"orml-currencies/try-runtime",
 	"orml-xtokens/try-runtime",
@@ -360,3 +367,10 @@ try-runtime = [
 
 	"zenlink-protocol/try-runtime",
 ]
+
+# Enable metadata hash generation at compile time for the `CheckMetadataHash` extension.
+metadata-hash = ["substrate-wasm-builder/metadata-hash"]
+
+# A feature that should be enabled when the runtime should be built for on-chain
+# deployment. This will disable stuff that shouldn't be part of the on-chain wasm
+on-chain-release-build = ["metadata-hash"]

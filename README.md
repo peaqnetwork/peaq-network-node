@@ -148,9 +148,15 @@ Please use following command to run peaq-network-node parachian in the docker co
 #### PEAQ-Dev env
 
  ```bash
-docker run -v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v0.0.101 \
+ # First we are getting the specs files
+ wget https://github.com/peaqnetwork/async-agung-chain-specs/releases/download/async-agung-chain-specs-01-2025/async-agung-parachain-specs.json
+ wget https://github.com/peaqnetwork/async-agung-chain-specs/releases/download/async-agung-chain-specs-01-2025/async-agung-relaychain-specs.json
+
+docker run -v $(pwd)/async-agung-parachain-specs.json:/async-agung-parachain-specs.json \
+-v $(pwd)/async-agung-relaychain-specs.json:/async-agung-relaychain-specs.json \
+-v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v0.0.103 \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-raw.json \
+--chain ./async-agung-parachain-specs.json \
 --base-path chain-data \
 --port 30333 \
 --rpc-port 9944 \
@@ -158,7 +164,7 @@ docker run -v peaq-dev-storage/chain-data -p 9944:9944 peaq/parachain:peaq-dev-v
 --execution wasm \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-raw.json \
+--chain ./async-agung-relaychain-specs.json \
 --port 30343 \
 --rpc-port 9977
  ```
@@ -185,7 +191,7 @@ docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain
 #### Peaq env
 
  ```bash
-docker run -v peaq-storage:/chain-data -p 9944:9944 peaq/parachain:peaq-v0.0.101 \
+docker run -v peaq-storage:/chain-data -p 9944:9944 peaq/parachain:peaq-v0.0.104 \
 --parachain-id 3338 \
 --chain ./node/src/chain-specs/peaq-raw.json \
 --base-path chain-data \
@@ -211,7 +217,7 @@ for peaq-network-node from the git repository
 
 #### PEAQ-Dev env
 ```bash
-git clone --branch peaq-dev-v0.0.101 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch peaq-dev-v0.0.103 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 #### Krest env
@@ -221,7 +227,7 @@ git clone --branch krest-v0.0.7 https://github.com/peaqnetwork/peaq-network-node
 
 #### Peaq env
 ```bash
-git clone --branch peaq-v0.0.101 https://github.com/peaqnetwork/peaq-network-node.git
+git clone --branch peaq-v0.0.104 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 2. CD into the peaq-network-node directory:
@@ -238,24 +244,28 @@ The folder .local is needed because that is where data such as session keys are 
 
 4. Compile the source code:
 ```bash
-./scripts/docker_run.sh cargo build --release
+./scripts/docker_run.sh cargo build --release --features on-chain-release-build
 ```
 
 5. Now run the following script to start a peaq-network-node parachain that will connect to the polkadot relay chain running in peaq development environment:
 
 ```bash
 # PEAQ-Dev env
+# First we are getting the specs files
+ wget https://github.com/peaqnetwork/async-agung-chain-specs/releases/download/async-agung-chain-specs-01-2025/async-agung-parachain-specs.json
+ wget https://github.com/peaqnetwork/async-agung-chain-specs/releases/download/async-agung-chain-specs-01-2025/async-agung-relaychain-specs.json
+
 ./scripts/docker_run.sh \
 ./target/release/peaq-node \
 --parachain-id 2000 \
---chain ./node/src/chain-specs/peaq-dev-raw.json \
+--chain ./async-agung-parachain-specs.json \
 --base-path chain-data \
 --port 30333 \
 --rpc-port 9944 \
 --execution wasm \
 -- \
 --execution wasm \
---chain ./node/src/chain-specs/rococo-local-raw.json \
+--chain ./async-agung-relaychain-specs.json \
 --port 30343 \
 --rpc-port 9977
 ```

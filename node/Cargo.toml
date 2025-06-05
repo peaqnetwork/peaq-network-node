@@ -76,7 +76,6 @@ fp-consensus = { workspace = true, default-features = true }
 fp-storage = { workspace = true, default-features = true }
 fp-rpc = { workspace = true, default-features = true }
 pallet-base-fee = { workspace = true, default-features = true }
-pallet-dynamic-fee = { workspace = true, default-features = true }
 pallet-ethereum = { workspace = true, default-features = true }
 pallet-evm = { workspace = true, default-features = true }
 tokio = { workspace = true, default-features = true, features = [ "macros", "sync" ] }
