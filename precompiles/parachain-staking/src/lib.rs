@@ -64,6 +64,7 @@ where
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]

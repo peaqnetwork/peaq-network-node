@@ -52,6 +52,8 @@ where
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
+
 {
 	#[precompile::public("vest()")]
 	fn vest(handle: &mut impl PrecompileHandle) -> EvmResult<bool> {

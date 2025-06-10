@@ -102,6 +102,12 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PreInherents = ();
+	type PostTransactions = ();
+	type SingleBlockMigrations = ();
 }
 
 parameter_types! {
@@ -123,6 +129,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = ();
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 impl pallet_aura::Config for Test {
@@ -185,7 +192,9 @@ impl pallet_evm::Config for Test {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Test>;
-	type SuicideQuickClearLimit = ();
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateInnerOriginFilter = ();
+	type CreateOriginFilter = ();
 }
 
 parameter_types! {
@@ -250,6 +259,7 @@ impl pallet_session::Config for Test {
 	type SessionHandler = <MockSessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = MockSessionKeys;
 	type WeightInfo = ();
+	type DisablingStrategy = ();
 }
 
 parameter_types! {
@@ -318,7 +328,7 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Test> { balances: self.balances.clone() }
+		pallet_balances::GenesisConfig::<Test> { balances: self.balances.clone(), ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Pallet balances storage can be assimilated");
 
@@ -347,7 +357,7 @@ impl ExtBuilder {
 
 		// NOTE: this will initialize the aura authorities
 		// through OneSessionHandler::on_genesis_session
-		pallet_session::GenesisConfig::<Test> { keys: session_keys }
+		pallet_session::GenesisConfig::<Test> { keys: session_keys, ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Session Pallet's storage can be assimilated");
 

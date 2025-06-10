@@ -80,6 +80,7 @@ where
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime>>,
 	<Runtime as orml_xtokens::Config>::CurrencyId:
 		From<<Runtime as pallet_assets::Config>::AssetId>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("transfer(address,uint256,(uint8,bytes[]),uint64)")]
 	fn transfer(

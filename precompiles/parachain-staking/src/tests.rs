@@ -138,7 +138,7 @@ fn unlock_unstaked() {
 			assert_ok!(unstaking.try_insert(3, 100));
 			let lock = BalanceLock { id: STAKING_ID, amount: 100, reasons: Reasons::All };
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
 			precompiles()
 				.prepare_test(
@@ -149,7 +149,7 @@ fn unlock_unstaked() {
 				.expect_no_logs()
 				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock.clone()]);
 
 			// join delegators and revoke again --> consume unstaking at block 3
 			roll_to(2, vec![]);
@@ -171,8 +171,8 @@ fn unlock_unstaked() {
 			));
 			unstaking.remove(&3);
 			assert_ok!(unstaking.try_insert(4, 100));
-			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_eq!(StakePallet::unstaking(&MockPeaqAccount::Bob), unstaking);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
 			precompiles()
 				.prepare_test(
@@ -183,12 +183,12 @@ fn unlock_unstaked() {
 				.expect_no_logs()
 				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock.clone()]);
 
 			// should reduce unlocking but not unlock anything
 			roll_to(3, vec![]);
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock.clone()]);
 			// shouldn't be able to unlock anything
 			precompiles()
 				.prepare_test(
@@ -199,11 +199,11 @@ fn unlock_unstaked() {
 				.expect_no_logs()
 				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock.clone()]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock.clone()]);
 
 			roll_to(4, vec![]);
 			unstaking.remove(&4);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![lock]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![lock]);
 			// shouldn't be able to unlock anything
 			precompiles()
 				.prepare_test(
@@ -214,7 +214,7 @@ fn unlock_unstaked() {
 				.expect_no_logs()
 				.execute_returns(());
 			assert_eq!(StakePallet::unstaking(MockPeaqAccount::Bob), unstaking);
-			assert_eq!(Balances::locks(MockPeaqAccount::Bob), vec![]);
+			assert_eq!(Balances::locks(&MockPeaqAccount::Bob), vec![]);
 		});
 }
 

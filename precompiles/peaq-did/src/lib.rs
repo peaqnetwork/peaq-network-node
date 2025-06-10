@@ -71,6 +71,7 @@ where
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	BlockNumberFor<Runtime>: Into<u32>,
 	sp_core::U256: From<MomentOf<Runtime>>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("readAttribute(address,bytes)")]
 	#[precompile::public("read_attribute(address,bytes)")]

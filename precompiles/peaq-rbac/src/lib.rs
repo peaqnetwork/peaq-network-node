@@ -68,6 +68,7 @@ where
 	// peaq-primitives-xcm::RbacEntityId is
 	EntityIdOf<Runtime>: From<RbacEntityId>,
 	H256: From<<Runtime as peaq_pallet_rbac::Config>::EntityId>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("fetchRole(address,bytes32)")]
 	#[precompile::public("fetch_role(address,bytes32)")]

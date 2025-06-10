@@ -82,6 +82,12 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PreInherents = ();
+	type PostTransactions = ();
+	type SingleBlockMigrations = ();
 }
 
 parameter_types! {
@@ -115,6 +121,7 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 pub type Precompiles<R> =
@@ -162,7 +169,9 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
-	type SuicideQuickClearLimit = ();
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateInnerOriginFilter = ();
+	type CreateOriginFilter = ();
 }
 
 parameter_types! {
@@ -211,7 +220,7 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances, ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Pallet balances storage can be assimilated");
 
