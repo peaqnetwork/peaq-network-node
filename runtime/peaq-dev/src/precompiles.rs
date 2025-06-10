@@ -1,6 +1,6 @@
 use crate::xcm_config::XcmConfig;
 use frame_support::parameter_types;
-// use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
+use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 // use pallet_evm_precompile_assets_factory::AssetsFactoryPrecompile;
 // use pallet_evm_precompile_balances_erc20::{Erc20BalancesPrecompile, Erc20Metadata};
 // use pallet_evm_precompile_batch::BatchPrecompile;
@@ -142,10 +142,10 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				// >,
 			),
 		>,
-		// PrecompileSetStartingWith<
-		// 	EVMAssetPrefix,
-		// 	Erc20AssetsPrecompileSet<R>,
-		// 	(CallableByContract, CallableByPrecompile),
-		// >,
+		PrecompileSetStartingWith<
+			EVMAssetPrefix,
+			Erc20AssetsPrecompileSet<R>,
+			(CallableByContract, CallableByPrecompile),
+		>,
 	),
 >;

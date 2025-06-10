@@ -15,6 +15,7 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 use pallet_evm::AddressMapping;
+use parity_scale_codec::DecodeWithMemTracking;
 use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -203,6 +204,7 @@ mock_account!(SiblingParachainAccount(u32), |v: SiblingParachainAccount| {
 	Deserialize,
 	derive_more::Display,
 	TypeInfo,
+	DecodeWithMemTracking
 )]
 pub struct MockAssetId(pub u128);
 
@@ -263,6 +265,7 @@ impl peaq_primitives_xcm::AssetIdExt for MockAssetId {
 	Deserialize,
 	derive_more::Display,
 	TypeInfo,
+	DecodeWithMemTracking
 )]
 pub enum MockPeaqAccount {
 	Alice,

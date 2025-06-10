@@ -141,6 +141,8 @@ where
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
+
 {
 	/// PrecompileSet discriminant. Allows to knows if the address maps to an asset id,
 	/// and if this is the case which one.
