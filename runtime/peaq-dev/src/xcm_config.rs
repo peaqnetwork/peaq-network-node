@@ -4,12 +4,13 @@ use super::{
 	RuntimeBlockWeights, RuntimeCall, RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee,
 	XcAssetConfig, XcmpQueue,
 };
-use crate::{PeaqAssetLocationIdConverter, Treasury};
+use crate::{PeaqAssetLocationIdConverter, Treasury, NegativeImbalance};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
-	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
+	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin, OnUnbalanced, fungible::Credit},
 };
+use frame_support::traits::Imbalance;
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
 use orml_xcm_support::{DisabledParachainFee, MultiNativeAsset};
@@ -243,8 +244,24 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 	PeaqPotAccount,
 >;
 
+// Make the wrapper for the BlockReward
+// Put here because NegativeImbalance::new is not implemented in the standard NegativeImbalance
+// trait
+pub struct BlockRewardWrapper;
+impl OnUnbalanced<Credit<AccountId, Balances>> for BlockRewardWrapper {
+	fn on_unbalanceds(mut fees_then_tips: impl Iterator<Item = Credit<AccountId, Balances>>) {
+		if let Some(fees) = fees_then_tips.next() {
+			<BlockReward as OnUnbalanced<_>>::on_unbalanced(NegativeImbalance::new(fees.peek()));
+		}
+	}
+
+	fn on_unbalanced(amount: Credit<AccountId, Balances>) {
+		Self::on_unbalanceds(Some(amount).into_iter());
+	}
+}
+
 pub type Trader = (
-	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockRewardWrapper>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
