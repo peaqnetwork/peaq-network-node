@@ -9,6 +9,7 @@ use frame_support::{
 	},
 	Parameter,
 };
+use frame_support::traits::tokens::WithdrawConsequence;
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_evm::{EVMCurrencyAdapter, OnChargeEVMTransaction as OnChargeEVMTransactionT};
@@ -135,16 +136,28 @@ where
 		Ok(())
 	}
 
-	fn can_withdraw_fee(
-			_who: &<T>::AccountId,
-			_call: &<T>::RuntimeCall,
-			_dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
-			_fee: Self::Balance,
-			_tip: Self::Balance,
-		) -> Result<(), TransactionValidityError> {
-			// TODO what to do with this?
-			todo!()
-	}
+	// [TODO] Need to check...
+    fn can_withdraw_fee(
+		who: &<T>::AccountId,
+		_call: &<T>::RuntimeCall,
+		_dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
+        fee: Self::Balance,
+        _tip: Self::Balance,
+    ) -> Result<(), TransactionValidityError> {
+        if fee.is_zero() {
+            return Ok(());
+        }
+
+		// Check if user can withdraw in any valid currency.
+		let currency_id = PCPC::ensure_can_withdraw(who, fee)?;
+		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
+		if currency_id != native_currency_id {
+			Err(InvalidTransaction::Payment.into())
+		} else {
+			Ok(())
+		}
+    }
+
 }
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
