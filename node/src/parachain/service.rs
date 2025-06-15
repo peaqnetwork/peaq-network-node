@@ -90,7 +90,7 @@ where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
 {
-	let frontier_backend = fc_db::Backend::KeyValue(fc_db::kv::Backend::<Block>::new(
+	let frontier_backend = fc_db::Backend::KeyValue(Arc::new(fc_db::kv::Backend::<Block, C>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
 			source: match config.database {
@@ -109,7 +109,7 @@ where
 					return Err("Supported db sources: `rocksdb` | `paritydb` | `auto`".to_string()),
 			},
 		},
-	)?);
+	)?));
 
 	Ok(frontier_backend)
 }
@@ -171,7 +171,7 @@ where
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 {
 	// Use ethereum style for subscription ids
-	config.rpc_id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
+	config.rpc.id_provider = Some(Box::new(fc_rpc::EthereumSubIdProvider));
 
 	let telemetry = config
 		.telemetry_endpoints
@@ -184,7 +184,8 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_wasm_executor(config);
+	// [TODO] ...
+	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -201,13 +202,14 @@ where
 		telemetry
 	});
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.role.is_authority().into(),
-		config.prometheus_registry(),
+	let transaction_pool = sc_transaction_pool::Builder::new(
 		task_manager.spawn_essential_handle(),
 		client.clone(),
-	);
+		config.role.is_authority().into(),
+	)
+	.with_options(config.transaction_pool.clone())
+	.with_prometheus(config.prometheus_registry())
+	.build();
 
 	let filter_pool: Option<FilterPool> = Some(Arc::new(std::sync::Mutex::new(BTreeMap::new())));
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
@@ -233,7 +235,7 @@ where
 		import_queue,
 		keystore_container,
 		task_manager,
-		transaction_pool,
+		transaction_pool: transaction_pool.into(),
 		select_chain: (),
 		other: (
 			parachain_block_import,
@@ -627,41 +629,34 @@ where
 {
 	let client2 = client.clone();
 
-	let aura_verifier = move || {
-		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client2).unwrap();
-
-		Box::new(cumulus_client_consensus_aura::build_verifier::<
-			sp_consensus_aura::sr25519::AuthorityPair,
-			_,
-			_,
-			_,
+	let aura_verifier = Box::new(cumulus_client_consensus_aura::build_verifier::<
+		sp_consensus_aura::sr25519::AuthorityPair,
+		_,
+		_,
+		_,
 		>(cumulus_client_consensus_aura::BuildVerifierParams {
 			client: client2.clone(),
-			create_inherent_data_providers: move |_, _| async move {
+		create_inherent_data_providers: move |parent_hash, _| {
+			let cidp_client = client2.clone();
+			async move {
 				let time = sp_timestamp::InherentDataProvider::from_system_time();
-
+				let slot_duration =
+					cumulus_client_consensus_aura::slot_duration_at(&*cidp_client, parent_hash)?;
 				let slot =
-					sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-						*time,
-						slot_duration,
-						);
-				let dynamic_fee =
-					fp_dynamic_fee::InherentDataProvider(U256::from(target_gas_price));
-
-				Ok((slot, time, dynamic_fee))
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+							*time,
+							slot_duration,
+							);
+				Ok((slot, time))
+			}
 			},
 			telemetry: telemetry_handle,
-		})) as Box<_>
-	};
+		}));
 
 	let relay_chain_verifier =
 		Box::new(RelayChainVerifier::new(client.clone(), |_, _| async { Ok(()) })) as Box<_>;
 
-	let verifier = Verifier {
-		client,
-		relay_chain_verifier,
-		aura_verifier: BuildOnAccess::Uninitialized(Some(Box::new(aura_verifier))),
-	};
+	let verifier = Verifier { client, relay_chain_verifier, aura_verifier };
 
 	let registry = config.prometheus_registry();
 	let spawner = task_manager.spawn_essential_handle();

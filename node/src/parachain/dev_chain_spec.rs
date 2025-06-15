@@ -16,7 +16,7 @@ use sp_runtime::{
 };
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
@@ -51,52 +51,39 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), "PEAQ".into());
+	properties.insert("tokenSymbol".into(), "AGUNG".into());
 	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
 
-	#[allow(deprecated)]
-	Ok(ChainSpec::from_genesis(
-		"peaq-dev",
-		"dev-testnet",
-		ChainType::Development,
-		move || {
-			configure_genesis(
-				// stakers
-				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					None,
-					2 * staking::MinCollatorStake::get(),
-				)],
-				// Initial PoA authorities
-				vec![authority_keys_from_seed("Alice")],
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-				],
-				para_id.into(),
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		// Fork ID
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
-		// code
+	Ok(ChainSpec::builder(
 		wasm_binary,
+		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
+	)
+	.with_name("peaq-dev")
+	.with_id("dev-testnet")
+	.with_chain_type(ChainType::Development)
+	.with_genesis_config(configure_genesis(
+		// stakers
+		vec![(
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			None,
+			2 * staking::MinCollatorStake::get(),
+		)],
+		// Initial PoA authorities
+		vec![authority_keys_from_seed("Alice")],
+		// Sudo account
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
+		// Pre-funded accounts
+		vec![
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+		],
+		para_id.into(),
 	))
+	.with_properties(properties)
+	.build())
 }
 
 fn session_keys(aura: AuraId) -> peaq_dev_runtime::opaque::SessionKeys {
@@ -110,25 +97,27 @@ fn configure_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	parachain_id: ParaId,
-) -> RuntimeGenesisConfig {
+) -> serde_json::Value {
 	// This is supposed the be the simplest bytecode to revert without returning any data.
 	// We will pre-deploy it under all of our precompiles to ensure they can be called from
 	// within contracts.
 	// (PUSH1 0x00 PUSH1 0x00 REVERT)
 	let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 
-	RuntimeGenesisConfig {
+	let config = RuntimeGenesisConfig {
 		system: Default::default(),
 		parachain_info: ParachainInfoConfig { parachain_id, ..Default::default() },
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 78.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 78)).collect(),
+			dev_accounts: None,
 		},
 		session: peaq_dev_runtime::SessionConfig {
 			keys: initial_authorities
 				.iter()
 				.map(|x| (x.0.clone(), x.0.clone(), session_keys(x.1.clone())))
 				.collect::<Vec<_>>(),
+			non_authority_keys: vec![],
 		},
 		parachain_staking: ParachainStakingConfig {
 			stakers,
@@ -155,7 +144,7 @@ fn configure_genesis(
 		},
 		aura_ext: Default::default(),
 		evm: EVMConfig {
-			accounts: PeaqPrecompiles::<Runtime>::used_addresses()
+			accounts: PeaqPrecompiles::<Runtime>::used_addresses_h160()
 				.map(|addr| {
 					(
 						addr,
@@ -187,5 +176,6 @@ fn configure_genesis(
 			},
 		},
 		assets: Default::default(),
-	}
+	};
+	serde_json::to_value(&config).expect("Could not build genesis config.")
 }
