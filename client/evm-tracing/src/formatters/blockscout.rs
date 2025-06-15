@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	listeners::call_list::Listener,
-	types::{
-		serialization::*,
-		single::{Call, TransactionTrace},
-		CallResult, CallType, CreateResult,
-	},
+use crate::listeners::call_list::Listener;
+use crate::types::serialization::*;
+use crate::types::{
+	single::{Call, TransactionTrace},
+	CallResult, CallType, CreateResult,
 };
 use ethereum_types::{H160, U256};
 use parity_scale_codec::{Decode, Encode};
@@ -36,8 +34,8 @@ impl super::ResponseFormatter for Formatter {
 		if let Some(entry) = listener.entries.last() {
 			return Some(TransactionTrace::CallList(
 				entry
-					.iter()
-					.map(|(_, value)| Call::Blockscout(Box::new(value.clone())))
+					.into_iter()
+					.map(|(_, value)| Call::Blockscout(value.clone()))
 					.collect(),
 			));
 		}
@@ -91,4 +89,5 @@ pub struct BlockscoutCall {
 	pub gas_used: U256,
 	#[serde(flatten)]
 	pub inner: BlockscoutCallInner,
+	pub logs: Vec<crate::types::single::Log>,
 }

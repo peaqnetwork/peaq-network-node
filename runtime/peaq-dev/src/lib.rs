@@ -1456,7 +1456,7 @@ impl_runtime_apis! {
 		#[cfg(feature = "evm-tracing")]
 		fn trace_transaction(
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			traced_transaction: &pallet_ethereum::Transaction,
+			traced_transaction: &EthereumTransaction,
 			header: &<Block as BlockT>::Header,
 		) -> Result<
 			(),
@@ -1493,7 +1493,7 @@ impl_runtime_apis! {
 		#[cfg(not(feature = "evm-tracing"))]
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			_traced_transaction: &pallet_ethereum::Transaction,
+			_traced_transaction: &EthereumTransaction,
 			_header: &<Block as BlockT>::Header,
 		) -> Result<
 			(),
@@ -1551,6 +1551,24 @@ impl_runtime_apis! {
 			(),
 			sp_runtime::DispatchError,
 		> {
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+
+		// [TODO] ....
+		fn trace_call(
+			header: &<Block as BlockT>::Header,
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
+			nonce: Option<U256>,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
+		) -> Result<(), sp_runtime::DispatchError> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
 			))

@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{listeners::raw::Listener, types::single::TransactionTrace};
+use crate::listeners::raw::Listener;
+use crate::types::single::TransactionTrace;
 
 pub struct Formatter;
 
@@ -27,7 +28,7 @@ impl super::ResponseFormatter for Formatter {
 			None
 		} else {
 			Some(TransactionTrace::Raw {
-				step_logs: listener.step_logs,
+				struct_logs: listener.struct_logs,
 				gas: listener.final_gas.into(),
 				return_value: listener.return_value,
 			})

@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -20,23 +20,27 @@
 //! the whole block tracing output.
 
 use super::serialization::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use ethereum_types::{H256, U256};
+use ethereum_types::{H160, H256, U256};
 use parity_scale_codec::{Decode, Encode};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum Call {
-	Blockscout(Box<crate::formatters::blockscout::BlockscoutCall>),
+	Blockscout(crate::formatters::blockscout::BlockscoutCall),
 	CallTracer(crate::formatters::call_tracer::CallTracerCall),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Encode, Decode)]
 pub enum TraceType {
 	/// Classic geth with no javascript based tracing.
-	Raw { disable_storage: bool, disable_memory: bool, disable_stack: bool },
+	Raw {
+		disable_storage: bool,
+		disable_memory: bool,
+		disable_stack: bool,
+	},
 	/// List of calls and subcalls formatted with an input tracer (i.e. callTracer or Blockscout).
 	CallList,
 	/// A single block trace. Use in `debug_traceTransactionByNumber` / `traceTransactionByHash`.
@@ -44,7 +48,6 @@ pub enum TraceType {
 }
 
 /// Single transaction trace.
-#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum TransactionTrace {
@@ -54,7 +57,7 @@ pub enum TransactionTrace {
 		gas: U256,
 		#[serde(with = "hex")]
 		return_value: Vec<u8>,
-		step_logs: Vec<RawStepLog>,
+		struct_logs: Vec<RawStepLog>,
 	},
 	/// Matches the formatter used by Blockscout.
 	/// Is also used to built output of OpenEthereum's `trace_filter`.
@@ -76,7 +79,10 @@ pub struct RawStepLog {
 	#[serde(serialize_with = "u256_serialize")]
 	pub gas_cost: U256,
 
-	#[serde(serialize_with = "seq_h256_serialize", skip_serializing_if = "Option::is_none")]
+	#[serde(
+		serialize_with = "seq_h256_serialize",
+		skip_serializing_if = "Option::is_none"
+	)]
 	pub memory: Option<Vec<H256>>,
 
 	#[serde(serialize_with = "opcode_serialize")]
@@ -85,9 +91,35 @@ pub struct RawStepLog {
 	#[serde(serialize_with = "u256_serialize")]
 	pub pc: U256,
 
-	#[serde(serialize_with = "seq_h256_serialize", skip_serializing_if = "Option::is_none")]
+	#[serde(
+		serialize_with = "seq_h256_serialize",
+		skip_serializing_if = "Option::is_none"
+	)]
 	pub stack: Option<Vec<H256>>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub storage: Option<BTreeMap<H256, H256>>,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TraceCallConfig {
+	pub with_log: bool,
+}
+
+impl Default for TraceCallConfig {
+	fn default() -> Self {
+		Self { with_log: false }
+	}
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, Serialize)]
+pub struct Log {
+	/// Event address.
+	pub address: H160,
+	/// Event topics
+	pub topics: Vec<H256>,
+	/// Event data
+	#[serde(serialize_with = "bytes_0x_serialize")]
+	pub data: Vec<u8>,
 }

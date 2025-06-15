@@ -3,7 +3,7 @@
 use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
+use fc_rpc::{EthBlockDataCacheTask, OverrideHandle, TxPool};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
@@ -152,7 +152,7 @@ where
 	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
-	use peaq_rpc_txpool::{TxPool, TxPoolServer};
+	// use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 

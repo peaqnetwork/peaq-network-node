@@ -9490,10 +9490,12 @@ dependencies = [
  "ethereum-types",
  "evm-tracing-events",
  "hex",
+ "log",
  "parity-scale-codec",
  "peaq-rpc-primitives-debug",
  "serde",
  "serde_json",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -9798,7 +9800,7 @@ dependencies = [
  "futures 0.3.31",
  "hex-literal 0.3.4",
  "inflation-manager",
- "jsonrpsee 0.20.4",
+ "jsonrpsee 0.24.9",
  "log",
  "orml-xtokens",
  "pallet-base-fee",
@@ -9819,7 +9821,6 @@ dependencies = [
  "peaq-rpc-primitives-debug",
  "peaq-rpc-primitives-txpool",
  "peaq-rpc-trace",
- "peaq-rpc-txpool",
  "peaq-runtime",
  "polkadot-cli",
  "polkadot-parachain-primitives",
@@ -10091,9 +10092,11 @@ dependencies = [
 name = "peaq-rpc-core-debug"
 version = "0.1.0"
 dependencies = [
+ "ethereum",
  "ethereum-types",
+ "fc-rpc-core",
  "futures 0.3.31",
- "jsonrpsee 0.20.4",
+ "jsonrpsee 0.24.9",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-types",
  "serde",
@@ -10107,21 +10110,9 @@ version = "0.6.0"
 dependencies = [
  "ethereum-types",
  "futures 0.3.31",
- "jsonrpsee 0.20.4",
+ "jsonrpsee 0.24.9",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-types",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "peaq-rpc-core-txpool"
-version = "0.6.0"
-dependencies = [
- "ethereum",
- "ethereum-types",
- "fc-rpc-core",
- "jsonrpsee 0.20.4",
  "serde",
  "serde_json",
 ]
@@ -10149,7 +10140,8 @@ dependencies = [
  "fp-rpc",
  "futures 0.3.31",
  "hex-literal 0.3.4",
- "jsonrpsee 0.20.4",
+ "jsonrpsee 0.24.9",
+ "log",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-debug",
  "peaq-rpc-core-types",
@@ -10162,6 +10154,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-trie",
  "tokio",
 ]
 
@@ -10208,7 +10201,7 @@ dependencies = [
  "fc-storage",
  "fp-rpc",
  "futures 0.3.31",
- "jsonrpsee 0.20.4",
+ "jsonrpsee 0.24.9",
  "log",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-trace",
@@ -10229,28 +10222,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "peaq-rpc-txpool"
-version = "0.6.0"
-dependencies = [
- "ethereum-types",
- "fc-rpc",
- "frame-system",
- "jsonrpsee 0.20.4",
- "peaq-rpc-core-txpool",
- "peaq-rpc-primitives-txpool",
- "rlp",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
- "serde",
- "sha3",
- "sp-api",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

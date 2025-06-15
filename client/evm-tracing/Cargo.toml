@@ -12,6 +12,7 @@ ethereum-types = { workspace = true, default-features = true }
 hex = { workspace = true, default-features = true, features = [ "serde" ] }
 serde = { workspace = true, default-features = true, features = [ "derive" ] }
 serde_json = { workspace = true, default-features = true }
+log = { workspace = true }
 
 evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events" }
 peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
@@ -19,3 +20,4 @@ peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug" }
 # Substrate
 parity-scale-codec = { workspace = true, default-features = true }
 sp-std = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = true }
