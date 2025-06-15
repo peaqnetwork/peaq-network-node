@@ -25,6 +25,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use parity_scale_codec::{Decode, DecodeLimit, MaxEncodedLen};
+use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 use precompile_utils::{precompile_set::SelectorFilter, prelude::*};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;

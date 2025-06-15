@@ -21,6 +21,7 @@ use crate::{
 	Currency, EvmAsset,
 };
 use orml_xtokens::Event as XtokensEvent;
+use peaq_precompile_utils::*;
 use precompile_utils::{prelude::*, testing::*};
 use sp_core::U256;
 use sp_runtime::traits::Convert;

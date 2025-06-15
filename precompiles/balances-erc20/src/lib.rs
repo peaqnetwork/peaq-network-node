@@ -31,6 +31,7 @@ use pallet_balances::pallet::{
 	Instance2, Instance3, Instance4, Instance5, Instance6, Instance7, Instance8, Instance9,
 };
 use pallet_evm::AddressMapping;
+use peaq_precompile_utils::SYSTEM_ACCOUNT_SIZE;
 use precompile_utils::prelude::*;
 use sp_core::{Decode, H160, H256, U256};
 use sp_std::{

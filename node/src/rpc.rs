@@ -136,7 +136,7 @@ where
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
-	P: TransactionPool<Block = Block> + 'static,
+	P: TransactionPool<Block = Block, Hash = <Block as BlockT>::Hash> + 'static,
 
 	BE::Blockchain: BlockchainBackend<Block>,
 {
@@ -159,7 +159,6 @@ where
 		client,
 		pool,
 		graph,
-		deny_unsafe,
 		is_authority,
 		network,
 		sync,
@@ -177,7 +176,7 @@ where
 		forced_parent_hashes,
 	} = deps;
 
-	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
+	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool)).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
 	enum Never {}
@@ -227,7 +226,7 @@ where
 		Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
 
 	io.merge(
-		Eth::<_, _, _, _, _, _, _, PeaqEthConfig<_, _>>::new(
+		Eth::<_, _, _, _, _, _, PeaqEthConfig<_, _>>::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
 			graph.clone(),
@@ -279,10 +278,11 @@ where
 	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
-	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
-	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
-	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
+	// [TODO]
+	// io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
+	// io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
+	// io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
+	// io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(
@@ -296,6 +296,7 @@ where
 		.into_rpc(),
 	)?;
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
+		#[cfg(feature = "txpool")]
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
 	}
 

@@ -3,12 +3,11 @@ name = "pallet-evm-precompile-xcm-utils"
 authors = [ "peaq" ]
 description = "A Precompile to make xcm utilities accessible to pallet-evm"
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
-# Peaq
-precompile-utils = { path = "../utils", default-features = false, features = [ "codec-xcm" ] }
-# xcm-primitives = { workspace = true }
+precompile-utils = { workspace = true, default-features = false, features = [ "codec-xcm" ] }
+peaq-precompile-utils = { path = "../utils", default-features = false }
 
 # Substrate
 frame-support = { workspace = true, default-features = false }
@@ -29,13 +28,13 @@ xcm = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
 
 [dev-dependencies]
-env_logger = "0.9"
+env_logger = "0.10"
 derive_more = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
 
-# Peaq
-precompile-utils = { path = "../utils", features = [ "testing" ] }
+precompile-utils = { workspace = true, features = [ "testing" ] }
+peaq-precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
 
 # # Substrate
 pallet-balances = { workspace = true, features = ["std", "insecure_zero_ed"] }
@@ -66,6 +65,7 @@ std = [
 	"parity-scale-codec/std",
 	"polkadot-parachain/std",
 	"precompile-utils/std",
+	"peaq-precompile-utils/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",

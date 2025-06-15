@@ -1595,7 +1595,7 @@ checksum = "fe6d2e5af09e8c8ad56c969f2157a3d4238cebc7c55f0a517728c38f7b200f81"
 dependencies = [
  "serde",
  "termcolor",
- "unicode-width 0.2.0",
+ "unicode-width 0.1.14",
 ]
 
 [[package]]
@@ -2899,12 +2899,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diff"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
-
-[[package]]
 name = "digest"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3228,19 +3222,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.101",
-]
-
-[[package]]
-name = "env_logger"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
-dependencies = [
- "atty",
- "humantime",
- "log",
- "regex",
- "termcolor",
 ]
 
 [[package]]
@@ -3704,7 +3685,7 @@ version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84f2e425d9790201ba4af4630191feac6dcc98765b118d4d18e91d23c2353866"
 dependencies = [
- "env_logger 0.10.2",
+ "env_logger",
  "log",
 ]
 
@@ -3753,12 +3734,6 @@ name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
-
-[[package]]
-name = "fixedbitset"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "flume"
@@ -5001,7 +4976,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -6750,23 +6725,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "macrotest"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0597a8d49ceeea5845b12d1970aa993261e68d4660b327eabab667b3e7ffd60"
-dependencies = [
- "diff",
- "fastrand 2.3.0",
- "glob",
- "prettyplease",
- "serde",
- "serde_derive",
- "serde_json",
- "syn 2.0.101",
- "toml_edit",
-]
-
-[[package]]
 name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7443,7 +7401,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af1844ef2428cc3e1cb900be36181049ef3d3193c63e43026cfe202983b27a56"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate 3.3.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -7554,7 +7512,7 @@ dependencies = [
  "expander",
  "indexmap 2.9.0",
  "itertools 0.11.0",
- "petgraph 0.6.5",
+ "petgraph",
  "proc-macro-crate 3.3.0",
  "proc-macro2",
  "quote",
@@ -8210,7 +8168,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-assets-erc20"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "derive_more 0.99.20",
  "fp-evm",
@@ -8221,6 +8179,7 @@ dependencies = [
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -8234,7 +8193,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-assets-factory"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "derive_more 0.99.20",
  "fp-evm",
@@ -8246,6 +8205,7 @@ dependencies = [
  "pallet-evm-precompile-assets-erc20",
  "pallet-timestamp",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -8259,7 +8219,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-balances-erc20"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derive_more 0.99.20",
  "fp-evm",
@@ -8272,6 +8232,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "paste",
+ "peaq-precompile-utils",
  "precompile-utils",
  "scale-info",
  "serde",
@@ -8284,7 +8245,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-batch"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derive_more 0.99.20",
  "evm",
@@ -8296,6 +8257,7 @@ dependencies = [
  "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "precompile-utils",
  "scale-info",
  "serde",
@@ -8347,7 +8309,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-parachain-staking"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "address-unification",
  "derive_more 0.99.20",
@@ -8362,6 +8324,7 @@ dependencies = [
  "pallet-timestamp",
  "parachain-staking",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -8376,7 +8339,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-peaq-did"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -8394,7 +8357,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-peaq-rbac"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -8412,7 +8375,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-peaq-storage"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -8448,7 +8411,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-vesting"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derive_more 0.99.20",
  "fp-evm",
@@ -8459,6 +8422,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vesting",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -8472,11 +8436,11 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-xcm-utils"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cumulus-primitives-core",
  "derive_more 0.99.20",
- "env_logger 0.9.3",
+ "env_logger",
  "fp-evm",
  "frame-support",
  "frame-system",
@@ -8486,6 +8450,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-xcm",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "polkadot-parachain-primitives",
  "precompile-utils",
  "scale-info",
@@ -8503,7 +8468,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-precompile-xtokens"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cumulus-primitives-core",
  "derive_more 0.99.20",
@@ -8520,6 +8485,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-xcm",
  "parity-scale-codec",
+ "peaq-precompile-utils",
  "peaq-primitives-xcm",
  "precompile-utils",
  "scale-info",
@@ -10051,6 +10017,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "peaq-precompile-utils"
+version = "0.1.2"
+dependencies = [
+ "derive_more 0.99.20",
+ "environmental",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "hex-literal 0.3.4",
+ "impl-trait-for-tuples",
+ "pallet-evm",
+ "parity-scale-codec",
+ "peaq-primitives-xcm",
+ "scale-info",
+ "serde",
+ "similar-asserts",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+ "staging-xcm",
+]
+
+[[package]]
 name = "peaq-primitives-ext"
 version = "0.1.0"
 dependencies = [
@@ -10417,17 +10409,7 @@ version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db"
 dependencies = [
- "fixedbitset 0.4.2",
- "indexmap 2.9.0",
-]
-
-[[package]]
-name = "petgraph"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3672b37090dbd86368a4145bc067582552b29c27377cad4e0a306c97f9bd7772"
-dependencies = [
- "fixedbitset 0.5.7",
+ "fixedbitset",
  "indexmap 2.9.0",
 ]
 
@@ -11742,19 +11724,22 @@ dependencies = [
 
 [[package]]
 name = "precompile-utils"
-version = "0.1.1"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2503-4#7090f6f53f233d330f37b1fd0f46886ac0d4516b"
 dependencies = [
- "derive_more 0.99.20",
+ "derive_more 1.0.0",
  "environmental",
  "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
- "hex-literal 0.3.4",
+ "hex",
+ "hex-literal 0.4.1",
  "impl-trait-for-tuples",
+ "log",
+ "num_enum 0.7.3",
  "pallet-evm",
  "parity-scale-codec",
- "peaq-primitives-xcm",
  "precompile-utils-macro",
  "scale-info",
  "serde",
@@ -11762,28 +11747,22 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
  "sp-weights",
  "staging-xcm",
 ]
 
 [[package]]
 name = "precompile-utils-macro"
-version = "0.1.1"
+version = "0.1.0"
+source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2503-4#7090f6f53f233d330f37b1fd0f46886ac0d4516b"
 dependencies = [
  "case",
- "fp-evm",
- "frame-support",
- "macrotest",
- "num_enum 0.5.11",
- "precompile-utils",
+ "num_enum 0.7.3",
+ "prettyplease",
  "proc-macro2",
  "quote",
- "sha3",
- "sp-core",
- "sp-std",
- "syn 1.0.109",
- "trybuild",
+ "sp-crypto-hashing 0.1.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-stable2503-4)",
+ "syn 2.0.101",
 ]
 
 [[package]]
@@ -12017,12 +11996,12 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.14.0",
  "log",
  "multimap",
  "once_cell",
- "petgraph 0.7.1",
+ "petgraph",
  "prettyplease",
  "prost 0.13.5",
  "prost-types",
@@ -16521,12 +16500,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 
 [[package]]
-name = "target-triple"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ac9aa371f599d22256307c24a9d748c041e548cbf599f35d890f9d365361790"
-
-[[package]]
 name = "tempfile"
 version = "3.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17041,21 +17014,6 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
-
-[[package]]
-name = "trybuild"
-version = "1.0.105"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c9bf9513a2f4aeef5fdac8677d7d349c79fdbcc03b9c86da6e9d254f1e43be2"
-dependencies = [
- "glob",
- "serde",
- "serde_derive",
- "serde_json",
- "target-triple",
- "termcolor",
- "toml 0.8.22",
-]
 
 [[package]]
 name = "tt-call"

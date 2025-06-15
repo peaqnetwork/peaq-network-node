@@ -106,11 +106,11 @@ peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug", default-featu
 peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-features = false }
 
 frame-support = { workspace = true, default-features = false }
+precompile-utils = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
-precompile-utils = { path = "../../precompiles/utils", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "../../precompiles/assets-erc20", default-features = false }
 pallet-evm-precompile-assets-factory = { path = "../../precompiles/assets-factory", default-features = false }
 pallet-evm-precompile-batch = { path = "../../precompiles/batch", default-features = false }
