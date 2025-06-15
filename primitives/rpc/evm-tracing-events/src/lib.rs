@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -107,6 +107,10 @@ pub struct Context {
 
 impl From<evm_runtime::Context> for Context {
 	fn from(i: evm_runtime::Context) -> Self {
-		Self { address: i.address, caller: i.caller, apparent_value: i.apparent_value }
+		Self {
+			address: i.address,
+			caller: i.caller,
+			apparent_value: i.apparent_value,
+		}
 	}
 }
