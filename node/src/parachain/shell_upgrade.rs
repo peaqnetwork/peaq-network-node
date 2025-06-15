@@ -92,7 +92,7 @@ where
 	Client::Api: AuraApi<Block, AuraId>,
 {
 	async fn verify(
-		&mut self,
+		&self,
 		block_import: BlockImportParams<Block>,
 	) -> Result<BlockImportParams<Block>, String> {
 		let block_hash = *block_import.header.parent_hash();

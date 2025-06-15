@@ -81,7 +81,7 @@ pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::P
 pub fn open_frontier_backend<C, BE>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<fc_db::Backend<Block>, String>
+) -> Result<fc_db::Backend<Block, C>, String>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
@@ -129,7 +129,7 @@ pub fn new_partial<RuntimeApi, BIQ>(
 		FullBackend,
 		(),
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi>>,
+		sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi>>,
 		(
 			ParachainBlockImport<
 				Block,
@@ -139,7 +139,7 @@ pub fn new_partial<RuntimeApi, BIQ>(
 			Option<FilterPool>,
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
-			Arc<fc_db::Backend<Block>>,
+			Arc<fc_db::Backend<Block, FullClient<RuntimeApi>>>,
 			FeeHistoryCache,
 		),
 	>,
@@ -258,8 +258,12 @@ async fn build_relay_chain_interface(
 	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
 		collator_options.relay_chain_mode
 	{
-		build_minimal_relay_chain_node_with_rpc(polkadot_config, task_manager, rpc_target_urls)
-			.await
+		build_minimal_relay_chain_node_with_rpc(
+			polkadot_config,
+			parachain_config.prometheus_registry(),
+			task_manager,
+			rpc_target_urls
+		).await
 	} else {
 		build_inprocess_relay_chain(
 			polkadot_config,
@@ -333,7 +337,7 @@ where
 		Option<TelemetryHandle>,
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
-		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi>>>,
+		Arc<sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi>>>,
 		Arc<SyncingService<Block>>,
 		KeystorePtr,
 		ParaId,
@@ -373,8 +377,11 @@ where
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
-	let network_config = FullNetworkConfiguration::new(&parachain_config.network);
-	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
+	let network_config = FullNetworkConfiguration::<_, _, sc_network::NetworkWorker<_, _>>::new(
+		&parachain_config.network,
+		prometheus_registry.clone()
+	);
+	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		cumulus_client_service::build_network(BuildNetworkParams {
 			parachain_config: &parachain_config,
 			net_config: network_config,
@@ -390,7 +397,7 @@ where
 
 	let fee_history_limit = rpc_config.fee_history_limit;
 
-	let overrides = fc_storage::overrides_handle(client.clone());
+	let overrides = Arc::new(fc_storage::StorageOverrideHandler::new(client.clone()));
 
 	let pubsub_notification_sinks: Arc<
 		fc_mapping_sync::EthereumBlockNotificationSinks<
@@ -410,7 +417,7 @@ where
 				client.clone(),
 				backend.clone(),
 				overrides.clone(),
-				Arc::new(b.clone()),
+				b.clone(),
 				3,
 				0,
 				fc_mapping_sync::SyncStrategy::Parachain,
@@ -438,7 +445,7 @@ where
 		Some("frontier"),
 		EthTask::fee_history_task(
 			Arc::clone(&client),
-			Arc::clone(&overrides),
+			overrides.clone(),
 			fee_history_cache.clone(),
 			fee_history_limit,
 		),
@@ -488,19 +495,18 @@ where
 		let fee_history_cache = fee_history_cache.clone();
 		let block_data_cache = block_data_cache.clone();
 
-		move |deny_unsafe, subscription_task_executor| {
+		move |subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
-				graph: pool.pool().clone(),
-				deny_unsafe,
+				graph: pool.clone(),
 				is_authority,
 				network: network.clone(),
 				sync: sync.clone(),
 				filter_pool: filter_pool.clone(),
 				ethapi_cmd: ethapi_cmd.clone(),
-				frontier_backend: match frontier_backend.as_ref() {
-					fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
+				frontier_backend: match &*frontier_backend {
+					fc_db::Backend::KeyValue(b) => b.clone(),
 				},
 				backend: backend.clone(),
 				command_sink: None,
@@ -588,8 +594,6 @@ where
 			collator_key.expect("Command line arguments do not allow this. qed"),
 		)?;
 	}
-
-	start_network.start_network();
 
 	Ok((task_manager, client))
 }
@@ -776,7 +780,7 @@ where
 			);
 
 			let fut =
-				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _, _>(async_aura::Params {
+				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _>(async_aura::Params {
 					create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 					block_import: block_import.clone(),
 					para_client: client.clone(),
@@ -785,12 +789,12 @@ where
 					code_hash_provider: move |block_hash| {
 						client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
 					},
-					sync_oracle: sync_oracle.clone(),
 					keystore,
 					collator_key,
 					para_id,
 					overseer_handle,
-					slot_duration,
+					// [TODO]
+					max_pov_percentage: None,
 					relay_chain_slot_duration: Duration::from_secs(6),
 					proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
 					collator_service,

@@ -3,7 +3,8 @@
 use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use fc_rpc::{EthBlockDataCacheTask, OverrideHandle, TxPool};
+// [TODO] TxPool
+use fc_rpc::{EthBlockDataCacheTask, StorageOverride};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
@@ -14,7 +15,7 @@ use sc_client_api::{
 	UsageProvider,
 };
 use sc_consensus_manual_seal::rpc::EngineCommand;
-use sc_network::NetworkService;
+use sc_network::service::traits::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_rpc_api::DenyUnsafe;
@@ -53,10 +54,10 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<BE>,
-	pub frontier_backend: Arc<fc_db::Backend<B>>,
+	pub frontier_backend: Arc<fc_db::Backend<B, C>>,
 	// pub frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
 	pub filter_pool: Option<FilterPool>,
-	pub overrides: Arc<OverrideHandle<B>>,
+	pub overrides: Arc<dyn StorageOverride<B>>,
 	pub fee_history_limit: u64,
 	pub fee_history_cache: FeeHistoryCache,
 }
@@ -64,19 +65,17 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 pub type XcmSenders = Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, A: ChainApi, BE> {
+pub struct FullDeps<C, P, BE> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
 	/// Graph pool instance.
-	pub graph: Arc<Pool<A>>,
-	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
+	pub graph: Arc<P>,
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
+	pub network: Arc<dyn NetworkService>,
 	/// Chain syncing service
 	pub sync: Arc<SyncingService<Block>>,
 	/// EthFilterApi pool.
@@ -98,7 +97,7 @@ pub struct FullDeps<C, P, A: ChainApi, BE> {
 	/// Channels for manual xcm messages (downward, hrmp)
 	pub xcm_senders: XcmSenders,
 	/// Ethereum data access overrides.
-	pub overrides: Arc<OverrideHandle<Block>>,
+	pub overrides: Arc<dyn StorageOverride<Block>>,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 	/// Mandated parent hashes for a given block hash.
@@ -111,8 +110,8 @@ pub struct TracingConfig {
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create_full<C, P, BE, A>(
-	deps: FullDeps<C, P, A, BE>,
+pub fn create_full<C, P, BE>(
+	deps: FullDeps<C, P, BE>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	maybe_tracing_config: Option<TracingConfig>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
@@ -138,7 +137,6 @@ where
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
 	P: TransactionPool<Block = Block> + 'static,
-	A: ChainApi<Block = Block> + 'static,
 
 	BE::Blockchain: BlockchainBackend<Block>,
 {
