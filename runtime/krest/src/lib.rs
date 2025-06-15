@@ -1197,7 +1197,10 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	(
+		pallet_contracts::Migration<Runtime>,
+		cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
+	),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
