@@ -278,11 +278,10 @@ where
 	> = Default::default();
 	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-	// [TODO]
-	// io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
-	// io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
-	// io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
-	// io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(PeaqRBAC::new(Arc::clone(&client)).into_rpc())?;
+	io.merge(ZenlinkProtocol::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(Web3::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(
 		EthPubSub::new(
