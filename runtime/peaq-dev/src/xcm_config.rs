@@ -390,8 +390,11 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
-	type MaxActiveOutboundChannels = ();
-	type MaxPageSize = ();
+
+	type MaxActiveOutboundChannels = ConstU32<128>;
+	// Most on-chain HRMP channels are configured to use 102400 bytes of max message size, so we
+	// need to set the page size larger than that until we reduce the channel size on-chain.
+	type MaxPageSize = MessageQueueHeapSize;
 }
 
 // For migration
@@ -506,5 +509,6 @@ impl pallet_message_queue::Config for Runtime {
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;
-	type IdleMaxServiceWeight = ();
+
+	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }

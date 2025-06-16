@@ -414,14 +414,15 @@ impl pallet_contracts::Config for Runtime {
 	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
 	type MaxDelegateDependencies = MaxDelegateDependencies;
 	type RuntimeHoldReason = RuntimeHoldReason;
-	type Migrations = ();
+	type Migrations = (pallet_contracts::migration::v16::Migration<Runtime>,);
+
 	type Debug = ();
 	type Environment = ();
 	type Xcm = ();
 
 	type ApiVersion = ();
 	type InstantiateOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
-	type MaxTransientStorageSize = ();
+	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
 	type UploadOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
 }
 
@@ -1114,7 +1115,7 @@ construct_runtime!(
 		System: frame_system = 0,
 		RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip::{Pallet, Storage} = 1,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 2,
-		Aura: pallet_aura::{Pallet, Config<T>} = 3,
+		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 3,
 		Balances: pallet_balances = 4,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 5,
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 6,
@@ -2021,6 +2022,20 @@ impl_runtime_apis! {
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
 			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+		}
+	}
+
+	impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
+		fn build_state(config: Vec<u8>) -> sp_genesis_builder::Result {
+			frame_support::genesis_builder_helper::build_state::<RuntimeGenesisConfig>(config)
+		}
+
+		fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
+			frame_support::genesis_builder_helper::get_preset::<RuntimeGenesisConfig>(id, |_| None)
+		}
+
+		fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
+			vec![]
 		}
 	}
 
