@@ -37,7 +37,7 @@ use pallet_evm::AddressMapping as PalletEVMAddressMapping;
 use parity_scale_codec::Encode;
 use precompile_utils::prelude::keccak256;
 
-use peaq_primitives_xcm::{evm::EvmAddress, AccountIndex};
+use peaq_primitives_xcm::{evm::EvmAddress, to_bytes, AccountIndex};
 use sp_core::{H160, H256};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::{
@@ -285,8 +285,7 @@ impl<T: Config> Pallet<T> {
 		let mut domain_seperator_msg = domain_hash.to_vec();
 		domain_seperator_msg.extend_from_slice(&keccak256!("Peaq EVM claim")); // name
 		domain_seperator_msg.extend_from_slice(&keccak256!("1")); // version
-		// TODO ensure this .into() converts into correct endian format
-		domain_seperator_msg.extend_from_slice(&T::ChainId::get().encode()); // chain id
+		domain_seperator_msg.extend_from_slice(&to_bytes(T::ChainId::get())); // chain id
 		domain_seperator_msg.extend_from_slice(
 			frame_system::Pallet::<T>::block_hash(BlockNumberFor::<T>::zero()).as_ref(),
 		); // genesis block hash
