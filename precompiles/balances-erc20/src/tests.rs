@@ -22,6 +22,7 @@ use libsecp256k1::{sign, Message, SecretKey};
 use precompile_utils::testing::*;
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};
+use peaq_precompile_utils::MockPeaqAccount;
 
 // No test of invalid selectors since we have a fallback behavior (deposit).
 fn precompiles() -> Precompiles<Runtime> {
