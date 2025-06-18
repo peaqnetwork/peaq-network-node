@@ -4,7 +4,7 @@ use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fc_rpc_core::types::{CallRequest, FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
 use polkadot_primitives::PersistedValidationData;
@@ -34,6 +34,27 @@ use zenlink_protocol::AssetId as ZenlinkAssetId;
 pub mod tracing;
 use crate::cli_opt::EthApi as EthApiCmd;
 
+pub struct PeaqEGA;
+
+impl fc_rpc::EstimateGasAdapter for PeaqEGA {
+	fn adapt_request(mut request: CallRequest) -> CallRequest {
+		use sp_core::H160;
+		const BATCH_PRECOMPILE_ADDRESS: H160 =
+			H160(hex_literal::hex!("0000000000000000000000000000000000000805"));
+		const BATCH_PRECOMPILE_BATCH_ALL_SELECTOR: [u8; 4] = hex_literal::hex!("79df4b9c");
+		if request.to == Some(BATCH_PRECOMPILE_ADDRESS) {
+			match &mut request.data {
+				Some(ref mut data) =>
+					if data.0.len() >= 4 {
+						data.0[..4].copy_from_slice(&BATCH_PRECOMPILE_BATCH_ALL_SELECTOR);
+					},
+				None => {},
+			}
+		}
+		request
+	}
+}
+
 pub struct PeaqEthConfig<C, BE>(std::marker::PhantomData<(C, BE)>);
 
 impl<C, BE> fc_rpc::EthConfig<Block, C> for PeaqEthConfig<C, BE>
@@ -43,7 +64,7 @@ where
 {
 	// Use to override (adapt) evm call to precompiles for proper gas estimation.
 	// We are not aware of any of our precompile that require this.
-	type EstimateGasAdapter = ();
+	type EstimateGasAdapter = PeaqEGA;
 	// This assumes the use of HashedMapping<BlakeTwo256> for address mapping
 	type RuntimeStorageOverride =
 		fc_rpc::frontier_backend_client::SystemAccountId32StorageOverride<Block, C, BE>;
