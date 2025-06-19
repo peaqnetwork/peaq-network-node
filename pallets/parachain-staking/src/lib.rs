@@ -193,8 +193,8 @@ pub mod pallet {
 		set::OrderedSet,
 		types::{
 			AccountIdOf, BalanceOf, Candidate, CandidateOf, CandidateStatus, DelayedPayoutInfoT,
-			DelegationCounter, Delegator, ReplacedDelegator, Reward, RoundInfo, Stake, StakeOf,
-			TotalStake,
+			DelegationCounter, Delegator, JailingStatus, ReplacedDelegator, Reward, RoundInfo,
+			Stake, StakeOf, TotalStake,
 		},
 		weightinfo::WeightInfo,
 	};
@@ -525,9 +525,9 @@ pub mod pallet {
 		/// Slashing has been enabled/disabled
 		/// \[new slashing status\]
 		SlashingEnabledChanged(bool),
-		/// A collator was kicked out of the candidate pool because of malicious behavior
+		/// A collator was jailed because of malicious behavior
 		/// \[collator's account]
-		CollatorKicked(T::AccountId),
+		CollatorJailed(T::AccountId),
 	}
 
 	#[pallet::hooks]
@@ -713,6 +713,11 @@ pub mod pallet {
 			}
 		}
 	}
+
+	// New storage map for jailed candidates
+	#[pallet::storage]
+	pub(crate) type JailedCandidates<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, JailingStatus, OptionQuery>;
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
@@ -2849,9 +2854,7 @@ pub mod pallet {
 				return;
 			}
 
-			if Self::remove_candidate(&collator, &state).is_err() {
-				log::error!("Failed to remove collator {:?}", collator);
-			}
+			<JailedCandidates<T>>::insert(&collator, JailingStatus::Jailed);
 
 			if candidates
 				.remove(&Stake { owner: collator.clone(), amount: state.total })
@@ -2863,7 +2866,7 @@ pub mod pallet {
 				Self::update_total_stake();
 			};
 
-			Self::deposit_event(Event::CollatorKicked(collator));
+			Self::deposit_event(Event::CollatorJailed(collator));
 		}
 
 		/// Handles staking reward payout for previous session for one collator and their delegators

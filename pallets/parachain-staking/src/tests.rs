@@ -4040,17 +4040,17 @@ fn check_collator_kickout_without_slash() {
 			assert_eq!(Session::current_index(), 2);
 			let collator_blocks =
 				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
-			assert_eq!(CandidatePool::<Test>::count(), 5);
+			assert_eq!(CandidatePool::<Test>::count(), 6);
 			assert_eq!(collator_blocks.len(), 2);
-			assert!(events().contains(&Event::CollatorKicked(3)));
+			assert!(events().contains(&Event::CollatorJailed(3)));
 			roll_to(20, authors.clone());
 
-			assert_eq!(StakePallet::selected_candidates().contains(&1), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&2), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&3), false);
-			assert_eq!(StakePallet::selected_candidates().contains(&4), false);
-			assert_eq!(StakePallet::selected_candidates().contains(&5), false);
-			assert_eq!(StakePallet::selected_candidates().contains(&6), true);
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(!StakePallet::selected_candidates().contains(&3));
+			assert!(!StakePallet::selected_candidates().contains(&4));
+			assert!(!StakePallet::selected_candidates().contains(&5));
+			assert!(StakePallet::selected_candidates().contains(&6));
 		});
 }
 
@@ -4077,12 +4077,12 @@ fn check_no_slashing() {
 				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
 			assert_eq!(CandidatePool::<Test>::count(), 3);
 			assert_eq!(collator_blocks.len(), 3);
-			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorKicked(_)) }));
+			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorJailed(_)) }));
 			roll_to(20, authors.clone());
 
-			assert_eq!(StakePallet::selected_candidates().contains(&1), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&2), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&3), true);
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(StakePallet::selected_candidates().contains(&3));
 		});
 }
 
@@ -4110,14 +4110,14 @@ fn check_disable_slashing() {
 				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
 			assert_eq!(CandidatePool::<Test>::count(), 6);
 			assert_eq!(collator_blocks.len(), 2);
-			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorKicked(_)) }));
+			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorJailed(_)) }));
 			roll_to(20, authors.clone());
 
-			assert_eq!(StakePallet::selected_candidates().contains(&1), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&2), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&3), true);
-			assert_eq!(StakePallet::selected_candidates().contains(&4), false);
-			assert_eq!(StakePallet::selected_candidates().contains(&5), false);
-			assert_eq!(StakePallet::selected_candidates().contains(&6), false);
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(StakePallet::selected_candidates().contains(&3));
+			assert!(!StakePallet::selected_candidates().contains(&4));
+			assert!(!StakePallet::selected_candidates().contains(&5));
+			assert!(!StakePallet::selected_candidates().contains(&6));
 		});
 }
