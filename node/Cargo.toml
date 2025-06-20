@@ -18,7 +18,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
 git = "https://github.com/peaqnetwork/polkadot-sdk"
-branch = "release-pool-issue"
+branch = "peaq-polkadot-v1.7.2"
 
 [dependencies]
 # serde_json = { workspace = true, default-features = true }
