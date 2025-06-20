@@ -24,6 +24,7 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_rbac::{
@@ -520,6 +521,9 @@ parameter_types! {
 	pub PcpcLocalAccepted: Vec<StorageAssetId> = vec![
 		PeaqAssetId::Token(1).try_into().unwrap(),
 	];
+
+	pub ConstantOne: Multiplier = 1.into();
+	pub ConstantZero: Multiplier = 0.into();
 }
 
 pub struct PeaqCPC;
@@ -543,7 +547,8 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	// type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type FeeMultiplierUpdate = ConstFeeMultiplier<ConstantOne>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -1650,6 +1655,7 @@ impl_runtime_apis! {
 			}
 
 			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+			let gas_limit = 1812u64;
 			let without_base_extrinsic_weight = true;
 
 			let (weight_limit, proof_size_base_cost) =
@@ -1669,8 +1675,8 @@ impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.unique_saturated_into(),
-				max_fee_per_gas,
-				max_priority_fee_per_gas,
+				None,
+				None,
 				nonce,
 				access_list.unwrap_or_default(),
 				is_transactional,

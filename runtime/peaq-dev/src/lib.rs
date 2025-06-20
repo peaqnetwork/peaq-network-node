@@ -23,6 +23,7 @@ use pallet_evm::{
 	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, GasWeightMapping,
 	HashedAddressMapping, Runner,
 };
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use parity_scale_codec::Encode;
 use peaq_pallet_did::{did::Did, structs::Attribute as DidAttribute};
 use peaq_pallet_rbac::{
@@ -498,6 +499,8 @@ parameter_types! {
 	pub PcpcLocalAccepted: Vec<StorageAssetId> = vec![
 		PeaqAssetId::Token(1).try_into().unwrap(),
 	];
+
+	pub ConstantOne: Multiplier = 1.into();
 }
 
 pub struct PeaqCPC;
@@ -521,7 +524,8 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	// type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type FeeMultiplierUpdate = ConstFeeMultiplier<ConstantOne>;
 }
 
 impl pallet_sudo::Config for Runtime {
