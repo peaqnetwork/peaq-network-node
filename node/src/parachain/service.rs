@@ -1,7 +1,7 @@
 //! Parachain Service and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::collators::lookahead as async_aura;
-use cumulus_client_consensus_common::ParachainBlockImport;
+use cumulus_client_consensus_aura::{collators::{lookahead as async_aura, slot_based::{self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport, SlotBasedBlockImportHandle}},};
+use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
 	prepare_node_config, start_relay_chain_tasks, BuildNetworkParams, DARecoveryProfile,
@@ -73,8 +73,37 @@ pub type ExtHostFunctions = (
 	peaq_primitives_ext::peaq_ext::HostFunctions,
 );
 
-type FullClient<RuntimeApi> = TFullClient<Block, RuntimeApi, WasmExecutor<ExtHostFunctions>>;
-type FullBackend = TFullBackend<Block>;
+
+type ParachainExecutor = WasmExecutor<ExtHostFunctions>;
+
+type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
+
+
+type ParachainBackend = TFullBackend<Block>;
+
+
+type ParachainBlockImport = TParachainBlockImport<
+	Block,
+	SlotBasedBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
+	ParachainBackend,
+>;
+
+type Service = PartialComponents<
+		ParachainClient,
+		ParachainBackend,
+		(),
+		sc_consensus::DefaultImportQueue<Block>,
+		sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient>,
+		(
+			ParachainBlockImport,
+			SlotBasedBlockImport<Block, ParachainClient, ParachainClient>,
+			Option<FilterPool>,
+			Option<Telemetry>,
+			Option<TelemetryWorkerHandle>,
+			Arc<fc_db::Backend<Block, ParachainClient>>,
+			FeeHistoryCache,
+		),
+	>;
 
 pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
 	config.base_path.config_dir(config.chain_spec.id()).join("frontier").join(path)
@@ -127,30 +156,9 @@ pub fn new_partial<RuntimeApi, BIQ>(
 	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
-) -> Result<
-	PartialComponents<
-		FullClient<RuntimeApi>,
-		FullBackend,
-		(),
-		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi>>,
-		(
-			ParachainBlockImport<
-				Block,
-				FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
-				FullBackend,
-			>,
-			Option<FilterPool>,
-			Option<Telemetry>,
-			Option<TelemetryWorkerHandle>,
-			Arc<fc_db::Backend<Block, FullClient<RuntimeApi>>>,
-			FeeHistoryCache,
-		),
-	>,
-	sc_service::Error,
->
+) -> Result<Service, sc_service::Error>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -159,14 +167,14 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>,
-	sc_client_api::StateBackendFor<FullBackend, Block>:
+	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
-		Arc<FullClient<RuntimeApi>>,
-		ParachainBlockImport<
+		Arc<ParachainClient>,
+		TParachainBlockImport<
 			Block,
-			FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
-			FullBackend,
+			FrontierBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
+			ParachainBackend,
 		>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -295,9 +303,9 @@ async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC>(
 	target_gas_price: u64,
 	fn_build_import_queue: BIQ,
 	fn_build_consensus: BIC,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
+) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -317,14 +325,14 @@ where
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
-	sc_client_api::StateBackendFor<FullBackend, Block>:
+	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
-		Arc<FullClient<RuntimeApi>>,
-		ParachainBlockImport<
+		Arc<ParachainClient>,
+		TParachainBlockImport<
 			Block,
-			FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
-			FullBackend,
+			FrontierBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
+			ParachainBackend,
 		>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -332,18 +340,18 @@ where
 		u64,
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	BIC: FnOnce(
-		Arc<FullClient<RuntimeApi>>,
-		Arc<FullBackend>,
-		ParachainBlockImport<
+		Arc<ParachainClient>,
+		Arc<ParachainBackend>,
+		TParachainBlockImport<
 			Block,
-			FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
-			FullBackend,
+			FrontierBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
+			ParachainBackend,
 		>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
-		Arc<sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi>>>,
+		Arc<sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient>>,
 		Arc<SyncingService<Block>>,
 		KeystorePtr,
 		ParaId,
@@ -607,19 +615,15 @@ where
 /// Build the import queue.
 #[allow(clippy::type_complexity)]
 pub fn build_import_queue<RuntimeApi>(
-	client: Arc<FullClient<RuntimeApi>>,
-	block_import: ParachainBlockImport<
-		Block,
-		FrontierBlockImport<Block, Arc<FullClient<RuntimeApi>>, FullClient<RuntimeApi>>,
-		FullBackend,
-	>,
+	client: Arc<ParachainClient>,
+	block_import: ParachainBlockImport,
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 	target_gas_price: u64,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -628,7 +632,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
-	sc_client_api::StateBackendFor<FullBackend, Block>:
+	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 {
 	let client2 = client.clone();
@@ -675,9 +679,9 @@ pub async fn start_node<RuntimeApi>(
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi>>)>
+) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi>> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
