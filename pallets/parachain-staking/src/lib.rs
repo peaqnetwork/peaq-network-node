@@ -432,6 +432,12 @@ pub mod pallet {
 		CommissionTooHigh,
 		/// Sudo cannot force new round if payouts are ongoing
 		PayoutsOngoing,
+		/// The candidate is not in jailed status
+		CandidateNotJailed,
+		/// The candidate cannot unjail if is leaving the set of candidates
+		CannotUnjailIfLeaving,
+		/// The minimum number of sessions a collator has to wait before being unjailed is invalid.
+		MinUnjailedDurationInvalid,
 	}
 
 	#[pallet::event]
@@ -528,6 +534,15 @@ pub mod pallet {
 		/// A collator was jailed because of malicious behavior
 		/// \[collator's account]
 		CollatorJailed(T::AccountId),
+		/// Changed the minimum session a collator has to wait before being unjailed.
+		/// \[new minimum unjailed duration\]
+		MinUnjailedDurationChanged(u8),
+		/// A collator requested to unjail
+		/// \[collator's account]
+		CollatorUnjailedStarted(T::AccountId),
+		/// Jail period has ended
+		/// \[collator's account]
+		CollatorUnjailedEnded(T::AccountId),
 	}
 
 	#[pallet::hooks]
@@ -549,6 +564,7 @@ pub mod pallet {
 			if SlashingEnabled::<T>::get() && current_round.first == n {
 				// Slash any collators that didn't author blocks in previous round
 				Self::get_collators_without_blocks(current_round.current - 1);
+				Self::update_jailed_candidates();
 			}
 			Self::payout_collator();
 		}
@@ -697,6 +713,16 @@ pub mod pallet {
 	#[pallet::getter(fn slashing_enabled)]
 	pub(crate) type SlashingEnabled<T> = StorageValue<_, bool, ValueQuery>;
 
+	// Storage map for jailed candidates
+	#[pallet::storage]
+	pub(crate) type JailedCandidates<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, JailingStatus, OptionQuery>;
+
+	// Minimum duration for a candidate to be jailed
+	#[pallet::storage]
+	#[pallet::getter(fn get_min_jail_duration)]
+	pub(crate) type MinUnjailDuration<T: Config> = StorageValue<_, u8, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub stakers: GenesisStaker<T>,
@@ -713,11 +739,6 @@ pub mod pallet {
 			}
 		}
 	}
-
-	// New storage map for jailed candidates
-	#[pallet::storage]
-	pub(crate) type JailedCandidates<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, JailingStatus, OptionQuery>;
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
@@ -2026,6 +2047,47 @@ pub mod pallet {
 			Self::deposit_event(Event::SlashingEnabledChanged(enabled));
 			Ok(())
 		}
+
+		#[pallet::call_index(22)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::set_min_unjailed_duration())]
+		pub fn set_min_unjailed_duration(origin: OriginFor<T>, duration: u8) -> DispatchResult {
+			ensure_root(origin)?;
+			ensure!(duration > 0, Error::<T>::MinUnjailedDurationInvalid);
+			MinUnjailDuration::<T>::put(duration);
+			Self::deposit_event(Event::MinUnjailedDurationChanged(duration));
+			Ok(())
+		}
+
+		/// Unjail the collator candidate, removing it from the set of
+		/// jailed candidates.
+		#[pallet::call_index(23)]
+		#[pallet::weight(<T as crate::pallet::Config>::WeightInfo::unjail_candidate(
+			T::MaxTopCandidates::get(),
+		))]
+		pub fn unjail_candidate(
+			origin: OriginFor<T>,
+			candidate: <T::Lookup as StaticLookup>::Source,
+		) -> DispatchResultWithPostInfo {
+			ensure_signed(origin)?;
+			let candidate = T::Lookup::lookup(candidate)?;
+			ensure!(CandidatePool::<T>::contains_key(&candidate), Error::<T>::CandidateNotFound);
+			let status =
+				JailedCandidates::<T>::get(&candidate).ok_or(Error::<T>::CandidateNotJailed)?;
+			ensure!(status == JailingStatus::Jailed, Error::<T>::CandidateNotJailed);
+			let collator =
+				CandidatePool::<T>::get(&candidate).ok_or(Error::<T>::CandidateNotFound)?;
+			ensure!(!collator.is_leaving(), Error::<T>::CannotUnjailIfLeaving);
+			// *** No Fail beyond this point ***
+			JailedCandidates::<T>::insert(
+				&candidate,
+				JailingStatus::Unjailing(MinUnjailDuration::<T>::get() + 1),
+			);
+			Self::deposit_event(Event::CollatorUnjailedStarted(candidate.clone()));
+			Ok(Some(<T as crate::pallet::Config>::WeightInfo::unjail_candidate(
+				T::MaxTopCandidates::get(),
+			))
+			.into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -2397,6 +2459,7 @@ pub mod pallet {
 				.into_iter()
 				.take(top_n)
 				.filter(|x| x.amount >= T::MinCollatorStake::get())
+				.filter(|x| JailedCandidates::<T>::get(&x.owner).is_none())
 				.map(|x| x.owner)
 				.collect::<Vec<T::AccountId>>();
 
@@ -2867,6 +2930,27 @@ pub mod pallet {
 			};
 
 			Self::deposit_event(Event::CollatorJailed(collator));
+		}
+
+		fn update_jailed_candidates() {
+			// Decrement the number of unjailing candidates
+			JailedCandidates::<T>::iter().for_each(|(collator, status)| {
+				if let JailingStatus::Unjailing(n) = status {
+					if n > 0 {
+						JailedCandidates::<T>::insert(&collator, JailingStatus::Unjailing(n - 1));
+					} else {
+						JailedCandidates::<T>::remove(&collator);
+						let mut candidates = TopCandidates::<T>::get();
+						let state =
+							CandidatePool::<T>::get(&collator).expect("Collator must exist");
+						candidates
+							.try_insert(Stake { owner: collator.clone(), amount: state.total })
+							.expect("Failed to insert stake");
+						TopCandidates::<T>::put(candidates);
+						Self::deposit_event(Event::CollatorUnjailedEnded(collator));
+					}
+				}
+			});
 		}
 
 		/// Handles staking reward payout for previous session for one collator and their delegators

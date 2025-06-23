@@ -25,4 +25,6 @@ pub trait WeightInfo {
 	fn set_max_candidate_stake() -> Weight;
 	fn set_commission(n: u32, m: u32) -> Weight;
 	fn set_slashing_enabled() -> Weight;
+	fn set_min_unjailed_duration() -> Weight;
+	fn unjail_candidate(n: u32) -> Weight;
 }

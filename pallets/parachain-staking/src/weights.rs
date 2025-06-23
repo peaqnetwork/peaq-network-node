@@ -548,4 +548,26 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+
+	fn set_min_unjailed_duration() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 3_000_000 picoseconds.
+		Weight::from_parts(4_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+
+	fn unjail_candidate(n: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 3_000_000 picoseconds.
+		Weight::from_parts(4_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			// Standard Error: 1_000
+			.saturating_add(Weight::from_parts(1_000_000, 0).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }

@@ -34,7 +34,7 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 mod upgrade {
 
 	use super::*;
-	use crate::pallet::SlashingEnabled;
+	use crate::{pallet::SlashingEnabled, MinUnjailDuration};
 
 	#[storage_alias]
 	type CollatorBlock<T: Config> =
@@ -119,6 +119,7 @@ mod upgrade {
 
 				// enable slashing
 				SlashingEnabled::<T>::put(true);
+				MinUnjailDuration::<T>::put(2);
 				weight_writes += 1;
 
 				log::info!("V12 Migrating Done.");
