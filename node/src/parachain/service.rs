@@ -1,4 +1,4 @@
-//! Parachain Service and ServiceFactory implementation.
+//! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{collators::{lookahead as async_aura, slot_based::{self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport, SlotBasedBlockImportHandle}},};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
@@ -76,31 +76,31 @@ pub type ExtHostFunctions = (
 
 type ParachainExecutor = WasmExecutor<ExtHostFunctions>;
 
-type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
+type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, ParachainExecutor>;
 
 
 type ParachainBackend = TFullBackend<Block>;
 
 
-type ParachainBlockImport = TParachainBlockImport<
+type ParachainBlockImport<RuntimeApi> = TParachainBlockImport<
 	Block,
-	SlotBasedBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
+	SlotBasedBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>,
 	ParachainBackend,
 >;
 
-type Service = PartialComponents<
-		ParachainClient,
+type Service<RuntimeApi> = PartialComponents<
+		ParachainClient<RuntimeApi>,
 		ParachainBackend,
 		(),
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient>,
+		sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
 		(
-			ParachainBlockImport,
-			SlotBasedBlockImport<Block, ParachainClient, ParachainClient>,
+			ParachainBlockImport<RuntimeApi>,
+			SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
 			Option<FilterPool>,
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
-			Arc<fc_db::Backend<Block, ParachainClient>>,
+			Arc<fc_db::Backend<Block, ParachainClient<RuntimeApi>>>,
 			FeeHistoryCache,
 		),
 	>;
@@ -156,9 +156,9 @@ pub fn new_partial<RuntimeApi, BIQ>(
 	config: &mut Configuration,
 	fn_build_import_queue: BIQ,
 	target_gas_price: u64,
-) -> Result<Service, sc_service::Error>
+) -> Result<Service<RuntimeApi>, sc_service::Error>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -170,12 +170,8 @@ where
 	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
-		Arc<ParachainClient>,
-		TParachainBlockImport<
-			Block,
-			FrontierBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
-			ParachainBackend,
-		>,
+		Arc<ParachainClient<RuntimeApi>>,
+		ParachainBlockImport<RuntimeApi>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -214,6 +210,12 @@ where
 		telemetry
 	});
 
+	let filter_pool: Option<FilterPool> = Some(Arc::new(std::sync::Mutex::new(BTreeMap::new())));
+	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
+
+	let frontier_backend = open_frontier_backend(client.clone(), config)?;
+	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
+
 	let transaction_pool = sc_transaction_pool::Builder::new(
 		task_manager.spawn_essential_handle(),
 		client.clone(),
@@ -223,14 +225,10 @@ where
 	.with_prometheus(config.prometheus_registry())
 	.build();
 
-	let filter_pool: Option<FilterPool> = Some(Arc::new(std::sync::Mutex::new(BTreeMap::new())));
-	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
-	let frontier_backend = open_frontier_backend(client.clone(), config)?;
-	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
-
-	let parachain_block_import: ParachainBlockImport<_, _, _> =
-		ParachainBlockImport::new(frontier_block_import, backend.clone());
+	let (slot_based_block_import, slot_based_handle) =
+		SlotBasedBlockImport::new(client.clone(), client.clone());
+	let parachain_block_import = ParachainBlockImport::new(slot_based_block_import.clone(), backend.clone());
 
 	let import_queue = fn_build_import_queue(
 		client.clone(),
@@ -251,6 +249,7 @@ where
 		select_chain: (),
 		other: (
 			parachain_block_import,
+			slot_based_handle,
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
@@ -303,9 +302,9 @@ async fn start_contracts_node_impl<RuntimeApi, BIQ, BIC>(
 	target_gas_price: u64,
 	fn_build_import_queue: BIQ,
 	fn_build_consensus: BIC,
-) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
+) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient<RuntimeApi>>)>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -328,30 +327,22 @@ where
 	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
-		Arc<ParachainClient>,
-		TParachainBlockImport<
-			Block,
-			FrontierBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
-			ParachainBackend,
-		>,
+		Arc<ParachainClient<RuntimeApi>>,
+		ParachainBlockImport<RuntimeApi>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
 		u64,
 	) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>,
 	BIC: FnOnce(
-		Arc<ParachainClient>,
+		Arc<ParachainClient<RuntimeApi>>,
 		Arc<ParachainBackend>,
-		TParachainBlockImport<
-			Block,
-			FrontierBlockImport<Block, Arc<ParachainClient>, ParachainClient>,
-			ParachainBackend,
-		>,
+		ParachainBlockImport<RuntimeApi>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
-		Arc<sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient>>,
+		Arc<sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>>,
 		Arc<SyncingService<Block>>,
 		KeystorePtr,
 		ParaId,
@@ -562,7 +553,7 @@ where
 		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		tx_handler_controller,
-		telemetry: telemetry.as_mut(),
+		telemetry: Some(telemetry.as_mut()),
 	})?;
 
 	let announce_block = {
@@ -615,15 +606,15 @@ where
 /// Build the import queue.
 #[allow(clippy::type_complexity)]
 pub fn build_import_queue<RuntimeApi>(
-	client: Arc<ParachainClient>,
-	block_import: ParachainBlockImport,
+	client: Arc<ParachainClient<RuntimeApi>>,
+	block_import: ParachainBlockImport<RuntimeApi>,
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 	target_gas_price: u64,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -679,9 +670,9 @@ pub async fn start_node<RuntimeApi>(
 	id: ParaId,
 	rpc_config: RpcConfig,
 	target_gas_price: u64,
-) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
+) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient<RuntimeApi>>)>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient> + Send + Sync + 'static,
+	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
