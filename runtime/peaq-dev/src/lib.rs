@@ -149,10 +149,11 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// Maximum number of blocks simultaneously accepted by the Runtime, not yet included into the
 /// relay chain.
-pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
+pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 2 * MAX_BLOCK_PROCESSING_VELOCITY + 1;
 /// How many parachain blocks are processed by the relay chain per parent. Limits the number of
 /// blocks authored per slot.
-pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
+/// 12 to achieve 500ms blocktime
+pub const MAX_BLOCK_PROCESSING_VELOCITY: u32 = 12;
 /// Relay chain slot duration, in milliseconds.
 pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
 
@@ -197,7 +198,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = (RELAY_CHAIN_SLOT_DURATION_MILLIS / MAX_BLOCK_PROCESSING_VELOCITY) as u64;
 
 // NOTE: Currently it is not possible to change the slot duration after the chain has started.
 //	   Attempting to do so will brick block production.
@@ -795,7 +796,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	Runtime,
 	RELAY_CHAIN_SLOT_DURATION_MILLIS,
-	BLOCK_PROCESSING_VELOCITY,
+	MAX_BLOCK_PROCESSING_VELOCITY,
 	UNINCLUDED_SEGMENT_CAPACITY,
 >;
 
