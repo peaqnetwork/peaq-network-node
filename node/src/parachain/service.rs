@@ -707,7 +707,8 @@ where
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
-		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
+		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
+		+ cumulus_primitives_core::GetCoreSelectorApi<Block>
 {
 	start_contracts_node_impl::<RuntimeApi, _, _>(
 		parachain_config,
