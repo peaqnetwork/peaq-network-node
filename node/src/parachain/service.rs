@@ -1,6 +1,6 @@
 //! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::{collators::{lookahead as async_aura, slot_based::{self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport, SlotBasedBlockImportHandle}},};
+use cumulus_client_consensus_aura::{collators::{lookahead as async_aura, slot_based::{self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport, SlotBasedBlockImportHandle}},};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
@@ -19,7 +19,7 @@ use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node_with_rpc;
-use fc_consensus::FrontierBlockImport;
+use fc_consensus::FrontierBlockImport as TFrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc::EthTask;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
@@ -81,10 +81,21 @@ type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, ParachainExecu
 
 type ParachainBackend = TFullBackend<Block>;
 
+type FrontierBlockImport<RuntimeApi> = TFrontierBlockImport<
+	Block,
+	SlotBasedBlockImport<RuntimeApi>,
+	ParachainClient<RuntimeApi>,
+>;
+
+type SlotBasedBlockImport<RuntimeApi> = TSlotBasedBlockImport<
+	Block,
+	Arc<ParachainClient<RuntimeApi>>,
+	ParachainClient<RuntimeApi>
+>;
 
 type ParachainBlockImport<RuntimeApi> = TParachainBlockImport<
 	Block,
-	SlotBasedBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>,
+	FrontierBlockImport<RuntimeApi>,
 	ParachainBackend,
 >;
 
@@ -96,7 +107,7 @@ type Service<RuntimeApi> = PartialComponents<
 		sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
 		(
 			ParachainBlockImport<RuntimeApi>,
-			SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
+			// SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
 			Option<FilterPool>,
 			Option<Telemetry>,
 			Option<TelemetryWorkerHandle>,
@@ -214,7 +225,6 @@ where
 	let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 
 	let frontier_backend = open_frontier_backend(client.clone(), config)?;
-	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
 	let transaction_pool = sc_transaction_pool::Builder::new(
 		task_manager.spawn_essential_handle(),
@@ -227,8 +237,9 @@ where
 
 
 	let (slot_based_block_import, slot_based_handle) =
-		SlotBasedBlockImport::new(client.clone(), client.clone());
-	let parachain_block_import = ParachainBlockImport::new(slot_based_block_import.clone(), backend.clone());
+	 	SlotBasedBlockImport::new(client.clone(), client.clone());
+	let frontier_block_import = FrontierBlockImport::new(slot_based_block_import.clone(), client.clone());
+	let parachain_block_import = ParachainBlockImport::new(frontier_block_import.clone(), backend.clone());
 
 	let import_queue = fn_build_import_queue(
 		client.clone(),
@@ -249,7 +260,7 @@ where
 		select_chain: (),
 		other: (
 			parachain_block_import,
-			slot_based_handle,
+			// slot_based_handle,
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
@@ -357,6 +368,7 @@ where
 	)?;
 	let (
 		parachain_block_import,
+		// slot_based_handle,
 		filter_pool,
 		mut telemetry,
 		telemetry_worker_handle,
@@ -553,7 +565,7 @@ where
 		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		tx_handler_controller,
-		telemetry: Some(telemetry.as_mut()),
+		telemetry: telemetry.as_mut(),
 	})?;
 
 	let announce_block = {
