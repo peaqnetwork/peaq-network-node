@@ -1,6 +1,8 @@
 //! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::{collators::{lookahead as async_aura, slot_based::{self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport, SlotBasedBlockImportHandle}},};
+use cumulus_client_consensus_aura::collators::slot_based::{
+	self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport, SlotBasedBlockImportHandle,
+};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
@@ -14,7 +16,6 @@ use cumulus_primitives_core::{
 use sc_client_api::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
@@ -107,6 +108,7 @@ type Service<RuntimeApi> = PartialComponents<
 		sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
 		(
 			ParachainBlockImport<RuntimeApi>,
+			SlotBasedBlockImportHandle<Block>,
 			// SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
 			Option<FilterPool>,
 			Option<Telemetry>,
@@ -260,7 +262,7 @@ where
 		select_chain: (),
 		other: (
 			parachain_block_import,
-			// slot_based_handle,
+			slot_based_handle,
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
@@ -358,6 +360,7 @@ where
 		KeystorePtr,
 		ParaId,
 		CollatorPair,
+		SlotBasedBlockImportHandle<Block>
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -368,7 +371,7 @@ where
 	)?;
 	let (
 		parachain_block_import,
-		// slot_based_handle,
+		slot_based_handle,
 		filter_pool,
 		mut telemetry,
 		telemetry_worker_handle,
@@ -609,6 +612,7 @@ where
 			params.keystore_container.keystore(),
 			id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
+			slot_based_handle
 		)?;
 	}
 
@@ -754,9 +758,10 @@ where
 		 relay_chain_interface,
 		 transaction_pool,
 		 sync_oracle,
-		 keystore,
+		 keystore,	
 		 para_id,
-		 collator_key| {
+		 collator_key,
+		 block_import_handle| {
 			let spawn_handle = task_manager.spawn_handle();
 
 			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
@@ -785,32 +790,36 @@ where
 				client.clone(),
 			);
 
-			let fut =
-				async_aura::run::<Block, AuraPair, _, _, _, _, _, _, _, _>(async_aura::Params {
-					create_inherent_data_providers: move |_, ()| async move { Ok(()) },
-					block_import: block_import.clone(),
-					para_client: client.clone(),
-					para_backend: backend.clone(),
-					relay_client: relay_chain_interface.clone(),
-					code_hash_provider: move |block_hash| {
-						client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
-					},
-					keystore,
-					collator_key,
-					para_id,
-					overseer_handle,
-					// [TODO]
-					max_pov_percentage: None,
-					relay_chain_slot_duration: Duration::from_secs(6),
-					proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
-					collator_service,
-					// We got around 1500ms for proposing
-					authoring_duration: Duration::from_millis(1500),
-					// collation_request_receiver: None,
-					reinitialize: false,
-				});
+			let params = SlotBasedParams {
+				create_inherent_data_providers: move |_, ()| async move { Ok(()) },
+				block_import: block_import.clone(),
+				para_client: client.clone(),
+				para_backend: backend.clone(),
+				relay_client: relay_chain_interface.clone(),
+				code_hash_provider: move |block_hash| {
+					client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
+				},
+				keystore,
+				collator_key,
+				para_id,
+				// [TODO]
+				max_pov_percentage: None,
+				relay_chain_slot_duration: Duration::from_secs(6),
+				proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
+				collator_service,
+				// We got around 1500ms for proposing
+				authoring_duration: Duration::from_millis(1500),
+				// collation_request_receiver: None,
+				reinitialize: false,
+				slot_offset: Duration::from_secs(1),
+				spawner: task_manager.spawn_handle(),
+				export_pov: None,
+				block_import_handle: block_import_handle
+			};
 
-			task_manager.spawn_essential_handle().spawn("aura", None, fut);
+			slot_based::run::<Block, sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _, _, _, _>(
+				params,
+			);
 
 			Ok(())
 		},
