@@ -43,12 +43,10 @@ impl fc_rpc::EstimateGasAdapter for PeaqEGA {
 			H160(hex_literal::hex!("0000000000000000000000000000000000000805"));
 		const BATCH_PRECOMPILE_BATCH_ALL_SELECTOR: [u8; 4] = hex_literal::hex!("79df4b9c");
 		if request.to == Some(BATCH_PRECOMPILE_ADDRESS) {
-			match &mut request.data {
-				Some(ref mut data) =>
-					if data.0.len() >= 4 {
-						data.0[..4].copy_from_slice(&BATCH_PRECOMPILE_BATCH_ALL_SELECTOR);
-					},
-				None => {},
+			if let Some(ref mut data) = &mut request.data {
+				if data.0.len() >= 4 {
+					data.0[..4].copy_from_slice(&BATCH_PRECOMPILE_BATCH_ALL_SELECTOR);
+				}
 			}
 		}
 		request
