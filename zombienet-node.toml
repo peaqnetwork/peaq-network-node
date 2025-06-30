@@ -22,7 +22,7 @@ id = 2000
 chain_spec_path = "./chain_spec.json" # Plain chainspec path
 
 [parachains.collator]
-name = "charlie"
+name = "alice"
 ws_port = 9988
 command = "peaq-node"
 args = [ "-lparachain::collation-generation=trace,parachain::collator-protocol=trace,parachain=debug,cumulus-collator=trace,aura=trace" ]
