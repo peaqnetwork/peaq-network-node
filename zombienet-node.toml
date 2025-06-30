@@ -1,0 +1,28 @@
+# Add parachain and relaychain binaries to path to maket his
+
+[relaychain.genesis.runtimeGenesis.patch.configuration.config.async_backing_params]
+  max_candidate_depth = 6
+  allowed_ancestry_len = 2
+
+[relaychain.genesis.runtimeGenesis.patch.configuration.config.scheduler_params]
+  max_validators_per_core = 1
+  num_cores = 11 # +1 is added when network is launched
+  lookahead = 3
+
+[relaychain]
+default_command = "polkadot"
+chain = "rococo-local"
+
+  [[relaychain.node_groups]]
+  name = "elastic-validator"
+  count = 12
+
+[[parachains]]
+id = 2000
+chain_spec_path = "./chain_spec.json" # Plain chainspec path
+
+[parachains.collator]
+name = "charlie"
+ws_port = 9988
+command = "peaq-node"
+args = [ "-lparachain::collation-generation=trace,parachain::collator-protocol=trace,parachain=debug,cumulus-collator=trace,aura=trace" ]
