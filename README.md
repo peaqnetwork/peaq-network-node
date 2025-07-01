@@ -37,7 +37,7 @@ you terminate the process. After the project has been built, there are other way
 node.
 
 
-### Connect with Polkadot-JS Apps Front-end
+### Connect with Explorer Apps Front-end
 
 Once the node template is running locally, you can connect it with **Network Expolrer Apps** front-end
 to interact with your chain. 
