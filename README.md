@@ -308,7 +308,7 @@ You can also replace the default command by appending your own. A few useful one
 ./scripts/docker_run.sh cargo check
 ```
 
-### Parachain Launch
+### Chain Launch
 
 1. Please use the [peaq-node-builder](https://github.com/peaqnetwork/peaq-node-builder) to build the project
 
@@ -317,4 +317,4 @@ You can also replace the default command by appending your own. A few useful one
 docker build -f scripts/Dockerfile.parachain-launch -t peaqtest .
 ```
 
-3. Please use the [parachain-launch](https://github.com/peaqnetwork/parachain-launch) to run the local parachain
+3. Please use the [chain-launch](https://github.com/peaqnetwork/parachain-launch) to run the local parachain
