@@ -9,7 +9,7 @@ First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
 ### Run
 
 Currently, because we are moving to the parachain, we need to use parachain-launch to start the
-parachain. Please refer to this project, [parachain-launch](https://github.com/peaqnetwork/parachain-launch)
+parachain. Please refer to this project, [peaq-launch](https://github.com/peaqnetwork/parachain-launch)
 , to more information.
 
 ### Build
@@ -36,17 +36,11 @@ The provided `cargo run` command will launch a temporary node and its state will
 you terminate the process. After the project has been built, there are other ways to launch the
 node.
 
-### Single-Node Development Chain
-
-Because we are the parachain now, we don't support the Single-Node Development Chain. However, you can start the parachain
-by parachain-launch.
 
 ### Connect with Polkadot-JS Apps Front-end
 
-Once the node template is running locally, you can connect it with **Polkadot-JS Apps** front-end
-to interact with your chain. [Click
-here](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944) connecting the Apps to your
-local node template.
+Once the node template is running locally, you can connect it with **Network Expolrer Apps** front-end
+to interact with your chain. 
 
 ### Multi-Node Local Testnet
 
