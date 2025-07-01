@@ -56,8 +56,7 @@ Substrate-based blockchain nodes expose a number of capabilities:
 - Consensus: Blockchains must have a way to come to
   [consensus](https://docs.substrate.io/v3/advanced/consensus) on the state of the
   network. Substrate makes it possible to supply custom consensus engines and also ships with
-  several consensus mechanisms that have been built on top of
-  [Web3 Foundation research](https://research.web3.foundation/en/latest/polkadot/NPoS/index.html).
+  several consensus mechanisms that have been built on top of Npos
 - RPC Server: A remote procedure call (RPC) server is used to interact with Substrate nodes.
 
 There are several files in the `node` directory - take special note of the following:
@@ -137,7 +136,7 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 First, install [Docker](https://docs.docker.com/get-docker/) and
 [Docker Compose](https://docs.docker.com/compose/install/).
 
-Please use following command to run peaq-network-node parachian in the docker container connected with polkadot relaychain running in the PEAQ development environment.
+Please use following command to run peaq-network-node parachian in the docker container connected with relaychain running in the PEAQ development environment.
 
 #### PEAQ-Dev env
 
@@ -204,7 +203,7 @@ Once you run this command, wait for a few second. Now the peaq parachian should 
 
 ### Run on your local machine with Docker commands
 
-Please follow the steps given below to run peaq-network-node parachian on your local machine connected with polkadot relaychain running in the PEAQ development environment. It is assumed that you have already downloaded the source code
+Please follow the steps given below to run peaq-network-node parachian on your local machine connected with  relaychain running in the PEAQ development environment. It is assumed that you have already downloaded the source code
 for peaq-network-node from the git repository
 
 1. Download the source code from the git repository:
@@ -241,7 +240,7 @@ The folder .local is needed because that is where data such as session keys are 
 ./scripts/docker_run.sh cargo build --release --features on-chain-release-build
 ```
 
-5. Now run the following script to start a peaq-network-node parachain that will connect to the polkadot relay chain running in peaq development environment:
+5. Now run the following script to start a peaq-network-node parachain that will connect to the relay chain running in peaq development environment:
 
 ```bash
 # PEAQ-Dev env
