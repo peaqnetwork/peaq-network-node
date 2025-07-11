@@ -180,6 +180,7 @@ sp-version = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "pe
 pallet-contracts = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }
 pallet-multisig = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }
 pallet-assets = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }
+pallet-nfts = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }
 pallet-utility = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }
 pallet-treasury = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }
 pallet-vesting = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2503-4", default-features = false }

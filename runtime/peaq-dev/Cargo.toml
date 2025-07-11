@@ -32,6 +32,7 @@ hex-literal = { workspace = true, default-features = false, optional = true  }
 pallet-aura = { workspace = true, default-features = false }
 pallet-balances = { workspace = true, default-features = false, features = ["insecure_zero_ed"] }
 pallet-insecure-randomness-collective-flip = { workspace = true, default-features = false }
+pallet-nfts = { workspace = true, default-features = false }
 pallet-sudo = { workspace = true, default-features = false }
 pallet-timestamp = { workspace = true, default-features = false }
 pallet-transaction-payment = { workspace = true, default-features = false }
@@ -151,6 +152,7 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-nfts/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
@@ -189,6 +191,7 @@ std = [
 	"pallet-aura/std",
 	"pallet-balances/std",
 	"pallet-insecure-randomness-collective-flip/std",
+	"pallet-nfts/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
@@ -347,6 +350,7 @@ try-runtime = [
 	"pallet-assets/try-runtime",
 	"pallet-scheduler/try-runtime",
 	"pallet-preimage/try-runtime",
+	"pallet-nfts/try-runtime",
 
 	"orml-currencies/try-runtime",
 	"orml-xtokens/try-runtime",
