@@ -468,13 +468,13 @@ dependencies = [
 [[package]]
 name = "ark-secret-scalar"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/sfffaaa/ring-vrf?branch=my-fix#dfbf69731c8b0e5fd76877d4d0af8c1c2c6355c7"
 dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-serialize",
  "ark-std",
- "ark-transcript 0.0.2 (git+https://github.com/w3f/ring-vrf?rev=e9782f9)",
+ "ark-transcript 0.0.2 (git+https://github.com/sfffaaa/ring-vrf?branch=my-fix)",
  "digest 0.10.7",
  "getrandom_or_panic",
  "zeroize",
@@ -531,7 +531,7 @@ dependencies = [
 [[package]]
 name = "ark-transcript"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/sfffaaa/ring-vrf?branch=my-fix#dfbf69731c8b0e5fd76877d4d0af8c1c2c6355c7"
 dependencies = [
  "ark-ff",
  "ark-serialize",
@@ -869,7 +869,7 @@ dependencies = [
 [[package]]
 name = "bandersnatch_vrfs"
 version = "0.0.4"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/sfffaaa/ring-vrf?branch=my-fix#dfbf69731c8b0e5fd76877d4d0af8c1c2c6355c7"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -1542,7 +1542,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#652286c32f96beb9ce7f5793f5e2c2c923f63b73"
+source = "git+https://github.com/sfffaaa/ring-proof?branch=my-fix#2dc8a6e8f1e9d032c2e8b604f0e868281623b567"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -2823,7 +2823,7 @@ dependencies = [
 [[package]]
 name = "dleq_vrf"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/sfffaaa/ring-vrf?branch=my-fix#dfbf69731c8b0e5fd76877d4d0af8c1c2c6355c7"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -2831,7 +2831,7 @@ dependencies = [
  "ark-secret-scalar",
  "ark-serialize",
  "ark-std",
- "ark-transcript 0.0.2 (git+https://github.com/w3f/ring-vrf?rev=e9782f9)",
+ "ark-transcript 0.0.2 (git+https://github.com/sfffaaa/ring-vrf?branch=my-fix)",
  "arrayvec 0.7.4",
  "zeroize",
 ]
@@ -3541,7 +3541,7 @@ dependencies = [
 [[package]]
 name = "fflonk"
 version = "0.1.0"
-source = "git+https://github.com/w3f/fflonk#1e854f35e9a65d08b11a86291405cdc95baa0a35"
+source = "git+https://github.com/w3f/fflonk?rev=1e854f35e9a65d08b11a86291405cdc95baa0a35#1e854f35e9a65d08b11a86291405cdc95baa0a35"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -7963,6 +7963,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-nfts"
+version = "22.0.0"
+source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#41c15ca64d4d2990b4b166b91b029cbd8603f7d6"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
+]
+
+[[package]]
 name = "pallet-nis"
 version = "28.0.0"
 source = "git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2#41c15ca64d4d2990b4b166b91b029cbd8603f7d6"
@@ -8796,6 +8814,7 @@ dependencies = [
  "pallet-insecure-randomness-collective-flip",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-nfts",
  "pallet-preimage",
  "pallet-scheduler",
  "pallet-session",
@@ -11622,7 +11641,7 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#652286c32f96beb9ce7f5793f5e2c2c923f63b73"
+source = "git+https://github.com/sfffaaa/ring-proof?branch=my-fix#2dc8a6e8f1e9d032c2e8b604f0e868281623b567"
 dependencies = [
  "ark-ec",
  "ark-ff",

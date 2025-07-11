@@ -185,6 +185,7 @@ sp-io = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-po
 pallet-session = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 pallet-authorship = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 pallet-collective = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+pallet-nfts = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 sp-weights = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 frame-benchmarking-cli = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = true }
 pallet-transaction-payment-rpc = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }
@@ -236,3 +237,11 @@ peaq-pallet-storage = { git = "https://github.com/peaqnetwork/peaq-storage-palle
 peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "dev", default-features = false }
 peaq-pallet-storage-runtime-api = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "dev", default-features = false }
 peaq-pallet-transaction = { git = "https://github.com/peaqnetwork/peaq-pallet-transaction.git", branch = "dev", default-features = false }
+fflonk = { git = "https://github.com/w3f/fflonk", rev = "2e854f35e9a65d08b11a86291405cdc95baa0a35" }
+# ring = { git = "https://https://github.com/w3f/ring-proof", rev = "652286c32f96beb9ce7f5793f5e2c2c923f63b73" }
+
+[patch."https://github.com/w3f/ring-vrf"]
+bandersnatch_vrfs = { git = "https://github.com/sfffaaa/ring-vrf", branch = "my-fix" }
+
+[patch."https://github.com/w3f/ring-proof"]
+ring = { git = "https://github.com/sfffaaa/ring-proof", branch = "my-fix" }
