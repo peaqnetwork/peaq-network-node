@@ -9328,7 +9328,9 @@ dependencies = [
 name = "peaq-rpc-core-debug"
 version = "0.1.0"
 dependencies = [
+ "ethereum",
  "ethereum-types",
+ "fc-rpc-core",
  "futures 0.3.30",
  "jsonrpsee",
  "peaq-client-evm-tracing",

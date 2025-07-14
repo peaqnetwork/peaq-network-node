@@ -8,6 +8,8 @@ repository = 'https://github.com/peaqnetwork/peaq-network-node/'
 version = "0.1.0"
 
 [dependencies]
+ethereum = { workspace = true, features = [ "with-codec" ] }
+fc-rpc-core = { workspace = true }
 ethereum-types = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, default-features = true }

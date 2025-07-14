@@ -25,6 +25,7 @@ use tokio::{
 	sync::{oneshot, Semaphore},
 };
 
+use peaq_rpc_core_debug::TraceCallParams;
 use ethereum_types::H256;
 use fc_rpc::{frontier_backend_client, internal_err, OverrideHandle};
 use fp_rpc::EthereumRuntimeRPCApi;
@@ -45,6 +46,7 @@ use sp_runtime::{
 use std::{future::Future, marker::PhantomData, sync::Arc};
 
 pub enum RequesterInput {
+	Call((RequestBlockId, TraceCallParams)),
 	Transaction(H256),
 	Block(RequestBlockId),
 }
@@ -116,6 +118,36 @@ impl DebugServer for Debug {
 			.map_err(|err| internal_err(format!("debug service dropped the channel : {:?}", err)))?
 			.map(|res| match res {
 				Response::Block(res) => res,
+				_ => unreachable!(),
+			})
+	}
+
+	/// Handler for `debug_traceCall` request. Communicates with the service-defined task
+	/// using channels.
+	async fn trace_call(
+		&self,
+		call_params: TraceCallParams,
+		id: RequestBlockId,
+		params: Option<TraceParams>,
+	) -> RpcResult<single::TransactionTrace> {
+		let requester = self.requester.clone();
+
+		let (tx, rx) = oneshot::channel();
+		// Send a message from the rpc handler to the service level task.
+		requester
+			.unbounded_send(((RequesterInput::Call((id, call_params)), params), tx))
+			.map_err(|err| {
+				internal_err(format!(
+					"failed to send request to debug service : {:?}",
+					err
+				))
+			})?;
+
+		// Receive a message from the service level task and send the rpc response.
+		rx.await
+			.map_err(|err| internal_err(format!("debug service dropped the channel : {:?}", err)))?
+			.map(|res| match res {
+				Response::Single(res) => res,
 				_ => unreachable!(),
 			})
 	}

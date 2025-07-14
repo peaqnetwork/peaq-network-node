@@ -1551,6 +1551,83 @@ impl_runtime_apis! {
 				"Missing `evm-tracing` compile time feature flag.",
 			))
 		}
+
+		#[cfg(feature = "evm-tracing")]
+		fn trace_call(
+			header: &<Block as BlockT>::Header,
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
+			nonce: Option<U256>,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
+		) -> Result<(), sp_runtime::DispatchError> {
+			use peaq_evm_tracer::tracer::EvmTracer;
+
+			// Initialize block: calls the "on_initialize" hook on every pallet
+			// in AllPalletsWithSystem.
+			Executive::initialize_block(header);
+
+			EvmTracer::new().trace(|| {
+				let is_transactional = false;
+				let validate = true;
+
+				let transaction_data = pallet_ethereum::TransactionData::new(
+					pallet_ethereum::TransactionAction::Call(to),
+					data.clone(),
+					nonce.unwrap_or_default(),
+					gas_limit,
+					None,
+					max_fee_per_gas.or(Some(U256::default())),
+					max_priority_fee_per_gas.or(Some(U256::default())),
+					value,
+					Some(<Runtime as pallet_evm::Config>::ChainId::get()),
+					access_list.clone().unwrap_or_default(),
+				);
+
+				let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+
+				let (weight_limit, proof_size_base_cost) = pallet_ethereum::Pallet::<Runtime>::transaction_weight(&transaction_data);
+
+				let _ = <Runtime as pallet_evm::Config>::Runner::call(
+					from,
+					to,
+					data,
+					value,
+					gas_limit,
+					max_fee_per_gas,
+					max_priority_fee_per_gas,
+					nonce,
+					access_list.unwrap_or_default(),
+					is_transactional,
+					validate,
+					weight_limit,
+					proof_size_base_cost,
+					<Runtime as pallet_evm::Config>::config(),
+				);
+			});
+			Ok(())
+		}
+		#[cfg(not(feature = "evm-tracing"))]
+		fn trace_call(
+			header: &<Block as BlockT>::Header,
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
+			nonce: Option<U256>,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
+		) -> Result<(), sp_runtime::DispatchError> {
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
 	}
 
 	impl peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block> for Runtime {
