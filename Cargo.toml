@@ -185,6 +185,7 @@ sp-io = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-po
 pallet-session = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 pallet-authorship = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 pallet-collective = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+pallet-nfts = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 sp-weights = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 frame-benchmarking-cli = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = true }
 pallet-transaction-payment-rpc = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2" }

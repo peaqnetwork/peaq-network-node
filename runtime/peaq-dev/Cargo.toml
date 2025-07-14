@@ -99,6 +99,7 @@ orml-traits = { workspace = true, default-features = false }
 orml-xtokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }
 pallet-collective = { workspace = true, default-features = false }
+pallet-nfts = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
 
 evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", optional = true, default-features = false }
@@ -170,6 +171,7 @@ runtime-benchmarks = [
 
 	"pallet-ethereum/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
+	"pallet-nfts/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
@@ -229,6 +231,7 @@ std = [
 	"pallet-utility/std",
 	"pallet-treasury/std",
 	"pallet-collective/std",
+	"pallet-nfts/std",
 	"pallet-vesting/std",
 
 	# ETH support
