@@ -1613,16 +1613,16 @@ impl_runtime_apis! {
 		}
 		#[cfg(not(feature = "evm-tracing"))]
 		fn trace_call(
-			header: &<Block as BlockT>::Header,
-			from: H160,
-			to: H160,
-			data: Vec<u8>,
-			value: U256,
-			gas_limit: U256,
-			max_fee_per_gas: Option<U256>,
-			max_priority_fee_per_gas: Option<U256>,
-			nonce: Option<U256>,
-			access_list: Option<Vec<(H160, Vec<H256>)>>,
+			_header: &<Block as BlockT>::Header,
+			_from: H160,
+			_to: H160,
+			_data: Vec<u8>,
+			_value: U256,
+			_gas_limit: U256,
+			_max_fee_per_gas: Option<U256>,
+			_max_priority_fee_per_gas: Option<U256>,
+			_nonce: Option<U256>,
+			_access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<(), sp_runtime::DispatchError> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",

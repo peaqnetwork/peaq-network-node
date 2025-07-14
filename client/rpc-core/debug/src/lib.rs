@@ -13,10 +13,8 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
-use ethereum_types::H256;
-use ethereum_types::H160;
-use ethereum_types::U256;
 use ethereum::AccessListItem;
+use ethereum_types::{H160, H256, U256};
 use fc_rpc_core::types::Bytes;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc};
 use peaq_client_evm_tracing::types::single;

@@ -25,11 +25,11 @@ use tokio::{
 	sync::{oneshot, Semaphore},
 };
 
-use peaq_rpc_core_debug::TraceCallParams;
 use ethereum_types::H256;
 use fc_rpc::{frontier_backend_client, internal_err, OverrideHandle};
 use fp_rpc::EthereumRuntimeRPCApi;
 use peaq_client_evm_tracing::{formatters::ResponseFormatter, types::single};
+use peaq_rpc_core_debug::TraceCallParams;
 use peaq_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use peaq_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
 use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
@@ -137,10 +137,7 @@ impl DebugServer for Debug {
 		requester
 			.unbounded_send(((RequesterInput::Call((id, call_params)), params), tx))
 			.map_err(|err| {
-				internal_err(format!(
-					"failed to send request to debug service : {:?}",
-					err
-				))
+				internal_err(format!("failed to send request to debug service : {:?}", err))
 			})?;
 
 		// Receive a message from the service level task and send the rpc response.
