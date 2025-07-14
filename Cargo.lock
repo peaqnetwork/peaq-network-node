@@ -468,13 +468,13 @@ dependencies = [
 [[package]]
 name = "ark-secret-scalar"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/peaqnetwork/ring-vrf?branch=feature/blk-151-fix-the-build-dependency#0ad3cf326c9bdd3c29c7fffd1ccf2df4f4def075"
 dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-serialize",
  "ark-std",
- "ark-transcript 0.0.2 (git+https://github.com/w3f/ring-vrf?rev=e9782f9)",
+ "ark-transcript 0.0.2 (git+https://github.com/peaqnetwork/ring-vrf?branch=feature/blk-151-fix-the-build-dependency)",
  "digest 0.10.7",
  "getrandom_or_panic",
  "zeroize",
@@ -531,7 +531,7 @@ dependencies = [
 [[package]]
 name = "ark-transcript"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/peaqnetwork/ring-vrf?branch=feature/blk-151-fix-the-build-dependency#0ad3cf326c9bdd3c29c7fffd1ccf2df4f4def075"
 dependencies = [
  "ark-ff",
  "ark-serialize",
@@ -869,7 +869,7 @@ dependencies = [
 [[package]]
 name = "bandersnatch_vrfs"
 version = "0.0.4"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/peaqnetwork/ring-vrf?branch=feature/blk-151-fix-the-build-dependency#0ad3cf326c9bdd3c29c7fffd1ccf2df4f4def075"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -1542,7 +1542,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#652286c32f96beb9ce7f5793f5e2c2c923f63b73"
+source = "git+https://github.com/peaqnetwork/ring-proof?branch=feature/blk-151-fix-the-build-dependency#50fc9cceec002f11d23c5ed790ea7771f38ee661"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -2823,7 +2823,7 @@ dependencies = [
 [[package]]
 name = "dleq_vrf"
 version = "0.0.2"
-source = "git+https://github.com/w3f/ring-vrf?rev=e9782f9#e9782f938629c90f3adb3fff2358bc8d1386af3e"
+source = "git+https://github.com/peaqnetwork/ring-vrf?branch=feature/blk-151-fix-the-build-dependency#0ad3cf326c9bdd3c29c7fffd1ccf2df4f4def075"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -2831,7 +2831,7 @@ dependencies = [
  "ark-secret-scalar",
  "ark-serialize",
  "ark-std",
- "ark-transcript 0.0.2 (git+https://github.com/w3f/ring-vrf?rev=e9782f9)",
+ "ark-transcript 0.0.2 (git+https://github.com/peaqnetwork/ring-vrf?branch=feature/blk-151-fix-the-build-dependency)",
  "arrayvec 0.7.4",
  "zeroize",
 ]
@@ -3541,7 +3541,7 @@ dependencies = [
 [[package]]
 name = "fflonk"
 version = "0.1.0"
-source = "git+https://github.com/w3f/fflonk#1e854f35e9a65d08b11a86291405cdc95baa0a35"
+source = "git+https://github.com/w3f/fflonk?rev=1e854f35e9a65d08b11a86291405cdc95baa0a35#1e854f35e9a65d08b11a86291405cdc95baa0a35"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -11622,7 +11622,7 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#652286c32f96beb9ce7f5793f5e2c2c923f63b73"
+source = "git+https://github.com/peaqnetwork/ring-proof?branch=feature/blk-151-fix-the-build-dependency#50fc9cceec002f11d23c5ed790ea7771f38ee661"
 dependencies = [
  "ark-ec",
  "ark-ff",
