@@ -153,6 +153,7 @@ sp-externalities = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch
 sp-runtime-interface = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 sp-core = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 sp-runtime = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
+sp-trie = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 sp-std = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 frame-benchmarking = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }
 frame-executive = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false }

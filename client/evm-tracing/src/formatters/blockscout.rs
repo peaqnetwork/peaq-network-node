@@ -36,8 +36,8 @@ impl super::ResponseFormatter for Formatter {
 		if let Some(entry) = listener.entries.last() {
 			return Some(TransactionTrace::CallList(
 				entry
-					.iter()
-					.map(|(_, value)| Call::Blockscout(Box::new(value.clone())))
+					.into_iter()
+					.map(|(_, value)| Call::Blockscout(value.clone()))
 					.collect(),
 			));
 		}
@@ -91,4 +91,5 @@ pub struct BlockscoutCall {
 	pub gas_used: U256,
 	#[serde(flatten)]
 	pub inner: BlockscoutCallInner,
+	pub logs: Vec<crate::types::single::Log>,
 }

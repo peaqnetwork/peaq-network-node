@@ -8726,10 +8726,12 @@ dependencies = [
  "ethereum-types",
  "evm-tracing-events",
  "hex",
+ "log",
  "parity-scale-codec",
  "peaq-rpc-primitives-debug",
  "serde",
  "serde_json",
+ "sp-runtime",
  "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
 ]
 
@@ -9389,6 +9391,7 @@ dependencies = [
  "futures 0.3.30",
  "hex-literal 0.3.4",
  "jsonrpsee",
+ "log",
  "peaq-client-evm-tracing",
  "peaq-rpc-core-debug",
  "peaq-rpc-core-types",
@@ -9401,6 +9404,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-trie",
  "tokio",
 ]
 

@@ -13,11 +13,12 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
+
 use ethereum::AccessListItem;
 use ethereum_types::{H160, H256, U256};
 use fc_rpc_core::types::Bytes;
 use jsonrpsee::{core::RpcResult, proc_macros::rpc};
-use peaq_client_evm_tracing::types::single;
+use peaq_client_evm_tracing::types::{block, single};
 use peaq_rpc_core_types::RequestBlockId;
 use serde::Deserialize;
 
@@ -29,6 +30,7 @@ pub struct TraceParams {
 	pub disable_stack: Option<bool>,
 	/// Javascript tracer (we just check if it's Blockscout tracer string)
 	pub tracer: Option<String>,
+	pub tracer_config: Option<single::TraceCallConfig>,
 	pub timeout: Option<String>,
 }
 
@@ -69,12 +71,6 @@ pub trait Debug {
 		transaction_hash: H256,
 		params: Option<TraceParams>,
 	) -> RpcResult<single::TransactionTrace>;
-	#[method(name = "debug_traceBlockByNumber", aliases = ["debug_traceBlockByHash"])]
-	async fn trace_block(
-		&self,
-		id: RequestBlockId,
-		params: Option<TraceParams>,
-	) -> RpcResult<Vec<single::TransactionTrace>>;
 	#[method(name = "debug_traceCall")]
 	async fn trace_call(
 		&self,
@@ -82,4 +78,10 @@ pub trait Debug {
 		id: RequestBlockId,
 		params: Option<TraceParams>,
 	) -> RpcResult<single::TransactionTrace>;
+	#[method(name = "debug_traceBlockByNumber", aliases = ["debug_traceBlockByHash"])]
+	async fn trace_block(
+		&self,
+		id: RequestBlockId,
+		params: Option<TraceParams>,
+	) -> RpcResult<Vec<block::BlockTransactionTrace>>;
 }

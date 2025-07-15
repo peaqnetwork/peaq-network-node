@@ -125,6 +125,11 @@ pub enum EvmEvent {
 		is_static: bool,
 		context: super::Context,
 	},
+	Log {
+		address: H160,
+		topics: Vec<H256>,
+		data: Vec<u8>,
+	},
 }
 
 #[cfg(feature = "evm-tracing")]
@@ -140,7 +145,11 @@ impl<'a> From<evm::tracing::Event<'a>> for EvmEvent {
 				context,
 			} => Self::Call {
 				code_address,
-				transfer: transfer.as_ref().map(|transfer| transfer.clone().into()),
+				transfer: if let Some(transfer) = transfer {
+					Some(transfer.clone().into())
+				} else {
+					None
+				},
 				input: input.to_vec(),
 				target_gas,
 				is_static,
@@ -204,12 +213,27 @@ impl<'a> From<evm::tracing::Event<'a>> for EvmEvent {
 				context,
 			} => Self::PrecompileSubcall {
 				code_address,
-				transfer: transfer.as_ref().map(|transfer| transfer.clone().into()),
+				transfer: if let Some(transfer) = transfer {
+					Some(transfer.clone().into())
+				} else {
+					None
+				},
 				input: input.to_vec(),
 				target_gas,
 				is_static,
 				context: context.clone().into(),
 			},
+			// Need backport the evm project
+			// [TODO] In 1.7.2, we don't have this event yet
+			// evm::tracing::Event::Log {
+			// 	address,
+			// 	topics,
+			// 	data,
+			// } => Self::Log {
+			// 	address,
+			// 	topics: topics.to_vec(),
+			// 	data: data.to_vec(),
+			// },
 		}
 	}
 }
