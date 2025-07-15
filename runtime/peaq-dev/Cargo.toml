@@ -80,6 +80,7 @@ cumulus-primitives-timestamp = { workspace = true, default-features = false }
 cumulus-primitives-aura = { workspace = true, default-features = false }
 cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
+cumulus-pallet-weight-reclaim = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 parachains-common = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
