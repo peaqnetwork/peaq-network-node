@@ -12,6 +12,7 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
+use sp_runtime::traits;
 
 use address_unification::{CallKillEVMLinkAccount, EVMAddressMapping};
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
