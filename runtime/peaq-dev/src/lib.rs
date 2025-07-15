@@ -1403,7 +1403,7 @@ impl_runtime_apis! {
 						Preamble::Signed(_, _, signed_extra) => {
 							// Yuck, this depends on the index of ChargeTransactionPayment in SignedExtra
 							// Get the 7th item from the tuple
-							let charge_transaction_payment = &signed_extra.7;
+							let charge_transaction_payment = &signed_extra.0.7;
 							charge_transaction_payment.tip()
 						},
 						Preamble::General(_, _) => 0,
