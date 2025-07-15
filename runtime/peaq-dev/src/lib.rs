@@ -12,7 +12,6 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
-use sp_runtime::traits;
 
 use address_unification::{CallKillEVMLinkAccount, EVMAddressMapping};
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
@@ -36,10 +35,10 @@ use peaq_pallet_rbac::{
 };
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use sp_runtime::{self, traits::IdentityLookup};
+use sp_runtime::traits::{self, IdentityLookup};
 
 use frame_support::traits::{
-	tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
+	tokens::{fungible::HoldConsideration, Locker, PayFromAccount, UnityAssetBalanceConversion},
 	EqualPrivilegeOnly, LinearStoragePrice,
 };
 use smallvec::smallvec;
@@ -1103,41 +1102,53 @@ impl pallet_preimage::Config for Runtime {
 
 parameter_types! {
 	pub const CollectionDeposit: Balance = 100 * DOLLARS;
-	pub const ItemDeposit: Balance = 1 * DOLLARS;
-	pub const ApprovalsLimit: u32 = 20;
-	pub const ItemAttributesApprovalsLimit: u32 = 20;
+	pub const ItemDeposit: Balance = DOLLARS;
+	pub const ApprovalsLimit: u32 = 3;
+	pub const ItemAttributesApprovalsLimit: u32 = 3;
 	pub const MaxTips: u32 = 10;
 	pub const MaxDeadlineDuration: BlockNumber = 12 * 30 * DAYS;
 	pub const MaxAttributesPerCall: u32 = 10;
 }
 
+/// This is an helper struct definition for checking different sources of possible locks on NFTs.
+/// Currently, there is only one source planned to check for possible locks on NFTs, it is
+/// `peaq-pallet-rwa`. All possible sources shall implement `frame_support::traits::tokens::Locker`.
+pub struct NftLockChecker();
+
+impl Locker<u128, u128> for NftLockChecker {
+	fn is_locked(_collection: u128, _item: u128) -> bool {
+		// TODO: Replace default return value by future implementations of `is_locked()`
+		false
+	}
+}
+
 impl pallet_nfts::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type CollectionId = u32;
-	type ItemId = u32;
-	type Currency = Balances;
-	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-	type CollectionDeposit = CollectionDeposit;
-	type ItemDeposit = ItemDeposit;
-	type MetadataDepositBase = MetadataDepositBase;
-	type AttributeDepositBase = MetadataDepositBase;
-	type DepositPerByte = MetadataDepositPerByte;
-	type StringLimit = ConstU32<256>;
-	type KeyLimit = ConstU32<64>;
-	type ValueLimit = ConstU32<256>;
 	type ApprovalsLimit = ApprovalsLimit;
+	type AttributeDepositBase = MetadataDepositBase;
+	type CollectionDeposit = CollectionDeposit;
+	type CollectionId = u128;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type Currency = Balances;
+	type DepositPerByte = MetadataDepositPerByte;
+	type Features = ();
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = ();
 	type ItemAttributesApprovalsLimit = ItemAttributesApprovalsLimit;
+	type ItemDeposit = ItemDeposit;
+	type ItemId = u128;
+	type KeyLimit = ConstU32<64>;
+	type Locker = NftLockChecker;
 	type MaxTips = MaxTips;
 	type MaxDeadlineDuration = MaxDeadlineDuration;
 	type MaxAttributesPerCall = MaxAttributesPerCall;
-	type Features = ();
-	type OffchainSignature = Signature;
+	type MetadataDepositBase = MetadataDepositBase;
 	type OffchainPublic = <Signature as traits::Verify>::Signer;
+	type OffchainSignature = Signature;
+	type RuntimeEvent = RuntimeEvent;
+	type StringLimit = ConstU32<256>;
+	type ValueLimit = ConstU32<256>;
 	type WeightInfo = pallet_nfts::weights::SubstrateWeight<Runtime>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = ();
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-	type Locker = ();
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
