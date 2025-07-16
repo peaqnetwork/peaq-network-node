@@ -497,21 +497,12 @@ impl Listener {
 				// behavior (like batch precompile does) thus we simply consider this a call.
 				self.call_type = Some(CallType::Call);
 			},
-			EvmEvent::Log {
-				address,
-				topics,
-				data,
-			} => {
+			EvmEvent::Log { address, topics, data } =>
 				if self.with_log {
 					if let Some(stack) = self.context_stack.last_mut() {
-						stack.logs.push(Log {
-							address,
-							topics,
-							data,
-						});
+						stack.logs.push(Log { address, topics, data });
 					}
-				}
-			}
+				},
 
 			// We ignore other kinds of message if any (new ones may be added in the future).
 			#[allow(unreachable_patterns)]
@@ -759,11 +750,8 @@ mod tests {
 				gas_limit: 0u64,
 				address: H160::default(),
 			},
-			TestEvmEvent::Log => EvmEvent::Log {
-				address: H160::default(),
-				topics: Vec::new(),
-				data: Vec::new(),
-			},
+			TestEvmEvent::Log =>
+				EvmEvent::Log { address: H160::default(), topics: Vec::new(), data: Vec::new() },
 		}
 	}
 

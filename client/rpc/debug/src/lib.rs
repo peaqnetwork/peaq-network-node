@@ -28,11 +28,10 @@ use tokio::{
 use ethereum_types::H256;
 use fc_rpc::{frontier_backend_client, internal_err, OverrideHandle};
 use fp_rpc::EthereumRuntimeRPCApi;
-use peaq_client_evm_tracing::formatters::call_tracer::CallTracerInner;
-use peaq_client_evm_tracing::types::block;
-use peaq_client_evm_tracing::types::block::BlockTransactionTrace;
-use peaq_client_evm_tracing::types::single::TransactionTrace;
-use peaq_client_evm_tracing::{formatters::ResponseFormatter, types::single};
+use peaq_client_evm_tracing::{
+	formatters::{call_tracer::CallTracerInner, ResponseFormatter},
+	types::{block, block::BlockTransactionTrace, single, single::TransactionTrace},
+};
 use peaq_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use peaq_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
 use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
@@ -47,8 +46,7 @@ use sp_runtime::{
 	generic::BlockId,
 	traits::{BlakeTwo256, Block as BlockT, Header as HeaderT, UniqueSaturatedInto},
 };
-use std::collections::BTreeMap;
-use std::{future::Future, marker::PhantomData, sync::Arc};
+use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc};
 
 pub enum RequesterInput {
 	Call((RequestBlockId, TraceCallParams)),
@@ -301,18 +299,10 @@ where
 
 	fn handle_params(
 		params: Option<TraceParams>,
-	) -> RpcResult<(
-		TracerInput,
-		single::TraceType,
-		Option<single::TraceCallConfig>,
-	)> {
+	) -> RpcResult<(TracerInput, single::TraceType, Option<single::TraceCallConfig>)> {
 		// Set trace input and type
 		match params {
-			Some(TraceParams {
-				tracer: Some(tracer),
-				tracer_config,
-				..
-			}) => {
+			Some(TraceParams { tracer: Some(tracer), tracer_config, .. }) => {
 				const BLOCKSCOUT_JS_CODE_HASH: [u8; 16] =
 					hex_literal::hex!("94d9f08796f91eb13a2e82a6066882f7");
 				const BLOCKSCOUT_JS_CODE_HASH_V2: [u8; 16] =
@@ -334,7 +324,7 @@ where
 						hash
 					)));
 				}
-			}
+			},
 			Some(params) => Ok((
 				TracerInput::None,
 				single::TraceType::Raw {
@@ -434,10 +424,8 @@ where
 			})
 			.collect();
 
-		let eth_tx_hashes: Vec<_> = eth_transactions_by_index
-			.values()
-			.map(|tx| tx.transaction_hash)
-			.collect();
+		let eth_tx_hashes: Vec<_> =
+			eth_transactions_by_index.values().map(|tx| tx.transaction_hash).collect();
 
 		// If there are no ethereum transactions in the block return empty trace right away.
 		if eth_tx_hashes.is_empty() {
@@ -469,7 +457,6 @@ where
 				// so we need to do it here before calling "trace_block".
 				api.initialize_block(parent_block_hash, &header)
 					.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?;
-
 
 				#[allow(deprecated)]
 				api.trace_block_before_version_5(parent_block_hash, exts, eth_tx_hashes)
@@ -503,65 +490,50 @@ where
 				proxy.finish_transaction();
 				let response = match tracer_input {
 					TracerInput::CallTracer => {
-						let result =
-							peaq_client_evm_tracing::formatters::CallTracer::format(proxy)
-								.ok_or("Trace result is empty.")
-								.map_err(|e| internal_err(format!("{:?}", e)))?
-								.into_iter()
-								.filter_map(|mut trace: BlockTransactionTrace| {
-									if let Some(EthTxPartial {
-										transaction_hash,
-										from,
-										to,
-									}) = eth_transactions_by_index
+						let result = peaq_client_evm_tracing::formatters::CallTracer::format(proxy)
+							.ok_or("Trace result is empty.")
+							.map_err(|e| internal_err(format!("{:?}", e)))?
+							.into_iter()
+							.filter_map(|mut trace: BlockTransactionTrace| {
+								if let Some(EthTxPartial { transaction_hash, from, to }) =
+									eth_transactions_by_index
 										.get(&(trace.tx_position - tx_position_offset))
-									{
-										// verify that the trace matches the ethereum transaction
-										let (trace_from, trace_to) = match trace.result {
-											TransactionTrace::Raw { .. } => {
-												(Default::default(), None)
-											}
-											TransactionTrace::CallList(_) => {
-												(Default::default(), None)
-											}
-											TransactionTrace::CallListNested(ref call) => {
-												match call {
-													single::Call::Blockscout(_) => {
-														(Default::default(), None)
-													}
-													single::Call::CallTracer(call) => (
-														call.from,
-														match call.inner {
-															CallTracerInner::Call {
-																to, ..
-															} => Some(to),
-															CallTracerInner::Create { .. } => None,
-															CallTracerInner::SelfDestruct {
-																..
-															} => None,
-														},
-													),
-												}
-											}
-										};
-										if trace_from == *from && trace_to == *to {
-											trace.tx_hash = *transaction_hash;
-											Some(trace)
-										} else {
-											// if the trace does not match the ethereum transaction
-											// it means that the trace is about a buggy transaction that is not in the block
-											// we need to offset the tx_position
-											tx_position_offset += 1;
-											None
-										}
+								{
+									// verify that the trace matches the ethereum transaction
+									let (trace_from, trace_to) = match trace.result {
+										TransactionTrace::Raw { .. } => (Default::default(), None),
+										TransactionTrace::CallList(_) => (Default::default(), None),
+										TransactionTrace::CallListNested(ref call) => match call {
+											single::Call::Blockscout(_) =>
+												(Default::default(), None),
+											single::Call::CallTracer(call) => (
+												call.from,
+												match call.inner {
+													CallTracerInner::Call { to, .. } => Some(to),
+													CallTracerInner::Create { .. } => None,
+													CallTracerInner::SelfDestruct { .. } => None,
+												},
+											),
+										},
+									};
+									if trace_from == *from && trace_to == *to {
+										trace.tx_hash = *transaction_hash;
+										Some(trace)
 									} else {
-										// If the transaction is not in the ethereum block
-										// it should not appear in the block trace
+										// if the trace does not match the ethereum transaction
+										// it means that the trace is about a buggy transaction that
+										// is not in the block we need to offset the tx_position
 										tx_position_offset += 1;
 										None
 									}
-								})
-								.collect::<Vec<BlockTransactionTrace>>();
+								} else {
+									// If the transaction is not in the ethereum block
+									// it should not appear in the block trace
+									tx_position_offset += 1;
+									None
+								}
+							})
+							.collect::<Vec<BlockTransactionTrace>>();
 
 						let n_txs = eth_transactions_by_index.len();
 						let n_traces = result.len();
@@ -575,10 +547,8 @@ where
 						}
 
 						Ok(result)
-					}
-					_ => Err(internal_err(
-						"Bug: failed to resolve the tracer format.".to_string(),
-					)),
+					},
+					_ => Err(internal_err("Bug: failed to resolve the tracer format.".to_string())),
 				}?;
 
 				Ok(Response::Block(response))
@@ -789,15 +759,12 @@ where
 
 		let reference_id: BlockId<B> = match request_block_id {
 			RequestBlockId::Number(n) => Ok(BlockId::Number(n.unique_saturated_into())),
-			RequestBlockId::Tag(RequestBlockTag::Latest) => {
-				Ok(BlockId::Number(client.info().best_number))
-			}
-			RequestBlockId::Tag(RequestBlockTag::Earliest) => {
-				Ok(BlockId::Number(0u32.unique_saturated_into()))
-			}
-			RequestBlockId::Tag(RequestBlockTag::Pending) => {
-				Err(internal_err("'pending' blocks are not supported"))
-			}
+			RequestBlockId::Tag(RequestBlockTag::Latest) =>
+				Ok(BlockId::Number(client.info().best_number)),
+			RequestBlockId::Tag(RequestBlockTag::Earliest) =>
+				Ok(BlockId::Number(0u32.unique_saturated_into())),
+			RequestBlockId::Tag(RequestBlockTag::Pending) =>
+				Err(internal_err("'pending' blocks are not supported")),
 			RequestBlockId::Hash(eth_hash) => {
 				match futures::executor::block_on(frontier_backend_client::load_hash::<B, C>(
 					client.as_ref(),
@@ -808,7 +775,7 @@ where
 					Ok(_) => Err(internal_err("Block hash not found".to_string())),
 					Err(e) => Err(e),
 				}
-			}
+			},
 		}?;
 
 		// Get ApiRef. This handle allow to keep changes between txs in an internal buffer.
@@ -838,15 +805,11 @@ where
 		{
 			api_version
 		} else {
-			return Err(internal_err(
-				"Runtime api version call failed (trace)".to_string(),
-			));
+			return Err(internal_err("Runtime api version call failed (trace)".to_string()));
 		};
 
 		if trace_api_version <= 5 {
-			return Err(internal_err(
-				"debug_traceCall not supported with old runtimes".to_string(),
-			));
+			return Err(internal_err("debug_traceCall not supported with old runtimes".to_string()));
 		}
 
 		let TraceCallParams {
@@ -868,21 +831,15 @@ where
 				(gas_price, None, None) => {
 					// Legacy request, all default to gas price.
 					// A zero-set gas price is None.
-					let gas_price = if gas_price.unwrap_or_default().is_zero() {
-						None
-					} else {
-						gas_price
-					};
+					let gas_price =
+						if gas_price.unwrap_or_default().is_zero() { None } else { gas_price };
 					(gas_price, gas_price)
-				}
+				},
 				(_, max_fee, max_priority) => {
 					// eip-1559
 					// A zero-set max fee is None.
-					let max_fee = if max_fee.unwrap_or_default().is_zero() {
-						None
-					} else {
-						max_fee
-					};
+					let max_fee =
+						if max_fee.unwrap_or_default().is_zero() { None } else { max_fee };
 					// Ensure `max_priority_fee_per_gas` is less or equal to `max_fee_per_gas`.
 					if let Some(max_priority) = max_priority {
 						let max_fee = max_fee.unwrap_or_default();
@@ -893,7 +850,7 @@ where
 						}
 					}
 					(max_fee, max_priority)
-				}
+				},
 			};
 
 		let gas_limit = match gas {
@@ -909,7 +866,7 @@ where
 						"block unavailable, cannot query gas limit".to_string(),
 					));
 				}
-			}
+			},
 		};
 		let data = data.map(|d| d.0).unwrap_or_default();
 
@@ -942,11 +899,7 @@ where
 		};
 
 		return match trace_type {
-			single::TraceType::Raw {
-				disable_storage,
-				disable_memory,
-				disable_stack,
-			} => {
+			single::TraceType::Raw { disable_storage, disable_memory, disable_stack } => {
 				let mut proxy = peaq_client_evm_tracing::listeners::Raw::new(
 					disable_storage,
 					disable_memory,
@@ -955,38 +908,33 @@ where
 				);
 				proxy.using(f)?;
 				Ok(Response::Single(
-					peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or(
-						internal_err(
-							"replayed transaction generated too much data. \
+					peaq_client_evm_tracing::formatters::Raw::format(proxy).ok_or(internal_err(
+						"replayed transaction generated too much data. \
 						try disabling memory or storage?",
-						),
-					)?,
+					))?,
 				))
-			}
+			},
 			single::TraceType::CallList => {
 				let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
 				proxy.with_log = tracer_config.map_or(false, |cfg| cfg.with_log);
 				proxy.using(f)?;
 				proxy.finish_transaction();
 				let response = match tracer_input {
-					TracerInput::Blockscout => {
+					TracerInput::Blockscout =>
 						peaq_client_evm_tracing::formatters::Blockscout::format(proxy)
 							.ok_or("Trace result is empty.")
-							.map_err(|e| internal_err(format!("{:?}", e)))
-					}
+							.map_err(|e| internal_err(format!("{:?}", e))),
 					TracerInput::CallTracer => {
 						let mut res =
 							peaq_client_evm_tracing::formatters::CallTracer::format(proxy)
 								.ok_or("Trace result is empty.")
 								.map_err(|e| internal_err(format!("{:?}", e)))?;
 						Ok(res.pop().expect("Trace result is empty.").result)
-					}
-					_ => Err(internal_err(
-						"Bug: failed to resolve the tracer format.".to_string(),
-					)),
+					},
+					_ => Err(internal_err("Bug: failed to resolve the tracer format.".to_string())),
 				}?;
 				Ok(Response::Single(response))
-			}
+			},
 			not_supported => Err(internal_err(format!(
 				"Bug: `handle_call_request` does not support {:?}.",
 				not_supported

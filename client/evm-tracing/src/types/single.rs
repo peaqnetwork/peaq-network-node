@@ -20,8 +20,7 @@
 //! the whole block tracing output.
 
 use super::serialization::*;
-use serde::Serialize;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use ethereum_types::{H160, H256, U256};
 use parity_scale_codec::{Decode, Encode};

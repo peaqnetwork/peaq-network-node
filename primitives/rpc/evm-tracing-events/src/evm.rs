@@ -223,15 +223,8 @@ impl<'a> From<evm::tracing::Event<'a>> for EvmEvent {
 				is_static,
 				context: context.clone().into(),
 			},
-			evm::tracing::Event::Log {
-				address,
-				topics,
-				data,
-			} => Self::Log {
-				address,
-				topics: topics.to_vec(),
-				data: data.to_vec(),
-			},
+			evm::tracing::Event::Log { address, topics, data } =>
+				Self::Log { address, topics: topics.to_vec(), data: data.to_vec() },
 		}
 	}
 }

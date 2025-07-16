@@ -797,7 +797,6 @@ where
 				api.initialize_block(substrate_parent_hash, &block_header)
 					.map_err(|e| format!("Runtime api access error: {:?}", e))?;
 
-
 				#[allow(deprecated)]
 				api.trace_block_before_version_5(substrate_parent_hash, extrinsics, eth_tx_hashes)
 			};
@@ -845,7 +844,7 @@ where
 							}
 
 							Some(trace)
-						}
+						},
 						None => {
 							log::warn!(
 								target: "tracing",
@@ -854,7 +853,7 @@ where
 								trace,
 							);
 							None
-						}
+						},
 					}
 				})
 				.collect();
