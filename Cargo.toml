@@ -236,10 +236,3 @@ peaq-pallet-storage = { git = "https://github.com/peaqnetwork/peaq-storage-palle
 peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "dev", default-features = false }
 peaq-pallet-storage-runtime-api = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "dev", default-features = false }
 peaq-pallet-transaction = { git = "https://github.com/peaqnetwork/peaq-pallet-transaction.git", branch = "dev", default-features = false }
-fflonk = { git = "https://github.com/w3f/fflonk", rev = "2e854f35e9a65d08b11a86291405cdc95baa0a35" }
-
-[patch."https://github.com/w3f/ring-vrf"]
-bandersnatch_vrfs = { git = "https://github.com/peaqnetwork/ring-vrf", branch = "feature/blk-151-fix-the-build-dependency" }
-
-[patch."https://github.com/w3f/ring-proof"]
-ring = { git = "https://github.com/peaqnetwork/ring-proof", branch = "feature/blk-151-fix-the-build-dependency" }
