@@ -37,9 +37,12 @@ use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use sp_runtime::{generic::Preamble, traits::IdentityLookup};
 
-use frame_support::traits::{
-	tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
-	EqualPrivilegeOnly, LinearStoragePrice,
+use frame_support::{
+	traits::{
+		tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
+		EqualPrivilegeOnly, LinearStoragePrice,
+	},
+	weights::constants,
 };
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
@@ -61,10 +64,13 @@ use sp_std::{borrow::Cow, marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use sp_weights::RuntimeDbWeight;
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 mod weights;
 pub mod xcm_config;
+
+use weights::rocksdb_weights::constants::RocksDbWeight;
 
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "std")]
@@ -81,7 +87,7 @@ pub use frame_support::{
 	},
 	weights::{
 		constants::{
-			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
+			BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND,
 		},
 		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
@@ -236,11 +242,12 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 /// `Operational` extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
+/// Polkadot/Kusama support 10MB now.
+const MAX_POV_SIZE: u32 = 10 * 1024 * 1024;
+
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-	WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64),
-	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
-);
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64), MAX_POV_SIZE as u64);
 
 /// Base Deposit for occupying storage - 0.01 PEAQ
 const STORAGE_DEPOSIT_BASE: Balance = CENTS;
