@@ -804,12 +804,12 @@ where
 				collator_key,
 				para_id,
 				// [TODO]
-				max_pov_percentage: None,
+				max_pov_percentage: Some(85),
 				relay_chain_slot_duration: Duration::from_secs(6),
 				proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
 				collator_service,
 				// We got around 1500ms for proposing
-				authoring_duration: Duration::from_millis(1500),
+				authoring_duration: Duration::from_millis(2000),
 				// collation_request_receiver: None,
 				reinitialize: false,
 				slot_offset: Duration::from_secs(1),
