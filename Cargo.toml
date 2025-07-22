@@ -107,7 +107,7 @@ parachains-common = { git = "https://github.com/peaqnetwork/polkadot-sdk", branc
 fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
 fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
 fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
-fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
+fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2", default-features = false, features = ["txpool", "rpc-binary-search-estimate"] }
 fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
 fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }
 fp-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-v1.7.2" }

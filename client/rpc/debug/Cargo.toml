@@ -33,7 +33,7 @@ ethereum = { workspace = true, default-features = false, features = [ "with-code
 ethereum-types = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
 fc-db = { workspace = true, default-features = true }
-fc-rpc = { workspace = true, default-features = true, features = [ "rpc-binary-search-estimate" ] }
+fc-rpc = { workspace = true }
 fp-rpc = { workspace = true, default-features = true }
 fc-storage = { workspace = true, default-features = true }
 fc-api = { workspace = true }

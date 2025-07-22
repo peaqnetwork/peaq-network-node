@@ -38,7 +38,7 @@ sp-transaction-pool = { workspace = true, default-features = true }
 
 # Frontier
 fc-consensus = { workspace = true, default-features = true }
-fc-rpc = { workspace = true, default-features = true, features = [ "rpc-binary-search-estimate" ] }
-fc-rpc-core = { workspace = true, default-features = true }
+fc-rpc = { workspace = true }
+fc-rpc-core = { workspace = true }
 fp-rpc = { workspace = true, default-features = true }
 fc-storage = { workspace = true, default-features = true }
