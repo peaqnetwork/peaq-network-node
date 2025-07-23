@@ -1801,7 +1801,7 @@ pub mod pallet {
 			let mut collator =
 				CandidatePool::<T>::get(&candidate).ok_or(Error::<T>::CandidateNotFound)?;
 			ensure!(!collator.is_leaving(), Error::<T>::CannotDelegateIfLeaving);
-			let delegator_total = delegations
+			let _delegator_total = delegations
 				.inc_delegation(candidate.clone(), more)
 				.ok_or(Error::<T>::DelegationNotFound)?;
 
