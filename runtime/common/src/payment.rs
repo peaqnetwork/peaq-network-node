@@ -9,7 +9,6 @@ use frame_support::{
 	},
 	Parameter,
 };
-use frame_support::traits::tokens::WithdrawConsequence;
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_evm::{EVMCurrencyAdapter, OnChargeEVMTransaction as OnChargeEVMTransactionT};

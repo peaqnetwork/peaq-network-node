@@ -1448,7 +1448,7 @@ impl_runtime_apis! {
 			ParachainSystem::core_selector()
 		}
 	}
-	
+
 	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
 		fn account_nonce(account: AccountId) -> Nonce {
 			System::account_nonce(account)
@@ -1560,7 +1560,7 @@ impl_runtime_apis! {
 			))
 		}
 
-		// [TODO] ....
+		#[cfg(feature = "evm-tracing")]
 		fn trace_call(
 			header: &<Block as BlockT>::Header,
 			from: H160,
@@ -1572,6 +1572,65 @@ impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			access_list: Option<Vec<(H160, Vec<H256>)>>,
+		) -> Result<(), sp_runtime::DispatchError> {
+			use peaq_evm_tracer::tracer::EvmTracer;
+
+			// Initialize block: calls the "on_initialize" hook on every pallet
+			// in AllPalletsWithSystem.
+			Executive::initialize_block(header);
+
+			EvmTracer::new().trace(|| {
+				let is_transactional = false;
+				let validate = true;
+
+				let transaction_data = pallet_ethereum::TransactionData::new(
+					pallet_ethereum::TransactionAction::Call(to),
+					data.clone(),
+					nonce.unwrap_or_default(),
+					gas_limit,
+					None,
+					max_fee_per_gas.or(Some(U256::default())),
+					max_priority_fee_per_gas.or(Some(U256::default())),
+					value,
+					Some(<Runtime as pallet_evm::Config>::ChainId::get()),
+					access_list.clone().unwrap_or_default(),
+				);
+
+				let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
+
+				let (weight_limit, proof_size_base_cost) = pallet_ethereum::Pallet::<Runtime>::transaction_weight(&transaction_data);
+
+				let _ = <Runtime as pallet_evm::Config>::Runner::call(
+					from,
+					to,
+					data,
+					value,
+					gas_limit,
+					max_fee_per_gas,
+					max_priority_fee_per_gas,
+					nonce,
+					access_list.unwrap_or_default(),
+					is_transactional,
+					validate,
+					weight_limit,
+					proof_size_base_cost,
+					<Runtime as pallet_evm::Config>::config(),
+				);
+			});
+			Ok(())
+		}
+		#[cfg(not(feature = "evm-tracing"))]
+		fn trace_call(
+			_header: &<Block as BlockT>::Header,
+			_from: H160,
+			_to: H160,
+			_data: Vec<u8>,
+			_value: U256,
+			_gas_limit: U256,
+			_max_fee_per_gas: Option<U256>,
+			_max_priority_fee_per_gas: Option<U256>,
+			_nonce: Option<U256>,
+			_access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<(), sp_runtime::DispatchError> {
 			Err(sp_runtime::DispatchError::Other(
 				"Missing `evm-tracing` compile time feature flag.",
