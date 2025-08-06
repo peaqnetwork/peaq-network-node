@@ -3583,6 +3583,7 @@ dependencies = [
  "sc-transaction-pool-api",
  "sc-utils",
  "schnellru",
+ "serde",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",

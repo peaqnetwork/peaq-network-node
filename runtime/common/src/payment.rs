@@ -9,7 +9,6 @@ use frame_support::{
 	},
 	Parameter,
 };
-use frame_support::traits::tokens::WithdrawConsequence;
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_evm::{EVMCurrencyAdapter, OnChargeEVMTransaction as OnChargeEVMTransactionT};
@@ -147,15 +146,18 @@ where
         if fee.is_zero() {
             return Ok(());
         }
-
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, fee)?;
 		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
 		if currency_id != native_currency_id {
-			Err(InvalidTransaction::Payment.into())
-		} else {
-			Ok(())
+			log!(
+				info,
+				PeaqMultiCurrenciesOnChargeTransaction,
+				"Payment with swap of {:?}-tokens",
+				currency_id
+			);
 		}
+		Ok(())
     }
 
 }

@@ -3,8 +3,9 @@
 use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-// [TODO] TxPool
 use fc_rpc::{EthBlockDataCacheTask, StorageOverride};
+use fc_rpc::TxPool;
+use fc_rpc::TxPoolApiServer;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
@@ -295,7 +296,6 @@ where
 		.into_rpc(),
 	)?;
 	if ethapi_cmd.contains(&EthApiCmd::Txpool) {
-		#[cfg(feature = "txpool")]
 		io.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
 	}
 
