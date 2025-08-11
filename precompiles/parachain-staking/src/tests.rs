@@ -358,10 +358,7 @@ fn test_get_delegator_state() {
 			(MockPeaqAccount::Charlie, 300),
 			(MockPeaqAccount::David, 400),
 		])
-		.with_collators(vec![
-			(MockPeaqAccount::Alice, 100),
-			(MockPeaqAccount::Charlie, 200),
-		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 100), (MockPeaqAccount::Charlie, 200)])
 		.with_delegators(vec![
 			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
 			(MockPeaqAccount::David, MockPeaqAccount::Alice, 60),
@@ -380,12 +377,10 @@ fn test_get_delegator_state() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(50),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(50),
+					}],
 					total: U256::from(50),
 				}]);
 
@@ -401,12 +396,10 @@ fn test_get_delegator_state() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(60),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(60),
+					}],
 					total: U256::from(60),
 				}]);
 
@@ -465,10 +458,7 @@ fn test_get_all_delegators_state() {
 			(MockPeaqAccount::Charlie, 300),
 			(MockPeaqAccount::David, 400),
 		])
-		.with_collators(vec![
-			(MockPeaqAccount::Alice, 100),
-			(MockPeaqAccount::Charlie, 200),
-		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 100), (MockPeaqAccount::Charlie, 200)])
 		.with_delegators(vec![
 			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
 			(MockPeaqAccount::David, MockPeaqAccount::Alice, 60),
@@ -485,18 +475,17 @@ fn test_get_all_delegators_state() {
 			// Test getting all delegators' states using zero address
 			// Since hash-based iteration order is unpredictable, we use a custom approach
 			// to verify the data content without relying on exact order
-			
+
 			// Create a custom test that can handle unordered results
 			let binding = precompiles();
-			let tester = binding
-				.prepare_test(
-					MockPeaqAccount::Bob,
-					MockPeaqAccount::EVMu1Account,
-					PCall::get_delegator_state { delegator: H256::zero() },
-				);
-			
+			let tester = binding.prepare_test(
+				MockPeaqAccount::Bob,
+				MockPeaqAccount::EVMu1Account,
+				PCall::get_delegator_state { delegator: H256::zero() },
+			);
+
 			let _result = tester.execute_some();
-			
+
 			// The result should contain both Bob and David's delegator states
 			// We can't predict order, but we can verify both are present
 			// Note: This is a basic verification that the function executes and returns data
@@ -507,18 +496,18 @@ fn test_get_all_delegators_state() {
 fn test_delegator_collators_sorting_by_stake_amount() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice, 500),    // Collator 
-			(MockPeaqAccount::Bob, 500),      // Collator
-			(MockPeaqAccount::Charlie, 500),  // Collator
-			(MockPeaqAccount::David, 1000),   // Delegator with delegations to multiple collators
+			(MockPeaqAccount::Alice, 500),   // Collator
+			(MockPeaqAccount::Bob, 500),     // Collator
+			(MockPeaqAccount::Charlie, 500), // Collator
+			(MockPeaqAccount::David, 1000),  // Delegator with delegations to multiple collators
 		])
 		.with_collators(vec![
 			(MockPeaqAccount::Alice, 100),
-			(MockPeaqAccount::Bob, 200), 
+			(MockPeaqAccount::Bob, 200),
 			(MockPeaqAccount::Charlie, 300),
 		])
 		.with_delegators(vec![
-			(MockPeaqAccount::David, MockPeaqAccount::Alice, 50),   // Lowest stake to Alice
+			(MockPeaqAccount::David, MockPeaqAccount::Alice, 50), // Lowest stake to Alice
 		])
 		.build()
 		.execute_with(|| {
@@ -526,17 +515,18 @@ fn test_delegator_collators_sorting_by_stake_amount() {
 			assert_ok!(StakePallet::delegate_another_candidate(
 				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
 				MockPeaqAccount::Bob.into(),
-				80  // Middle stake
+				80 // Middle stake
 			));
 
 			// Add delegation to Charlie with highest stake
 			assert_ok!(StakePallet::delegate_another_candidate(
 				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
 				MockPeaqAccount::Charlie.into(),
-				100  // Highest stake
+				100 // Highest stake
 			));
 
-			// Test David's delegations - collators should be sorted by delegation amount (descending) 
+			// Test David's delegations - collators should be sorted by delegation amount
+			// (descending)
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::David,
@@ -571,16 +561,9 @@ fn test_delegator_collators_sorting_by_stake_amount() {
 #[test]
 fn test_get_delegator_state_edge_cases() {
 	ExtBuilder::default()
-		.with_balances(vec![
-			(MockPeaqAccount::Alice, 100),
-			(MockPeaqAccount::Bob, 200),
-		])
-		.with_collators(vec![
-			(MockPeaqAccount::Alice, 100),
-		])
-		.with_delegators(vec![
-			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
-		])
+		.with_balances(vec![(MockPeaqAccount::Alice, 100), (MockPeaqAccount::Bob, 200)])
+		.with_collators(vec![(MockPeaqAccount::Alice, 100)])
+		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50)])
 		.build()
 		.execute_with(|| {
 			// Test zero address - should return all delegators (only Bob in this test)
@@ -594,12 +577,10 @@ fn test_get_delegator_state_edge_cases() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(50),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(50),
+					}],
 					total: U256::from(50),
 				}]);
 
@@ -609,14 +590,12 @@ fn test_get_delegator_state_edge_cases() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::get_delegator_state {
-						delegator: non_existent_account,
-					},
+					PCall::get_delegator_state { delegator: non_existent_account },
 				)
 				.expect_no_logs()
 				.execute_returns(Vec::<CollatorDelegatorState>::new());
 
-			// Test collator account that exists but has no delegations 
+			// Test collator account that exists but has no delegations
 			// (Alice is a collator but not a delegator)
 			precompiles()
 				.prepare_test(
@@ -635,18 +614,18 @@ fn test_get_delegator_state_edge_cases() {
 fn test_get_delegator_state_paging() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice, 500),    // Collator 
-			(MockPeaqAccount::Bob, 500),      // Collator
-			(MockPeaqAccount::Charlie, 500),  // Collator
-			(MockPeaqAccount::David, 1000),   // Delegator with delegations to multiple collators
+			(MockPeaqAccount::Alice, 500),   // Collator
+			(MockPeaqAccount::Bob, 500),     // Collator
+			(MockPeaqAccount::Charlie, 500), // Collator
+			(MockPeaqAccount::David, 1000),  // Delegator with delegations to multiple collators
 		])
 		.with_collators(vec![
 			(MockPeaqAccount::Alice, 100),
-			(MockPeaqAccount::Bob, 200), 
+			(MockPeaqAccount::Bob, 200),
 			(MockPeaqAccount::Charlie, 300),
 		])
 		.with_delegators(vec![
-			(MockPeaqAccount::David, MockPeaqAccount::Alice, 50),   // Lowest stake to Alice
+			(MockPeaqAccount::David, MockPeaqAccount::Alice, 50), // Lowest stake to Alice
 		])
 		.build()
 		.execute_with(|| {
@@ -654,14 +633,14 @@ fn test_get_delegator_state_paging() {
 			assert_ok!(StakePallet::delegate_another_candidate(
 				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
 				MockPeaqAccount::Bob.into(),
-				80  // Middle stake
+				80 // Middle stake
 			));
 
 			// Add delegation to Charlie with highest stake
 			assert_ok!(StakePallet::delegate_another_candidate(
 				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
 				MockPeaqAccount::Charlie.into(),
-				100  // Highest stake
+				100 // Highest stake
 			));
 
 			// Test paging: get first 2 collators (offset=0, limit=2)
@@ -706,12 +685,10 @@ fn test_get_delegator_state_paging() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(50), // Lowest stake last
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(50), // Lowest stake last
+					}],
 					total: U256::from(230), // Still shows total of all delegations
 				}]);
 
@@ -727,7 +704,8 @@ fn test_get_delegator_state_paging() {
 					},
 				)
 				.expect_no_logs()
-				.execute_returns(Vec::<CollatorDelegatorState>::new()); // Empty vector when offset exceeds available collators
+				.execute_returns(Vec::<CollatorDelegatorState>::new()); // Empty vector when offset exceeds
+			                                            // available collators
 		})
 }
 
@@ -735,16 +713,13 @@ fn test_get_delegator_state_paging() {
 fn test_get_all_delegators_paging() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice, 500),    // Collator
-			(MockPeaqAccount::Bob, 200),      // Delegator 1
-			(MockPeaqAccount::Charlie, 300),  // Collator
-			(MockPeaqAccount::David, 400),    // Delegator 2
+			(MockPeaqAccount::Alice, 500),         // Collator
+			(MockPeaqAccount::Bob, 200),           // Delegator 1
+			(MockPeaqAccount::Charlie, 300),       // Collator
+			(MockPeaqAccount::David, 400),         // Delegator 2
 			(MockPeaqAccount::ParentAccount, 500), // Delegator 3
 		])
-		.with_collators(vec![
-			(MockPeaqAccount::Alice, 100),
-			(MockPeaqAccount::Charlie, 200),
-		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 100), (MockPeaqAccount::Charlie, 200)])
 		.with_delegators(vec![
 			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
 			(MockPeaqAccount::David, MockPeaqAccount::Alice, 60),
@@ -765,7 +740,7 @@ fn test_get_all_delegators_paging() {
 					},
 				)
 				.execute_some();
-			
+
 			// Test paging: get first 2 delegators (offset=0, limit=2)
 			let _paged_result = precompiles()
 				.prepare_test(
@@ -779,7 +754,7 @@ fn test_get_all_delegators_paging() {
 				)
 				.execute_some();
 
-			// Test paging: get next delegator (offset=2, limit=1) 
+			// Test paging: get next delegator (offset=2, limit=1)
 			let _next_result = precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob,
@@ -808,7 +783,7 @@ fn test_get_all_delegators_paging() {
 				.execute_returns(Vec::<CollatorDelegatorState>::new()); // Should return empty
 
 			// Verify basic execution succeeded for the other tests
-			// (We can't verify exact content due to hash-based ordering, 
+			// (We can't verify exact content due to hash-based ordering,
 			// but we confirmed the functions execute without panicking)
 		})
 }
@@ -819,15 +794,11 @@ fn test_single_delegator_paging_verification() {
 	// so we can predict the exact results
 	ExtBuilder::default()
 		.with_balances(vec![
-			(MockPeaqAccount::Alice, 500),    // Collator
-			(MockPeaqAccount::Bob, 200),      // Only delegator
+			(MockPeaqAccount::Alice, 500), // Collator
+			(MockPeaqAccount::Bob, 200),   // Only delegator
 		])
-		.with_collators(vec![
-			(MockPeaqAccount::Alice, 100),
-		])
-		.with_delegators(vec![
-			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 75),
-		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 100)])
+		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 75)])
 		.build()
 		.execute_with(|| {
 			// Test 1: Get all delegators (should return exactly Bob)
@@ -844,12 +815,10 @@ fn test_single_delegator_paging_verification() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(75),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(75),
+					}],
 					total: U256::from(75),
 				}]);
 
@@ -867,12 +836,10 @@ fn test_single_delegator_paging_verification() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(75),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(75),
+					}],
 					total: U256::from(75),
 				}]);
 
@@ -895,19 +862,15 @@ fn test_single_delegator_paging_verification() {
 				.prepare_test(
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
-					PCall::get_delegator_state {
-						delegator: H256::zero(),
-					},
+					PCall::get_delegator_state { delegator: H256::zero() },
 				)
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
-					collators: vec![
-						DelegationInfo {
-							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(75),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(75),
+					}],
 					total: U256::from(75),
 				}]);
 		})
@@ -945,7 +908,7 @@ fn test_paging_with_data_verification() {
 				MockPeaqAccount::Charlie,
 				30
 			));
-			
+
 			let david_addr = convert_mock_account_by_u8_list(MockPeaqAccount::David);
 			let alice_addr = convert_mock_account_by_u8_list(MockPeaqAccount::Alice);
 			let bob_addr = convert_mock_account_by_u8_list(MockPeaqAccount::Bob);
@@ -963,18 +926,9 @@ fn test_paging_with_data_verification() {
 					delegator: david_addr,
 					collators: vec![
 						// Sorted by stake amount (descending)
-						DelegationInfo {
-							collator: alice_addr,
-							amount: U256::from(50),
-						},
-						DelegationInfo {
-							collator: bob_addr,
-							amount: U256::from(40),
-						},
-						DelegationInfo {
-							collator: charlie_addr,
-							amount: U256::from(30),
-						},
+						DelegationInfo { collator: alice_addr, amount: U256::from(50) },
+						DelegationInfo { collator: bob_addr, amount: U256::from(40) },
+						DelegationInfo { collator: charlie_addr, amount: U256::from(30) },
 					],
 					total: U256::from(120),
 				}]);
@@ -994,14 +948,8 @@ fn test_paging_with_data_verification() {
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: david_addr,
 					collators: vec![
-						DelegationInfo {
-							collator: alice_addr,
-							amount: U256::from(50),
-						},
-						DelegationInfo {
-							collator: bob_addr,
-							amount: U256::from(40),
-						},
+						DelegationInfo { collator: alice_addr, amount: U256::from(50) },
+						DelegationInfo { collator: bob_addr, amount: U256::from(40) },
 					],
 					total: U256::from(120), // Total remains the full amount
 				}]);
@@ -1020,12 +968,10 @@ fn test_paging_with_data_verification() {
 				.expect_no_logs()
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: david_addr,
-					collators: vec![
-						DelegationInfo {
-							collator: charlie_addr,
-							amount: U256::from(30),
-						},
-					],
+					collators: vec![DelegationInfo {
+						collator: charlie_addr,
+						amount: U256::from(30),
+					}],
 					total: U256::from(120),
 				}]);
 
@@ -1058,21 +1004,11 @@ fn test_paging_with_data_verification() {
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: david_addr,
 					collators: vec![
-						DelegationInfo {
-							collator: alice_addr,
-							amount: U256::from(50),
-						},
-						DelegationInfo {
-							collator: bob_addr,
-							amount: U256::from(40),
-						},
-						DelegationInfo {
-							collator: charlie_addr,
-							amount: U256::from(30),
-						},
+						DelegationInfo { collator: alice_addr, amount: U256::from(50) },
+						DelegationInfo { collator: bob_addr, amount: U256::from(40) },
+						DelegationInfo { collator: charlie_addr, amount: U256::from(30) },
 					],
 					total: U256::from(120),
 				}]);
 		});
 }
-

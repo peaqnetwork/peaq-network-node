@@ -292,27 +292,30 @@ where
 		// Check if delegator is zero address (means get all)
 		if delegator == H256::zero() {
 			// Get all delegators using DelegatorState iterator
-			let all_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<Runtime>::iter()
-				.map(|(delegator_account, state)| {
-					let delegator_h256 = H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(delegator_account));
-					let collators: Vec<DelegationInfo> = state
-						.delegations
-						.into_iter()
-						.map(|stake| DelegationInfo {
-							collator: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(
-								stake.owner,
-							)),
-							amount: stake.amount.into(),
-						})
-						.collect();
+			let all_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<
+				Runtime,
+			>::iter()
+			.map(|(delegator_account, state)| {
+				let delegator_h256 =
+					H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(delegator_account));
+				let collators: Vec<DelegationInfo> = state
+					.delegations
+					.into_iter()
+					.map(|stake| DelegationInfo {
+						collator: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(
+							stake.owner,
+						)),
+						amount: stake.amount.into(),
+					})
+					.collect();
 
-					CollatorDelegatorState {
-						delegator: delegator_h256,
-						collators,
-						total: state.total.into(),
-					}
-				})
-				.collect();
+				CollatorDelegatorState {
+					delegator: delegator_h256,
+					collators,
+					total: state.total.into(),
+				}
+			})
+			.collect();
 
 			// Apply paging to the list of delegators
 			let offset_usize: usize = offset.try_into().unwrap_or(usize::MAX);
@@ -320,8 +323,9 @@ where
 			let num_delegators = all_delegators.len();
 
 			let mut paged_delegators = all_delegators;
-			
-			// Handle paging - if offset is MAX or limit is MAX (from failed conversion), handle appropriately
+
+			// Handle paging - if offset is MAX or limit is MAX (from failed conversion), handle
+			// appropriately
 			if offset != U256::zero() || limit != U256::zero() {
 				// If offset is beyond available items, return empty
 				if offset_usize >= paged_delegators.len() {
@@ -329,7 +333,7 @@ where
 				} else {
 					// Skip offset items
 					paged_delegators = paged_delegators.into_iter().skip(offset_usize).collect();
-					
+
 					// Take limit items (if limit is not 0, apply it)
 					if limit != U256::zero() && !paged_delegators.is_empty() {
 						let take_limit = limit_usize.min(paged_delegators.len());
@@ -340,7 +344,7 @@ where
 
 			// Account for reading all delegator states (estimated)
 			handle.record_db_read::<Runtime>(num_delegators.saturating_mul(2580))?; // 2580 per delegator state
-			
+
 			Ok(paged_delegators)
 		} else {
 			// DelegatorState: Storage read for specific delegator's state
