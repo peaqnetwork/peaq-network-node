@@ -277,16 +277,71 @@ where
 		handle: &mut impl PrecompileHandle,
 		delegator: H256,
 	) -> EvmResult<Vec<CollatorDelegatorState>> {
+		Self::get_delegator_state_paged(handle, delegator, U256::zero(), U256::zero())
+	}
+
+	#[precompile::public("getDelegatorState(bytes32,uint256,uint256)")]
+	#[precompile::public("get_delegator_state(bytes32,uint256,uint256)")]
+	#[precompile::view]
+	fn get_delegator_state_paged(
+		handle: &mut impl PrecompileHandle,
+		delegator: H256,
+		offset: U256,
+		limit: U256,
+	) -> EvmResult<Vec<CollatorDelegatorState>> {
 		// Check if delegator is zero address (means get all)
 		if delegator == H256::zero() {
-			// TODO: Getting all delegators requires iterating through DelegatorState
-			// which is currently private. For now, return empty result.
-			// This functionality could be implemented by either:
-			// 1. Making DelegatorState public in the pallet
-			// 2. Adding a public iterator method to the pallet
-			// 3. Implementing a different approach to collect all delegator data
-			handle.record_db_read::<Runtime>(100)?;
-			Ok(vec![])
+			// Get all delegators using DelegatorState iterator
+			let all_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<Runtime>::iter()
+				.map(|(delegator_account, state)| {
+					let delegator_h256 = H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(delegator_account));
+					let collators: Vec<DelegationInfo> = state
+						.delegations
+						.into_iter()
+						.map(|stake| DelegationInfo {
+							collator: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(
+								stake.owner,
+							)),
+							amount: stake.amount.into(),
+						})
+						.collect();
+
+					CollatorDelegatorState {
+						delegator: delegator_h256,
+						collators,
+						total: state.total.into(),
+					}
+				})
+				.collect();
+
+			// Apply paging to the list of delegators
+			let offset_usize: usize = offset.try_into().unwrap_or(usize::MAX);
+			let limit_usize: usize = limit.try_into().unwrap_or(usize::MAX);
+			let num_delegators = all_delegators.len();
+
+			let mut paged_delegators = all_delegators;
+			
+			// Handle paging - if offset is MAX or limit is MAX (from failed conversion), handle appropriately
+			if offset != U256::zero() || limit != U256::zero() {
+				// If offset is beyond available items, return empty
+				if offset_usize >= paged_delegators.len() {
+					paged_delegators = vec![];
+				} else {
+					// Skip offset items
+					paged_delegators = paged_delegators.into_iter().skip(offset_usize).collect();
+					
+					// Take limit items (if limit is not 0, apply it)
+					if limit != U256::zero() && !paged_delegators.is_empty() {
+						let take_limit = limit_usize.min(paged_delegators.len());
+						paged_delegators = paged_delegators.into_iter().take(take_limit).collect();
+					}
+				}
+			}
+
+			// Account for reading all delegator states (estimated)
+			handle.record_db_read::<Runtime>(num_delegators.saturating_mul(2580))?; // 2580 per delegator state
+			
+			Ok(paged_delegators)
 		} else {
 			// DelegatorState: Storage read for specific delegator's state
 			// We account for reading the delegator state
@@ -300,7 +355,7 @@ where
 
 			match delegator_state {
 				Some(state) => {
-					let collators: Vec<DelegationInfo> = state
+					let mut collators: Vec<DelegationInfo> = state
 						.delegations
 						.into_iter()
 						.map(|stake| DelegationInfo {
@@ -310,6 +365,25 @@ where
 							amount: stake.amount.into(),
 						})
 						.collect();
+
+					// Apply paging to collators if offset or limit is specified
+					let offset_usize: usize = offset.try_into().unwrap_or(0);
+					let limit_usize: usize = limit.try_into().unwrap_or(0);
+
+					if offset_usize > 0 || limit_usize > 0 {
+						// If offset is beyond available collators, return empty
+						if offset_usize >= collators.len() {
+							return Ok(vec![]);
+						}
+
+						// Skip offset items
+						collators = collators.into_iter().skip(offset_usize).collect();
+
+						// Take limit items (if limit is 0, take all remaining)
+						if limit_usize > 0 && !collators.is_empty() {
+							collators = collators.into_iter().take(limit_usize).collect();
+						}
+					}
 
 					Ok(vec![CollatorDelegatorState {
 						delegator,

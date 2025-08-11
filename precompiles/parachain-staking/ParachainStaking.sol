@@ -79,4 +79,15 @@ interface ParachainStaking {
     /// 
     /// selector: 0x72a09ed8
     function getDelegatorState(bytes32 delegator) external view returns (CollatorDelegatorState[] memory);
+
+    /// Get the delegations for a specific delegator or all delegators with paging support
+    /// If delegator is zero address (0x0), returns all delegators' states with paging
+    /// Otherwise returns the delegations for the specified delegator (paging applies to collators within delegator)
+    /// 
+    /// @param delegator The delegator address to query (use 0x0 for all delegators)
+    /// @param offset The starting index for pagination (0-based)
+    /// @param limit The maximum number of items to return (0 means no limit)
+    /// 
+    /// selector: 0x657c7960
+    function getDelegatorState(bytes32 delegator, uint256 offset, uint256 limit) external view returns (CollatorDelegatorState[] memory);
 }

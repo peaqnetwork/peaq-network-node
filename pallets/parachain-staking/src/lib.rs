@@ -565,7 +565,7 @@ pub mod pallet {
 	/// It maps from an account to its delegation details.
 	#[pallet::storage]
 	#[pallet::getter(fn delegator_state)]
-	pub(crate) type DelegatorState<T: Config> = StorageMap<
+	pub type DelegatorState<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
