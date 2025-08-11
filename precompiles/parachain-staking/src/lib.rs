@@ -68,8 +68,8 @@ impl GasCalculator {
 	pub const SINGLE_DELEGATOR_READ: usize = 3789;
 	/// Gas cost per delegator in bulk operations (avg 3 delegations)
 	pub const BULK_DELEGATOR_READ_PER_ITEM: usize = 2580;
-	/// Gas cost for reading collator pool (theoretical 150 collators)
-	pub const COLLATOR_POOL_READ: usize = 7200;
+	/// Gas cost for reading collator pool (realistic 64 collators)
+	pub const COLLATOR_POOL_READ: usize = 3072;
 
 	/// Calculate gas cost for bulk delegator operations
 	pub fn calculate_bulk_delegator_cost(count: usize) -> usize {
@@ -253,7 +253,7 @@ where
 	#[precompile::view]
 	fn get_collator_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
 		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
-		// we account for a theoretical 150 pool.
+		// we account for a realistic 64 collator pool.
 
 		handle.record_db_read::<Runtime>(GasCalculator::COLLATOR_POOL_READ)?;
 
@@ -269,7 +269,7 @@ where
 	#[precompile::view]
 	fn get_wait_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
 		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
-		// we account for a theoretical 150 pool.
+		// we account for a realistic 64 collator pool.
 
 		handle.record_db_read::<Runtime>(GasCalculator::COLLATOR_POOL_READ)?;
 
