@@ -70,6 +70,8 @@ impl GasCalculator {
 	pub const BULK_DELEGATOR_READ_PER_ITEM: usize = 2580;
 	/// Gas cost for reading collator pool (realistic 64 collators)
 	pub const COLLATOR_POOL_READ: usize = 3072;
+	/// Maximum number of delegators to return in a single bulk query
+	pub const MAX_DELEGATORS_PER_QUERY: usize = 512;
 
 	/// Calculate gas cost for bulk delegator operations
 	pub fn calculate_bulk_delegator_cost(count: usize) -> usize {
@@ -151,17 +153,31 @@ where
 		let offset_usize: usize = offset.try_into().unwrap_or(usize::MAX);
 		let limit_usize: usize = limit.try_into().unwrap_or(usize::MAX);
 
-		// Early return for invalid offset to avoid unnecessary processing
+		// Validate input parameters
 		if offset != U256::zero() && offset_usize == usize::MAX {
-			return Ok(vec![]);
+			return Err(RevertReason::custom("Invalid offset: value too large").into());
+		}
+
+		// Forbid limit = 0 to force explicit pagination
+		if limit == U256::zero() {
+			return Err(RevertReason::custom("Invalid limit: must be greater than 0").into());
+		}
+
+		if limit_usize == usize::MAX {
+			return Err(RevertReason::custom("Invalid limit: value too large").into());
+		}
+
+		// Forbid limit exceeding maximum to prevent resource exhaustion
+		if limit_usize > GasCalculator::MAX_DELEGATORS_PER_QUERY {
+			return Err(RevertReason::custom(&format!(
+				"Invalid limit: maximum allowed is {}",
+				GasCalculator::MAX_DELEGATORS_PER_QUERY
+			))
+			.into());
 		}
 
 		// Use lazy evaluation with iterator chaining for optimal performance
-		let actual_limit = if limit == U256::zero() || limit_usize == usize::MAX {
-			usize::MAX // No limit
-		} else {
-			limit_usize
-		};
+		let actual_limit = limit_usize;
 
 		// Chain operations: skip -> take -> process (only processes what we need)
 		let paged_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<
@@ -204,6 +220,32 @@ where
 		offset: U256,
 		limit: U256,
 	) -> EvmResult<Vec<CollatorDelegatorState>> {
+		// Validate input parameters
+		let offset_usize: usize = offset.try_into().unwrap_or(usize::MAX);
+		let limit_usize: usize = limit.try_into().unwrap_or(usize::MAX);
+
+		if offset != U256::zero() && offset_usize == usize::MAX {
+			return Err(RevertReason::custom("Invalid offset: value too large").into());
+		}
+
+		// Forbid limit = 0 for consistency (force explicit pagination)
+		if limit == U256::zero() {
+			return Err(RevertReason::custom("Invalid limit: must be greater than 0").into());
+		}
+
+		if limit_usize == usize::MAX {
+			return Err(RevertReason::custom("Invalid limit: value too large").into());
+		}
+
+		// Enforce consistent maximum limit for all query types
+		if limit_usize > GasCalculator::MAX_DELEGATORS_PER_QUERY {
+			return Err(RevertReason::custom(&format!(
+				"Invalid limit: maximum allowed is {}",
+				GasCalculator::MAX_DELEGATORS_PER_QUERY
+			))
+			.into());
+		}
+
 		// Gas accounting for single delegator state read
 		handle.record_db_read::<Runtime>(GasCalculator::SINGLE_DELEGATOR_READ)?;
 
@@ -224,9 +266,6 @@ where
 					.collect();
 
 				// Apply paging to collators if offset or limit is specified
-				let offset_usize: usize = offset.try_into().unwrap_or(0);
-				let limit_usize: usize = limit.try_into().unwrap_or(0);
-
 				if offset_usize > 0 || limit_usize > 0 {
 					// If offset is beyond available collators, return empty
 					if offset_usize >= collators.len() {
@@ -421,20 +460,10 @@ where
 		Ok(())
 	}
 
-	#[precompile::public("getDelegatorState(bytes32)")]
-	#[precompile::public("get_delegator_state(bytes32)")]
-	#[precompile::view]
-	fn get_delegator_state(
-		handle: &mut impl PrecompileHandle,
-		delegator: H256,
-	) -> EvmResult<Vec<CollatorDelegatorState>> {
-		Self::get_delegator_state_paged(handle, delegator, U256::zero(), U256::zero())
-	}
-
 	#[precompile::public("getDelegatorState(bytes32,uint256,uint256)")]
 	#[precompile::public("get_delegator_state(bytes32,uint256,uint256)")]
 	#[precompile::view]
-	fn get_delegator_state_paged(
+	fn get_delegator_state(
 		handle: &mut impl PrecompileHandle,
 		delegator: H256,
 		offset: U256,
