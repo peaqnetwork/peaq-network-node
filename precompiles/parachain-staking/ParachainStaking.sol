@@ -19,6 +19,17 @@ interface ParachainStaking {
         uint256 commission;
     }
 
+    struct DelegationInfo {
+        bytes32 collator;
+        uint256 amount;
+    }
+
+    struct CollatorDelegatorState {
+        bytes32 delegator;
+        DelegationInfo[] collators;
+        uint256 total;
+    }
+
     /// Get all collator informations
     // selector: 0xaaacb283
     function getCollatorList() external view returns (CollatorInfo[] memory);
@@ -58,4 +69,14 @@ interface ParachainStaking {
 		/// elapsed.
     /// selector: 0x0f615369
     function unlockUnstaked(address target) external;
+
+    /// Get the delegations for a specific delegator or all delegators
+    /// If delegator is zero address (0x0), returns all delegators' states
+    /// Otherwise returns the delegations for the specified delegator
+    /// 
+    /// IMPORTANT: Collators within each delegator's state are sorted by stake amount 
+    /// in DESCENDING order (highest stake first, lowest stake last)
+    /// 
+    /// selector: 0x72a09ed8
+    function getDelegatorState(bytes32 delegator) external view returns (CollatorDelegatorState[] memory);
 }

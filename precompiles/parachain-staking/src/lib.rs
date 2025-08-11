@@ -53,6 +53,19 @@ pub struct CollatorInfo {
 	commission: U256,
 }
 
+#[derive(Default, solidity::Codec)]
+pub struct DelegationInfo {
+	collator: H256,
+	amount: U256,
+}
+
+#[derive(Default, solidity::Codec)]
+pub struct CollatorDelegatorState {
+	delegator: H256,
+	collators: Vec<DelegationInfo>,
+	total: U256,
+}
+
 #[precompile_utils::precompile]
 impl<Runtime> ParachainStakingPrecompile<Runtime>
 where
@@ -255,6 +268,58 @@ where
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
+	}
+
+	#[precompile::public("getDelegatorState(bytes32)")]
+	#[precompile::public("get_delegator_state(bytes32)")]
+	#[precompile::view]
+	fn get_delegator_state(
+		handle: &mut impl PrecompileHandle,
+		delegator: H256,
+	) -> EvmResult<Vec<CollatorDelegatorState>> {
+		// Check if delegator is zero address (means get all)
+		if delegator == H256::zero() {
+			// TODO: Getting all delegators requires iterating through DelegatorState
+			// which is currently private. For now, return empty result.
+			// This functionality could be implemented by either:
+			// 1. Making DelegatorState public in the pallet
+			// 2. Adding a public iterator method to the pallet
+			// 3. Implementing a different approach to collect all delegator data
+			handle.record_db_read::<Runtime>(100)?;
+			Ok(vec![])
+		} else {
+			// DelegatorState: Storage read for specific delegator's state
+			// We account for reading the delegator state
+			handle.record_db_read::<Runtime>(3789)?;
+
+			let delegator_account: Runtime::AccountId =
+				AccountIdOf::<Runtime>::from(delegator.to_fixed_bytes());
+
+			let delegator_state =
+				parachain_staking::Pallet::<Runtime>::delegator_state(&delegator_account);
+
+			match delegator_state {
+				Some(state) => {
+					let collators: Vec<DelegationInfo> = state
+						.delegations
+						.into_iter()
+						.map(|stake| DelegationInfo {
+							collator: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(
+								stake.owner,
+							)),
+							amount: stake.amount.into(),
+						})
+						.collect();
+
+					Ok(vec![CollatorDelegatorState {
+						delegator,
+						collators,
+						total: state.total.into(),
+					}])
+				},
+				None => Ok(vec![]),
+			}
+		}
 	}
 
 	fn u256_to_amount(value: U256) -> MayRevert<BalanceOf<Runtime>> {

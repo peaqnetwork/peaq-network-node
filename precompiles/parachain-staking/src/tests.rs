@@ -21,7 +21,7 @@ use crate::{
 		roll_to, Balances, BlockNumber, ExtBuilder, PCall, Precompiles, PrecompilesValue,
 		RuntimeOrigin, StakePallet, Test,
 	},
-	Address, BalanceOf, CollatorInfo, U256,
+	Address, BalanceOf, CollatorDelegatorState, CollatorInfo, DelegationInfo, U256,
 };
 use frame_support::{
 	assert_ok, storage::bounded_btree_map::BoundedBTreeMap, traits::LockIdentifier,
@@ -55,6 +55,7 @@ fn test_selector_enum() {
 	assert!(PCall::delegator_stake_more_selectors().contains(&0x1b3d3cdf));
 	assert!(PCall::delegator_stake_less_selectors().contains(&0xb7e8947f));
 	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
+	assert!(PCall::get_delegator_state_selectors().contains(&0x72a09ed8));
 }
 
 #[test]
@@ -71,6 +72,7 @@ fn modifiers() {
 			);
 
 			tester.test_view_modifier(PCall::get_collator_list_selectors());
+			tester.test_view_modifier(PCall::get_delegator_state_selectors());
 		});
 }
 
@@ -343,3 +345,269 @@ fn should_update_total_stake() {
 			);
 		})
 }
+
+#[test]
+fn test_get_delegator_state() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Bob, 200),
+			(MockPeaqAccount::Charlie, 300),
+			(MockPeaqAccount::David, 400),
+		])
+		.with_collators(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Charlie, 200),
+		])
+		.with_delegators(vec![
+			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
+			(MockPeaqAccount::David, MockPeaqAccount::Alice, 60),
+		])
+		.build()
+		.execute_with(|| {
+			// Test Bob's delegator state
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(vec![CollatorDelegatorState {
+					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+					collators: vec![
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+							amount: U256::from(50),
+						},
+					],
+					total: U256::from(50),
+				}]);
+
+			// Test David's delegator state
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(vec![CollatorDelegatorState {
+					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+					collators: vec![
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+							amount: U256::from(60),
+						},
+					],
+					total: U256::from(60),
+				}]);
+
+			// Test non-existent delegator (Alice is a collator, not a delegator)
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(Vec::<CollatorDelegatorState>::new());
+
+			// Now let Bob also delegate to Charlie
+			assert_ok!(StakePallet::delegate_another_candidate(
+				RuntimeOrigin::signed(MockPeaqAccount::Bob.into()),
+				MockPeaqAccount::Charlie.into(),
+				30
+			));
+
+			// Test Bob's updated delegator state (now delegating to both Alice and Charlie)
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(vec![CollatorDelegatorState {
+					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+					collators: vec![
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+							amount: U256::from(50),
+						},
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
+							amount: U256::from(30),
+						},
+					],
+					total: U256::from(80),
+				}]);
+		})
+}
+
+#[test]
+fn test_get_all_delegators_state() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Bob, 200),
+			(MockPeaqAccount::Charlie, 300),
+			(MockPeaqAccount::David, 400),
+		])
+		.with_collators(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Charlie, 200),
+		])
+		.with_delegators(vec![
+			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
+			(MockPeaqAccount::David, MockPeaqAccount::Alice, 60),
+		])
+		.build()
+		.execute_with(|| {
+			// Add David's delegation to Charlie
+			assert_ok!(StakePallet::delegate_another_candidate(
+				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
+				MockPeaqAccount::Charlie.into(),
+				40
+			));
+
+			// Test getting all delegators' states using zero address
+			// Currently returns empty as noted in TODO - full implementation would require
+			// making DelegatorState public or adding iterator methods to the pallet
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state { delegator: H256::zero() },
+				)
+				.expect_no_logs()
+				.execute_returns(Vec::<CollatorDelegatorState>::new());
+		})
+}
+
+#[test]
+fn test_delegator_collators_sorting_by_stake_amount() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 500),    // Collator 
+			(MockPeaqAccount::Bob, 500),      // Collator
+			(MockPeaqAccount::Charlie, 500),  // Collator
+			(MockPeaqAccount::David, 1000),   // Delegator with delegations to multiple collators
+		])
+		.with_collators(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Bob, 200), 
+			(MockPeaqAccount::Charlie, 300),
+		])
+		.with_delegators(vec![
+			(MockPeaqAccount::David, MockPeaqAccount::Alice, 50),   // Lowest stake to Alice
+		])
+		.build()
+		.execute_with(|| {
+			// Add delegation to Bob with middle stake
+			assert_ok!(StakePallet::delegate_another_candidate(
+				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
+				MockPeaqAccount::Bob.into(),
+				80  // Middle stake
+			));
+
+			// Add delegation to Charlie with highest stake
+			assert_ok!(StakePallet::delegate_another_candidate(
+				RuntimeOrigin::signed(MockPeaqAccount::David.into()),
+				MockPeaqAccount::Charlie.into(),
+				100  // Highest stake
+			));
+
+			// Test David's delegations - collators should be sorted by delegation amount (descending) 
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::David,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(vec![CollatorDelegatorState {
+					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+					collators: vec![
+						// Should be sorted by stake amount in DESCENDING order:
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
+							amount: U256::from(100), // Highest stake first
+						},
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+							amount: U256::from(80), // Middle stake second
+						},
+						DelegationInfo {
+							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+							amount: U256::from(50), // Lowest stake last
+						},
+					],
+					total: U256::from(230), // 100 + 80 + 50
+				}]);
+		})
+}
+
+#[test]
+fn test_get_delegator_state_edge_cases() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 100),
+			(MockPeaqAccount::Bob, 200),
+		])
+		.with_collators(vec![
+			(MockPeaqAccount::Alice, 100),
+		])
+		.with_delegators(vec![
+			(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 50),
+		])
+		.build()
+		.execute_with(|| {
+			// Test zero address - should return empty vector (not implemented)
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state { delegator: H256::zero() },
+				)
+				.expect_no_logs()
+				.execute_returns(Vec::<CollatorDelegatorState>::new());
+
+			// Test completely non-existent account (not a collator, not a delegator)
+			let non_existent_account = H256::from([0x99; 32]); // Random account that doesn't exist
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: non_existent_account,
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(Vec::<CollatorDelegatorState>::new());
+
+			// Test collator account that exists but has no delegations 
+			// (Alice is a collator but not a delegator)
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_delegator_state {
+						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+					},
+				)
+				.expect_no_logs()
+				.execute_returns(Vec::<CollatorDelegatorState>::new());
+		})
+}
+
