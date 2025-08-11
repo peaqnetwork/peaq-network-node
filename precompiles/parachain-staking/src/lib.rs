@@ -40,6 +40,43 @@ type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as C
 	<Runtime as frame_system::Config>::AccountId,
 >>::Balance;
 
+/// Helper struct for account conversions between H256 and AccountId
+struct AccountConverter<Runtime>(PhantomData<Runtime>);
+
+impl<Runtime> AccountConverter<Runtime>
+where
+	Runtime: frame_system::Config,
+	AccountIdOf<Runtime>: From<[u8; 32]>,
+	[u8; 32]: From<AccountIdOf<Runtime>>,
+{
+	/// Convert H256 to AccountId
+	pub fn h256_to_account_id(h256: H256) -> AccountIdOf<Runtime> {
+		AccountIdOf::<Runtime>::from(h256.to_fixed_bytes())
+	}
+
+	/// Convert AccountId to H256
+	pub fn account_id_to_h256(account: AccountIdOf<Runtime>) -> H256 {
+		H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(account))
+	}
+}
+
+/// Gas cost constants and calculation utilities
+struct GasCalculator;
+
+impl GasCalculator {
+	/// Gas cost for reading a single delegator state (max 75 delegations)
+	pub const SINGLE_DELEGATOR_READ: usize = 3789;
+	/// Gas cost per delegator in bulk operations (avg 3 delegations)
+	pub const BULK_DELEGATOR_READ_PER_ITEM: usize = 2580;
+	/// Gas cost for reading collator pool (theoretical 150 collators)
+	pub const COLLATOR_POOL_READ: usize = 7200;
+
+	/// Calculate gas cost for bulk delegator operations
+	pub fn calculate_bulk_delegator_cost(count: usize) -> usize {
+		count.saturating_mul(Self::BULK_DELEGATOR_READ_PER_ITEM)
+	}
+}
+
 /// A precompile to wrap the functionality from parachain_staking.
 ///
 /// EXAMPLE USECASE:
@@ -78,6 +115,139 @@ where
 	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
 {
+	/// Helper method to get all collator info
+	fn get_all_collators_info() -> Vec<CollatorInfo> {
+		parachain_staking::CandidatePool::<Runtime>::iter()
+			.map(|(_id, stake_info)| CollatorInfo {
+				owner: AccountConverter::<Runtime>::account_id_to_h256(stake_info.id),
+				amount: stake_info.total.into(),
+				commission: U256::from(stake_info.commission.deconstruct() as u128),
+			})
+			.collect()
+	}
+
+	/// Helper method to get top candidates as H256 addresses
+	fn get_top_candidates() -> Vec<H256> {
+		parachain_staking::Pallet::<Runtime>::top_candidates()
+			.into_iter()
+			.map(|stake_info| AccountConverter::<Runtime>::account_id_to_h256(stake_info.owner))
+			.collect()
+	}
+
+	/// Helper method to get current validators as H256 addresses
+	fn get_validators() -> Vec<H256> {
+		pallet_session::Pallet::<Runtime>::validators()
+			.into_iter()
+			.map(|validator| AccountConverter::<Runtime>::account_id_to_h256(validator))
+			.collect()
+	}
+
+	/// Get all delegators with paging support (optimized with lazy evaluation)
+	fn get_all_delegators_paged(
+		handle: &mut impl PrecompileHandle,
+		offset: U256,
+		limit: U256,
+	) -> EvmResult<Vec<CollatorDelegatorState>> {
+		let offset_usize: usize = offset.try_into().unwrap_or(usize::MAX);
+		let limit_usize: usize = limit.try_into().unwrap_or(usize::MAX);
+
+		// Early return for invalid offset to avoid unnecessary processing
+		if offset != U256::zero() && offset_usize == usize::MAX {
+			return Ok(vec![]);
+		}
+
+		// Use lazy evaluation with iterator chaining for optimal performance
+		let actual_limit = if limit == U256::zero() || limit_usize == usize::MAX {
+			usize::MAX // No limit
+		} else {
+			limit_usize
+		};
+
+		// Chain operations: skip -> take -> process (only processes what we need)
+		let paged_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<
+			Runtime,
+		>::iter()
+		.skip(offset_usize)
+		.take(actual_limit)
+		.map(|(delegator_account, state)| {
+			let delegator_h256 = AccountConverter::<Runtime>::account_id_to_h256(delegator_account);
+			let collators: Vec<DelegationInfo> = state
+				.delegations
+				.into_iter()
+				.map(|stake| DelegationInfo {
+					collator: AccountConverter::<Runtime>::account_id_to_h256(stake.owner),
+					amount: stake.amount.into(),
+				})
+				.collect();
+
+			CollatorDelegatorState {
+				delegator: delegator_h256,
+				collators,
+				total: state.total.into(),
+			}
+		})
+		.collect();
+
+		// Account for reading only the processed delegator states
+		let processed_count = paged_delegators.len();
+		handle.record_db_read::<Runtime>(GasCalculator::calculate_bulk_delegator_cost(
+			processed_count,
+		))?;
+
+		Ok(paged_delegators)
+	}
+
+	/// Get single delegator state with paging support for their delegations
+	fn get_single_delegator_paged(
+		handle: &mut impl PrecompileHandle,
+		delegator: H256,
+		offset: U256,
+		limit: U256,
+	) -> EvmResult<Vec<CollatorDelegatorState>> {
+		// Gas accounting for single delegator state read
+		handle.record_db_read::<Runtime>(GasCalculator::SINGLE_DELEGATOR_READ)?;
+
+		let delegator_account = AccountConverter::<Runtime>::h256_to_account_id(delegator);
+
+		let delegator_state =
+			parachain_staking::Pallet::<Runtime>::delegator_state(&delegator_account);
+
+		match delegator_state {
+			Some(state) => {
+				let mut collators: Vec<DelegationInfo> = state
+					.delegations
+					.into_iter()
+					.map(|stake| DelegationInfo {
+						collator: AccountConverter::<Runtime>::account_id_to_h256(stake.owner),
+						amount: stake.amount.into(),
+					})
+					.collect();
+
+				// Apply paging to collators if offset or limit is specified
+				let offset_usize: usize = offset.try_into().unwrap_or(0);
+				let limit_usize: usize = limit.try_into().unwrap_or(0);
+
+				if offset_usize > 0 || limit_usize > 0 {
+					// If offset is beyond available collators, return empty
+					if offset_usize >= collators.len() {
+						return Ok(vec![]);
+					}
+
+					// Skip offset items
+					collators = collators.into_iter().skip(offset_usize).collect();
+
+					// Take limit items (if limit is 0, take all remaining)
+					if limit_usize > 0 && !collators.is_empty() {
+						collators = collators.into_iter().take(limit_usize).collect();
+					}
+				}
+
+				Ok(vec![CollatorDelegatorState { delegator, collators, total: state.total.into() }])
+			},
+			None => Ok(vec![]),
+		}
+	}
+
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
 	#[precompile::view]
@@ -85,22 +255,12 @@ where
 		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
 		// we account for a theoretical 150 pool.
 
-		handle.record_db_read::<Runtime>(7200)?;
+		handle.record_db_read::<Runtime>(GasCalculator::COLLATOR_POOL_READ)?;
 
-		let all_collators = parachain_staking::CandidatePool::<Runtime>::iter()
-			.map(|(_id, stake_info)| CollatorInfo {
-				owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.id)),
-				amount: stake_info.total.into(),
-				commission: U256::from(stake_info.commission.deconstruct() as u128),
-			})
-			.collect::<Vec<CollatorInfo>>();
-		let top_candiate = parachain_staking::Pallet::<Runtime>::top_candidates()
-			.into_iter()
-			.map(|stake_info| {
-				H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.owner))
-			})
-			.collect::<Vec<H256>>();
-		let candidate_list = all_collators.into_iter().filter(|x| top_candiate.contains(&x.owner));
+		let all_collators = Self::get_all_collators_info();
+		let top_candidates = Self::get_top_candidates();
+		let candidate_list =
+			all_collators.into_iter().filter(|x| top_candidates.contains(&x.owner));
 		Ok(candidate_list.collect::<Vec<CollatorInfo>>())
 	}
 
@@ -111,19 +271,10 @@ where
 		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
 		// we account for a theoretical 150 pool.
 
-		handle.record_db_read::<Runtime>(7200)?;
+		handle.record_db_read::<Runtime>(GasCalculator::COLLATOR_POOL_READ)?;
 
-		let all_collators = parachain_staking::CandidatePool::<Runtime>::iter()
-			.map(|(_id, stake_info)| CollatorInfo {
-				owner: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(stake_info.id)),
-				amount: stake_info.total.into(),
-				commission: U256::from(stake_info.commission.deconstruct() as u128),
-			})
-			.collect::<Vec<CollatorInfo>>();
-		let validators = pallet_session::Pallet::<Runtime>::validators()
-			.into_iter()
-			.map(|info| H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(info)))
-			.collect::<Vec<H256>>();
+		let all_collators = Self::get_all_collators_info();
+		let validators = Self::get_validators();
 		let candidate_list = all_collators.into_iter().filter(|x| !validators.contains(&x.owner));
 		Ok(candidate_list.collect::<Vec<CollatorInfo>>())
 	}
@@ -139,9 +290,9 @@ where
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
+		let collator_account = AccountConverter::<Runtime>::h256_to_account_id(collator);
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
-			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+			<Runtime::Lookup as StaticLookup>::unlookup(collator_account.clone());
 		let call = parachain_staking::Call::<Runtime>::join_delegators { collator, amount: stake };
 
 		// Dispatch call (if enough gas).
@@ -161,9 +312,9 @@ where
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
+		let collator_account = AccountConverter::<Runtime>::h256_to_account_id(collator);
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
-			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+			<Runtime::Lookup as StaticLookup>::unlookup(collator_account.clone());
 		let call = parachain_staking::Call::<Runtime>::delegate_another_candidate {
 			collator,
 			amount: stake,
@@ -193,9 +344,9 @@ where
 	fn revoke_delegation(handle: &mut impl PrecompileHandle, collator: H256) -> EvmResult {
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
+		let collator_account = AccountConverter::<Runtime>::h256_to_account_id(collator);
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
-			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+			<Runtime::Lookup as StaticLookup>::unlookup(collator_account.clone());
 		let call = parachain_staking::Call::<Runtime>::revoke_delegation { collator };
 
 		// Dispatch call (if enough gas).
@@ -215,9 +366,9 @@ where
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
+		let collator_account = AccountConverter::<Runtime>::h256_to_account_id(collator);
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
-			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+			<Runtime::Lookup as StaticLookup>::unlookup(collator_account.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_more {
 			candidate: collator,
 			more: stake,
@@ -240,9 +391,9 @@ where
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
-		let collator: Runtime::AccountId = AccountIdOf::<Runtime>::from(collator.to_fixed_bytes());
+		let collator_account = AccountConverter::<Runtime>::h256_to_account_id(collator);
 		let collator: <Runtime::Lookup as StaticLookup>::Source =
-			<Runtime::Lookup as StaticLookup>::unlookup(collator.clone());
+			<Runtime::Lookup as StaticLookup>::unlookup(collator_account.clone());
 		let call = parachain_staking::Call::<Runtime>::delegator_stake_less {
 			candidate: collator,
 			less: stake,
@@ -289,114 +440,11 @@ where
 		offset: U256,
 		limit: U256,
 	) -> EvmResult<Vec<CollatorDelegatorState>> {
-		// Check if delegator is zero address (means get all)
+		// Check if delegator is zero address (means get all delegators)
 		if delegator == H256::zero() {
-			// Get all delegators using DelegatorState iterator
-			let all_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<
-				Runtime,
-			>::iter()
-			.map(|(delegator_account, state)| {
-				let delegator_h256 =
-					H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(delegator_account));
-				let collators: Vec<DelegationInfo> = state
-					.delegations
-					.into_iter()
-					.map(|stake| DelegationInfo {
-						collator: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(
-							stake.owner,
-						)),
-						amount: stake.amount.into(),
-					})
-					.collect();
-
-				CollatorDelegatorState {
-					delegator: delegator_h256,
-					collators,
-					total: state.total.into(),
-				}
-			})
-			.collect();
-
-			// Apply paging to the list of delegators
-			let offset_usize: usize = offset.try_into().unwrap_or(usize::MAX);
-			let limit_usize: usize = limit.try_into().unwrap_or(usize::MAX);
-			let num_delegators = all_delegators.len();
-
-			let mut paged_delegators = all_delegators;
-
-			// Handle paging - if offset is MAX or limit is MAX (from failed conversion), handle
-			// appropriately
-			if offset != U256::zero() || limit != U256::zero() {
-				// If offset is beyond available items, return empty
-				if offset_usize >= paged_delegators.len() {
-					paged_delegators = vec![];
-				} else {
-					// Skip offset items
-					paged_delegators = paged_delegators.into_iter().skip(offset_usize).collect();
-
-					// Take limit items (if limit is not 0, apply it)
-					if limit != U256::zero() && !paged_delegators.is_empty() {
-						let take_limit = limit_usize.min(paged_delegators.len());
-						paged_delegators = paged_delegators.into_iter().take(take_limit).collect();
-					}
-				}
-			}
-
-			// Account for reading all delegator states (estimated)
-			handle.record_db_read::<Runtime>(num_delegators.saturating_mul(2580))?; // 2580 per delegator state
-
-			Ok(paged_delegators)
+			Self::get_all_delegators_paged(handle, offset, limit)
 		} else {
-			// DelegatorState: Storage read for specific delegator's state
-			// We account for reading the delegator state
-			handle.record_db_read::<Runtime>(3789)?;
-
-			let delegator_account: Runtime::AccountId =
-				AccountIdOf::<Runtime>::from(delegator.to_fixed_bytes());
-
-			let delegator_state =
-				parachain_staking::Pallet::<Runtime>::delegator_state(&delegator_account);
-
-			match delegator_state {
-				Some(state) => {
-					let mut collators: Vec<DelegationInfo> = state
-						.delegations
-						.into_iter()
-						.map(|stake| DelegationInfo {
-							collator: H256::from(<AccountIdOf<Runtime> as Into<[u8; 32]>>::into(
-								stake.owner,
-							)),
-							amount: stake.amount.into(),
-						})
-						.collect();
-
-					// Apply paging to collators if offset or limit is specified
-					let offset_usize: usize = offset.try_into().unwrap_or(0);
-					let limit_usize: usize = limit.try_into().unwrap_or(0);
-
-					if offset_usize > 0 || limit_usize > 0 {
-						// If offset is beyond available collators, return empty
-						if offset_usize >= collators.len() {
-							return Ok(vec![]);
-						}
-
-						// Skip offset items
-						collators = collators.into_iter().skip(offset_usize).collect();
-
-						// Take limit items (if limit is 0, take all remaining)
-						if limit_usize > 0 && !collators.is_empty() {
-							collators = collators.into_iter().take(limit_usize).collect();
-						}
-					}
-
-					Ok(vec![CollatorDelegatorState {
-						delegator,
-						collators,
-						total: state.total.into(),
-					}])
-				},
-				None => Ok(vec![]),
-			}
+			Self::get_single_delegator_paged(handle, delegator, offset, limit)
 		}
 	}
 
