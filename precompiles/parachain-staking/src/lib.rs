@@ -276,7 +276,7 @@ where
 					collators = collators.into_iter().skip(offset_usize).collect();
 
 					// Take limit items (if limit is 0, take all remaining)
-					if limit_usize > 0 && !collators.is_empty() {
+					if !collators.is_empty() {
 						collators = collators.into_iter().take(limit_usize).collect();
 					}
 				}
