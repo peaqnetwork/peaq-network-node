@@ -265,8 +265,8 @@ where
 					})
 					.collect();
 
-				// Apply paging to collators if offset or limit is specified
-				if offset_usize > 0 || limit_usize > 0 {
+				// Apply paging to collators if offset is specified
+				if offset_usize > 0 {
 					// If offset is beyond available collators, return empty
 					if offset_usize >= collators.len() {
 						return Ok(vec![]);
