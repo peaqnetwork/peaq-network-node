@@ -466,9 +466,11 @@ where
 	/// If delegator is zero address (0x0), returns all delegators' states with paging.
 	/// Otherwise returns the delegations for the specified delegator with paging.
 	///
-	/// IMPORTANT: Delegations within each delegator's state are returned as stored
-	/// by the parachain-staking pallet, which maintains them sorted by stake amount
-	/// in descending order (highest stake first).
+	/// IMPORTANT - Sorting behavior:
+	/// - When querying ALL delegators (0x0): The order of delegators is NOT sorted,
+	///   they are returned in unpredictable storage iteration order
+	/// - Each individual delegator's delegations: ARE sorted by stake amount in
+	///   descending order (highest stake first), maintained by the parachain-staking pallet
 	///
 	/// Parameters:
 	/// - delegator: H256 address of delegator (or 0x0 for all delegators)

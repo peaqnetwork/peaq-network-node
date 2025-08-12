@@ -74,8 +74,11 @@ interface ParachainStaking {
     /// If delegator is zero address (0x0), returns all delegators' states
     /// Otherwise returns the delegations for the specified delegator
     /// 
-    /// IMPORTANT: Collators within each delegator's state are sorted by stake amount 
-    /// in DESCENDING order (highest stake first, lowest stake last)
+    /// IMPORTANT - Sorting behavior:
+    /// - When querying ALL delegators (0x0): The order of delegators is NOT sorted,
+    ///   they are returned in unpredictable storage iteration order
+    /// - Each individual delegator's delegations: ARE sorted by stake amount
+    ///   in DESCENDING order (highest stake first, lowest stake last)
     /// 
     /// selector: 0x72a09ed8
     function getDelegatorState(bytes32 delegator) external view returns (CollatorDelegatorState[] memory);
@@ -84,9 +87,13 @@ interface ParachainStaking {
     /// If delegator is zero address (0x0), returns all delegators' states with paging
     /// Otherwise returns the delegations for the specified delegator (paging applies to collators within delegator)
     /// 
+    /// IMPORTANT - Sorting behavior (same as above):
+    /// - When querying ALL delegators (0x0): The order of delegators is NOT sorted
+    /// - Each individual delegator's delegations: ARE sorted by stake amount in DESCENDING order
+    /// 
     /// @param delegator The delegator address to query (use 0x0 for all delegators)
     /// @param offset The starting index for pagination (0-based)
-    /// @param limit The maximum number of items to return (0 means no limit)
+    /// @param limit The maximum number of items to return (must be 1-512)
     /// 
     /// selector: 0x657c7960
     function getDelegatorState(bytes32 delegator, uint256 offset, uint256 limit) external view returns (CollatorDelegatorState[] memory);
