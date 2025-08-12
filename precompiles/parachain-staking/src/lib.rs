@@ -169,7 +169,7 @@ where
 
 		// Forbid limit exceeding maximum to prevent resource exhaustion
 		if limit_usize > GasCalculator::MAX_DELEGATORS_PER_QUERY {
-			return Err(RevertReason::custom(&format!(
+			return Err(RevertReason::custom(format!(
 				"Invalid limit: maximum allowed is {}",
 				GasCalculator::MAX_DELEGATORS_PER_QUERY
 			))
@@ -239,7 +239,7 @@ where
 
 		// Enforce consistent maximum limit for all query types
 		if limit_usize > GasCalculator::MAX_DELEGATORS_PER_QUERY {
-			return Err(RevertReason::custom(&format!(
+			return Err(RevertReason::custom(format!(
 				"Invalid limit: maximum allowed is {}",
 				GasCalculator::MAX_DELEGATORS_PER_QUERY
 			))
@@ -460,6 +460,20 @@ where
 		Ok(())
 	}
 
+	/// Get delegator state with pagination support
+	///
+	/// Returns delegation information for a specific delegator or all delegators.
+	/// If delegator is zero address (0x0), returns all delegators' states with paging.
+	/// Otherwise returns the delegations for the specified delegator with paging.
+	///
+	/// IMPORTANT: Delegations within each delegator's state are returned as stored
+	/// by the parachain-staking pallet, which maintains them sorted by stake amount
+	/// in descending order (highest stake first).
+	///
+	/// Parameters:
+	/// - delegator: H256 address of delegator (or 0x0 for all delegators)
+	/// - offset: Starting index for pagination
+	/// - limit: Maximum number of results to return (1-512)
 	#[precompile::public("getDelegatorState(bytes32,uint256,uint256)")]
 	#[precompile::public("get_delegator_state(bytes32,uint256,uint256)")]
 	#[precompile::view]

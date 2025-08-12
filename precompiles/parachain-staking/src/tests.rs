@@ -535,8 +535,8 @@ fn test_delegator_collators_sorting_by_stake_amount() {
 				100 // Highest stake
 			));
 
-			// Test David's delegations - collators should be sorted by delegation amount
-			// (descending)
+			// Test David's delegations - collators are returned sorted by stake amount
+			// in descending order (as maintained by the parachain-staking pallet)
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::David,
@@ -551,18 +551,19 @@ fn test_delegator_collators_sorting_by_stake_amount() {
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
 					collators: vec![
-						// Should be sorted by stake amount in DESCENDING order:
+						// Actual order returned by the pallet (appears to be sorted by stake
+						// descending):
 						DelegationInfo {
 							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
-							amount: U256::from(100), // Highest stake first
+							amount: U256::from(100), // Highest stake
 						},
 						DelegationInfo {
 							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
-							amount: U256::from(80), // Middle stake second
+							amount: U256::from(80), // Middle stake
 						},
 						DelegationInfo {
 							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
-							amount: U256::from(50), // Lowest stake last
+							amount: U256::from(50), // Lowest stake
 						},
 					],
 					total: U256::from(230), // 100 + 80 + 50
@@ -745,7 +746,7 @@ fn test_get_delegator_state_paging() {
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
 					collators: vec![
-						// Should be sorted by stake amount and limited to first 2:
+						// Sorted by stake amount, limited to first 2:
 						DelegationInfo {
 							collator: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
 							amount: U256::from(100), // Highest stake first
@@ -1020,7 +1021,7 @@ fn test_paging_with_data_verification() {
 				.execute_returns(vec![CollatorDelegatorState {
 					delegator: david_addr,
 					collators: vec![
-						// Sorted by stake amount (descending)
+						// Sorted by stake amount (descending order as maintained by pallet)
 						DelegationInfo { collator: alice_addr, amount: U256::from(50) },
 						DelegationInfo { collator: bob_addr, amount: U256::from(40) },
 						DelegationInfo { collator: charlie_addr, amount: U256::from(30) },
