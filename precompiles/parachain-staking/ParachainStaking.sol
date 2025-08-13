@@ -70,18 +70,6 @@ interface ParachainStaking {
     /// selector: 0x0f615369
     function unlockUnstaked(address target) external;
 
-    /// Get the delegations for a specific delegator or all delegators
-    /// If delegator is zero address (0x0), returns all delegators' states
-    /// Otherwise returns the delegations for the specified delegator
-    /// 
-    /// IMPORTANT - Sorting behavior:
-    /// - When querying ALL delegators (0x0): The order of delegators is NOT sorted,
-    ///   they are returned in unpredictable storage iteration order
-    /// - Each individual delegator's delegations: ARE sorted by stake amount
-    ///   in DESCENDING order (highest stake first, lowest stake last)
-    /// 
-    /// selector: 0x72a09ed8
-    function getDelegatorState(bytes32 delegator) external view returns (CollatorDelegatorState[] memory);
 
     /// Get the delegations for a specific delegator or all delegators with paging support
     /// If delegator is zero address (0x0), returns all delegators' states with paging

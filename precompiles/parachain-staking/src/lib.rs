@@ -166,10 +166,6 @@ where
 			return Err(RevertReason::custom("Invalid limit: must be greater than 0").into());
 		}
 
-		if limit_usize == usize::MAX {
-			return Err(RevertReason::custom("Invalid limit: value too large").into());
-		}
-
 		// Forbid limit exceeding maximum to prevent resource exhaustion
 		if limit_usize > GasCalculator::MAX_DELEGATORS_PER_QUERY {
 			return Err(RevertReason::custom(format!(
@@ -179,15 +175,13 @@ where
 			.into());
 		}
 
-		// Use lazy evaluation with iterator chaining for optimal performance
-		let actual_limit = limit_usize;
-
 		// Chain operations: skip -> take -> process (only processes what we need)
+		// Uses lazy evaluation with iterator chaining for optimal performance
 		let paged_delegators: Vec<CollatorDelegatorState> = parachain_staking::DelegatorState::<
 			Runtime,
 		>::iter()
 		.skip(offset_usize)
-		.take(actual_limit)
+		.take(limit_usize)
 		.map(|(delegator_account, state)| {
 			let delegator_h256 = AccountConverter::<Runtime>::account_id_to_h256(delegator_account);
 			let collators: Vec<DelegationInfo> = state
@@ -234,10 +228,6 @@ where
 		// Forbid limit = 0 for consistency (force explicit pagination)
 		if limit == U256::zero() {
 			return Err(RevertReason::custom("Invalid limit: must be greater than 0").into());
-		}
-
-		if limit_usize == usize::MAX {
-			return Err(RevertReason::custom("Invalid limit: value too large").into());
 		}
 
 		// Enforce consistent maximum limit for all query types
