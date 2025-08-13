@@ -268,21 +268,18 @@ where
 					})
 					.collect();
 
-				// Apply paging to collators if offset is specified
-				if offset_usize > 0 {
-					// If offset is beyond available collators, return empty
-					if offset_usize >= collators.len() {
-						return Ok(vec![]);
-					}
-
-					// Skip offset items
-					collators = collators.into_iter().skip(offset_usize).collect();
-
-					// Take limit items (if limit is 0, take all remaining)
-					if !collators.is_empty() {
-						collators = collators.into_iter().take(limit_usize).collect();
-					}
+				// Apply paging to collators (limit is always > 0 due to validation)
+				// If offset is beyond available collators, return empty
+				if offset_usize >= collators.len() {
+					return Ok(vec![]);
 				}
+
+				// Skip offset items and take limit items
+				collators = collators
+					.into_iter()
+					.skip(offset_usize)
+					.take(limit_usize)
+					.collect();
 
 				Ok(vec![CollatorDelegatorState { delegator, collators, total: state.total.into() }])
 			},
