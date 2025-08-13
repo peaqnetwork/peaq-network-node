@@ -18,6 +18,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+use alloc::format;
+
 #[cfg(test)]
 mod mock;
 
@@ -33,7 +36,7 @@ use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Dispatchable, StaticLookup};
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_std::{convert::TryInto, marker::PhantomData, vec, vec::Vec};
 
 type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as Currency<
