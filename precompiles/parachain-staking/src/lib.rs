@@ -275,11 +275,7 @@ where
 				}
 
 				// Skip offset items and take limit items
-				collators = collators
-					.into_iter()
-					.skip(offset_usize)
-					.take(limit_usize)
-					.collect();
+				collators = collators.into_iter().skip(offset_usize).take(limit_usize).collect();
 
 				Ok(vec![CollatorDelegatorState { delegator, collators, total: state.total.into() }])
 			},
