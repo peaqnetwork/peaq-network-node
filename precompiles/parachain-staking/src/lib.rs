@@ -484,7 +484,7 @@ where
 	}
 
 	/// Convert Ethereum address to substrate account hash
-	/// 
+	///
 	/// This utility function shows how Ethereum addresses are mapped to substrate accounts
 	/// internally by the AddressMapping. Useful for debugging and understanding the mapping.
 	#[precompile::public("convertEthToSubstrateAccount(address)")]

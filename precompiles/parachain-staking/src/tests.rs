@@ -1126,7 +1126,7 @@ fn test_convert_eth_to_substrate_account() {
 		.build()
 		.execute_with(|| {
 			let eth_address = Address(H160::from_slice(&[1u8; 20]));
-			
+
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
@@ -1135,10 +1135,10 @@ fn test_convert_eth_to_substrate_account() {
 				)
 				.expect_no_logs()
 				.execute_some();
-			
+
 			// Test with zero address
 			let zero_address = Address(H160::zero());
-			
+
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Alice,
