@@ -34,7 +34,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_core::{H256, U256};
+use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{Dispatchable, StaticLookup};
 use sp_std::{convert::TryInto, marker::PhantomData, vec, vec::Vec};
 
@@ -459,23 +459,27 @@ where
 	///   (highest stake first), maintained by the parachain-staking pallet
 	///
 	/// Parameters:
-	/// - delegator: H256 address of delegator (or 0x0 for all delegators)
+	/// - delegator: Address of delegator (or 0x0 for all delegators)
 	/// - offset: Starting index for pagination
 	/// - limit: Maximum number of results to return (1-512)
-	#[precompile::public("getDelegatorState(bytes32,uint256,uint256)")]
-	#[precompile::public("get_delegator_state(bytes32,uint256,uint256)")]
+	#[precompile::public("getDelegatorState(address,uint256,uint256)")]
+	#[precompile::public("get_delegator_state(address,uint256,uint256)")]
 	#[precompile::view]
 	fn get_delegator_state(
 		handle: &mut impl PrecompileHandle,
-		delegator: H256,
+		delegator: Address,
 		offset: U256,
 		limit: U256,
 	) -> EvmResult<Vec<CollatorDelegatorState>> {
 		// Check if delegator is zero address (means get all delegators)
-		if delegator == H256::zero() {
+		let delegator_h160: H160 = delegator.into();
+		if delegator_h160 == H160::zero() {
 			Self::get_all_delegators_paged(handle, offset, limit)
 		} else {
-			Self::get_single_delegator_paged(handle, delegator, offset, limit)
+			// Convert Ethereum address to Substrate account via AddressMapping
+			let delegator_account = Runtime::AddressMapping::into_account_id(delegator_h160);
+			let delegator_h256 = AccountConverter::<Runtime>::account_id_to_h256(delegator_account);
+			Self::get_single_delegator_paged(handle, delegator_h256, offset, limit)
 		}
 	}
 

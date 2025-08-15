@@ -83,6 +83,6 @@ interface ParachainStaking {
     /// @param offset The starting index for pagination (0-based)
     /// @param limit The maximum number of items to return (must be 1-512)
     /// 
-    /// selector: 0x657c7960
-    function getDelegatorState(bytes32 delegator, uint256 offset, uint256 limit) external view returns (CollatorDelegatorState[] memory);
+    /// selector: 0xbeae0df4
+    function getDelegatorState(address delegator, uint256 offset, uint256 limit) external view returns (CollatorDelegatorState[] memory);
 }

@@ -29,7 +29,7 @@ use frame_support::{
 use pallet_balances::{BalanceLock, Reasons};
 use parachain_staking::types::TotalStake;
 use precompile_utils::testing::{MockPeaqAccount, PrecompileTesterExt, PrecompilesModifierTester};
-use sp_core::H256;
+use sp_core::{H160, H256};
 
 const STAKING_ID: LockIdentifier = *b"peaqstak";
 
@@ -45,6 +45,12 @@ fn convert_mock_account_by_u8_list(account: MockPeaqAccount) -> H256 {
 	H256::from(<[u8; 32]>::from(account))
 }
 
+fn convert_mock_account_to_address(account: MockPeaqAccount) -> Address {
+	// Convert MockPeaqAccount to an Ethereum address for input
+	let account_bytes: [u8; 32] = account.into();
+	Address(H160::from_slice(&account_bytes[..20]))
+}
+
 #[test]
 fn test_selector_enum() {
 	assert!(PCall::get_collator_list_selectors().contains(&0xaaacb283));
@@ -56,7 +62,7 @@ fn test_selector_enum() {
 	assert!(PCall::delegator_stake_less_selectors().contains(&0xb7e8947f));
 	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
 	// getDelegatorState now only supports the paged version with offset/limit parameters
-	assert!(PCall::get_delegator_state_selectors().contains(&0x657c7960));
+	assert!(PCall::get_delegator_state_selectors().contains(&0xbeae0df4));
 }
 
 #[test]
@@ -369,7 +375,7 @@ fn test_get_delegator_state() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::Bob),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -390,7 +396,7 @@ fn test_get_delegator_state() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::David),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -411,7 +417,7 @@ fn test_get_delegator_state() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::Alice),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -432,7 +438,7 @@ fn test_get_delegator_state() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Bob),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::Bob),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -488,7 +494,7 @@ fn test_get_all_delegators_state() {
 				MockPeaqAccount::Bob,
 				MockPeaqAccount::EVMu1Account,
 				PCall::get_delegator_state {
-					delegator: H256::zero(),
+					delegator: Address(H160::zero()),
 					offset: U256::zero(),
 					limit: U256::from(10),
 				},
@@ -542,7 +548,7 @@ fn test_delegator_collators_sorting_by_stake_amount() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::David),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -584,7 +590,7 @@ fn test_limit_zero_validation() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::zero(),
 						limit: U256::zero(), // Should be rejected
 					},
@@ -598,7 +604,7 @@ fn test_limit_zero_validation() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::zero(),
 						limit: U256::from(1000), // 1000 > 512, should be rejected
 					},
@@ -612,7 +618,7 @@ fn test_limit_zero_validation() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::Alice),
 						offset: U256::zero(),
 						limit: U256::zero(), // Should be rejected even for single delegator
 					},
@@ -626,7 +632,7 @@ fn test_limit_zero_validation() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::Alice),
 						offset: U256::zero(),
 						limit: U256::from(1000), // 1000 > 512, should be rejected
 					},
@@ -651,7 +657,7 @@ fn test_get_delegator_state_edge_cases() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -667,7 +673,7 @@ fn test_get_delegator_state_edge_cases() {
 				}]);
 
 			// Test completely non-existent account (not a collator, not a delegator)
-			let non_existent_account = H256::from([0x99; 32]); // Random account that doesn't exist
+			let non_existent_account = Address(H160::from([0x99; 20])); // Random account that doesn't exist
 			precompiles()
 				.prepare_test(
 					MockPeaqAccount::Bob,
@@ -688,7 +694,7 @@ fn test_get_delegator_state_edge_cases() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::Alice),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -737,7 +743,7 @@ fn test_get_delegator_state_paging() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::David),
 						offset: U256::from(0),
 						limit: U256::from(2),
 					},
@@ -765,7 +771,7 @@ fn test_get_delegator_state_paging() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::David),
 						offset: U256::from(2),
 						limit: U256::from(1),
 					},
@@ -786,7 +792,7 @@ fn test_get_delegator_state_paging() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: convert_mock_account_by_u8_list(MockPeaqAccount::David),
+						delegator: convert_mock_account_to_address(MockPeaqAccount::David),
 						offset: U256::from(10),
 						limit: U256::from(5),
 					},
@@ -822,7 +828,7 @@ fn test_get_all_delegators_paging() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(0),
 						limit: U256::from(10), // Get up to 10 results - get all
 					},
@@ -835,7 +841,7 @@ fn test_get_all_delegators_paging() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(0),
 						limit: U256::from(2),
 					},
@@ -848,7 +854,7 @@ fn test_get_all_delegators_paging() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(2),
 						limit: U256::from(1),
 					},
@@ -862,7 +868,7 @@ fn test_get_all_delegators_paging() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(10),
 						limit: U256::from(5),
 					},
@@ -895,7 +901,7 @@ fn test_single_delegator_paging_verification() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(0),
 						limit: U256::from(10), // Get up to 10 results
 					},
@@ -916,7 +922,7 @@ fn test_single_delegator_paging_verification() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(0),
 						limit: U256::from(1),
 					},
@@ -937,7 +943,7 @@ fn test_single_delegator_paging_verification() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(1),
 						limit: U256::from(5),
 					},
@@ -951,7 +957,7 @@ fn test_single_delegator_paging_verification() {
 					MockPeaqAccount::Bob,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -1002,6 +1008,7 @@ fn test_paging_with_data_verification() {
 			));
 
 			let david_addr = convert_mock_account_by_u8_list(MockPeaqAccount::David);
+			let david_address = convert_mock_account_to_address(MockPeaqAccount::David);
 			let alice_addr = convert_mock_account_by_u8_list(MockPeaqAccount::Alice);
 			let bob_addr = convert_mock_account_by_u8_list(MockPeaqAccount::Bob);
 			let charlie_addr = convert_mock_account_by_u8_list(MockPeaqAccount::Charlie);
@@ -1012,7 +1019,7 @@ fn test_paging_with_data_verification() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: david_addr,
+						delegator: david_address,
 						offset: U256::zero(),
 						limit: U256::from(10),
 					},
@@ -1035,7 +1042,7 @@ fn test_paging_with_data_verification() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: david_addr,
+						delegator: david_address,
 						offset: U256::from(0),
 						limit: U256::from(2),
 					},
@@ -1056,7 +1063,7 @@ fn test_paging_with_data_verification() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: david_addr,
+						delegator: david_address,
 						offset: U256::from(2),
 						limit: U256::from(1),
 					},
@@ -1077,7 +1084,7 @@ fn test_paging_with_data_verification() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: david_addr,
+						delegator: david_address,
 						offset: U256::from(10),
 						limit: U256::from(5),
 					},
@@ -1091,7 +1098,7 @@ fn test_paging_with_data_verification() {
 					MockPeaqAccount::David,
 					MockPeaqAccount::EVMu1Account,
 					PCall::get_delegator_state {
-						delegator: H256::zero(),
+						delegator: Address(H160::zero()),
 						offset: U256::from(0),
 						limit: U256::from(10),
 					},
