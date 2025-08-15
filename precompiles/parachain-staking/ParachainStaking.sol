@@ -85,4 +85,13 @@ interface ParachainStaking {
     /// 
     /// selector: 0xbeae0df4
     function getDelegatorState(address delegator, uint256 offset, uint256 limit) external view returns (CollatorDelegatorState[] memory);
+
+    /// Convert Ethereum address to substrate account hash (bytes32)
+    /// This shows how Ethereum addresses are mapped to substrate accounts internally
+    /// 
+    /// @param ethAddress The Ethereum address to convert
+    /// @return The substrate account hash (bytes32) derived from the Ethereum address
+    /// 
+    /// selector: 0xb76f87bf
+    function convertEthToSubstrateAccount(address ethAddress) external view returns (bytes32);
 }

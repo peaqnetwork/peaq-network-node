@@ -483,6 +483,23 @@ where
 		}
 	}
 
+	/// Convert Ethereum address to substrate account hash
+	/// 
+	/// This utility function shows how Ethereum addresses are mapped to substrate accounts
+	/// internally by the AddressMapping. Useful for debugging and understanding the mapping.
+	#[precompile::public("convertEthToSubstrateAccount(address)")]
+	#[precompile::public("convert_eth_to_substrate_account(address)")]
+	#[precompile::view]
+	fn convert_eth_to_substrate_account(
+		_handle: &mut impl PrecompileHandle,
+		eth_address: Address,
+	) -> EvmResult<H256> {
+		let h160: H160 = eth_address.into();
+		let substrate_account = Runtime::AddressMapping::into_account_id(h160);
+		let substrate_hash = AccountConverter::<Runtime>::account_id_to_h256(substrate_account);
+		Ok(substrate_hash)
+	}
+
 	fn u256_to_amount(value: U256) -> MayRevert<BalanceOf<Runtime>> {
 		value
 			.try_into()

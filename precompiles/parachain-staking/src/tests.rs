@@ -63,6 +63,8 @@ fn test_selector_enum() {
 	assert!(PCall::unlock_unstaked_selectors().contains(&0x0f615369));
 	// getDelegatorState now only supports the paged version with offset/limit parameters
 	assert!(PCall::get_delegator_state_selectors().contains(&0xbeae0df4));
+	// convertEthToSubstrateAccount utility function
+	assert!(PCall::convert_eth_to_substrate_account_selectors().contains(&0xb76f87bf));
 }
 
 #[test]
@@ -1113,5 +1115,37 @@ fn test_paging_with_data_verification() {
 					],
 					total: U256::from(120),
 				}]);
+		});
+}
+
+#[test]
+fn test_convert_eth_to_substrate_account() {
+	ExtBuilder::default()
+		.with_balances(vec![(MockPeaqAccount::Alice, 100)])
+		.with_collators(vec![(MockPeaqAccount::Alice, 100)])
+		.build()
+		.execute_with(|| {
+			let eth_address = Address(H160::from_slice(&[1u8; 20]));
+			
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::EVMu1Account,
+					PCall::convert_eth_to_substrate_account { eth_address },
+				)
+				.expect_no_logs()
+				.execute_some();
+			
+			// Test with zero address
+			let zero_address = Address(H160::zero());
+			
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Alice,
+					MockPeaqAccount::EVMu1Account,
+					PCall::convert_eth_to_substrate_account { eth_address: zero_address },
+				)
+				.expect_no_logs()
+				.execute_some();
 		});
 }
