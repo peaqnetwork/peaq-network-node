@@ -79,7 +79,11 @@ interface ParachainStaking {
     /// - When querying ALL delegators (0x0): The order of delegators is NOT sorted
     /// - Each individual delegator's delegations: ARE sorted by stake amount in DESCENDING order
     /// 
-    /// @param delegator The delegator address to query (use 0x0 for all delegators)
+    /// INPUT/OUTPUT ADDRESS FORMAT:
+    /// - Input: Ethereum address (20 bytes) for the delegator parameter
+    /// - Output: All addresses in the returned structs are substrate account hashes (bytes32)
+    /// 
+    /// @param delegator The delegator Ethereum address to query (use 0x0 for all delegators)
     /// @param offset The starting index for pagination (0-based)
     /// @param limit The maximum number of items to return (must be 1-512)
     /// 
@@ -88,6 +92,9 @@ interface ParachainStaking {
 
     /// Convert Ethereum address to substrate account hash (bytes32)
     /// This shows how Ethereum addresses are mapped to substrate accounts internally
+    /// 
+    /// Input: Standard Ethereum address (20 bytes)
+    /// Output: Substrate account hash (32 bytes) - the derived substrate account representation
     /// 
     /// @param ethAddress The Ethereum address to convert
     /// @return The substrate account hash (bytes32) derived from the Ethereum address

@@ -458,8 +458,12 @@ where
 	/// - Each individual delegator's delegations: ARE sorted by stake amount in descending order
 	///   (highest stake first), maintained by the parachain-staking pallet
 	///
+	/// ADDRESS FORMAT:
+	/// - Input: Ethereum address (H160/20 bytes) for the delegator parameter
+	/// - Output: All addresses in returned structs are substrate account hashes (H256/32 bytes)
+	///
 	/// Parameters:
-	/// - delegator: Address of delegator (or 0x0 for all delegators)
+	/// - delegator: Ethereum address of delegator (or 0x0 for all delegators)
 	/// - offset: Starting index for pagination
 	/// - limit: Maximum number of results to return (1-512)
 	#[precompile::public("getDelegatorState(address,uint256,uint256)")]
@@ -485,7 +489,9 @@ where
 
 	/// Convert Ethereum address to substrate account hash
 	///
-	/// This utility function shows how Ethereum addresses are mapped to substrate accounts
+	/// Takes a standard Ethereum address (H160/20 bytes) as input and returns the corresponding
+	/// substrate account hash (H256/32 bytes) that represents the same identity in the substrate
+	/// runtime. This utility function shows how Ethereum addresses are mapped to substrate accounts
 	/// internally by the AddressMapping. Useful for debugging and understanding the mapping.
 	#[precompile::public("convertEthToSubstrateAccount(address)")]
 	#[precompile::public("convert_eth_to_substrate_account(address)")]
