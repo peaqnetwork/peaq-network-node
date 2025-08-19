@@ -1,0 +1,143 @@
+name: Runtime Upgrade
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+   
+  release:
+    types:
+      - published
+
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-node:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Increment spec_version
+      id: version_update
+      run: |
+         FILE_PATH="$GITHUB_WORKSPACE/runtime/peaq/src/lib.rs"
+
+          if [ ! -f "$FILE_PATH" ]; then
+            echo "File not found at $FILE_PATH"
+            exit 1
+          fi
+
+          # get current spec_version.
+          current_version=$(grep -oP 'spec_version:\s*\K\d+' "$FILE_PATH")
+
+          if [ -z "$current_version" ]; then
+            echo "Could not find current spec_version from $FILE_PATH"
+            exit 1
+          fi
+          echo "Current spec_version is : $current_version"
+
+          # for testing increment current version, this will not be pushed to repo
+          new_version=$((current_version + 1))
+          echo "New spec_version is set to : $new_version"
+
+          sed_expr="s/\(spec_version:\s*\)$current_version\([,]\)/\1$new_version\2/"
+          sed -i "$sed_expr" "$FILE_PATH"
+          echo "Verify updated version"
+          updated_content=$(grep "spec_version:" "$FILE_PATH")
+          echo "New updated version got from file is $updated_content"
+
+          if ! echo "$updated_content" | grep -q "spec_version:\s*$new_version,"; then
+            echo "spec_version is not updated correctly to $new_version in the file."
+            exit 1
+          fi
+
+          echo "File $FILE_PATH updated successfully to spec_version $new_version."
+
+    - name: Get PR number or target branch
+      id: tag-title
+      run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "This is a pull request."
+            echo "target_tag=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "This is a push event."
+            echo "target_tag=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          else
+            echo "Unsupported event: ${{ github.event_name }}"
+          fi
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: /home/runner/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache cargo git
+      uses: actions/cache@v4
+      with:
+        path: /home/runner/.cargo/git
+        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-git-
+
+    - name: Cache cargo build target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-target-
+    
+    - name: Compile node
+      uses: addnab/docker-run-action@v2
+      with:
+#         username: ${{ secrets.DOCKER_USERNAME }}
+#         password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: ghcr.io
+        image: ghcr.io/peaqnetwork/peaq-node-builder:latest
+        options: 
+          -v ${{ github.workspace }}:/work
+          -v /home/runner/.cargo/registry:/usr/local/cargo/registry
+          -v /home/runner/.cargo/git:/usr/local/cargo/git
+          -v ${{ github.workspace }}/target:/work/target
+        run: |
+          cd /work
+
+          echo "Building wasm"
+          cargo build --release -p peaq-runtime --features "std aura on-chain-release-build"
+
+        # echo "Building network node"
+        #  cargo build --release --features on-chain-release-build
+
+    - uses: tenhaus/get-release-or-tag@v2
+      id: tag
+
+    - name: Compress wasm runtime
+      uses: a7ul/tar-action@v1.1.0
+      with:
+        command: c
+        cwd: ./target/release/wbuild/peaq-runtime/
+        files: |
+          ./peaq_runtime.compact.compressed.wasm
+        outPath: peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
+    - name: Run runtime-upgrade script
+      working-directory: ./deploy/upgrade
+      run: |
+        WS_URL="wss://${{ steps.tag-title.outputs.target_tag }}-peaq-network-node.cisys.xyz"
+        echo "Using URL: $WS_URL"
+        npm install
+        npm run runtime-upgrade -- ../../target/release/wbuild/peaq-runtime/peaq_runtime.compact.compressed.wasm "$WS_URL"
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.tag-title.outputs.target_tag }}
+        draft: true
+        files: |
+          peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
+

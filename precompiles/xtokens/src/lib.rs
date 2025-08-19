@@ -41,6 +41,7 @@ use xcm::{
 	latest::{Asset, AssetId, Assets, Fungibility, Location, WeightLimit},
 	VersionedAsset, VersionedAssets, VersionedLocation,
 };
+use peaq_precompile_utils::SYSTEM_ACCOUNT_SIZE;
 
 #[cfg(test)]
 mod mock;
@@ -115,7 +116,12 @@ where
 			dest_weight_limit,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			SYSTEM_ACCOUNT_SIZE,
+		)?;
 
 		Ok(())
 	}
@@ -162,7 +168,12 @@ where
 			dest_weight_limit,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			SYSTEM_ACCOUNT_SIZE,
+		)?;
 
 		Ok(())
 	}
@@ -196,7 +207,12 @@ where
 			dest_weight_limit,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			SYSTEM_ACCOUNT_SIZE,
+		)?;
 
 		Ok(())
 	}
@@ -242,7 +258,12 @@ where
 			dest_weight_limit,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			SYSTEM_ACCOUNT_SIZE,
+		)?;
 
 		Ok(())
 	}
@@ -301,7 +322,12 @@ where
 			dest_weight_limit,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			SYSTEM_ACCOUNT_SIZE,
+		)?;
 
 		Ok(())
 	}
@@ -355,7 +381,12 @@ where
 			dest_weight_limit,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			SYSTEM_ACCOUNT_SIZE,
+		)?;
 
 		Ok(())
 	}
