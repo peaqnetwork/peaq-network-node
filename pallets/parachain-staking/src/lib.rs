@@ -1853,14 +1853,14 @@ pub mod pallet {
 			let mut collator =
 				CandidatePool::<T>::get(&candidate).ok_or(Error::<T>::CandidateNotFound)?;
 			ensure!(!collator.is_leaving(), Error::<T>::CannotDelegateIfLeaving);
-			let delegator_total = delegations
+			let _delegator_total = delegations
 				.inc_delegation(candidate.clone(), more)
 				.ok_or(Error::<T>::DelegationNotFound)?;
 
 			// *** No Fail except during increase_lock beyond this point ***
 
 			// update lock
-			let unstaking_len = Self::increase_lock(&delegator, delegator_total, more)?;
+			let unstaking_len = Self::increase_lock(&delegator, delegations.total, more)?;
 
 			let CandidateOf::<T, _> { stake: before_stake, total: before_total, .. } = collator;
 			collator.inc_delegator(delegator.clone(), more);
