@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ use frame_support::{
 	traits::{ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait, PalletInfo as _},
 	weights::{RuntimeDbWeight, Weight},
 };
+use xcm_builder::Case;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use peaq_precompile_utils::*;
 use precompile_utils::precompile_set::*;
@@ -124,7 +125,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-	type RuntimeTask = ();
+	type RuntimeTask = RuntimeTask;
 	type ExtensionsWeightInfo = ();
 	type MultiBlockMigrator = ();
 	type PostInherents = ();
@@ -374,6 +375,9 @@ parameter_types! {
 
 
 	pub const MaxAssetsIntoHolding: u32 = 64;
+
+	pub RelayLocation: Location = Location::parent();
+	pub RelayForeignAsset: (AssetFilter, Location) = (All.into(), RelayLocation::get());
 }
 
 pub type XcmOriginToTransactDispatchOrigin = (
@@ -388,7 +392,7 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = TestSendXcm;
 	type AssetTransactor = DummyAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = ();
+	type IsReserve = Case<RelayForeignAsset>;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;

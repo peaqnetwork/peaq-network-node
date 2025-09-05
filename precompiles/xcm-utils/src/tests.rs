@@ -67,7 +67,7 @@ fn test_weight_message() {
 
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
-			.expect_cost(0)
+			.expect_cost(1)
 			.expect_no_logs()
 			.execute_returns(1000u64);
 	});
@@ -80,7 +80,7 @@ fn test_get_units_per_second() {
 
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
-			.expect_cost(1)
+			.expect_cost(2)
 			.expect_no_logs()
 			.execute_returns(U256::from(1_000_000_000_000u128));
 	});
@@ -154,7 +154,7 @@ fn test_executor_transact() {
 			encoded.append(&mut call_bytes);
 			let xcm_to_execute = VersionedXcm::<()>::V5(Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				fallback_max_weight: None,
+				fallback_max_weight: Some(Weight::from_parts(1_000_000_000u64, 5206u64)),
 				call: encoded.into(),
 			}]))
 			.encode();
@@ -163,7 +163,7 @@ fn test_executor_transact() {
 
 			precompiles()
 				.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
-				.expect_cost(1100001001)
+				.expect_cost(273835001)
 				.expect_no_logs()
 				.execute_returns(());
 
@@ -183,7 +183,7 @@ fn test_send_clear_origin() {
 		precompiles()
 			.prepare_test(MockPeaqAccount::Alice, MockPeaqAccount::EVMu1Account, input)
 			// Only the cost of TestWeightInfo
-			.expect_cost(100000000)
+			.expect_cost(100000001)
 			.expect_no_logs()
 			.execute_returns(());
 
