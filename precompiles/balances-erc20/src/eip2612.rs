@@ -106,8 +106,9 @@ where
 		handle.record_db_read::<Runtime>(104)?;
 		// Following two lines are for writing cost.
 		// Implemented similarly to record_db_read() method above.
-		// NoncesStorage / owner(20) + ApprovesStorage / 2 * owner(20) + amount(32)
-		const STORAGE_WRITE_COSTS: u64 = 92;
+		// NoncesStorage = owner(20) + nonce(32) = 52
+		// ApprovesStorage = owner(20) + spender(20) + amount(32) = 72
+		const STORAGE_WRITE_COSTS: u64 = 124;
 		handle.record_cost(RuntimeHelper::<Runtime>::db_write_gas_cost())?;
 		handle.record_external_cost(None, Some(STORAGE_WRITE_COSTS), None)?;
 		// Costs for log3 calls
