@@ -328,7 +328,7 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = DoNothingRouter;
 	type AssetTransactor = DummyAssetTransactor;
 	type OriginConverter = pallet_xcm::XcmPassthrough<RuntimeOrigin>;
-	type IsReserve = ();
+	type IsReserve = Everything;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
