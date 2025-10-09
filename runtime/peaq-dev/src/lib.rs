@@ -389,7 +389,13 @@ parameter_types! {
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const DeletionQueueDepth: u32 = 128;
-	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+	pub Schedule: pallet_contracts::Schedule<Runtime> = pallet_contracts::Schedule {
+		limits: pallet_contracts::Limits {
+			payload_len: 12 * 1024,  // Reduced from 16KB to 12KB to meet storage limit with 90% dispatch ratio
+			..Default::default()
+		},
+		..Default::default()
+	};
 	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
 	// TODO: re-vist to make sure values are appropriate
 	pub const MaxDelegateDependencies: u32 = 32;
