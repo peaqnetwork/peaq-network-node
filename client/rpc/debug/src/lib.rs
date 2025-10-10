@@ -402,10 +402,10 @@ where
 
 		// Enable proof recording
 		api.record_proof();
-		api.proof_recorder().map(|recorder| {
+		if let Some(recorder) = api.proof_recorder() {
 			let ext = sp_trie::proof_size_extension::ProofSizeExt::new(recorder);
 			api.register_extension(ext);
-		});
+		};
 
 		// Get Blockchain backend
 		let blockchain = backend.blockchain();
@@ -670,11 +670,11 @@ where
 
 		// Enable proof recording
 		api.record_proof();
-		api.proof_recorder().map(|recorder| {
+		if let Some(recorder) = api.proof_recorder() {
 			let ext = sp_trie::proof_size_extension::ProofSizeExt::new(recorder);
 			api.register_extension(ext);
-		});
-
+		};
+		
 		// Get Blockchain backend
 		let blockchain = backend.blockchain();
 		// Get the header I want to work with.
@@ -884,10 +884,10 @@ where
 
 		// Enable proof recording
 		api.record_proof();
-		api.proof_recorder().map(|recorder| {
+		if let Some(recorder) = api.proof_recorder() {
 			let ext = sp_trie::proof_size_extension::ProofSizeExt::new(recorder);
 			api.register_extension(ext);
-		});
+		};
 
 		// Get the header I want to work with.
 		let Ok(hash) = client.expect_block_hash_from_id(&reference_id) else {

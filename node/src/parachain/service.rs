@@ -627,7 +627,7 @@ pub fn build_import_queue<RuntimeApi>(
 	config: &Configuration,
 	telemetry_handle: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-	target_gas_price: u64,
+	_target_gas_price: u64,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
@@ -765,8 +765,6 @@ where
 		 block_import_handle| {
 			let spawn_handle = task_manager.spawn_handle();
 
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client).unwrap();
-
 			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 				spawn_handle,
 				client.clone(),
@@ -774,10 +772,6 @@ where
 				prometheus_registry,
 				telemetry.clone(),
 			);
-
-			let overseer_handle = relay_chain_interface
-				.overseer_handle()
-				.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
 			let announce_block = {
 				let sync_service = sync_oracle.clone();
