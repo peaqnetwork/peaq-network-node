@@ -20,7 +20,7 @@ use super::{
 	pallet::{Error, Event},
 	*,
 };
-use frame_support::{assert_noop, assert_ok, WeakBoundedVec};
+use frame_support::{assert_noop, assert_ok};
 use mock::*;
 use sp_runtime::traits::BadOrigin;
 use xcm::{latest::prelude::*, v5::Location, VersionedLocation};

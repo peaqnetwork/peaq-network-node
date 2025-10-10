@@ -48,7 +48,7 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{
 		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
 		DispatchInfoOf, Dispatchable, OpaqueKeys, PostDispatchInfoOf, SaturatedConversion,
@@ -449,7 +449,7 @@ impl pallet_contracts::Config for Runtime {
 
 	type ApiVersion = ();
 	type InstantiateOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
-	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
+	type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
 	type UploadOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
 }
 

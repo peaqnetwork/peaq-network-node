@@ -27,7 +27,7 @@ use sp_runtime::{
 	Perbill,
 };
 use sp_weights::Weight;
-use xcm::{latest::{prelude::*, Asset}, v4::NetworkId as OldNetworkId};
+use xcm::latest::{prelude::*, Asset};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, ConvertedConcreteId, DescribeAllTerminal, DescribeFamily,
@@ -46,7 +46,7 @@ use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
 parameter_types! {
-	pub RelayNetwork: NetworkId = NetworkId::Kusama.into();
+	pub RelayNetwork: NetworkId = NetworkId::Kusama;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorLocation =
 		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into())].into();

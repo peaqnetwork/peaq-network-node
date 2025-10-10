@@ -37,13 +37,10 @@ use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use sp_runtime::{generic::Preamble, traits::IdentityLookup};
 
-use frame_support::{
-	traits::{
+use frame_support::traits::{
 		tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
 		EqualPrivilegeOnly, LinearStoragePrice,
-	},
-	weights::constants,
-};
+	};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -64,7 +61,6 @@ use sp_std::{borrow::Cow, marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use sp_weights::RuntimeDbWeight;
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
 mod weights;
@@ -441,7 +437,7 @@ impl pallet_contracts::Config for Runtime {
 
 	type ApiVersion = ();
 	type InstantiateOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
-	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
+	type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
 	type UploadOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
 }
 

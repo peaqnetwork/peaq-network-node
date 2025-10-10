@@ -19,9 +19,7 @@ use sc_consensus_manual_seal::rpc::EngineCommand;
 use sc_network::service::traits::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_rpc_api::DenyUnsafe;
 use sc_service::{TaskManager, TransactionPool};
-use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{

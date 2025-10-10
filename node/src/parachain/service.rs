@@ -815,7 +815,7 @@ where
 				slot_offset: Duration::from_secs(1),
 				spawner: task_manager.spawn_handle(),
 				export_pov: None,
-				block_import_handle: block_import_handle
+				block_import_handle
 			};
 
 			slot_based::run::<Block, sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _, _, _, _>(

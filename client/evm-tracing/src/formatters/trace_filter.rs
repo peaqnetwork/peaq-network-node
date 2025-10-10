@@ -43,7 +43,7 @@ impl super::ResponseFormatter for Formatter {
 				continue;
 			}
 			let mut tx_traces: Vec<_> = entry
-				.into_iter()
+				.iter()
 				.map(|(_, trace)| match trace.inner.clone() {
 					CallInner::Call {
 						input,

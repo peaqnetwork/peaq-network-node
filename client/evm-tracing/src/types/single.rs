@@ -103,15 +103,11 @@ pub struct RawStepLog {
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub struct TraceCallConfig {
 	pub with_log: bool,
 }
 
-impl Default for TraceCallConfig {
-	fn default() -> Self {
-		Self { with_log: false }
-	}
-}
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, Serialize)]
 pub struct Log {

@@ -49,7 +49,7 @@ impl super::ResponseFormatter for Formatter {
 				continue;
 			}
 			let mut result: Vec<Call> = entry
-				.into_iter()
+				.iter()
 				.map(|(_, it)| {
 					let from = it.from;
 					let trace_address = it.trace_address.clone();
@@ -58,9 +58,9 @@ impl super::ResponseFormatter for Formatter {
 					let gas_used = it.gas_used;
 					let inner = it.inner.clone();
 					Call::CallTracer(CallTracerCall {
-						from: from,
-						gas: gas,
-						gas_used: gas_used,
+						from,
+						gas,
+						gas_used,
 						trace_address: Some(trace_address.clone()),
 						inner: match inner.clone() {
 							BlockscoutCallInner::Call {
@@ -104,7 +104,7 @@ impl super::ResponseFormatter for Formatter {
 									} => Some(created_contract_code),
 									CreateResult::Error { .. } => None,
 								},
-								value: value,
+								value,
 								call_type: "CREATE".as_bytes().to_vec(),
 							},
 							BlockscoutCallInner::SelfDestruct { balance, to } => {
@@ -188,9 +188,9 @@ impl super::ResponseFormatter for Formatter {
 									continue;
 								}
 							}
-							return false;
+							false
 						};
-						if b_len > a_len || (a_len == b_len && sibling_greater_than(&a, &b)) {
+						if b_len > a_len || (a_len == b_len && sibling_greater_than(a, b)) {
 							Ordering::Less
 						} else {
 							Ordering::Greater
@@ -263,7 +263,7 @@ impl super::ResponseFormatter for Formatter {
 		if traces.is_empty() {
 			return None;
 		}
-		return Some(traces);
+		Some(traces)
 	}
 }
 

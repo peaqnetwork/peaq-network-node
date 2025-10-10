@@ -422,7 +422,7 @@ impl pallet_contracts::Config for Runtime {
 
 	type ApiVersion = ();
 	type InstantiateOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
-	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
+	type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
 	type UploadOrigin = EnsureSigned<<Self as frame_system::Config>::AccountId>;
 }
 
