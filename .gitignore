@@ -22,3 +22,7 @@
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
 .gdf_*
+
+# editor specific ignores
+.vscode
+.idea
