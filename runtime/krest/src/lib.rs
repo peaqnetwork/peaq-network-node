@@ -1192,18 +1192,28 @@ pub type UncheckedExtrinsic =
 pub type CheckedExtrinsic =
 	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 /// Executive: handles dispatch to the various modules.
+// Migrations to apply on runtime upgrade
+pub type Migrations = (
+	pallet_session::migrations::v1::MigrateV0ToV1<
+		Runtime,
+		pallet_session::migrations::v1::InitOffenceSeverity<Runtime>,
+	>,
+	pallet_contracts::Migration<Runtime>,
+	cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
+	// permanent
+	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
+	cumulus_pallet_aura_ext::migration::MigrateV0ToV1<Runtime>,
+);
+
+/// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		pallet_contracts::Migration<Runtime>,
-		cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
-	),
+	Migrations,
 >;
-
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
 extern crate frame_benchmarking;
