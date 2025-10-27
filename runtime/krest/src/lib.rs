@@ -720,8 +720,6 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = crate::weights::pallet_evm::WeightInfo<Runtime>;
-	// type SuicideQuickClearLimit = ConstU32<0>;
-	// TODO verify this
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type CreateInnerOriginFilter = ();
 	type CreateOriginFilter = ();

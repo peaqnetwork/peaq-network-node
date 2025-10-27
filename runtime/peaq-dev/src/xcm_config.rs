@@ -310,7 +310,6 @@ impl xcm_executor::Config for XcmConfig {
 	type MaxAssetsIntoHolding = ConstU32<64>;
 	type AssetLocker = ();
 	type AssetExchanger = ();
-	// TODO Verify generics to SendXcmFeeToAccount
 	type FeeManager = XcmFeeManagerFromComponents<
 		(),
 		SendXcmFeeToAccount<Self::AssetTransactor, TreasuryAccount>,
