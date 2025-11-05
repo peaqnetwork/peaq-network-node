@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Check out the repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
     - name: Trigger Build Docker Image workflow
       uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
