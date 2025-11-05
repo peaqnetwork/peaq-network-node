@@ -679,7 +679,7 @@ parameter_types! {
 	/// (15_000_000 / 40kb)
 	/// However, let us setup the value as 1 for now because we also has the did/storage bridge
 	/// [TODO] Need to check
-	pub GasLimitStorageGrowthRatio: u64 = 1;
+	pub GasLimitStorageGrowthRatio: u64 = 366;
 }
 
 impl pallet_evm::Config for Runtime {
