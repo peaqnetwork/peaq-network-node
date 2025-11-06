@@ -319,9 +319,11 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 
-	fn claim_assets() -> cumulus_primitives_core::Weight { todo!() }
-	fn add_authorized_alias() -> cumulus_primitives_core::Weight { todo!() }
-	fn remove_authorized_alias() -> cumulus_primitives_core::Weight { todo!() }
+	fn claim_assets() -> Weight { Weight::zero() }
+	
+	fn add_authorized_alias() -> Weight { Weight::zero() }
+	
+	fn remove_authorized_alias() -> Weight { Weight::zero() }
 }
 
 #[cfg(test)]
