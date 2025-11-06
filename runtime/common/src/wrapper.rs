@@ -222,15 +222,14 @@ where
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)
 	}
 
-	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance, _existence_requirement: ExistenceRequirement) -> DispatchResult {
+	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance, existence_requirement: ExistenceRequirement) -> DispatchResult {
 		log::debug!(
 			"PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}",
 			from,
 			to,
 			amount
 		);
-		// TODO already set to KeepAlive, do we need to provide function argument also?
-		Currency::transfer(from, to, amount, ExistenceRequirement::KeepAlive)
+		Currency::transfer(from, to, amount, existence_requirement)
 	}
 
 	fn deposit(who: &AccountId, amount: Self::Balance) -> DispatchResult {
@@ -242,9 +241,8 @@ where
 		Ok(())
 	}
 
-	fn withdraw(who: &AccountId, amount: Self::Balance, _existence_requirement: ExistenceRequirement) -> DispatchResult {
-		// TODO already set to KeepAlive, do we need to provide function argument also?
-		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath)
+	fn withdraw(who: &AccountId, amount: Self::Balance, existence_requirement: ExistenceRequirement) -> DispatchResult {
+		Currency::withdraw(who, amount, WithdrawReasons::all(), existence_requirement)
 			.map(|_| ())
 	}
 
