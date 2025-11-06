@@ -123,7 +123,7 @@ use runtime_common::{
 	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
 	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
 	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
-	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS, MAX_POV_SIZE
 };
 
 /// An index to a block.
@@ -234,9 +234,6 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
 /// `Operational` extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
-
-/// Polkadot/Kusama support 10MB now.
-const MAX_POV_SIZE: u32 = 10 * 1024 * 1024;
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight =

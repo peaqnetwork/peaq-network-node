@@ -26,6 +26,9 @@ pub const MILLICENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 3);
 pub const CENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2);
 pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
 
+/// Polkadot/Kusama support 10MB now.
+pub const MAX_POV_SIZE: u32 = 10 * 1024 * 1024;
+
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 	pub const OperationalFeeMultiplier: u8 = 5;

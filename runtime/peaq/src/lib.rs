@@ -123,7 +123,7 @@ use runtime_common::{
 	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
 	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
 	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
-	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
+	TransactionByteFee, CENTS, DOLLARS, MILLICENTS, MAX_POV_SIZE
 };
 
 /// An index to a block.
@@ -255,13 +255,11 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
 /// `Operational` extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-	WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64),
-	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
-);
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64), MAX_POV_SIZE as u64);
 
 /// Base Deposit for occupying storage - 0.01 PEAQ
 const STORAGE_DEPOSIT_BASE: Balance = CENTS;
@@ -403,8 +401,13 @@ parameter_types! {
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const DeletionQueueDepth: u32 = 128;
-	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
-	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
+	pub Schedule: pallet_contracts::Schedule<Runtime> = pallet_contracts::Schedule {
+		limits: pallet_contracts::Limits {
+			payload_len: 12 * 1024,  // Reduced from 16KB to 12KB to meet storage limit with 90% dispatch ratio
+			..Default::default()
+		},
+		..Default::default()
+	};	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
 	// TODO: re-vist to make sure values are appropriate
 	pub const MaxDelegateDependencies: u32 = 32;
 }
