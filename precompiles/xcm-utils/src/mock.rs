@@ -21,12 +21,12 @@ use frame_support::{
 	traits::{ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait, PalletInfo as _},
 	weights::{RuntimeDbWeight, Weight},
 };
-use xcm_builder::Case;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use peaq_precompile_utils::*;
 use precompile_utils::precompile_set::*;
 use sp_core::{H256, U256};
 use sp_runtime::BuildStorage;
+use xcm_builder::Case;
 
 use sp_runtime::traits::{
 	BlakeTwo256,

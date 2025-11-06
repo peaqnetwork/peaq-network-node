@@ -1611,31 +1611,36 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			assert_eq!(
 				Balances::free_balance(1),
 				genesis_reward_1 +
-					normal_odd_reward_1 + normal_even_reward_1 +
+					normal_odd_reward_1 +
+					normal_even_reward_1 +
 					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(2),
 				genesis_reward_2 +
-					normal_odd_reward_2 + normal_even_reward_2 +
+					normal_odd_reward_2 +
+					normal_even_reward_2 +
 					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(3),
 				genesis_reward_3 +
-					normal_odd_reward_3 + normal_even_reward_3 +
+					normal_odd_reward_3 +
+					normal_even_reward_3 +
 					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(4),
 				genesis_reward_4 +
-					normal_odd_reward_4 + normal_even_reward_4 +
+					normal_odd_reward_4 +
+					normal_even_reward_4 +
 					20_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(5),
 				genesis_reward_5 +
-					normal_odd_reward_5 + normal_even_reward_5 +
+					normal_odd_reward_5 +
+					normal_even_reward_5 +
 					20_000_000 * DECIMALS
 			);
 

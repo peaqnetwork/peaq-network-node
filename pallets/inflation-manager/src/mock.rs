@@ -158,9 +158,12 @@ impl ExternalityBuilder {
 			frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
 		// This will cause some initial issuance
-		pallet_balances::GenesisConfig::<TestRuntime> { balances: self.balances, ..Default::default() }
-			.assimilate_storage(&mut storage)
-			.ok();
+		pallet_balances::GenesisConfig::<TestRuntime> {
+			balances: self.balances,
+			..Default::default()
+		}
+		.assimilate_storage(&mut storage)
+		.ok();
 		inflation_manager::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
 			.assimilate_storage(&mut storage)
 			.ok();

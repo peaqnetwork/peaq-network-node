@@ -21,8 +21,8 @@
 //! The implementation is composed of multiple tasks :
 //! - Many calls the RPC handler `Trace::filter`, communicating with the main task.
 //! - A main `CacheTask` managing the cache and the communication between tasks.
-//! - For each traced block an async task responsible to wait for a permit, spawn a blocking
-//!   task and waiting for the result, then send it to the main `CacheTask`.
+//! - For each traced block an async task responsible to wait for a permit, spawn a blocking task
+//!   and waiting for the result, then send it to the main `CacheTask`.
 
 use futures::{select, stream::FuturesUnordered, FutureExt, StreamExt};
 use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
@@ -86,25 +86,18 @@ where
 {
 	/// Create a new RPC handler.
 	pub fn new(client: Arc<C>, requester: CacheRequester, max_count: u32) -> Self {
-		Self {
-			client,
-			requester,
-			max_count,
-			_phantom: PhantomData,
-		}
+		Self { client, requester, max_count, _phantom: PhantomData }
 	}
 
 	/// Convert an optional block ID (number or tag) to a block height.
 	fn block_id(&self, id: Option<RequestBlockId>) -> Result<u32, &'static str> {
 		match id {
 			Some(RequestBlockId::Number(n)) => Ok(n),
-			None | Some(RequestBlockId::Tag(RequestBlockTag::Latest)) => {
-				Ok(self.client.info().best_number)
-			}
+			None | Some(RequestBlockId::Tag(RequestBlockTag::Latest)) =>
+				Ok(self.client.info().best_number),
 			Some(RequestBlockId::Tag(RequestBlockTag::Earliest)) => Ok(0),
-			Some(RequestBlockId::Tag(RequestBlockTag::Pending)) => {
-				Err("'pending' is not supported")
-			}
+			Some(RequestBlockId::Tag(RequestBlockTag::Pending)) =>
+				Err("'pending' is not supported"),
 			Some(RequestBlockId::Hash(_)) => Err("Block hash not supported"),
 		}
 	}
@@ -134,10 +127,7 @@ where
 				.client
 				.hash(block_height)
 				.map_err(|e| {
-					format!(
-						"Error when fetching block {} header : {:?}",
-						block_height, e
-					)
+					format!("Error when fetching block {} header : {:?}", block_height, e)
 				})?
 				.ok_or_else(|| format!("Block with height {} don't exist", block_height))?;
 
@@ -179,18 +169,15 @@ where
 			let mut block_traces: Vec<_> = block_traces
 				.iter()
 				.filter(|trace| match trace.action {
-					block::TransactionTraceAction::Call { from, to, .. } => {
-						(from_address.is_empty() || from_address.contains(&from))
-							&& (to_address.is_empty() || to_address.contains(&to))
-					}
-					block::TransactionTraceAction::Create { from, .. } => {
-						(from_address.is_empty() || from_address.contains(&from))
-							&& to_address.is_empty()
-					}
-					block::TransactionTraceAction::Suicide { address, .. } => {
-						(from_address.is_empty() || from_address.contains(&address))
-							&& to_address.is_empty()
-					}
+					block::TransactionTraceAction::Call { from, to, .. } =>
+						(from_address.is_empty() || from_address.contains(&from)) &&
+							(to_address.is_empty() || to_address.contains(&to)),
+					block::TransactionTraceAction::Create { from, .. } =>
+						(from_address.is_empty() || from_address.contains(&from)) &&
+							to_address.is_empty(),
+					block::TransactionTraceAction::Suicide { address, .. } =>
+						(from_address.is_empty() || from_address.contains(&address)) &&
+							to_address.is_empty(),
 				})
 				.cloned()
 				.collect();
@@ -241,10 +228,7 @@ where
 		&self,
 		filter: FilterRequest,
 	) -> jsonrpsee::core::RpcResult<Vec<TransactionTrace>> {
-		self.clone()
-			.filter(filter)
-			.await
-			.map_err(fc_rpc::internal_err)
+		self.clone().filter(filter).await.map_err(fc_rpc::internal_err)
 	}
 }
 
@@ -288,23 +272,14 @@ impl CacheRequester {
 		let sender = self.0.clone();
 
 		sender
-			.unbounded_send(CacheRequest::StartBatch {
-				sender: response_tx,
-				blocks,
-			})
+			.unbounded_send(CacheRequest::StartBatch { sender: response_tx, blocks })
 			.map_err(|e| {
-				format!(
-					"Failed to send request to the trace cache task. Error : {:?}",
-					e
-				)
+				format!("Failed to send request to the trace cache task. Error : {:?}", e)
 			})?;
 
-		response_rx.await.map_err(|e| {
-			format!(
-				"Trace cache task closed the response channel. Error : {:?}",
-				e
-			)
-		})
+		response_rx
+			.await
+			.map_err(|e| format!("Trace cache task closed the response channel. Error : {:?}", e))
 	}
 
 	/// Fetch the traces for given block hash.
@@ -317,25 +292,14 @@ impl CacheRequester {
 		let sender = self.0.clone();
 
 		sender
-			.unbounded_send(CacheRequest::GetTraces {
-				sender: response_tx,
-				block,
-			})
+			.unbounded_send(CacheRequest::GetTraces { sender: response_tx, block })
 			.map_err(|e| {
-				format!(
-					"Failed to send request to the trace cache task. Error : {:?}",
-					e
-				)
+				format!("Failed to send request to the trace cache task. Error : {:?}", e)
 			})?;
 
 		response_rx
 			.await
-			.map_err(|e| {
-				format!(
-					"Trace cache task closed the response channel. Error : {:?}",
-					e
-				)
-			})?
+			.map_err(|e| format!("Trace cache task closed the response channel. Error : {:?}", e))?
 			.map_err(|e| format!("Failed to replay block. Error : {:?}", e))
 	}
 
@@ -347,14 +311,9 @@ impl CacheRequester {
 
 		// Here we don't care if the request has been accepted or refused, the caller can't
 		// do anything with it.
-		let _ = sender
-			.unbounded_send(CacheRequest::StopBatch { batch_id })
-			.map_err(|e| {
-				format!(
-					"Failed to send request to the trace cache task. Error : {:?}",
-					e
-				)
-			});
+		let _ = sender.unbounded_send(CacheRequest::StopBatch { batch_id }).map_err(|e| {
+			format!("Failed to send request to the trace cache task. Error : {:?}", e)
+		});
 	}
 }
 
@@ -400,10 +359,7 @@ enum BlockingTaskMessage {
 	/// started being traced.
 	Started { block_hash: H256 },
 	/// The tracing is finished and the result is sent to the main task.
-	Finished {
-		block_hash: H256,
-		result: TxsTraceRes,
-	},
+	Finished { block_hash: H256, result: TxsTraceRes },
 }
 
 /// Type wrapper for the cache task, generic over the Client, Block and Backend types.
@@ -462,7 +418,7 @@ where
 					Err(err) => {
 						log::error!(target: "tracing", "Failed to register metrics {err:?}");
 						None
-					}
+					},
 				}
 			} else {
 				None
@@ -601,10 +557,7 @@ where
 
 						// Send a response to the main task.
 						let _ = blocking_tx
-							.send(BlockingTaskMessage::Finished {
-								block_hash: block,
-								result,
-							})
+							.send(BlockingTaskMessage::Finished { block_hash: block, result })
 							.await;
 					}
 					.instrument(tracing::trace_span!("Block tracing", block = %block)),
@@ -634,19 +587,16 @@ where
 
 	/// Handle a request to get the traces of the provided block.
 	/// - If the result is stored in the cache, it sends it immediately.
-	/// - If the block is currently being pooled, it is added to this block cache waiting list,
-	///   and all requests concerning this block will be satisfied when the tracing for this block
-	///   is finished.
+	/// - If the block is currently being pooled, it is added to this block cache waiting list, and
+	///   all requests concerning this block will be satisfied when the tracing for this block is
+	///   finished.
 	/// - If this block is missing from the cache, it means no batch asked for it. All requested
 	///   blocks should be contained in a batch beforehand, and thus an error is returned.
 	#[instrument(skip(self))]
 	fn request_get_traces(&mut self, sender: oneshot::Sender<TxsTraceRes>, block: H256) {
 		if let Some(block_cache) = self.cached_blocks.get_mut(&block) {
 			match &mut block_cache.state {
-				CacheBlockState::Pooled {
-					ref mut waiting_requests,
-					..
-				} => {
+				CacheBlockState::Pooled { ref mut waiting_requests, .. } => {
 					tracing::warn!(
 						"A request asked a pooled block ({}), adding it to the list of \
 						waiting requests.",
@@ -656,7 +606,7 @@ where
 					if let Some(metrics) = &self.metrics {
 						metrics.tracing_cache_misses.inc();
 					}
-				}
+				},
 				CacheBlockState::Cached { traces, .. } => {
 					tracing::warn!(
 						"A request asked a cached block ({}), sending the traces directly.",
@@ -666,17 +616,15 @@ where
 					if let Some(metrics) = &self.metrics {
 						metrics.tracing_cache_hits.inc();
 					}
-				}
+				},
 			}
 		} else {
 			tracing::warn!(
 				"An RPC request asked to get a block ({}) which was not batched.",
 				block
 			);
-			let _ = sender.send(Err(format!(
-				"RPC request asked a block ({}) that was not batched",
-				block
-			)));
+			let _ = sender
+				.send(Err(format!("RPC request asked a block ({}) that was not batched", block)));
 		}
 	}
 
@@ -696,8 +644,8 @@ where
 				// We remove early the block cache if this batch is the last
 				// pooling this block.
 				if let Some(block_cache) = self.cached_blocks.get_mut(block) {
-					if block_cache.active_batch_count == 1
-						&& matches!(
+					if block_cache.active_batch_count == 1 &&
+						matches!(
 							block_cache.state,
 							CacheBlockState::Pooled { started: false, .. }
 						) {
@@ -720,10 +668,7 @@ where
 	#[instrument(skip(self))]
 	fn blocking_started(&mut self, block_hash: H256) {
 		if let Some(block_cache) = self.cached_blocks.get_mut(&block_hash) {
-			if let CacheBlockState::Pooled {
-				ref mut started, ..
-			} = block_cache.state
-			{
+			if let CacheBlockState::Pooled { ref mut started, .. } = block_cache.state {
 				*started = true;
 			}
 		}
@@ -739,11 +684,7 @@ where
 		// TODO : Should we add it back ? Should it have an active_batch_count
 		// of 1 then ?
 		if let Some(block_cache) = self.cached_blocks.get_mut(&block_hash) {
-			if let CacheBlockState::Pooled {
-				ref mut waiting_requests,
-				..
-			} = block_cache.state
-			{
+			if let CacheBlockState::Pooled { ref mut waiting_requests, .. } = block_cache.state {
 				tracing::trace!(
 					"A new block ({}) has been traced, adding it to the cache and responding to \
 					{} waiting requests.",
@@ -798,10 +739,7 @@ where
 		let block_header = client
 			.header(substrate_hash)
 			.map_err(|e| {
-				format!(
-					"Error when fetching substrate block {} header : {:?}",
-					substrate_hash, e
-				)
+				format!("Error when fetching substrate block {} header : {:?}", substrate_hash, e)
 			})?
 			.ok_or_else(|| format!("Substrate block {} don't exist", substrate_hash))?;
 
@@ -814,29 +752,22 @@ where
 			overrides.current_transaction_statuses(substrate_hash),
 		) {
 			(Some(a), Some(b)) => (a, b),
-			_ => {
+			_ =>
 				return Err(format!(
 					"Failed to get Ethereum block data for Substrate block {}",
 					substrate_hash
-				))
-			}
+				)),
 		};
 
 		let eth_block_hash = eth_block.header.hash();
-		let eth_tx_hashes = eth_transactions
-			.iter()
-			.map(|t| t.transaction_hash)
-			.collect();
+		let eth_tx_hashes = eth_transactions.iter().map(|t| t.transaction_hash).collect();
 
 		// Get extrinsics (containing Ethereum ones)
 		let extrinsics = backend
 			.blockchain()
 			.body(substrate_hash)
 			.map_err(|e| {
-				format!(
-					"Blockchain error when fetching extrinsics of block {} : {:?}",
-					height, e
-				)
+				format!("Blockchain error when fetching extrinsics of block {} : {:?}", height, e)
 			})?
 			.ok_or_else(|| format!("Could not find block {} when fetching extrinsics.", height))?;
 
@@ -852,12 +783,7 @@ where
 		// Trace the block.
 		let f = || -> Result<_, String> {
 			let result = if trace_api_version >= 5 {
-				api.trace_block(
-					substrate_parent_hash,
-					extrinsics,
-					eth_tx_hashes,
-					&block_header,
-				)
+				api.trace_block(substrate_parent_hash, extrinsics, eth_tx_hashes, &block_header)
 			} else {
 				// Get core runtime api version
 				let core_api_version = if let Ok(Some(api_version)) =
@@ -895,10 +821,7 @@ where
 						height,
 						e
 					);
-					format!(
-						"Internal runtime error when replaying block {} : {:?}",
-						height, e
-					)
+					format!("Internal runtime error when replaying block {} : {:?}", height, e)
 				})?;
 
 			Ok(peaq_rpc_primitives_debug::Response::Block)
@@ -933,7 +856,7 @@ where
 							}
 
 							Some(trace)
-						}
+						},
 						None => {
 							log::warn!(
 								target: "tracing",
@@ -942,7 +865,7 @@ where
 								trace,
 							);
 							None
-						}
+						},
 					}
 				})
 				.collect();

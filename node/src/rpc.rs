@@ -3,9 +3,7 @@
 use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use fc_rpc::{EthBlockDataCacheTask, StorageOverride};
-use fc_rpc::TxPool;
-use fc_rpc::TxPoolApiServer;
+use fc_rpc::{EthBlockDataCacheTask, StorageOverride, TxPool, TxPoolApiServer};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
@@ -176,7 +174,7 @@ where
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool)).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
-	
+
 	let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;

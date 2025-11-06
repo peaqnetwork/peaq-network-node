@@ -192,7 +192,7 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances, ..Default::default()}
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances, ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Pallet balances storage can be assimilated");
 
@@ -202,7 +202,7 @@ impl ExtBuilder {
 			let _ = pallet_evm::Pallet::<Runtime>::create_account(
 				MockPeaqAccount::EVMu2Account.into(),
 				hex_literal::hex!("1460006000fd").to_vec(),
-				None
+				None,
 			);
 		});
 		ext

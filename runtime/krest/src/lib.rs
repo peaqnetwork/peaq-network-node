@@ -36,7 +36,7 @@ use peaq_pallet_rbac::{
 };
 use peaq_pallet_storage::traits::Storage;
 use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
-use sp_runtime::{traits::IdentityLookup, generic::Preamble};
+use sp_runtime::{generic::Preamble, traits::IdentityLookup};
 
 use frame_support::traits::{
 	tokens::{fungible::HoldConsideration, PayFromAccount, UnityAssetBalanceConversion},
@@ -58,7 +58,7 @@ use sp_runtime::{
 	},
 	ApplyExtrinsicResult, Perbill, Percent, Permill,
 };
-use sp_std::{marker::PhantomData, prelude::*, vec, vec::Vec, borrow::Cow};
+use sp_std::{borrow::Cow, marker::PhantomData, prelude::*, vec, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -636,7 +636,8 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
+			let authority_id =
+				pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
 			let encoded = authority_id.encode();
 			let bytes: [u8; 32] =
 				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
@@ -722,7 +723,8 @@ parameter_types! {
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<<Self as frame_system::Config>::Version>;
+	type StateRoot =
+		pallet_ethereum::IntermediateStateRoot<<Self as frame_system::Config>::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
 }

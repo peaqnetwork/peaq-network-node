@@ -157,7 +157,7 @@ where
 			amount
 				.try_into()
 				.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
-			ExistenceRequirement::AllowDeath
+			ExistenceRequirement::AllowDeath,
 		)?;
 
 		Ok(amount)

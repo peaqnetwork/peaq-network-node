@@ -122,9 +122,12 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::<Runtime>::default().build_storage().unwrap();
 
-		pallet_balances::GenesisConfig::<Runtime> { balances: vec![(bob_account_id(), 100000)], ..Default::default() }
-			.assimilate_storage(&mut t)
-			.unwrap();
+		pallet_balances::GenesisConfig::<Runtime> {
+			balances: vec![(bob_account_id(), 100000)],
+			..Default::default()
+		}
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));

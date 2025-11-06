@@ -134,7 +134,7 @@ where
 		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
-		existense_requirement: ExistenceRequirement
+		existense_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(());
@@ -176,8 +176,15 @@ where
 		} else {
 			// We cannot slash the token because it didn't implemnt that...
 			// If error happens, will return 0
-			MultiCurrencies::burn_from(asset_id, who, amount, Preservation::Expendable, Precision::Exact, Fortitude::Polite)
-				.unwrap_or(Zero::zero())
+			MultiCurrencies::burn_from(
+				asset_id,
+				who,
+				amount,
+				Preservation::Expendable,
+				Precision::Exact,
+				Fortitude::Polite,
+			)
+			.unwrap_or(Zero::zero())
 		}
 	}
 }
@@ -222,7 +229,12 @@ where
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)
 	}
 
-	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance, existence_requirement: ExistenceRequirement) -> DispatchResult {
+	fn transfer(
+		from: &AccountId,
+		to: &AccountId,
+		amount: Self::Balance,
+		existence_requirement: ExistenceRequirement,
+	) -> DispatchResult {
 		log::debug!(
 			"PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}",
 			from,
@@ -241,9 +253,12 @@ where
 		Ok(())
 	}
 
-	fn withdraw(who: &AccountId, amount: Self::Balance, existence_requirement: ExistenceRequirement) -> DispatchResult {
-		Currency::withdraw(who, amount, WithdrawReasons::all(), existence_requirement)
-			.map(|_| ())
+	fn withdraw(
+		who: &AccountId,
+		amount: Self::Balance,
+		existence_requirement: ExistenceRequirement,
+	) -> DispatchResult {
+		Currency::withdraw(who, amount, WithdrawReasons::all(), existence_requirement).map(|_| ())
 	}
 
 	fn can_slash(who: &AccountId, amount: Self::Balance) -> bool {

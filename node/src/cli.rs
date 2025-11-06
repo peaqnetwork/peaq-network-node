@@ -126,7 +126,7 @@ pub enum Subcommand {
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
 	/// Exposing this at all times for documentation reasons
-	/// try-runtime CLI is no longer supported by peaq and is now a standalone CLI 
+	/// try-runtime CLI is no longer supported by peaq and is now a standalone CLI
 	/// https://github.com/paritytech/try-runtime-cli
 	TryRuntime,
 }

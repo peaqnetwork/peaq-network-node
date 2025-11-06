@@ -1,7 +1,8 @@
 //! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::collators::slot_based::{
-	self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport, SlotBasedBlockImportHandle,
+	self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport,
+	SlotBasedBlockImportHandle,
 };
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
@@ -74,49 +75,38 @@ pub type ExtHostFunctions = (
 	peaq_primitives_ext::peaq_ext::HostFunctions,
 );
 
-
 type ParachainExecutor = WasmExecutor<ExtHostFunctions>;
 
 type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, ParachainExecutor>;
 
-
 type ParachainBackend = TFullBackend<Block>;
 
-type FrontierBlockImport<RuntimeApi> = TFrontierBlockImport<
-	Block,
-	SlotBasedBlockImport<RuntimeApi>,
-	ParachainClient<RuntimeApi>,
->;
+type FrontierBlockImport<RuntimeApi> =
+	TFrontierBlockImport<Block, SlotBasedBlockImport<RuntimeApi>, ParachainClient<RuntimeApi>>;
 
-type SlotBasedBlockImport<RuntimeApi> = TSlotBasedBlockImport<
-	Block,
-	Arc<ParachainClient<RuntimeApi>>,
-	ParachainClient<RuntimeApi>
->;
+type SlotBasedBlockImport<RuntimeApi> =
+	TSlotBasedBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>;
 
-type ParachainBlockImport<RuntimeApi> = TParachainBlockImport<
-	Block,
-	FrontierBlockImport<RuntimeApi>,
-	ParachainBackend,
->;
+type ParachainBlockImport<RuntimeApi> =
+	TParachainBlockImport<Block, FrontierBlockImport<RuntimeApi>, ParachainBackend>;
 
 type Service<RuntimeApi> = PartialComponents<
-		ParachainClient<RuntimeApi>,
-		ParachainBackend,
-		(),
-		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
-		(
-			ParachainBlockImport<RuntimeApi>,
-			SlotBasedBlockImportHandle<Block>,
-			// SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
-			Option<FilterPool>,
-			Option<Telemetry>,
-			Option<TelemetryWorkerHandle>,
-			Arc<fc_db::Backend<Block, ParachainClient<RuntimeApi>>>,
-			FeeHistoryCache,
-		),
-	>;
+	ParachainClient<RuntimeApi>,
+	ParachainBackend,
+	(),
+	sc_consensus::DefaultImportQueue<Block>,
+	sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
+	(
+		ParachainBlockImport<RuntimeApi>,
+		SlotBasedBlockImportHandle<Block>,
+		// SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
+		Option<FilterPool>,
+		Option<Telemetry>,
+		Option<TelemetryWorkerHandle>,
+		Arc<fc_db::Backend<Block, ParachainClient<RuntimeApi>>>,
+		FeeHistoryCache,
+	),
+>;
 
 pub fn frontier_database_dir(config: &Configuration, path: &str) -> std::path::PathBuf {
 	config.base_path.config_dir(config.chain_spec.id()).join("frontier").join(path)
@@ -204,7 +194,7 @@ where
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
-	
+
 	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =
@@ -236,11 +226,12 @@ where
 	.with_prometheus(config.prometheus_registry())
 	.build();
 
-
 	let (slot_based_block_import, slot_based_handle) =
-	 	SlotBasedBlockImport::new(client.clone(), client.clone());
-	let frontier_block_import = FrontierBlockImport::new(slot_based_block_import.clone(), client.clone());
-	let parachain_block_import = ParachainBlockImport::new(frontier_block_import.clone(), backend.clone());
+		SlotBasedBlockImport::new(client.clone(), client.clone());
+	let frontier_block_import =
+		FrontierBlockImport::new(slot_based_block_import.clone(), client.clone());
+	let parachain_block_import =
+		ParachainBlockImport::new(frontier_block_import.clone(), backend.clone());
 
 	let import_queue = fn_build_import_queue(
 		client.clone(),
@@ -287,8 +278,9 @@ async fn build_relay_chain_interface(
 			polkadot_config,
 			parachain_config.prometheus_registry(),
 			task_manager,
-			rpc_target_urls
-		).await
+			rpc_target_urls,
+		)
+		.await
 	} else {
 		build_inprocess_relay_chain(
 			polkadot_config,
@@ -359,7 +351,7 @@ where
 		KeystorePtr,
 		ParaId,
 		CollatorPair,
-		SlotBasedBlockImportHandle<Block>
+		SlotBasedBlockImportHandle<Block>,
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -398,7 +390,7 @@ where
 	let import_queue_service = params.import_queue.service();
 	let network_config = FullNetworkConfiguration::<_, _, sc_network::NetworkWorker<_, _>>::new(
 		&parachain_config.network,
-		prometheus_registry.clone()
+		prometheus_registry.clone(),
 	);
 	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		cumulus_client_service::build_network(BuildNetworkParams {
@@ -611,7 +603,7 @@ where
 			params.keystore_container.keystore(),
 			id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
-			slot_based_handle
+			slot_based_handle,
 		)?;
 	}
 
@@ -648,8 +640,8 @@ where
 		_,
 		_,
 		_,
-		>(cumulus_client_consensus_aura::BuildVerifierParams {
-			client: client2.clone(),
+	>(cumulus_client_consensus_aura::BuildVerifierParams {
+		client: client2.clone(),
 		create_inherent_data_providers: move |parent_hash, _| {
 			let cidp_client = client2.clone();
 			async move {
@@ -663,9 +655,9 @@ where
 							);
 				Ok((slot, time))
 			}
-			},
-			telemetry: telemetry_handle,
-		}));
+		},
+		telemetry: telemetry_handle,
+	}));
 
 	let relay_chain_verifier =
 		Box::new(RelayChainVerifier::new(client.clone(), |_, _| async { Ok(()) })) as Box<_>;
@@ -707,7 +699,7 @@ where
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
-		+ cumulus_primitives_core::GetCoreSelectorApi<Block>
+		+ cumulus_primitives_core::GetCoreSelectorApi<Block>,
 {
 	start_contracts_node_impl::<RuntimeApi, _, _>(
 		parachain_config,
@@ -758,7 +750,7 @@ where
 		 relay_chain_interface,
 		 transaction_pool,
 		 sync_oracle,
-		 keystore,	
+		 keystore,
 		 para_id,
 		 collator_key,
 		 block_import_handle| {
@@ -808,12 +800,22 @@ where
 				slot_offset: Duration::from_secs(1),
 				spawner: task_manager.spawn_handle(),
 				export_pov: None,
-				block_import_handle
+				block_import_handle,
 			};
 
-			slot_based::run::<Block, sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _, _, _, _>(
-				params,
-			);
+			slot_based::run::<
+				Block,
+				sp_consensus_aura::sr25519::AuthorityPair,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+			>(params);
 
 			Ok(())
 		},

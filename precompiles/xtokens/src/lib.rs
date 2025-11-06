@@ -25,7 +25,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use pallet_evm_precompile_assets_erc20::AssetIdOf;
-use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
+use peaq_precompile_utils::{DEFAULT_PROOF_SIZE, SYSTEM_ACCOUNT_SIZE};
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::prelude::*;
 use sp_core::{H160, U256};
@@ -41,7 +41,6 @@ use xcm::{
 	latest::{Asset, AssetId, Assets, Fungibility, Location, WeightLimit},
 	VersionedAsset, VersionedAssets, VersionedLocation,
 };
-use peaq_precompile_utils::SYSTEM_ACCOUNT_SIZE;
 
 #[cfg(test)]
 mod mock;

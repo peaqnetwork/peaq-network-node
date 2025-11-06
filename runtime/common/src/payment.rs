@@ -3,10 +3,7 @@ use frame_support::{
 	pallet_prelude::{
 		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
 	},
-	traits::{
-		Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
-		WithdrawReasons,
-	},
+	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	Parameter,
 };
 use frame_system::Config as SysConfig;
@@ -23,11 +20,11 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
+use pallet_evm::AccountIdOf as EVMAccountIdOf;
 use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
 };
-use pallet_evm::{AccountIdOf as EVMAccountIdOf};
 
 use crate::{log, log_icon, log_internal};
 
@@ -136,16 +133,16 @@ where
 	}
 
 	// [TODO] Need to check...
-    fn can_withdraw_fee(
+	fn can_withdraw_fee(
 		who: &<T>::AccountId,
 		_call: &<T>::RuntimeCall,
 		_dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
-        fee: Self::Balance,
-        _tip: Self::Balance,
-    ) -> Result<(), TransactionValidityError> {
-        if fee.is_zero() {
-            return Ok(());
-        }
+		fee: Self::Balance,
+		_tip: Self::Balance,
+	) -> Result<(), TransactionValidityError> {
+		if fee.is_zero() {
+			return Ok(());
+		}
 		// Check if user can withdraw in any valid currency.
 		let currency_id = PCPC::ensure_can_withdraw(who, fee)?;
 		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
@@ -158,8 +155,7 @@ where
 			);
 		}
 		Ok(())
-    }
-
+	}
 }
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
@@ -266,12 +262,12 @@ impl<T, C, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<C, OU>
 where
 	T: pallet_evm::Config<Currency = C>,
 	C: Currency<EVMAccountIdOf<T>>,
-    C::PositiveImbalance:
-        Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::NegativeImbalance>,
-    C::NegativeImbalance:
-        Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::PositiveImbalance>,
-    OU: OnUnbalanced<EVMNegativeImbalanceOf<C, T>>,
-    U256: UniqueSaturatedInto<<C as Currency<EVMAccountIdOf<T>>>::Balance>,
+	C::PositiveImbalance:
+		Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::NegativeImbalance>,
+	C::NegativeImbalance:
+		Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::PositiveImbalance>,
+	OU: OnUnbalanced<EVMNegativeImbalanceOf<C, T>>,
+	U256: UniqueSaturatedInto<<C as Currency<EVMAccountIdOf<T>>>::Balance>,
 {
 	type LiquidityInfo = Option<EVMNegativeImbalanceOf<T::Currency, T>>;
 
@@ -285,7 +281,12 @@ where
 		base_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) -> Self::LiquidityInfo {
-		<EVMCurrencyAdapter<C, OU> as OnChargeEVMTransactionT<T>>::correct_and_deposit_fee(who, corrected_fee, base_fee, already_withdrawn)
+		<EVMCurrencyAdapter<C, OU> as OnChargeEVMTransactionT<T>>::correct_and_deposit_fee(
+			who,
+			corrected_fee,
+			base_fee,
+			already_withdrawn,
+		)
 	}
 
 	fn pay_priority_fee(tip: Self::LiquidityInfo) {

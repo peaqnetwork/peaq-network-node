@@ -119,7 +119,6 @@ impl frame_system::Config for Runtime {
 	type PreInherents = ();
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
-
 }
 
 parameter_types! {

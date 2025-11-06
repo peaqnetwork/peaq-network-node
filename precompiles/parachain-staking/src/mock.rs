@@ -328,9 +328,12 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Test> { balances: self.balances.clone(), ..Default::default() }
-			.assimilate_storage(&mut t)
-			.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances.clone(),
+			..Default::default()
+		}
+		.assimilate_storage(&mut t)
+		.expect("Pallet balances storage can be assimilated");
 
 		let mut stakers: Vec<(AccountId, Option<AccountId>, Balance)> = Vec::new();
 		for collator in self.collators.clone() {
