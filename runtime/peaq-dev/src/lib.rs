@@ -66,8 +66,6 @@ use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiA
 mod weights;
 pub mod xcm_config;
 
-use weights::rocksdb_weights::constants::RocksDbWeight;
-
 // A few exports that help ease life for downstream crates.
 #[cfg(feature = "std")]
 pub use fp_evm::GenesisAccount;
@@ -83,7 +81,7 @@ pub use frame_support::{
 	},
 	weights::{
 		constants::{
-			BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND,
+			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
 		},
 		ConstantMultiplier, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
@@ -151,11 +149,10 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 /// Maximum number of blocks simultaneously accepted by the Runtime, not yet included into the
 /// relay chain.
-pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 2 * MAX_BLOCK_PROCESSING_VELOCITY + 1;
+pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
 /// How many parachain blocks are processed by the relay chain per parent. Limits the number of
 /// blocks authored per slot.
-/// 12 to achieve 500ms blocktime
-pub const MAX_BLOCK_PROCESSING_VELOCITY: u32 = 12;
+pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 /// Relay chain slot duration, in milliseconds.
 pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
 
@@ -660,8 +657,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id =
-				pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
+			let authority_id = pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
 			let encoded = authority_id.encode();
 			let bytes: [u8; 32] =
 				encoded.try_into().expect("Encoded authority_id should be exactly 32 bytes");
@@ -805,7 +801,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	Runtime,
 	RELAY_CHAIN_SLOT_DURATION_MILLIS,
-	MAX_BLOCK_PROCESSING_VELOCITY,
+	BLOCK_PROCESSING_VELOCITY,
 	UNINCLUDED_SEGMENT_CAPACITY,
 >;
 
