@@ -204,8 +204,7 @@ where
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
-
-	// [TODO] ...
+	
 	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =

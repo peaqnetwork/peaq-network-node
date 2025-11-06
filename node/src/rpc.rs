@@ -149,7 +149,6 @@ where
 	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
-	// use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 
@@ -177,16 +176,7 @@ where
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool)).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
-
-	// enum Never {}
-	// impl<T> fp_rpc::ConvertTransaction<T> for Never {
-	// 	fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
-	// 		// The Never type is not instantiable, but this method requires the type to be
-	// 		// instantiated to be called (`&self` parameter), so if the code compiles we have the
-	// 		// guarantee that this function will never be called.
-	// 		unreachable!()
-	// 	}
-	// }
+	
 	let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;

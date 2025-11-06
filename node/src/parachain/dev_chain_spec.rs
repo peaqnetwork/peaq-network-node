@@ -56,7 +56,7 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 
 	Ok(ChainSpec::builder(
 		wasm_binary,
-		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
+		Extensions { bad_blocks: Default::default(), relay_chain: "westend-local".into(), para_id },
 	)
 	.with_name("peaq-dev")
 	.with_id("dev-testnet")
