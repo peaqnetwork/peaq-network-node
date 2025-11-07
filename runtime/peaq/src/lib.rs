@@ -10,7 +10,7 @@ use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use fp_rpc::TransactionStatus;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
+	EnsureRoot, EnsureSigned, EnsureWithSuccess,
 };
 use sp_core::crypto::AccountId32;
 
@@ -630,29 +630,23 @@ parameter_types! {
 	pub const MaxBalance: Balance = Balance::MAX;
 }
 
+type RootOrTreasuryCouncilOrigin = EitherOfDiverse<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
+>;
+
+
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	// type ApproveOrigin = EitherOfDiverse<
-	// 	EnsureRoot<AccountId>,
-	// 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-	// >;
-	type RejectOrigin = EitherOfDiverse<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
-	>;
-	//type RuntimeEvent = RuntimeEvent;
-	// type OnSlash = ();
-	// type ProposalBond = ProposalBond;
-	// type ProposalBondMinimum = ProposalBondMinimum;
-	// type ProposalBondMaximum = ();
+	type RejectOrigin = RootOrTreasuryCouncilOrigin;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type MaxApprovals = MaxApprovals;
-	type SpendOrigin = EnsureRootWithSuccess<AccountId, MaxBalance>; //EnsureWithSuccess<EnsureRoot<AccountId>, AccountId, MaxBalance>;
+	type SpendOrigin = EnsureWithSuccess<RootOrTreasuryCouncilOrigin, AccountId, MaxBalance>;
 	type RuntimeEvent = RuntimeEvent;
 
 	type AssetKind = ();
