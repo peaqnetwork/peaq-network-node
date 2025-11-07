@@ -708,12 +708,11 @@ where
 							// Pre-london update, legacy transactions.
 							match transaction {
 								#[allow(deprecated)]
-								ethereum::TransactionV2::Legacy(tx) =>
-									api.trace_transaction_before_version_4(
-										parent_block_hash,
-										exts,
-										tx,
-									),
+								ethereum::TransactionV2::Legacy(tx) => api.trace_transaction_before_version_4(
+									parent_block_hash,
+									exts,
+									tx,
+								),
 								_ =>
 									return Err(internal_err(
 										"Bug: pre-london runtime expects legacy transactions"
