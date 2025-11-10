@@ -156,6 +156,14 @@ where
 		}
 		Ok(())
 	}
+
+	// These two are unused but must satisfy the trait impl
+	#[cfg(feature = "runtime-benchmarks")]
+	fn endow_account(_who: &<T>::AccountId, _amount: Self::Balance) {}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn minimum_balance() -> Self::Balance {
+		Self::Balance::zero()
+	}
 }
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as

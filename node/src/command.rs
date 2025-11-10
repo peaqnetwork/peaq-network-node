@@ -14,7 +14,7 @@ use sc_service::{
 };
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::{
-	traits::{AccountIdConversion, Block as BlockT, Hash as HashT, Header as HeaderT, Zero},
+	traits::{AccountIdConversion, Block as BlockT, Hash as HashT, Header as HeaderT, HashingFor, Zero},
 	StateVersion,
 };
 use std::io::Write;
@@ -321,7 +321,7 @@ pub fn run() -> sc_cli::Result<()> {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							runner.sync_run(|config| {
-								cmd.run::<Block, parachain::ExtHostFunctions>(config)
+								cmd.run_with_spec::<HashingFor<Block>, parachain::ExtHostFunctions>(Some(config.chain_spec))
 							})
 						})
 					},
