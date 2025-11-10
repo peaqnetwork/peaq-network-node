@@ -48,7 +48,9 @@ impl super::ResponseFormatter for Formatter {
 				);
 				continue;
 			}
-			let mut result: Vec<Call> = entry.values().map(|it| {
+			let mut result: Vec<Call> = entry
+				.values()
+				.map(|it| {
 					let from = it.from;
 					let trace_address = it.trace_address.clone();
 					let value = it.value;

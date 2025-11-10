@@ -202,7 +202,7 @@ where
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
-			true
+			true,
 		)?;
 	let client = Arc::new(client);
 

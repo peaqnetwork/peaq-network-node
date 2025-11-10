@@ -45,7 +45,9 @@ impl super::ResponseFormatter for Formatter {
 				);
 				continue;
 			}
-			let mut tx_traces: Vec<_> = entry.values().map(|trace| match trace.inner.clone() {
+			let mut tx_traces: Vec<_> = entry
+				.values()
+				.map(|trace| match trace.inner.clone() {
 					CallInner::Call { input, to, res, call_type } => TransactionTrace {
 						action: TransactionTraceAction::Call {
 							call_type,
