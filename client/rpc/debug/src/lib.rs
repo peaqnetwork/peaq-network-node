@@ -502,7 +502,7 @@ where
 		match trace_type {
 			single::TraceType::CallList => {
 				let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
-				proxy.with_log = tracer_config.map_or(false, |cfg| cfg.with_log);
+				proxy.with_log = tracer_config.is_some_and(|cfg| cfg.with_log);
 				proxy.using(f)?;
 				proxy.finish_transaction();
 				let response = match tracer_input {
@@ -754,7 +754,7 @@ where
 					},
 					single::TraceType::CallList => {
 						let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
-						proxy.with_log = tracer_config.map_or(false, |cfg| cfg.with_log);
+						proxy.with_log = tracer_config.is_some_and(|cfg| cfg.with_log);
 						proxy.using(f)?;
 						proxy.finish_transaction();
 						let response = match tracer_input {
@@ -950,7 +950,7 @@ where
 			},
 			single::TraceType::CallList => {
 				let mut proxy = peaq_client_evm_tracing::listeners::CallList::default();
-				proxy.with_log = tracer_config.map_or(false, |cfg| cfg.with_log);
+				proxy.with_log = tracer_config.is_some_and(|cfg| cfg.with_log);
 				proxy.using(f)?;
 				proxy.finish_transaction();
 				let response = match tracer_input {
