@@ -215,7 +215,7 @@ impl<'a> From<evm::tracing::Event<'a>> for EvmEvent {
 				is_static,
 				context: context.clone().into(),
 			},
-			// [TODO] Need to check...
+			// No such variant as Log on evm::tracing::Event
 			// evm::tracing::Event::Log {
 			// 	address,
 			// 	topics,
