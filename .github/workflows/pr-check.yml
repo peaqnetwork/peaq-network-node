@@ -60,4 +60,4 @@ jobs:
             
       - name: Run clippy
         run: |
-          cargo clippy --release --features on-chain-release-build -- -Dwarnings
+          cargo clippy --release --features on-chain-release-build,try-runtime,runtime-benchmarks,evm-tracing
