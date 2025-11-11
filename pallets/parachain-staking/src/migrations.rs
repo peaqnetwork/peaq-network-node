@@ -2,13 +2,15 @@
 
 use crate::{
 	pallet::{Config, Pallet, OLD_STAKING_ID, STAKING_ID},
-	types::{Candidate, OldCandidate},
+	types::{AccountIdOf, Candidate, OldCandidate},
 	CandidatePool, ForceNewRound, Round,
 };
 use frame_support::{
-	pallet_prelude::{GetStorageVersion, StorageVersion},
+	pallet_prelude::{GetStorageVersion, StorageVersion, ValueQuery},
+	storage_alias,
 	traits::{Get, LockableCurrency, WithdrawReasons},
 	weights::Weight,
+	Twox64Concat,
 };
 use pallet_balances::Locks;
 use sp_runtime::Permill;
@@ -20,8 +22,9 @@ pub enum Versions {
 	_V8 = 8,
 	V9 = 9,
 	V10 = 10,
-	#[default]
 	V11 = 11,
+	#[default]
+	V12 = 12,
 }
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
@@ -31,7 +34,11 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 mod upgrade {
 
 	use super::*;
+	use crate::{pallet::SlashingEnabled, MinUnjailDuration};
 
+	#[storage_alias]
+	type CollatorBlock<T: Config> =
+		StorageMap<Pallet<T>, Twox64Concat, AccountIdOf<T>, u32, ValueQuery>;
 	/// Migration implementation that deletes the old reward rate config and changes the staking ID.
 	pub struct Migrate<T>(sp_std::marker::PhantomData<T>);
 
@@ -102,6 +109,22 @@ mod upgrade {
 
 				log::info!("V11 Migrating Done.");
 			}
+
+			if onchain_storage_version < StorageVersion::new(Versions::V12 as u16) {
+				log::info!(
+					"Running storage migration from version {:?} to {:?}",
+					onchain_storage_version,
+					Versions::default() as u16
+				);
+
+				// enable slashing
+				SlashingEnabled::<T>::put(true);
+				MinUnjailDuration::<T>::put(2);
+				weight_writes += 1;
+
+				log::info!("V12 Migrating Done.");
+			}
+
 			// update onchain storage version
 			StorageVersion::new(Versions::default() as u16).put::<Pallet<T>>();
 			weight_writes += 1;

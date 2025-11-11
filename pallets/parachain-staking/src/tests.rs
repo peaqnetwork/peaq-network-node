@@ -350,6 +350,7 @@ fn collator_exit_executes_after_delay() {
 		.with_delegators(vec![(3, 1, 100), (4, 1, 100), (5, 2, 100), (6, 2, 100)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_eq!(CandidatePool::<Test>::count(), 3);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -389,6 +390,7 @@ fn collator_exit_executes_after_delay() {
 			// (within the last T::StakeDuration blocks)
 			roll_to(25, vec![]);
 			let expected = vec![
+				Event::SlashingEnabledChanged(false),
 				Event::MaxSelectedCandidatesSet(2, 5),
 				Event::NewRound(5, 1),
 				Event::NewRound(10, 2),
@@ -420,6 +422,7 @@ fn collator_selection_chooses_top_candidates() {
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -433,7 +436,11 @@ fn collator_selection_chooses_top_candidates() {
 			roll_to(8, vec![]);
 			// should choose top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			let expected = vec![Event::MaxSelectedCandidatesSet(2, 5), Event::NewRound(5, 1)];
+			let expected = vec![
+				Event::SlashingEnabledChanged(false),
+				Event::MaxSelectedCandidatesSet(2, 5),
+				Event::NewRound(5, 1),
+			];
 			assert_eq!(events(), expected);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(6)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5],);
@@ -454,6 +461,7 @@ fn collator_selection_chooses_top_candidates() {
 			roll_to(27, vec![]);
 			// should choose top MaxSelectedCandidates (5), in order
 			let expected = vec![
+				Event::SlashingEnabledChanged(false),
 				Event::MaxSelectedCandidatesSet(2, 5),
 				Event::NewRound(5, 1),
 				Event::LeftTopCandidates(6),
@@ -490,6 +498,7 @@ fn exit_queue_with_events() {
 		.with_collators(vec![(1, 100), (2, 90), (3, 80), (4, 70), (5, 60), (6, 50)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_eq!(CandidatePool::<Test>::count(), 6);
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2]);
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 5));
@@ -498,7 +507,11 @@ fn exit_queue_with_events() {
 			roll_to(8, vec![]);
 			// should choose top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			let mut expected = vec![Event::MaxSelectedCandidatesSet(2, 5), Event::NewRound(5, 1)];
+			let mut expected = vec![
+				Event::SlashingEnabledChanged(false),
+				Event::MaxSelectedCandidatesSet(2, 5),
+				Event::NewRound(5, 1),
+			];
 			assert_eq!(events(), expected);
 			assert_ok!(StakePallet::init_leave_candidates(RuntimeOrigin::signed(6)));
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
@@ -586,6 +599,7 @@ fn execute_leave_candidates_with_delay() {
 		.with_delegators(vec![(11, 1, 110), (12, 1, 120), (13, 2, 130), (14, 2, 140)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_eq!(CandidatePool::<Test>::count(), 10);
 			assert_eq!(
 				StakePallet::total_collator_stake(),
@@ -880,11 +894,16 @@ fn multiple_delegations() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 5));
 			roll_to(8, vec![]);
 			// chooses top MaxSelectedCandidates (5), in order
 			assert_eq!(StakePallet::selected_candidates().into_inner(), vec![1, 2, 3, 4, 5]);
-			let mut expected = vec![Event::MaxSelectedCandidatesSet(2, 5), Event::NewRound(5, 1)];
+			let mut expected = vec![
+				Event::SlashingEnabledChanged(false),
+				Event::MaxSelectedCandidatesSet(2, 5),
+				Event::NewRound(5, 1),
+			];
 			assert_eq!(events(), expected);
 			assert_noop!(
 				StakePallet::delegate_another_candidate(RuntimeOrigin::signed(6), 1, 10),
@@ -1048,6 +1067,7 @@ fn should_update_total_stake() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			let mut old_stake = StakePallet::total_collator_stake();
 			assert_eq!(old_stake, TotalStake { collators: 40, delegators: 30 });
 			assert_ok!(StakePallet::candidate_stake_more(RuntimeOrigin::signed(1), 50));
@@ -1164,6 +1184,8 @@ fn collators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false)
+				.expect("Failed to disable slashing");
 			roll_to(4, vec![]);
 			assert_noop!(
 				StakePallet::candidate_stake_more(RuntimeOrigin::signed(6), 50),
@@ -1255,6 +1277,7 @@ fn delegators_bond() {
 		.set_blocks_per_round(5)
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			roll_to(4, vec![]);
 			assert_noop!(
 				StakePallet::join_delegators(RuntimeOrigin::signed(6), 2, 50),
@@ -1414,11 +1437,12 @@ fn round_transitions() {
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
 			roll_to(6, vec![]);
 			// chooses top MaxSelectedCandidates (5), in order
-			let init = vec![Event::NewRound(5, 1)];
+			let init = vec![Event::SlashingEnabledChanged(false), Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 			assert_eq!(last_event(), MetaEvent::StakePallet(Event::BlocksPerRoundSet(1, 5, 5, 3)));
@@ -1443,11 +1467,12 @@ fn round_transitions() {
 		.with_delegators(vec![(2, 1, 10), (3, 1, 10)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			// Default round every 5 blocks, but MinBlocksPerRound is 3 and we set it to min
 			// 3 blocks
 			roll_to(7, vec![]);
 			// chooses top MaxSelectedCandidates (5), in order
-			let init = vec![Event::NewRound(5, 1)];
+			let init = vec![Event::SlashingEnabledChanged(false), Event::NewRound(5, 1)];
 			assert_eq!(events(), init);
 			assert_ok!(StakePallet::set_blocks_per_round(RuntimeOrigin::root(), 3));
 
@@ -1697,6 +1722,7 @@ fn should_reward_delegators_below_min_stake() {
 		.with_delegators(vec![(3, 2, stake_num)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			// impossible but lets assume it happened
 			let mut state =
 				StakePallet::candidate_pool(1).expect("CollatorState cannot be missing");
@@ -2440,6 +2466,7 @@ fn candidate_leaves() {
 		.with_delegators(vec![(12, 1, 100), (13, 1, 10)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			assert_eq!(
 				StakePallet::top_candidates().into_iter().map(|s| s.owner).collect::<Vec<u64>>(),
 				vec![1, 2]
@@ -3124,6 +3151,7 @@ fn force_new_round() {
 		.with_collators(vec![(1, 100), (2, 100), (3, 100), (4, 100)])
 		.build()
 		.execute_with(|| {
+			StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false).unwrap();
 			let mut round = RoundInfo { current: 0, first: 0, length: 5 };
 			assert_eq!(StakePallet::round(), round);
 			assert_eq!(Session::validators(), vec![1, 2]);
@@ -3988,5 +4016,150 @@ fn check_snapshot_is_cleared() {
 			roll_to(18, authors);
 			let at_stake = <crate::AtStake<Test>>::iter_prefix(2).collect::<Vec<_>>();
 			assert_eq!(at_stake.len(), 0);
+		});
+}
+
+#[test]
+fn check_collator_kickout_without_slash() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10), (4, 10), (5, 10), (6, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 6);
+			assert_eq!(collator_blocks.len(), 2);
+			assert!(events().contains(&Event::CollatorJailed(3)));
+			roll_to(20, authors.clone());
+
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(!StakePallet::selected_candidates().contains(&3));
+			assert!(!StakePallet::selected_candidates().contains(&4));
+			assert!(!StakePallet::selected_candidates().contains(&5));
+			assert!(StakePallet::selected_candidates().contains(&6));
+		});
+}
+
+#[test]
+fn check_no_slashing() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 3 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 3);
+			assert_eq!(collator_blocks.len(), 3);
+			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorJailed(_)) }));
+			roll_to(20, authors.clone());
+
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(StakePallet::selected_candidates().contains(&3));
+		});
+}
+
+#[test]
+fn check_disable_slashing() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10), (4, 10), (5, 10), (6, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=22).map(|i| Some(i % 2 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+			assert_ok!(StakePallet::set_slashing_enabled(RuntimeOrigin::root(), false));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 6);
+			assert_eq!(collator_blocks.len(), 2);
+			assert!(!events().iter().any(|event| { matches!(event, Event::CollatorJailed(_)) }));
+			roll_to(20, authors.clone());
+
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(StakePallet::selected_candidates().contains(&3));
+			assert!(!StakePallet::selected_candidates().contains(&4));
+			assert!(!StakePallet::selected_candidates().contains(&5));
+			assert!(!StakePallet::selected_candidates().contains(&6));
+		});
+}
+
+#[test]
+fn check_collator_can_be_unjailed() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (6, 100)])
+		.with_collators(vec![(1, 10), (2, 10), (3, 10)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..=42).map(|i| Some(i % 2 + 1)).collect();
+
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 3));
+			assert_ok!(StakePallet::set_min_unjailed_duration(RuntimeOrigin::root(), 2));
+
+			// roll to new round
+			roll_to(10, authors.clone());
+
+			// sanity check
+			let round = RoundInfo { current: 2, first: 10, length: 5 };
+			assert_eq!(StakePallet::round(), round);
+			assert_eq!(Session::validators(), vec![1, 2, 3]);
+			assert_eq!(Session::current_index(), 2);
+			let collator_blocks =
+				<crate::CollatorBlocks<Test>>::iter_prefix(1).collect::<Vec<(AccountId, u32)>>();
+			assert_eq!(CandidatePool::<Test>::count(), 3);
+			assert_eq!(collator_blocks.len(), 2);
+			assert!(events().contains(&Event::CollatorJailed(3)));
+			roll_to(20, authors.clone());
+
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(!StakePallet::selected_candidates().contains(&3));
+
+			// unjail collator
+			assert_ok!(StakePallet::unjail_candidate(RuntimeOrigin::signed(3), 3));
+
+			roll_to(36, authors.clone());
+
+			assert!(StakePallet::selected_candidates().contains(&1));
+			assert!(StakePallet::selected_candidates().contains(&2));
+			assert!(StakePallet::selected_candidates().contains(&3));
 		});
 }

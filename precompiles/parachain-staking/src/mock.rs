@@ -333,6 +333,7 @@ impl ExtBuilder {
 		parachain_staking::GenesisConfig::<Test> {
 			stakers,
 			max_candidate_stake: 160_000_000 * DECIMALS,
+			slashing_enabled: true,
 		}
 		.assimilate_storage(&mut t)
 		.expect("Parachain Staking's storage can be assimilated");

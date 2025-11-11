@@ -100,6 +100,17 @@ pub enum CandidateStatus {
 	Leaving(SessionIndex),
 }
 
+#[derive(
+	Copy, Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen,
+)]
+pub enum JailingStatus {
+	/// Collator is jailed for a certain number of rounds.
+	#[default]
+	Jailed,
+	/// Collator is unjailing and will rejoin the candidate pool in n sessions.
+	Unjailing(u8),
+}
+
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]

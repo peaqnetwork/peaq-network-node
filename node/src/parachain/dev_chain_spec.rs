@@ -133,6 +133,7 @@ fn configure_genesis(
 		parachain_staking: ParachainStakingConfig {
 			stakers,
 			max_candidate_stake: staking::MAX_COLLATOR_STAKE,
+			slashing_enabled: true,
 		},
 		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
