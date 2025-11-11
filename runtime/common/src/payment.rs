@@ -156,13 +156,15 @@ where
 		}
 		Ok(())
 	}
-
-	// These two are unused but must satisfy the trait impl
+	
 	#[cfg(feature = "runtime-benchmarks")]
-	fn endow_account(_who: &<T>::AccountId, _amount: Self::Balance) {}
+	fn endow_account(who: &<T>::AccountId, amount: Self::Balance) {
+		let _ = C::deposit_creating(who, amount);
+	}
+	
 	#[cfg(feature = "runtime-benchmarks")]
 	fn minimum_balance() -> Self::Balance {
-		Self::Balance::zero()
+		C::minimum_balance()
 	}
 }
 
