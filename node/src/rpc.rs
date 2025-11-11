@@ -1,6 +1,5 @@
 //! A collection of node-specific RPC methods.
 
-use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_rpc::{EthBlockDataCacheTask, StorageOverride, TxPool, TxPoolApiServer};
@@ -59,8 +58,6 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub fee_history_cache: FeeHistoryCache,
 }
 
-pub type XcmSenders = Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>;
-
 /// Full client dependencies.
 pub struct FullDeps<C, P, BE> {
 	/// The client instance to use.
@@ -89,8 +86,6 @@ pub struct FullDeps<C, P, BE> {
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
-	/// Channels for manual xcm messages (downward, hrmp)
-	pub xcm_senders: XcmSenders,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<dyn StorageOverride<Block>>,
 	/// Cache for Ethereum block data.
@@ -163,7 +158,6 @@ where
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
-		xcm_senders: _,
 		overrides,
 		block_data_cache,
 		forced_parent_hashes,
