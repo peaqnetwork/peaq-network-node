@@ -46,12 +46,14 @@ use sp_runtime::{
 };
 use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc};
 
+#[allow(clippy::large_enum_variant)]
 pub enum RequesterInput {
 	Call((RequestBlockId, TraceCallParams)),
 	Transaction(H256),
 	Block(RequestBlockId),
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum Response {
 	Single(single::TransactionTrace),
 	Block(Vec<block::BlockTransactionTrace>),
