@@ -461,6 +461,14 @@ pub fn run() -> sc_cli::Result<()> {
 				info!("Parachain Account: {}", parachain_account);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
+				if !rpc_config.relay_chain_rpc_urls.is_empty() && !cli.relaychain_args.is_empty() {
+					log::warn!(
+						"Detected relay chain node arguments together with \
+					--relay-chain-rpc-url. This command starts a minimal Polkadot node that only \
+					uses a network-related subset of all relay chain CLI options."
+					);
+				}
+
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
 					start_node::<RuntimeApi>(
