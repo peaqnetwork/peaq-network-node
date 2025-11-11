@@ -537,4 +537,31 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+
+	/// Storage: `ParachainStaking::MaxCommissionChange` (r:1 w:1)
+	/// Proof: `ParachainStaking::MaxCommissionChange` (`max_values`: None, `max_size`: Some(1314), added: 3789, mode: `MaxEncodedLen`)
+	/// The range of component `m` is `[0, 1000000]`.
+	fn set_max_commission_change(_m: u32) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `393`
+		//  Estimated: `4779`
+		// Minimum execution time: 19_960_000 picoseconds.
+		Weight::from_parts(20_647_875, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: `ParachainStaking::MaxCommissionChangeInterval` (r:1 w:1)
+	/// Proof: `ParachainStaking::MaxCommissionChangeInterval` (`max_values`: None, `max_size`: Some(1314), added: 3789, mode: `MaxEncodedLen`)
+	/// The range of component `n` is `[0, 1000000]`.
+	fn set_min_commission_change_interval() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `393`
+		//  Estimated: `4779`
+		// Minimum execution time: 19_960_000 picoseconds.
+		Weight::from_parts(20_647_875, 0)
+			.saturating_add(Weight::from_parts(0, 4779))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
