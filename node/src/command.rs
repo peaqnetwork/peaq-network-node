@@ -14,9 +14,7 @@ use sc_service::{
 };
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::{
-	traits::{
-		AccountIdConversion, Block as BlockT, Hash as HashT, Header as HeaderT, Zero,
-	},
+	traits::{AccountIdConversion, Block as BlockT, Hash as HashT, Header as HeaderT, Zero},
 	StateVersion,
 };
 use std::io::Write;
