@@ -521,7 +521,6 @@ where
 					fc_db::Backend::KeyValue(b) => b.clone(),
 				},
 				backend: backend.clone(),
-				command_sink: None,
 				max_past_logs,
 				fee_history_limit,
 				fee_history_cache: fee_history_cache.clone(),

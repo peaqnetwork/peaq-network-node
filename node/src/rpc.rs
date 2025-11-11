@@ -13,7 +13,7 @@ use sc_client_api::{
 	client::BlockchainEvents,
 	UsageProvider,
 };
-use sc_consensus_manual_seal::rpc::EngineCommand;
+
 use sc_network::service::traits::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
@@ -83,8 +83,6 @@ pub struct FullDeps<C, P, BE> {
 	pub frontier_backend: Arc<dyn fc_api::Backend<Block>>,
 	/// Backend.
 	pub backend: Arc<BE>,
-	/// Manual seal command sink
-	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
@@ -160,7 +158,6 @@ where
 		sync,
 		filter_pool,
 		ethapi_cmd,
-		command_sink: _,
 		frontier_backend,
 		backend: _,
 		max_past_logs,
