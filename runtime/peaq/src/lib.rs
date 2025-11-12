@@ -65,6 +65,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use zenlink_protocol::{AssetBalance, MultiAssetsHandler, PairInfo, ZenlinkMultiAssets};
 
+mod test;
 mod weights;
 pub mod xcm_config;
 
