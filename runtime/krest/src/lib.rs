@@ -118,12 +118,7 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 
 pub use precompiles::EVMAssetPrefix;
 
-use runtime_common::{
-	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
-	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
-	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
-	TransactionByteFee, CENTS, DOLLARS, MILLICENTS,
-};
+use runtime_common::{LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS, MAX_POV_SIZE, MILLICENTS};
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -228,13 +223,11 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5);
 
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
 /// `Operational` extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-	WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64),
-	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
-);
+const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_parts(WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2_u64), MAX_POV_SIZE as u64);
 
 /// Base Deposit for occupying storage - 0.002 KREST
 const STORAGE_DEPOSIT_BASE: Balance = 2 * CENTS / 10;
@@ -376,7 +369,13 @@ parameter_types! {
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO * RuntimeBlockWeights::get().max_block;
 	pub const DeletionQueueDepth: u32 = 128;
-	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+	pub Schedule: pallet_contracts::Schedule<Runtime> = pallet_contracts::Schedule {
+		limits: pallet_contracts::Limits {
+			payload_len: 12 * 1024,  // Reduced from 16KB to 12KB to meet storage limit with 90% dispatch ratio
+			..Default::default()
+		},
+		..Default::default()
+	};
 	pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
 	// TODO: re-vist to make sure values are appropriate
 	pub const MaxDelegateDependencies: u32 = 32;
@@ -1162,17 +1161,22 @@ construct_runtime!(
 );
 
 /// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-	frame_system::CheckNonZeroSender<Runtime>,
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
-);
+pub type SignedExtra = cumulus_pallet_weight_reclaim::StorageWeightReclaim<
+	Runtime,
+	(
+		frame_system::CheckNonZeroSender<Runtime>,
+		frame_system::CheckSpecVersion<Runtime>,
+		frame_system::CheckTxVersion<Runtime>,
+		frame_system::CheckGenesis<Runtime>,
+		frame_system::CheckEra<Runtime>,
+		frame_system::CheckNonce<Runtime>,
+		frame_system::CheckWeight<Runtime>,
+		pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+		frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
+	),
+>;
+
+
 type EventRecord = frame_system::EventRecord<
 	<Runtime as frame_system::Config>::RuntimeEvent,
 	<Runtime as frame_system::Config>::Hash,
@@ -1384,7 +1388,7 @@ impl_runtime_apis! {
 						Preamble::Signed(_, _, signed_extra) => {
 							// Yuck, this depends on the index of ChargeTransactionPayment in SignedExtra
 							// Get the 7th item from the tuple
-							let charge_transaction_payment = &signed_extra.7;
+							let charge_transaction_payment = &signed_extra.0.7;
 							charge_transaction_payment.tip()
 						},
 						Preamble::General(_, _) => 0,
@@ -2332,4 +2336,8 @@ impl EVMAddressToAssetId<StorageAssetId> for Runtime {
 		let asset_id = asset_id.try_into().ok()?;
 		Some(AssetIdToEVMAddress::<EVMAssetPrefix>::convert(asset_id))
 	}
+}
+
+impl cumulus_pallet_weight_reclaim::Config for Runtime {
+	type WeightInfo = ();
 }
