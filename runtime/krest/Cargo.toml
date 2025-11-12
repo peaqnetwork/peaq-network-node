@@ -252,6 +252,7 @@ std = [
 	"cumulus-primitives-aura/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
+	"cumulus-pallet-weight-reclaim/std",
 	"parachain-info/std",
 	"parachains-common/std",
 
