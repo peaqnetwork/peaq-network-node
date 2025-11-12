@@ -118,7 +118,12 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 
 pub use precompiles::EVMAssetPrefix;
 
-use runtime_common::{LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier, PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction, PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper, TransactionByteFee, CENTS, DOLLARS, MAX_POV_SIZE, MILLICENTS};
+use runtime_common::{
+	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
+	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
+	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
+	TransactionByteFee, CENTS, DOLLARS, MAX_POV_SIZE, MILLICENTS,
+};
 
 /// An index to a block.
 type BlockNumber = peaq_primitives_xcm::BlockNumber;
@@ -1175,7 +1180,6 @@ pub type SignedExtra = cumulus_pallet_weight_reclaim::StorageWeightReclaim<
 		frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 	),
 >;
-
 
 type EventRecord = frame_system::EventRecord<
 	<Runtime as frame_system::Config>::RuntimeEvent,
