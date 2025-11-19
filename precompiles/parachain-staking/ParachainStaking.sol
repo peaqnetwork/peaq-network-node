@@ -19,6 +19,17 @@ interface ParachainStaking {
         uint256 commission;
     }
 
+    struct DelegationInfo {
+        bytes32 collator;
+        uint256 amount;
+    }
+
+    struct CollatorDelegatorState {
+        bytes32 delegator;
+        DelegationInfo[] collators;
+        uint256 total;
+    }
+
     /// Get all collator informations
     // selector: 0xaaacb283
     function getCollatorList() external view returns (CollatorInfo[] memory);
@@ -58,4 +69,36 @@ interface ParachainStaking {
 		/// elapsed.
     /// selector: 0x0f615369
     function unlockUnstaked(address target) external;
+
+
+    /// Get the delegations for a specific delegator or all delegators with paging support
+    /// If delegator is zero address (0x0), returns all delegators' states with paging
+    /// Otherwise returns the delegations for the specified delegator (paging applies to collators within delegator)
+    /// 
+    /// IMPORTANT - Sorting behavior (same as above):
+    /// - When querying ALL delegators (0x0): The order of delegators is NOT sorted
+    /// - Each individual delegator's delegations: ARE sorted by stake amount in DESCENDING order
+    /// 
+    /// INPUT/OUTPUT ADDRESS FORMAT:
+    /// - Input: Ethereum address (20 bytes) for the delegator parameter
+    /// - Output: All addresses in the returned structs are substrate account hashes (bytes32)
+    /// 
+    /// @param delegator The delegator Ethereum address to query (use 0x0 for all delegators)
+    /// @param offset The starting index for pagination (0-based)
+    /// @param limit The maximum number of items to return (must be 1-512)
+    /// 
+    /// selector: 0xbeae0df4
+    function getDelegatorState(address delegator, uint256 offset, uint256 limit) external view returns (CollatorDelegatorState[] memory);
+
+    /// Convert Ethereum address to substrate account hash (bytes32)
+    /// This shows how Ethereum addresses are mapped to substrate accounts internally
+    /// 
+    /// Input: Standard Ethereum address (20 bytes)
+    /// Output: Substrate account hash (32 bytes) - the derived substrate account representation
+    /// 
+    /// @param ethAddress The Ethereum address to convert
+    /// @return The substrate account hash (bytes32) derived from the Ethereum address
+    /// 
+    /// selector: 0xb76f87bf
+    function convertEthToSubstrateAccount(address ethAddress) external view returns (bytes32);
 }
