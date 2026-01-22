@@ -22,13 +22,13 @@ use crate::{types::RoundInfo, *};
 use frame_benchmarking::v1::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	assert_ok,
-	traits::{Currency, Get, OnInitialize, OnFinalize},
+	traits::{Currency, Get, OnFinalize, OnInitialize},
 };
 use frame_system::{pallet_prelude::BlockNumberFor, Pallet as System, RawOrigin};
 use pallet_session::Pallet as Session;
 use sp_runtime::{
 	traits::{One, SaturatedConversion, StaticLookup},
-	Permill, Saturating
+	Permill, Saturating,
 };
 use sp_std::{convert::TryInto, vec::Vec};
 
@@ -287,7 +287,7 @@ benchmarks! {
 
 		// go to block in which we can exit
 		assert_ok!(<Pallet<T>>::init_leave_candidates(RawOrigin::Signed(candidate.clone()).into()));
-		
+
 		// Get the initial round when leave was initiated
 		let initial_round = <Round<T>>::get().current;
 		let exit_round = initial_round.saturating_add(T::ExitQueueDelay::get());
@@ -299,7 +299,7 @@ benchmarks! {
 			System::<T>::set_block_number(round_end_block);
 			Session::<T>::on_initialize(round_end_block);
 		}
-		
+
 		// Verify we can exit now
 		let state = <CandidatePool<T>>::get(&candidate).expect("Candidate should exist");
 		assert!(state.can_exit(<Round<T>>::get().current), "Candidate should be able to exit");
