@@ -22,7 +22,7 @@ use crate::{types::RoundInfo, *};
 use frame_benchmarking::v1::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	assert_ok,
-	traits::{Currency, Get, OnFinalize, OnInitialize},
+	traits::{Currency, Get, OnInitialize},
 };
 use frame_system::{pallet_prelude::BlockNumberFor, Pallet as System, RawOrigin};
 use pallet_session::Pallet as Session;
