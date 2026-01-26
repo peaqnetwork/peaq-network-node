@@ -206,6 +206,9 @@ SUCCESS_COUNT=0
 FAILED_COUNT=0
 FAILED_PALLETS=()
 
+# Disable exit on error for benchmark loops (we handle errors manually)
+set +e
+
 # Benchmark local pallets (from pallets/ directory)
 for PALLET_DIR in "${PALLET_DIRS[@]}"; do
     # Get pallet name and output filename from mapping function
@@ -294,6 +297,9 @@ for PALLET_ENTRY in "${EXTERNAL_PALLETS[@]}"; do
     fi
     echo ""
 done
+
+# Re-enable exit on error for summary section
+set -e
 
 # Print summary
 echo "=========================================="
