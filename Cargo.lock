@@ -3358,7 +3358,7 @@ dependencies = [
 [[package]]
 name = "evm"
 version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#6ca5a72bc8942f4860137155dd9033526fd362a5"
+source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -3378,7 +3378,7 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#6ca5a72bc8942f4860137155dd9033526fd362a5"
+source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -3389,7 +3389,7 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#6ca5a72bc8942f4860137155dd9033526fd362a5"
+source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
 dependencies = [
  "environmental",
  "evm-core",
@@ -3400,7 +3400,7 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#6ca5a72bc8942f4860137155dd9033526fd362a5"
+source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
 dependencies = [
  "auto_impl",
  "environmental",
