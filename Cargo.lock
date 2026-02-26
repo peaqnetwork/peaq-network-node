@@ -9158,6 +9158,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "peaq-pallet-did2"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/peaqnetwork/polkadot-sdk?branch=peaq-polkadot-v1.7.2)",
+]
+
+[[package]]
 name = "peaq-pallet-mor"
 version = "0.1.2"
 source = "git+https://github.com/peaqnetwork/peaq-pallet-mor.git?branch=dev#d20225dbf59b7a590a31348a67331b529120c6a8"
