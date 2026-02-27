@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 #[allow(missing_docs)]
 #[derive(Debug, Parser)]
-pub struct RunCmd {
+pub struct NodeRunCmd {
 	#[allow(missing_docs)]
 	#[clap(flatten)]
 	pub base: cumulus_client_cli::RunCmd,
@@ -57,7 +57,7 @@ pub struct RunCmd {
 	pub target_gas_price: u64,
 }
 
-impl std::ops::Deref for RunCmd {
+impl std::ops::Deref for NodeRunCmd {
 	type Target = cumulus_client_cli::RunCmd;
 
 	fn deref(&self) -> &Self::Target {
@@ -77,7 +77,7 @@ pub struct Cli {
 
 	#[allow(missing_docs)]
 	#[clap(flatten)]
-	pub run: RunCmd,
+	pub run: NodeRunCmd,
 
 	/// Relaychain arguments
 	#[clap(raw = true)]
