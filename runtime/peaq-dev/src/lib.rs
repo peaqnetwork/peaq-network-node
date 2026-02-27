@@ -546,6 +546,12 @@ impl peaq_pallet_did::Config for Runtime {
 	type ReserveIdentifier = DIDReserveIdentifier;
 }
 
+/// Config the did2 in pallets/did2
+impl peaq_pallet_did2::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = peaq_pallet_did2::weights::WeightInfo<Runtime>;
+}
+
 /// Config the utility in pallets/utility
 impl pallet_utility::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
@@ -1158,6 +1164,7 @@ construct_runtime!(
 		PeaqRbac: peaq_pallet_rbac::{Pallet, Call, Storage, Event<T>} = 103,
 		PeaqStorage: peaq_pallet_storage::{Pallet, Call, Storage, Event<T>} = 104,
 		PeaqMor: peaq_pallet_mor::{Pallet, Call, Config<T>, Storage, Event<T>} = 105,
+		PeaqDid2: peaq_pallet_did2::{Pallet, Call, Storage, Event<T>} = 106,
 	}
 );
 
@@ -1211,6 +1218,7 @@ mod benches {
 		[pallet_block_reward, BlockReward]
 		[peaq_pallet_transaction, Transaction]
 		[peaq_pallet_did, PeaqDid]
+		[peaq_pallet_did2, PeaqDid2]
 		[peaq_pallet_rbac, PeaqRbac]
 		[peaq_pallet_storage, PeaqStorage]
 		[peaq_pallet_mor, PeaqMor]

@@ -51,6 +51,7 @@ sp-transaction-pool = { workspace = true, default-features = false }
 sp-version = { workspace = true, default-features = false }
 pallet-contracts = { workspace = true, default-features = false }
 peaq-pallet-did = { workspace = true, default-features = false }
+peaq-pallet-did2 = { workspace = true, default-features = false }
 peaq-pallet-did-runtime-api = { workspace = true, default-features = false }
 peaq-pallet-transaction = { workspace = true, default-features = false }
 peaq-pallet-rbac = { workspace = true, default-features = false }
@@ -177,6 +178,7 @@ runtime-benchmarks = [
 
 	"peaq-pallet-transaction/runtime-benchmarks",
 	"peaq-pallet-did/runtime-benchmarks",
+	"peaq-pallet-did2/runtime-benchmarks",
 	"peaq-pallet-rbac/runtime-benchmarks",
 	"peaq-pallet-storage/runtime-benchmarks",
 	"peaq-pallet-mor/runtime-benchmarks",
@@ -219,6 +221,7 @@ std = [
 	"sp-weights/std",
 	"pallet-contracts/std",
 	"peaq-pallet-did/std",
+	"peaq-pallet-did2/std",
 	"peaq-pallet-did-runtime-api/std",
 	"peaq-pallet-transaction/std",
 	"peaq-pallet-rbac/std",
@@ -357,6 +360,7 @@ try-runtime = [
 	"orml-xtokens/try-runtime",
 
 	"peaq-pallet-did/try-runtime",
+	"peaq-pallet-did2/try-runtime",
 	"peaq-pallet-transaction/try-runtime",
 	"peaq-pallet-storage/try-runtime",
 	"peaq-pallet-rbac/try-runtime",

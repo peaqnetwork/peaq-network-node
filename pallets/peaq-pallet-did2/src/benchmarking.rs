@@ -2,15 +2,12 @@
 
 use super::*;
 
-use frame_benchmarking::v2::*;
+use frame_benchmarking::v1::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
+use sp_std::vec;
 
-#[benchmarks]
-mod benchmarks {
-	use super::*;
-
-	#[benchmark]
-	fn create() {
+benchmarks! {
+	create {
 		let caller: T::AccountId = whitelisted_caller();
 		let did: Did = BoundedVec::try_from(b"did:peaq:0x00".to_vec()).unwrap();
 		let service = DidService {
@@ -24,18 +21,10 @@ mod benchmarks {
 			services: BoundedVec::try_from(vec![service]).unwrap(),
 		};
 		let versioned_doc = VersionedDidDocument::V0(doc);
-
-		#[extrinsic_call]
-		_(RawOrigin::Signed(caller), versioned_doc);
-
+	}: _(RawOrigin::Signed(caller), versioned_doc)
+	verify {
 		assert!(Controller::<T>::contains_key(did));
 	}
-
-	impl_benchmark_test_suite!(
-		Pallet,
-		crate::benchmarking::tests::new_test_ext(),
-		crate::mock::TestRuntime,
-	);
 }
 
 #[cfg(test)]
@@ -47,3 +36,9 @@ mod tests {
 		mock::ExternalityBuilder::build()
 	}
 }
+
+impl_benchmark_test_suite!(
+	Pallet,
+	crate::benchmarking::tests::new_test_ext(),
+	crate::mock::TestRuntime,
+);

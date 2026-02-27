@@ -226,6 +226,7 @@ zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-D
 
 # Peaq's own developments
 peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
+peaq-pallet-did2 = { path = "pallets/peaq-pallet-did2", default-features = false }
 peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
 peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "dev", default-features = false }
 peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "dev", default-features = false }
