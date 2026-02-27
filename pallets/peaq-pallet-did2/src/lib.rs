@@ -80,20 +80,15 @@ pub mod pallet {
 		DidAlreadyExists,
 		/// The services list exceeds the maximum allowed length.
 		TooManyServices,
-		#[cfg(feature = "did-document-validation")]
 		/// The DID `id` is not valid UTF-8 or does not follow `did:<method>:<method-specific-id>`.
 		/// The method name must consist of lowercase letters and digits only.
 		InvalidDidSyntax,
-		#[cfg(feature = "did-document-validation")]
 		/// A service entry has an invalid or empty `id` field.
 		InvalidServiceId,
-		#[cfg(feature = "did-document-validation")]
 		/// A service entry has an empty `type` field.
 		InvalidServiceType,
-		#[cfg(feature = "did-document-validation")]
 		/// A service `serviceEndpoint` is empty or not a valid URI (must contain `://`).
 		InvalidServiceEndpoint,
-		#[cfg(feature = "did-document-validation")]
 		/// Two or more service entries within the document share the same `id`.
 		DuplicateServiceId,
 	}
@@ -163,7 +158,38 @@ pub mod pallet {
 
 			match document {
 				VersionedDidDocument::V0(doc) => {
-					#[cfg(feature = "did-document-validation")]
+					let did = doc.id;
+
+					ensure!(!Controller::<T>::contains_key(&did), Error::<T>::DidAlreadyExists);
+
+					Controller::<T>::insert(&did, doc.controller);
+
+					let mut versioned_services: BoundedVec<VersionedDidService, ConstU32<10>> =
+						BoundedVec::new();
+					for service in doc.services {
+						versioned_services
+							.try_push(VersionedDidService::V0(service))
+							.map_err(|_| Error::<T>::TooManyServices)?;
+					}
+					Service::<T>::insert(&did, versioned_services);
+
+					Self::deposit_event(Event::DidDocumentCreated { did, who });
+				},
+			}
+
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::WeightInfo::create2())]
+		pub fn create2(
+			origin: OriginFor<T>,
+			document: VersionedDidDocument<T::AccountId>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+
+			match document {
+				VersionedDidDocument::V0(doc) => {
 					Self::validate_did_document(&doc)?;
 
 					let did = doc.id;
@@ -193,7 +219,6 @@ pub mod pallet {
 	// Internal helpers
 	// -------------------------------------------------------------------------
 
-	#[cfg(feature = "did-document-validation")]
 	impl<T: Config> Pallet<T> {
 		/// Validate a [`DidDocument`] against the W3C DID Core specification rules that are
 		/// enforceable on-chain without external context.
@@ -225,6 +250,33 @@ pub mod pallet {
 
 			// Method-specific ID must be non-empty
 			ensure!(!method_id.is_empty(), Error::<T>::InvalidDidSyntax);
+
+			// Method-specific-id character set (W3C DID Core §3.1 ABNF):
+			//   idchar = ALPHA / DIGIT / "." / "-" / "_" / pct-encoded
+			//   ":" is allowed as a sub-delimiter between idchar groups.
+			//   pct-encoded = "%" HEXDIG HEXDIG
+			//   The id must end with an idchar, not ":".
+			let id_bytes = method_id.as_bytes();
+			let len = id_bytes.len();
+			let mut i = 0usize;
+			while i < len {
+				let b = id_bytes[i];
+				if matches!(b, b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'.' | b'-' | b'_' | b':') {
+					i += 1;
+				} else if b == b'%' {
+					// pct-encoded requires exactly two following hex digits
+					ensure!(i + 2 < len, Error::<T>::InvalidDidSyntax);
+					ensure!(
+						id_bytes[i + 1].is_ascii_hexdigit() && id_bytes[i + 2].is_ascii_hexdigit(),
+						Error::<T>::InvalidDidSyntax
+					);
+					i += 3;
+				} else {
+					return Err(Error::<T>::InvalidDidSyntax.into());
+				}
+			}
+			// Must not end with ':' — the ABNF requires *( *idchar ":" ) 1*idchar
+			ensure!(id_bytes[len - 1] != b':', Error::<T>::InvalidDidSyntax);
 
 			// --- Service entries ---
 			for (i, service) in doc.services.iter().enumerate() {

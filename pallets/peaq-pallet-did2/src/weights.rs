@@ -17,10 +17,30 @@ pub struct WeightInfo<T>(PhantomData<T>);
 
 impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 	/// Storage: `PeaqDid2::Controller` (r:1 w:1)
+	/// Proof: `PeaqDid2::Controller` (`max_values`: None, `max_size`: Some(306), added: 2781, mode: `MaxEncodedLen`)
 	/// Storage: `PeaqDid2::Service` (r:0 w:1)
+	/// Proof: `PeaqDid2::Service` (`max_values`: None, `max_size`: Some(4495), added: 6970, mode: `MaxEncodedLen`)
 	fn create() -> Weight {
-		// Placeholder weights – regenerate via benchmarking CLI before production use.
-		Weight::from_parts(10_000_000, 0)
+		// Proof Size summary in bytes:
+		//  Measured:  `114`
+		//  Estimated: `3771`
+		// Minimum execution time: 192_239_000 picoseconds.
+		Weight::from_parts(196_906_000, 0)
+			.saturating_add(Weight::from_parts(0, 3771))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(2))
+	}
+	/// Storage: `PeaqDid2::Controller` (r:1 w:1)
+	/// Proof: `PeaqDid2::Controller` (`max_values`: None, `max_size`: Some(306), added: 2781, mode: `MaxEncodedLen`)
+	/// Storage: `PeaqDid2::Service` (r:0 w:1)
+	/// Proof: `PeaqDid2::Service` (`max_values`: None, `max_size`: Some(4495), added: 6970, mode: `MaxEncodedLen`)
+	fn create2() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `114`
+		//  Estimated: `3771`
+		// Minimum execution time: 194_075_000 picoseconds.
+		Weight::from_parts(207_355_000, 0)
+			.saturating_add(Weight::from_parts(0, 3771))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}

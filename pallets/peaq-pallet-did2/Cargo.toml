@@ -29,7 +29,6 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
-did-document-validation = []
 runtime-benchmarks = [
 	"frame-benchmarking",
 	"frame-support/runtime-benchmarks",
