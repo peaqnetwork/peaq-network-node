@@ -1,16 +1,5 @@
-use crate::{mock::*, *};
+use crate::{mock::*, utils::make_document, *};
 use frame_support::{assert_noop, assert_ok};
-
-fn make_document(did: Did, controller: AccountId) -> VersionedDidDocument<AccountId> {
-	let service = DidService {
-		id: BoundedVec::try_from(b"did:peaq:0x01#svc".to_vec()).unwrap(),
-		service_type: BoundedVec::try_from(b"LinkedDomains".to_vec()).unwrap(),
-		service_endpoint: BoundedVec::try_from(b"https://example.com".to_vec()).unwrap(),
-	};
-	let doc =
-		DidDocument { id: did, controller, services: BoundedVec::try_from(vec![service]).unwrap() };
-	VersionedDidDocument::V0(doc)
-}
 
 #[test]
 fn create_stores_controller_and_services() {
@@ -56,15 +45,21 @@ mod validation {
 			id: BoundedVec::try_from(did_bytes.to_vec()).unwrap(),
 			controller,
 			services: BoundedVec::new(),
+			verification_methods: BoundedVec::new(),
+			machine_metadata: BoundedVec::new(),
+			permissions: Permissions { owner: controller, controllers: BoundedVec::new() },
 		};
 		VersionedDidDocument::V0(doc)
 	}
 
-	fn make_doc_with_service(service: DidService) -> VersionedDidDocument<AccountId> {
+	fn make_doc_with_service(service: ServiceEndpoint) -> VersionedDidDocument<AccountId> {
 		let doc = DidDocument {
 			id: BoundedVec::try_from(b"did:peaq:valid".to_vec()).unwrap(),
 			controller: 1,
 			services: BoundedVec::try_from(vec![service]).unwrap(),
+			verification_methods: BoundedVec::new(),
+			machine_metadata: BoundedVec::new(),
+			permissions: Permissions { owner: 1, controllers: BoundedVec::new() },
 		};
 		VersionedDidDocument::V0(doc)
 	}
@@ -120,7 +115,7 @@ mod validation {
 	#[test]
 	fn create_fails_when_service_type_is_empty() {
 		ExternalityBuilder::build().execute_with(|| {
-			let svc = DidService {
+			let svc = ServiceEndpoint {
 				id: BoundedVec::try_from(b"did:peaq:valid#svc".to_vec()).unwrap(),
 				service_type: BoundedVec::new(), // empty
 				service_endpoint: BoundedVec::try_from(b"https://example.com".to_vec()).unwrap(),
@@ -135,7 +130,7 @@ mod validation {
 	#[test]
 	fn create_fails_when_service_endpoint_has_no_scheme() {
 		ExternalityBuilder::build().execute_with(|| {
-			let svc = DidService {
+			let svc = ServiceEndpoint {
 				id: BoundedVec::try_from(b"did:peaq:valid#svc".to_vec()).unwrap(),
 				service_type: BoundedVec::try_from(b"LinkedDomains".to_vec()).unwrap(),
 				service_endpoint: BoundedVec::try_from(b"example.com".to_vec()).unwrap(), /* no "://" */
@@ -150,7 +145,7 @@ mod validation {
 	#[test]
 	fn create_fails_when_service_endpoint_is_empty() {
 		ExternalityBuilder::build().execute_with(|| {
-			let svc = DidService {
+			let svc = ServiceEndpoint {
 				id: BoundedVec::try_from(b"did:peaq:valid#svc".to_vec()).unwrap(),
 				service_type: BoundedVec::try_from(b"LinkedDomains".to_vec()).unwrap(),
 				service_endpoint: BoundedVec::new(), // empty
@@ -201,10 +196,7 @@ mod validation {
 		ExternalityBuilder::build().execute_with(|| {
 			// '@' is not an allowed idchar
 			assert_noop!(
-				PeaqDid2::create2(
-					RuntimeOrigin::signed(1),
-					make_bare_doc(b"did:peaq:node@1", 1),
-				),
+				PeaqDid2::create2(RuntimeOrigin::signed(1), make_bare_doc(b"did:peaq:node@1", 1),),
 				Error::<TestRuntime>::InvalidDidSyntax,
 			);
 		});
@@ -214,10 +206,7 @@ mod validation {
 	fn create2_fails_when_method_specific_id_has_space() {
 		ExternalityBuilder::build().execute_with(|| {
 			assert_noop!(
-				PeaqDid2::create2(
-					RuntimeOrigin::signed(1),
-					make_bare_doc(b"did:peaq:node 1", 1),
-				),
+				PeaqDid2::create2(RuntimeOrigin::signed(1), make_bare_doc(b"did:peaq:node 1", 1),),
 				Error::<TestRuntime>::InvalidDidSyntax,
 			);
 		});
@@ -228,10 +217,7 @@ mod validation {
 		ExternalityBuilder::build().execute_with(|| {
 			// "%" followed by only one hex digit at end of string
 			assert_noop!(
-				PeaqDid2::create2(
-					RuntimeOrigin::signed(1),
-					make_bare_doc(b"did:peaq:node%2", 1),
-				),
+				PeaqDid2::create2(RuntimeOrigin::signed(1), make_bare_doc(b"did:peaq:node%2", 1),),
 				Error::<TestRuntime>::InvalidDidSyntax,
 			);
 		});
@@ -242,10 +228,7 @@ mod validation {
 		ExternalityBuilder::build().execute_with(|| {
 			// bare "%" at end of string
 			assert_noop!(
-				PeaqDid2::create2(
-					RuntimeOrigin::signed(1),
-					make_bare_doc(b"did:peaq:node%", 1),
-				),
+				PeaqDid2::create2(RuntimeOrigin::signed(1), make_bare_doc(b"did:peaq:node%", 1),),
 				Error::<TestRuntime>::InvalidDidSyntax,
 			);
 		});
@@ -256,10 +239,7 @@ mod validation {
 		ExternalityBuilder::build().execute_with(|| {
 			// "%" followed by two non-hex characters
 			assert_noop!(
-				PeaqDid2::create2(
-					RuntimeOrigin::signed(1),
-					make_bare_doc(b"did:peaq:node%GG", 1),
-				),
+				PeaqDid2::create2(RuntimeOrigin::signed(1), make_bare_doc(b"did:peaq:node%GG", 1),),
 				Error::<TestRuntime>::InvalidDidSyntax,
 			);
 		});
@@ -269,10 +249,7 @@ mod validation {
 	fn create2_fails_when_method_specific_id_ends_with_colon() {
 		ExternalityBuilder::build().execute_with(|| {
 			assert_noop!(
-				PeaqDid2::create2(
-					RuntimeOrigin::signed(1),
-					make_bare_doc(b"did:peaq:node:", 1),
-				),
+				PeaqDid2::create2(RuntimeOrigin::signed(1), make_bare_doc(b"did:peaq:node:", 1),),
 				Error::<TestRuntime>::InvalidDidSyntax,
 			);
 		});
@@ -282,12 +259,12 @@ mod validation {
 	fn create_fails_on_duplicate_service_ids() {
 		ExternalityBuilder::build().execute_with(|| {
 			let svc_id = BoundedVec::try_from(b"did:peaq:valid#svc".to_vec()).unwrap();
-			let svc1 = DidService {
+			let svc1 = ServiceEndpoint {
 				id: svc_id.clone(),
 				service_type: BoundedVec::try_from(b"LinkedDomains".to_vec()).unwrap(),
 				service_endpoint: BoundedVec::try_from(b"https://a.example.com".to_vec()).unwrap(),
 			};
-			let svc2 = DidService {
+			let svc2 = ServiceEndpoint {
 				id: svc_id,
 				service_type: BoundedVec::try_from(b"LinkedDomains".to_vec()).unwrap(),
 				service_endpoint: BoundedVec::try_from(b"https://b.example.com".to_vec()).unwrap(),
@@ -296,6 +273,9 @@ mod validation {
 				id: BoundedVec::try_from(b"did:peaq:valid".to_vec()).unwrap(),
 				controller: 1,
 				services: BoundedVec::try_from(vec![svc1, svc2]).unwrap(),
+				verification_methods: BoundedVec::new(),
+				machine_metadata: BoundedVec::new(),
+				permissions: Permissions { owner: 1, controllers: BoundedVec::new() },
 			};
 			assert_noop!(
 				PeaqDid2::create2(RuntimeOrigin::signed(1), VersionedDidDocument::V0(doc)),

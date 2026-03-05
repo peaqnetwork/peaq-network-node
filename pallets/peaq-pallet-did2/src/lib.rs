@@ -24,14 +24,13 @@ use frame_system::pallet_prelude::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+pub mod did_spec;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
-
-pub mod types;
-pub use types::*;
-
+pub use did_spec::*;
+pub mod utils;
 pub mod weightinfo;
 pub mod weights;
 pub use weightinfo::WeightInfo;
@@ -67,7 +66,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new DID document was created on-chain.
-		DidDocumentCreated { did: Did, who: T::AccountId },
+		DidDocumentCreated { id: VersionedDid, who: T::AccountId },
 	}
 
 	// -------------------------------------------------------------------------
@@ -78,11 +77,11 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// A DID with this identifier already exists.
 		DidAlreadyExists,
-		/// The services list exceeds the maximum allowed length.
-		TooManyServices,
 		/// The DID `id` is not valid UTF-8 or does not follow `did:<method>:<method-specific-id>`.
 		/// The method name must consist of lowercase letters and digits only.
 		InvalidDidSyntax,
+		/// The `permissions.owner` field does not match the signer of the transaction.
+		InvalidOwner,
 		/// A service entry has an invalid or empty `id` field.
 		InvalidServiceId,
 		/// A service entry has an empty `type` field.
@@ -91,6 +90,10 @@ pub mod pallet {
 		InvalidServiceEndpoint,
 		/// Two or more service entries within the document share the same `id`.
 		DuplicateServiceId,
+		/// The services list exceeds the maximum allowed length.
+		TooManyServices,
+		/// The machine metadata entries exceed the maximum allowed length.
+		TooManyMetadataEntries,
 	}
 
 	// -------------------------------------------------------------------------
@@ -108,23 +111,28 @@ pub mod pallet {
 	// Storages
 	// -------------------------------------------------------------------------
 	#[pallet::storage]
-	pub type Controller<T: Config> = StorageMap<_, Blake2_128Concat, Did, T::AccountId>;
+	pub type Controller<T: Config> =
+		StorageMap<_, Blake2_128Concat, VersionedDid, VersionedController<T::AccountId>>;
 
 	#[pallet::storage]
-	pub type Service<T: Config> =
-		StorageMap<_, Blake2_128Concat, Did, BoundedVec<VersionedDidService, ConstU32<10>>>;
+	pub type Services<T: Config> =
+		StorageMap<_, Blake2_128Concat, VersionedDid, VersionedServiceEndpoints>;
 
-	// #[pallet::storage]
-	// pub type VerificationMethod<T: Config> = StorageMap<_, Blake2_128Concat, Did,
-	// BoundedVec<v0::VerificationMethod, ConstU32<10>>>;
+	#[pallet::storage]
+	pub type VerificationMethod<T: Config> =
+		StorageMap<_, Blake2_128Concat, VersionedDid, VersionedVerificationMethods>;
+
+	#[pallet::storage]
+	pub type Permissions<T: Config> =
+		StorageMap<_, Blake2_128Concat, VersionedDid, VersionedPermissions<T::AccountId>>;
 
 	#[pallet::storage]
 	pub type Metadata<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		Did,
+		VersionedDid,
 		Blake2_128Concat,
-		BoundedVec<u8, ConstU32<64>>,
+		BoundedVec<u8, ConstU32<128>>,
 		BoundedVec<u8, ConstU32<128>>,
 	>;
 
@@ -155,27 +163,12 @@ pub mod pallet {
 			document: VersionedDidDocument<T::AccountId>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			let did_split = document.into_split()?;
+			let id = did_split.id.clone();
 
-			match document {
-				VersionedDidDocument::V0(doc) => {
-					let did = doc.id;
-
-					ensure!(!Controller::<T>::contains_key(&did), Error::<T>::DidAlreadyExists);
-
-					Controller::<T>::insert(&did, doc.controller);
-
-					let mut versioned_services: BoundedVec<VersionedDidService, ConstU32<10>> =
-						BoundedVec::new();
-					for service in doc.services {
-						versioned_services
-							.try_push(VersionedDidService::V0(service))
-							.map_err(|_| Error::<T>::TooManyServices)?;
-					}
-					Service::<T>::insert(&did, versioned_services);
-
-					Self::deposit_event(Event::DidDocumentCreated { did, who });
-				},
-			}
+			ensure!(!Controller::<T>::contains_key(&id), Error::<T>::DidAlreadyExists);
+			Self::insert_new_document(did_split)?;
+			Self::deposit_event(Event::DidDocumentCreated { id, who });
 
 			Ok(())
 		}
@@ -187,29 +180,13 @@ pub mod pallet {
 			document: VersionedDidDocument<T::AccountId>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			Self::validate_did_document(&document, &who)?;
+			let did_split = document.into_split()?;
+			let id = did_split.id.clone();
 
-			match document {
-				VersionedDidDocument::V0(doc) => {
-					Self::validate_did_document(&doc)?;
-
-					let did = doc.id;
-
-					ensure!(!Controller::<T>::contains_key(&did), Error::<T>::DidAlreadyExists);
-
-					Controller::<T>::insert(&did, doc.controller);
-
-					let mut versioned_services: BoundedVec<VersionedDidService, ConstU32<10>> =
-						BoundedVec::new();
-					for service in doc.services {
-						versioned_services
-							.try_push(VersionedDidService::V0(service))
-							.map_err(|_| Error::<T>::TooManyServices)?;
-					}
-					Service::<T>::insert(&did, versioned_services);
-
-					Self::deposit_event(Event::DidDocumentCreated { did, who });
-				},
-			}
+			ensure!(!Controller::<T>::contains_key(&id), Error::<T>::DidAlreadyExists);
+			Self::insert_new_document(did_split)?;
+			Self::deposit_event(Event::DidDocumentCreated { id, who });
 
 			Ok(())
 		}
@@ -220,18 +197,70 @@ pub mod pallet {
 	// -------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
+		fn insert_new_document(did_split: DidSplit<T::AccountId>) -> DispatchResult {
+			ensure!(
+				did_split.machine_metadata.len() as u32 <= 20,
+				Error::<T>::TooManyMetadataEntries
+			);
+			Controller::<T>::insert(&did_split.id, did_split.controller);
+			Services::<T>::insert(&did_split.id, did_split.services);
+			VerificationMethod::<T>::insert(&did_split.id, did_split.verification_methods);
+			Permissions::<T>::insert(&did_split.id, did_split.permissions);
+			did_split.machine_metadata.into_iter().for_each(|(key, value)| {
+				Metadata::<T>::insert(&did_split.id, key, value);
+			});
+
+			Ok(())
+		}
+
+		/// Reconstruct a full [`DidDocument`] from the on-chain storage entries for a given DID.
+		pub fn did_document_from_storage(
+			did: &VersionedDid,
+		) -> core::result::Result<VersionedDidDocument<T::AccountId>, ()> {
+			let controller = Controller::<T>::try_get(did)?;
+			let services = Services::<T>::try_get(did)?;
+			let verification_methods = VerificationMethod::<T>::try_get(did)?;
+			let permissions = Permissions::<T>::try_get(did)?;
+			let mut machine_metadata = BoundedVec::<Attribute, ConstU32<20>>::new();
+			for (attr, val) in Metadata::<T>::iter_prefix(did) {
+				machine_metadata.try_push((attr, val)).map_err(|_| ())?;
+			}
+
+			let did_split = DidSplit {
+				id: did.clone(),
+				controller,
+				services,
+				verification_methods,
+				permissions,
+				machine_metadata,
+			};
+
+			Ok(VersionedDidDocument::from_split(did_split))
+		}
+
 		/// Validate a [`DidDocument`] against the W3C DID Core specification rules that are
 		/// enforceable on-chain without external context.
 		///
 		/// Rules checked:
-		/// - `id` is valid UTF-8 and matches `did:<method>:<method-specific-id>`, where the method
-		///   name consists only of lowercase letters (`a-z`) and digits (`0-9`).
+		/// - `id` is valid UTF-8 and matches `did:<method>:<method-specific-id>`, where the name
+		///   consists only of lowercase letters (`a-z`) and digits (`0-9`).
 		/// - Every service entry has a non-empty, valid UTF-8 `id`.
 		/// - Every service entry has a non-empty `type`.
-		/// - Every service entry `serviceEndpoint` is a non-empty UTF-8 string that contains `://`,
-		///   i.e. it looks like a URI scheme.
+		/// - Every service entry `serviceEndpoint` is a non-empty UTF-8 string that contains i.e.
+		///   it looks like a URI scheme.
 		/// - All service `id` values within the document are unique.
-		fn validate_did_document(doc: &DidDocument<T::AccountId>) -> DispatchResult {
+		fn validate_did_document(
+			did: &VersionedDidDocument<T::AccountId>,
+			who: &T::AccountId,
+		) -> DispatchResult {
+			let doc = match did {
+				VersionedDidDocument::V0(doc) => doc,
+				// Later throw error if not using the newest version
+			};
+
+			// --- True owner must be the signer ---
+			ensure!(doc.permissions.owner.eq(who), Error::<T>::DidAlreadyExists);
+
 			// --- DID id syntax ---
 			let id_str = core::str::from_utf8(&doc.id).map_err(|_| Error::<T>::InvalidDidSyntax)?;
 
@@ -261,7 +290,8 @@ pub mod pallet {
 			let mut i = 0usize;
 			while i < len {
 				let b = id_bytes[i];
-				if matches!(b, b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'.' | b'-' | b'_' | b':') {
+				if matches!(b, b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'.' | b'-' | b'_' | b':')
+				{
 					i += 1;
 				} else if b == b'%' {
 					// pct-encoded requires exactly two following hex digits
