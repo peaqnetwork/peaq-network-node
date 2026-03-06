@@ -1,0 +1,46 @@
+syntax = "proto3";
+package peaq.did.v0;
+
+enum VerificationType {
+  ED25519_VERIFICATION_KEY2020 = 0;
+  SR25519_VERIFICATION_KEY2020 = 1;
+  EDCSA_SECP256K1_VERIFICATION_KEY2020 = 2;
+}
+
+message ServiceEndpoint {
+  bytes id = 1;
+  bytes service_type = 2;
+  bytes service_endpoint = 3;
+}
+
+message VerificationMethod {
+  bytes id = 1;
+  VerificationType type = 2;
+  bytes public_key = 3;
+  bytes purpose = 4;
+}
+
+message Attribute {
+  bytes key = 1;
+  bytes value = 2;
+}
+
+message Permissions {
+  bytes owner = 1;
+  repeated bytes controllers = 2;
+}
+
+message Controller {
+  oneof controller_type {
+    bytes account = 1;
+  }
+}
+
+message DidDocument {
+  bytes id = 1;
+  Controller controller = 2;
+  repeated ServiceEndpoint services = 3;
+  repeated VerificationMethod verification_methods = 4;
+  Permissions permissions = 5;
+  repeated Attribute machine_metadata = 6;
+}

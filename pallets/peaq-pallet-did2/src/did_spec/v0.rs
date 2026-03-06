@@ -4,6 +4,8 @@ use scale_info::TypeInfo;
 // #[cfg(feature = "std")]
 // use serde::{Deserialize, Serialize};
 
+use peaq_proto_macro::ToProto;
+
 use super::*;
 
 pub type IdType = BoundedVec<u8, ConstU32<256>>;
@@ -17,19 +19,25 @@ pub type IdType = BoundedVec<u8, ConstU32<256>>;
 /// It is not intended to be stored directly on-chain, but rather to be constructed from
 /// on-chain data when needed.
 // #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Clone, Decode, Encode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Decode, Encode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, ToProto)]
 pub struct DidDocument<AccountId> {
 	/// Decentralized Identifier.
+	#[proto(field = 1, ty = "bytes")]
 	pub id: Did,
 	/// Controller of the DID Document (allowed to edit).
+	#[proto(field = 2, ty = "Controller")]
 	pub controller: Controller<AccountId>,
 	/// Service endpoints associated with the DID Document.
+	#[proto(field = 3, ty = "ServiceEndpoint", repeated)]
 	pub services: ServiceEndpoints,
 	/// Verification methods associated with the DID Document.
+	#[proto(field = 4, ty = "VerificationMethod", repeated)]
 	pub verification_methods: VerificationMethods,
 	/// Permissions for the DID Document.
+	#[proto(field = 5, ty = "Permissions")]
 	pub permissions: Permissions<AccountId>,
 	/// Variable metadata field.
+	#[proto(field = 6, ty = "Attribute", repeated)]
 	pub machine_metadata: BoundedVec<Attribute, ConstU32<20>>,
 }
 
@@ -92,8 +100,10 @@ impl<AccountId> From<DidDocument<AccountId>> for DidSplit<AccountId> {
 pub type Did = BoundedVec<u8, ConstU32<256>>;
 
 /// A controller can be an account only at the moment.
-#[derive(Clone, Decode, Encode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Decode, Encode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, ToProto)]
+#[proto(oneof = "controller_type")]
 pub enum Controller<AccountId> {
+	#[proto(field = 1, ty = "bytes")]
 	Account(AccountId),
 }
 
@@ -105,43 +115,68 @@ pub type VerificationMethods = BoundedVec<VerificationMethod, ConstU32<10>>;
 
 /// A service endpoint defined in a DID Document.
 /// See https://www.w3.org/TR/cid-1.0/#services
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, ToProto)]
 pub struct ServiceEndpoint {
 	/// Identifier for the service.
+	#[proto(field = 1, ty = "bytes")]
 	pub id: IdType,
 	/// Type of the service.
+	#[proto(field = 2, ty = "bytes")]
 	pub service_type: BoundedVec<u8, ConstU32<32>>,
 	/// Endpoint URL for the service.
+	#[proto(field = 3, ty = "bytes")]
 	pub service_endpoint: BoundedVec<u8, ConstU32<128>>,
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, ToProto)]
 pub struct VerificationMethod {
 	/// Identifier for the verification method.
+	#[proto(field = 1, ty = "bytes")]
 	pub id: BoundedVec<u8, ConstU32<64>>,
 	/// Type of the verification method.
+	/// Note: field named `type_` in Rust (keyword avoidance); emitted as `type` in proto.
+	#[proto(field = 2, ty = "VerificationType")]
 	pub type_: VerificationType,
 	/// Public key associated with the verification method.
+	#[proto(field = 3, ty = "bytes")]
 	pub public_key: BoundedVec<u8, ConstU32<32>>,
 	/// Purpose of the verification method (e.g., authentication, assertion).
+	#[proto(field = 4, ty = "bytes")]
 	pub purpose: BoundedVec<u8, ConstU32<128>>,
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, ToProto)]
 pub enum VerificationType {
 	/// Example verification type: Ed25519VerificationKey2018
+	#[proto(value = 0)]
 	Ed25519VerificationKey2020,
 	/// Example verification type: Sr25519VerificationKey2020
+	#[proto(value = 1)]
 	Sr25519VerificationKey2020,
 	/// Example verification type: EcdsaSecp256k1VerificationKey2020
+	#[proto(value = 2)]
 	EdcsaSecp256k1VerificationKey2020,
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen, ToProto)]
 pub struct Permissions<AccountId> {
 	/// Owner of the DID Document with full permissions.
+	#[proto(field = 1, ty = "bytes")]
 	pub owner: AccountId,
 	/// Controllers with limited permissions (e.g., can edit services but not verification
 	/// methods).
+	#[proto(field = 2, ty = "bytes", repeated)]
 	pub controllers: BoundedVec<AccountId, ConstU32<10>>,
+}
+
+/// Proto-only helper: represents the `Attribute` key-value tuple as a proper proto message.
+/// The `Attribute` type alias `(BoundedVec<u8,_>, BoundedVec<u8,_>)` cannot be derived on
+/// directly, so this struct mirrors it with an explicit proto name override.
+#[derive(ToProto)]
+#[proto(name = "Attribute")]
+pub struct ProtoAttribute {
+	#[proto(field = 1, ty = "bytes")]
+	pub key: (),
+	#[proto(field = 2, ty = "bytes")]
+	pub value: (),
 }

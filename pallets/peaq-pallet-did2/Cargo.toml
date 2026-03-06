@@ -6,6 +6,7 @@ edition = "2021"
 description = "FRAME pallet for DID v2 – decentralized identity management"
 
 [dependencies]
+peaq-proto-macro = { path = "../peaq-proto-macro" }
 parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 frame-support = { workspace = true, default-features = false }

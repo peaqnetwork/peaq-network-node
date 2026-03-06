@@ -6,9 +6,34 @@ use frame_support::pallet_prelude::*;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-pub mod v0;
+use peaq_proto_macro::generate_proto_file;
 
+// ----------------------------------------------------------------------------------
+// Versioning, specify latest spec version, and conversion traits for versioned types
+// ----------------------------------------------------------------------------------
+pub mod v0;
 pub use v0::DidSplit;
+
+// Reads src/did_spec/v0.rs at compile time, generates proto snippets for the listed types
+// in declaration order, and writes src/did_spec/did.proto automatically on every cargo build.
+// build.rs declares `cargo:rerun-if-changed=src/did_spec/v0.rs` to trigger recompilation.
+generate_proto_file! {
+    source  = "src/did_spec/v0.rs",
+    path    = "did_spec_v0.proto",
+    syntax  = "proto3",
+    package = "peaq.did.v0",
+    types = [
+        VerificationType,
+        ServiceEndpoint,
+        VerificationMethod,
+        ProtoAttribute,
+        Permissions,
+        Controller,
+        DidDocument,
+    ]
+}
+
+// -----------------------------------------------------------------------------------
 
 /// Generic type alias for a attribute-value pair.
 pub type Attribute = (BoundedVec<u8, ConstU32<128>>, BoundedVec<u8, ConstU32<128>>);

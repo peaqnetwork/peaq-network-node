@@ -9166,6 +9166,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
+ "peaq-proto-macro",
  "prost 0.12.6",
  "scale-info",
  "serde",
@@ -9340,6 +9341,15 @@ dependencies = [
  "staging-xcm-executor",
  "xc-asset-config",
  "zenlink-protocol",
+]
+
+[[package]]
+name = "peaq-proto-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
