@@ -10,6 +10,30 @@ use super::*;
 
 pub type IdType = BoundedVec<u8, ConstU32<256>>;
 
+// ------------------------------------------------------------------------------------------------
+// Protbuf file generation of DID spec v0.
+// ------------------------------------------------------------------------------------------------
+
+// Reads src/did_spec/v0.rs at compile time, generates proto snippets for the listed types
+// in declaration order, and writes src/did_spec/did.proto automatically on every cargo build.
+// build.rs declares `cargo:rerun-if-changed=src/did_spec/v0.rs` to trigger recompilation.
+generate_proto_file! {
+    source     = "src/did_spec/v0.rs",
+    path       = "proto/did_spec_v0.proto",
+    syntax     = "proto3",
+    package    = "peaq.did.v0",
+    proto_mod  = crate::proto_gen::v0,
+    native_mod = crate::did_spec::v0,
+    types = [
+        VerificationType,
+        ServiceEndpoint,
+        VerificationMethod,
+        Permissions,
+        Controller,
+        DidDocument,
+    ]
+}
+
 //-------------------------------------------------------------------------------------------------
 // The full DID document and its split variant.
 //-------------------------------------------------------------------------------------------------
@@ -36,9 +60,10 @@ pub struct DidDocument<AccountId> {
 	/// Permissions for the DID Document.
 	#[proto(field = 5, ty = "Permissions")]
 	pub permissions: Permissions<AccountId>,
-	/// Variable metadata field.
-	#[proto(field = 6, ty = "Attribute", repeated)]
-	pub machine_metadata: BoundedVec<Attribute, ConstU32<20>>,
+	/// Variable metadata — key/value string pairs assembled from the `Metadata` storage map.
+	/// Only populated in the full RPC document view; never stored as a whole on-chain.
+	#[proto(field = 6, ty = "map<string, string>")]
+	pub machine_metadata: BoundedBTreeMap<BoundedVec<u8, ConstU32<128>>, BoundedVec<u8, ConstU32<128>>, ConstU32<20>>,
 }
 
 impl<AccountId> From<DidSplit<AccountId>> for DidDocument<AccountId> {
@@ -75,7 +100,7 @@ pub struct DidSplit<AccountId> {
 	pub services: VersionedServiceEndpoints,
 	pub verification_methods: VersionedVerificationMethods,
 	pub permissions: VersionedPermissions<AccountId>,
-	pub machine_metadata: BoundedVec<Attribute, ConstU32<20>>,
+	pub machine_metadata: BoundedBTreeMap<BoundedVec<u8, ConstU32<128>>, BoundedVec<u8, ConstU32<128>>, ConstU32<20>>,
 }
 
 impl<AccountId> From<DidDocument<AccountId>> for DidSplit<AccountId> {
@@ -169,14 +194,3 @@ pub struct Permissions<AccountId> {
 	pub controllers: BoundedVec<AccountId, ConstU32<10>>,
 }
 
-/// Proto-only helper: represents the `Attribute` key-value tuple as a proper proto message.
-/// The `Attribute` type alias `(BoundedVec<u8,_>, BoundedVec<u8,_>)` cannot be derived on
-/// directly, so this struct mirrors it with an explicit proto name override.
-#[derive(ToProto)]
-#[proto(name = "Attribute")]
-pub struct ProtoAttribute {
-	#[proto(field = 1, ty = "bytes")]
-	pub key: (),
-	#[proto(field = 2, ty = "bytes")]
-	pub value: (),
-}

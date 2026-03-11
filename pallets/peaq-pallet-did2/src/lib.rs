@@ -25,8 +25,12 @@ use frame_system::pallet_prelude::*;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod did_spec;
+#[cfg(feature = "std")]
+pub mod proto_gen;
 #[cfg(test)]
 mod mock;
+#[cfg(test)]
+mod proto_tests;
 #[cfg(test)]
 mod tests;
 pub use did_spec::*;
@@ -221,9 +225,13 @@ pub mod pallet {
 			let services = Services::<T>::try_get(did)?;
 			let verification_methods = VerificationMethod::<T>::try_get(did)?;
 			let permissions = Permissions::<T>::try_get(did)?;
-			let mut machine_metadata = BoundedVec::<Attribute, ConstU32<20>>::new();
+			let mut machine_metadata = BoundedBTreeMap::<
+				BoundedVec<u8, ConstU32<128>>,
+				BoundedVec<u8, ConstU32<128>>,
+				ConstU32<20>,
+			>::new();
 			for (attr, val) in Metadata::<T>::iter_prefix(did) {
-				machine_metadata.try_push((attr, val)).map_err(|_| ())?;
+				machine_metadata.try_insert(attr, val).map_err(|_| ())?;
 			}
 
 			let did_split = DidSplit {

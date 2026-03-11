@@ -14,29 +14,7 @@ use peaq_proto_macro::generate_proto_file;
 pub mod v0;
 pub use v0::DidSplit;
 
-// Reads src/did_spec/v0.rs at compile time, generates proto snippets for the listed types
-// in declaration order, and writes src/did_spec/did.proto automatically on every cargo build.
-// build.rs declares `cargo:rerun-if-changed=src/did_spec/v0.rs` to trigger recompilation.
-generate_proto_file! {
-    source  = "src/did_spec/v0.rs",
-    path    = "did_spec_v0.proto",
-    syntax  = "proto3",
-    package = "peaq.did.v0",
-    types = [
-        VerificationType,
-        ServiceEndpoint,
-        VerificationMethod,
-        ProtoAttribute,
-        Permissions,
-        Controller,
-        DidDocument,
-    ]
-}
-
 // -----------------------------------------------------------------------------------
-
-/// Generic type alias for a attribute-value pair.
-pub type Attribute = (BoundedVec<u8, ConstU32<128>>, BoundedVec<u8, ConstU32<128>>);
 
 /// The generic version specifier for all versioned types in this DID specification.
 #[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -55,6 +33,62 @@ pub trait Validateable {
 }
 
 macro_rules! impl_versioned {
+	// Generic type with proto file generation.
+	// Emits PROTO_SNIPPET_<vertype> const and writes the proto file via generate_proto_file!.
+	($vertype:ident, $type:ident<$gen:ident>,
+	 proto(package = $pkg:literal, path = $proto_path:literal, imports = [$($import:literal),* $(,)?] $(,)?),
+	 $($version:ident($mod:tt) = $fnum:literal),+ $(,)?) => {
+		#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+		pub enum $vertype<$gen> {
+			$(
+				$version($mod::$type<$gen>),
+			)*
+		}
+
+		impl<$gen> $vertype<$gen> {
+			pub fn version(&self) -> SpecVersion {
+				match self {
+					$(
+						Self::$version(_) => SpecVersion::$version,
+					)*
+				}
+			}
+
+			pub fn is_lastest(&self) -> bool {
+				self.version() == SpecVersion::current()
+			}
+		}
+
+		// Emit PROTO_SNIPPET_<vertype> as a Rust const (usable at runtime / for inspection).
+		::paste::paste! {
+			#[allow(non_upper_case_globals, dead_code)]
+			pub const [<PROTO_SNIPPET_ $vertype>]: &str = concat!(
+				"message ", stringify!($vertype), " {\n  oneof version {\n",
+				$(
+					"    ", $pkg, ".", stringify!($mod), ".", stringify!($type), " ",
+					stringify!($mod), " = ", stringify!($fnum), ";\n",
+				)*
+				"  }\n}"
+			);
+		}
+
+		// Write the versioned wrapper proto file.
+		generate_proto_file! {
+			path    = $proto_path,
+			syntax  = "proto3",
+			package = $pkg,
+			imports = [$($import),*],
+			snippets = [concat!(
+				"message ", stringify!($vertype), " {\n  oneof version {\n",
+				$(
+					"    ", $pkg, ".", stringify!($mod), ".", stringify!($type), " ",
+					stringify!($mod), " = ", stringify!($fnum), ";\n",
+				)*
+				"  }\n}"
+			)],
+		}
+	};
+	// Generic type without proto generation.
 	($vertype:ident, $type:ident<$gen:ident>, $($version:ident($mod:tt))*) => {
 		#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 		pub enum $vertype<$gen> {
@@ -77,6 +111,7 @@ macro_rules! impl_versioned {
             }
 		}
 	};
+	// Non-generic type without proto generation.
 	($vertype:ident, $type:ident, $($version:ident($mod:tt))*) => {
 		#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 		pub enum $vertype {
@@ -101,7 +136,15 @@ macro_rules! impl_versioned {
 	};
 }
 
-impl_versioned!(VersionedDidDocument, DidDocument<AccountId>, V0(v0));
+impl_versioned!(
+	VersionedDidDocument, DidDocument<AccountId>,
+	proto(
+		package = "peaq.did",
+		path    = "proto/did_spec.proto",
+		imports = ["proto/did_spec_v0.proto"],
+	),
+	V0(v0) = 1
+);
 
 impl_versioned!(VersionedDid, Did, V0(v0));
 impl_versioned!(VersionedController, Controller<AccountId>, V0(v0));

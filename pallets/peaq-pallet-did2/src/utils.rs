@@ -23,7 +23,7 @@ pub fn make_document<AccountId: Clone>(
 				controller,
 				services,
 				verification_methods: BoundedVec::new(),
-				machine_metadata: BoundedVec::new(),
+				machine_metadata: Default::default(),
 				permissions,
 			};
 

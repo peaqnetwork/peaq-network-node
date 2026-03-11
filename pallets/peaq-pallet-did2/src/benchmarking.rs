@@ -8,7 +8,7 @@ use frame_system::RawOrigin;
 benchmarks! {
 	create {
 		let caller: T::AccountId = whitelisted_caller();
-		let did: Did = BoundedVec::try_from(b"did:peaq:0x00".to_vec()).unwrap();
+		let did = VersionedDid::V0(BoundedVec::try_from(b"did:peaq:0x00".to_vec()).unwrap());
 		let versioned_doc = crate::utils::make_document(did.clone(), caller.clone());
 	}: _(RawOrigin::Signed(caller), versioned_doc)
 	verify {
@@ -17,7 +17,7 @@ benchmarks! {
 
 	create2 {
 		let caller: T::AccountId = whitelisted_caller();
-		let did: Did = BoundedVec::try_from(b"did:peaq:0x00".to_vec()).unwrap();
+		let did = VersionedDid::V0(BoundedVec::try_from(b"did:peaq:0x00".to_vec()).unwrap());
 		let versioned_doc = crate::utils::make_document(did.clone(), caller.clone());
 	}: _(RawOrigin::Signed(caller), versioned_doc)
 	verify {

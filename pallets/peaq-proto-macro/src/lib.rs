@@ -5,13 +5,13 @@
 //! Two macros are provided:
 //!
 //! - `#[derive(ToProto)]` — annotate a struct or enum with `#[proto(...)]` helper attributes to
-//!   declare protobuf field numbers and types.  The derive emits a
-//!   `pub const PROTO_SNIPPET_<TypeName>: &str` containing the corresponding `.proto` snippet.
+//!   declare protobuf field numbers and types.  The derive emits a `pub const
+//!   PROTO_SNIPPET_<TypeName>: &str` containing the corresponding `.proto` snippet.
 //!
 //! - `generate_proto_file!(...)` — collects previously emitted `PROTO_SNIPPET_*` constants,
 //!   prefixes them with a `syntax` / `package` header, and generates a `write_proto_file()`
-//!   function (std-only) plus a companion `#[test]` that writes the assembled `.proto` file to
-//!   disk when you run `cargo test`.
+//!   function (std-only) plus a companion `#[test]` that writes the assembled `.proto` file to disk
+//!   when you run `cargo test`.
 //!
 //! # Attribute Schema
 //!
@@ -41,6 +41,7 @@ use proc_macro::TokenStream;
 
 mod attr;
 mod codegen;
+mod convert;
 mod derive;
 mod generate;
 
@@ -50,7 +51,7 @@ mod generate;
 /// Helper attribute: `#[proto(...)]` — see crate-level docs for the full schema.
 #[proc_macro_derive(ToProto, attributes(proto))]
 pub fn derive_to_proto(input: TokenStream) -> TokenStream {
-    derive::expand(input)
+	derive::expand(input)
 }
 
 /// Function-like macro that assembles `PROTO_SNIPPET_*` constants into a complete `.proto` file.
@@ -77,5 +78,5 @@ pub fn derive_to_proto(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn generate_proto_file(input: TokenStream) -> TokenStream {
-    generate::expand(input)
+	generate::expand(input)
 }

@@ -20,11 +20,6 @@ message VerificationMethod {
   bytes purpose = 4;
 }
 
-message Attribute {
-  bytes key = 1;
-  bytes value = 2;
-}
-
 message Permissions {
   bytes owner = 1;
   repeated bytes controllers = 2;
@@ -42,5 +37,5 @@ message DidDocument {
   repeated ServiceEndpoint services = 3;
   repeated VerificationMethod verification_methods = 4;
   Permissions permissions = 5;
-  repeated Attribute machine_metadata = 6;
+  map<string, string> machine_metadata = 6;
 }

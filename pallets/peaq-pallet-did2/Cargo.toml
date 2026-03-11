@@ -7,6 +7,7 @@ description = "FRAME pallet for DID v2 – decentralized identity management"
 
 [dependencies]
 peaq-proto-macro = { path = "../peaq-proto-macro" }
+paste = { workspace = true }
 parity-scale-codec = { workspace = true, default-features = false, features = ["derive"] }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 frame-support = { workspace = true, default-features = false }
@@ -17,9 +18,13 @@ sp-runtime = { workspace = true, default-features = false }
 sp-std = { workspace = true, default-features = false }
 serde = { version = "1.0", default-features = true, features = ["derive"], optional = true }
 
+[build-dependencies]
+prost-build = { workspace = true }
+
 [dev-dependencies]
 sp-core = { workspace = true, default-features = false }
 sp-io = { workspace = true, default-features = false }
+prost = { workspace = true, default-features = true, features = ["derive"] }
 
 [features]
 default = ["std"]

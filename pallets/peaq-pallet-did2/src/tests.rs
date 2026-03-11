@@ -1,25 +1,33 @@
 use crate::{mock::*, utils::make_document, *};
+use crate::v0::{Controller, Did, DidDocument, Permissions, ServiceEndpoint};
 use frame_support::{assert_noop, assert_ok};
 
 #[test]
 fn create_stores_controller_and_services() {
 	ExternalityBuilder::build().execute_with(|| {
-		let did: Did = BoundedVec::try_from(b"did:peaq:test-1".to_vec()).unwrap();
+		let did_raw: Did = BoundedVec::try_from(b"did:peaq:test-1".to_vec()).unwrap();
+		let did = VersionedDid::V0(did_raw.clone());
 		assert_ok!(PeaqDid2::create(RuntimeOrigin::signed(1), make_document(did.clone(), 1)));
 
-		assert_eq!(pallet::Controller::<TestRuntime>::get(&did), Some(1));
-		let services = pallet::Service::<TestRuntime>::get(&did).unwrap();
-		assert_eq!(services.len(), 1);
+		let stored_ctrl = pallet::Controller::<TestRuntime>::get(&did).unwrap();
+		assert_eq!(stored_ctrl, VersionedController::V0(Controller::Account(1)));
+
+		let stored_svcs = pallet::Services::<TestRuntime>::get(&did).unwrap();
+		let svc_count = match stored_svcs {
+			VersionedServiceEndpoints::V0(ref svcs) => svcs.len(),
+		};
+		assert_eq!(svc_count, 1);
 	});
 }
 
 #[test]
 fn create_emits_event() {
 	ExternalityBuilder::build().execute_with(|| {
-		let did: Did = BoundedVec::try_from(b"did:peaq:test-2".to_vec()).unwrap();
+		let did_raw: Did = BoundedVec::try_from(b"did:peaq:test-2".to_vec()).unwrap();
+		let did = VersionedDid::V0(did_raw.clone());
 		assert_ok!(PeaqDid2::create(RuntimeOrigin::signed(1), make_document(did.clone(), 1)));
 		System::assert_last_event(RuntimeEvent::PeaqDid2(Event::DidDocumentCreated {
-			did,
+			id: did,
 			who: 1,
 		}));
 	});
@@ -28,7 +36,8 @@ fn create_emits_event() {
 #[test]
 fn create_fails_on_duplicate_did() {
 	ExternalityBuilder::build().execute_with(|| {
-		let did: Did = BoundedVec::try_from(b"did:peaq:test-3".to_vec()).unwrap();
+		let did_raw: Did = BoundedVec::try_from(b"did:peaq:test-3".to_vec()).unwrap();
+		let did = VersionedDid::V0(did_raw.clone());
 		assert_ok!(PeaqDid2::create(RuntimeOrigin::signed(1), make_document(did.clone(), 1)));
 		assert_noop!(
 			PeaqDid2::create(RuntimeOrigin::signed(2), make_document(did, 2)),
@@ -43,10 +52,10 @@ mod validation {
 	fn make_bare_doc(did_bytes: &[u8], controller: AccountId) -> VersionedDidDocument<AccountId> {
 		let doc = DidDocument {
 			id: BoundedVec::try_from(did_bytes.to_vec()).unwrap(),
-			controller,
+			controller: Controller::Account(controller),
 			services: BoundedVec::new(),
 			verification_methods: BoundedVec::new(),
-			machine_metadata: BoundedVec::new(),
+			machine_metadata: Default::default(),
 			permissions: Permissions { owner: controller, controllers: BoundedVec::new() },
 		};
 		VersionedDidDocument::V0(doc)
@@ -55,10 +64,10 @@ mod validation {
 	fn make_doc_with_service(service: ServiceEndpoint) -> VersionedDidDocument<AccountId> {
 		let doc = DidDocument {
 			id: BoundedVec::try_from(b"did:peaq:valid".to_vec()).unwrap(),
-			controller: 1,
+			controller: Controller::Account(1),
 			services: BoundedVec::try_from(vec![service]).unwrap(),
 			verification_methods: BoundedVec::new(),
-			machine_metadata: BoundedVec::new(),
+			machine_metadata: Default::default(),
 			permissions: Permissions { owner: 1, controllers: BoundedVec::new() },
 		};
 		VersionedDidDocument::V0(doc)
@@ -271,10 +280,10 @@ mod validation {
 			};
 			let doc = DidDocument {
 				id: BoundedVec::try_from(b"did:peaq:valid".to_vec()).unwrap(),
-				controller: 1,
+				controller: Controller::Account(1),
 				services: BoundedVec::try_from(vec![svc1, svc2]).unwrap(),
 				verification_methods: BoundedVec::new(),
-				machine_metadata: BoundedVec::new(),
+				machine_metadata: Default::default(),
 				permissions: Permissions { owner: 1, controllers: BoundedVec::new() },
 			};
 			assert_noop!(

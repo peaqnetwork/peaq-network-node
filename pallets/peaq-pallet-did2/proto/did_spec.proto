@@ -1,0 +1,9 @@
+syntax = "proto3";
+package peaq.did;
+import "proto/did_spec_v0.proto";
+
+message VersionedDidDocument {
+  oneof version {
+    peaq.did.v0.DidDocument v0 = 1;
+  }
+}

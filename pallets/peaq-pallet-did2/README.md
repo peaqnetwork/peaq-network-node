@@ -1,0 +1,127 @@
+# peaq-pallet-did2
+
+Experimental Substrate pallet for managing W3C-aligned Decentralized Identifiers (DIDs) on a
+peaq-based blockchain. The pallet provides extrinsics for creating, updating, and deleting DID
+documents, as well as managing their verification methods, service endpoints, and permissions.
+
+---
+
+## Repository layout
+
+```
+pallets/
+├── peaq-pallet-did2/
+│   ├── build.rs                    # Runs prost_build to compile .proto → Rust (output to OUT_DIR)
+│   ├── proto/                      # Proto files — AUTO-GENERATED, do not edit by hand
+│   │   ├── did_spec_v0.proto       # Generated from did_spec/v0.rs via `generate_proto_file!`
+│   │   └── did_spec.proto          # Generated from did_spec/mod.rs via `generate_proto_file!`
+│   └── src/
+│       ├── did_spec/
+│       │   ├── mod.rs              # Versioned wrapper types + impl_versioned! macro
+│       │   └── v0.rs               # *** SPEC SOURCE OF TRUTH — edit here to change the spec ***
+│       ├── proto_gen.rs            # Pulls in prost-generated Rust via include! (never edit)
+│       ├── lib.rs                  # Pallet definition (storage, extrinsics, events, errors)
+│       ├── utils.rs                # Helper logic
+│       ├── benchmarking.rs         # FRAME benchmarks
+│       └── weights.rs              # Generated weight constants (do not edit by hand)
+└── peaq-proto-macro/               # Proc-macro crate that powers the code-generation pipeline
+    └── src/
+        ├── lib.rs                  # Public API: `#[derive(ToProto)]` + `generate_proto_file!`
+        ├── derive.rs               # Expand ToProto derive
+        ├── generate.rs             # Expand generate_proto_file!
+        ├── codegen.rs              # Shared proto-snippet builder
+        ├── attr.rs                 # Parse #[proto(...)] attributes
+        └── convert.rs              # Auto-generate From/TryFrom between prost and native types
+```
+
+---
+
+## Code-generation pipeline
+
+```
+src/did_spec/v0.rs          (source of truth — hand-written Rust structs/enums)
+        │
+        │  #[derive(ToProto)]  +  #[proto(...)] field attributes
+        ▼
+PROTO_SNIPPET_* constants   (emitted by peaq-proto-macro at compile time)
+        │
+        │  generate_proto_file! { ... }   (in v0.rs and mod.rs)
+        ▼
+proto/did_spec_v0.proto     (written to disk by a cargo test — see below)
+proto/did_spec.proto
+        │
+        │  prost_build in build.rs
+        ▼
+OUT_DIR/peaq.did.v0.rs      (prost-generated Rust, lives in target/, never committed)
+OUT_DIR/peaq.did.rs
+        │
+        │  include!(...) in src/proto_gen.rs
+        ▼
+crate::proto_gen::v0::*     (usable at runtime under the `std` feature)
+```
+
+### Writing the proto files to disk
+
+The `.proto` files in `proto/` are not written automatically on every `cargo build`.
+Run the dedicated test to (re-)write them:
+
+```bash
+cargo test -p peaq-pallet-did2 generate_proto -- --nocapture
+```
+
+After the test completes, `proto/did_spec_v0.proto` and `proto/did_spec.proto` are up to date.
+Commit them together with any type changes in `v0.rs`.
+
+---
+
+## Adding or changing the spec
+
+### Updating types within the current version (v0)
+
+1. Edit `src/did_spec/v0.rs` — add/remove fields on existing structs or enums.
+2. Adjust the `#[proto(field = …, ty = "…")]` attributes to match.
+3. Regenerate proto files:
+   ```bash
+   cargo test -p peaq-pallet-did2 generate_proto -- --nocapture
+   ```
+4. Run the full build to verify prost compilation and Rust types still compile:
+   ```bash
+   cargo build -p peaq-pallet-did2
+   ```
+5. Update tests in `src/tests.rs` and `src/proto_tests.rs` if needed.
+
+### Adding a new spec version (e.g. v1)
+
+1. Create `src/did_spec/v1.rs` with the new types (copy `v0.rs` as a starting point).
+2. In `src/did_spec/mod.rs`:
+   - Add `pub mod v1;` and `pub use v1::...` exports.
+   - Add `V1` to `SpecVersion` and update `SpecVersion::current()` to return `V1`.
+   - Add `V1(v1)` to each `impl_versioned!(...)` call.
+   - Add a migration arm to `VersionedDidDocument::into_current()`.
+3. Run `generate_proto` test as above — `did_spec_v1.proto` will be written and the
+   versioned wrapper proto will be updated automatically.
+4. Wire up conversions (`From`/`TryFrom`) between v0 and v1 types as needed.
+
+---
+
+## Key macros
+
+| Macro | Where | What it does |
+|---|---|---|
+| `#[derive(ToProto)]` | `v0.rs` structs/enums | Emits `PROTO_SNIPPET_<TypeName>: &str` const |
+| `#[proto(field=N, ty="T")]` | field/variant | Declares proto field number and type |
+| `generate_proto_file! { source=…, types=[…] }` | `v0.rs` | Assembles snippets → proto file + test |
+| `generate_proto_file! { snippets=[…] }` | `mod.rs` | Writes versioned wrapper proto file |
+| `impl_versioned!(VerType, Type<G>, V0(v0) = 1)` | `mod.rs` | Generates versioned enum + proto snippet |
+
+---
+
+## Auto-generated files — do not edit by hand
+
+| File | Regenerated by |
+|---|---|
+| `proto/did_spec_v0.proto` | `cargo test … generate_proto` |
+| `proto/did_spec.proto` | `cargo test … generate_proto` |
+| `src/weights.rs` | `cargo benchmark` (FRAME weight generation) |
+| `OUT_DIR/peaq.did.v0.rs` | `cargo build` (via `build.rs` + prost) |
+| `OUT_DIR/peaq.did.rs` | `cargo build` (via `build.rs` + prost) |
