@@ -1,9 +1,6 @@
 //! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::collators::slot_based::{
-	self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport,
-	SlotBasedBlockImportHandle,
-};
+use cumulus_client_consensus_aura::collators::lookahead::{self as lookahead, Params as LookaheadParams};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
@@ -82,10 +79,7 @@ type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, ParachainExecu
 type ParachainBackend = TFullBackend<Block>;
 
 type FrontierBlockImport<RuntimeApi> =
-	TFrontierBlockImport<Block, SlotBasedBlockImport<RuntimeApi>, ParachainClient<RuntimeApi>>;
-
-type SlotBasedBlockImport<RuntimeApi> =
-	TSlotBasedBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>;
+	TFrontierBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>;
 
 type ParachainBlockImport<RuntimeApi> =
 	TParachainBlockImport<Block, FrontierBlockImport<RuntimeApi>, ParachainBackend>;
@@ -98,8 +92,6 @@ type Service<RuntimeApi> = PartialComponents<
 	sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
 	(
 		ParachainBlockImport<RuntimeApi>,
-		SlotBasedBlockImportHandle<Block>,
-		// SlotBasedBlockImport<Block, ParachainClient<RuntimeApi>, ParachainClient<RuntimeApi>>,
 		Option<FilterPool>,
 		Option<Telemetry>,
 		Option<TelemetryWorkerHandle>,
@@ -198,11 +190,10 @@ where
 	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts_record_import::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
-			true,
 		)?;
 	let client = Arc::new(client);
 
@@ -227,12 +218,9 @@ where
 	.with_prometheus(config.prometheus_registry())
 	.build();
 
-	let (slot_based_block_import, slot_based_handle) =
-		SlotBasedBlockImport::new(client.clone(), client.clone());
-	let frontier_block_import =
-		FrontierBlockImport::new(slot_based_block_import.clone(), client.clone());
+	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
 	let parachain_block_import =
-		ParachainBlockImport::new(frontier_block_import.clone(), backend.clone());
+		ParachainBlockImport::new(frontier_block_import, backend.clone());
 
 	let import_queue = fn_build_import_queue(
 		client.clone(),
@@ -253,7 +241,6 @@ where
 		select_chain: (),
 		other: (
 			parachain_block_import,
-			slot_based_handle,
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
@@ -352,7 +339,6 @@ where
 		KeystorePtr,
 		ParaId,
 		CollatorPair,
-		SlotBasedBlockImportHandle<Block>,
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -363,7 +349,6 @@ where
 	)?;
 	let (
 		parachain_block_import,
-		slot_based_handle,
 		filter_pool,
 		mut telemetry,
 		telemetry_worker_handle,
@@ -506,6 +491,7 @@ where
 		let overrides = overrides.clone();
 		let fee_history_cache = fee_history_cache.clone();
 		let block_data_cache = block_data_cache.clone();
+		let pubsub_notification_sinks = pubsub_notification_sinks.clone();
 
 		move |subscription_task_executor| {
 			let deps = crate::rpc::FullDeps {
@@ -527,6 +513,7 @@ where
 				overrides: overrides.clone(),
 				block_data_cache: block_data_cache.clone(),
 				forced_parent_hashes: None,
+				pubsub_notification_sinks: pubsub_notification_sinks.clone(),
 			};
 
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
@@ -602,7 +589,6 @@ where
 			params.keystore_container.keystore(),
 			id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
-			slot_based_handle,
 		)?;
 	}
 
@@ -751,8 +737,7 @@ where
 		 sync_oracle,
 		 keystore,
 		 para_id,
-		 collator_key,
-		 block_import_handle| {
+		 collator_key| {
 			let spawn_handle = task_manager.spawn_handle();
 
 			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
@@ -762,6 +747,10 @@ where
 				prometheus_registry,
 				telemetry.clone(),
 			);
+
+			let overseer_handle = relay_chain_interface
+				.overseer_handle()
+				.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
 			let announce_block = {
 				let sync_service = sync_oracle.clone();
@@ -775,7 +764,7 @@ where
 				client.clone(),
 			);
 
-			let params = SlotBasedParams {
+			let params = LookaheadParams {
 				create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 				block_import: block_import.clone(),
 				para_client: client.clone(),
@@ -787,6 +776,7 @@ where
 				keystore,
 				collator_key,
 				para_id,
+				overseer_handle,
 				// [TODO]
 				max_pov_percentage: Some(85),
 				relay_chain_slot_duration: Duration::from_secs(6),
@@ -796,13 +786,9 @@ where
 				authoring_duration: Duration::from_millis(2000),
 				// collation_request_receiver: None,
 				reinitialize: false,
-				slot_offset: Duration::from_secs(1),
-				spawner: task_manager.spawn_handle(),
-				export_pov: None,
-				block_import_handle,
 			};
 
-			slot_based::run::<
+			let fut = lookahead::run::<
 				Block,
 				sp_consensus_aura::sr25519::AuthorityPair,
 				_,
@@ -813,8 +799,9 @@ where
 				_,
 				_,
 				_,
-				_,
 			>(params);
+
+			task_manager.spawn_essential_handle().spawn("aura", None, fut);
 
 			Ok(())
 		},

@@ -92,6 +92,14 @@ pub struct FullDeps<C, P, BE> {
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 	/// Mandated parent hashes for a given block hash.
 	pub forced_parent_hashes: Option<BTreeMap<H256, H256>>,
+	/// Shared sink list — must be the same Arc passed to `MappingSyncWorker`,
+	/// otherwise `eth_subscribe("newHeads"/"logs")` returns a sub ID but never
+	/// delivers notifications.
+	pub pubsub_notification_sinks: Arc<
+		fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		>,
+	>,
 }
 
 pub struct TracingConfig {
@@ -161,6 +169,7 @@ where
 		overrides,
 		block_data_cache,
 		forced_parent_hashes,
+		pubsub_notification_sinks,
 	} = deps;
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool)).into_rpc())?;
@@ -250,11 +259,6 @@ where
 		)
 		.into_rpc(),
 	)?;
-
-	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>,
-	> = Default::default();
-	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;
