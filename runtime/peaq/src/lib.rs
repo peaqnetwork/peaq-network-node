@@ -635,8 +635,9 @@ type RootOrTreasuryCouncilOrigin = EitherOfDiverse<
 	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
 
-// Treasury spends require a council 3/5 supermajority (or root), matching the
-// pre-stable2503 ApproveOrigin threshold. RejectOrigin keeps the looser >1/2.
+// Treasury spends require root or a council 3/5 supermajority. The stable2503
+// base gated this at council >1/2; deliberately tightened to 3/5 here.
+// RejectOrigin is intentionally left at the looser >1/2.
 type RootOrTreasuryCouncilSpendOrigin = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
