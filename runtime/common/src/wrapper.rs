@@ -146,7 +146,10 @@ where
 				asset_id,
 				who,
 				amount,
-				Preservation::Protect, // TODO What does this do?
+				// 1.7.2 對齊:舊 fungibles::burn_from 內部寫死 Expendable(可扣到 0、可 reap)。
+				// Protect 會卡 ED 底線 → 舊版會成功的非原生 withdraw 現在 FundsUnavailable。
+				// 與同檔 slash 的 Expendable 保持一致。
+				Preservation::Expendable,
 				Precision::Exact,
 				Fortitude::Polite,
 			);
