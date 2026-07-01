@@ -132,7 +132,6 @@ where
 		Ok(())
 	}
 
-	// [TODO] Need to check...
 	fn can_withdraw_fee(
 		who: &<T>::AccountId,
 		_call: &<T>::RuntimeCall,
@@ -143,8 +142,11 @@ where
 		if fee.is_zero() {
 			return Ok(());
 		}
-		// Check if user can withdraw in any valid currency.
-		let currency_id = PCPC::ensure_can_withdraw(who, fee)?;
+		// Read-only check that the fee is payable in SOME currency, WITHOUT executing the swap.
+		// can_withdraw_fee runs in `validate` (mempool), which must be side-effect-free; the real
+		// swap happens later in withdraw_fee (`prepare`). Calling the swap-executing
+		// ensure_can_withdraw here would swap in validate AND again in withdraw_fee -> double-swap.
+		let (currency_id, _) = PCPC::check_currencies_n_priorities(who, fee)?;
 		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
 		if currency_id != native_currency_id {
 			log!(
