@@ -509,6 +509,13 @@ pub mod pallet {
 		/// A collator or a delegator has received a reward.
 		/// \[account, amount of reward\]
 		Rewarded(T::AccountId, BalanceOf<T>),
+		/// A delegator's reward was restaked into their delegation (auto-compound).
+		/// \[delegator, collator candidate, reward amount\]
+		DelegatorRewardRestaked(T::AccountId, T::AccountId, BalanceOf<T>),
+		/// A delegator's reward was paid out without restaking, because it could not be
+		/// safely restaked onto the collator (delegator gone, candidate leaving, or
+		/// inconsistent state). \[delegator, collator candidate, reward amount\]
+		DelegatorRewardPaidNotRestaked(T::AccountId, T::AccountId, BalanceOf<T>),
 		/// The maximum number of collator candidates selected in future
 		/// validation rounds has changed. \[old value, new value\]
 		MaxSelectedCandidatesSet(u32, u32),
@@ -524,10 +531,29 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> frame_support::weights::Weight {
-			// on_finalize weight
-			// At worst, we have to make 'MaxSelectedCandidates + 2' number of deletions from
-			// AtStake
-			T::DbWeight::get().reads_writes(6u64, (MaxSelectedCandidates::<T>::get() + 2).into())
+			// The on_finalize payout only does heavy work on a block with a pending payout
+			// (DelayedPayoutInfo set): it pays one collator and restakes up to
+			// MaxDelegatorsPerCollator delegators, or (once every author is paid) clears the
+			// round's AtStake snapshots. Reserve that cost ONLY on those blocks; idle blocks
+			// must not permanently lose the capacity.
+			//
+			// The exists() gate is correct only because Session's on_initialize (which sets
+			// DelayedPayoutInfo at a session boundary) runs BEFORE this pallet's -- true on
+			// peaq (Session = 21 < ParachainStaking = 23). Reversing that order would
+			// under-reserve on a boundary block.
+			if DelayedPayoutInfo::<T>::exists() {
+				// Reserve the larger of the two on_finalize branches: paying one collator +
+				// MaxDelegatorsPerCollator restakes, or clearing MaxSelectedCandidates snapshots.
+				let payout = <T as crate::pallet::Config>::WeightInfo::payout_collator(
+					T::MaxDelegatorsPerCollator::get(),
+				);
+				let cleanup = T::DbWeight::get()
+					.reads_writes(6u64, (MaxSelectedCandidates::<T>::get() + 2).into());
+				payout.max(cleanup)
+			} else {
+				// No payout pending -> payout_collator returns after reading DelayedPayoutInfo + Round.
+				T::DbWeight::get().reads(3)
+			}
 		}
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -536,6 +562,11 @@ pub mod pallet {
 
 		fn on_finalize(_n: BlockNumberFor<T>) {
 			Self::payout_collator();
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn try_state(_n: BlockNumberFor<T>) -> Result<(), sp_runtime::TryRuntimeError> {
+			Self::do_try_state().map_err(Into::into)
 		}
 	}
 
@@ -1798,7 +1829,7 @@ pub mod pallet {
 			let candidate = T::Lookup::lookup(candidate)?;
 			let mut delegations =
 				DelegatorState::<T>::get(&delegator).ok_or(Error::<T>::DelegatorNotFound)?;
-			let mut collator =
+			let collator =
 				CandidatePool::<T>::get(&candidate).ok_or(Error::<T>::CandidateNotFound)?;
 			ensure!(!collator.is_leaving(), Error::<T>::CannotDelegateIfLeaving);
 			let _delegator_total = delegations
@@ -1810,25 +1841,9 @@ pub mod pallet {
 			// update lock
 			let unstaking_len = Self::increase_lock(&delegator, delegations.total, more)?;
 
-			let CandidateOf::<T, _> { stake: before_stake, total: before_total, .. } = collator;
-			collator.inc_delegator(delegator.clone(), more);
-			let after = collator.total;
-
-			// update top candidates and total amount at stake
-			let n = if collator.is_active() {
-				Self::update_top_candidates(
-					candidate.clone(),
-					before_stake,
-					// safe because total >= stake
-					before_total - before_stake,
-					collator.stake,
-					collator.total - collator.stake,
-				)
-			} else {
-				0u32
-			};
-
-			CandidatePool::<T>::insert(&candidate, collator);
+			let before_total = collator.total;
+			let (n, after) =
+				Self::commit_candidate_delegation_increase(&candidate, &delegator, collator, more);
 			DelegatorState::<T>::insert(&delegator, delegations);
 
 			Self::deposit_event(Event::DelegatorStakedMore(
@@ -2646,13 +2661,153 @@ pub mod pallet {
 			Ok(unstaking_len)
 		}
 
-		/// Process the coinbase rewards for the production of a new block.
+		/// Raise the `STAKING_ID` lock to cover `new_active_total` plus any pending
+		/// unstaking, WITHOUT consuming `Unstaking`. Used when restaking a reward:
+		/// unlike `increase_lock`, the new money must not cancel a queued unstake.
 		///
-		/// # <weight>
-		/// Weight: O(1)
-		/// - Reads: Balance
-		/// - Writes: Balance
-		/// # </weight>
+		/// Precondition: `new_active_total` MUST already include the amount being restaked
+		/// (i.e. call this AFTER `inc_delegation`), or the lock is set too low.
+		fn increase_lock_from_reward(who: &T::AccountId, new_active_total: BalanceOf<T>) {
+			let pending_unstaking = <Unstaking<T>>::get(who)
+				.iter()
+				.fold(BalanceOf::<T>::zero(), |acc, (_, amount)| acc.saturating_add(*amount));
+			let new_lock = new_active_total.saturating_add(pending_unstaking);
+			T::Currency::set_lock(STAKING_ID, who, new_lock, WithdrawReasons::all());
+		}
+
+		/// Fold a delegation increase into the candidate record: bump the candidate, refresh
+		/// the top-candidate set, and persist `CandidatePool`. Returns (top-candidate weight
+		/// count, candidate's new total). Shared by `delegator_stake_more` and the reward
+		/// restake path -- they differ only in how the lock is raised, whether they touch
+		/// `Unstaking`, and which event they emit. Caller writes `DelegatorState` + event.
+		fn commit_candidate_delegation_increase(
+			candidate: &T::AccountId,
+			delegator: &T::AccountId,
+			mut collator: CandidateOf<T, T::MaxDelegatorsPerCollator>,
+			more: BalanceOf<T>,
+		) -> (u32, BalanceOf<T>) {
+			let CandidateOf::<T, _> { stake: before_stake, total: before_total, .. } = collator;
+			collator.inc_delegator(delegator.clone(), more);
+			let after = collator.total;
+			// inc_delegator is a silent no-op if the coupled invariant is violated (the
+			// delegator is absent from the candidate's set although the delegator side lists
+			// this candidate). The Mandatory payout hook cannot revert, so surface a divergence
+			// via a log instead of letting it pass unnoticed. No panic: a debug_assert could
+			// halt a debug-built runtime inside on_finalize, which this design forbids.
+			if after != before_total.saturating_add(more) {
+				log::warn!(
+					target: "parachain-staking",
+					"candidate-side delegation increase did not grow total by the expected \
+					 amount; coupled delegator/candidate invariant may be violated",
+				);
+			}
+			let n = if collator.is_active() {
+				Self::update_top_candidates(
+					candidate.clone(),
+					before_stake,
+					// safe because total >= stake
+					before_total - before_stake,
+					collator.stake,
+					collator.total - collator.stake,
+				)
+			} else {
+				0u32
+			};
+			CandidatePool::<T>::insert(candidate, collator);
+			(n, after)
+		}
+
+		/// Pay a delegator's reward by restaking it into their delegation, or fall back to
+		/// a plain payout when it cannot be safely restaked.
+		///
+		/// Two-phase: PHASE 1 preflights every fallible check (reads only, no writes, no
+		/// transfer); PHASE 2 moves the reward then commits infallibly. Ordering matters
+		/// because on_finalize is `Mandatory` and cannot revert or panic -- a "transfer
+		/// then fail mid-commit" split-brain must be impossible.
+		///
+		/// T4 reject guards (each falls back to a plain, non-restaked payout): missing
+		/// `DelegatorState`; missing `CandidatePool` or candidate `is_leaving()`; delegator
+		/// no longer delegates this candidate. These mirror `delegator_stake_more`.
+		/// Deliberately NOT mirrored: its free-balance check (the reward is transferred in
+		/// first, so balance always covers the new lock) and its MaxDelegationsPerRound
+		/// counter (that caps *user* delegations per round; a reward restake is not one).
+		/// Arithmetic uses saturating adds: a reward bounded by pot issuance added to an
+		/// existing stake cannot overflow u128 in practice, so there is no overflow branch.
+		/// Restake one delegator's reward into the shared in-memory `candidate`, or fall back
+		/// to a plain payout when it cannot be restaked. The caller owns `candidate` and flushes
+		/// it (top-candidate re-rank + CandidatePool write) exactly ONCE after the whole delegator
+		/// loop -- see `payout_collator`. Because every delegator in a payout delegates the SAME
+		/// collator, batching that flush avoids an O(m) full-struct write per delegator while
+		/// keeping per-delegator atomicity: a delegator's transfer, lock, candidate mutation and
+		/// DelegatorState write commit together, and a transfer failure cleanly skips that
+		/// delegator (`inc_delegator` runs only after the transfer succeeds).
+		///
+		/// The caller has already confirmed the candidate is present and not leaving, so PHASE 1
+		/// here only checks the delegator side (exists and still delegates this candidate).
+		fn do_delegator_reward(
+			pot: &T::AccountId,
+			candidate: &mut CandidateOf<T, T::MaxDelegatorsPerCollator>,
+			collator_id: &T::AccountId,
+			delegator_id: &T::AccountId,
+			reward: BalanceOf<T>,
+		) {
+			// Skip zero rewards entirely to avoid state churn (no transfer, no restake, no event).
+			if reward.is_zero() {
+				return
+			}
+			// PHASE 1: preflight (reads + checks only; no writes, no transfer)
+			let mut delegations = match DelegatorState::<T>::get(delegator_id) {
+				Some(d) => d,
+				None => return Self::pay_delegator_reward_not_restaked(pot, collator_id, delegator_id, reward),
+			};
+			if delegations.inc_delegation(collator_id.clone(), reward).is_none() {
+				return Self::pay_delegator_reward_not_restaked(pot, collator_id, delegator_id, reward)
+			}
+
+			// PHASE 2: commit (move the reward in, then lock + restake it)
+			if T::Currency::transfer(pot, delegator_id, reward, KeepAlive).is_err() {
+				return
+			}
+			// Raise the lock by exactly the reward, leaving pending Unstaking untouched
+			// (reward is new money; it must not cancel a queued unstake).
+			Self::increase_lock_from_reward(delegator_id, delegations.total);
+
+			// PHASE 1 checked delegator-side membership (inc_delegation); the candidate-side
+			// inc_delegator is assumed to match via the coupled invariant every extrinsic
+			// maintains (a delegation exists on both sides or neither). inc_delegator is a silent
+			// no-op on divergence; a Mandatory hook cannot revert, so we surface (not fix) it via
+			// a log. The caller flushes `candidate` once after the loop.
+			let before = candidate.total;
+			candidate.inc_delegator(delegator_id.clone(), reward);
+			if candidate.total != before.saturating_add(reward) {
+				log::warn!(
+					target: "parachain-staking",
+					"restake: candidate-side total did not grow by the reward; coupled \
+					 delegator/candidate invariant may be violated",
+				);
+			}
+			DelegatorState::<T>::insert(delegator_id, delegations);
+			// Distinct event so indexers can tell restaked from plain-paid rewards.
+			Self::deposit_event(Event::DelegatorRewardRestaked(delegator_id.clone(), collator_id.clone(), reward));
+		}
+
+		/// Pay a delegator's reward as a plain balance transfer (no restake), emitting the
+		/// distinct fallback event. Used when the reward cannot be safely restaked.
+		fn pay_delegator_reward_not_restaked(
+			pot: &T::AccountId,
+			collator_id: &T::AccountId,
+			delegator_id: &T::AccountId,
+			reward: BalanceOf<T>,
+		) {
+			if T::Currency::transfer(pot, delegator_id, reward, KeepAlive).is_ok() {
+				Self::deposit_event(Event::DelegatorRewardPaidNotRestaked(
+					delegator_id.clone(),
+					collator_id.clone(),
+					reward,
+				));
+			}
+		}
+
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
 			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
 				Self::deposit_event(Event::Rewarded(who.clone(), reward));
@@ -2797,10 +2952,73 @@ pub mod pallet {
 			T::PotId::get().into_account_truncating()
 		}
 
+		/// AC-8 invariant (partial-write safety net): every candidate's `total` must equal
+		/// its self-stake plus the sum of its delegators' stakes. A restake that updated
+		/// some fields but not the candidate total / a delegator amount would break this.
+		/// Callable from tests and the try-runtime `try_state` hook.
+		#[cfg(any(test, feature = "try-runtime"))]
+		pub(crate) fn do_try_state() -> Result<(), &'static str> {
+			for (_id, candidate) in CandidatePool::<T>::iter() {
+				let delegator_sum = (&candidate.delegators)
+					.into_iter()
+					.fold(BalanceOf::<T>::zero(), |acc, s| acc.saturating_add(s.amount));
+				ensure!(
+					candidate.total == candidate.stake.saturating_add(delegator_sum),
+					"candidate.total must equal self stake + sum(delegator stakes)"
+				);
+			}
+			for (who, state) in DelegatorState::<T>::iter() {
+				let deleg_sum = (&state.delegations)
+					.into_iter()
+					.fold(BalanceOf::<T>::zero(), |acc, s| acc.saturating_add(s.amount));
+				ensure!(
+					state.total == deleg_sum,
+					"delegator.total must equal sum(per-collator stakes)"
+				);
+				// The reward restake raises the lock and the delegation total in separate
+				// steps; this catches any divergence (the spec's primary invariant).
+				let unstaking_sum = <Unstaking<T>>::get(&who)
+					.iter()
+					.fold(BalanceOf::<T>::zero(), |acc, (_, amt)| acc.saturating_add(*amt));
+				let staking_lock = pallet_balances::Pallet::<T>::locks(&who)
+					.iter()
+					.find(|l| l.id == STAKING_ID)
+					.map(|l| l.amount)
+					.unwrap_or_else(Zero::zero);
+				ensure!(
+					staking_lock == state.total.saturating_add(unstaking_sum).into(),
+					"STAKING_ID lock must equal active total + pending unstaking"
+				);
+			}
+			// The loop above only checks accounts still in DelegatorState. An account that
+			// fully revoked its delegation is removed from DelegatorState but keeps pending
+			// Unstaking until unlock_unstaked; its only remaining STAKING_ID lock must equal
+			// that pending amount. Candidates are skipped (their lock also covers self-stake,
+			// which is not verified here).
+			for (who, unstaking) in <Unstaking<T>>::iter() {
+				if DelegatorState::<T>::contains_key(&who) || CandidatePool::<T>::contains_key(&who) {
+					continue
+				}
+				let unstaking_sum = unstaking
+					.iter()
+					.fold(BalanceOf::<T>::zero(), |acc, (_, amt)| acc.saturating_add(*amt));
+				let staking_lock = pallet_balances::Pallet::<T>::locks(&who)
+					.iter()
+					.find(|l| l.id == STAKING_ID)
+					.map(|l| l.amount)
+					.unwrap_or_else(Zero::zero);
+				ensure!(
+					staking_lock == unstaking_sum.into(),
+					"fully-exited account's STAKING_ID lock must equal pending unstaking"
+				);
+			}
+			Ok(())
+		}
+
 		/// Handles staking reward payout for previous session for one collator and their delegators
 		/// At Worst: 5 DB Reads and 'MaxSelectedCandidate + 1' DB Writes
 		/// Complexity: O(n)
-		fn payout_collator() {
+		pub(crate) fn payout_collator() {
 			// if there's no previous round, i.e, genesis round, then skip
 			if Self::round().current.is_zero() {
 				return
@@ -2812,7 +3030,7 @@ pub mod pallet {
 				{
 					let pot = Self::account_id();
 					// get collator's staking info
-					if let Some(state) = AtStake::<T>::take(payout_info.round, author) {
+					if let Some(state) = AtStake::<T>::take(payout_info.round, &author) {
 						// calculate reward for collator from previous round
 						let now_reward = Self::get_collator_reward_per_session(
 							&state,
@@ -2830,9 +3048,43 @@ pub mod pallet {
 							payout_info.total_issuance,
 						);
 
-						now_rewards.into_iter().for_each(|x| {
-							Self::do_reward(&pot, &x.owner, x.amount);
+						// Read the shared candidate ONCE: every delegator in this payout
+						// delegates the same collator, so all restakes accumulate into one
+						// in-memory struct and it is flushed once below (batch -- Spec §3),
+						// instead of an O(m) full-struct write per delegator. A missing or
+						// leaving candidate cannot receive restakes -> each delegator is paid
+						// plainly.
+						let mut candidate =
+							CandidatePool::<T>::get(&author).filter(|c| !c.is_leaving());
+						let before = candidate.as_ref().map(|c| (c.stake, c.total));
+
+						now_rewards.into_iter().for_each(|x| match candidate.as_mut() {
+							Some(c) =>
+								Self::do_delegator_reward(&pot, c, &author, &x.owner, x.amount),
+							None => Self::pay_delegator_reward_not_restaked(
+								&pot, &author, &x.owner, x.amount,
+							),
 						});
+
+						// Flush the shared candidate ONCE: re-rank it in the top set and write
+						// the pool a single time, only when a restake actually grew its total.
+						if let (Some(candidate), Some((before_stake, before_total))) =
+							(candidate, before)
+						{
+							if candidate.total != before_total {
+								if candidate.is_active() {
+									Self::update_top_candidates(
+										author.clone(),
+										before_stake,
+										// safe because total >= stake
+										before_total - before_stake,
+										candidate.stake,
+										candidate.total - candidate.stake,
+									);
+								}
+								CandidatePool::<T>::insert(&author, candidate);
+							}
+						}
 					}
 				} else {
 					// Kill storage

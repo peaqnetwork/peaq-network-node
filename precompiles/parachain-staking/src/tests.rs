@@ -343,3 +343,56 @@ fn should_update_total_stake() {
 			);
 		})
 }
+
+// AC-HUB: the EVM precompile getCollatorList reports a collator's UPDATED total after
+// the staking pallet grows CandidatePool[collator].total (as auto-restake does when it
+// folds a delegator reward into the collator's backing). Restake growing the total
+// correctly is proven in the pallet crate (auto_restake_* / do_try_state); here we
+// isolate the downstream-consumer contract: the precompile reads live CandidatePool.
+#[test]
+fn get_collator_list_reflects_grown_candidate_total() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(MockPeaqAccount::Alice, 10),
+			(MockPeaqAccount::Bob, 100),
+			(MockPeaqAccount::Charlie, 100),
+		])
+		.with_collators(vec![(MockPeaqAccount::Alice, 10), (MockPeaqAccount::Charlie, 20)])
+		.with_delegators(vec![(MockPeaqAccount::Bob, MockPeaqAccount::Alice, 100)])
+		.build()
+		.execute_with(|| {
+			// genesis: Alice total = stake 10 + delegation 100 = 110
+			assert_eq!(
+				parachain_staking::CandidatePool::<Test>::get(MockPeaqAccount::Alice)
+					.unwrap()
+					.total,
+				110
+			);
+			// simulate a restaked reward folded into Alice's backing
+			parachain_staking::CandidatePool::<Test>::mutate(MockPeaqAccount::Alice, |maybe| {
+				if let Some(candidate) = maybe {
+					candidate.total += 5;
+				}
+			});
+			// precompile must report the grown total (115), shape intact
+			precompiles()
+				.prepare_test(
+					MockPeaqAccount::Bob,
+					MockPeaqAccount::EVMu1Account,
+					PCall::get_collator_list {},
+				)
+				.expect_no_logs()
+				.execute_returns(vec![
+					CollatorInfo {
+						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Alice),
+						amount: U256::from(115),
+						commission: U256::from(0),
+					},
+					CollatorInfo {
+						owner: convert_mock_account_by_u8_list(MockPeaqAccount::Charlie),
+						amount: U256::from(20),
+						commission: U256::from(0),
+					},
+				]);
+		})
+}

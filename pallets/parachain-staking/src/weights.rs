@@ -537,4 +537,17 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	/// NOTE(T8): placeholder until benchmarked via the frame-benchmarking CLI. Bounds the
+	/// per-delegator restake footprint so on_initialize reserves conservatively.
+	fn payout_collator(n: u32, ) -> Weight {
+		// proof_size is conservative: ~10 KiB base (candidate + top-candidate set) plus
+		// ~2 KiB/delegator (DelegatorState + Locks + Account). Real numbers via node CLI.
+		// Writes: the shared candidate + top-candidate set are written ONCE (batch flush,
+		// folded into the base), so per-delegator writes are only DelegatorState + Account +
+		// Locks; the 4n bound keeps a margin over that. Reads stay conservative at 8n.
+		Weight::from_parts(50_000_000, 10_000)
+			.saturating_add(Weight::from_parts(0, 2_000).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().reads(6u64.saturating_add(8u64.saturating_mul(n.into()))))
+			.saturating_add(T::DbWeight::get().writes(6u64.saturating_add(4u64.saturating_mul(n.into()))))
+	}
 }

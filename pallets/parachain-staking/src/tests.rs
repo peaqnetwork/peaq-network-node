@@ -3843,6 +3843,11 @@ fn check_snapshot() {
 			// check states at round 1, session 2
 			roll_to(10, authors.clone());
 			// CollatorBlocks
+			// snapshot for round 2 (taken at this round boundary) == live candidate_pool now;
+			// from round 2 on it includes restaked rewards, so capture it here instead of
+			// comparing to the frozen genesis candidate.
+			let snap_2_c1 = StakePallet::candidate_pool(1).unwrap();
+			let snap_2_c2 = StakePallet::candidate_pool(2).unwrap();
 			assert_eq!(StakePallet::collator_blocks(1, 1), author_blocks);
 			assert_eq!(StakePallet::collator_blocks(1, 2), author_blocks_alt);
 			// Snapshot - AtStake
@@ -3859,15 +3864,17 @@ fn check_snapshot() {
 			// check states at round 2, session 3
 			roll_to(15, authors.clone());
 			// CollatorBlocks
+			let snap_3_c1 = StakePallet::candidate_pool(1).unwrap();
+			let snap_3_c2 = StakePallet::candidate_pool(2).unwrap();
 			assert_eq!(StakePallet::collator_blocks(2, 1), author_blocks_alt);
 			assert_eq!(StakePallet::collator_blocks(2, 2), author_blocks);
 			// Snapshot - AtStake
-			assert_eq!(StakePallet::at_stake(2, 1).unwrap(), candidate_1);
-			assert_eq!(StakePallet::at_stake(2, 2).unwrap(), candidate_2);
+			assert_eq!(StakePallet::at_stake(2, 1).unwrap(), snap_2_c1);
+			assert_eq!(StakePallet::at_stake(2, 2).unwrap(), snap_2_c2);
 			// check delayed payout info
 			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
-			let total_stake = author_blocks_alt as u128 * author_1_total_stake +
-				author_blocks as u128 * author_2_total_stake;
+			let total_stake = author_blocks_alt as u128 * snap_2_c1.total +
+				author_blocks as u128 * snap_2_c2.total;
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			// TODO total issuance is 1 token more than expected
 			// assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);
@@ -3879,12 +3886,12 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::collator_blocks(3, 1), author_blocks);
 			assert_eq!(StakePallet::collator_blocks(3, 2), author_blocks_alt);
 			// Snapshot - AtStake
-			assert_eq!(StakePallet::at_stake(3, 1).unwrap(), candidate_1);
-			assert_eq!(StakePallet::at_stake(3, 2).unwrap(), candidate_2);
+			assert_eq!(StakePallet::at_stake(3, 1).unwrap(), snap_3_c1);
+			assert_eq!(StakePallet::at_stake(3, 2).unwrap(), snap_3_c2);
 			// check delayed payout info
 			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
-			let total_stake = author_blocks as u128 * author_1_total_stake +
-				author_blocks_alt as u128 * author_2_total_stake;
+			let total_stake = author_blocks as u128 * snap_3_c1.total +
+				author_blocks_alt as u128 * snap_3_c2.total;
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			// TODO total issuance is 1 token more than expected
 			// assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);
@@ -3988,5 +3995,365 @@ fn check_snapshot_is_cleared() {
 			roll_to(18, authors);
 			let at_stake = <crate::AtStake<Test>>::iter_prefix(2).collect::<Vec<_>>();
 			assert_eq!(at_stake.len(), 0);
+		});
+}
+
+// ===================================================================
+// Delegator auto-restake (inline) — AC tests
+// Spec: ~/my-todos/work/peaq-delegator-auto-restake-spec-todo.html
+// ===================================================================
+
+// AC-1: a delegator's staking reward is restaked into their bonded stake at
+// payout time, instead of landing as liquid free balance.
+#[test]
+fn auto_restake_adds_delegator_reward_to_stake() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			// collator 1 authors every block; roll_to tops up the pot + note_author
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+
+			let before_total = StakePallet::delegator_state(2).unwrap().total;
+			assert_eq!(before_total, stake);
+
+			// advance across a round boundary so delegator 2's reward is paid
+			roll_to(10, authors);
+
+			// AC-1: the reward must be restaked into the delegator's bonded stake,
+			// not left liquid.
+			let after_total = StakePallet::delegator_state(2).unwrap().total;
+			assert!(
+				after_total > before_total,
+				"delegator reward should be restaked into stake: before={before_total}, after={after_total}"
+			);
+		});
+}
+
+// AC-2 (critical): restaking a reward must NOT consume the delegator's pending
+// `Unstaking`. The reward is new money; it must raise the lock by exactly the reward
+// and leave any queued unstake untouched (catches accidental reuse of `increase_lock`).
+#[test]
+fn auto_restake_does_not_consume_pending_unstaking() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			// delegator 2 unstakes part of their delegation -> one pending Unstaking entry
+			assert_ok!(StakePallet::delegator_stake_less(RuntimeOrigin::signed(2), 1, stake / 2));
+			let unstaking_before = StakePallet::unstaking(2);
+			assert_eq!(unstaking_before.len(), 1);
+			let total_before = StakePallet::delegator_state(2).unwrap().total;
+
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			roll_to(10, authors);
+
+			// reward was restaked (active total grew) ...
+			assert!(StakePallet::delegator_state(2).unwrap().total > total_before);
+			// ... but the pending Unstaking must be byte-for-byte unchanged.
+			assert_eq!(
+				StakePallet::unstaking(2),
+				unstaking_before,
+				"restake must not consume pending Unstaking"
+			);
+			// lock invariant (lock == active total + pending unstaking) holds with unstaking
+			assert_ok!(StakePallet::do_try_state());
+		});
+}
+
+// AC-1/T6: a successful restake emits the distinct DelegatorRewardRestaked event.
+#[test]
+fn auto_restake_emits_restaked_event() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			roll_to(10, authors);
+			assert!(
+				events().iter().any(|e| matches!(e, Event::DelegatorRewardRestaked(2, 1, _))),
+				"restake should emit DelegatorRewardRestaked"
+			);
+		});
+}
+
+// AC-3: if the delegator can no longer be restaked onto the collator (here: they
+// revoked the delegation after the snapshot was taken), the reward is paid out as a
+// plain balance via the distinct fallback event, and no restake happens.
+#[test]
+fn auto_restake_falls_back_to_plain_payout_when_delegation_revoked() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			// delegator 2 is in the genesis snapshot, then revokes before payout
+			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			assert!(StakePallet::delegator_state(2).is_none());
+			let free_before = Balances::free_balance(2);
+
+			roll_to(10, authors);
+
+			// reward paid as plain balance ...
+			assert!(Balances::free_balance(2) > free_before);
+			// ... via the distinct fallback event, with no restake.
+			assert!(
+				events()
+					.iter()
+					.any(|e| matches!(e, Event::DelegatorRewardPaidNotRestaked(2, 1, _))),
+				"fallback should emit DelegatorRewardPaidNotRestaked"
+			);
+			assert!(
+				!events().iter().any(|e| matches!(e, Event::DelegatorRewardRestaked(2, _, _))),
+				"revoked delegator must not be restaked"
+			);
+		});
+}
+
+// gap: exercise do_try_state's fully-exited-account branch. A delegator that fully revoked
+// has no DelegatorState but still holds pending Unstaking, and its STAKING_ID lock must equal
+// that unstaking. Prove the check both PASSES on the valid state AND FIRES on a corrupted lock
+// (otherwise the branch could pass vacuously and catch nothing).
+#[test]
+fn do_try_state_catches_fully_exited_account_lock_mismatch() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			// delegator 2 fully revokes -> removed from DelegatorState, stake -> pending Unstaking
+			assert_ok!(StakePallet::revoke_delegation(RuntimeOrigin::signed(2), 1));
+			assert!(StakePallet::delegator_state(2).is_none());
+			// valid: lock == pending unstaking, so the fully-exited-account branch holds
+			assert_ok!(StakePallet::do_try_state());
+
+			// corrupt ONLY the STAKING_ID lock so lock != pending unstaking; the branch must fire
+			let locked = Balances::locks(2)
+				.iter()
+				.find(|l| l.id == STAKING_ID)
+				.map(|l| l.amount)
+				.expect("revoked delegator keeps a STAKING_ID lock for pending unstaking");
+			<Balances as frame_support::traits::LockableCurrency<AccountId>>::set_lock(
+				STAKING_ID,
+				&2,
+				locked + 1,
+				frame_support::traits::WithdrawReasons::all(),
+			);
+			assert!(
+				StakePallet::do_try_state().is_err(),
+				"do_try_state must catch a fully-exited account whose lock != pending unstaking"
+			);
+		});
+}
+
+// AC-8: the candidate-total invariant (self stake + sum of delegator stakes) survives
+// many rounds of restaking. (AC-6 compounding and AC-7 R->R+2 snapshot ordering are
+// covered directly by `check_snapshot`.)
+#[test]
+fn auto_restake_preserves_candidate_total_invariant() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake), (3, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake), (3, 1, stake)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(StakePallet::do_try_state());
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			roll_to(20, authors);
+			assert_ok!(StakePallet::do_try_state());
+		});
+}
+
+// AC-5: with the max number of delegators on one collator, every delegator is restaked
+// and the candidate total stays consistent (batch correctness).
+#[test]
+fn auto_restake_batch_many_delegators_consistent() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake), (3, stake), (4, stake), (5, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake), (3, 1, stake), (4, 1, stake), (5, 1, stake)])
+		.build()
+		.execute_with(|| {
+			let cand_before = StakePallet::candidate_pool(1).unwrap().total;
+			let d2_before = StakePallet::delegator_state(2).unwrap().total;
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			roll_to(10, authors);
+			assert!(StakePallet::delegator_state(2).unwrap().total > d2_before);
+			assert!(StakePallet::delegator_state(5).unwrap().total > d2_before);
+			assert!(StakePallet::candidate_pool(1).unwrap().total > cand_before);
+			assert_ok!(StakePallet::do_try_state());
+		});
+}
+
+// Full-session scale (mock-max): several collators, each at MaxDelegatorsPerCollator
+// capacity, are all paid one-per-block across whole sessions -- proves the multi-collator
+// payout spread + snapshot cleanup + cross-side/lock invariant end-to-end. The mock caps
+// delegators at 4/collator, so the runtime-scale 100-delegator-per-block case is covered
+// separately by the payout_collator benchmark (which uses the real runtime bound of 100).
+#[test]
+fn auto_restake_full_session_all_collators_restake() {
+	let stake = 10_000_000 * DECIMALS;
+	// 4 collators (1..=4), each with MaxDelegatorsPerCollator (=4) delegators.
+	// delegator id for collator c, slot d is 10*c + d, keeping every id distinct.
+	let collators: Vec<(AccountId, Balance)> = (1u64..=4).map(|c| (c, stake)).collect();
+	let mut balances: Vec<(AccountId, Balance)> = collators.clone();
+	let mut delegators: Vec<(AccountId, AccountId, Balance)> = Vec::new();
+	for c in 1u64..=4 {
+		for d in 1u64..=4 {
+			let did = 10 * c + d;
+			balances.push((did, stake));
+			delegators.push((did, c, stake));
+		}
+	}
+	ExtBuilder::default()
+		.with_balances(balances)
+		.with_collators(collators)
+		.with_delegators(delegators.clone())
+		.build()
+		.execute_with(|| {
+			// genesis selects only MinCollators (=2); select all 4 so each is paid
+			assert_ok!(StakePallet::set_max_selected_candidates(RuntimeOrigin::root(), 4));
+			let cand_before: Vec<Balance> =
+				(1u64..=4).map(|c| StakePallet::candidate_pool(c).unwrap().total).collect();
+
+			// every collator authors in rotation, so each is paid one-per-block each session
+			let authors: Vec<Option<AccountId>> = (0u64..80).map(|i| Some((i % 4) + 1)).collect();
+			roll_to(50, authors);
+
+			// every delegator of every collator restaked at least once (stake strictly grew)
+			for (did, c, _s) in &delegators {
+				assert!(
+					StakePallet::delegator_state(*did).unwrap().total > stake,
+					"delegator {} of collator {} should have restaked",
+					did,
+					c
+				);
+			}
+			// every collator's candidate total grew from its delegators' restakes
+			for (idx, c) in (1u64..=4).enumerate() {
+				assert!(
+					StakePallet::candidate_pool(c).unwrap().total > cand_before[idx],
+					"candidate {} total should have grown",
+					c
+				);
+			}
+			// cross-side + STAKING_ID lock invariants hold after a full multi-collator session
+			assert_ok!(StakePallet::do_try_state());
+		});
+}
+
+// AC-9 (regression / scope): collator rewards are NOT restaked (scope is delegator-only).
+// The collator's reward is still paid as liquid balance with the plain Rewarded event.
+#[test]
+fn auto_restake_leaves_collator_reward_untouched() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake), (2, stake)])
+		.build()
+		.execute_with(|| {
+			let self_stake_before = StakePallet::candidate_pool(1).unwrap().stake;
+			let free_before = Balances::free_balance(1);
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			roll_to(10, authors);
+			assert!(Balances::free_balance(1) > free_before);
+			assert_eq!(StakePallet::candidate_pool(1).unwrap().stake, self_stake_before);
+			assert!(events().iter().any(|e| matches!(e, Event::Rewarded(1, _))));
+		});
+}
+
+// AC-BND: a collator with no delegators is paid without panicking, invariant intact.
+#[test]
+fn auto_restake_collator_with_no_delegators() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake), (2, stake)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			roll_to(10, authors);
+			assert!(Balances::free_balance(1) > stake);
+			assert_ok!(StakePallet::do_try_state());
+		});
+}
+
+// AC-IDEM: a delegator is restaked exactly once per round the collator authored, not
+// twice (the CollatorBlocks drain makes each round's payout happen once).
+#[test]
+fn auto_restake_pays_each_round_once() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			// collator 1 authors one block in round 0 only
+			let authors: Vec<Option<AccountId>> =
+				(0u64..=100).map(|i| if i % 5 == 2 { Some(1u64) } else { None }).collect();
+			roll_to(BLOCKS_PER_ROUND * 2, authors);
+			let restakes = events()
+				.iter()
+				.filter(|e| matches!(e, Event::DelegatorRewardRestaked(2, 1, _)))
+				.count();
+			assert_eq!(restakes, 1, "delegator must be restaked once per round, not twice");
+		});
+}
+
+// AC-4: a zero reward is skipped entirely -- no restake, no stake churn, no event.
+// Forced via 100% commission (delegators earn nothing from rounds snapshotted after it).
+#[test]
+fn auto_restake_skips_zero_reward() {
+	let stake = 10_000_000 * DECIMALS;
+	ExtBuilder::default()
+		.with_balances(vec![(1, stake), (2, stake)])
+		.with_collators(vec![(1, stake)])
+		.with_delegators(vec![(2, 1, stake)])
+		.build()
+		.execute_with(|| {
+			let authors: Vec<Option<AccountId>> = (0u64..100u64).map(|_| Some(1u64)).collect();
+			assert_ok!(StakePallet::set_commission(
+				RuntimeOrigin::signed(1),
+				Permill::from_percent(100)
+			));
+
+			// round 0 uses the genesis snapshot (0% commission) -> one restake
+			roll_to(10, authors.clone());
+			let total_after_round0 = StakePallet::delegator_state(2).unwrap().total;
+			assert!(total_after_round0 > stake);
+			let restakes_before = events()
+				.iter()
+				.filter(|e| matches!(e, Event::DelegatorRewardRestaked(2, 1, _)))
+				.count();
+
+			// later rounds carry 100% commission -> zero delegator reward -> skipped
+			roll_to(30, authors);
+			assert_eq!(
+				StakePallet::delegator_state(2).unwrap().total,
+				total_after_round0,
+				"zero rewards must not change stake"
+			);
+			let restakes_after = events()
+				.iter()
+				.filter(|e| matches!(e, Event::DelegatorRewardRestaked(2, 1, _)))
+				.count();
+			assert_eq!(restakes_after, restakes_before, "zero rewards must not emit restake events");
 		});
 }
