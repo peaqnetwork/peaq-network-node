@@ -146,9 +146,10 @@ where
 				asset_id,
 				who,
 				amount,
-				// 1.7.2 對齊:舊 fungibles::burn_from 內部寫死 Expendable(可扣到 0、可 reap)。
-				// Protect 會卡 ED 底線 → 舊版會成功的非原生 withdraw 現在 FundsUnavailable。
-				// 與同檔 slash 的 Expendable 保持一致。
+				// 1.7.2 parity: the old fungibles::burn_from hardcoded Expendable
+				// (balance may drop to 0 and the account may be reaped). Protect would
+				// enforce the ED floor, making non-native withdraws that used to succeed
+				// fail with FundsUnavailable. Also consistent with slash() below.
 				Preservation::Expendable,
 				Precision::Exact,
 				Fortitude::Polite,
