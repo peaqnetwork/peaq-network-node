@@ -108,6 +108,7 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
 			"dev" => Box::new(parachain::dev_chain_spec::get_chain_spec()?),
+			"dev-stress" => Box::new(parachain::dev_chain_spec::get_stress_chain_spec(2000)?),
 			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
@@ -119,6 +120,7 @@ impl SubstrateCli for Cli {
 			"peaq-local" => Box::new(parachain::peaq_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
+			"peaq-stress" => Box::new(parachain::peaq_chain_spec::get_stress_chain_spec(2000)?),
 			path => {
 				let chain_spec = parachain::dev_chain_spec::ChainSpec::from_json_file(
 					std::path::PathBuf::from(path),

@@ -6,7 +6,7 @@ use peaq_runtime::{
 	GenesisAccount, ParachainInfoConfig, ParachainStakingConfig, PeaqPrecompiles, Runtime,
 	RuntimeGenesisConfig, SudoConfig, WASM_BINARY,
 };
-use runtime_common::TOKEN_DECIMALS;
+use runtime_common::{DOLLARS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
@@ -88,6 +88,67 @@ pub fn get_chain_spec_local_testnet(para_id: u32) -> Result<ChainSpec, String> {
 			para_id,
 		},
 		// code
+		wasm_binary,
+	))
+}
+
+/// 64 collators x 100 delegators = 6400 delegators on the peaq MAINNET runtime,
+/// for production-runtime restake / block-stuck validation at the mainnet ceiling
+/// (MaxCollatorCandidates=64, MaxDelegatorsPerCollator=100). Mirrors dev-stress but
+/// uses peaq_runtime configure_genesis + mainnet stake scale (MinCollatorStake in DOLLARS).
+pub fn get_stress_chain_spec(para_id: u32) -> Result<ChainSpec, String> {
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "PEAQ".into());
+	properties.insert("tokenDecimals".into(), TOKEN_DECIMALS.into());
+
+	const N_COLLATORS: u32 = 64;
+	const N_DELEGATORS_PER: u32 = 100;
+	let coll_stake: Balance = 2 * staking::MinCollatorStake::get();
+	let del_stake: Balance = 100 * DOLLARS;
+
+	let collators: Vec<(AccountId, AuraId)> = (0..N_COLLATORS)
+		.map(|i| authority_keys_from_seed(&format!("//Collator{}", i)))
+		.collect();
+
+	let mut stakers: Vec<(AccountId, Option<AccountId>, Balance)> = Vec::new();
+	let mut endowed: Vec<AccountId> = Vec::new();
+	for (c_acc, _) in collators.iter() {
+		stakers.push((c_acc.clone(), None, coll_stake));
+		endowed.push(c_acc.clone());
+	}
+	for (ci, (c_acc, _)) in collators.iter().enumerate() {
+		for di in 0..N_DELEGATORS_PER {
+			let d =
+				get_account_id_from_seed::<sr25519::Public>(&format!("//Delegator{}_{}", ci, di));
+			stakers.push((d.clone(), Some(c_acc.clone()), del_stake));
+			endowed.push(d);
+		}
+	}
+	let root_key = collators[0].0.clone();
+	endowed.push(get_account_id_from_seed::<sr25519::Public>("Alice"));
+
+	#[allow(deprecated)]
+	Ok(ChainSpec::from_genesis(
+		"peaq-network-stress",
+		"peaq-stress",
+		ChainType::Development,
+		move || {
+			configure_genesis(
+				stakers.clone(),
+				collators.clone(),
+				root_key.clone(),
+				endowed.clone(),
+				para_id.into(),
+			)
+		},
+		vec![],
+		None,
+		None,
+		None,
+		Some(properties),
+		Extensions { bad_blocks: Default::default(), relay_chain: "rococo-local".into(), para_id },
 		wasm_binary,
 	))
 }
