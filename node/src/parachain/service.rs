@@ -190,10 +190,15 @@ where
 	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts_record_import::<Block, RuntimeApi, _>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
+			// Author uses ProposerFactory::with_proof_recording; the importer MUST also record
+			// proof so cumulus-pallet-weight-reclaim writes an identical frame_system::BlockWeight
+			// on both paths. Otherwise the intermediate state root (embedded by frontier into the
+			// `fron` digest) diverges and execute_block fails final_checks ("Digest item must match").
+			true,
 		)?;
 	let client = Arc::new(client);
 
