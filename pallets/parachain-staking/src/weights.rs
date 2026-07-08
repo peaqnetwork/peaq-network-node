@@ -537,17 +537,33 @@ impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
-	/// NOTE(T8): placeholder until benchmarked via the frame-benchmarking CLI. Bounds the
-	/// per-delegator restake footprint so on_initialize reserves conservatively.
 	fn payout_collator(n: u32, ) -> Weight {
-		// proof_size is conservative: ~10 KiB base (candidate + top-candidate set) plus
-		// ~2 KiB/delegator (DelegatorState + Locks + Account). Real numbers via node CLI.
-		// Writes: the shared candidate + top-candidate set are written ONCE (batch flush,
-		// folded into the base), so per-delegator writes are only DelegatorState + Account +
-		// Locks; the 4n bound keeps a margin over that. Reads stay conservative at 8n.
-		Weight::from_parts(50_000_000, 10_000)
-			.saturating_add(Weight::from_parts(0, 2_000).saturating_mul(n.into()))
-			.saturating_add(T::DbWeight::get().reads(6u64.saturating_add(8u64.saturating_mul(n.into()))))
-			.saturating_add(T::DbWeight::get().writes(6u64.saturating_add(4u64.saturating_mul(n.into()))))
+		// Proof Size summary in bytes:
+		//  Measured:  `1830 + n * (473 ±0)`
+		//  Estimated: `8392 + n * (3774 ±0)`
+		// Minimum execution time: 151_592_000 picoseconds.
+		Weight::from_parts(212_800_641, 0)
+			.saturating_add(Weight::from_parts(0, 8392))
+			.saturating_add(Weight::from_parts(187_259_436, 0).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().reads(10))
+			.saturating_add(T::DbWeight::get().reads((5_u64).saturating_mul(n.into())))
+			.saturating_add(T::DbWeight::get().writes(6))
+			.saturating_add(T::DbWeight::get().writes((3_u64).saturating_mul(n.into())))
+			.saturating_add(Weight::from_parts(0, 3774).saturating_mul(n.into()))
+	}
+	fn prepare_delayed_rewards(n: u32, m: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0 + m * (6151 ±0) + n * (9894 ±0)`
+		//  Estimated: `3593 + n * (7402 ±0)`
+		// Minimum execution time: 199_802_000 picoseconds.
+		Weight::from_parts(199_802_000, 0)
+			.saturating_add(Weight::from_parts(0, 3593))
+			.saturating_add(Weight::from_parts(37_112_768, 0).saturating_mul(n.into()))
+			.saturating_add(Weight::from_parts(3_796_214, 0).saturating_mul(m.into()))
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().reads((3_u64).saturating_mul(n.into())))
+			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(n.into())))
+			.saturating_add(Weight::from_parts(0, 7402).saturating_mul(n.into()))
 	}
 }

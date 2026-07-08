@@ -3156,8 +3156,11 @@ pub mod pallet {
 			collators: &[T::AccountId],
 			session_index: SessionIndex,
 		) -> Weight {
-			let mut reads = Weight::from_parts(1_u64, 0);
-			let mut writes = Weight::from_parts(1_u64, 0);
+			// Worst-case components for the weight: n selected collators snapshotted, each
+			// with up to MaxDelegatorsPerCollator delegators. Weight comes from the
+			// prepare_delayed_rewards benchmark (WeightInfo), not a manual read/write count.
+			let n = collators.len() as u32;
+			let m = T::MaxDelegatorsPerCollator::get();
 
 			// get updated RoundInfo
 			let round = <Round<T>>::get().current;
@@ -3166,24 +3169,22 @@ pub mod pallet {
 			for collator in collators.iter() {
 				if let Some(collator_state) = CandidatePool::<T>::get(collator) {
 					<AtStake<T>>::insert(round, collator, collator_state);
-					reads = reads.saturating_add(Weight::from_parts(1_u64, 0));
-					writes = reads.saturating_add(Weight::from_parts(1_u64, 0));
 				}
 			}
 
 			// if prepare_delayed_rewards is called by SessionManager::new_session_genesis, we skip
 			// this part
 			if session_index.is_zero() {
-				return T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time());
+				return <T as crate::pallet::Config>::WeightInfo::prepare_delayed_rewards(n, m);
 			}
 
 			let old_round = round - 1;
-			// Get total collator staking number of round that is ending
-			let (in_reads, total_stake) = Self::get_total_collator_staking_num(old_round);
+			// Get total collator staking number of round that is ending. The weight returned by
+			// this helper is ignored here -- prepare_delayed_rewards's benchmark already covers it.
+			let (_, total_stake) = Self::get_total_collator_staking_num(old_round);
 
 			// Get total issuance of round that is ending
-			let (issuance_weight, total_issuance) = Self::pot_issuance();
-			reads = reads.saturating_add(in_reads).saturating_add(issuance_weight);
+			let (_, total_issuance) = Self::pot_issuance();
 
 			// take snapshot of previous session's staking totals for payout calculation
 			DelayedPayoutInfo::<T>::put(DelayedPayoutInfoT {
@@ -3191,9 +3192,8 @@ pub mod pallet {
 				total_stake,
 				total_issuance,
 			});
-			writes = writes.saturating_add(Weight::from_parts(1_u64, 0));
 
-			T::DbWeight::get().reads_writes(reads.ref_time(), writes.ref_time())
+			<T as crate::pallet::Config>::WeightInfo::prepare_delayed_rewards(n, m)
 		}
 	}
 

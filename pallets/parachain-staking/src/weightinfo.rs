@@ -25,4 +25,5 @@ pub trait WeightInfo {
 	fn set_max_candidate_stake() -> Weight;
 	fn set_commission(n: u32, m: u32) -> Weight;
 	fn payout_collator(n: u32) -> Weight;
+	fn prepare_delayed_rewards(n: u32, m: u32) -> Weight;
 }
