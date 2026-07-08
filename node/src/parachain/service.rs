@@ -1,6 +1,8 @@
 //! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::collators::lookahead::{self as lookahead, Params as LookaheadParams};
+use cumulus_client_consensus_aura::collators::lookahead::{
+	self as lookahead, Params as LookaheadParams,
+};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
@@ -197,7 +199,8 @@ where
 			// Author uses ProposerFactory::with_proof_recording; the importer MUST also record
 			// proof so cumulus-pallet-weight-reclaim writes an identical frame_system::BlockWeight
 			// on both paths. Otherwise the intermediate state root (embedded by frontier into the
-			// `fron` digest) diverges and execute_block fails final_checks ("Digest item must match").
+			// `fron` digest) diverges and execute_block fails final_checks ("Digest item must
+			// match").
 			true,
 		)?;
 	let client = Arc::new(client);
@@ -224,8 +227,7 @@ where
 	.build();
 
 	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
-	let parachain_block_import =
-		ParachainBlockImport::new(frontier_block_import, backend.clone());
+	let parachain_block_import = ParachainBlockImport::new(frontier_block_import, backend.clone());
 
 	let import_queue = fn_build_import_queue(
 		client.clone(),
