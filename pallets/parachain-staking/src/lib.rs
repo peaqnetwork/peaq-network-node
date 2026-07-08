@@ -551,7 +551,8 @@ pub mod pallet {
 					.reads_writes(6u64, (MaxSelectedCandidates::<T>::get() + 2).into());
 				payout.max(cleanup)
 			} else {
-				// No payout pending -> payout_collator returns after reading DelayedPayoutInfo + Round.
+				// No payout pending -> payout_collator returns after reading DelayedPayoutInfo +
+				// Round.
 				T::DbWeight::get().reads(3)
 			}
 		}
@@ -2758,10 +2759,21 @@ pub mod pallet {
 			// PHASE 1: preflight (reads + checks only; no writes, no transfer)
 			let mut delegations = match DelegatorState::<T>::get(delegator_id) {
 				Some(d) => d,
-				None => return Self::pay_delegator_reward_not_restaked(pot, collator_id, delegator_id, reward),
+				None =>
+					return Self::pay_delegator_reward_not_restaked(
+						pot,
+						collator_id,
+						delegator_id,
+						reward,
+					),
 			};
 			if delegations.inc_delegation(collator_id.clone(), reward).is_none() {
-				return Self::pay_delegator_reward_not_restaked(pot, collator_id, delegator_id, reward)
+				return Self::pay_delegator_reward_not_restaked(
+					pot,
+					collator_id,
+					delegator_id,
+					reward,
+				)
 			}
 
 			// PHASE 2: commit (move the reward in, then lock + restake it)
@@ -2788,7 +2800,11 @@ pub mod pallet {
 			}
 			DelegatorState::<T>::insert(delegator_id, delegations);
 			// Distinct event so indexers can tell restaked from plain-paid rewards.
-			Self::deposit_event(Event::DelegatorRewardRestaked(delegator_id.clone(), collator_id.clone(), reward));
+			Self::deposit_event(Event::DelegatorRewardRestaked(
+				delegator_id.clone(),
+				collator_id.clone(),
+				reward,
+			));
 		}
 
 		/// Pay a delegator's reward as a plain balance transfer (no restake), emitting the
@@ -2996,7 +3012,8 @@ pub mod pallet {
 			// that pending amount. Candidates are skipped (their lock also covers self-stake,
 			// which is not verified here).
 			for (who, unstaking) in <Unstaking<T>>::iter() {
-				if DelegatorState::<T>::contains_key(&who) || CandidatePool::<T>::contains_key(&who) {
+				if DelegatorState::<T>::contains_key(&who) || CandidatePool::<T>::contains_key(&who)
+				{
 					continue
 				}
 				let unstaking_sum = unstaking
