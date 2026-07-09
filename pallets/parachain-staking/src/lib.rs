@@ -2778,6 +2778,14 @@ pub mod pallet {
 
 			// PHASE 2: commit (move the reward in, then lock + restake it)
 			if T::Currency::transfer(pot, delegator_id, reward, KeepAlive).is_err() {
+				// on_finalize is Mandatory and cannot propagate: a failed transfer skips this
+				// delegator (no lock/restake/state change). Log so an underfunded pot is visible
+				// instead of silently dropping the reward.
+				log::error!(
+					target: "parachain-staking",
+					"restake payout: transfer pot -> delegator {:?} failed (reward {:?}); skipped",
+					delegator_id, reward,
+				);
 				return
 			}
 			// Raise the lock by exactly the reward, leaving pending Unstaking untouched
@@ -2821,12 +2829,24 @@ pub mod pallet {
 					collator_id.clone(),
 					reward,
 				));
+			} else {
+				log::error!(
+					target: "parachain-staking",
+					"payout: transfer pot -> delegator {:?} failed (reward {:?}); skipped",
+					delegator_id, reward,
+				);
 			}
 		}
 
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
 			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
 				Self::deposit_event(Event::Rewarded(who.clone(), reward));
+			} else {
+				log::error!(
+					target: "parachain-staking",
+					"collator payout: transfer pot -> {:?} failed (reward {:?}); skipped",
+					who, reward,
+				);
 			}
 		}
 
@@ -2886,7 +2906,7 @@ pub mod pallet {
 		) -> Reward<T::AccountId, BalanceOf<T>> {
 			let delegator_sum = (&stake.delegators)
 				.into_iter()
-				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc + x.amount);
+				.fold(T::CurrencyBalance::from(0u128), |acc, x| acc.saturating_add(x.amount));
 
 			// issue_number = block_num * (state.total - delegator_sum) / total_staking_in_session
 			let nominator = T::CurrencyBalance::from(block_num)
@@ -2916,8 +2936,8 @@ pub mod pallet {
 			} else {
 				Reward {
 					owner: stake.id.clone(),
-					amount: percentage * issue_number +
-						stake.commission.mul(delegator_percentage * issue_number),
+					amount: (percentage * issue_number)
+						.saturating_add(stake.commission.mul(delegator_percentage * issue_number)),
 				}
 			}
 		}
@@ -2953,14 +2973,26 @@ pub mod pallet {
 					} else {
 						Reward {
 							owner: x.owner.clone(),
-							amount: percentage * issue_number -
-								stake.commission.mul(percentage * issue_number),
+							amount: (percentage * issue_number)
+								.saturating_sub(stake.commission.mul(percentage * issue_number)),
 						}
 					}
 				})
 				.collect::<Vec<Reward<T::AccountId, BalanceOf<T>>>>();
 
-			inner.try_into().expect("Did not extend vec q.e.d.")
+			// `inner` is a 1:1 map over `stake.delegators` (bounded by MaxDelegatorsPerCollator),
+			// so it can never exceed the bound. truncate_from never panics (unlike expect); this
+			// runs in on_finalize (Mandatory), which must not panic. Log the impossible case.
+			let expected_len = inner.len();
+			let bounded = BoundedVec::<_, T::MaxDelegatorsPerCollator>::truncate_from(inner);
+			if bounded.len() != expected_len {
+				log::error!(
+					target: "parachain-staking",
+					"delegator reward vec exceeded MaxDelegatorsPerCollator; {} dropped",
+					expected_len.saturating_sub(bounded.len()),
+				);
+			}
+			bounded
 		}
 
 		/// Get a unique, inaccessible account id from the `PotId`.
