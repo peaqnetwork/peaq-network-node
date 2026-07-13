@@ -670,7 +670,9 @@ benchmarks! {
 		});
 		// current round must be non-zero, else payout_collator early-returns
 		Round::<T>::mutate(|r| { r.current = round + 1; });
-	}: { Pallet::<T>::payout_collator() }
+	}: {
+		Pallet::<T>::payout_collator();
+	}
 	verify {
 		// the collator's snapshot was consumed (its delegators were paid + restaked)
 		assert!(AtStake::<T>::get(round, &collator).is_none());
