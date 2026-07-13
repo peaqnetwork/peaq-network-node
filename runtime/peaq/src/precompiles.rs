@@ -6,6 +6,7 @@ use pallet_evm_precompile_balances_erc20::{Erc20BalancesPrecompile, Erc20Metadat
 use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
+use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_p256verify::P256Verify;
 use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
@@ -107,6 +108,13 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<1026>,
 					ECRecoverPublicKey,
+					(CallableByContract, CallableByPrecompile),
+				>,
+				// Ed25519 signature verification (peaq-specific address; Ed25519 has no ecosystem
+				// standard). Output matches P256VERIFY: 32-byte 1 = valid, empty = invalid.
+				PrecompileAt<
+					AddressU64<1027>,
+					Ed25519Verify,
 					(CallableByContract, CallableByPrecompile),
 				>,
 				PrecompileAt<

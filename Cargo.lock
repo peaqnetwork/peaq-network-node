@@ -8142,6 +8142,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-ed25519"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek",
+ "fp-evm",
+]
+
+[[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
 source = "git+https://github.com/peaqnetwork/frontier?branch=peaq-polkadot-stable2503-4#29dca6bf66b2fabcc1833ce343fc4335468024e9"
@@ -9370,6 +9378,7 @@ dependencies = [
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
+ "pallet-evm-precompile-ed25519",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-p256verify",
  "pallet-evm-precompile-parachain-staking",
@@ -9513,6 +9522,7 @@ dependencies = [
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
+ "pallet-evm-precompile-ed25519",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-p256verify",
  "pallet-evm-precompile-parachain-staking",
@@ -10127,6 +10137,7 @@ dependencies = [
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-dispatch",
+ "pallet-evm-precompile-ed25519",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-p256verify",
  "pallet-evm-precompile-parachain-staking",
