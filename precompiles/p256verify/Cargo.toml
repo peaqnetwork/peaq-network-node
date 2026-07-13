@@ -1,0 +1,28 @@
+[package]
+name = "pallet-evm-precompile-p256verify"
+authors = [ "peaq" ]
+description = "RIP-7212 secp256r1 (P-256) signature verification precompile for Frontier EVM."
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+# Crypto
+p256 = { workspace = true }
+
+# Substrate
+frame-support = { workspace = true, default-features = false }
+
+# Frontier
+fp-evm = { workspace = true, default-features = false }
+
+[dev-dependencies]
+precompile-utils = { workspace = true, features = [ "std", "testing" ] }
+hex-literal = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"p256/std",
+	"frame-support/std",
+	"fp-evm/std",
+]
