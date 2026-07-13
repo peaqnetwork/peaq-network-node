@@ -2745,7 +2745,7 @@ pub mod pallet {
 		///
 		/// The caller has already confirmed the candidate is present and not leaving, so PHASE 1
 		/// here only checks the delegator side (exists and still delegates this candidate).
-		fn do_delegator_reward(
+		fn restake_delegator_reward(
 			pot: &T::AccountId,
 			candidate: &mut CandidateOf<T, T::MaxDelegatorsPerCollator>,
 			collator_id: &T::AccountId,
@@ -3109,7 +3109,7 @@ pub mod pallet {
 
 						now_rewards.into_iter().for_each(|x| match candidate.as_mut() {
 							Some(c) =>
-								Self::do_delegator_reward(&pot, c, &author, &x.owner, x.amount),
+								Self::restake_delegator_reward(&pot, c, &author, &x.owner, x.amount),
 							None => Self::pay_delegator_reward_not_restaked(
 								&pot, &author, &x.owner, x.amount,
 							),
