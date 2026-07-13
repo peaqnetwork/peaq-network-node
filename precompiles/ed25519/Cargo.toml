@@ -1,0 +1,17 @@
+[package]
+name = "pallet-evm-precompile-ed25519"
+authors = [ "peaq" ]
+description = "Ed25519 signature verification precompile for Frontier EVM (vendored from Frontier, Apache-2.0)."
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+ed25519-dalek = { workspace = true }
+fp-evm = { workspace = true, default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"ed25519-dalek/std",
+	"fp-evm/std",
+]
