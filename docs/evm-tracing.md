@@ -35,7 +35,7 @@ peaq-node \
   ... # your usual flags
 ```
 
-The node selects the correct override per block by reading the `spec_version` embedded in each wasm file, so the whole folder can be passed as-is. Filenames are informational only.
+The node selects the correct override per block by reading the `spec_version` embedded in each wasm file, so the whole folder can be passed as-is. Filenames are informational only, with one exception: every override file must keep the `.wasm` suffix. The node only picks up files ending in `.wasm`, so anything renamed without it is silently ignored.
 
 ## Updating
 
