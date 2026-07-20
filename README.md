@@ -30,6 +30,10 @@ subcommands:
 ./target/release/peaq-node -h
 ```
 
+### EVM Tracing
+
+Running a tracing node (`debug` / `trace` RPC support) requires WASM runtime overrides, published on the [evm-tracing-wasm-overrides release](https://github.com/peaqnetwork/peaq-network-node/releases/tag/evm-tracing-wasm-overrides). See [docs/evm-tracing.md](docs/evm-tracing.md) for setup.
+
 ## Run
 
 The provided `cargo run` command will launch a temporary node and its state will be discarded after

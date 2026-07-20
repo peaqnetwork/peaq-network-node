@@ -23,6 +23,17 @@ Or with curl, fetch individual files:
 curl -LO https://github.com/peaqnetwork/peaq-network-node/releases/download/evm-tracing-wasm-overrides/peaq_runtime.compact.compressed.wasm.peaq.v0.0.112-evm.wasm
 ```
 
+## Verify
+
+The release includes a `SHA256SUMS` manifest covering every asset. After downloading, verify from inside the download folder:
+
+```bash
+curl -LO https://github.com/peaqnetwork/peaq-network-node/releases/download/evm-tracing-wasm-overrides/SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS   # macOS: shasum -a 256 -c SHA256SUMS
+```
+
+Every file you downloaded should report `OK`.
+
 ## Run
 
 Build or use a node binary with the `evm-tracing` feature, then start it with:
