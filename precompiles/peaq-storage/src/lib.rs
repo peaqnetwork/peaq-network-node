@@ -46,6 +46,7 @@ where
 	Runtime::RuntimeCall: From<peaq_pallet_storage::Call<Runtime>>,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
 	AccountIdOf<Runtime>: From<[u8; 32]> + AsRef<[u8]>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("getItem(address,bytes)")]
 	#[precompile::public("get_item(address,bytes)")]

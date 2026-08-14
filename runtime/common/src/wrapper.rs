@@ -92,12 +92,13 @@ where
 		from: &T::AccountId,
 		to: &T::AccountId,
 		amount: Self::Balance,
+		existense_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		if amount.is_zero() || from == to {
 			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
-			NativeCurrency::transfer(from, to, amount)
+			NativeCurrency::transfer(from, to, amount, existense_requirement)
 		} else {
 			// Keep alive setup as true
 			let out = MultiCurrencies::transfer(asset_id, from, to, amount, Preservation::Preserve);
@@ -133,17 +134,23 @@ where
 		asset_id: Self::CurrencyId,
 		who: &T::AccountId,
 		amount: Self::Balance,
+		existense_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		if amount.is_zero() {
 			return Ok(());
 		}
 		if asset_id == GetNativeAssetId::get() {
-			NativeCurrency::withdraw(who, amount)
+			NativeCurrency::withdraw(who, amount, existense_requirement)
 		} else {
 			let out = MultiCurrencies::burn_from(
 				asset_id,
 				who,
 				amount,
+				// 1.7.2 parity: the old fungibles::burn_from hardcoded Expendable
+				// (balance may drop to 0 and the account may be reaped). Protect would
+				// enforce the ED floor, making non-native withdraws that used to succeed
+				// fail with FundsUnavailable. Also consistent with slash() below.
+				Preservation::Expendable,
 				Precision::Exact,
 				Fortitude::Polite,
 			);
@@ -173,8 +180,15 @@ where
 		} else {
 			// We cannot slash the token because it didn't implemnt that...
 			// If error happens, will return 0
-			MultiCurrencies::burn_from(asset_id, who, amount, Precision::Exact, Fortitude::Polite)
-				.unwrap_or(Zero::zero())
+			MultiCurrencies::burn_from(
+				asset_id,
+				who,
+				amount,
+				Preservation::Expendable,
+				Precision::Exact,
+				Fortitude::Polite,
+			)
+			.unwrap_or(Zero::zero())
 		}
 	}
 }
@@ -219,14 +233,19 @@ where
 		Currency::ensure_can_withdraw(who, amount, WithdrawReasons::all(), new_balance)
 	}
 
-	fn transfer(from: &AccountId, to: &AccountId, amount: Self::Balance) -> DispatchResult {
+	fn transfer(
+		from: &AccountId,
+		to: &AccountId,
+		amount: Self::Balance,
+		existence_requirement: ExistenceRequirement,
+	) -> DispatchResult {
 		log::debug!(
 			"PeaqNativeCurrencyWrapper: transfer: from: {:?}, to: {:?}, amount: {:?}",
 			from,
 			to,
 			amount
 		);
-		Currency::transfer(from, to, amount, ExistenceRequirement::KeepAlive)
+		Currency::transfer(from, to, amount, existence_requirement)
 	}
 
 	fn deposit(who: &AccountId, amount: Self::Balance) -> DispatchResult {
@@ -238,9 +257,12 @@ where
 		Ok(())
 	}
 
-	fn withdraw(who: &AccountId, amount: Self::Balance) -> DispatchResult {
-		Currency::withdraw(who, amount, WithdrawReasons::all(), ExistenceRequirement::AllowDeath)
-			.map(|_| ())
+	fn withdraw(
+		who: &AccountId,
+		amount: Self::Balance,
+		existence_requirement: ExistenceRequirement,
+	) -> DispatchResult {
+		Currency::withdraw(who, amount, WithdrawReasons::all(), existence_requirement).map(|_| ())
 	}
 
 	fn can_slash(who: &AccountId, amount: Self::Balance) -> bool {

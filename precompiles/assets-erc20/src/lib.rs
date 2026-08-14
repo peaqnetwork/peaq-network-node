@@ -50,9 +50,8 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::{
-	evm::logs::LogsBuilder,
 	prelude::{
-		Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
+		log3, Address, DiscriminantResult, InjectBacktrace, LogExt, MayRevert, PrecompileHandleExt,
 		RevertReason, RuntimeHelper, UnboundedBytes,
 	},
 	solidity,
@@ -141,6 +140,7 @@ where
 	BalanceOf<Runtime, Instance>: TryFrom<U256> + Into<U256> + solidity::Codec,
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	/// PrecompileSet discriminant. Allows to knows if the address maps to an asset id,
 	/// and if this is the case which one.
@@ -276,14 +276,14 @@ where
 			)?;
 		}
 
-		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_APPROVAL,
-				handle.context().caller,
-				spender,
-				solidity::encode_event_data(value),
-			)
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_APPROVAL,
+			handle.context().caller,
+			spender,
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
 
 		Ok(true)
 	}
@@ -318,14 +318,14 @@ where
 			)?;
 		}
 
-		LogsBuilder::new(handle.context().address)
-			.log3(
-				SELECTOR_LOG_TRANSFER,
-				handle.context().caller,
-				to,
-				solidity::encode_event_data(value),
-			)
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER,
+			handle.context().caller,
+			to,
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
 
 		Ok(true)
 	}
@@ -380,9 +380,14 @@ where
 			}
 		}
 
-		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, from, to, solidity::encode_event_data(value))
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER,
+			from,
+			to,
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
 
 		// Build output.
 		Ok(true)
@@ -464,9 +469,14 @@ where
 			0,
 		)?;
 
-		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, H160::default(), addr, solidity::encode_event_data(amount))
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER,
+			H160::default(),
+			addr,
+			solidity::encode_event_data(amount),
+		)
+		.record(handle)?;
 
 		Ok(true)
 	}
@@ -498,9 +508,14 @@ where
 			0,
 		)?;
 
-		LogsBuilder::new(handle.context().address)
-			.log3(SELECTOR_LOG_TRANSFER, addr, H160::default(), solidity::encode_event_data(amount))
-			.record(handle)?;
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER,
+			addr,
+			H160::default(),
+			solidity::encode_event_data(amount),
+		)
+		.record(handle)?;
 
 		Ok(true)
 	}

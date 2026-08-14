@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(test, feature(assert_matches))]
 
 use fp_evm::PrecompileHandle;
 use frame_support::{
@@ -52,6 +51,7 @@ where
 	AccountIdOf<Runtime>: From<[u8; 32]>,
 	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("vest()")]
 	fn vest(handle: &mut impl PrecompileHandle) -> EvmResult<bool> {

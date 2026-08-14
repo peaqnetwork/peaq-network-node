@@ -1,6 +1,6 @@
 [package]
 name = "peaq-krest-runtime"
-version = "4.0.1-polkadot-v1.7.2"
+version = "4.0.1-polkadot-stable2503-4"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -14,7 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-wasm-builder]
 git = "https://github.com/peaqnetwork/polkadot-sdk"
-branch = "peaq-polkadot-v1.7.2"
+branch = "peaq-polkadot-stable2503-4"
 
 [dependencies]
 # sp-debug-derive = { git = "https://github.com/peaqnetwork/polakdot-sdk", branch = "peaq-polkadot-v1.7.2", default-features = false, features = ["std", "force-debug"] }
@@ -78,8 +78,9 @@ cumulus-primitives-core = { workspace = true, default-features = false }
 cumulus-primitives-utility = { workspace = true, default-features = false }
 cumulus-primitives-timestamp = { workspace = true, default-features = false }
 cumulus-primitives-aura = { workspace = true, default-features = false }
-cumulus-pallet-parachain-system = { workspace = true, default-features = false, features = ["parameterized-consensus-hook"] }
+cumulus-pallet-parachain-system = { workspace = true, default-features = false }
 cumulus-pallet-aura-ext = { workspace = true, default-features = false }
+cumulus-pallet-weight-reclaim = { workspace = true, default-features = false }
 parachain-info = { workspace = true, default-features = false }
 parachains-common = { workspace = true, default-features = false }
 polkadot-parachain = { workspace = true, default-features = false }
@@ -100,6 +101,7 @@ orml-xtokens = { workspace = true, default-features = false }
 orml-xcm-support = { workspace = true, default-features = false }
 pallet-collective = { workspace = true, default-features = false }
 sp-weights = { workspace = true, default-features = false }
+sp-genesis-builder = { workspace = true, default-features = false }
 
 evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", optional = true, default-features = false }
 peaq-evm-tracer = { path = "../evm_tracer", optional = true, default-features = false }
@@ -107,11 +109,11 @@ peaq-rpc-primitives-debug = { path = "../../primitives/rpc/debug", default-featu
 peaq-rpc-primitives-txpool = { path = "../../primitives/rpc/txpool", default-features = false }
 
 frame-support = { workspace = true, default-features = false }
+precompile-utils = { workspace = true, default-features = false }
 
 parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 pallet-block-reward = { path = "../../pallets/block-reward", default-features = false }
 peaq-primitives-xcm = { path = "../../primitives/xcm", default-features = false }
-precompile-utils = { path = "../../precompiles/utils", default-features = false }
 pallet-evm-precompile-assets-erc20 = { path = "../../precompiles/assets-erc20", default-features = false }
 pallet-evm-precompile-assets-factory = { path = "../../precompiles/assets-factory", default-features = false }
 pallet-evm-precompile-batch = { path = "../../precompiles/batch", default-features = false }
@@ -140,15 +142,7 @@ ethereum = {workspace = true, default-features = false}
 pallet-evm-precompile-peaq-rbac = { path = "../../precompiles/peaq-rbac", default-features = false }
 
 [features]
-default = ["std", "aura", "parameterized-consensus-hook", "experimental"]
-
-parameterized-consensus-hook = [
-	"cumulus-pallet-parachain-system/parameterized-consensus-hook",
-]
-
-experimental = [
-	"pallet-aura/experimental",
-]
+default = ["std", "aura"]
 
 aura = []
 runtime-benchmarks = [
@@ -181,7 +175,8 @@ runtime-benchmarks = [
 	"peaq-pallet-storage/runtime-benchmarks",
 	"inflation-manager/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
-	"pallet-preimage/runtime-benchmarks"
+	"pallet-preimage/runtime-benchmarks",
+	"runtime-common/runtime-benchmarks",
 ]
 
 std = [
@@ -214,6 +209,8 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	"sp-weights/std",
+	"sp-genesis-builder/std",
+
 	"pallet-contracts/std",
 	"peaq-pallet-did/std",
 	"peaq-pallet-did-runtime-api/std",
@@ -255,6 +252,7 @@ std = [
 	"cumulus-primitives-aura/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-aura-ext/std",
+	"cumulus-pallet-weight-reclaim/std",
 	"parachain-info/std",
 	"parachains-common/std",
 

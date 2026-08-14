@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ impl super::ResponseFormatter for Formatter {
 			None
 		} else {
 			Some(TransactionTrace::Raw {
-				step_logs: listener.step_logs,
+				struct_logs: listener.struct_logs,
 				gas: listener.final_gas.into(),
 				return_value: listener.return_value,
 			})

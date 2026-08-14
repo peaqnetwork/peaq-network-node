@@ -4,11 +4,14 @@ use super::{
 	RuntimeBlockWeights, RuntimeCall, RuntimeEvent, RuntimeOrigin, StorageAssetId, WeightToFee,
 	XcAssetConfig, XcmpQueue,
 };
-use crate::{PeaqAssetLocationIdConverter, Treasury};
+use crate::{NegativeImbalance, PeaqAssetLocationIdConverter, Treasury};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
-	traits::{fungibles, Contains, Everything, Nothing, TransformOrigin},
+	traits::{
+		fungible::Credit, fungibles, Contains, Everything, Imbalance, Nothing, OnUnbalanced,
+		TransformOrigin,
+	},
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::{RelativeReserveProvider, Reserve};
@@ -26,16 +29,19 @@ use sp_runtime::{
 	Perbill,
 };
 use sp_weights::Weight;
-use xcm::latest::{prelude::*, Asset};
+use xcm::{
+	latest::{prelude::*, Asset},
+	v4::NetworkId as OldNetworkId,
+};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, ConvertedConcreteId, DescribeAllTerminal, DescribeFamily,
 	EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter,
 	FungiblesAdapter, HashedDescription, IsConcrete, NoChecking, ParentAsSuperuser, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	RelayChainAsNative, SendXcmFeeToAccount, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeRevenue,
 	TakeWeightCredit, TrailingSetTopicAsId, UsingComponents, WithComputedOrigin,
-	XcmFeeManagerFromComponents, XcmFeeToAccount,
+	XcmFeeManagerFromComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
@@ -45,7 +51,7 @@ use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
 parameter_types! {
-	pub const RelayNetwork: NetworkId = NetworkId::Rococo;
+	pub RelayNetwork: NetworkId = OldNetworkId::Rococo.into();
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorLocation =
 		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into())].into();
@@ -243,8 +249,24 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 	PeaqPotAccount,
 >;
 
+// Make the wrapper for the BlockReward
+// Put here because NegativeImbalance::new is not implemented in the standard NegativeImbalance
+// trait
+pub struct BlockRewardWrapper;
+impl OnUnbalanced<Credit<AccountId, Balances>> for BlockRewardWrapper {
+	fn on_unbalanceds(mut fees_then_tips: impl Iterator<Item = Credit<AccountId, Balances>>) {
+		if let Some(fees) = fees_then_tips.next() {
+			<BlockReward as OnUnbalanced<_>>::on_unbalanced(NegativeImbalance::new(fees.peek()));
+		}
+	}
+
+	fn on_unbalanced(amount: Credit<AccountId, Balances>) {
+		Self::on_unbalanceds(Some(amount).into_iter());
+	}
+}
+
 pub type Trader = (
-	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockReward>,
+	UsingComponents<WeightToFee, SelfReserveLocation, AccountId, Balances, BlockRewardWrapper>,
 	FixedRateOfForeignAsset<XcAssetConfig, PeaqXcmFungibleFeeHandler>,
 );
 
@@ -295,7 +317,7 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetExchanger = ();
 	type FeeManager = XcmFeeManagerFromComponents<
 		(),
-		XcmFeeToAccount<Self::AssetTransactor, AccountId, TreasuryAccount>,
+		SendXcmFeeToAccount<Self::AssetTransactor, TreasuryAccount>,
 	>;
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
@@ -303,6 +325,12 @@ impl xcm_executor::Config for XcmConfig {
 	type Aliasers = Nothing;
 
 	type TransactionalProcessor = FrameTransactionalProcessor;
+
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type HrmpNewChannelOpenRequestHandler = ();
+	type XcmEventEmitter = ();
+	type XcmRecorder = ();
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -348,6 +376,7 @@ impl pallet_xcm::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
+	type AuthorizedAliasConsideration = ();
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -365,6 +394,17 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 	type WeightInfo = ();
+
+	type MaxActiveOutboundChannels = ConstU32<128>;
+	// Most on-chain HRMP channels are configured to use 102400 bytes of max message size, so we
+	// need to set the page size larger than that until we reduce the channel size on-chain.
+	type MaxPageSize = MessageQueueHeapSize;
+}
+
+// For migration
+impl cumulus_pallet_xcmp_queue::migration::v5::V5Config for Runtime {
+	// This must be the same as the `ChannelInfo` from the `Config`:
+	type ChannelList = ParachainSystem;
 }
 
 parameter_types! {
@@ -473,4 +513,6 @@ impl pallet_message_queue::Config for Runtime {
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
 	type WeightInfo = ();
 	type ServiceWeight = MessageQueueServiceWeight;
+
+	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }

@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-use frame_support::{pallet_prelude::*, parameter_types};
+use frame_support::{pallet_prelude::*, parameter_types, traits::ExistenceRequirement};
 use orml_traits::MultiCurrency;
 use sp_runtime::traits::Convert;
 use sp_std::{convert::TryFrom, fmt::Debug, marker::PhantomData, vec::Vec};
@@ -25,6 +25,9 @@ pub const NANOCENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 9);
 pub const MILLICENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2 - 3);
 pub const CENTS: Balance = 10_u128.pow(TOKEN_DECIMALS - 2);
 pub const DOLLARS: Balance = 10_u128.pow(TOKEN_DECIMALS);
+
+/// Polkadot/Kusama support 10MB now.
+pub const MAX_POV_SIZE: u32 = 10 * 1024 * 1024;
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
@@ -107,6 +110,7 @@ where
 			amount
 				.try_into()
 				.map_err(|_| DispatchError::Other("convert amount in local transfer"))?,
+			ExistenceRequirement::KeepAlive,
 		)
 	}
 
@@ -153,6 +157,7 @@ where
 			amount
 				.try_into()
 				.map_err(|_| DispatchError::Other("convert amount in local withdraw"))?,
+			ExistenceRequirement::AllowDeath,
 		)?;
 
 		Ok(amount)

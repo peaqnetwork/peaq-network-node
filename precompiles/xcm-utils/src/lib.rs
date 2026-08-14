@@ -25,6 +25,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use parity_scale_codec::{Decode, DecodeLimit, MaxEncodedLen};
+use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 use precompile_utils::{precompile_set::SelectorFilter, prelude::*};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
@@ -54,6 +55,7 @@ where
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	fn is_allowed(_caller: H160, selector: Option<u32>) -> bool {
 		match selector {
@@ -82,6 +84,7 @@ where
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	// Remove multilocationToAddress
 

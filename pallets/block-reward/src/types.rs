@@ -101,6 +101,7 @@ impl Default for RewardDistributionConfigV0 {
 	MaxEncodedLen,
 	Serialize,
 	Deserialize,
+	DecodeWithMemTracking,
 )]
 pub struct RewardDistributionConfig {
 	/// Base percentage of reward that goes to treasury

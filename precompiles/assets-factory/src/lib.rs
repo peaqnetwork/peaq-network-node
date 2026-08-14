@@ -67,6 +67,7 @@ where
 	AssetIdParameterOf<Runtime, Instance>: TryFrom<u64>,
 	Runtime: EVMAddressToAssetId<StorageAssetIdOf<Runtime, Instance>>,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin: OriginTrait,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("convertAssetIdToAddress(uint64)")]
 	#[precompile::public("convert_asset_id_to_address(uint64)")]

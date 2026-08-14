@@ -25,6 +25,7 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use pallet_evm_precompile_assets_erc20::AssetIdOf;
+use peaq_precompile_utils::{DEFAULT_PROOF_SIZE, SYSTEM_ACCOUNT_SIZE};
 use peaq_primitives_xcm::EVMAddressToAssetId;
 use precompile_utils::prelude::*;
 use sp_core::{H160, U256};
@@ -80,6 +81,7 @@ where
 	Runtime: EVMAddressToAssetId<AssetIdOf<Runtime>>,
 	<Runtime as orml_xtokens::Config>::CurrencyId:
 		From<<Runtime as pallet_assets::Config>::AssetId>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public("transfer(address,uint256,(uint8,bytes[]),uint64)")]
 	fn transfer(
@@ -109,7 +111,7 @@ where
 		let call = orml_xtokens::Call::<Runtime>::transfer {
 			currency_id: asset_id.into(),
 			amount,
-			dest: Box::new(VersionedLocation::V4(destination)),
+			dest: Box::new(VersionedLocation::from(destination)),
 			dest_weight_limit,
 		};
 
@@ -161,7 +163,7 @@ where
 			currency_id: asset_id.into(),
 			amount,
 			fee,
-			dest: Box::new(VersionedLocation::V4(destination)),
+			dest: Box::new(VersionedLocation::from(destination)),
 			dest_weight_limit,
 		};
 
@@ -196,11 +198,11 @@ where
 		};
 
 		let call = orml_xtokens::Call::<Runtime>::transfer_multiasset {
-			asset: Box::new(VersionedAsset::V4(Asset {
+			asset: Box::new(VersionedAsset::from(Asset {
 				id: AssetId(asset),
 				fun: Fungibility::Fungible(to_balance),
 			})),
-			dest: Box::new(VersionedLocation::V4(destination)),
+			dest: Box::new(VersionedLocation::from(destination)),
 			dest_weight_limit,
 		};
 
@@ -243,15 +245,15 @@ where
 		};
 
 		let call = orml_xtokens::Call::<Runtime>::transfer_multiasset_with_fee {
-			asset: Box::new(VersionedAsset::V4(Asset {
+			asset: Box::new(VersionedAsset::from(Asset {
 				id: AssetId(asset.clone()),
 				fun: Fungibility::Fungible(amount),
 			})),
-			fee: Box::new(VersionedAsset::V4(Asset {
+			fee: Box::new(VersionedAsset::from(Asset {
 				id: AssetId(asset),
 				fun: Fungibility::Fungible(fee),
 			})),
-			dest: Box::new(VersionedLocation::V4(destination)),
+			dest: Box::new(VersionedLocation::from(destination)),
 			dest_weight_limit,
 		};
 
@@ -315,7 +317,7 @@ where
 		let call = orml_xtokens::Call::<Runtime>::transfer_multicurrencies {
 			currencies,
 			fee_item,
-			dest: Box::new(VersionedLocation::V4(destination)),
+			dest: Box::new(VersionedLocation::from(destination)),
 			dest_weight_limit,
 		};
 
@@ -372,9 +374,9 @@ where
 		};
 
 		let call = orml_xtokens::Call::<Runtime>::transfer_multiassets {
-			assets: Box::new(VersionedAssets::V4(assets)),
+			assets: Box::new(VersionedAssets::from(assets)),
 			fee_item,
-			dest: Box::new(VersionedLocation::V4(destination)),
+			dest: Box::new(VersionedLocation::from(destination)),
 			dest_weight_limit,
 		};
 

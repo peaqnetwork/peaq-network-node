@@ -100,6 +100,12 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PostTransactions = ();
+	type PreInherents = ();
+	type SingleBlockMigrations = ();
 }
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
@@ -120,6 +126,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 impl pallet_aura::Config for Test {
@@ -128,7 +135,6 @@ impl pallet_aura::Config for Test {
 	type MaxAuthorities = MaxCollatorCandidates;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 
-	#[cfg(feature = "experimental")]
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
@@ -199,6 +205,7 @@ impl pallet_session::Config for Test {
 	type SessionHandler = <MockSessionKeys as OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = MockSessionKeys;
 	type WeightInfo = ();
+	type DisablingStrategy = ();
 }
 
 parameter_types! {
@@ -267,9 +274,12 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Test> { balances: self.balances.clone() }
-			.assimilate_storage(&mut t)
-			.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances.clone(),
+			..Default::default()
+		}
+		.assimilate_storage(&mut t)
+		.expect("Pallet balances storage can be assimilated");
 
 		let mut stakers: Vec<(AccountId, Option<AccountId>, Balance)> = Vec::new();
 		for collator in self.collators.clone() {
@@ -291,7 +301,7 @@ impl ExtBuilder {
 
 		// NOTE: this will initialize the aura authorities
 		// through OneSessionHandler::on_genesis_session
-		pallet_session::GenesisConfig::<Test> { keys: session_keys }
+		pallet_session::GenesisConfig::<Test> { keys: session_keys, ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Session Pallet's storage can be assimilated");
 

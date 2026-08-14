@@ -1,9 +1,8 @@
 //! A collection of node-specific RPC methods.
 
-use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
+use fc_rpc::{EthBlockDataCacheTask, StorageOverride, TxPool, TxPoolApiServer};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
@@ -13,13 +12,11 @@ use sc_client_api::{
 	client::BlockchainEvents,
 	UsageProvider,
 };
-use sc_consensus_manual_seal::rpc::EngineCommand;
-use sc_network::NetworkService;
+
+use sc_network::service::traits::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_rpc_api::DenyUnsafe;
 use sc_service::{TaskManager, TransactionPool};
-use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
@@ -53,30 +50,26 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<BE>,
-	pub frontier_backend: Arc<fc_db::Backend<B>>,
+	pub frontier_backend: Arc<fc_db::Backend<B, C>>,
 	// pub frontier_backend: Arc<dyn fc_api::Backend<B> + Send + Sync>,
 	pub filter_pool: Option<FilterPool>,
-	pub overrides: Arc<OverrideHandle<B>>,
+	pub overrides: Arc<dyn StorageOverride<B>>,
 	pub fee_history_limit: u64,
 	pub fee_history_cache: FeeHistoryCache,
 }
 
-pub type XcmSenders = Option<(flume::Sender<Vec<u8>>, flume::Sender<(ParaId, Vec<u8>)>)>;
-
 /// Full client dependencies.
-pub struct FullDeps<C, P, A: ChainApi, BE> {
+pub struct FullDeps<C, P, BE> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
 	/// Graph pool instance.
-	pub graph: Arc<Pool<A>>,
-	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
+	pub graph: Arc<P>,
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
+	pub network: Arc<dyn NetworkService>,
 	/// Chain syncing service
 	pub sync: Arc<SyncingService<Block>>,
 	/// EthFilterApi pool.
@@ -87,22 +80,26 @@ pub struct FullDeps<C, P, A: ChainApi, BE> {
 	pub frontier_backend: Arc<dyn fc_api::Backend<Block>>,
 	/// Backend.
 	pub backend: Arc<BE>,
-	/// Manual seal command sink
-	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
-	/// Channels for manual xcm messages (downward, hrmp)
-	pub xcm_senders: XcmSenders,
 	/// Ethereum data access overrides.
-	pub overrides: Arc<OverrideHandle<Block>>,
+	pub overrides: Arc<dyn StorageOverride<Block>>,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 	/// Mandated parent hashes for a given block hash.
 	pub forced_parent_hashes: Option<BTreeMap<H256, H256>>,
+	/// Shared sink list — must be the same Arc passed to `MappingSyncWorker`,
+	/// otherwise `eth_subscribe("newHeads"/"logs")` returns a sub ID but never
+	/// delivers notifications.
+	pub pubsub_notification_sinks: Arc<
+		fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		>,
+	>,
 }
 
 pub struct TracingConfig {
@@ -111,8 +108,8 @@ pub struct TracingConfig {
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create_full<C, P, BE, A>(
-	deps: FullDeps<C, P, A, BE>,
+pub fn create_full<C, P, BE>(
+	deps: FullDeps<C, P, BE>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 	maybe_tracing_config: Option<TracingConfig>,
 ) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
@@ -137,8 +134,7 @@ where
 	C::Api: peaq_rpc_primitives_txpool::TxPoolRuntimeApi<Block>,
 	C::Api: peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>,
 	C::Api: zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>,
-	P: TransactionPool<Block = Block> + 'static,
-	A: ChainApi<Block = Block> + 'static,
+	P: TransactionPool<Block = Block, Hash = <Block as BlockT>::Hash> + 'static,
 
 	BE::Blockchain: BlockchainBackend<Block>,
 {
@@ -152,7 +148,6 @@ where
 	use peaq_pallet_storage_rpc::{PeaqStorage, PeaqStorageApiServer};
 	use peaq_rpc_debug::{Debug, DebugServer};
 	use peaq_rpc_trace::{Trace, TraceServer};
-	use peaq_rpc_txpool::{TxPool, TxPoolServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 	use zenlink_protocol_rpc::{ZenlinkProtocol, ZenlinkProtocolApiServer};
 
@@ -161,36 +156,25 @@ where
 		client,
 		pool,
 		graph,
-		deny_unsafe,
 		is_authority,
 		network,
 		sync,
 		filter_pool,
 		ethapi_cmd,
-		command_sink: _,
 		frontier_backend,
 		backend: _,
 		max_past_logs,
 		fee_history_limit,
 		fee_history_cache,
-		xcm_senders: _,
 		overrides,
 		block_data_cache,
 		forced_parent_hashes,
+		pubsub_notification_sinks,
 	} = deps;
 
-	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
+	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool)).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
-	enum Never {}
-	impl<T> fp_rpc::ConvertTransaction<T> for Never {
-		fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
-			// The Never type is not instantiable, but this method requires the type to be
-			// instantiated to be called (`&self` parameter), so if the code compiles we have the
-			// guarantee that this function will never be called.
-			unreachable!()
-		}
-	}
 	let no_tx_converter: Option<fp_rpc::NoTransactionConverter> = None;
 
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
@@ -229,7 +213,7 @@ where
 		Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
 
 	io.merge(
-		Eth::<_, _, _, _, _, _, _, PeaqEthConfig<_, _>>::new(
+		Eth::<_, _, _, _, _, _, PeaqEthConfig<_, _>>::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
 			graph.clone(),
@@ -275,11 +259,6 @@ where
 		)
 		.into_rpc(),
 	)?;
-
-	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>,
-	> = Default::default();
-	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
 	io.merge(PeaqStorage::new(Arc::clone(&client)).into_rpc())?;
 	io.merge(PeaqDID::new(Arc::clone(&client)).into_rpc())?;

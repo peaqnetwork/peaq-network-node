@@ -71,7 +71,7 @@ mod upgrade {
 			let onchain_storage_version = Pallet::<T>::on_chain_storage_version();
 			weight_reads += 1;
 			// That should be 2
-			let current = Pallet::<T>::current_storage_version();
+			let current = Pallet::<T>::in_code_storage_version();
 
 			if onchain_storage_version < current {
 				// Just keep the total issuance number consistent if it is not set

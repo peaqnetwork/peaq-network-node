@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -64,7 +64,7 @@ pub enum RuntimeEvent {
 		context: Context,
 		// This needs to be marshalled in the runtime no matter what.
 		opcode: Vec<u8>,
-		// We can use ExitReason with `with-parity_scale_codec` feature,
+		// We can use ExitReason with `with-codec` feature,
 		position: Result<u64, ExitReason>,
 		stack: Option<Stack>,
 		memory: Option<Memory>,
@@ -87,7 +87,10 @@ pub enum RuntimeEvent {
 
 #[cfg(feature = "evm-tracing")]
 impl RuntimeEvent {
-	pub fn from_evm_event(i: evm_runtime::tracing::Event, filter: crate::StepEventFilter) -> Self {
+	pub fn from_evm_event(
+		i: evm_runtime::tracing::Event<'_>,
+		filter: crate::StepEventFilter,
+	) -> Self {
 		match i {
 			evm_runtime::tracing::Event::Step { context, opcode, position, stack, memory } =>
 				Self::Step {
@@ -185,6 +188,9 @@ pub fn opcodes_string(opcode: Opcode) -> Vec<u8> {
 		Opcode(89) => "MSize",
 		Opcode(90) => "Gas",
 		Opcode(91) => "JumpDest",
+		Opcode(92) => "TLoad",
+		Opcode(93) => "TStore",
+		Opcode(94) => "MCopy",
 		Opcode(96) => "Push1",
 		Opcode(97) => "Push2",
 		Opcode(98) => "Push3",

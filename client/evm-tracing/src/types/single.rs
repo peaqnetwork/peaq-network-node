@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -20,16 +20,16 @@
 //! the whole block tracing output.
 
 use super::serialization::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use ethereum_types::{H256, U256};
+use ethereum_types::{H160, H256, U256};
 use parity_scale_codec::{Decode, Encode};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum Call {
-	Blockscout(Box<crate::formatters::blockscout::BlockscoutCall>),
+	Blockscout(crate::formatters::blockscout::BlockscoutCall),
 	CallTracer(crate::formatters::call_tracer::CallTracerCall),
 }
 
@@ -54,7 +54,7 @@ pub enum TransactionTrace {
 		gas: U256,
 		#[serde(with = "hex")]
 		return_value: Vec<u8>,
-		step_logs: Vec<RawStepLog>,
+		struct_logs: Vec<RawStepLog>,
 	},
 	/// Matches the formatter used by Blockscout.
 	/// Is also used to built output of OpenEthereum's `trace_filter`.
@@ -90,4 +90,22 @@ pub struct RawStepLog {
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub storage: Option<BTreeMap<H256, H256>>,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(Default)]
+pub struct TraceCallConfig {
+	pub with_log: bool,
+}
+
+#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, Serialize)]
+pub struct Log {
+	/// Event address.
+	pub address: H160,
+	/// Event topics
+	pub topics: Vec<H256>,
+	/// Event data
+	#[serde(serialize_with = "bytes_0x_serialize")]
+	pub data: Vec<u8>,
 }

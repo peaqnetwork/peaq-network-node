@@ -321,7 +321,9 @@ pub fn run() -> sc_cli::Result<()> {
 					BenchmarkCmd::Pallet(cmd) => {
 						with_runtime_or_err!(chain_spec, {
 							runner.sync_run(|config| {
-								cmd.run::<Block, parachain::ExtHostFunctions>(config)
+								cmd.run_with_spec::<sp_runtime::traits::HashingFor<Block>, parachain::ExtHostFunctions>(
+									Some(config.chain_spec),
+								)
 							})
 						})
 					},
@@ -413,13 +415,9 @@ pub fn run() -> sc_cli::Result<()> {
 
 			Ok(())
 		},
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => Err("TryRuntime will not be supported anymore by the \
-            peaq-node. Instead please use the provided CLI tool by Substrate! Have a look at crate \
-            `try-runtime-cli`."
+		Some(Subcommand::TryRuntime) => Err("The `try-runtime` subcommand has been migrated to a \
+			standalone CLI (https://github.com/paritytech/try-runtime-cli)."
 			.into()),
-		#[cfg(feature = "try-runtime")]
-		Some(Subcommand::TryRuntime(_)) => Ok(()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -460,6 +458,14 @@ pub fn run() -> sc_cli::Result<()> {
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
+
+				if !rpc_config.relay_chain_rpc_urls.is_empty() && !cli.relaychain_args.is_empty() {
+					log::warn!(
+						"Detected relay chain node arguments together with \
+					--relay-chain-rpc-url. This command starts a minimal Polkadot node that only \
+					uses a network-related subset of all relay chain CLI options."
+					);
+				}
 
 				with_runtime_or_err!(config.chain_spec, {
 					info!("{} network start", config.chain_spec.id());
@@ -526,15 +532,9 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.prometheus_config(default_listen_port, chain_spec)
 	}
 
-	fn init<F>(
-		&self,
-		_support_url: &String,
-		_impl_version: &String,
-		_logger_hook: F,
-		_config: &sc_service::Configuration,
-	) -> Result<()>
+	fn init<F>(&self, _support_url: &String, _impl_version: &String, _logger_hook: F) -> Result<()>
 	where
-		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
+		F: FnOnce(&mut sc_cli::LoggerBuilder),
 	{
 		unreachable!("PolkadotCli is never initialized; qed");
 	}
