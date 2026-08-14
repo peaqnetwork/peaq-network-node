@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -22,9 +22,11 @@ use frame_support::{
 	weights::{RuntimeDbWeight, Weight},
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
-use precompile_utils::{precompile_set::*, testing::*};
+use peaq_precompile_utils::*;
+use precompile_utils::precompile_set::*;
 use sp_core::{H256, U256};
 use sp_runtime::BuildStorage;
+use xcm_builder::Case;
 
 use sp_runtime::traits::{
 	BlakeTwo256,
@@ -123,7 +125,13 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-	type RuntimeTask = ();
+	type RuntimeTask = RuntimeTask;
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PreInherents = ();
+	type PostTransactions = ();
+	type SingleBlockMigrations = ();
 }
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 1;
@@ -145,6 +153,7 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -182,6 +191,7 @@ impl pallet_xcm::Config for Runtime {
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
 	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
+	type AuthorizedAliasConsideration = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
 }
@@ -250,7 +260,9 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
-	type SuicideQuickClearLimit = ();
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateInnerOriginFilter = ();
+	type CreateOriginFilter = ();
 }
 
 parameter_types! {
@@ -363,6 +375,9 @@ parameter_types! {
 
 
 	pub const MaxAssetsIntoHolding: u32 = 64;
+
+	pub RelayLocation: Location = Location::parent();
+	pub RelayForeignAsset: (AssetFilter, Location) = (All.into(), RelayLocation::get());
 }
 
 pub type XcmOriginToTransactDispatchOrigin = (
@@ -377,7 +392,7 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = TestSendXcm;
 	type AssetTransactor = DummyAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = ();
+	type IsReserve = Case<RelayForeignAsset>;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
@@ -398,6 +413,11 @@ impl xcm_executor::Config for XcmConfig {
 	type SafeCallFilter = Everything;
 	type Aliasers = Nothing;
 	type TransactionalProcessor = ();
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type HrmpNewChannelOpenRequestHandler = ();
+	type XcmEventEmitter = ();
+	type XcmRecorder = ();
 }
 
 #[derive(Default)]
@@ -417,7 +437,7 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances, ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Pallet balances storage can be assimilated");
 

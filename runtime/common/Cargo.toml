@@ -57,3 +57,13 @@ std = [
 	"zenlink-protocol/std",
 	"xc-asset-config/std",
 ]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"pallet-block-reward/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"xc-asset-config/runtime-benchmarks",
+
+	"xcm-builder/runtime-benchmarks",
+]

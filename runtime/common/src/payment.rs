@@ -3,10 +3,7 @@ use frame_support::{
 	pallet_prelude::{
 		InvalidTransaction, MaxEncodedLen, MaybeSerializeDeserialize, TransactionValidityError,
 	},
-	traits::{
-		fungible::Balanced, Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
-		WithdrawReasons,
-	},
+	traits::{Currency, ExistenceRequirement, Get, Imbalance, OnUnbalanced, WithdrawReasons},
 	Parameter,
 };
 use frame_system::Config as SysConfig;
@@ -23,6 +20,7 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, marker::PhantomData, vec, vec::Vec};
 
+use pallet_evm::AccountIdOf as EVMAccountIdOf;
 use peaq_primitives_xcm::AssetId as PeaqAssetId;
 use zenlink_protocol::{
 	AssetBalance, AssetId as ZenlinkAssetId, Config as ZenProtConfig, ExportZenlink,
@@ -33,6 +31,7 @@ use crate::{log, log_icon, log_internal};
 type BalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::Balance;
 type BalanceOfA<C, A> = <C as Currency<A>>::Balance;
 type NegativeImbalanceOf<C, T> = <C as Currency<<T as SysConfig>::AccountId>>::NegativeImbalance;
+type EVMNegativeImbalanceOf<C, T> = <C as Currency<EVMAccountIdOf<T>>>::NegativeImbalance;
 
 /// Peaq's Currency Adapter to apply EoT-Fee and to enable withdrawal from foreign currencies.
 pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>(
@@ -78,7 +77,7 @@ where
 		let tx_fee = total_fee.saturating_add(eot_fee);
 
 		// Check if user can withdraw in any valid currency.
-		let currency_id = PCPC::ensure_can_withdraw(who, tx_fee)?;
+		let currency_id = PCPC::resolve_and_swap_fee_currency(who, tx_fee)?;
 		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
 		if currency_id != native_currency_id {
 			log!(
@@ -132,6 +131,43 @@ where
 		}
 		Ok(())
 	}
+
+	fn can_withdraw_fee(
+		who: &<T>::AccountId,
+		_call: &<T>::RuntimeCall,
+		_dispatch_info: &DispatchInfoOf<<T>::RuntimeCall>,
+		fee: Self::Balance,
+		_tip: Self::Balance,
+	) -> Result<(), TransactionValidityError> {
+		if fee.is_zero() {
+			return Ok(());
+		}
+		// Read-only check that the fee is payable in SOME currency, WITHOUT executing the swap.
+		// can_withdraw_fee runs in `validate` (mempool), which must be side-effect-free; the real
+		// swap happens later in withdraw_fee (`prepare`). Calling the swap-executing
+		// resolve_and_swap_fee_currency here would swap in validate AND again in withdraw_fee.
+		let (currency_id, _) = PCPC::check_currencies_n_priorities(who, fee)?;
+		let native_currency_id = PeaqAssetId::default().try_into().ok().unwrap();
+		if currency_id != native_currency_id {
+			log!(
+				info,
+				PeaqMultiCurrenciesOnChargeTransaction,
+				"Payment with swap of {:?}-tokens",
+				currency_id
+			);
+		}
+		Ok(())
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn endow_account(who: &<T>::AccountId, amount: Self::Balance) {
+		let _ = C::deposit_creating(who, amount);
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn minimum_balance() -> Self::Balance {
+		C::minimum_balance()
+	}
 }
 
 /// Individual trait to handle payments in non-local currencies. The intention is to keep it as
@@ -172,9 +208,11 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 
 	type AssetIdToZenlinkId: Convert<Self::AssetId, Option<ZenlinkAssetId>>;
 
-	/// This method checks if the fee can be withdrawn in any currency and returns the asset_id
-	/// of the choosen currency in dependency of the priority-list and availability of tokens.
-	fn ensure_can_withdraw(
+	/// Resolves which currency pays the fee (per the priority list) and, if it is a non-native
+	/// currency, EXECUTES the DEX swap to native so the caller can then withdraw it. This MUTATES
+	/// chain state, so it must NOT be called from the `validate` phase — use the read-only
+	/// `check_currencies_n_priorities` there. Returns the asset_id of the chosen source currency.
+	fn resolve_and_swap_fee_currency(
 		who: &Self::AccountId,
 		tx_fee: BalanceOfA<Self::Currency, Self::AccountId>,
 	) -> Result<Self::AssetId, TransactionValidityError> {
@@ -233,19 +271,19 @@ pub trait PeaqMultiCurrenciesPaymentConvert {
 	}
 }
 
-pub struct OnChargeEVMTransaction<OU>(sp_std::marker::PhantomData<OU>);
-impl<T, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<OU>
+pub struct OnChargeEVMTransaction<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
+impl<T, C, OU> OnChargeEVMTransactionT<T> for OnChargeEVMTransaction<C, OU>
 where
-	T: pallet_evm::Config + frame_system::Config,
-	T::Currency: Balanced<T::AccountId>,
-	OU: OnUnbalanced<NegativeImbalanceOf<T::Currency, T>>,
-	U256: UniqueSaturatedInto<BalanceOf<T::Currency, T>>,
+	T: pallet_evm::Config<Currency = C>,
+	C: Currency<EVMAccountIdOf<T>>,
+	C::PositiveImbalance:
+		Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::NegativeImbalance>,
+	C::NegativeImbalance:
+		Imbalance<<C as Currency<EVMAccountIdOf<T>>>::Balance, Opposite = C::PositiveImbalance>,
+	OU: OnUnbalanced<EVMNegativeImbalanceOf<C, T>>,
+	U256: UniqueSaturatedInto<<C as Currency<EVMAccountIdOf<T>>>::Balance>,
 {
-	type LiquidityInfo = Option<NegativeImbalanceOf<T::Currency, T>>;
-
-	fn can_withdraw(who: &H160, amount: U256) -> Result<(), pallet_evm::Error<T>> {
-		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::can_withdraw(who, amount)
-	}
+	type LiquidityInfo = Option<EVMNegativeImbalanceOf<T::Currency, T>>;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
 		EVMCurrencyAdapter::<<T as pallet_evm::Config>::Currency, OU>::withdraw_fee(who, fee)
@@ -256,10 +294,13 @@ where
 		corrected_fee: U256,
 		base_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
-	) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		<EVMCurrencyAdapter<<T as pallet_evm::Config>::Currency, OU> as OnChargeEVMTransactionT<
-			T,
-		>>::correct_and_deposit_fee(who, corrected_fee, base_fee, already_withdrawn)
+	) -> Self::LiquidityInfo {
+		<EVMCurrencyAdapter<C, OU> as OnChargeEVMTransactionT<T>>::correct_and_deposit_fee(
+			who,
+			corrected_fee,
+			base_fee,
+			already_withdrawn,
+		)
 	}
 
 	fn pay_priority_fee(tip: Self::LiquidityInfo) {

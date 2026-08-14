@@ -35,7 +35,7 @@ use sp_core::{Decode, Encode, MaxEncodedLen, H160, H256};
 	Serialize,
 	Deserialize,
 	derive_more::Display,
-	DecodeWithMemTracking
+	DecodeWithMemTracking,
 )]
 pub struct MockAccount(pub H160);
 
@@ -205,7 +205,7 @@ mock_account!(SiblingParachainAccount(u32), |v: SiblingParachainAccount| {
 	Deserialize,
 	derive_more::Display,
 	TypeInfo,
-	DecodeWithMemTracking
+	DecodeWithMemTracking,
 )]
 pub struct MockAssetId(pub u128);
 
@@ -266,7 +266,7 @@ impl peaq_primitives_xcm::AssetIdExt for MockAssetId {
 	Deserialize,
 	derive_more::Display,
 	TypeInfo,
-	DecodeWithMemTracking
+	DecodeWithMemTracking,
 )]
 pub enum MockPeaqAccount {
 	Alice,

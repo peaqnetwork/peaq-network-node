@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ use serde::{
 	ser::{Error, SerializeSeq},
 	Serializer,
 };
+use sp_runtime::traits::UniqueSaturatedInto;
 
 pub fn seq_h256_serialize<S>(data: &Option<Vec<H256>>, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -95,7 +96,7 @@ pub fn u256_serialize<S>(data: &U256, serializer: S) -> Result<S::Ok, S::Error>
 where
 	S: Serializer,
 {
-	serializer.serialize_u64(data.low_u64())
+	serializer.serialize_u64(UniqueSaturatedInto::<u64>::unique_saturated_into(*data))
 }
 
 pub fn h256_serialize<S>(data: &H256, serializer: S) -> Result<S::Ok, S::Error>

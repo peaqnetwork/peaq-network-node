@@ -1,6 +1,6 @@
 [package]
 name = "peaq-node"
-version = "4.0.1-polkadot-v1.7.2"
+version = "4.0.1-polkadot-stable2503-4"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
@@ -18,10 +18,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
 git = "https://github.com/peaqnetwork/polkadot-sdk"
-branch = "peaq-polkadot-v1.7.2"
+branch = "peaq-polkadot-stable2503-4"
 
 [dependencies]
-# serde_json = { workspace = true, default-features = true }
+serde_json = { workspace = true, default-features = true }
 structopt = { workspace = true, default-features = true }
 async-trait = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
@@ -69,7 +69,7 @@ hex-literal = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
 fc-db = { workspace = true, default-features = true }
 fc-mapping-sync = { workspace = true, default-features = true }
-fc-rpc = { workspace = true, default-features = true, features = [ "rpc-binary-search-estimate" ] }
+fc-rpc = { workspace = true, default-features = true, features = [ "rpc-binary-search-estimate", "txpool" ] }
 fc-rpc-core = { workspace = true, default-features = true }
 fc-api = { workspace = true, default-features = true }
 fp-consensus = { workspace = true, default-features = true }
@@ -117,7 +117,6 @@ peaq-pallet-storage-rpc = { workspace = true, default-features = true }
 zenlink-protocol = { workspace = true, default-features = true }
 zenlink-protocol-rpc = { workspace = true, default-features = true }
 zenlink-protocol-runtime-api = { workspace = true, default-features = true }
-try-runtime-cli = { workspace = true, optional = true }
 sp-io = {workspace = true, default-features = true}
 
 peaq-dev-runtime = { path = "../runtime/peaq-dev" }
@@ -128,7 +127,7 @@ peaq-rpc-debug = { path = "../client/rpc/debug" }
 peaq-rpc-primitives-debug = { path = "../primitives/rpc/debug" }
 peaq-rpc-primitives-txpool = { path = "../primitives/rpc/txpool" }
 peaq-rpc-trace = { path = "../client/rpc/trace" }
-peaq-rpc-txpool = { path = "../client/rpc/txpool" }
+# peaq-rpc-txpool = { path = "../client/rpc/txpool" }
 pallet-block-reward = { path = "../pallets/block-reward" }
 peaq-primitives-xcm = { path = "../primitives/xcm" }
 runtime-common = { path = "../runtime/common" }
@@ -138,14 +137,6 @@ inflation-manager ={ path = "../pallets/inflation-manager" }
 default = [
 	"aura",
 	"polkadot-cli",
-	"experimental",
-	"parameterized-consensus-hook"
-	]
-experimental = [
-	"peaq-dev-runtime/experimental",
-]
-parameterized-consensus-hook = [
-	"peaq-dev-runtime/parameterized-consensus-hook",
 ]
 aura = [
 	"peaq-dev-runtime/aura",
@@ -162,5 +153,4 @@ try-runtime = [
 	"peaq-dev-runtime/try-runtime",
 	"peaq-krest-runtime/try-runtime",
 	"peaq-runtime/try-runtime",
-	"try-runtime-cli/try-runtime"
 ]

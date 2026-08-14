@@ -25,6 +25,7 @@ use crate::{
 use fp_evm::ExitError;
 use frame_support::assert_ok;
 use pallet_evm::Call as EvmCall;
+use peaq_precompile_utils::*;
 use precompile_utils::{
 	evm::costs::call_cost, prelude::*, solidity::revert::revert_as_bytes, testing::*,
 };

@@ -76,7 +76,7 @@ where
 			Arc::clone(&params.client),
 			Arc::clone(&params.substrate_backend),
 			match params.frontier_backend.as_ref() {
-				fc_db::Backend::KeyValue(b) => Arc::new(b.clone()),
+				fc_db::Backend::KeyValue(b) => b.clone(),
 			},
 			Arc::clone(&permit_pool),
 			Arc::clone(&params.overrides),

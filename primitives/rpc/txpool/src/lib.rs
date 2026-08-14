@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -21,11 +21,10 @@
 
 pub use ethereum::{TransactionV0 as LegacyTransaction, TransactionV2 as Transaction};
 use parity_scale_codec::{Decode, Encode};
-use scale_info::TypeInfo;
-use sp_runtime::{traits::Block as BlockT, RuntimeDebug};
+use sp_runtime::{scale_info::TypeInfo, traits::Block as BlockT, RuntimeDebug};
 use sp_std::vec::Vec;
 
-#[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]
+#[derive(Eq, PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TxPoolResponseLegacy {
 	pub ready: Vec<LegacyTransaction>,
 	pub future: Vec<LegacyTransaction>,

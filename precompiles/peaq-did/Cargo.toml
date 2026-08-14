@@ -3,11 +3,10 @@ name = "pallet-evm-precompile-peaq-did"
 authors = [ "Peaq" ]
 description = "A Precompile Module for Frontier EVM that implements the PEAQ DID standard."
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
-# Peaq
-precompile-utils = { path = "../utils", default-features = false }
+precompile-utils = { workspace = true, default-features = false }
 
 # Substrate
 parity-scale-codec = { workspace = true, default-features = false, features = [ "max-encoded-len" ]}

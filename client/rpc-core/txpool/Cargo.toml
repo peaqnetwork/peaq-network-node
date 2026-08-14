@@ -12,7 +12,7 @@ ethereum-types = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, default-features = true }
 
-ethereum = { workspace = true, default-features = true, features = [ "with-codec" ] }
+ethereum = { workspace = true, default-features = true, features = [ "with-scale" ] }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }
 
 fc-rpc-core = { workspace = true, default-features = true }

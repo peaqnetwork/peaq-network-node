@@ -36,6 +36,7 @@
 
 use crate::{mock::*, *};
 
+use peaq_precompile_utils::*;
 use precompile_utils::testing::*;
 
 fn precompiles() -> Precompiles<Runtime> {

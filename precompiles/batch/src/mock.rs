@@ -19,7 +19,8 @@ use super::*;
 
 use frame_support::{construct_runtime, parameter_types, traits::Everything, weights::Weight};
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use precompile_utils::{precompile_set::*, testing::*};
+use peaq_precompile_utils::*;
+use precompile_utils::precompile_set::*;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -70,6 +71,12 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PreInherents = ();
+	type PostTransactions = ();
+	type SingleBlockMigrations = ();
 }
 
 parameter_types! {
@@ -92,6 +99,7 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 pub type Precompiles<R> = PrecompileSetBuilder<
@@ -152,7 +160,9 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
-	type SuicideQuickClearLimit = ();
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateInnerOriginFilter = ();
+	type CreateOriginFilter = ();
 }
 
 parameter_types! {
@@ -182,16 +192,17 @@ impl ExtBuilder {
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances }
+		pallet_balances::GenesisConfig::<Runtime> { balances: self.balances, ..Default::default() }
 			.assimilate_storage(&mut t)
 			.expect("Pallet balances storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| {
 			System::set_block_number(1);
-			pallet_evm::Pallet::<Runtime>::create_account(
+			let _ = pallet_evm::Pallet::<Runtime>::create_account(
 				MockPeaqAccount::EVMu2Account.into(),
 				hex_literal::hex!("1460006000fd").to_vec(),
+				None,
 			);
 		});
 		ext

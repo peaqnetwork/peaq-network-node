@@ -19,6 +19,7 @@ use std::str::from_utf8;
 use crate::{eip2612::Eip2612, mock::*, *};
 
 use libsecp256k1::{sign, Message, SecretKey};
+use peaq_precompile_utils::MockPeaqAccount;
 use precompile_utils::testing::*;
 use sha3::{Digest, Keccak256};
 use sp_core::{H256, U256};

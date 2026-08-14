@@ -1,8 +1,8 @@
 [package]
-name = "precompile-utils"
+name = "peaq-precompile-utils"
 description = "Utils to write EVM precompiles."
 edition = "2021"
-version = "0.1.1"
+version = "0.1.2"
 
 [dependencies]
 derive_more = { workspace = true, optional = true }
@@ -12,9 +12,6 @@ impl-trait-for-tuples = { workspace = true }
 scale-info = { workspace = true, optional = true, features = [ "derive" ] }
 serde = { workspace = true, optional = true }
 similar-asserts = { workspace = true, optional = true }
-
-# Moonbeam
-precompile-utils-macro = { path = "macro" }
 
 # Substrate
 frame-support = { workspace = true }

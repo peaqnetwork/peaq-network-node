@@ -17,7 +17,7 @@
 // along with Astar. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{self as pallet_xc_asset_config};
-use xcm::{latest::prelude::Junction::GeneralKey, v4::Location};
+use xcm::{latest::prelude::Junction::GeneralKey, v5::Location};
 
 use frame_support::{construct_runtime, parameter_types, weights::Weight};
 use sp_core::H256;
@@ -73,6 +73,12 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PostTransactions = ();
+	type PreInherents = ();
+	type SingleBlockMigrations = ();
 }
 
 parameter_types! {
@@ -96,6 +102,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 type AssetId = u128;

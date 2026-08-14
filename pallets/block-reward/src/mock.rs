@@ -64,6 +64,12 @@ impl frame_system::Config for TestRuntime {
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 	type RuntimeTask = ();
+	type ExtensionsWeightInfo = ();
+	type MultiBlockMigrator = ();
+	type PostInherents = ();
+	type PostTransactions = ();
+	type PreInherents = ();
+	type SingleBlockMigrations = ();
 }
 
 parameter_types! {
@@ -86,6 +92,7 @@ impl pallet_balances::Config for TestRuntime {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -184,6 +191,7 @@ impl ExternalityBuilder {
 		// This will cause some initial issuance
 		pallet_balances::GenesisConfig::<TestRuntime> {
 			balances: vec![(1, 9000), (2, 800), (3, 10000)],
+			..Default::default()
 		}
 		.assimilate_storage(&mut storage)
 		.ok();

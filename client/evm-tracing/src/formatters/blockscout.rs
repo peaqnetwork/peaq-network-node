@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -35,10 +35,7 @@ impl super::ResponseFormatter for Formatter {
 	fn format(listener: Listener) -> Option<TransactionTrace> {
 		if let Some(entry) = listener.entries.last() {
 			return Some(TransactionTrace::CallList(
-				entry
-					.iter()
-					.map(|(_, value)| Call::Blockscout(Box::new(value.clone())))
-					.collect(),
+				entry.values().map(|value| Call::Blockscout(value.clone())).collect(),
 			));
 		}
 		None
@@ -91,4 +88,5 @@ pub struct BlockscoutCall {
 	pub gas_used: U256,
 	#[serde(flatten)]
 	pub inner: BlockscoutCallInner,
+	pub logs: Vec<crate::types::single::Log>,
 }

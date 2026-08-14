@@ -5,7 +5,6 @@ use frame_support::weights::Weight;
 /// Weight functions needed for parachain_staking.
 pub trait WeightInfo {
 	fn on_initialize_no_action() -> Weight;
-	fn on_initialize_round_update() -> Weight;
 	fn force_new_round() -> Weight;
 	fn set_max_selected_candidates(n: u32, m: u32) -> Weight;
 	fn set_blocks_per_round() -> Weight;

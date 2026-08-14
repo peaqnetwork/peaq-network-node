@@ -1,4 +1,4 @@
-// Copyright 2019-2022 PureStake Inc.
+// Copyright 2019-2025 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 use super::blockscout::BlockscoutCallInner;
 use crate::types::{
-	single::{Call, TransactionTrace},
+	single::{Call, Log, TransactionTrace},
 	CallResult, CallType, CreateResult,
 };
 
@@ -25,6 +25,7 @@ use crate::listeners::call_list::Listener;
 use crate::types::serialization::*;
 use serde::Serialize;
 
+use crate::types::block::BlockTransactionTrace;
 use ethereum_types::{H160, U256};
 use parity_scale_codec::{Decode, Encode};
 use sp_std::{cmp::Ordering, vec::Vec};
@@ -33,17 +34,23 @@ pub struct Formatter;
 
 impl super::ResponseFormatter for Formatter {
 	type Listener = Listener;
-	type Response = Vec<TransactionTrace>;
+	type Response = Vec<BlockTransactionTrace>;
 
-	fn format(mut listener: Listener) -> Option<Vec<TransactionTrace>> {
-		// Remove empty BTreeMaps pushed to `entries`.
-		// I.e. InvalidNonce or other pallet_evm::runner exits
-		listener.entries.retain(|x| !x.is_empty());
+	fn format(listener: Listener) -> Option<Vec<BlockTransactionTrace>> {
 		let mut traces = Vec::new();
-		for entry in listener.entries.iter() {
+		for (eth_tx_index, entry) in listener.entries.iter().enumerate() {
+			// Skip empty BTreeMaps pushed to `entries`.
+			// I.e. InvalidNonce or other pallet_evm::runner exits
+			if entry.is_empty() {
+				log::debug!(
+					target: "tracing",
+					"Empty trace entry with transaction index {}, skipping...", eth_tx_index
+				);
+				continue;
+			}
 			let mut result: Vec<Call> = entry
-				.iter()
-				.map(|(_, it)| {
+				.values()
+				.map(|it| {
 					let from = it.from;
 					let trace_address = it.trace_address.clone();
 					let value = it.value;
@@ -54,8 +61,8 @@ impl super::ResponseFormatter for Formatter {
 						from,
 						gas,
 						gas_used,
-						trace_address: Some(trace_address),
-						inner: match inner {
+						trace_address: Some(trace_address.clone()),
+						inner: match inner.clone() {
 							BlockscoutCallInner::Call { input, to, res, call_type } =>
 								CallTracerInner::Call {
 									call_type: match call_type {
@@ -67,8 +74,12 @@ impl super::ResponseFormatter for Formatter {
 									},
 									to,
 									input,
-									res,
+									res: res.clone(),
 									value: Some(value),
+									logs: match res {
+										CallResult::Output { .. } => it.logs.clone(),
+										CallResult::Error { .. } => Vec::new(),
+									},
 								},
 							BlockscoutCallInner::Create { init, res } => CallTracerInner::Create {
 								input: init,
@@ -157,9 +168,9 @@ impl super::ResponseFormatter for Formatter {
 						let sibling_greater_than = |a: &Vec<u32>, b: &Vec<u32>| -> bool {
 							for (i, a_value) in a.iter().enumerate() {
 								match a_value.cmp(&b[i]) {
-									Ordering::Greater => return true,
-									Ordering::Less => return false,
-									Ordering::Equal => continue,
+									std::cmp::Ordering::Greater => return true,
+									std::cmp::Ordering::Less => return false,
+									std::cmp::Ordering::Equal => continue,
 								}
 							}
 							false
@@ -183,7 +194,10 @@ impl super::ResponseFormatter for Formatter {
 							(
 								Call::CallTracer(CallTracerCall { trace_address: Some(a), .. }),
 								Call::CallTracer(CallTracerCall { trace_address: Some(b), .. }),
-							) => b[..] == a[0..a.len() - 1],
+							) =>
+								&b[..] ==
+									a.get(0..a.len() - 1)
+										.expect("non-root element while traversing trace result"),
 							_ => unreachable!(),
 						}) {
 						// Remove `trace_address` from result.
@@ -206,11 +220,16 @@ impl super::ResponseFormatter for Formatter {
 				*trace_address = None;
 			}
 			if result.len() == 1 {
-				traces.push(TransactionTrace::CallListNested(
-					result
-						.pop()
-						.expect("result.len() == 1, so pop() necessarily returns this element"),
-				));
+				traces.push(BlockTransactionTrace {
+					tx_position: eth_tx_index as u32,
+					// Use default, the correct value will be set upstream
+					tx_hash: Default::default(),
+					result: TransactionTrace::CallListNested(
+						result
+							.pop()
+							.expect("result.len() == 1, so pop() necessarily returns this element"),
+					),
+				});
 			}
 		}
 		if traces.is_empty() {
@@ -256,6 +275,9 @@ pub enum CallTracerInner {
 
 		#[serde(skip_serializing_if = "Option::is_none")]
 		value: Option<U256>,
+
+		#[serde(skip_serializing_if = "Vec::is_empty")]
+		logs: Vec<Log>,
 	},
 	Create {
 		#[serde(rename = "type", serialize_with = "opcode_serialize")]

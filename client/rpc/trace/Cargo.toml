@@ -9,7 +9,7 @@ version = "0.6.0"
 
 [dependencies]
 log = { workspace = true }
-ethereum = { workspace = true, default-features = true, features = [ "with-codec" ] }
+ethereum = { workspace = true, default-features = true, features = [ "with-scale" ] }
 ethereum-types = { workspace = true, default-features = true }
 futures = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [ "macros", "server" ] }

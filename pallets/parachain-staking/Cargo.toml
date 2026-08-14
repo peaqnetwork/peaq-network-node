@@ -32,11 +32,7 @@ sp-std = { workspace = true, default-features = false }
 frame-benchmarking = { workspace = true, default-features = false, optional = true }
 
 [features]
-default = ["std", "experimental"]
-
-experimental = [
-    "pallet-aura/experimental",
-]
+default = ["std"]
 
 runtime-benchmarks = [
   "frame-benchmarking",

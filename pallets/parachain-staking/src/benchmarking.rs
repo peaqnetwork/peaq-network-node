@@ -285,12 +285,21 @@ benchmarks! {
 		// go to block in which we can exit
 		assert_ok!(<Pallet<T>>::init_leave_candidates(RawOrigin::Signed(candidate.clone()).into()));
 
-		// Round rotation now lives in pallet_session, so this pallet's on_initialize no longer
-		// advances the round. Bump the round counter directly by ExitQueueDelay so the exit
-		// delay elapses and the candidate can execute its leave (can_exit checks Round.current).
-		<Round<T>>::mutate(|round| {
-			round.current = round.current.saturating_add(T::ExitQueueDelay::get());
-		});
+		// Get the initial round when leave was initiated
+		let initial_round = <Round<T>>::get().current;
+		let exit_round = initial_round.saturating_add(T::ExitQueueDelay::get());
+
+		// Advance rounds until we reach the exit round
+		while <Round<T>>::get().current < exit_round {
+			let round = <Round<T>>::get();
+			let round_end_block = round.first.saturating_add(round.length);
+			System::<T>::set_block_number(round_end_block);
+			Session::<T>::on_initialize(round_end_block);
+		}
+
+		// Verify we can exit now
+		let state = <CandidatePool<T>>::get(&candidate).expect("Candidate should exist");
+		assert!(state.can_exit(<Round<T>>::get().current), "Candidate should be able to exit");
 		let unlookup_candidate = T::Lookup::unlookup(candidate.clone());
 
 	}: _(RawOrigin::Signed(candidate.clone()), unlookup_candidate)

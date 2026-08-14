@@ -3,11 +3,10 @@ name = "pallet-evm-precompile-batch"
 authors = [ "peaq" ]
 description = "A Precompile to batch multiple calls."
 edition = "2021"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
-# Peaq
-precompile-utils = { path = "../utils", default-features = false, features = [ "codec-xcm" ] }
+precompile-utils = { workspace = true, default-features = false, features = [ "codec-xcm" ] }
 
 # Substrate
 frame-support = { workspace = true, default-features = false }
@@ -31,7 +30,8 @@ sha3 = { workspace = true }
 pallet-balances = { workspace = true, features = [ "std", "insecure_zero_ed" ] }
 pallet-timestamp = { workspace = true, features = [ "std" ] }
 parity-scale-codec = { workspace = true, features = [ "max-encoded-len", "std" ] }
-precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
+precompile-utils = { workspace = true, features = [ "std", "testing" ] }
+peaq-precompile-utils = { path = "../utils", features = [ "std", "testing" ] }
 scale-info = { workspace = true, features = [ "derive", "std" ] }
 sp-runtime = { workspace = true, features = [ "std" ] }
 
