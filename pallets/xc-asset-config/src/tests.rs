@@ -366,4 +366,3 @@ fn different_xcm_versions_are_ok() {
 		assert_eq!(XcAssetConfig::get_xc_asset_location(asset_id), Some(new_asset_location));
 	})
 }
-
