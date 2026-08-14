@@ -139,15 +139,6 @@ benchmarks! {
 		assert_eq!(<Round<T>>::get().current, 0u32);
 	}
 
-	// NOTE round updates in on_finalize now
-	// on_initialize_round_update {
-	// 	let round = <Round<T>>::get();
-	// 	assert_eq!(round.current, 0u32);
-	// }: { Pallet::<T>::on_initialize(round.length) }
-	// verify {
-	// 	assert_eq!(<Round<T>>::get().current, 1u32);
-	// }
-
 	force_new_round {
 		let round = <Round<T>>::get();
 		let now = System::<T>::block_number();
