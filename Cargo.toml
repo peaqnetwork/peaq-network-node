@@ -15,7 +15,8 @@ members = [
 	"precompiles/peaq-rbac",
 	"precompiles/parachain-staking",
 	"precompiles/vesting",
-	"precompiles/p256verify"
+	"precompiles/p256verify",
+	"precompiles/ed25519"
 ]
 resolver = "2"
 
@@ -54,6 +55,7 @@ impl-trait-for-tuples = "0.2.2"
 jsonrpsee = { version = "0.24.9", default-features = false }
 libsecp256k1 = { version = "0.7", default-features = false }
 p256 = { version = "0.13.2", default-features = false, features = [ "ecdsa" ] }
+ed25519-dalek = { version = "2.1.0", default-features = false, features = [ "alloc" ] }
 log = { version = "0.4.17", default-features = false }
 macrotest = { version = "1.0.9", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
