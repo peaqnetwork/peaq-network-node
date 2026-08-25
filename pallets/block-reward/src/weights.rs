@@ -31,15 +31,13 @@ use core::marker::PhantomData;
 /// Weight functions for `pallet_block_reward`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
-	/// Storage: `BlockReward::RewardDistributionConfigStorage` (r:0 w:1)
-	/// Proof: `BlockReward::RewardDistributionConfigStorage` (`max_values`: Some(1), `max_size`: Some(24), added: 519, mode: `MaxEncodedLen`)
-	fn set_configuration() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 9_320_000 picoseconds.
-		Weight::from_parts(9_620_000, 0)
-			.saturating_add(Weight::from_parts(0, 0))
-			.saturating_add(T::DbWeight::get().writes(1))
+	fn set_sinks(n: u32) -> Weight {
+		Weight::from_parts(20_000_000, 0)
+			.saturating_add(Weight::from_parts(5_000_000, 0).saturating_mul(n.into()))
+	}
+	fn distribute_imbalances(n: u32) -> Weight {
+		// 1 Read (Sinks) + pro Senke 1 Read/Write auf das Konto.
+		Weight::from_parts(5_000_000, 0)
+			.saturating_add(Weight::from_parts(25_000_000, 0).saturating_mul(n.into()))
 	}
 }
