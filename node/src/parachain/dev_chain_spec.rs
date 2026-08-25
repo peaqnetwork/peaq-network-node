@@ -1,19 +1,17 @@
 use crate::parachain::Extensions;
 use cumulus_primitives_core::ParaId;
 use peaq_dev_runtime::{
-	staking, BalancesConfig, BlockRewardConfig, CouncilConfig, EVMConfig, EthereumConfig,
-	GenesisAccount, MorConfig, ParachainInfoConfig, ParachainStakingConfig, PeaqMorConfig,
-	PeaqPrecompiles, Runtime, RuntimeGenesisConfig, SudoConfig, WASM_BINARY,
+	staking, BalancesConfig, BlockRewardConfig, BlockRewardMigrationSinks, CouncilConfig,
+	EVMConfig, EthereumConfig, GenesisAccount, MorConfig, ParachainInfoConfig,
+	ParachainStakingConfig, PeaqMorConfig, PeaqPrecompiles, Runtime, RuntimeGenesisConfig,
+	SudoConfig, WASM_BINARY,
 };
 use peaq_primitives_xcm::{AccountId, Balance, Signature};
 use runtime_common::{CENTS, DOLLARS, MILLICENTS, TOKEN_DECIMALS};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	Perbill,
-};
+use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
@@ -125,15 +123,10 @@ fn configure_genesis(
 		},
 		inflation_manager: Default::default(),
 		block_reward: BlockRewardConfig {
-			// Make sure sum is 100
-			reward_config: pallet_block_reward::RewardDistributionConfig {
-				treasury_percent: Perbill::from_percent(25),
-				collators_delegators_percent: Perbill::from_percent(40),
-				coretime_percent: Perbill::from_percent(10),
-				subsidization_pool_percent: Perbill::from_percent(5),
-				depin_staking_percent: Perbill::from_percent(5),
-				depin_incentivization_percent: Perbill::from_percent(15),
-			},
+			// Same sinks the live chain's `MigrateToV3x` migration adopts -- see
+			// `BlockRewardMigrationSinks` in runtime/peaq-dev/src/lib.rs, the single
+			// place that decides this runtime's post-migration distribution.
+			sinks: BlockRewardMigrationSinks::get(),
 			_phantom: Default::default(),
 		},
 		vesting: Default::default(),

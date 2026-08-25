@@ -108,6 +108,15 @@ impl pallet_timestamp::Config for TestRuntime {
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
+// Only used by the `migrations::v3::MigrateToV3x` translation test - the legacy
+// distribution had six categories, so we need distinct targets for all of them.
+// `into_account_truncating()` on a `u64` mock AccountId only keeps the first 4
+// bytes of the PalletId (the rest is eaten by the "modl" prefix), so these must
+// differ from each other and from the two pots above in their first 4 bytes.
+pub(crate) const CORETIME_POT: PalletId = PalletId(*b"coretime");
+pub(crate) const SUBSIDIZATION_POT: PalletId = PalletId(*b"subsidyp");
+pub(crate) const DEPIN_STAKING_POT: PalletId = PalletId(*b"depistak");
+pub(crate) const DEPIN_INCENTIVIZATION_POT: PalletId = PalletId(*b"dpincntv");
 pub(crate) const MACHINE_POOL_EVM: H160 =
 	H160(hex_literal::hex!("1111111111111111111111111111111111111111"));
 pub(crate) const MACHINE_SUBSCRIPTION_LP_EVM: H160 =
@@ -115,7 +124,36 @@ pub(crate) const MACHINE_SUBSCRIPTION_LP_EVM: H160 =
 
 parameter_types! {
 	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
-	pub const FallbackPot: PalletId = PalletId(*b"fallback");
+	/// Sinks the `migrations::v3::MigrateToV3x` test adopts when it finds the
+	/// legacy distribution config on chain -- mirrors the six pots the real
+	/// runtimes used to have, just decided directly here instead of translated
+	/// from on-chain data.
+	pub MockMigrationSinks: sp_std::vec::Vec<pallet_block_reward::Sink> = sp_std::vec![
+		pallet_block_reward::Sink {
+			target: pallet_block_reward::RewardTarget::Pallet(TREASURY_POT.into()),
+			share: Perbill::from_percent(25),
+		},
+		pallet_block_reward::Sink {
+			target: pallet_block_reward::RewardTarget::Pallet(COLLATOR_DELEGATOR_POT.into()),
+			share: Perbill::from_percent(40),
+		},
+		pallet_block_reward::Sink {
+			target: pallet_block_reward::RewardTarget::Pallet(CORETIME_POT.into()),
+			share: Perbill::from_percent(10),
+		},
+		pallet_block_reward::Sink {
+			target: pallet_block_reward::RewardTarget::Pallet(SUBSIDIZATION_POT.into()),
+			share: Perbill::from_percent(5),
+		},
+		pallet_block_reward::Sink {
+			target: pallet_block_reward::RewardTarget::Pallet(DEPIN_STAKING_POT.into()),
+			share: Perbill::from_percent(5),
+		},
+		pallet_block_reward::Sink {
+			target: pallet_block_reward::RewardTarget::Pallet(DEPIN_INCENTIVIZATION_POT.into()),
+			share: Perbill::from_percent(15),
+		},
+	];
 	pub const DefaultTotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
 	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
 		inflation_parameters: InflationParameters {
@@ -154,8 +192,8 @@ impl crate::AddressMapping<AccountId> for MockAddressMapping {
 impl pallet_block_reward::Config for TestRuntime {
 	type AddressMapping = MockAddressMapping;
 	type Currency = Balances;
-	type FallbackTarget = FallbackPot;
-	type MaxSinks = ConstU32<5>;
+	type MaxSinks = ConstU32<8>;
+	type MigrationSinks = MockMigrationSinks;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
 }
@@ -164,6 +202,12 @@ pub struct ExternalityBuilder;
 
 impl ExternalityBuilder {
 	pub fn build() -> TestExternalities {
+		Self::build_with_sinks(Vec::default())
+	}
+
+	/// Like [`Self::build`], but seeds `pallet_block_reward`'s genesis config with the
+	/// given `sinks` -- used to exercise `GenesisConfig::build()` itself.
+	pub fn build_with_sinks(sinks: sp_std::vec::Vec<pallet_block_reward::Sink>) -> TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 
@@ -177,12 +221,9 @@ impl ExternalityBuilder {
 		inflation_manager::GenesisConfig::<TestRuntime> { _phantom: Default::default() }
 			.assimilate_storage(&mut storage)
 			.ok();
-		pallet_block_reward::GenesisConfig::<TestRuntime> {
-			sinks: Vec::default(),
-			_phantom: Default::default(),
-		}
-		.assimilate_storage(&mut storage)
-		.ok();
+		pallet_block_reward::GenesisConfig::<TestRuntime> { sinks, _phantom: Default::default() }
+			.assimilate_storage(&mut storage)
+			.ok();
 
 		let mut ext = TestExternalities::from(storage);
 		ext.execute_with(|| System::set_block_number(1));

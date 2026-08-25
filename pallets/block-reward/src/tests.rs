@@ -30,6 +30,25 @@ fn bounded(sinks: Vec<Sink>) -> SinksOf<TestRuntime> {
 }
 
 #[test]
+fn is_complete_distribution_accepts_exact_100_percent() {
+	assert!(is_complete_distribution(&[
+		treasury_sink(Perbill::from_percent(70)),
+		collator_delegator_sink(Perbill::from_percent(30)),
+	]));
+}
+
+#[test]
+fn is_complete_distribution_rejects_bad_sum_and_zero_share() {
+	// 90%, not 100%.
+	assert!(!is_complete_distribution(&[treasury_sink(Perbill::from_percent(90))]));
+	// Sums to 100%, but one share is zero.
+	assert!(!is_complete_distribution(&[
+		treasury_sink(Perbill::from_percent(100)),
+		collator_delegator_sink(Perbill::zero()),
+	]));
+}
+
+#[test]
 fn set_sinks_requires_root() {
 	ExternalityBuilder::build().execute_with(|| {
 		assert_noop!(
@@ -122,6 +141,28 @@ fn set_sinks_is_ok() {
 }
 
 #[test]
+fn genesis_build_populates_sinks() {
+	let sinks =
+		vec![treasury_sink(Perbill::from_percent(60)), collator_delegator_sink(Perbill::from_percent(40))];
+	ExternalityBuilder::build_with_sinks(sinks.clone()).execute_with(|| {
+		assert_eq!(BlockReward::sinks().into_inner(), sinks.clone());
+
+		for sink in &sinks {
+			let account = BlockReward::resolve(&sink.target);
+			assert!(frame_system::Account::<TestRuntime>::get(account).providers >= 1);
+		}
+	});
+}
+
+#[test]
+#[should_panic(expected = "invalid genesis sinks")]
+fn genesis_build_panics_on_invalid_sinks() {
+	// Sums to 90%, not 100% -- must panic at chain-spec build time rather than
+	// silently launching a chain with a broken distribution.
+	ExternalityBuilder::build_with_sinks(vec![treasury_sink(Perbill::from_percent(90))]);
+}
+
+#[test]
 fn resolve_maps_pallet_and_evm_targets() {
 	ExternalityBuilder::build().execute_with(|| {
 		let expected_treasury: AccountId =
@@ -146,6 +187,11 @@ fn resolve_maps_pallet_and_evm_targets() {
 #[test]
 pub fn inflation_and_total_issuance_as_expected() {
 	ExternalityBuilder::build().execute_with(|| {
+		// Needs a configured sink, otherwise the issued reward is burned right back
+		// (see `distribute_imbalances_burns_reward_if_sinks_somehow_empty`) and
+		// issuance wouldn't grow at all -- this test is about inflation, not sinks.
+		assert_ok!(BlockReward::set_sinks(RuntimeOrigin::root(), bounded(vec![treasury_sink(Perbill::one())])));
+
 		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
 		let block_reward: Balance = InflationManagerPallet::<TestRuntime>::block_rewards();
 
@@ -164,18 +210,24 @@ pub fn inflation_and_total_issuance_as_expected() {
 }
 
 #[test]
-pub fn distribution_falls_back_when_no_sinks_configured() {
+pub fn distribute_imbalances_burns_reward_if_sinks_somehow_empty() {
 	ExternalityBuilder::build().execute_with(|| {
+		// `Sinks` can never actually become empty through any pallet-supported path
+		// -- genesis and `set_sinks` both require a valid, 100%-summing list. This
+		// forces the otherwise-unreachable state directly via storage, to prove the
+		// defensive branch degrades safely (burns the reward) instead of losing or
+		// misdirecting funds.
+		Sinks::<TestRuntime>::kill();
 		assert!(BlockReward::sinks().is_empty());
 
-		let fallback: AccountId = FallbackPot::get().into_account_truncating();
-		assert!(Balances::free_balance(fallback).is_zero());
-
+		let issuance_before = <TestRuntime as Config>::Currency::total_issuance();
 		let block_reward: Balance = InflationManagerPallet::<TestRuntime>::block_rewards();
+
 		BlockReward::on_timestamp_set(0);
 
-		assert_eq!(Balances::free_balance(fallback), block_reward);
-		System::assert_has_event(mock::RuntimeEvent::BlockReward(Event::FallbackUsed {
+		// Issued, then immediately burned again -- net effect on issuance: none.
+		assert_eq!(<TestRuntime as Config>::Currency::total_issuance(), issuance_before);
+		System::assert_has_event(mock::RuntimeEvent::BlockReward(Event::RewardsBurned {
 			amount: block_reward,
 		}));
 	})
