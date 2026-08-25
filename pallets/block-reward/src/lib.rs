@@ -97,9 +97,11 @@ pub mod pallet {
 		/// The currency trait.
 		type Currency: Currency<Self::AccountId, Balance = Balance>;
 
-		/// A fallback target token sink, so no tokens will be dropped.
+		/// The sinks to adopt when the one-time `migrations::v3::MigrateToV3x` migration
+		/// finds the legacy, pre-Sinks fixed distribution config on chain. Decided
+		/// entirely by the runtime; can be removed once every live chain has migrated.
 		#[pallet::constant]
-		type FallbackTarget: Get<frame_support::PalletId>;
+		type MigrationSinks: Get<Vec<Sink>>;
 
 		/// Maximum number of token sinks.
 		#[pallet::constant]
@@ -129,8 +131,12 @@ pub mod pallet {
 		/// Rewards have been distributed
 		TransactionFeesDistributed(BalanceOf<T>),
 
-		/// The token fallback was used to deposit tokens
-		FallbackUsed { amount: BalanceOf<T> },
+		/// `Sinks` was empty when a reward/fee distribution was attempted -- this
+		/// should be structurally unreachable (genesis and `set_sinks` both require a
+		/// valid, 100%-summing sink list), but if it ever happens the amount is
+		/// burned (cleanly un-minted / un-collected) rather than sent to an
+		/// arbitrary destination.
+		RewardsBurned { amount: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -160,7 +166,30 @@ pub mod pallet {
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
-		fn build(&self) {}
+		fn build(&self) {
+			// Empty stays a silent no-op: `construct_runtime!` generates an
+			// integrity test requiring every pallet's `GenesisConfig::default()` to
+			// build successfully, and there's no runtime-agnostic default `sinks`
+			// list that would mean anything (target `PalletId`s are runtime-specific)
+			// -- so `Default` has to stay `sinks: Vec::new()`, and that has to build.
+			// A real chain-spec that deliberately supplies a *non-empty* list still
+			// gets full validation: any invalid list panics below.
+			if self.sinks.is_empty() {
+				return;
+			}
+
+			// Panicking here is safe and idiomatic: this runs once while building
+			// the chain-spec/genesis block, before the chain exists -- unlike a
+			// panic in `on_runtime_upgrade`, it can never halt an already-running
+			// chain.
+			let sinks = Pallet::<T>::validate_sinks(self.sinks.clone())
+				.unwrap_or_else(|e| panic!("pallet-block-reward: invalid genesis sinks: {:?}", e));
+
+			for sink in sinks.iter() {
+				frame_system::Pallet::<T>::inc_providers(&Pallet::<T>::resolve(&sink.target));
+			}
+			Sinks::<T>::put(&sinks);
+		}
 	}
 
 	#[pallet::hooks]
@@ -186,26 +215,13 @@ pub mod pallet {
 		pub fn set_sinks(origin: OriginFor<T>, new_sinks: SinksOf<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
-			// 1. Anteile muessen exakt 100 % ergeben -- kein Rundungsrest,
-			//    keine stille Ueberausschuettung.
-			let sum = new_sinks
-				.iter()
-				.try_fold(0u64, |acc, s| acc.checked_add(s.share.deconstruct() as u64))
-				.ok_or(Error::<T>::InvalidShareSum)?;
-			ensure!(sum == Perbill::one().deconstruct() as u64, Error::<T>::InvalidShareSum);
-			ensure!(new_sinks.iter().all(|s| !s.share.is_zero()), Error::<T>::ZeroShare);
+			let new_sinks = Self::validate_sinks(new_sinks.into_inner())?;
 
-			// 2. Auf Konto-Ebene deduplizieren, nicht auf Target-Ebene:
-			//    entscheidend ist, wo das Geld landet.
+			// Provider-Bookkeeping: neue Konten hochzaehlen, entfallene
+			// herunter. Damit existieren die Konten auch bei Guthaben 0
+			// und `resolve_creating` kann nicht am ED scheitern.
 			let new_accounts: Vec<T::AccountId> =
 				new_sinks.iter().map(|s| Self::resolve(&s.target)).collect();
-			for (i, a) in new_accounts.iter().enumerate() {
-				ensure!(!new_accounts[i + 1..].contains(a), Error::<T>::DuplicateTarget);
-			}
-
-			// 3. Provider-Bookkeeping: neue Konten hochzaehlen, entfallene
-			//    herunter. Damit existieren die Konten auch bei Guthaben 0
-			//    und `resolve_creating` kann nicht am ED scheitern.
 			let old_accounts: Vec<T::AccountId> =
 				Sinks::<T>::get().iter().map(|s| Self::resolve(&s.target)).collect();
 
@@ -247,6 +263,31 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Validates a candidate sink list: shares must sum to exactly 100%, no share
+		/// may be zero, no two sinks may resolve to the same account, and the list must
+		/// fit within `MaxSinks`. Shared by the `set_sinks` extrinsic and by the
+		/// `migrations::v3::MigrateToV3x` migration.
+		pub(crate) fn validate_sinks(new_sinks: Vec<Sink>) -> Result<SinksOf<T>, Error<T>> {
+			// 1. Anteile muessen exakt 100 % ergeben -- kein Rundungsrest,
+			//    keine stille Ueberausschuettung.
+			let sum = new_sinks
+				.iter()
+				.try_fold(0u64, |acc, s| acc.checked_add(s.share.deconstruct() as u64))
+				.ok_or(Error::<T>::InvalidShareSum)?;
+			ensure!(sum == Perbill::one().deconstruct() as u64, Error::<T>::InvalidShareSum);
+			ensure!(new_sinks.iter().all(|s| !s.share.is_zero()), Error::<T>::ZeroShare);
+
+			// 2. Auf Konto-Ebene deduplizieren, nicht auf Target-Ebene:
+			//    entscheidend ist, wo das Geld landet.
+			let accounts: Vec<T::AccountId> =
+				new_sinks.iter().map(|s| Self::resolve(&s.target)).collect();
+			for (i, a) in accounts.iter().enumerate() {
+				ensure!(!accounts[i + 1..].contains(a), Error::<T>::DuplicateTarget);
+			}
+
+			SinksOf::<T>::try_from(new_sinks).map_err(|_| Error::<T>::TooManySinks)
+		}
+
 		/// Resolves to an address in dependency of the sink type / reward target.
 		pub fn resolve(target: &RewardTarget) -> T::AccountId {
 			match target {
@@ -276,9 +317,12 @@ pub mod pallet {
 			);
 
 			if sinks.is_empty() {
-				let who: T::AccountId = T::FallbackTarget::get().into_account_truncating();
-				T::Currency::resolve_creating(&who, credit);
-				Self::deposit_event(Event::FallbackUsed { amount: total });
+				// Structurally unreachable in correct operation (see `Event::RewardsBurned`),
+				// but if it ever happens: dropping `credit` here safely un-mints the block
+				// reward / burns the collected fee via `NegativeImbalance`'s own `Drop` impl
+				// (which corrects `TotalIssuance` accordingly) -- no arbitrary destination
+				// account needed.
+				Self::deposit_event(Event::RewardsBurned { amount: total });
 				return;
 			}
 

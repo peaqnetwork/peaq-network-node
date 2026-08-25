@@ -210,7 +210,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 112,
+	spec_version: 113,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 2,
@@ -917,70 +917,59 @@ impl parachain_staking::Config for Runtime {
 	type WeightInfo = parachain_staking::weights::WeightInfo<Runtime>;
 }
 
-/// Implements the adapters for depositing unbalanced tokens on pots
-/// of various pallets, e.g. Peaq-MOR, Peaq-Treasury etc.
-macro_rules! impl_to_pot_adapter {
-	($name:ident, $pot:ident, $negbal:ident) => {
-		pub struct $name;
-		impl OnUnbalanced<$negbal> for $name {
-			fn on_unbalanced(amount: $negbal) {
-				Self::on_nonzero_unbalanced(amount);
-			}
+/// Sinks adopted by `migrations::v3::MigrateToV3x` when it finds the legacy,
+/// pre-Sinks fixed distribution config on chain, and the default genesis sinks for
+/// fresh `--chain peaq-local` networks (see `node/src/parachain/peaq_chain_spec.rs`).
+/// Only treasury and parachain-staking survive the migration here, with a new split
+/// -- everything the legacy config used to send to coretime/subsidization/DePIN
+/// pots now goes to treasury instead.
+///
+/// A `const` array (not a `parameter_types!` `Vec` literal) so the 100%-sum
+/// invariant can be, and is, checked at compile time below.
+const BLOCK_REWARD_SINKS: [pallet_block_reward::Sink; 2] = [
+	pallet_block_reward::Sink {
+		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
+			PotTreasuryId::get(),
+		)),
+		share: Perbill::from_percent(70),
+	},
+	pallet_block_reward::Sink {
+		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
+			PotStakeId::get(),
+		)),
+		share: Perbill::from_percent(30),
+	},
+];
+const _: () = assert!(
+	pallet_block_reward::is_complete_distribution(&BLOCK_REWARD_SINKS),
+	"BLOCK_REWARD_SINKS must sum to exactly 100% with no zero shares"
+);
 
-			fn on_nonzero_unbalanced(amount: $negbal) {
-				let pot = $pot::get().into_account_truncating();
-				Balances::resolve_creating(&pot, amount);
-			}
-		}
-	};
+parameter_types! {
+	/// Upper bound on the number of configurable block-reward token sinks.
+	pub const MaxBlockRewardSinks: u32 = 8;
+
+	pub BlockRewardMigrationSinks: sp_std::vec::Vec<pallet_block_reward::Sink> = BLOCK_REWARD_SINKS.to_vec();
 }
 
-impl_to_pot_adapter!(ToStakingPot, PotStakeId, NegativeImbalance);
-impl_to_pot_adapter!(ToCoreTimePot, PotCoretimeId, NegativeImbalance);
-impl_to_pot_adapter!(ToSubsidizationPot, PotSubsidizationId, NegativeImbalance);
-impl_to_pot_adapter!(ToDepinStakingPot, PotDepinStakingId, NegativeImbalance);
-impl_to_pot_adapter!(ToDepinIncentivizationPot, PotDepinIncentivisationId, NegativeImbalance);
-
-pub struct ToTreasuryPot;
-impl OnUnbalanced<NegativeImbalance> for ToTreasuryPot {
-	fn on_nonzero_unbalanced(amount: NegativeImbalance) {
-		let pot = PotTreasuryId::get().into_account_truncating();
-		Balances::resolve_creating(&pot, amount);
+/// Maps an EVM address to a Substrate `AccountId`, reusing the same hashing scheme
+/// already used to unify EVM and native accounts elsewhere in this runtime.
+pub struct BlockRewardAddressMapping;
+impl pallet_block_reward::AddressMapping<AccountId> for BlockRewardAddressMapping {
+	fn into_account_id(address: H160) -> AccountId {
+		<HashedAddressMapping<BlakeTwo256> as pallet_evm::AddressMapping<AccountId>>::into_account_id(
+			address,
+		)
 	}
 }
 
 impl pallet_block_reward::Config for Runtime {
+	type AddressMapping = BlockRewardAddressMapping;
 	type Currency = Balances;
-	type BeneficiaryPayout = BeneficiaryPayout;
+	type MaxSinks = MaxBlockRewardSinks;
+	type MigrationSinks = BlockRewardMigrationSinks;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_block_reward::weights::WeightInfo<Runtime>;
-}
-
-pub struct BeneficiaryPayout();
-impl pallet_block_reward::BeneficiaryPayout<NegativeImbalance> for BeneficiaryPayout {
-	fn treasury(reward: NegativeImbalance) {
-		ToTreasuryPot::on_unbalanced(reward);
-	}
-
-	fn collators_delegators(reward: NegativeImbalance) {
-		ToStakingPot::on_unbalanced(reward);
-	}
-
-	fn coretime(reward: NegativeImbalance) {
-		ToCoreTimePot::on_unbalanced(reward);
-	}
-
-	fn subsidization_pool(reward: NegativeImbalance) {
-		ToSubsidizationPot::on_unbalanced(reward);
-	}
-
-	fn depin_staking(reward: NegativeImbalance) {
-		ToDepinStakingPot::on_unbalanced(reward);
-	}
-
-	fn depin_incentivization(reward: NegativeImbalance) {
-		ToDepinIncentivizationPot::on_unbalanced(reward);
-	}
 }
 
 parameter_types! {
