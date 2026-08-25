@@ -46,7 +46,7 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, vec::Vec};
 
-mod convert_impl;
+pub mod convert_impl;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;

@@ -1,15 +1,14 @@
-use crate::{self as pallet_block_reward, NegativeImbalanceOf};
-
-use frame_support::{
-	construct_runtime, parameter_types, traits::Currency, weights::Weight, PalletId,
-};
-use frame_system::pallet_prelude::BlockNumberFor;
-use sp_io::TestExternalities;
+use crate::{self as pallet_block_reward};
 
 use inflation_manager::types::{InflationConfiguration, InflationParameters};
-use sp_core::{ConstU32, H256};
+use frame_support::{
+	construct_runtime, parameter_types, weights::Weight, PalletId,
+};
+use frame_system::pallet_prelude::BlockNumberFor;
+use sp_core::{ConstU32, H160, H256};
+use sp_io::TestExternalities;
 use sp_runtime::{
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage, Perbill,
 };
 
@@ -109,46 +108,14 @@ impl pallet_timestamp::Config for TestRuntime {
 // Fake accounts used to simulate reward beneficiaries balances
 pub(crate) const TREASURY_POT: PalletId = PalletId(*b"moktrsry");
 pub(crate) const COLLATOR_DELEGATOR_POT: PalletId = PalletId(*b"mokcolat");
-pub(crate) const CORETIME_POT: PalletId = PalletId(*b"lpreward");
-pub(crate) const SUBSIDIZATION_POT: PalletId = PalletId(*b"machiner");
-pub(crate) const DE_PINSTAKING_ACCOUNT: PalletId = PalletId(*b"destakin");
-pub(crate) const DE_PININCENTIVIZATION_ACCOUNT: PalletId = PalletId(*b"deincent");
-
-// Type used as beneficiary payout handle
-pub struct BeneficiaryPayout();
-impl pallet_block_reward::BeneficiaryPayout<NegativeImbalanceOf<TestRuntime>>
-	for BeneficiaryPayout
-{
-	fn treasury(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&TREASURY_POT.into_account_truncating(), reward);
-	}
-
-	fn collators_delegators(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&COLLATOR_DELEGATOR_POT.into_account_truncating(), reward);
-	}
-
-	fn coretime(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&CORETIME_POT.into_account_truncating(), reward);
-	}
-
-	fn subsidization_pool(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&SUBSIDIZATION_POT.into_account_truncating(), reward);
-	}
-
-	fn depin_staking(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(&DE_PINSTAKING_ACCOUNT.into_account_truncating(), reward);
-	}
-
-	fn depin_incentivization(reward: NegativeImbalanceOf<TestRuntime>) {
-		Balances::resolve_creating(
-			&DE_PININCENTIVIZATION_ACCOUNT.into_account_truncating(),
-			reward,
-		);
-	}
-}
+pub(crate) const MACHINE_POOL_EVM: H160 =
+	H160(hex_literal::hex!("1111111111111111111111111111111111111111"));
+pub(crate) const MACHINE_SUBSCRIPTION_LP_EVM: H160 =
+	H160(hex_literal::hex!("2222222222222222222222222222222222222222"));
 
 parameter_types! {
 	pub const InfaltionPot: PalletId = PalletId(*b"inflapot");
+	pub const FallbackPot: PalletId = PalletId(*b"fallback");
 	pub const DefaultTotalIssuanceNum: Balance = 10_000_000_000_000_000_000_000_000;
 	pub const DefaultInflationConfiguration: InflationConfiguration = InflationConfiguration {
 		inflation_parameters: InflationParameters {
@@ -174,10 +141,22 @@ impl inflation_manager::Config for TestRuntime {
 	type BlockRewardBeforeInitialize = BlockRewardBeforeInitialize;
 }
 
+/// Deterministic H160 -> AccountId mapping used only for testing purposes.
+pub struct MockAddressMapping;
+impl crate::AddressMapping<AccountId> for MockAddressMapping {
+	fn into_account_id(address: H160) -> AccountId {
+		let mut bytes = [0u8; 8];
+		bytes.copy_from_slice(&address.0[12..20]);
+		AccountId::from_be_bytes(bytes)
+	}
+}
+
 impl pallet_block_reward::Config for TestRuntime {
-	type RuntimeEvent = RuntimeEvent;
+	type AddressMapping = MockAddressMapping;
 	type Currency = Balances;
-	type BeneficiaryPayout = BeneficiaryPayout;
+	type FallbackTarget = FallbackPot;
+	type MaxSinks = ConstU32<5>;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_block_reward::weights::WeightInfo<TestRuntime>;
 }
 
@@ -199,7 +178,7 @@ impl ExternalityBuilder {
 			.assimilate_storage(&mut storage)
 			.ok();
 		pallet_block_reward::GenesisConfig::<TestRuntime> {
-			reward_config: pallet_block_reward::RewardDistributionConfig::default(),
+			sinks: Vec::default(),
 			_phantom: Default::default(),
 		}
 		.assimilate_storage(&mut storage)
