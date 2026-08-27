@@ -76,6 +76,28 @@ macro_rules! log {
 	};
 }
 
+/// Builds a [`Sink`] targeting a Substrate pallet pot, given its `parameter_types!`
+/// `PalletId` getter and a whole-percent share -- shorthand for the migration-target
+/// lists a runtime otherwise has to spell out per entry.
+///
+/// ```ignore
+/// const BLOCK_REWARD_SINKS: [pallet_block_reward::Sink; 2] = [
+///     pallet_block_reward::block_reward_sink!(PotTreasuryId, 70),
+///     pallet_block_reward::block_reward_sink!(PotStakeId, 30),
+/// ];
+/// ```
+#[macro_export]
+macro_rules! block_reward_sink {
+	($pallet_id:ty, $percent:expr) => {
+		$crate::Sink {
+			target: $crate::RewardTarget::Pallet(
+				$crate::SinkPalletId::from_pallet_id(<$pallet_id>::get()),
+			),
+			share: sp_runtime::Perbill::from_percent($percent),
+		}
+	};
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 

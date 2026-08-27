@@ -907,42 +907,12 @@ impl parachain_staking::Config for Runtime {
 /// A `const` array (not a `parameter_types!` `Vec` literal) so the 100%-sum
 /// invariant can be, and is, checked at compile time below.
 const BLOCK_REWARD_SINKS: [pallet_block_reward::Sink; 6] = [
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotTreasuryId::get(),
-		)),
-		share: Perbill::from_percent(25),
-	},
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotStakeId::get(),
-		)),
-		share: Perbill::from_percent(40),
-	},
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotCoretimeId::get(),
-		)),
-		share: Perbill::from_percent(10),
-	},
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotSubsidizationId::get(),
-		)),
-		share: Perbill::from_percent(5),
-	},
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotDepinStakingId::get(),
-		)),
-		share: Perbill::from_percent(5),
-	},
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotDepinIncentivisationId::get(),
-		)),
-		share: Perbill::from_percent(15),
-	},
+	pallet_block_reward::block_reward_sink!(PotTreasuryId, 25),
+	pallet_block_reward::block_reward_sink!(PotStakeId, 40),
+	pallet_block_reward::block_reward_sink!(PotCoretimeId, 10),
+	pallet_block_reward::block_reward_sink!(PotSubsidizationId, 5),
+	pallet_block_reward::block_reward_sink!(PotDepinStakingId, 5),
+	pallet_block_reward::block_reward_sink!(PotDepinIncentivisationId, 15),
 ];
 const _: () = assert!(
 	pallet_block_reward::is_complete_distribution(&BLOCK_REWARD_SINKS),
