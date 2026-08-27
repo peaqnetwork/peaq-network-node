@@ -56,8 +56,8 @@ mod v3 {
 
 	impl<T: Config> MigrateToV3x<T> {
 		pub fn on_runtime_upgrade() -> Weight {
+			let mut weight_reads = 2;
 			let mut weight_writes = 0;
-			let weight_reads = 2;
 
 			let current = Pallet::<T>::in_code_storage_version();
 			let onchain_version = Pallet::<T>::on_chain_storage_version();
@@ -73,7 +73,9 @@ mod v3 {
 					RewardDistributionConfigStorage::<T>::kill();
 					weight_writes += 1;
 
-					weight_writes += Self::apply_sinks(T::MigrationSinks::get());
+					let (reads, writes) = Self::apply_sinks(T::MigrationSinks::get());
+					weight_reads += reads;
+					weight_writes += writes;
 				}
 
 				current.put::<Pallet<T>>();
@@ -85,22 +87,26 @@ mod v3 {
 		}
 
 		/// Validates `candidate` and, if valid, adopts it as the new `Sinks`. Returns
-		/// the number of storage writes performed, for weight accounting.
+		/// the number of storage reads and writes performed, for weight accounting:
+		/// each sink incurs one read + one write via `inc_providers`
+		/// (`frame_system::Account` is read then mutated), plus one final write for
+		/// `Sinks::put`.
 		///
 		/// Never panics: unlike a genesis-config error (which only fails a
 		/// not-yet-launched chain-spec build), a panic here would halt an
 		/// already-running chain with real funds in it. On invalid input, `Sinks` is
 		/// simply left empty (drained via `FallbackTarget` instead).
-		fn apply_sinks(candidate: sp_std::vec::Vec<Sink>) -> u64 {
+		fn apply_sinks(candidate: sp_std::vec::Vec<Sink>) -> (u64, u64) {
 			match Pallet::<T>::validate_sinks(candidate) {
 				Ok(sinks) => {
 					for sink in sinks.iter() {
 						frame_system::Pallet::<T>::inc_providers(&Pallet::<T>::resolve(&sink.target));
 					}
 					log!(info, "block-reward: migrated to {} configured sink(s)", sinks.len());
+					let reads = sinks.len() as u64;
 					let writes = sinks.len() as u64 + 1;
 					Sinks::<T>::put(&sinks);
-					writes
+					(reads, writes)
 				},
 				Err(e) => {
 					log!(
@@ -108,7 +114,7 @@ mod v3 {
 						"block-reward: T::MigrationSinks is invalid ({:?}); Sinks left empty, FallbackTarget absorbs rewards until `set_sinks` is called",
 						e
 					);
-					0
+					(0, 0)
 				},
 			}
 		}
@@ -169,8 +175,9 @@ mod v3 {
 					share: Perbill::from_percent(90),
 				}];
 
-				let writes = MigrateToV3x::<TestRuntime>::apply_sinks(invalid);
+				let (reads, writes) = MigrateToV3x::<TestRuntime>::apply_sinks(invalid);
 
+				assert_eq!(reads, 0);
 				assert_eq!(writes, 0);
 				assert!(Sinks::<TestRuntime>::get().is_empty());
 			});

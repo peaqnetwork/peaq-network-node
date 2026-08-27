@@ -223,15 +223,19 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Sets the reward distribution configuration parameters which will be used from next block
-		/// reward distribution.
+		/// Sets the list of reward sinks (and their shares) which will be used from
+		/// the next block reward distribution onward.
 		///
-		/// It is mandatory that all components of configuration sum up to one whole (**100%**),
-		/// otherwise an error `InvalidDistributionConfiguration` will be raised.
+		/// `new_sinks` must satisfy all of the following, otherwise the corresponding
+		/// error is raised:
+		/// - shares must sum up to exactly one whole (**100%**), or `InvalidShareSum`
+		/// - no individual share may be zero, or `ZeroShare`
+		/// - no two sinks may resolve to the same account, or `DuplicateTarget`
+		/// - the list must fit within `MaxSinks`, or `TooManySinks`
 		///
-		/// - `reward_distro_params` - reward distribution params
+		/// - `new_sinks` - the new list of reward sinks
 		///
-		/// Emits `DistributionConfigurationChanged` with config embeded into event itself.
+		/// Emits `TokenSinksUpdated` with the new sinks embedded into the event itself.
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::set_sinks(new_sinks.len() as u32))]
 		pub fn set_sinks(origin: OriginFor<T>, new_sinks: SinksOf<T>) -> DispatchResult {

@@ -14,8 +14,8 @@ pub(crate) type NegativeImbalanceOf<T> = <<T as PalletConfig>::Currency as Curre
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
 
-/// Encoding-identisch zu `PalletId` (beides schlicht `[u8; 8]`),
-/// nur mit den Derives, die BoundedVec-Storage braucht.
+/// Encoding-identical to `PalletId` (both are simply `[u8; 8]`),
+/// just with the derives needed for `BoundedVec` storage.
 #[derive(
     Clone, Copy, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Deserialize, MaxEncodedLen, RuntimeDebug, Serialize, TypeInfo,
 )]
@@ -48,7 +48,7 @@ pub enum RewardTarget {
 	Evm(sp_core::H160),
 }
 
-/// One token sink mit ihrem Anteil an der Gesamtausschuettung.
+/// One token sink with its share of the total distribution.
 #[derive(
     Clone, Copy, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Deserialize, MaxEncodedLen, RuntimeDebug, Serialize, TypeInfo,
 )]
