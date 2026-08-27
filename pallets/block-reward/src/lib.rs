@@ -47,7 +47,7 @@ use frame_support::{
 use frame_system::{ensure_root, pallet_prelude::*};
 use inflation_manager::{Config as InflationManagerConfig, Pallet as InflationManagerPallet};
 use peaq_primitives_xcm::Balance;
-use sp_runtime::{Perbill, traits::AccountIdConversion};
+use sp_runtime::{traits::AccountIdConversion, Perbill};
 use sp_std::vec::Vec;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -90,9 +90,9 @@ macro_rules! log {
 macro_rules! block_reward_sink {
 	($pallet_id:ty, $percent:expr) => {
 		$crate::Sink {
-			target: $crate::RewardTarget::Pallet(
-				$crate::SinkPalletId::from_pallet_id(<$pallet_id>::get()),
-			),
+			target: $crate::RewardTarget::Pallet($crate::SinkPalletId::from_pallet_id(
+				<$pallet_id>::get(),
+			)),
 			share: sp_runtime::Perbill::from_percent($percent),
 		}
 	};
@@ -317,7 +317,9 @@ pub mod pallet {
 		/// Resolves to an address in dependency of the sink type / reward target.
 		pub fn resolve(target: &RewardTarget) -> T::AccountId {
 			match target {
-				RewardTarget::Pallet(id) => frame_support::PalletId::from(*id).into_account_truncating(),
+				RewardTarget::Pallet(id) => {
+					frame_support::PalletId::from(*id).into_account_truncating()
+				},
 				RewardTarget::Evm(addr) => T::AddressMapping::into_account_id(*addr),
 			}
 		}

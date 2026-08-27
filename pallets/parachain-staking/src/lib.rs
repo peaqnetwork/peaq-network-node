@@ -1029,8 +1029,8 @@ pub mod pallet {
 			ensure!(stake >= T::MinCollatorCandidateStake::get(), Error::<T>::ValStakeBelowMin);
 			ensure!(stake <= MaxCollatorCandidateStake::<T>::get(), Error::<T>::ValStakeAboveMax);
 			ensure!(
-				Unstaking::<T>::get(&sender).len().saturated_into::<u32>() <
-					T::MaxUnstakeRequests::get(),
+				Unstaking::<T>::get(&sender).len().saturated_into::<u32>()
+					< T::MaxUnstakeRequests::get(),
 				Error::<T>::CannotJoinBeforeUnlocking
 			);
 
@@ -1446,8 +1446,8 @@ pub mod pallet {
 			// cannot be a collator candidate and delegator with same AccountId
 			ensure!(Self::is_active_candidate(&acc).is_none(), Error::<T>::CandidateExists);
 			ensure!(
-				Unstaking::<T>::get(&acc).len().saturated_into::<u32>() <
-					T::MaxUnstakeRequests::get(),
+				Unstaking::<T>::get(&acc).len().saturated_into::<u32>()
+					< T::MaxUnstakeRequests::get(),
 				Error::<T>::CannotJoinBeforeUnlocking
 			);
 			// cannot delegate if number of delegations in this round exceeds
@@ -1585,16 +1585,16 @@ pub mod pallet {
 
 			// check balance
 			ensure!(
-				pallet_balances::Pallet::<T>::free_balance(acc.clone()) >=
-					delegator.total.saturating_add(amount).into(),
+				pallet_balances::Pallet::<T>::free_balance(acc.clone())
+					>= delegator.total.saturating_add(amount).into(),
 				pallet_balances::Error::<T>::InsufficientBalance
 			);
 
 			// delegation after first
 			ensure!(amount >= T::MinDelegation::get(), Error::<T>::DelegationBelowMin);
 			ensure!(
-				(delegator.delegations.len().saturated_into::<u32>()) <
-					T::MaxCollatorsPerDelegator::get(),
+				(delegator.delegations.len().saturated_into::<u32>())
+					< T::MaxCollatorsPerDelegator::get(),
 				Error::<T>::MaxCollatorsPerDelegatorExceeded
 			);
 			// cannot delegate if number of delegations in this round exceeds
@@ -1971,7 +1971,7 @@ pub mod pallet {
 			let collator = ensure_signed(origin)?;
 			CandidatePool::<T>::get(&collator).ok_or(Error::<T>::CandidateNotFound)?;
 			if commission > Permill::from_percent(100) {
-				return Err(Error::<T>::CommissionTooHigh.into())
+				return Err(Error::<T>::CommissionTooHigh.into());
 			}
 
 			<crate::pallet::CandidatePool<T>>::mutate(&collator, |maybe_candidate| {
@@ -2327,8 +2327,9 @@ pub mod pallet {
 		/// delegation state if it still contains other delegations.
 		fn update_kicked_delegator_storage(delegator: Option<ReplacedDelegator<T>>) {
 			match delegator {
-				Some(ReplacedDelegator { who, state: Some(state) }) =>
-					DelegatorState::<T>::insert(who, state),
+				Some(ReplacedDelegator { who, state: Some(state) }) => {
+					DelegatorState::<T>::insert(who, state)
+				},
 				Some(ReplacedDelegator { who, .. }) => DelegatorState::<T>::remove(who),
 				_ => (),
 			}
@@ -2577,8 +2578,8 @@ pub mod pallet {
 				.into_iter()
 				.enumerate()
 				.find_map(|(i, id)| {
-					if <T as pallet_session::Config>::ValidatorIdOf::convert(collator.clone()) ==
-						Some(id)
+					if <T as pallet_session::Config>::ValidatorIdOf::convert(collator.clone())
+						== Some(id)
 					{
 						Some(i)
 					} else {
@@ -2745,8 +2746,8 @@ pub mod pallet {
 			} else {
 				Reward {
 					owner: stake.id.clone(),
-					amount: percentage * issue_number +
-						stake.commission.mul(delegator_percentage * issue_number),
+					amount: percentage * issue_number
+						+ stake.commission.mul(delegator_percentage * issue_number),
 				}
 			}
 		}
@@ -2782,8 +2783,8 @@ pub mod pallet {
 					} else {
 						Reward {
 							owner: x.owner.clone(),
-							amount: percentage * issue_number -
-								stake.commission.mul(percentage * issue_number),
+							amount: percentage * issue_number
+								- stake.commission.mul(percentage * issue_number),
 						}
 					}
 				})
@@ -2803,7 +2804,7 @@ pub mod pallet {
 		fn payout_collator() {
 			// if there's no previous round, i.e, genesis round, then skip
 			if Self::round().current.is_zero() {
-				return
+				return;
 			}
 
 			if let Some(payout_info) = DelayedPayoutInfo::<T>::get() {

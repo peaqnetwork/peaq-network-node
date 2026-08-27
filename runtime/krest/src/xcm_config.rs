@@ -103,7 +103,7 @@ impl<
 {
 	fn take_revenue(revenue: Asset) {
 		match Matcher::matches_fungibles(&revenue) {
-			Ok((asset_id, amount)) =>
+			Ok((asset_id, amount)) => {
 				if amount > Zero::zero() {
 					if let Err(error) =
 						Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
@@ -119,7 +119,8 @@ impl<
 							amount, asset_id,
 						);
 					}
-				},
+				}
+			},
 			Err(_) => {
 				log::error!(
 					target: "xcm::weight",
@@ -186,15 +187,15 @@ impl SafeCallFilter {
 	pub fn allow_base_call(call: &RuntimeCall) -> bool {
 		matches!(
 			call,
-			RuntimeCall::System(..) |
-				RuntimeCall::Balances(..) |
-				RuntimeCall::Vesting(..) |
-				RuntimeCall::Assets(..) |
-				RuntimeCall::PolkadotXcm(..) |
-				RuntimeCall::Session(..) |
-				RuntimeCall::Multisig(
-					pallet_multisig::Call::approve_as_multi { .. } |
-						pallet_multisig::Call::cancel_as_multi { .. },
+			RuntimeCall::System(..)
+				| RuntimeCall::Balances(..)
+				| RuntimeCall::Vesting(..)
+				| RuntimeCall::Assets(..)
+				| RuntimeCall::PolkadotXcm(..)
+				| RuntimeCall::Session(..)
+				| RuntimeCall::Multisig(
+					pallet_multisig::Call::approve_as_multi { .. }
+						| pallet_multisig::Call::cancel_as_multi { .. },
 				)
 		)
 	}
@@ -204,16 +205,21 @@ impl SafeCallFilter {
 	/// calls is allowed.
 	pub fn allow_composite_call(call: &RuntimeCall) -> bool {
 		match call {
-			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) =>
-				calls.iter().all(Self::allow_base_call),
-			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) =>
-				calls.iter().all(Self::allow_base_call),
-			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) =>
-				Self::allow_base_call(call),
-			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) =>
-				Self::allow_base_call(call),
-			RuntimeCall::Multisig(pallet_multisig::Call::as_multi { call, .. }) =>
-				Self::allow_base_call(call),
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) => {
+				calls.iter().all(Self::allow_base_call)
+			},
+			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) => {
+				calls.iter().all(Self::allow_base_call)
+			},
+			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) => {
+				Self::allow_base_call(call)
+			},
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi_threshold_1 { call, .. }) => {
+				Self::allow_base_call(call)
+			},
+			RuntimeCall::Multisig(pallet_multisig::Call::as_multi { call, .. }) => {
+				Self::allow_base_call(call)
+			},
 			_ => false,
 		}
 	}

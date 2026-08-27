@@ -1,6 +1,6 @@
 //! Type and trait definitions of the crate
 
-use frame_support::{Deserialize, Serialize, pallet_prelude::*, traits::Currency};
+use frame_support::{pallet_prelude::*, traits::Currency, Deserialize, Serialize};
 use sp_runtime::Perbill;
 
 use crate::pallet::Config as PalletConfig;
@@ -17,29 +17,55 @@ pub(crate) type NegativeImbalanceOf<T> = <<T as PalletConfig>::Currency as Curre
 /// Encoding-identical to `PalletId` (both are simply `[u8; 8]`),
 /// just with the derives needed for `BoundedVec` storage.
 #[derive(
-    Clone, Copy, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Deserialize, MaxEncodedLen, RuntimeDebug, Serialize, TypeInfo,
+	Clone,
+	Copy,
+	Eq,
+	PartialEq,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Deserialize,
+	MaxEncodedLen,
+	RuntimeDebug,
+	Serialize,
+	TypeInfo,
 )]
 pub struct SinkPalletId(pub [u8; 8]);
 
 impl SinkPalletId {
-    /// `const fn` equivalent of `From<PalletId>`, usable to build `Sink` arrays as
-    /// compile-time constants (trait methods like `Into::into` can't be `const` on
-    /// stable Rust).
-    pub const fn from_pallet_id(id: frame_support::PalletId) -> Self {
-        Self(id.0)
-    }
+	/// `const fn` equivalent of `From<PalletId>`, usable to build `Sink` arrays as
+	/// compile-time constants (trait methods like `Into::into` can't be `const` on
+	/// stable Rust).
+	pub const fn from_pallet_id(id: frame_support::PalletId) -> Self {
+		Self(id.0)
+	}
 }
 
 impl From<SinkPalletId> for frame_support::PalletId {
-    fn from(v: SinkPalletId) -> Self { frame_support::PalletId(v.0) }
+	fn from(v: SinkPalletId) -> Self {
+		frame_support::PalletId(v.0)
+	}
 }
 impl From<frame_support::PalletId> for SinkPalletId {
-    fn from(v: frame_support::PalletId) -> Self { Self(v.0) }
+	fn from(v: frame_support::PalletId) -> Self {
+		Self(v.0)
+	}
 }
 
 /// A single reward target type. Can be either a pallet, or an EVM address.
 #[derive(
-    Clone, Copy, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Deserialize, MaxEncodedLen, RuntimeDebug, Serialize, TypeInfo,
+	Clone,
+	Copy,
+	Eq,
+	PartialEq,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Deserialize,
+	MaxEncodedLen,
+	RuntimeDebug,
+	Serialize,
+	TypeInfo,
 )]
 pub enum RewardTarget {
 	/// A Substrate-based pot, derived by using PalletId
@@ -50,7 +76,18 @@ pub enum RewardTarget {
 
 /// One token sink with its share of the total distribution.
 #[derive(
-    Clone, Copy, Eq, PartialEq, Encode, Decode, DecodeWithMemTracking, Deserialize, MaxEncodedLen, RuntimeDebug, Serialize, TypeInfo,
+	Clone,
+	Copy,
+	Eq,
+	PartialEq,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Deserialize,
+	MaxEncodedLen,
+	RuntimeDebug,
+	Serialize,
+	TypeInfo,
 )]
 pub struct Sink {
 	/// The official target, pallet or an EVM contract.
@@ -78,19 +115,19 @@ pub type SinksOf<T> = BoundedVec<Sink, <T as PalletConfig>::MaxSinks>;
 /// `cargo build`/CI time instead of silently degrading a live chain's distribution
 /// during a runtime upgrade.
 pub const fn is_complete_distribution(sinks: &[Sink]) -> bool {
-    let mut sum: u64 = 0;
-    let mut i = 0;
-    while i < sinks.len() {
-        let share = sinks[i].share.deconstruct();
-        if share == 0 {
-            return false;
-        }
-        sum += share as u64;
-        i += 1;
-    }
-    // 1_000_000_000 == Perbill::ACCURACY (its `PerThing::ACCURACY`); spelled out as a
-    // literal because pulling in the `PerThing` trait just for this const isn't worth it.
-    sum == 1_000_000_000
+	let mut sum: u64 = 0;
+	let mut i = 0;
+	while i < sinks.len() {
+		let share = sinks[i].share.deconstruct();
+		if share == 0 {
+			return false;
+		}
+		sum += share as u64;
+		i += 1;
+	}
+	// 1_000_000_000 == Perbill::ACCURACY (its `PerThing::ACCURACY`); spelled out as a
+	// literal because pulling in the `PerThing` trait just for this const isn't worth it.
+	sum == 1_000_000_000
 }
 
 /// Minimal trait for mapping addresses from H160 into SS58.
