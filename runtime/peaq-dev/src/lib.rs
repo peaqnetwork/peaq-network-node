@@ -910,18 +910,8 @@ impl parachain_staking::Config for Runtime {
 /// A `const` array (not a `parameter_types!` `Vec` literal) so the 100%-sum
 /// invariant can be, and is, checked at compile time below.
 const BLOCK_REWARD_SINKS: [pallet_block_reward::Sink; 2] = [
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotTreasuryId::get(),
-		)),
-		share: Perbill::from_percent(70),
-	},
-	pallet_block_reward::Sink {
-		target: pallet_block_reward::RewardTarget::Pallet(pallet_block_reward::SinkPalletId::from_pallet_id(
-			PotStakeId::get(),
-		)),
-		share: Perbill::from_percent(30),
-	},
+	pallet_block_reward::block_reward_sink!(PotTreasuryId, 70),
+	pallet_block_reward::block_reward_sink!(PotStakeId, 30),
 ];
 const _: () = assert!(
 	pallet_block_reward::is_complete_distribution(&BLOCK_REWARD_SINKS),
