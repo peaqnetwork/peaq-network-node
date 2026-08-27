@@ -1,10 +1,8 @@
 use crate::{self as pallet_block_reward};
 
-use inflation_manager::types::{InflationConfiguration, InflationParameters};
-use frame_support::{
-	construct_runtime, parameter_types, weights::Weight, PalletId,
-};
+use frame_support::{construct_runtime, parameter_types, weights::Weight, PalletId};
 use frame_system::pallet_prelude::BlockNumberFor;
+use inflation_manager::types::{InflationConfiguration, InflationParameters};
 use sp_core::{ConstU32, H160, H256};
 use sp_io::TestExternalities;
 use sp_runtime::{
@@ -207,7 +205,9 @@ impl ExternalityBuilder {
 
 	/// Like [`Self::build`], but seeds `pallet_block_reward`'s genesis config with the
 	/// given `sinks` -- used to exercise `GenesisConfig::build()` itself.
-	pub fn build_with_sinks(sinks: sp_std::vec::Vec<pallet_block_reward::Sink>) -> TestExternalities {
+	pub fn build_with_sinks(
+		sinks: sp_std::vec::Vec<pallet_block_reward::Sink>,
+	) -> TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::<TestRuntime>::default().build_storage().unwrap();
 

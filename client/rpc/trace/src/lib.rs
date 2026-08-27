@@ -93,11 +93,13 @@ where
 	fn block_id(&self, id: Option<RequestBlockId>) -> Result<u32, &'static str> {
 		match id {
 			Some(RequestBlockId::Number(n)) => Ok(n),
-			None | Some(RequestBlockId::Tag(RequestBlockTag::Latest)) =>
-				Ok(self.client.info().best_number),
+			None | Some(RequestBlockId::Tag(RequestBlockTag::Latest)) => {
+				Ok(self.client.info().best_number)
+			},
 			Some(RequestBlockId::Tag(RequestBlockTag::Earliest)) => Ok(0),
-			Some(RequestBlockId::Tag(RequestBlockTag::Pending)) =>
-				Err("'pending' is not supported"),
+			Some(RequestBlockId::Tag(RequestBlockTag::Pending)) => {
+				Err("'pending' is not supported")
+			},
 			Some(RequestBlockId::Hash(_)) => Err("Block hash not supported"),
 		}
 	}
@@ -169,15 +171,18 @@ where
 			let mut block_traces: Vec<_> = block_traces
 				.iter()
 				.filter(|trace| match trace.action {
-					block::TransactionTraceAction::Call { from, to, .. } =>
-						(from_address.is_empty() || from_address.contains(&from)) &&
-							(to_address.is_empty() || to_address.contains(&to)),
-					block::TransactionTraceAction::Create { from, .. } =>
-						(from_address.is_empty() || from_address.contains(&from)) &&
-							to_address.is_empty(),
-					block::TransactionTraceAction::Suicide { address, .. } =>
-						(from_address.is_empty() || from_address.contains(&address)) &&
-							to_address.is_empty(),
+					block::TransactionTraceAction::Call { from, to, .. } => {
+						(from_address.is_empty() || from_address.contains(&from))
+							&& (to_address.is_empty() || to_address.contains(&to))
+					},
+					block::TransactionTraceAction::Create { from, .. } => {
+						(from_address.is_empty() || from_address.contains(&from))
+							&& to_address.is_empty()
+					},
+					block::TransactionTraceAction::Suicide { address, .. } => {
+						(from_address.is_empty() || from_address.contains(&address))
+							&& to_address.is_empty()
+					},
 				})
 				.cloned()
 				.collect();
@@ -644,8 +649,8 @@ where
 				// We remove early the block cache if this batch is the last
 				// pooling this block.
 				if let Some(block_cache) = self.cached_blocks.get_mut(block) {
-					if block_cache.active_batch_count == 1 &&
-						matches!(
+					if block_cache.active_batch_count == 1
+						&& matches!(
 							block_cache.state,
 							CacheBlockState::Pooled { started: false, .. }
 						) {
@@ -752,11 +757,12 @@ where
 			overrides.current_transaction_statuses(substrate_hash),
 		) {
 			(Some(a), Some(b)) => (a, b),
-			_ =>
+			_ => {
 				return Err(format!(
 					"Failed to get Ethereum block data for Substrate block {}",
 					substrate_hash
-				)),
+				))
+			},
 		};
 
 		let eth_block_hash = eth_block.header.hash();

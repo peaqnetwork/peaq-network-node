@@ -39,16 +39,20 @@ pub fn err2str(error: &RbacError) -> &str {
 	match error {
 		RbacError { typ: RbacErrorType::EntityAlreadyExist, .. } => "RbacError.EntityAlreadyExists",
 		RbacError { typ: RbacErrorType::EntityDoesNotExist, .. } => "RbacError.EntityDoesNotExist",
-		RbacError { typ: RbacErrorType::EntityAuthorizationFailed, .. } =>
-			"RbacError.EntityAuthorizationFailed",
+		RbacError { typ: RbacErrorType::EntityAuthorizationFailed, .. } => {
+			"RbacError.EntityAuthorizationFailed"
+		},
 		RbacError { typ: RbacErrorType::EntityDisabled, .. } => "RbacError.EntityDisabled",
-		RbacError { typ: RbacErrorType::AssignmentAlreadyExist, .. } =>
-			"RbacError.AssignmentAlreadyExist",
-		RbacError { typ: RbacErrorType::AssignmentDoesNotExist, .. } =>
-			"RbacError.AssignmentDoesNotExist",
+		RbacError { typ: RbacErrorType::AssignmentAlreadyExist, .. } => {
+			"RbacError.AssignmentAlreadyExist"
+		},
+		RbacError { typ: RbacErrorType::AssignmentDoesNotExist, .. } => {
+			"RbacError.AssignmentDoesNotExist"
+		},
 		RbacError { typ: RbacErrorType::NameExceedMaxChar, .. } => "RbacError.NameExceedMaxChar",
-		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } =>
-			"RbacError.StorageExceedsMaxBounds",
+		RbacError { typ: RbacErrorType::StorageExceedsMaxBounds, .. } => {
+			"RbacError.StorageExceedsMaxBounds"
+		},
 		RbacError { typ: RbacErrorType::EntityDeleted, .. } => "RbacError.EntityDeleted",
 	}
 }
@@ -85,8 +89,9 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_role(&owner_account, entity_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) =>
-				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
+			Ok(v) => {
+				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled })
+			},
 		}
 	}
 
@@ -310,8 +315,9 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_permission(&owner, permission_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) =>
-				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
+			Ok(v) => {
+				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled })
+			},
 		}
 	}
 
@@ -551,8 +557,9 @@ where
 
 		match peaq_pallet_rbac::Pallet::<Runtime>::get_group(&owner, group_id) {
 			Err(_e) => Err(Revert::new(RevertReason::custom(err2str(&_e))).into()),
-			Ok(v) =>
-				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled }),
+			Ok(v) => {
+				Ok(Entity { id: v.id.into(), name: v.name.to_vec().into(), enabled: v.enabled })
+			},
 		}
 	}
 

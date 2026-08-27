@@ -358,12 +358,15 @@ where
 
 		let reference_id: BlockId<B> = match request_block_id {
 			RequestBlockId::Number(n) => Ok(BlockId::Number(n.unique_saturated_into())),
-			RequestBlockId::Tag(RequestBlockTag::Latest) =>
-				Ok(BlockId::Number(client.info().best_number)),
-			RequestBlockId::Tag(RequestBlockTag::Earliest) =>
-				Ok(BlockId::Number(0u32.unique_saturated_into())),
-			RequestBlockId::Tag(RequestBlockTag::Pending) =>
-				Err(internal_err("'pending' blocks are not supported")),
+			RequestBlockId::Tag(RequestBlockTag::Latest) => {
+				Ok(BlockId::Number(client.info().best_number))
+			},
+			RequestBlockId::Tag(RequestBlockTag::Earliest) => {
+				Ok(BlockId::Number(0u32.unique_saturated_into()))
+			},
+			RequestBlockId::Tag(RequestBlockTag::Pending) => {
+				Err(internal_err("'pending' blocks are not supported"))
+			},
 			RequestBlockId::Hash(eth_hash) => {
 				match futures::executor::block_on(frontier_backend_client::load_hash::<B, C>(
 					client.as_ref(),
@@ -523,8 +526,9 @@ where
 										TransactionTrace::Raw { .. } => (Default::default(), None),
 										TransactionTrace::CallList(_) => (Default::default(), None),
 										TransactionTrace::CallListNested(ref call) => match call {
-											single::Call::Blockscout(_) =>
-												(Default::default(), None),
+											single::Call::Blockscout(_) => {
+												(Default::default(), None)
+											},
 											single::Call::CallTracer(call) => (
 												call.from,
 												match call.inner {
@@ -715,11 +719,12 @@ where
 									exts,
 									tx,
 								),
-								_ =>
+								_ => {
 									return Err(internal_err(
 										"Bug: pre-london runtime expects legacy transactions"
 											.to_string(),
-									)),
+									))
+								},
 							}
 						}
 					};
@@ -760,10 +765,11 @@ where
 						proxy.using(f)?;
 						proxy.finish_transaction();
 						let response = match tracer_input {
-							TracerInput::Blockscout =>
+							TracerInput::Blockscout => {
 								peaq_client_evm_tracing::formatters::Blockscout::format(proxy)
 									.ok_or("Trace result is empty.")
-									.map_err(|e| internal_err(format!("{:?}", e))),
+									.map_err(|e| internal_err(format!("{:?}", e)))
+							},
 							TracerInput::CallTracer => {
 								let mut res =
 									peaq_client_evm_tracing::formatters::CallTracer::format(proxy)
@@ -799,12 +805,15 @@ where
 
 		let reference_id: BlockId<B> = match request_block_id {
 			RequestBlockId::Number(n) => Ok(BlockId::Number(n.unique_saturated_into())),
-			RequestBlockId::Tag(RequestBlockTag::Latest) =>
-				Ok(BlockId::Number(client.info().best_number)),
-			RequestBlockId::Tag(RequestBlockTag::Earliest) =>
-				Ok(BlockId::Number(0u32.unique_saturated_into())),
-			RequestBlockId::Tag(RequestBlockTag::Pending) =>
-				Err(internal_err("'pending' blocks are not supported")),
+			RequestBlockId::Tag(RequestBlockTag::Latest) => {
+				Ok(BlockId::Number(client.info().best_number))
+			},
+			RequestBlockId::Tag(RequestBlockTag::Earliest) => {
+				Ok(BlockId::Number(0u32.unique_saturated_into()))
+			},
+			RequestBlockId::Tag(RequestBlockTag::Pending) => {
+				Err(internal_err("'pending' blocks are not supported"))
+			},
 			RequestBlockId::Hash(eth_hash) => {
 				match futures::executor::block_on(frontier_backend_client::load_hash::<B, C>(
 					client.as_ref(),
@@ -849,7 +858,9 @@ where
 		};
 
 		if trace_api_version <= 5 {
-			return Err(internal_err("debug_traceCall not supported with old runtimes".to_string()));
+			return Err(internal_err(
+				"debug_traceCall not supported with old runtimes".to_string(),
+			));
 		}
 
 		let TraceCallParams {
@@ -956,10 +967,11 @@ where
 				proxy.using(f)?;
 				proxy.finish_transaction();
 				let response = match tracer_input {
-					TracerInput::Blockscout =>
+					TracerInput::Blockscout => {
 						peaq_client_evm_tracing::formatters::Blockscout::format(proxy)
 							.ok_or("Trace result is empty.")
-							.map_err(|e| internal_err(format!("{:?}", e))),
+							.map_err(|e| internal_err(format!("{:?}", e)))
+					},
 					TracerInput::CallTracer => {
 						let mut res =
 							peaq_client_evm_tracing::formatters::CallTracer::format(proxy)

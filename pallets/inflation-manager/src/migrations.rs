@@ -94,8 +94,8 @@ mod upgrade {
 				// Just for the security check, recaulcate_at should be larger than block_number_now
 				if recalculate_at > block_number_now {
 					DoRecalculationAt::<T>::put(
-						block_number_now +
-							(recalculate_at - block_number_now).saturating_mul(2_u32.into()),
+						block_number_now
+							+ (recalculate_at - block_number_now).saturating_mul(2_u32.into()),
 					);
 					weight_writes += 1;
 				}
@@ -105,8 +105,8 @@ mod upgrade {
 				// Setup the delay TGE if it had
 				if initial_at > block_number_now {
 					DoInitializeAt::<T>::put(
-						block_number_now +
-							(initial_at - block_number_now).saturating_mul(2_u32.into()),
+						block_number_now
+							+ (initial_at - block_number_now).saturating_mul(2_u32.into()),
 					);
 					weight_writes += 1;
 				}

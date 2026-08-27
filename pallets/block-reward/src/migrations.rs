@@ -2,8 +2,8 @@
 
 use super::*;
 use frame_support::{storage_alias, weights::Weight};
-use sp_runtime::Perbill;
 use serde::{Deserialize, Serialize};
+use sp_runtime::Perbill;
 
 pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 	v3::MigrateToV3x::<T>::on_runtime_upgrade()
@@ -100,7 +100,9 @@ mod v3 {
 			match Pallet::<T>::validate_sinks(candidate) {
 				Ok(sinks) => {
 					for sink in sinks.iter() {
-						frame_system::Pallet::<T>::inc_providers(&Pallet::<T>::resolve(&sink.target));
+						frame_system::Pallet::<T>::inc_providers(&Pallet::<T>::resolve(
+							&sink.target,
+						));
 					}
 					log!(info, "block-reward: migrated to {} configured sink(s)", sinks.len());
 					let reads = sinks.len() as u64;
@@ -130,7 +132,9 @@ mod v3 {
 			ExternalityBuilder::build().execute_with(|| {
 				// The value doesn't matter any more, only its presence as the
 				// "this chain still needs migrating" trigger.
-				RewardDistributionConfigStorage::<TestRuntime>::put(RewardDistributionConfig::default());
+				RewardDistributionConfigStorage::<TestRuntime>::put(
+					RewardDistributionConfig::default(),
+				);
 
 				let _ = MigrateToV3x::<TestRuntime>::on_runtime_upgrade();
 

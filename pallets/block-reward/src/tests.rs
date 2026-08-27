@@ -142,8 +142,10 @@ fn set_sinks_is_ok() {
 
 #[test]
 fn genesis_build_populates_sinks() {
-	let sinks =
-		vec![treasury_sink(Perbill::from_percent(60)), collator_delegator_sink(Perbill::from_percent(40))];
+	let sinks = vec![
+		treasury_sink(Perbill::from_percent(60)),
+		collator_delegator_sink(Perbill::from_percent(40)),
+	];
 	ExternalityBuilder::build_with_sinks(sinks.clone()).execute_with(|| {
 		assert_eq!(BlockReward::sinks().into_inner(), sinks.clone());
 
@@ -165,18 +167,16 @@ fn genesis_build_panics_on_invalid_sinks() {
 #[test]
 fn resolve_maps_pallet_and_evm_targets() {
 	ExternalityBuilder::build().execute_with(|| {
-		let expected_treasury: AccountId =
-			<frame_support::PalletId as AccountIdConversion<AccountId>>::into_account_truncating(
-				&TREASURY_POT,
-			);
+		let expected_treasury: AccountId = <frame_support::PalletId as AccountIdConversion<
+			AccountId,
+		>>::into_account_truncating(&TREASURY_POT);
 		assert_eq!(
 			BlockReward::resolve(&RewardTarget::Pallet(TREASURY_POT.into())),
 			expected_treasury
 		);
 
-		let expected_machine_pool = <MockAddressMapping as AddressMapping<AccountId>>::into_account_id(
-			MACHINE_POOL_EVM,
-		);
+		let expected_machine_pool =
+			<MockAddressMapping as AddressMapping<AccountId>>::into_account_id(MACHINE_POOL_EVM);
 		assert_eq!(
 			BlockReward::resolve(&RewardTarget::Evm(MACHINE_POOL_EVM)),
 			expected_machine_pool
@@ -190,7 +190,10 @@ pub fn inflation_and_total_issuance_as_expected() {
 		// Needs a configured sink, otherwise the issued reward is burned right back
 		// (see `distribute_imbalances_burns_reward_if_sinks_somehow_empty`) and
 		// issuance wouldn't grow at all -- this test is about inflation, not sinks.
-		assert_ok!(BlockReward::set_sinks(RuntimeOrigin::root(), bounded(vec![treasury_sink(Perbill::one())])));
+		assert_ok!(BlockReward::set_sinks(
+			RuntimeOrigin::root(),
+			bounded(vec![treasury_sink(Perbill::one())])
+		));
 
 		let init_issuance = <TestRuntime as Config>::Currency::total_issuance();
 		let block_reward: Balance = InflationManagerPallet::<TestRuntime>::block_rewards();
@@ -244,7 +247,8 @@ pub fn reward_distribution_as_expected() {
 		];
 		assert_ok!(BlockReward::set_sinks(RuntimeOrigin::root(), bounded(sinks.clone())));
 
-		let accounts: Vec<AccountId> = sinks.iter().map(|s| BlockReward::resolve(&s.target)).collect();
+		let accounts: Vec<AccountId> =
+			sinks.iter().map(|s| BlockReward::resolve(&s.target)).collect();
 
 		// Ensure that initially, all sinks have no free balance
 		let init_balances = free_balances(&accounts);
@@ -268,11 +272,14 @@ pub fn reward_distribution_as_expected() {
 #[test]
 pub fn on_unbalanced_distributes_according_to_sinks() {
 	ExternalityBuilder::build().execute_with(|| {
-		let sinks =
-			vec![treasury_sink(Perbill::from_percent(70)), machine_pool_sink(Perbill::from_percent(30))];
+		let sinks = vec![
+			treasury_sink(Perbill::from_percent(70)),
+			machine_pool_sink(Perbill::from_percent(30)),
+		];
 		assert_ok!(BlockReward::set_sinks(RuntimeOrigin::root(), bounded(sinks.clone())));
 
-		let accounts: Vec<AccountId> = sinks.iter().map(|s| BlockReward::resolve(&s.target)).collect();
+		let accounts: Vec<AccountId> =
+			sinks.iter().map(|s| BlockReward::resolve(&s.target)).collect();
 		let before = free_balances(&accounts);
 
 		let amount = 1_000_000_000_000 as Balance;
