@@ -30,11 +30,10 @@ where
 		let asset_id1: PeaqAssetId = asset1.try_into().ok()?;
 
 		match (asset_id0, asset_id1) {
-			(PeaqAssetId::Token(symbol0), PeaqAssetId::Token(symbol1)) => {
+			(PeaqAssetId::Token(symbol0), PeaqAssetId::Token(symbol1)) =>
 				AssetIdToZenlinkId::<T::SelfParaId>::convert(
 					PeaqAssetId::LPToken(symbol0, symbol1).try_into().ok()?,
-				)
-			},
+				),
 
 			(_, _) => None,
 		}

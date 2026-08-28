@@ -9,6 +9,19 @@ pub(crate) fn on_runtime_upgrade<T: Config>() -> Weight {
 	v3::MigrateToV3x::<T>::on_runtime_upgrade()
 }
 
+#[cfg(feature = "try-runtime")]
+pub(crate) fn pre_upgrade<T: Config>() -> Result<sp_std::vec::Vec<u8>, sp_runtime::TryRuntimeError>
+{
+	v3::MigrateToV3x::<T>::pre_upgrade()
+}
+
+#[cfg(feature = "try-runtime")]
+pub(crate) fn post_upgrade<T: Config>(
+	state: sp_std::vec::Vec<u8>,
+) -> Result<(), sp_runtime::TryRuntimeError> {
+	v3::MigrateToV3x::<T>::post_upgrade(state)
+}
+
 mod v3 {
 	use super::*;
 
@@ -84,6 +97,45 @@ mod v3 {
 				log!(info, "Migrating to {:?} Done.", current);
 			}
 			T::DbWeight::get().reads_writes(weight_reads, weight_writes)
+		}
+
+		/// Records whether this chain actually needs migrating (`on_chain_storage_version
+		/// < in_code_storage_version`) pre-upgrade, so `post_upgrade` can tell a
+		/// migration that genuinely had nothing to do (chain already migrated) apart
+		/// from one that silently no-op'd -- e.g. because the legacy trigger storage
+		/// was unexpectedly missing, or `T::MigrationSinks` was invalid -- leaving
+		/// `Sinks` empty and every future block reward burned.
+		#[cfg(feature = "try-runtime")]
+		pub(crate) fn pre_upgrade() -> Result<sp_std::vec::Vec<u8>, sp_runtime::TryRuntimeError> {
+			let needs_migration =
+				Pallet::<T>::on_chain_storage_version() < Pallet::<T>::in_code_storage_version();
+			Ok(needs_migration.encode())
+		}
+
+		/// Asserts the storage version was bumped and, if the chain needed migrating
+		/// pre-upgrade, that `Sinks` ended up non-empty -- an empty `Sinks`
+		/// post-migration means every future block reward gets burned instead of
+		/// distributed (see `Pallet::distribute_imbalances`).
+		#[cfg(feature = "try-runtime")]
+		pub(crate) fn post_upgrade(
+			state: sp_std::vec::Vec<u8>,
+		) -> Result<(), sp_runtime::TryRuntimeError> {
+			let needed_migration: bool = Decode::decode(&mut state.as_ref())
+				.map_err(|_| "block-reward migration: cannot decode pre_upgrade state")?;
+
+			frame_support::ensure!(
+				Pallet::<T>::on_chain_storage_version() >= Pallet::<T>::in_code_storage_version(),
+				"block-reward migration: on-chain storage version was not bumped to the in-code version"
+			);
+
+			if needed_migration {
+				frame_support::ensure!(
+					!Sinks::<T>::get().is_empty(),
+					"block-reward migration: chain needed migrating but Sinks is empty post-upgrade -- future rewards would be burned"
+				);
+			}
+
+			Ok(())
 		}
 
 		/// Validates `candidate` and, if valid, adopts it as the new `Sinks`. Returns
@@ -167,6 +219,40 @@ mod v3 {
 					Pallet::<TestRuntime>::in_code_storage_version()
 				);
 				assert!(Sinks::<TestRuntime>::get().is_empty());
+			});
+		}
+
+		#[test]
+		#[cfg(feature = "try-runtime")]
+		fn post_upgrade_fails_when_migration_needed_but_sinks_ends_up_empty() {
+			ExternalityBuilder::build().execute_with(|| {
+				// Legacy trigger storage missing while the chain still reports an
+				// outdated storage version -- the migration silently does nothing
+				// beyond bumping the version, so `Sinks` stays empty and every future
+				// block reward would be burned. `post_upgrade` must catch this.
+				assert!(!RewardDistributionConfigStorage::<TestRuntime>::exists());
+
+				let state = MigrateToV3x::<TestRuntime>::pre_upgrade().unwrap();
+				let _ = MigrateToV3x::<TestRuntime>::on_runtime_upgrade();
+
+				assert!(Sinks::<TestRuntime>::get().is_empty());
+				assert!(MigrateToV3x::<TestRuntime>::post_upgrade(state).is_err());
+			});
+		}
+
+		#[test]
+		#[cfg(feature = "try-runtime")]
+		fn post_upgrade_succeeds_when_migration_populates_sinks() {
+			ExternalityBuilder::build().execute_with(|| {
+				RewardDistributionConfigStorage::<TestRuntime>::put(
+					RewardDistributionConfig::default(),
+				);
+
+				let state = MigrateToV3x::<TestRuntime>::pre_upgrade().unwrap();
+				let _ = MigrateToV3x::<TestRuntime>::on_runtime_upgrade();
+
+				assert!(!Sinks::<TestRuntime>::get().is_empty());
+				assert!(MigrateToV3x::<TestRuntime>::post_upgrade(state).is_ok());
 			});
 		}
 
