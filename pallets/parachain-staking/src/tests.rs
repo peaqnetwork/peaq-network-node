@@ -1561,16 +1561,16 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			roll_to(15, authors.clone());
 			let normal_odd_total_stake: u64 = 2 * (32 + 8 + 16) + 3 * (8 + 16);
 
-			let normal_odd_reward_1 = Perbill::from_rational(2 * 32, normal_odd_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_odd_reward_3 = Perbill::from_rational(2 * 8, normal_odd_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_odd_reward_4 = Perbill::from_rational(2 * 16, normal_odd_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_odd_reward_2 = Perbill::from_rational(3 * 8, normal_odd_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_odd_reward_5 = Perbill::from_rational(3 * 16, normal_odd_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_1 = Perbill::from_rational(2 * 32, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_3 = Perbill::from_rational(2 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_4 = Perbill::from_rational(2 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_2 = Perbill::from_rational(3 * 8, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_odd_reward_5 = Perbill::from_rational(3 * 16, normal_odd_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
 
 			assert_eq!(
 				Balances::free_balance(1),
@@ -1597,94 +1597,94 @@ fn coinbase_rewards_many_blocks_simple_check() {
 			roll_to(20, authors.clone());
 			let normal_even_total_stake: u64 = 3 * (32 + 8 + 16) + 2 * (8 + 16);
 
-			let normal_even_reward_1 = Perbill::from_rational(3 * 32, normal_even_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_even_reward_3 = Perbill::from_rational(3 * 8, normal_even_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_even_reward_4 = Perbill::from_rational(3 * 16, normal_even_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_even_reward_2 = Perbill::from_rational(2 * 8, normal_even_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
-			let normal_even_reward_5 = Perbill::from_rational(2 * 16, normal_even_total_stake)
-				* BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_1 = Perbill::from_rational(3 * 32, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_3 = Perbill::from_rational(3 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_4 = Perbill::from_rational(3 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_2 = Perbill::from_rational(2 * 8, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
+			let normal_even_reward_5 = Perbill::from_rational(2 * 16, normal_even_total_stake) *
+				BLOCK_REWARD_IN_NORMAL_SESSION;
 
 			assert_eq!(
 				Balances::free_balance(1),
-				genesis_reward_1
-					+ normal_odd_reward_1
-					+ normal_even_reward_1
-					+ 40_000_000 * DECIMALS
+				genesis_reward_1 +
+					normal_odd_reward_1 +
+					normal_even_reward_1 +
+					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(2),
-				genesis_reward_2
-					+ normal_odd_reward_2
-					+ normal_even_reward_2
-					+ 40_000_000 * DECIMALS
+				genesis_reward_2 +
+					normal_odd_reward_2 +
+					normal_even_reward_2 +
+					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(3),
-				genesis_reward_3
-					+ normal_odd_reward_3
-					+ normal_even_reward_3
-					+ 40_000_000 * DECIMALS
+				genesis_reward_3 +
+					normal_odd_reward_3 +
+					normal_even_reward_3 +
+					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(4),
-				genesis_reward_4
-					+ normal_odd_reward_4
-					+ normal_even_reward_4
-					+ 20_000_000 * DECIMALS
+				genesis_reward_4 +
+					normal_odd_reward_4 +
+					normal_even_reward_4 +
+					20_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(5),
-				genesis_reward_5
-					+ normal_odd_reward_5
-					+ normal_even_reward_5
-					+ 20_000_000 * DECIMALS
+				genesis_reward_5 +
+					normal_odd_reward_5 +
+					normal_even_reward_5 +
+					20_000_000 * DECIMALS
 			);
 
 			roll_to(end_block + 5, authors.clone());
 			let multiply_factor = (end_block as u128 - 5) / 10;
 			assert_eq!(
 				Balances::free_balance(1),
-				genesis_reward_1
-					+ (normal_odd_reward_1 + normal_even_reward_1) * multiply_factor
-					+ 40_000_000 * DECIMALS
+				genesis_reward_1 +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(2),
-				genesis_reward_2
-					+ (normal_odd_reward_2 + normal_even_reward_2) * multiply_factor
-					+ 40_000_000 * DECIMALS
+				genesis_reward_2 +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(3),
-				genesis_reward_3
-					+ (normal_odd_reward_3 + normal_even_reward_3) * multiply_factor
-					+ 40_000_000 * DECIMALS
+				genesis_reward_3 +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					40_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(4),
-				genesis_reward_4
-					+ (normal_odd_reward_4 + normal_even_reward_4) * multiply_factor
-					+ 20_000_000 * DECIMALS
+				genesis_reward_4 +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					20_000_000 * DECIMALS
 			);
 			assert_eq!(
 				Balances::free_balance(5),
-				genesis_reward_5
-					+ (normal_odd_reward_5 + normal_even_reward_5) * multiply_factor
-					+ 20_000_000 * DECIMALS
+				genesis_reward_5 +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor +
+					20_000_000 * DECIMALS
 			);
 
 			// Check total issue number
 			assert!(almost_equal(
-				total_issuance
-					+ (normal_odd_reward_1 + normal_even_reward_1) * multiply_factor
-					+ (normal_odd_reward_2 + normal_even_reward_2) * multiply_factor
-					+ (normal_odd_reward_3 + normal_even_reward_3) * multiply_factor
-					+ (normal_odd_reward_4 + normal_even_reward_4) * multiply_factor
-					+ (normal_odd_reward_5 + normal_even_reward_5) * multiply_factor,
+				total_issuance +
+					(normal_odd_reward_1 + normal_even_reward_1) * multiply_factor +
+					(normal_odd_reward_2 + normal_even_reward_2) * multiply_factor +
+					(normal_odd_reward_3 + normal_even_reward_3) * multiply_factor +
+					(normal_odd_reward_4 + normal_even_reward_4) * multiply_factor +
+					(normal_odd_reward_5 + normal_even_reward_5) * multiply_factor,
 				<Test as Config>::Currency::total_issuance(),
 				Perbill::from_perthousand(1)
 			));
@@ -1725,13 +1725,13 @@ fn should_reward_delegators_below_min_stake() {
 			roll_to(10, authors);
 			assert_eq!(
 				Balances::usable_balance(1),
-				Perquintill::from_rational(stake_num, total_stake_num)
-					* BLOCK_REWARD_IN_GENESIS_SESSION
+				Perquintill::from_rational(stake_num, total_stake_num) *
+					BLOCK_REWARD_IN_GENESIS_SESSION
 			);
 			assert_eq!(
 				Balances::usable_balance(4) - stake_num,
-				Perquintill::from_rational(delegator_stake_below_min, total_stake_num)
-					* BLOCK_REWARD_IN_GENESIS_SESSION
+				Perquintill::from_rational(delegator_stake_below_min, total_stake_num) *
+					BLOCK_REWARD_IN_GENESIS_SESSION
 			);
 
 			assert_eq!(Balances::usable_balance(2), Balance::zero());
@@ -3475,9 +3475,9 @@ fn check_claim_block_normal_wo_delegator() {
 			roll_to(15, authors.clone());
 			assert_eq!(
 				Balances::free_balance(1),
-				collator_1_percentage * BLOCK_REWARD_IN_GENESIS_SESSION
-					+ BLOCK_REWARD_IN_NORMAL_SESSION
-					+ origin_balance
+				collator_1_percentage * BLOCK_REWARD_IN_GENESIS_SESSION +
+					BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
 			);
 			assert_eq!(
 				Balances::free_balance(2),
@@ -3565,10 +3565,10 @@ fn check_claim_block_normal_wi_delegator() {
 			let total_stake_in_round_1 = 5 * collator_1_total_stake;
 			assert_eq!(
 				Balances::free_balance(1),
-				collator_1_percentage * BLOCK_REWARD_IN_GENESIS_SESSION
-					+ Perquintill::from_rational(5 * stake, total_stake_in_round_1)
-						* BLOCK_REWARD_IN_NORMAL_SESSION
-					+ origin_balance
+				collator_1_percentage * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_rational(5 * stake, total_stake_in_round_1) *
+						BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
 			);
 			// TODO fails because DelayedPayoutInfo.total_issuance is 5001 not 5000
 			// Delegator 5's balance 10000000000000000003036
@@ -3581,10 +3581,10 @@ fn check_claim_block_normal_wi_delegator() {
 			// );
 			assert_eq!(
 				Balances::free_balance(6),
-				delegator_6_percentage * BLOCK_REWARD_IN_GENESIS_SESSION
-					+ Perquintill::from_rational(5 * 6 * stake, total_stake_in_round_1)
-						* BLOCK_REWARD_IN_NORMAL_SESSION
-					+ origin_balance
+				delegator_6_percentage * BLOCK_REWARD_IN_GENESIS_SESSION +
+					Perquintill::from_rational(5 * 6 * stake, total_stake_in_round_1) *
+						BLOCK_REWARD_IN_NORMAL_SESSION +
+					origin_balance
 			);
 
 			// Nothing change
@@ -3838,8 +3838,8 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(0, 1).unwrap(), candidate_1);
 			assert_eq!(StakePallet::at_stake(0, 2).unwrap(), candidate_2);
 			// check delayed payout info
-			let total_stake = author_1_total_stake * author_blocks as u128
-				+ author_2_total_stake * author_blocks as u128;
+			let total_stake = author_1_total_stake * author_blocks as u128 +
+				author_2_total_stake * author_blocks as u128;
 			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_GENESIS_SESSION);
@@ -3854,8 +3854,8 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(1, 1).unwrap(), candidate_1);
 			assert_eq!(StakePallet::at_stake(1, 2).unwrap(), candidate_2);
 			// check delayed payout info
-			let total_stake = author_blocks as u128 * author_1_total_stake
-				+ author_blocks_alt as u128 * author_2_total_stake;
+			let total_stake = author_blocks as u128 * author_1_total_stake +
+				author_blocks_alt as u128 * author_2_total_stake;
 			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);
@@ -3871,8 +3871,8 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(2, 2).unwrap(), candidate_2);
 			// check delayed payout info
 			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
-			let total_stake = author_blocks_alt as u128 * author_1_total_stake
-				+ author_blocks as u128 * author_2_total_stake;
+			let total_stake = author_blocks_alt as u128 * author_1_total_stake +
+				author_blocks as u128 * author_2_total_stake;
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			// TODO total issuance is 1 token more than expected
 			// assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);
@@ -3888,8 +3888,8 @@ fn check_snapshot() {
 			assert_eq!(StakePallet::at_stake(3, 2).unwrap(), candidate_2);
 			// check delayed payout info
 			let delayed_payout_info = StakePallet::delayed_payout_info().unwrap();
-			let total_stake = author_blocks as u128 * author_1_total_stake
-				+ author_blocks_alt as u128 * author_2_total_stake;
+			let total_stake = author_blocks as u128 * author_1_total_stake +
+				author_blocks_alt as u128 * author_2_total_stake;
 			assert_eq!(delayed_payout_info.total_stake, total_stake);
 			// TODO total issuance is 1 token more than expected
 			// assert_eq!(delayed_payout_info.total_issuance, BLOCK_REWARD_IN_NORMAL_SESSION);

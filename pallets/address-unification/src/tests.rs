@@ -44,8 +44,8 @@ fn claim_account_work() {
 			},
 		));
 		assert!(
-			Accounts::<Runtime>::contains_key(AddressUnificationModule::evm_address(&alice()))
-				&& EvmAddresses::<Runtime>::contains_key(ALICE)
+			Accounts::<Runtime>::contains_key(AddressUnificationModule::evm_address(&alice())) &&
+				EvmAddresses::<Runtime>::contains_key(ALICE)
 		);
 	});
 }
@@ -129,8 +129,8 @@ fn claim_default_account_work() {
 			crate::Event::ClaimAccount { account_id: ALICE, evm_address },
 		));
 		assert!(
-			Accounts::<Runtime>::contains_key(evm_address)
-				&& EvmAddresses::<Runtime>::contains_key(ALICE)
+			Accounts::<Runtime>::contains_key(evm_address) &&
+				EvmAddresses::<Runtime>::contains_key(ALICE)
 		);
 	});
 }

@@ -95,8 +95,8 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 			self.asset_location_and_units_per_second.clone()
 		{
 			let weight = weight.min(self.weight);
-			let amount = units_per_second.saturating_mul(weight.ref_time() as u128)
-				/ (WEIGHT_REF_TIME_PER_SECOND as u128);
+			let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
+				(WEIGHT_REF_TIME_PER_SECOND as u128);
 
 			self.weight = self.weight.saturating_sub(weight);
 			self.consumed = self.consumed.saturating_sub(amount);

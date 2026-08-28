@@ -219,6 +219,16 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			migrations::on_runtime_upgrade::<T>()
 		}
+
+		#[cfg(feature = "try-runtime")]
+		fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::TryRuntimeError> {
+			migrations::pre_upgrade::<T>()
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
+			migrations::post_upgrade::<T>(state)
+		}
 	}
 
 	#[pallet::call]
@@ -294,8 +304,8 @@ pub mod pallet {
 		/// fit within `MaxSinks`. Shared by the `set_sinks` extrinsic and by the
 		/// `migrations::v3::MigrateToV3x` migration.
 		pub(crate) fn validate_sinks(new_sinks: Vec<Sink>) -> Result<SinksOf<T>, Error<T>> {
-			// 1. Anteile muessen exakt 100 % ergeben -- kein Rundungsrest,
-			//    keine stille Ueberausschuettung.
+			// 1. Anteile muessen exakt 100 % ergeben -- kein Rundungsrest, keine stille
+			//    Ueberausschuettung.
 			let sum = new_sinks
 				.iter()
 				.try_fold(0u64, |acc, s| acc.checked_add(s.share.deconstruct() as u64))
@@ -303,8 +313,8 @@ pub mod pallet {
 			ensure!(sum == Perbill::one().deconstruct() as u64, Error::<T>::InvalidShareSum);
 			ensure!(new_sinks.iter().all(|s| !s.share.is_zero()), Error::<T>::ZeroShare);
 
-			// 2. Auf Konto-Ebene deduplizieren, nicht auf Target-Ebene:
-			//    entscheidend ist, wo das Geld landet.
+			// 2. Auf Konto-Ebene deduplizieren, nicht auf Target-Ebene: entscheidend ist, wo das
+			//    Geld landet.
 			let accounts: Vec<T::AccountId> =
 				new_sinks.iter().map(|s| Self::resolve(&s.target)).collect();
 			for (i, a) in accounts.iter().enumerate() {
@@ -317,9 +327,8 @@ pub mod pallet {
 		/// Resolves to an address in dependency of the sink type / reward target.
 		pub fn resolve(target: &RewardTarget) -> T::AccountId {
 			match target {
-				RewardTarget::Pallet(id) => {
-					frame_support::PalletId::from(*id).into_account_truncating()
-				},
+				RewardTarget::Pallet(id) =>
+					frame_support::PalletId::from(*id).into_account_truncating(),
 				RewardTarget::Evm(addr) => T::AddressMapping::into_account_id(*addr),
 			}
 		}
