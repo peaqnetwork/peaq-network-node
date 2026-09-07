@@ -20,12 +20,7 @@ serde_json = { workspace = true, optional = true }
 frame-support = { workspace = true, default-features = false }
 zenlink-protocol = { workspace = true, default-features = false }
 pallet-assets = { workspace = true, default-features = false }
-xc-asset-config = { path = "../../pallets/xc-asset-config", default-features = false }
 pallet-evm = { workspace = true, default-features = false }
-xcm-executor = { workspace = true, default-features = false }
-xcm-builder = { workspace = true, default-features = false }
-xcm = { workspace = true, default-features = false }
-orml-traits = { workspace = true, default-features = false }
 
 [dev-dependencies]
 once_cell = { workspace = true }
@@ -45,12 +40,7 @@ std = [
 	"frame-support/std",
 	"pallet-assets/std",
 	"pallet-evm/std",
-	"xc-asset-config/std",
-	"xcm-executor/std",
-	"xcm/std",
-	"xcm-builder/std",
 	"zenlink-protocol/std",
-	"orml-traits/std",
 	"serde",
 	"serde_json",
 ]

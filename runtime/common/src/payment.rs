@@ -9,7 +9,7 @@ use frame_support::{
 use frame_system::Config as SysConfig;
 use orml_traits::MultiCurrency;
 use pallet_evm::{EVMCurrencyAdapter, OnChargeEVMTransaction as OnChargeEVMTransactionT};
-use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction};
+use pallet_transaction_payment::{Config as TransPayConfig, OnChargeTransaction, TxCreditHold};
 use sp_core::{H160, U256};
 use sp_runtime::{
 	traits::{
@@ -37,6 +37,18 @@ type EVMNegativeImbalanceOf<C, T> = <C as Currency<EVMAccountIdOf<T>>>::Negative
 pub struct PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>(
 	PhantomData<(C, OU, PCPC, FEE)>,
 );
+
+/// `OnChargeTransaction` requires this since stable2603, so that the pallet can park the withdrawn
+/// fee credit in temporary storage for other pallets to inspect during tx application.
+///
+/// This adapter keeps the withdrawn fee in its own `LiquidityInfo` (a `Currency` negative
+/// imbalance) rather than handing it to the pallet, so there is no credit to store. This mirrors
+/// upstream `CurrencyAdapter`, which sets `Credit` to `()` for the same reason.
+impl<T: TransPayConfig, C, OU, PCPC, FEE> TxCreditHold<T>
+	for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>
+{
+	type Credit = ();
+}
 
 impl<T, C, OU, PCPC, FEE> OnChargeTransaction<T>
 	for PeaqMultiCurrenciesOnChargeTransaction<C, OU, PCPC, FEE>

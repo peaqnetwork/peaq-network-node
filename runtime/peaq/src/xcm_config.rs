@@ -9,8 +9,10 @@ use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
 	traits::{
-		fungible::Credit, fungibles, Contains, Everything, Imbalance, Nothing, OnUnbalanced,
-		TransformOrigin,
+		fungible::Credit,
+		fungibles,
+		tokens::imbalance::{ImbalanceAccounting, UnsafeManualAccounting},
+		Contains, Everything, Imbalance, Nothing, OnUnbalanced, TransformOrigin,
 	},
 };
 use frame_system::EnsureRoot;
@@ -43,10 +45,9 @@ use xcm_builder::{
 	TakeWeightCredit, TrailingSetTopicAsId, UsingComponents, WithComputedOrigin,
 	XcmFeeManagerFromComponents,
 };
-use xcm_executor::{traits::JustTry, XcmExecutor};
+use xcm_executor::{traits::JustTry, AssetsInHolding, XcmExecutor};
 
 use frame_support::pallet_prelude::Get;
-use sp_runtime::traits::Zero;
 use sp_std::marker::PhantomData;
 use xcm_executor::traits::MatchesFungibles;
 
@@ -99,36 +100,50 @@ pub struct XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>(
 );
 impl<
 		AccountId: Eq,
-		Assets: fungibles::Mutate<AccountId>,
+		Assets: fungibles::Balanced<AccountId, OnDropCredit: 'static, OnDropDebt: 'static>,
 		Matcher: MatchesFungibles<Assets::AssetId, Assets::Balance>,
 		FeeDestination: Get<AccountId>,
 	> TakeRevenue for XcmFungibleFeeHandler<AccountId, Matcher, Assets, FeeDestination>
+where
+	Assets::AssetId: 'static,
+	Assets::Balance: 'static,
 {
-	fn take_revenue(revenue: Asset) {
-		match Matcher::matches_fungibles(&revenue) {
-			Ok((asset_id, amount)) =>
-				if amount > Zero::zero() {
-					if let Err(error) =
-						Assets::mint_into(asset_id.clone(), &FeeDestination::get(), amount)
-					{
-						log::error!(
-							target: "xcm::weight",
-							"XcmFeeHandler::take_revenue failed when minting asset: {:?}", error,
-						);
-					} else {
-						log::trace!(
-							target: "xcm::weight",
-							"XcmFeeHandler::take_revenue took {:?} of asset Id {:?}",
-							amount, asset_id,
-						);
-					}
-				},
-			Err(_) => {
+	fn take_revenue(revenue: AssetsInHolding) {
+		let destination = FeeDestination::get();
+		// The holding register carries real imbalances, so the fee has already been withdrawn
+		// from the payer. It is deposited by resolving the credit into the destination account;
+		// minting it here instead would double-count the fee.
+		for (asset_id, imbalance) in revenue.fungible {
+			let amount = imbalance.amount();
+			if amount == 0 {
+				continue;
+			}
+
+			let asset: Asset = (asset_id, amount).into();
+			let Ok((local_asset_id, _)) = Matcher::matches_fungibles(&asset) else {
 				log::error!(
 					target: "xcm::weight",
 					"XcmFeeHandler:take_revenue failed to match fungible asset, it has been burned."
 				);
-			},
+				continue;
+			};
+
+			let mut credit = fungibles::Credit::<AccountId, Assets>::zero(local_asset_id.clone());
+			credit.saturating_subsume(imbalance);
+
+			if Assets::resolve(&destination, credit).is_err() {
+				log::error!(
+					target: "xcm::weight",
+					"XcmFeeHandler::take_revenue failed to deposit asset Id {:?}, it has been burned.",
+					local_asset_id,
+				);
+			} else {
+				log::trace!(
+					target: "xcm::weight",
+					"XcmFeeHandler::take_revenue took {:?} of asset Id {:?}",
+					amount, local_asset_id,
+				);
+			}
 		}
 	}
 }
