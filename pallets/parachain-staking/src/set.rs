@@ -297,7 +297,7 @@ mod tests {
 		pub const One: u32 = 1;
 		#[derive(PartialEq, Eq, Debug)]
 		pub const Eight: u32 = 8;
-		#[derive(PartialEq, Eq, Clone)]
+		#[derive(PartialEq, Eq, Clone, Debug)]
 		pub const Five: u32 = 5;
 	}
 

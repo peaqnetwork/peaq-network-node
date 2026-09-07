@@ -39,7 +39,7 @@ use crate::{set::OrderedSet, Config};
 ///
 /// The stake has a destination account (to which the stake is directed) and an
 /// amount of funds staked.
-#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
 pub struct Stake<AccountId, Balance>
 where
@@ -90,7 +90,7 @@ pub type Reward<AccountId, Balance> = Stake<AccountId, Balance>;
 
 /// The activity status of the collator.
 #[derive(
-	Copy, Clone, Default, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen,
+	Copy, Clone, Default, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug,
 )]
 pub enum CandidateStatus {
 	/// Committed to be online and producing valid blocks (not equivocating)
@@ -100,7 +100,7 @@ pub enum CandidateStatus {
 	Leaving(SessionIndex),
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 #[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
 pub struct OldCandidate<AccountId, Balance, MaxDelegatorsPerCandidate>
@@ -116,7 +116,7 @@ where
 	pub status: CandidateStatus,
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 #[scale_info(skip_type_params(MaxDelegatorsPerCandidate))]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
 /// Global collator state with commission fee, staked funds, and delegations
@@ -230,7 +230,7 @@ where
 	}
 }
 
-#[derive(Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 #[scale_info(skip_type_params(MaxCollatorsPerDelegator))]
 #[codec(mel_bound(AccountId: MaxEncodedLen, Balance: MaxEncodedLen))]
 pub struct Delegator<AccountId: Eq + Ord, Balance: Eq + Ord, MaxCollatorsPerDelegator: Get<u32>> {
@@ -336,7 +336,7 @@ where
 }
 
 /// The current round index and transition information.
-#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, MaxEncodedLen, Debug)]
 pub struct RoundInfo<BlockNumber> {
 	/// Current round index.
 	pub current: SessionIndex,
@@ -382,7 +382,7 @@ where
 /// The total stake of the pallet.
 ///
 /// The stake includes both collators' and delegators' staked funds.
-#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 pub struct TotalStake<Balance: Default> {
 	pub collators: Balance,
 	pub delegators: Balance,
@@ -390,7 +390,7 @@ pub struct TotalStake<Balance: Default> {
 
 /// The number of delegations a delegator has done within the last session in
 /// which they delegated.
-#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 pub struct DelegationCounter {
 	/// The index of the last delegation.
 	pub round: SessionIndex,
@@ -411,7 +411,7 @@ pub type CandidateOf<T, S> = Candidate<AccountIdOf<T>, BalanceOf<T>, S>;
 pub type MaxDelegatorsPerCollator<T> = <T as Config>::MaxDelegatorsPerCollator;
 pub type StakeOf<T> = Stake<AccountIdOf<T>, BalanceOf<T>>;
 
-#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Default, Clone, Encode, Decode, PartialEq, Eq, TypeInfo, MaxEncodedLen, Debug)]
 /// Info needed to make delayed payments to stakers after round end
 pub struct DelayedPayoutInfoT<SessionIndex, Balance: Default> {
 	/// The round index for which payouts should be made
