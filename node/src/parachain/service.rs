@@ -57,7 +57,6 @@ macro_rules! declare_executor {
 }
 
 declare_executor!(dev, peaq_dev_runtime);
-declare_executor!(krest, peaq_krest_runtime);
 declare_executor!(peaq, peaq_runtime);
 
 #[cfg(feature = "runtime-benchmarks")]

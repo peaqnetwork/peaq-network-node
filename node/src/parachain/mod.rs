@@ -11,7 +11,6 @@ pub mod service;
 
 /// Parachain specs.
 pub mod dev_chain_spec;
-pub mod krest_chain_spec;
 pub mod peaq_chain_spec;
 
 pub use service::build_import_queue;

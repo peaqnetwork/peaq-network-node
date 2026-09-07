@@ -44,7 +44,7 @@
 #
 # ARGUMENTS:
 #   chain       - Chain name to benchmark (default: peaq-local)
-#                 Common options: peaq-local, peaq, dev-local, krest, krest-local
+#                 Common options: peaq-local, peaq, dev-local
 #   binary_path - Path to peaq-node binary (default: ./target/release/peaq-node)
 #                 The script will attempt to build it if it doesn't exist
 #   steps       - Number of steps for benchmarking (default: 50)

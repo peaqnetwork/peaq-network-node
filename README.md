@@ -162,25 +162,6 @@ docker run -v $(pwd)/async-agung-parachain-specs.json:/async-agung-parachain-spe
 --rpc-port 9977
  ```
 
-#### Krest env
-
- ```bash
-docker run -v krest-storage:/chain-data -p 9944:9944 -p 9933:9933 peaq/parachain:krest-v0.0.7 \
---parachain-id 2241 \
---chain ./node/src/chain-specs/krest-raw.json \
---base-path chain-data \
---port 30333 \
---rpc-port 9944 \
---rpc-cors=all \
---execution wasm \
--- \
---execution wasm \
---chain ./node/src/chain-specs/kusama.json \
---port 30343 \
---sync warp \
---rpc-port 9977
- ```
-
 #### Peaq env
 
  ```bash
@@ -211,11 +192,6 @@ for peaq-network-node from the git repository
 #### PEAQ-Dev env
 ```bash
 git clone --branch peaq-dev-v0.0.106 https://github.com/peaqnetwork/peaq-network-node.git
-```
-
-#### Krest env
-```bash
-git clone --branch krest-v0.0.7 https://github.com/peaqnetwork/peaq-network-node.git
 ```
 
 #### Peaq env
@@ -260,25 +236,6 @@ The folder .local is needed because that is where data such as session keys are 
 --execution wasm \
 --chain ./async-agung-relaychain-specs.json \
 --port 30343 \
---rpc-port 9977
-```
-
-```bash
-# Krest env
-./scripts/docker_run.sh \
-./target/release/peaq-node \
---parachain-id 2241 \
---chain ./node/src/chain-specs/krest-raw.json \
---base-path chain-data \
---port 30333 \
---rpc-port 9944 \
---execution wasm \
--- \
---execution wasm \
---chain ./node/src/chain-specs/kusama.json \
---port 30343 \
---pruning=16 \
---sync warp \
 --rpc-port 9977
 ```
 

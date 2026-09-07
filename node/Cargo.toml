@@ -120,7 +120,6 @@ zenlink-protocol-runtime-api = { workspace = true, default-features = true }
 sp-io = {workspace = true, default-features = true}
 
 peaq-dev-runtime = { path = "../runtime/peaq-dev" }
-peaq-krest-runtime = { path = "../runtime/krest" }
 peaq-runtime = { path = "../runtime/peaq" }
 peaq-primitives-ext = { path = "../primitives/ext" }
 peaq-rpc-debug = { path = "../client/rpc/debug" }
@@ -139,18 +138,15 @@ default = [
 	"polkadot-cli",
 ]
 aura = [
-	"peaq-dev-runtime/aura",
-	"peaq-krest-runtime/aura"
+	"peaq-dev-runtime/aura"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking-cli",
-	"peaq-krest-runtime/runtime-benchmarks",
 	"peaq-dev-runtime/runtime-benchmarks",
 	"peaq-runtime/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
 try-runtime = [
 	"peaq-dev-runtime/try-runtime",
-	"peaq-krest-runtime/try-runtime",
 	"peaq-runtime/try-runtime",
 ]
