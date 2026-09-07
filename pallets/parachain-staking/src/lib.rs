@@ -697,7 +697,7 @@ pub mod pallet {
 			// Setup delegate & collators
 			for &(ref actor, ref opt_val, balance) in &self.stakers {
 				assert!(
-					T::Currency::free_balance(actor) >= balance,
+					<T as Config>::Currency::free_balance(actor) >= balance,
 					"Account does not have enough balance to stake."
 				);
 				if let Some(delegated_val) = opt_val {
@@ -2482,7 +2482,7 @@ pub mod pallet {
 
 			// Either set a new lock or potentially extend the existing one if amount
 			// exceeds the currently locked amount
-			T::Currency::extend_lock(STAKING_ID, who, amount, WithdrawReasons::all());
+			<T as Config>::Currency::extend_lock(STAKING_ID, who, amount, WithdrawReasons::all());
 
 			Ok(unstaking_len)
 		}
@@ -2636,10 +2636,10 @@ pub mod pallet {
 			};
 
 			if total_locked.is_zero() {
-				T::Currency::remove_lock(STAKING_ID, who);
+				<T as Config>::Currency::remove_lock(STAKING_ID, who);
 				<Unstaking<T>>::remove(who);
 			} else {
-				T::Currency::set_lock(STAKING_ID, who, total_locked, WithdrawReasons::all());
+				<T as Config>::Currency::set_lock(STAKING_ID, who, total_locked, WithdrawReasons::all());
 				<Unstaking<T>>::insert(who, unstaking);
 			}
 
@@ -2654,7 +2654,7 @@ pub mod pallet {
 		/// - Writes: Balance
 		/// # </weight>
 		fn do_reward(pot: &T::AccountId, who: &T::AccountId, reward: BalanceOf<T>) {
-			if let Ok(_success) = T::Currency::transfer(pot, who, reward, KeepAlive) {
+			if let Ok(_success) = <T as Config>::Currency::transfer(pot, who, reward, KeepAlive) {
 				Self::deposit_event(Event::Rewarded(who.clone(), reward));
 			}
 		}
@@ -2865,14 +2865,14 @@ pub mod pallet {
 		pub(crate) fn pot_issuance() -> (Weight, BalanceOf<T>) {
 			let pot = Self::account_id();
 			let weight = Weight::from_parts(1, 0);
-			let ed = <T::Currency as frame_support::traits::fungible::Inspect<T::AccountId>>::minimum_balance();
+			let ed = <<T as Config>::Currency as frame_support::traits::fungible::Inspect<T::AccountId>>::minimum_balance();
 			let issuance = if ed == T::CurrencyBalance::from(0_u32) {
-				T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
+				<T as Config>::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
 					// Avoid the pot complaint no balance there
 					.checked_sub(&T::CurrencyBalance::from(10_u32))
 					.unwrap_or_else(Zero::zero)
 			} else {
-				T::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
+				<T as Config>::Currency::reducible_balance(&pot, Preservation::Preserve, Fortitude::Polite)
 			};
 
 			(weight, issuance)

@@ -47,11 +47,11 @@ mod upgrade {
 				for (account_id, balance) in Locks::<T>::iter() {
 					if let Some(lock) = balance.iter().find(|lock| lock.id == OLD_STAKING_ID) {
 						// Unlock the old lock
-						T::Currency::remove_lock(OLD_STAKING_ID, &account_id);
+						<T as Config>::Currency::remove_lock(OLD_STAKING_ID, &account_id);
 						weight_writes += 1;
 
 						// Create a new lock with the new ID
-						T::Currency::set_lock(
+						<T as Config>::Currency::set_lock(
 							STAKING_ID,
 							&account_id,
 							lock.amount.into(),
