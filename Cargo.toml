@@ -103,30 +103,30 @@ parachain-info = { git = "https://github.com/paritytech/polkadot-sdk", tag = "po
 parachains-common = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 
 # Frontier
-fc-consensus = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fc-db = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fc-mapping-sync = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fc-rpc = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fc-rpc-core = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fc-api = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fp-consensus = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fp-storage = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fp-dynamic-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fc-storage = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603" }
-fp-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-fp-rpc = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-fp-self-contained = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false, features = ["serde"] }
-pallet-base-fee = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-ethereum = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm-precompile-blake2 = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm-precompile-bn128 = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm-precompile-dispatch = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm-precompile-modexp = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm-precompile-sha3fips = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-pallet-evm-precompile-simple = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-precompile-utils = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
-precompile-utils-macro = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2603", default-features = false }
+fc-consensus = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/consensus" }
+fc-db = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/db" }
+fc-mapping-sync = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/mapping-sync" }
+fc-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/rpc" }
+fc-rpc-core = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/rpc-core" }
+fc-api = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/api" }
+fp-consensus = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/consensus" }
+fp-storage = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/storage" }
+fp-dynamic-fee = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/dynamic-fee" }
+fc-storage = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/storage" }
+fp-evm = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/evm", default-features = false }
+fp-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/rpc", default-features = false }
+fp-self-contained = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/self-contained", default-features = false, features = ["serde"] }
+pallet-base-fee = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/base-fee", default-features = false }
+pallet-ethereum = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/ethereum", default-features = false }
+pallet-evm = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm", default-features = false }
+pallet-evm-precompile-blake2 = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/blake2", default-features = false }
+pallet-evm-precompile-bn128 = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/bn128", default-features = false }
+pallet-evm-precompile-dispatch = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/dispatch", default-features = false }
+pallet-evm-precompile-modexp = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/modexp", default-features = false }
+pallet-evm-precompile-sha3fips = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/sha3fips", default-features = false }
+pallet-evm-precompile-simple = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/simple", default-features = false }
+precompile-utils = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/precompiles", default-features = false }
+precompile-utils-macro = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/precompiles/macro", default-features = false }
 
 # Open-Runtime-Module-Library
 orml-currencies = { path = "/home/jaypan/Work/upgrade/deps-2603/ORML/currencies", default-features = false }
