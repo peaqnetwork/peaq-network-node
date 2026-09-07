@@ -32,7 +32,7 @@ mod v3 {
 		Default,
 		Encode,
 		Decode,
-		RuntimeDebug,
+		Debug,
 		TypeInfo,
 		MaxEncodedLen,
 		Serialize,

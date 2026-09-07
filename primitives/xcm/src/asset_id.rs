@@ -4,7 +4,7 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::{traits::Convert, RuntimeDebug};
+use sp_runtime::{traits::Convert};
 use sp_std::marker::PhantomData;
 use zenlink_protocol::AssetId as ZenlinkAssetId;
 
@@ -17,7 +17,7 @@ use sp_std::convert::TryFrom;
 	PartialEq,
 	Copy,
 	Clone,
-	RuntimeDebug,
+	Debug,
 	PartialOrd,
 	Ord,
 	TypeInfo,

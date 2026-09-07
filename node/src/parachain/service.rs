@@ -785,7 +785,8 @@ where
 				overseer_handle,
 				max_pov_percentage: Some(85),
 				relay_chain_slot_duration: Duration::from_secs(6),
-				proposer: cumulus_client_consensus_proposer::Proposer::new(proposer_factory),
+				collator_peer_id: network.local_peer_id(),
+				proposer: proposer_factory,
 				collator_service,
 				// We got around 1500ms for proposing
 				authoring_duration: Duration::from_millis(2000),

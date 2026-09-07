@@ -286,18 +286,18 @@ impl<T: Ord + Clone, S: Get<u32>> From<OrderedSet<T, S>> for BoundedVec<T, S> {
 mod tests {
 	use crate::{mock::Test, types::StakeOf};
 	use frame_support::parameter_types;
-	use sp_runtime::RuntimeDebug;
+	use sp_runtime::Debug;
 
 	use super::*;
 
 	parameter_types! {
-		#[derive(PartialEq, Eq, RuntimeDebug)]
+		#[derive(PartialEq, Eq, Debug)]
 		pub const Zero: u32 = 0;
-		#[derive(PartialEq, Eq, RuntimeDebug)]
+		#[derive(PartialEq, Eq, Debug)]
 		pub const One: u32 = 1;
-		#[derive(PartialEq, Eq, RuntimeDebug)]
+		#[derive(PartialEq, Eq, Debug)]
 		pub const Eight: u32 = 8;
-		#[derive(PartialEq, Eq, RuntimeDebug, Clone)]
+		#[derive(PartialEq, Eq, Clone)]
 		pub const Five: u32 = 5;
 	}
 

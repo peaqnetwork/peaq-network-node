@@ -26,7 +26,7 @@ pub(crate) type NegativeImbalanceOf<T> = <<T as PalletConfig>::Currency as Curre
 	DecodeWithMemTracking,
 	Deserialize,
 	MaxEncodedLen,
-	RuntimeDebug,
+	Debug,
 	Serialize,
 	TypeInfo,
 )]
@@ -63,7 +63,7 @@ impl From<frame_support::PalletId> for SinkPalletId {
 	DecodeWithMemTracking,
 	Deserialize,
 	MaxEncodedLen,
-	RuntimeDebug,
+	Debug,
 	Serialize,
 	TypeInfo,
 )]
@@ -85,7 +85,7 @@ pub enum RewardTarget {
 	DecodeWithMemTracking,
 	Deserialize,
 	MaxEncodedLen,
-	RuntimeDebug,
+	Debug,
 	Serialize,
 	TypeInfo,
 )]

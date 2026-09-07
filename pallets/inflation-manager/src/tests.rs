@@ -399,7 +399,7 @@ fn block_reward_change() {
 }
 
 /// Represents inflation manager storage snapshot at current block
-#[derive(PartialEq, Eq, Clone, RuntimeDebug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 struct InflationManagerSnapshot {
 	inflation_configuration: InflationConfigurationT,
 	inflation_parameters: InflationParametersT,
