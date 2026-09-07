@@ -3860,35 +3860,15 @@ dependencies = [
 
 [[package]]
 name = "evm"
-version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
-dependencies = [
- "auto_impl",
- "environmental",
- "ethereum 0.15.0",
- "evm-core 0.42.0",
- "evm-gasometer 0.42.0",
- "evm-runtime 0.42.0",
- "log",
- "parity-scale-codec",
- "primitive-types",
- "rlp",
- "scale-info",
- "serde",
- "sha3",
-]
-
-[[package]]
-name = "evm"
 version = "0.43.4"
-source = "git+https://github.com/rust-ethereum/evm.git?branch=v0.x#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/rust-ethereum/evm.git?rev=a656db9050c65170b050360c3fa66c0fd8bf226a#a656db9050c65170b050360c3fa66c0fd8bf226a"
 dependencies = [
  "auto_impl",
  "environmental",
  "ethereum 0.18.2",
- "evm-core 0.43.0",
- "evm-gasometer 0.43.0",
- "evm-runtime 0.43.0",
+ "evm-core",
+ "evm-gasometer",
+ "evm-runtime",
  "log",
  "parity-scale-codec",
  "primitive-types",
@@ -3900,19 +3880,8 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
-dependencies = [
- "parity-scale-codec",
- "primitive-types",
- "scale-info",
- "serde",
-]
-
-[[package]]
-name = "evm-core"
 version = "0.43.0"
-source = "git+https://github.com/rust-ethereum/evm.git?branch=v0.x#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/rust-ethereum/evm.git?rev=a656db9050c65170b050360c3fa66c0fd8bf226a#a656db9050c65170b050360c3fa66c0fd8bf226a"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -3922,46 +3891,23 @@ dependencies = [
 
 [[package]]
 name = "evm-gasometer"
-version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
-dependencies = [
- "environmental",
- "evm-core 0.42.0",
- "evm-runtime 0.42.0",
- "primitive-types",
-]
-
-[[package]]
-name = "evm-gasometer"
 version = "0.43.0"
-source = "git+https://github.com/rust-ethereum/evm.git?branch=v0.x#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/rust-ethereum/evm.git?rev=a656db9050c65170b050360c3fa66c0fd8bf226a#a656db9050c65170b050360c3fa66c0fd8bf226a"
 dependencies = [
  "environmental",
- "evm-core 0.43.0",
- "evm-runtime 0.43.0",
+ "evm-core",
+ "evm-runtime",
  "primitive-types",
 ]
 
 [[package]]
 name = "evm-runtime"
-version = "0.42.0"
-source = "git+https://github.com/peaqnetwork/evm?branch=peaq-polkadot-stable2503-4#b21947f276013d4d4c1a86e2503142287ea8a983"
-dependencies = [
- "auto_impl",
- "environmental",
- "evm-core 0.42.0",
- "primitive-types",
- "sha3",
-]
-
-[[package]]
-name = "evm-runtime"
 version = "0.43.0"
-source = "git+https://github.com/rust-ethereum/evm.git?branch=v0.x#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/rust-ethereum/evm.git?rev=a656db9050c65170b050360c3fa66c0fd8bf226a#a656db9050c65170b050360c3fa66c0fd8bf226a"
 dependencies = [
  "auto_impl",
  "environmental",
- "evm-core 0.43.0",
+ "evm-core",
  "primitive-types",
  "sha3",
 ]
@@ -3973,9 +3919,9 @@ dependencies = [
  "environmental",
  "ethereum 0.15.0",
  "ethereum-types",
- "evm 0.42.0",
- "evm-gasometer 0.42.0",
- "evm-runtime 0.42.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
  "parity-scale-codec",
  "sp-runtime-interface 34.0.0",
 ]
@@ -4128,7 +4074,7 @@ version = "2.0.0-dev"
 dependencies = [
  "ethereum 0.18.2",
  "ethereum-types",
- "evm 0.43.4",
+ "evm",
  "fc-api",
  "fc-mapping-sync",
  "fc-rpc-core",
@@ -4434,7 +4380,7 @@ name = "fp-evm"
 version = "3.0.0-dev"
 dependencies = [
  "environmental",
- "evm 0.43.4",
+ "evm",
  "frame-support",
  "num_enum 0.7.6",
  "parity-scale-codec",
@@ -8726,7 +8672,7 @@ version = "4.0.0-dev"
 dependencies = [
  "ethereum 0.18.2",
  "ethereum-types",
- "evm 0.43.4",
+ "evm",
  "fp-consensus",
  "fp-ethereum",
  "fp-evm",
@@ -8749,7 +8695,7 @@ dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
  "ethereum 0.18.2",
- "evm 0.43.4",
+ "evm",
  "fp-account",
  "fp-evm",
  "frame-benchmarking",
@@ -8848,7 +8794,7 @@ name = "pallet-evm-precompile-batch"
 version = "0.1.1"
 dependencies = [
  "derive_more 0.99.20",
- "evm 0.42.0",
+ "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
@@ -10245,9 +10191,9 @@ name = "peaq-evm-tracer"
 version = "0.1.0"
 dependencies = [
  "ethereum-types",
- "evm 0.42.0",
- "evm-gasometer 0.42.0",
- "evm-runtime 0.42.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
  "evm-tracing-events",
  "fp-evm",
  "pallet-evm",
@@ -10543,7 +10489,7 @@ version = "0.1.2"
 dependencies = [
  "derive_more 0.99.20",
  "environmental",
- "evm 0.42.0",
+ "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
@@ -10579,7 +10525,7 @@ dependencies = [
 name = "peaq-primitives-xcm"
 version = "3.1.0-polkadot-v1.7.2"
 dependencies = [
- "evm 0.42.0",
+ "evm",
  "frame-support",
  "log",
  "num_enum 0.5.11",
@@ -12360,7 +12306,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
- "evm 0.43.4",
+ "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
