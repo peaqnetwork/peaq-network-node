@@ -125,14 +125,6 @@ jobs:
         files: |
           ./peaq_runtime.compact.compressed.wasm
         outPath: peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
-    - name: Run runtime-upgrade script
-      working-directory: ./deploy/upgrade
-      run: |
-        WS_URL="wss://${{ steps.tag-title.outputs.target_tag }}-peaq-network-node.cisys.xyz"
-        echo "Using URL: $WS_URL"
-        npm install
-        npm run runtime-upgrade -- ../../target/release/wbuild/peaq-runtime/peaq_runtime.compact.compressed.wasm "$WS_URL"
-
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
@@ -140,4 +132,11 @@ jobs:
         draft: true
         files: |
           peaq-node-runtime-${{ steps.tag.outputs.tag }}.tar.gz
+    - name: Run runtime-upgrade script
+      working-directory: ./deploy/upgrade
+      run: |
+        WS_URL="wss://${{ steps.tag-title.outputs.target_tag }}-peaq-network-node.cisys.xyz"
+        echo "Using URL: $WS_URL"
+        npm install
+        npm run runtime-upgrade -- ../../target/release/wbuild/peaq-runtime/peaq_runtime.compact.compressed.wasm "$WS_URL"
 
