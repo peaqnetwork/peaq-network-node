@@ -23,21 +23,17 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	cli_opt::{EthApi, RpcConfig},
 	parachain,
-	parachain::service::{self, dev, frontier_database_dir, krest, peaq, start_node},
+	parachain::service::{self, dev, frontier_database_dir, peaq, start_node},
 };
 
 trait IdentifyChain {
 	fn is_dev(&self) -> bool;
-	fn is_krest(&self) -> bool;
 	fn is_peaq(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_dev(&self) -> bool {
 		self.id().starts_with("dev")
-	}
-	fn is_krest(&self) -> bool {
-		self.id().starts_with("krest")
 	}
 	fn is_peaq(&self) -> bool {
 		self.id().starts_with("peaq")
@@ -49,10 +45,6 @@ macro_rules! with_runtime_or_err {
 		if $chain_spec.is_dev() {
 			#[allow(unused_imports)]
 			use dev::{RuntimeApi};
-			$( $code )*
-		} else if $chain_spec.is_krest() {
-			#[allow(unused_imports)]
-			use krest::{RuntimeApi};
 			$( $code )*
 		} else if $chain_spec.is_peaq() {
 			#[allow(unused_imports)]
@@ -67,9 +59,6 @@ macro_rules! with_runtime_or_err {
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
-	}
-	fn is_krest(&self) -> bool {
-		<dyn sc_service::ChainSpec>::is_krest(self)
 	}
 	fn is_peaq(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_peaq(self)
@@ -111,10 +100,6 @@ impl SubstrateCli for Cli {
 			"dev-local" => Box::new(parachain::dev_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
 			)?),
-			"krest" => Box::new(parachain::krest_chain_spec::get_chain_spec()?),
-			"krest-local" => Box::new(parachain::krest_chain_spec::get_chain_spec_local_testnet(
-				self.run.parachain_id,
-			)?),
 			"peaq" => Box::new(parachain::peaq_chain_spec::get_chain_spec()?),
 			"peaq-local" => Box::new(parachain::peaq_chain_spec::get_chain_spec_local_testnet(
 				self.run.parachain_id,
@@ -125,10 +110,6 @@ impl SubstrateCli for Cli {
 				)?;
 				if chain_spec.is_dev() {
 					Box::new(parachain::dev_chain_spec::ChainSpec::from_json_file(
-						std::path::PathBuf::from(path),
-					)?)
-				} else if chain_spec.is_krest() {
-					Box::new(parachain::krest_chain_spec::ChainSpec::from_json_file(
 						std::path::PathBuf::from(path),
 					)?)
 				} else if chain_spec.is_peaq() {
@@ -146,9 +127,7 @@ impl SubstrateCli for Cli {
 impl Cli {
 	#[allow(clippy::borrowed_box)]
 	fn runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		if chain_spec.is_krest() {
-			&peaq_krest_runtime::VERSION
-		} else if chain_spec.is_peaq() {
+		if chain_spec.is_peaq() {
 			&peaq_runtime::VERSION
 		} else {
 			&peaq_dev_runtime::VERSION

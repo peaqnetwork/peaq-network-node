@@ -7,7 +7,6 @@ use frame_system::RawOrigin;
 
 type CurrencyOf<T> = <T as Config>::Currency;
 
-// We have to use Krest runtime to generate the benchmarking code
 benchmarks! {
 	transfer_all_pot {
 		let pot_account = <T as Config>::PotId::get().into_account_truncating();
