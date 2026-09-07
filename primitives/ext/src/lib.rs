@@ -23,7 +23,7 @@
 //! - Host functions will decode the input and emit an event `with` environmental.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-use sp_runtime_interface::runtime_interface;
+use sp_runtime_interface::{pass_by::AllocateAndReturnByCodec, runtime_interface};
 
 use parity_scale_codec::Decode;
 use sp_std::vec::Vec;
@@ -71,7 +71,7 @@ pub trait PeaqExt {
 	/// Allow the tracing module in the runtime to know how to filter Step event
 	/// content, as cloning the entire data is expensive and most of the time
 	/// not necessary.
-	fn step_event_filter(&self) -> StepEventFilter {
+	fn step_event_filter(&self) -> AllocateAndReturnByCodec<StepEventFilter> {
 		evm_tracing_events::step_event_filter().unwrap_or_default()
 	}
 
