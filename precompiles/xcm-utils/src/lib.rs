@@ -29,7 +29,7 @@ use peaq_precompile_utils::DEFAULT_PROOF_SIZE;
 use precompile_utils::{precompile_set::SelectorFilter, prelude::*};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
-use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
+use sp_std::{boxed::Box, marker::PhantomData, vec::Vec};
 use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
 use xcm_executor::traits::{WeightBounds, WeightTrader};
@@ -99,36 +99,33 @@ where
 		// max encoded len: hash (16) + Multilocation + u128 (16)
 		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
-		// We will construct an asset with the max amount, and check how much we
-		// get in return to substract
-		let multiasset: xcm::latest::Asset = (location.clone(), u128::MAX).into();
+		// `quote_weight` prices the weight without moving anything into the holding register.
+		// Paying with a synthetic `u128::MAX` asset and reading back the remainder would charge
+		// the trader for real, and dropping it would hand that "fee" to `TakeRevenue`.
 		let weight_per_second = 1_000_000_000_000u64;
 
 		let mut trader = <XcmConfig as xcm_executor::Config>::Trader::new();
 
-		let ctx =
-			XcmContext { origin: Some(location), message_id: XcmHash::default(), topic: None };
+		let ctx = XcmContext {
+			origin: Some(location.clone()),
+			message_id: XcmHash::default(),
+			topic: None,
+		};
 
-		// buy_weight returns unused assets
-		let unused = trader
-			.buy_weight(
+		let quoted = trader
+			.quote_weight(
 				Weight::from_parts(weight_per_second, DEFAULT_PROOF_SIZE),
-				vec![multiasset.clone()].into(),
+				AssetId(location),
 				&ctx,
 			)
 			.map_err(|_| {
 				RevertReason::custom("Asset not supported as fee payment").in_field("multilocation")
 			})?;
 
-		// we just need to substract from u128::MAX the unused assets
-		if let Some(amount) = unused
-			.fungible
-			.get(&multiasset.id)
-			.map(|&value| u128::MAX.saturating_sub(value))
-		{
-			Ok(amount.into())
-		} else {
-			Err(revert("Weight was too expensive to be bought with this asset"))
+		match quoted.fun {
+			Fungibility::Fungible(amount) => Ok(amount.into()),
+			Fungibility::NonFungible(_) =>
+				Err(revert("Weight was too expensive to be bought with this asset")),
 		}
 	}
 
@@ -150,7 +147,7 @@ where
 
 		let result = match msg {
 			Ok(Ok(mut x)) =>
-				XcmConfig::Weigher::weight(&mut x).map_err(|_| revert("failed weighting")),
+				XcmConfig::Weigher::weight(&mut x, Weight::MAX).map_err(|_| revert("failed weighting")),
 			_ => Err(RevertReason::custom("Failed decoding").in_field("message").into()),
 		};
 

@@ -80,6 +80,25 @@ impl<T: ExecutionPaymentRate, R: TakeRevenue> WeightTrader for FixedRateOfForeig
 		Ok(payment)
 	}
 
+	/// Price `weight` in `given` without touching the holding register.
+	///
+	/// Callers that only want to know the fee (the `xcm-utils` precompile) used to synthesise a
+	/// `u128::MAX` payment and read what `buy_weight` left over. That charges the trader for real,
+	/// so dropping it hands the "fee" to `TakeRevenue`. This is the read-only path for that.
+	fn quote_weight(
+		&mut self,
+		weight: Weight,
+		given: AssetId,
+		_context: &XcmContext,
+	) -> Result<Asset, XcmError> {
+		let AssetId(asset_location) = given;
+		let units_per_second =
+			T::get_units_per_second(asset_location.clone()).ok_or(XcmError::TooExpensive)?;
+		let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
+			(WEIGHT_REF_TIME_PER_SECOND as u128);
+		Ok((asset_location, amount).into())
+	}
+
 	fn refund_weight(&mut self, weight: Weight, _context: &XcmContext) -> Option<AssetsInHolding> {
 		log::trace!(target: "xcm::weight", "FixedRateOfForeignAsset::refund_weight weight: {:?}", weight);
 
