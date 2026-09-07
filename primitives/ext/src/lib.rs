@@ -23,7 +23,10 @@
 //! - Host functions will decode the input and emit an event `with` environmental.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-use sp_runtime_interface::{pass_by::AllocateAndReturnByCodec, runtime_interface};
+use sp_runtime_interface::{
+	pass_by::{AllocateAndReturnByCodec, PassFatPointerAndRead},
+	runtime_interface,
+};
 
 use parity_scale_codec::Decode;
 use sp_std::vec::Vec;
@@ -33,20 +36,20 @@ use evm_tracing_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent, StepEven
 #[allow(clippy::unnecessary_mut_passed)]
 #[runtime_interface]
 pub trait PeaqExt {
-	fn raw_step(&mut self, _data: Vec<u8>) {}
+	fn raw_step(&mut self, _data: PassFatPointerAndRead<Vec<u8>>) {}
 
-	fn raw_gas(&mut self, _data: Vec<u8>) {}
+	fn raw_gas(&mut self, _data: PassFatPointerAndRead<Vec<u8>>) {}
 
-	fn raw_return_value(&mut self, _data: Vec<u8>) {}
+	fn raw_return_value(&mut self, _data: PassFatPointerAndRead<Vec<u8>>) {}
 
-	fn call_list_entry(&mut self, _index: u32, _value: Vec<u8>) {}
+	fn call_list_entry(&mut self, _index: u32, _value: PassFatPointerAndRead<Vec<u8>>) {}
 
 	fn call_list_new(&mut self) {}
 
 	// New design, proxy events.
 	/// An `Evm` event proxied by the Moonbeam runtime to this host function.
 	/// evm -> moonbeam_runtime -> host.
-	fn evm_event(&mut self, event: Vec<u8>) {
+	fn evm_event(&mut self, event: PassFatPointerAndRead<Vec<u8>>) {
 		if let Ok(event) = EvmEvent::decode(&mut &event[..]) {
 			Event::Evm(event).emit();
 		}
@@ -54,7 +57,7 @@ pub trait PeaqExt {
 
 	/// A `Gasometer` event proxied by the Moonbeam runtime to this host function.
 	/// evm_gasometer -> moonbeam_runtime -> host.
-	fn gasometer_event(&mut self, event: Vec<u8>) {
+	fn gasometer_event(&mut self, event: PassFatPointerAndRead<Vec<u8>>) {
 		if let Ok(event) = GasometerEvent::decode(&mut &event[..]) {
 			Event::Gasometer(event).emit();
 		}
@@ -62,7 +65,7 @@ pub trait PeaqExt {
 
 	/// A `Runtime` event proxied by the Moonbeam runtime to this host function.
 	/// evm_runtime -> moonbeam_runtime -> host.
-	fn runtime_event(&mut self, event: Vec<u8>) {
+	fn runtime_event(&mut self, event: PassFatPointerAndRead<Vec<u8>>) {
 		if let Ok(event) = RuntimeEvent::decode(&mut &event[..]) {
 			Event::Runtime(event).emit();
 		}
