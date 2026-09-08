@@ -11,13 +11,14 @@ use frame_support::{
 	traits::{
 		fungible::Credit,
 		fungibles,
-		tokens::imbalance::{ImbalanceAccounting, UnsafeManualAccounting},
+		tokens::imbalance::UnsafeManualAccounting,
 		Contains, Everything, Imbalance, Nothing, OnUnbalanced, TransformOrigin,
 	},
 };
 use frame_system::EnsureRoot;
-use orml_traits::location::{RelativeReserveProvider, Reserve};
+use orml_traits::location::Reserve;
 use orml_xcm_support::{DisabledParachainFee, MultiNativeAsset};
+use orml_xtokens::RelativeReserveProvider;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::{
 	message_queue::{NarrowOriginToSibling, ParaIdToSibling},
@@ -323,7 +324,6 @@ impl xcm_executor::Config for XcmConfig {
 
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
-	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 
 	type PalletInstancesInfo = AllPalletsWithSystem;
@@ -461,7 +461,6 @@ impl Convert<StorageAssetId, Option<Location>> for AssetIdConvert {
 }
 
 impl orml_xtokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = StorageAssetId;
 	type CurrencyIdConvert = AssetIdConvert;

@@ -73,9 +73,11 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<AddressU64<8>, Bn128Pairing, EthereumPrecompilesChecks>,
 				PrecompileAt<AddressU64<9>, Blake2F, EthereumPrecompilesChecks>,
 				// Non-Moonbeam specific nor Ethereum precompiles :
+				// stable2603 prices this precompile by weight: `WI = ()` uses frontier's
+				// own "laptop" defaults. Re-benchmark with the rest of the weights.
 				PrecompileAt<
 					AddressU64<1024>,
-					Sha3FIPS256,
+					Sha3FIPS256<R, ()>,
 					(CallableByContract, CallableByPrecompile),
 				>,
 				// PrecompileAt<AddressU64<1025>, Dispatch<R>>,

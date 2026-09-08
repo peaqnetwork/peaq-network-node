@@ -102,7 +102,7 @@ pub use precompiles::PeaqPrecompiles;
 pub type Precompiles = PeaqPrecompiles<Runtime>;
 
 use peaq_primitives_xcm::{
-	xcm::AssetLocationIdConverter, Address, AssetId as PeaqAssetId, AssetIdToEVMAddress,
+	Address, AssetId as PeaqAssetId, AssetIdToEVMAddress,
 	AssetIdToZenlinkId, Balance, EvmRevertCodeHandler, Header, Moment, Nonce, RbacEntityId,
 	StorageAssetId, NATIVE_ASSET_ID,
 };
@@ -121,7 +121,7 @@ use peaq_primitives_xcm::EVMAddressToAssetId;
 pub use precompiles::EVMAssetPrefix;
 
 use runtime_common::{
-	LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
+	AssetLocationIdConverter, LocalAssetAdaptor, OnChargeEVMTransaction, OperationalFeeMultiplier,
 	PeaqAssetZenlinkLpGenerate, PeaqMultiCurrenciesOnChargeTransaction,
 	PeaqMultiCurrenciesPaymentConvert, PeaqMultiCurrenciesWrapper, PeaqNativeCurrencyWrapper,
 	TransactionByteFee, CENTS, DOLLARS, MAX_POV_SIZE, MILLICENTS,
@@ -708,6 +708,10 @@ parameter_types! {
 	/// However, let us setup the value as 1 for now because we also has the did/storage bridge
 	/// [TODO] Need to check
 	pub GasLimitStorageGrowthRatio: u64 = 1;
+	/// EIP-7825 per-transaction gas cap, new in stable2603. `None` keeps the
+	/// pre-2603 behaviour of no cap; adopting `Some(fp_evm::MAX_TRANSACTION_GAS_LIMIT)`
+	/// would be a consensus-breaking change and needs its own announced upgrade.
+	pub TransactionGasLimit: Option<U256> = None;
 }
 
 impl pallet_evm::Config for Runtime {
@@ -719,7 +723,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = AddressUnification;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = Precompiles;
 	type PrecompilesValue = PrecompilesValue;
@@ -730,6 +733,7 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+	type TransactionGasLimit = TransactionGasLimit;
 	type Timestamp = Timestamp;
 	type WeightInfo = crate::weights::pallet_evm::WeightInfo<Runtime>;
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
@@ -739,14 +743,18 @@ impl pallet_evm::Config for Runtime {
 
 parameter_types! {
 	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
+	/// New in stable2603. Before it existed the pallet accepted legacy transactions
+	/// without an EIP-155 chain id unconditionally, so `true` preserves that.
+	/// Flipping to `false` would invalidate previously-valid transactions.
+	pub const AllowUnprotectedTxs: bool = true;
 }
 
 impl pallet_ethereum::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type StateRoot =
 		pallet_ethereum::IntermediateStateRoot<<Self as frame_system::Config>::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
+	type AllowUnprotectedTxs = AllowUnprotectedTxs;
 }
 
 frame_support::parameter_types! {
@@ -768,7 +776,6 @@ impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 }
 
 impl pallet_base_fee::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Threshold = BaseFeeThreshold;
 	type DefaultBaseFeePerGas = DefaultBaseFeePerGas;
 	type DefaultElasticity = DefaultElasticity;
@@ -783,6 +790,11 @@ parameter_types! {
 	pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 }
 
+/// Offset between the relay chain tip and the relay parent used when authoring.
+/// 0 == pre-stable2603 behaviour. Must equal what `RelayParentOffsetApi` returns;
+/// `parachain_system::on_initialize` asserts on the pair and panics on mismatch.
+const RELAY_PARENT_OFFSET: u32 = 0;
+
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnSystemEvent = ();
@@ -795,7 +807,9 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ConsensusHook = ConsensusHook;
 	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
 	type WeightInfo = ();
-	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
+	/// Must stay in sync with `RelayParentOffsetApi::relay_parent_offset` below;
+	/// `on_initialize` asserts they are equal. 0 == pre-2603 behaviour.
+	type RelayParentOffset = ConstU32<RELAY_PARENT_OFFSET>;
 }
 
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
@@ -835,6 +849,9 @@ impl pallet_session::Config for Runtime {
 	type Keys = opaque::SessionKeys;
 	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
 	type DisablingStrategy = ();
+	type Currency = Balances;
+	// Zero keeps `set_keys` free, as it was before stable2603 introduced the hold.
+	type KeyDeposit = ();
 }
 
 pub mod staking {
@@ -1129,7 +1146,7 @@ construct_runtime!(
 		// Parachain
 		InflationManager: inflation_manager::{Pallet, Call, Storage, Config<T>, Event<T>} = 15,
 		Authorship: pallet_authorship::{Pallet, Storage} = 20,
-		Session: pallet_session::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
+		Session: pallet_session::{Pallet, Call, Storage, Event<T>, Config<T>, HoldReason} = 21,
 		AuraExt: cumulus_pallet_aura_ext = 22,
 		ParachainStaking: parachain_staking = 23,
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>} = 24,
@@ -1195,6 +1212,13 @@ pub type CheckedExtrinsic =
 
 // Migrations to apply on runtime upgrade
 pub type Migrations = (
+	// stable2603: `pallet_session::DisabledValidators` changed from `Vec<u32>` to
+	// `Vec<(u32, OffenceSeverity)>` and the pallet's storage version went 0 -> 1.
+	// Without this the stored value fails to decode.
+	pallet_session::migrations::v1::MigrateV0ToV1<
+		Runtime,
+		pallet_session::migrations::v1::InitOffenceSeverity<Runtime>,
+	>,
 	// permanent
 	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
 );
@@ -1301,7 +1325,7 @@ impl_runtime_apis! {
 			VERSION
 		}
 
-		fn execute_block(block: Block) {
+		fn execute_block(block: <Block as BlockT>::LazyBlock) {
 			Executive::execute_block(block)
 		}
 
@@ -1338,7 +1362,7 @@ impl_runtime_apis! {
 		}
 
 		fn check_inherents(
-			block: Block,
+			block: <Block as BlockT>::LazyBlock,
 			data: sp_inherents::InherentData,
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
@@ -1446,12 +1470,6 @@ impl_runtime_apis! {
 			slot: cumulus_primitives_aura::Slot,
 		) -> bool {
 			ConsensusHook::can_build_upon(included_hash, slot)
-		}
-	}
-
-	impl cumulus_primitives_core::GetCoreSelectorApi<Block> for Runtime {
-		fn core_selector() -> (cumulus_primitives_core::CoreSelector, cumulus_primitives_core::ClaimQueueOffset) {
-			ParachainSystem::core_selector()
 		}
 	}
 
@@ -1706,6 +1724,8 @@ impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 			access_list: Option<Vec<(H160, Vec<H256>)>>,
+			authorization_list: Option<ethereum::AuthorizationList>,
+			state_override: fp_evm::StateOverride,
 		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1731,11 +1751,16 @@ impl_runtime_apis! {
 				// action: 21 (enum varianrt + call address)
 				// value: 32
 				// access_list: 1 (empty vec size)
+				// authorization_list: 1 (empty vec size)
 				// 65 bytes signature
-				258;
+				259;
 
 			if access_list.is_some() {
 				estimated_transaction_len += access_list.encoded_size();
+			}
+
+			if authorization_list.is_some() {
+				estimated_transaction_len += authorization_list.encoded_size();
 			}
 
 			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
@@ -1762,10 +1787,12 @@ impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
+				authorization_list.unwrap_or_default(),
 				is_transactional,
 				validate,
 				weight_limit,
 				proof_size_base_cost,
+				state_override,
 				config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
 			).map_err(|err| err.error.into())
 		}
@@ -1780,6 +1807,7 @@ impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 			access_list: Option<Vec<(H160, Vec<H256>)>>,
+			authorization_list: Option<ethereum::AuthorizationList>,
 		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();
@@ -1810,6 +1838,9 @@ impl_runtime_apis! {
 			if access_list.is_some() {
 				estimated_transaction_len += access_list.encoded_size();
 			}
+			if authorization_list.is_some() {
+				estimated_transaction_len += authorization_list.encoded_size();
+			}
 
 			let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
 			let without_base_extrinsic_weight = true;
@@ -1835,6 +1866,7 @@ impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
+				authorization_list.unwrap_or_default(),
 				is_transactional,
 				validate,
 				weight_limit,
@@ -1884,7 +1916,7 @@ impl_runtime_apis! {
 
 		fn pending_block(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> (Option<ethereum::BlockV2>, Option<Vec<TransactionStatus>>) {
+		) -> (Option<pallet_ethereum::Block>, Option<Vec<TransactionStatus>>) {
 			for ext in xts.into_iter() {
 				let _ = Executive::apply_extrinsic(ext);
 			}
@@ -2094,8 +2126,8 @@ impl_runtime_apis! {
 	}
 
 	impl sp_session::SessionKeys<Block> for Runtime {
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			opaque::SessionKeys::generate(seed)
+		fn generate_session_keys(owner: Vec<u8>, seed: Option<Vec<u8>>) -> sp_session::OpaqueGeneratedSessionKeys {
+			opaque::SessionKeys::generate(&owner, seed).into()
 		}
 
 		fn decode_session_keys(
@@ -2122,6 +2154,12 @@ impl_runtime_apis! {
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
 		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
 			ParachainSystem::collect_collation_info(header)
+		}
+	}
+
+	impl cumulus_primitives_core::RelayParentOffsetApi<Block> for Runtime {
+		fn relay_parent_offset() -> u32 {
+			RELAY_PARENT_OFFSET
 		}
 	}
 
@@ -2315,6 +2353,9 @@ impl pallet_assets::Config for Runtime {
 	type AssetIdParameter = StorageAssetId;
 	type CallbackHandle = EvmRevertCodeHandler<Self, Self>;
 	type Holder = ();
+	// stable2603 added per-asset trusted-reserve config. `()` leaves the `Reserves`
+	// map unused, which is the pre-2603 behaviour.
+	type ReserveData = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }

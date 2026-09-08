@@ -1,13 +1,34 @@
 use cumulus_primitives_core::XcmContext;
 use frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND;
+use sp_runtime::traits::{Bounded, MaybeEquivalence};
 use sp_std::marker::PhantomData;
-use xc_asset_config::ExecutionPaymentRate;
+use xc_asset_config::{ExecutionPaymentRate, XcAssetLocation};
 use xcm::latest::{
 	prelude::{Asset, AssetId, Fungibility, Location, XcmError},
 	Weight,
 };
 use xcm_builder::TakeRevenue;
 use xcm_executor::{traits::WeightTrader, AssetsInHolding};
+
+/// Used to convert between cross-chain asset multilocation and local asset Id.
+///
+/// This implementation relies on `XcAssetConfig` pallet to handle mapping.
+/// In case asset location hasn't been mapped, it means the asset isn't supported (yet).
+pub struct AssetLocationIdConverter<AssetId, AssetMapper>(PhantomData<(AssetId, AssetMapper)>);
+impl<AssetId, AssetMapper> MaybeEquivalence<Location, AssetId>
+	for AssetLocationIdConverter<AssetId, AssetMapper>
+where
+	AssetId: Clone + Eq + Bounded,
+	AssetMapper: XcAssetLocation<AssetId>,
+{
+	fn convert(location: &Location) -> Option<AssetId> {
+		AssetMapper::get_asset_id(location.clone())
+	}
+
+	fn convert_back(id: &AssetId) -> Option<Location> {
+		AssetMapper::get_xc_asset_location(id.clone())
+	}
+}
 
 /// Used as weight trader for foreign assets.
 ///
