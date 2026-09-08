@@ -44,7 +44,7 @@ futures = { version = "0.3.21" }
 evm = { git = "https://github.com/rust-ethereum/evm.git", rev = "a656db9050c65170b050360c3fa66c0fd8bf226a", default-features = false }
 evm-gasometer = { git = "https://github.com/rust-ethereum/evm.git", rev = "a656db9050c65170b050360c3fa66c0fd8bf226a", default-features = false }
 evm-runtime = { git = "https://github.com/rust-ethereum/evm.git", rev = "a656db9050c65170b050360c3fa66c0fd8bf226a", default-features = false }
-ethereum = { git = "https://github.com/rust-ethereum/ethereum", rev = "bbb544622208ef6e9890a2dbc224248f6dd13318", default-features = false }
+ethereum = { version = "0.18.2", default-features = false }
 ethereum-types = { version = "0.15.1", default-features = false }
 flume = "0.10"
 hex = { version = "0.4.3", default-features = false }

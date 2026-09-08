@@ -710,7 +710,7 @@ where
 							// Pre-london update, legacy transactions.
 							match transaction {
 								#[allow(deprecated)]
-								ethereum::TransactionV2::Legacy(tx) => api.trace_transaction_before_version_4(
+								ethereum::TransactionV3::Legacy(tx) => api.trace_transaction_before_version_4(
 									parent_block_hash,
 									exts,
 									tx,
