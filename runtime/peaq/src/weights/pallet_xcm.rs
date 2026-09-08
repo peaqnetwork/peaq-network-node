@@ -391,4 +391,16 @@ impl<T: frame_system::Config> pallet_xcm::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	/// New in stable2603. Not covered by the benchmark run above; the value below is
+	/// upstream's `asset-hub-westend` measurement. Only consumed by pallet-xcm's EVM
+	/// precompile, which this runtime does not instantiate, so it is currently unused.
+	/// Re-benchmark together with the rest of this file.
+	fn weigh_message() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 8_604_000 picoseconds.
+		Weight::from_parts(8_790_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+	}
 }
