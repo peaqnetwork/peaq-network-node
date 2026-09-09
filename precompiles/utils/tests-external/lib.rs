@@ -99,7 +99,7 @@ mod tests {
 		type ExistentialDeposit = ExistentialDeposit;
 		type AccountStore = System;
 		type WeightInfo = ();
-		type RuntimeHoldReason = ();
+		type RuntimeHoldReason = RuntimeHoldReason;
 		type FreezeIdentifier = ();
 		type MaxFreezes = ();
 		type RuntimeFreezeReason = ();
@@ -235,7 +235,12 @@ mod tests {
 		};
 	}
 
-	impl pallet_evm::Config for Runtime {
+	parameter_types! {
+	/// EIP-7825 per-tx gas cap, new in stable2603. `None` == pre-2603 behaviour.
+	pub TransactionGasLimit: Option<U256> = None;
+}
+
+impl pallet_evm::Config for Runtime {
 		type FeeCalculator = ();
 		type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 		type WeightPerGas = WeightPerGas;
@@ -243,8 +248,7 @@ mod tests {
 		type WithdrawOrigin = EnsureAddressNever<AccountId>;
 		type AddressMapping = AccountId;
 		type Currency = Balances;
-		type RuntimeEvent = RuntimeEvent;
-		type Runner = pallet_evm::runner::stack::Runner<Self>;
+			type Runner = pallet_evm::runner::stack::Runner<Self>;
 		type PrecompilesType = Precompiles<Runtime>;
 		type PrecompilesValue = PrecompilesValue;
 		type ChainId = ();
@@ -451,5 +455,6 @@ mod tests {
 				get_address_type::<Runtime>(&mut MockPrecompileHandle, addr).expect("OOG")
 			);
 		})
-	}
+	}	type TransactionGasLimit = TransactionGasLimit;
 }
+

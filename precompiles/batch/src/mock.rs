@@ -138,6 +138,11 @@ parameter_types! {
 	};
 }
 
+parameter_types! {
+	/// EIP-7825 per-tx gas cap, new in stable2603. `None` == pre-2603 behaviour.
+	pub TransactionGasLimit: Option<U256> = None;
+}
+
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = ();
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
@@ -146,7 +151,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type PrecompilesType = Precompiles<Self>;
@@ -162,8 +166,9 @@ impl pallet_evm::Config for Runtime {
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type CreateInnerOriginFilter = ();
-	type CreateOriginFilter = ();
+	type CreateOriginFilter = ();	type TransactionGasLimit = TransactionGasLimit;
 }
+
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = 5;

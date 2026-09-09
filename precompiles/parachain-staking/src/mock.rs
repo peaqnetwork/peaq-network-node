@@ -127,7 +127,7 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = ();
 	// type MaxHolds = ();
 	type MaxFreezes = ();
-	type RuntimeHoldReason = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = ();
 	type DoneSlashHandler = ();
 }
@@ -168,6 +168,7 @@ parameter_types! {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
 		block_gas_limit.saturating_div(BLOCK_STORAGE_LIMIT)
 	};
+	pub TransactionGasLimit: Option<U256> = None;
 }
 
 impl pallet_evm::Config for Test {
@@ -178,7 +179,6 @@ impl pallet_evm::Config for Test {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = Precompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
@@ -190,6 +190,7 @@ impl pallet_evm::Config for Test {
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+	type TransactionGasLimit = TransactionGasLimit;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Test>;
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
@@ -260,6 +261,8 @@ impl pallet_session::Config for Test {
 	type Keys = MockSessionKeys;
 	type WeightInfo = ();
 	type DisablingStrategy = ();
+	type Currency = Balances;
+	type KeyDeposit = ();
 }
 
 parameter_types! {

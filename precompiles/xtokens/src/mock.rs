@@ -175,6 +175,11 @@ parameter_types! {
 	};
 }
 
+parameter_types! {
+	/// EIP-7825 per-tx gas cap, new in stable2603. `None` == pre-2603 behaviour.
+	pub TransactionGasLimit: Option<U256> = None;
+}
+
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = ();
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
@@ -183,7 +188,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = Precompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
@@ -199,8 +203,9 @@ impl pallet_evm::Config for Runtime {
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type CreateInnerOriginFilter = ();
-	type CreateOriginFilter = ();
+	type CreateOriginFilter = ();	type TransactionGasLimit = TransactionGasLimit;
 }
+
 
 // These parameters dont matter much as this will only be called by root with the forced arguments
 // No deposit is substracted with those methods
@@ -234,8 +239,10 @@ impl pallet_assets::Config for Runtime {
 	type CallbackHandle = ();
 	type Holder = ();
 	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
+	type BenchmarkHelper = ();	// stable2603: per-asset trusted-reserve config; `()` == pre-2603 behaviour.
+	type ReserveData = ();
 }
+
 
 pub struct ConvertOriginToLocal;
 impl<Origin: OriginTrait> EnsureOrigin<Origin> for ConvertOriginToLocal {
