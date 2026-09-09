@@ -212,10 +212,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 113,
+	spec_version: 114,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	// Bumped for stable2603: `pallet_evm::Call::call` gained a trailing
+	// `authorization_list` argument (EIP-7702), so the call's SCALE encoding
+	// changed and previously-built extrinsics no longer decode the same way.
+	transaction_version: 3,
 	system_version: 1,
 };
 
