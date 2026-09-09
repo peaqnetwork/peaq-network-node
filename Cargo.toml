@@ -103,36 +103,36 @@ parachain-info = { git = "https://github.com/paritytech/polkadot-sdk", tag = "po
 parachains-common = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 
 # Frontier
-fc-consensus = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/consensus" }
-fc-db = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/db" }
-fc-mapping-sync = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/mapping-sync" }
-fc-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/rpc" }
-fc-rpc-core = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/rpc-core" }
-fc-api = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/api" }
-fp-consensus = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/consensus" }
-fp-storage = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/storage" }
-fp-dynamic-fee = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/dynamic-fee" }
-fc-storage = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/client/storage" }
-fp-evm = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/evm", default-features = false }
-fp-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/rpc", default-features = false }
-fp-self-contained = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/primitives/self-contained", default-features = false, features = ["serde"] }
-pallet-base-fee = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/base-fee", default-features = false }
-pallet-ethereum = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/ethereum", default-features = false }
-pallet-evm = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm", default-features = false }
-pallet-evm-precompile-blake2 = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/blake2", default-features = false }
-pallet-evm-precompile-bn128 = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/bn128", default-features = false }
-pallet-evm-precompile-dispatch = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/dispatch", default-features = false }
-pallet-evm-precompile-modexp = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/modexp", default-features = false }
-pallet-evm-precompile-sha3fips = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/sha3fips", default-features = false }
-pallet-evm-precompile-simple = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/frame/evm/precompile/simple", default-features = false }
-precompile-utils = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/precompiles", default-features = false }
-precompile-utils-macro = { path = "/home/jaypan/Work/upgrade/deps-2603/frontier/precompiles/macro", default-features = false }
+fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fp-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fp-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fp-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false, features = ["serde"] }
+pallet-base-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-ethereum = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm-precompile-blake2 = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm-precompile-bn128 = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm-precompile-dispatch = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm-precompile-modexp = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm-precompile-sha3fips = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+pallet-evm-precompile-simple = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+precompile-utils = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+precompile-utils-macro = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
 
 # Open-Runtime-Module-Library
-orml-currencies = { path = "/home/jaypan/Work/upgrade/deps-2603/ORML/currencies", default-features = false }
-orml-traits = { path = "/home/jaypan/Work/upgrade/deps-2603/ORML/traits", default-features = false }
-orml-xtokens = { path = "/home/jaypan/Work/upgrade/deps-2603/ORML/xtokens", default-features = false }
-orml-xcm-support = { path = "/home/jaypan/Work/upgrade/deps-2603/ORML/xcm-support", default-features = false }
+orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-stable2603-6", default-features = false }
+orml-traits = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-stable2603-6", default-features = false }
+orml-xtokens = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-stable2603-6", default-features = false }
+orml-xcm-support = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-stable2603-6", default-features = false }
 
 # Polkadot
 polkadot-parachain = { package = "polkadot-parachain-primitives", git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
@@ -222,19 +222,19 @@ try-runtime-cli = { git = "https://github.com/paritytech/polkadot-sdk", tag = "p
 pallet-scheduler = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 pallet-preimage = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 
-zenlink-protocol = { path = "/home/jaypan/Work/upgrade/deps-2603/Zenlink-DEX-Module/zenlink-protocol", default-features = false }
-zenlink-protocol-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/Zenlink-DEX-Module/zenlink-protocol/rpc", default-features = false }
-zenlink-protocol-runtime-api = { path = "/home/jaypan/Work/upgrade/deps-2603/Zenlink-DEX-Module/zenlink-protocol/rpc/runtime-api", default-features = false }
+zenlink-protocol = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-stable2603-6", default-features = false }
+zenlink-protocol-rpc = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-stable2603-6", default-features = false }
+zenlink-protocol-runtime-api = { git = "https://github.com/peaqnetwork/Zenlink-DEX-Module", branch = "peaq-polkadot-stable2603-6", default-features = false }
 
 # Peaq's own developments
-peaq-pallet-did = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-did/pallet", default-features = false }
-peaq-pallet-did-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-did/rpc", default-features = false }
-peaq-pallet-did-runtime-api = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-did/rpc/runtime-api", default-features = false }
-peaq-pallet-mor = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-mor", default-features = false }
-peaq-pallet-rbac = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-rbac/pallet", default-features = false }
-peaq-pallet-rbac-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-rbac/rpc" }
-peaq-pallet-rbac-runtime-api = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-rbac/rpc/runtime-api", default-features = false }
-peaq-pallet-storage = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-storage-pallet/pallet", default-features = false }
-peaq-pallet-storage-rpc = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-storage-pallet/rpc", default-features = false }
-peaq-pallet-storage-runtime-api = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-storage-pallet/rpc/runtime-api", default-features = false }
-peaq-pallet-transaction = { path = "/home/jaypan/Work/upgrade/deps-2603/peaq-pallet-transaction", default-features = false }
+peaq-pallet-did = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-did-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-did-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-did.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-mor = { git = "https://github.com/peaqnetwork/peaq-pallet-mor.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-rbac = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-rbac-rpc = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-stable2603-6" }
+peaq-pallet-rbac-runtime-api = { git = "https://github.com/peaqnetwork/peaq-pallet-rbac.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-storage = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-storage-rpc = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-storage-runtime-api = { git = "https://github.com/peaqnetwork/peaq-storage-pallet.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
+peaq-pallet-transaction = { git = "https://github.com/peaqnetwork/peaq-pallet-transaction.git", branch = "peaq-polkadot-stable2603-6", default-features = false }
