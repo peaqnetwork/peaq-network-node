@@ -1,6 +1,6 @@
 [package]
 name = "peaq-node"
-version = "4.0.1-polkadot-stable2503-4"
+version = "4.0.1-polkadot-stable2603-6"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"
