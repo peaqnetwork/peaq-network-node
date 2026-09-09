@@ -47,6 +47,7 @@ fn evm_call(from: impl Into<H160>, input: Vec<u8>) -> EvmCall<Runtime> {
 		max_priority_fee_per_gas: Some(U256::zero()),
 		nonce: None, // Use the next nonce
 		access_list: Vec::new(),
+		authorization_list: Vec::new(),
 	}
 }
 
@@ -980,7 +981,10 @@ fn batch_not_callable_by_smart_contract() {
 		.execute_with(|| {
 			// "deploy" SC to alice address
 			let alice_h160: H160 = MockPeaqAccount::Alice.into();
-			pallet_evm::AccountCodes::<Runtime>::insert(alice_h160, vec![10u8]);
+			// Use the pallet helper: stable2603's EIP-3607 check reads AccountCodesMetadata,
+			// so writing AccountCodes directly leaves the account looking like an EOA.
+			pallet_evm::Pallet::<Runtime>::create_account(alice_h160, vec![10u8], None)
+				.expect("create_account");
 
 			// succeeds if not called by SC, see `evm_batch_recursion_under_limit`
 			let input = PCall::batch_all {
@@ -1019,10 +1023,13 @@ fn batch_is_not_callable_by_dummy_code() {
 		.execute_with(|| {
 			// "deploy" dummy code to alice address
 			let alice_h160: H160 = MockPeaqAccount::Alice.into();
-			pallet_evm::AccountCodes::<Runtime>::insert(
+			// See note above: AccountCodesMetadata must be written too.
+			pallet_evm::Pallet::<Runtime>::create_account(
 				alice_h160,
 				[0x60, 0x00, 0x60, 0x00, 0xfd].to_vec(),
-			);
+				None,
+			)
+			.expect("create_account");
 
 			// succeeds if called by dummy code, see `evm_batch_recursion_under_limit`
 			let input = PCall::batch_all {

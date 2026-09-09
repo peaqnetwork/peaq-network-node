@@ -325,7 +325,14 @@ impl SendXcm for TestSendXcm {
 
 pub struct DummyAssetTransactor;
 impl TransactAsset for DummyAssetTransactor {
-	fn deposit_asset(_what: &Asset, _who: &Location, _context: Option<&XcmContext>) -> XcmResult {
+	// stable2603: deposit takes the whole holding lot (which now carries imbalances)
+	// and hands it back on failure. This dummy always succeeds, so the lot is consumed --
+	// that models "the assets were deposited", same as the old no-op.
+	fn deposit_asset(
+		_what: AssetsInHolding,
+		_who: &Location,
+		_context: Option<&XcmContext>,
+	) -> Result<(), (AssetsInHolding, XcmError)> {
 		Ok(())
 	}
 
@@ -334,7 +341,7 @@ impl TransactAsset for DummyAssetTransactor {
 		_who: &Location,
 		_maybe_context: Option<&XcmContext>,
 	) -> Result<AssetsInHolding, XcmError> {
-		Ok(AssetsInHolding::default())
+		Ok(AssetsInHolding::new())
 	}
 }
 
@@ -344,16 +351,38 @@ impl WeightTrader for DummyWeightTrader {
 		DummyWeightTrader
 	}
 
+	// stable2603: `checked_sub` is gone; `try_take` mutates `payment` in place and returns
+	// what was taken, so `payment` is left holding the unused remainder -- same result as the
+	// old `checked_sub`. On failure the trait now requires handing the payment back; that is
+	// safe because `try_take` calls `ensure_contains` before mutating, so `payment` is
+	// untouched on the error path.
 	fn buy_weight(
 		&mut self,
 		weight: Weight,
-		payment: AssetsInHolding,
+		mut payment: AssetsInHolding,
 		_context: &XcmContext,
-	) -> Result<AssetsInHolding, XcmError> {
+	) -> Result<AssetsInHolding, (AssetsInHolding, XcmError)> {
 		let asset_to_charge: Asset = (Location::parent(), weight.ref_time() as u128).into();
-		let unused = payment.checked_sub(asset_to_charge).map_err(|_| XcmError::TooExpensive)?;
+		match payment.try_take(asset_to_charge.into()) {
+			Ok(_taken) => Ok(payment),
+			Err(_) => Err((payment, XcmError::TooExpensive)),
+		}
+	}
 
-		Ok(unused)
+	// stable2603 added `quote_weight`; its default impl always errors, which is why
+	// `get_units_per_second` reverted once these tests could compile again.
+	// Deliberately gated on the same asset as `buy_weight`: a quote that succeeds where
+	// the buy would fail is precisely the mismatch 4b5d090d fixed in the real precompile.
+	fn quote_weight(
+		&mut self,
+		weight: Weight,
+		given: AssetId,
+		_context: &XcmContext,
+	) -> Result<Asset, XcmError> {
+		if given != AssetId(Location::parent()) {
+			return Err(XcmError::TooExpensive);
+		}
+		Ok((given, weight.ref_time() as u128).into())
 	}
 }
 
@@ -406,7 +435,6 @@ impl xcm_executor::Config for XcmConfig {
 	type ResponseHandler = ();
 	type SubscriptionService = ();
 	type AssetTrap = ();
-	type AssetClaims = ();
 	type CallDispatcher = RuntimeCall;
 	type AssetLocker = ();
 	type AssetExchanger = ();

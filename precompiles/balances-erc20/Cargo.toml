@@ -29,7 +29,8 @@ pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
 [dev-dependencies]
 derive_more = { workspace = true }
 hex-literal = { workspace = true }
-libsecp256k1 = { workspace = true }
+# `sign` needs hmac + static-context; the workspace pin sets default-features = false
+libsecp256k1 = { workspace = true, features = ["hmac", "static-context"] }
 serde = { workspace = true }
 sha3 = { workspace = true }
 

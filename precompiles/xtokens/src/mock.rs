@@ -26,7 +26,8 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
-use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
+use orml_traits::parameter_type_with_key;
+use orml_xtokens::AbsoluteReserveProvider;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
 use peaq_precompile_utils::*;
 use precompile_utils::precompile_set::*;
@@ -278,7 +279,14 @@ pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
 
 pub struct DummyAssetTransactor;
 impl TransactAsset for DummyAssetTransactor {
-	fn deposit_asset(_what: &Asset, _who: &Location, _context: Option<&XcmContext>) -> XcmResult {
+	// stable2603: deposit takes the whole holding lot (which now carries imbalances)
+	// and hands it back on failure. This dummy always succeeds, so the lot is consumed --
+	// that models "the assets were deposited", same as the old no-op.
+	fn deposit_asset(
+		_what: AssetsInHolding,
+		_who: &Location,
+		_context: Option<&XcmContext>,
+	) -> Result<(), (AssetsInHolding, XcmError)> {
 		Ok(())
 	}
 
@@ -287,7 +295,7 @@ impl TransactAsset for DummyAssetTransactor {
 		_who: &Location,
 		_maybe_context: Option<&XcmContext>,
 	) -> Result<AssetsInHolding, XcmError> {
-		Ok(AssetsInHolding::default())
+		Ok(AssetsInHolding::new())
 	}
 }
 
@@ -344,7 +352,6 @@ impl xcm_executor::Config for XcmConfig {
 	type ResponseHandler = ();
 	type SubscriptionService = ();
 	type AssetTrap = ();
-	type AssetClaims = ();
 	type CallDispatcher = RuntimeCall;
 	type AssetLocker = ();
 	type AssetExchanger = ();
@@ -418,7 +425,6 @@ parameter_type_with_key! {
 }
 
 impl orml_xtokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
 	type AccountIdToLocation = AccountIdToLocation;
