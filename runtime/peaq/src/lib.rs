@@ -1638,6 +1638,9 @@ impl_runtime_apis! {
 					value,
 					Some(<Runtime as pallet_evm::Config>::ChainId::get()),
 					access_list.clone().unwrap_or_default(),
+					// `trace_call` has no authorization list of its own; an empty one
+					// keeps the traced call equivalent to a non-EIP-7702 call.
+					Default::default(),
 				);
 
 				let gas_limit = gas_limit.min(u64::MAX.into()).low_u64();
@@ -1654,10 +1657,12 @@ impl_runtime_apis! {
 					max_priority_fee_per_gas,
 					nonce,
 					access_list.unwrap_or_default(),
+					Default::default(),
 					is_transactional,
 					validate,
 					weight_limit,
 					proof_size_base_cost,
+					None,
 					<Runtime as pallet_evm::Config>::config(),
 				);
 			});
