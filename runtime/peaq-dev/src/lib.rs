@@ -2171,6 +2171,15 @@ impl_runtime_apis! {
 		}
 	}
 
+	// New in stable2603; the node requires it to build a collation. An empty
+	// request asks for no extra relay chain storage keys in the proof, which is
+	// what the collator did before this API existed.
+	impl cumulus_primitives_core::KeyToIncludeInRelayProof<Block> for Runtime {
+		fn keys_to_prove() -> cumulus_primitives_core::RelayProofRequest {
+			Default::default()
+		}
+	}
+
 	impl peaq_pallet_storage_runtime_api::PeaqStorageApi<Block, AccountId> for Runtime{
 		fn read(did_account: AccountId, item_type: Vec<u8>) -> Option<Vec<u8>>{
 			PeaqStorage::read(&did_account, &item_type)

@@ -2185,6 +2185,15 @@ impl_runtime_apis! {
 		}
 	}
 
+	// New in stable2603; the node requires it to build a collation. An empty
+	// request asks for no extra relay chain storage keys in the proof, which is
+	// what the collator did before this API existed.
+	impl cumulus_primitives_core::KeyToIncludeInRelayProof<Block> for Runtime {
+		fn keys_to_prove() -> cumulus_primitives_core::RelayProofRequest {
+			Default::default()
+		}
+	}
+
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
 		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
 			ParachainSystem::collect_collation_info(header)
