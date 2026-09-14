@@ -34,7 +34,10 @@ sp-trie = { workspace = true, default-features = true }
 ethereum = { workspace = true, default-features = false, features = [ "with-scale" ] }
 ethereum-types = { workspace = true, default-features = true }
 fc-consensus = { workspace = true, default-features = true }
-fc-db = { workspace = true, default-features = true }
+# Feature unification is additive across the workspace: leaving `default` on here
+# re-enables frontier's SQL backend for every member even though this crate uses
+# no fc_db API at all. Keep it aligned with the workspace declaration.
+fc-db = { workspace = true, default-features = false }
 fc-rpc = { workspace = true, default-features = true, features = [ "rpc-binary-search-estimate" ] }
 fp-rpc = { workspace = true, default-features = true }
 fc-storage = { workspace = true, default-features = true }

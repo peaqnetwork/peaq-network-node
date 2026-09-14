@@ -104,8 +104,11 @@ parachains-common = { git = "https://github.com/paritytech/polkadot-sdk", tag = 
 
 # Frontier
 fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
-fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
-fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
+# frontier stable2603 puts its SQL backend behind `default`; peaq only ever builds the
+# key-value backend (node/src/parachain/service.rs), so the default stays off here.
+# Cargo ignores `default-features = false` on a member unless the workspace sets it.
+fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
 fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
 fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
 fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
