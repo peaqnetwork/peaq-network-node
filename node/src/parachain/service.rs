@@ -7,7 +7,8 @@ use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImpo
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, BuildNetworkParams,
-	DARecoveryProfile, ParachainHostFunctions, StartRelayChainTasksParams,
+	DARecoveryProfile, ParachainHostFunctions, ParachainTracingExecuteBlock,
+	StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::{
 	relay_chain::{CollatorPair, ValidationCode},
@@ -17,7 +18,7 @@ use sc_client_api::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 
-use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_interface::RelayChainInterface;
 use fc_consensus::FrontierBlockImport as TFrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc::EthTask;
@@ -28,7 +29,7 @@ use peaq_primitives_xcm::*;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::WasmExecutor;
-use sc_network::{config::FullNetworkConfiguration, NetworkBlock, PeerId};
+use sc_network::{config::FullNetworkConfiguration, NetworkBackend, NetworkBlock, PeerId};
 use sc_network_sync::SyncingService;
 use sc_service::{
 	Configuration, ImportQueue, PartialComponents, TFullBackend, TFullClient, TaskManager,
@@ -199,6 +200,9 @@ where
 			// `fron` digest) diverges and execute_block fails final_checks ("Digest item must
 			// match").
 			true,
+			// Pruning filters pin blocks whose justifications must be kept; that is a
+			// GRANDPA concern and a parachain has none, so nothing to retain.
+			Default::default(),
 		)?;
 	let client = Arc::new(client);
 
@@ -291,7 +295,8 @@ where
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
-		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
+		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
+		+ cumulus_primitives_core::KeyToIncludeInRelayProof<Block>,
 	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
@@ -365,13 +370,29 @@ where
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
+			// The syncing/network worker moved onto the essential task set upstream, so a
+			// panic there takes the node down instead of leaving it half-alive.
+			spawn_essential_handle: task_manager.spawn_essential_handle(),
 			import_queue: params.import_queue,
 			relay_chain_interface: relay_chain_interface.clone(),
 			sybil_resistance_level: cumulus_client_service::CollatorSybilResistance::Resistant,
+			// NotificationMetrics has no Default; passing None here would silently drop
+			// every notification-protocol metric.
+			metrics: sc_network::NetworkWorker::<Block, Hash>::register_notification_metrics(
+				parachain_config.prometheus_config.as_ref().map(|config| &config.registry),
+			),
 		})
 		.await?;
 
 	let fee_history_limit = rpc_config.fee_history_limit;
+
+	let state_pruning_blocks = parachain_config.state_pruning.as_ref().and_then(|mode| {
+		if let sc_service::PruningMode::Constrained(c) = mode {
+			c.max_blocks.map(u64::from)
+		} else {
+			None
+		}
+	});
 
 	let overrides = Arc::new(fc_storage::StorageOverrideHandler::new(client.clone()));
 
@@ -396,6 +417,12 @@ where
 				b.clone(),
 				3,
 				0,
+				// Lets the eth mapping-sync worker skip blocks whose state is already
+				// pruned instead of wedging behind them. Derived from --state-pruning the
+				// way frontier's template does; every peaq deployment runs
+				// --state-pruning=archive, for which this is None (never skip), so it is
+				// behaviour-preserving today and only matters if pruning is ever enabled.
+				state_pruning_blocks,
 				fc_mapping_sync::SyncStrategy::Parachain,
 				sync_service.clone(),
 				pubsub_notification_sinks.clone(),
@@ -525,6 +552,10 @@ where
 		system_rpc_tx,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
+		// Backs state_traceBlock. The parachain variant registers ProofSizeExt, which this
+		// runtime needs: without it cumulus-pallet-weight-reclaim mis-measures and the trace
+		// diverges from real execution. `None` would compile and just drop the RPC.
+		tracing_execute_block: Some(Arc::new(ParachainTracingExecuteBlock::new(client.clone()))),
 	})?;
 
 	let announce_block = {
@@ -552,6 +583,7 @@ where
 		} else {
 			DARecoveryProfile::FullNode
 		},
+		prometheus_registry: prometheus_registry.as_ref(),
 	})?;
 
 	if is_authority {
@@ -666,7 +698,8 @@ where
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
-		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
+		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
+		+ cumulus_primitives_core::KeyToIncludeInRelayProof<Block>,
 {
 	start_contracts_node_impl::<RuntimeApi, _, _>(
 		parachain_config,
@@ -723,7 +756,7 @@ where
 		 collator_peer_id| {
 			let spawn_handle = task_manager.spawn_handle();
 
-			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+			let proposer_factory = sc_basic_authorship::ProposerFactory::new(
 				spawn_handle,
 				client.clone(),
 				transaction_pool,

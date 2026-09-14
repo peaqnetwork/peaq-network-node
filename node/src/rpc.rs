@@ -2,7 +2,9 @@
 
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use fc_rpc::{EthBlockDataCacheTask, StorageOverride, TxPool, TxPoolApiServer};
+use fc_rpc::{
+	EthBlockDataCacheTask, LogsJournal, LogsJournalConfig, StorageOverride, TxPool, TxPoolApiServer,
+};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use peaq_primitives_xcm::*;
@@ -57,6 +59,10 @@ pub struct SpawnTasksParams<'a, B: BlockT, C, BE> {
 	pub fee_history_limit: u64,
 	pub fee_history_cache: FeeHistoryCache,
 }
+
+/// Widest block range a single eth_getLogs may scan. frontier's CLI default;
+/// peaq's RpcConfig does not expose it yet.
+const MAX_BLOCK_RANGE: u32 = 1024;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, BE> {
@@ -205,6 +211,12 @@ where
 			relay_chain_state,
 			downward_messages: Default::default(),
 			horizontal_messages: Default::default(),
+			// Both new in stable2603. This is the synthetic inherent for `pending`
+			// eth_call / estimateGas, not a real collation, so there are no relay
+			// parent descendants to prove and no collator behind it -- the same
+			// values the SDK's mock inherent provider uses.
+			relay_parent_descendants: Default::default(),
+			collator_peer_id: None,
 		};
 		Ok((slot, timestamp, parachain_inherent_data))
 	};
@@ -212,11 +224,20 @@ where
 	let pending_consensus_data_provider =
 		Box::new(fc_rpc::pending::AuraConsensusDataProvider::new(client.clone()));
 
+	// Reorg-aware journal backing eth_getFilterChanges / logs subscriptions,
+	// new in stable2603 and shared by the filter and pubsub RPCs below.
+	// Default config is frontier's 512 MiB cap.
+	let logs_journal = Arc::new(LogsJournal::with_config(
+		subscription_task_executor.clone(),
+		overrides.clone(),
+		pubsub_notification_sinks.clone(),
+		LogsJournalConfig::default(),
+	));
+
 	io.merge(
 		Eth::<_, _, _, _, _, _, PeaqEthConfig<_, _>>::new(
 			Arc::clone(&client),
 			Arc::clone(&pool),
-			graph.clone(),
 			no_tx_converter,
 			Arc::clone(&sync),
 			Default::default(), // signers
@@ -227,6 +248,11 @@ where
 			fee_history_cache,
 			fee_history_limit,
 			10_u64,
+			// RPC-side gate for legacy transactions without an EIP-155 chain id. The
+			// runtime already accepts them (pallet_ethereum AllowUnprotectedTxs = true,
+			// chosen for compatibility), so rejecting them here would only push the
+			// same transactions onto p2p gossip. Keep every layer consistent.
+			true,
 			forced_parent_hashes,
 			pending_create_inherent_data_providers,
 			Some(pending_consensus_data_provider),
@@ -240,11 +266,13 @@ where
 			EthFilter::new(
 				client.clone(),
 				frontier_backend,
-				graph.clone(),
+				pool.clone(),
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
+				MAX_BLOCK_RANGE,
 				block_data_cache,
+				logs_journal.clone(),
 			)
 			.into_rpc(),
 		)?;
@@ -273,6 +301,7 @@ where
 			subscription_task_executor,
 			overrides,
 			pubsub_notification_sinks.clone(),
+			logs_journal,
 		)
 		.into_rpc(),
 	)?;
