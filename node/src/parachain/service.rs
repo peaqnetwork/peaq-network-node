@@ -6,8 +6,8 @@ use cumulus_client_consensus_aura::collators::lookahead::{
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use cumulus_client_service::{
-	prepare_node_config, start_relay_chain_tasks, BuildNetworkParams, DARecoveryProfile,
-	ParachainHostFunctions, StartRelayChainTasksParams,
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, BuildNetworkParams,
+	DARecoveryProfile, ParachainHostFunctions, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::{
 	relay_chain::{CollatorPair, ValidationCode},
@@ -17,9 +17,7 @@ use sc_client_api::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 
-use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node_with_rpc;
 use fc_consensus::FrontierBlockImport as TFrontierBlockImport;
 use fc_db::DatabaseSource;
 use fc_rpc::EthTask;
@@ -30,7 +28,7 @@ use peaq_primitives_xcm::*;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::import_queue::BasicQueue;
 use sc_executor::WasmExecutor;
-use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
+use sc_network::{config::FullNetworkConfiguration, NetworkBlock, PeerId};
 use sc_network_sync::SyncingService;
 use sc_service::{
 	Configuration, ImportQueue, PartialComponents, TFullBackend, TFullClient, TaskManager,
@@ -258,34 +256,6 @@ where
 	Ok(params)
 }
 
-async fn build_relay_chain_interface(
-	polkadot_config: Configuration,
-	parachain_config: &Configuration,
-	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
-	task_manager: &mut TaskManager,
-	collator_options: CollatorOptions,
-) -> RelayChainResult<(Arc<dyn RelayChainInterface + 'static>, Option<CollatorPair>)> {
-	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
-		collator_options.relay_chain_mode
-	{
-		build_minimal_relay_chain_node_with_rpc(
-			polkadot_config,
-			parachain_config.prometheus_registry(),
-			task_manager,
-			rpc_target_urls,
-		)
-		.await
-	} else {
-		build_inprocess_relay_chain(
-			polkadot_config,
-			parachain_config,
-			telemetry_worker_handle,
-			task_manager,
-			None,
-		)
-	}
-}
-
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
@@ -345,6 +315,7 @@ where
 		KeystorePtr,
 		ParaId,
 		CollatorPair,
+		PeerId,
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -366,13 +337,15 @@ where
 	let backend = params.backend.clone();
 
 	let mut task_manager = params.task_manager;
-	let (relay_chain_interface, collator_key) = build_relay_chain_interface(
-		polkadot_config,
-		&parachain_config,
-		telemetry_worker_handle,
-		&mut task_manager,
-		collator_options.clone(),
-	)
+	let (relay_chain_interface, collator_key, relay_chain_network, _paranode_rx) =
+		build_relay_chain_interface(
+			polkadot_config,
+			&parachain_config,
+			telemetry_worker_handle,
+			&mut task_manager,
+			collator_options.clone(),
+			None,
+		)
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
@@ -595,6 +568,10 @@ where
 			params.keystore_container.keystore(),
 			id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
+			// The lookahead collator wants the RELAY chain's peer id, not the
+			// parachain's -- both the parachain template and polkadot-omni-node
+			// pass relay_chain_network.local_peer_id() here.
+			relay_chain_network.local_peer_id(),
 		)?;
 	}
 
@@ -689,8 +666,7 @@ where
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
-		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
-		+ cumulus_primitives_core::GetCoreSelectorApi<Block>,
+		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>,
 {
 	start_contracts_node_impl::<RuntimeApi, _, _>(
 		parachain_config,
@@ -743,7 +719,8 @@ where
 		 sync_oracle,
 		 keystore,
 		 para_id,
-		 collator_key| {
+		 collator_key,
+		 collator_peer_id| {
 			let spawn_handle = task_manager.spawn_handle();
 
 			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
@@ -785,7 +762,7 @@ where
 				overseer_handle,
 				max_pov_percentage: Some(85),
 				relay_chain_slot_duration: Duration::from_secs(6),
-				collator_peer_id: network.local_peer_id(),
+				collator_peer_id,
 				proposer: proposer_factory,
 				collator_service,
 				// We got around 1500ms for proposing
