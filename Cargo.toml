@@ -107,8 +107,12 @@ fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq
 # frontier stable2603 puts its SQL backend behind `default`; peaq only ever builds the
 # key-value backend (node/src/parachain/service.rs), so the default stays off here.
 # Cargo ignores `default-features = false` on a member unless the workspace sets it.
-fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
-fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false }
+# frontier 2603 moved `rocksdb` out of fc-db's defaults (`default = ["sql"]`), so
+# dropping the defaults to lose the SQL backend must add `rocksdb` back explicitly:
+# without it fc_db cannot open a RocksDb `DatabaseSource` and the node exits with
+# "Supported db sources: `auto` | `rocksdb` | `paritydb`" at startup.
+fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false, features = [ "rocksdb" ] }
+fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6", default-features = false, features = [ "rocksdb" ] }
 fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
 fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
 fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-6" }
