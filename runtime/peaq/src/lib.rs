@@ -2308,6 +2308,88 @@ impl_runtime_apis! {
 			Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
 		}
 	}
+
+	// XCM tooling APIs. Wallets and explorers use these to price a cross-chain
+	// transfer and to preview its outcome before the user signs anything; without
+	// them a caller can only submit and wait. Every parachain peaq exchanges assets
+	// with implements both (Polkadot AssetHub, Astar, HydraDX, Acala, Moonbeam).
+	impl xcm_runtime_apis::fees::XcmPaymentApi<Block> for Runtime {
+		fn query_acceptable_payment_assets(
+			xcm_version: xcm::Version,
+		) -> Result<Vec<xcm::VersionedAssetId>, xcm_runtime_apis::fees::Error> {
+			// Mirror the two arms of `xcm_config::Trader`: the native token, priced by
+			// `UsingComponents`, plus every foreign asset XcAssetConfig holds a
+			// units-per-second rate for, priced by `FixedRateOfForeignAsset`. An asset
+			// registered without a rate cannot pay fees, so it is left out.
+			let mut acceptable = alloc::vec![xcm::latest::AssetId(
+				xcm_config::SelfReserveLocation::get()
+			)];
+			acceptable.extend(
+				xc_asset_config::AssetLocationUnitsPerSecond::<Runtime>::iter_keys().filter_map(
+					|location| {
+						xcm::latest::Location::try_from(location)
+							.ok()
+							.map(xcm::latest::AssetId)
+					},
+				),
+			);
+			PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable)
+		}
+
+		fn query_weight_to_asset_fee(
+			weight: Weight,
+			asset: xcm::VersionedAssetId,
+		) -> Result<u128, xcm_runtime_apis::fees::Error> {
+			// Ask the configured trader itself rather than restating its formula here,
+			// so the quote cannot drift away from what execution actually charges.
+			type Trader = <xcm_config::XcmConfig as xcm_executor::Config>::Trader;
+			PolkadotXcm::query_weight_to_asset_fee::<Trader>(weight, asset)
+		}
+
+		fn query_xcm_weight(
+			message: xcm::VersionedXcm<()>,
+		) -> Result<Weight, xcm_runtime_apis::fees::Error> {
+			PolkadotXcm::query_xcm_weight(message)
+		}
+
+		fn query_delivery_fees(
+			destination: xcm::VersionedLocation,
+			message: xcm::VersionedXcm<()>,
+			asset_id: xcm::VersionedAssetId,
+		) -> Result<xcm::VersionedAssets, xcm_runtime_apis::fees::Error> {
+			type AssetExchanger = <xcm_config::XcmConfig as xcm_executor::Config>::AssetExchanger;
+			PolkadotXcm::query_delivery_fees::<AssetExchanger>(destination, message, asset_id)
+		}
+	}
+
+	impl xcm_runtime_apis::dry_run::DryRunApi<Block, RuntimeCall, RuntimeEvent, OriginCaller>
+		for Runtime
+	{
+		fn dry_run_call(
+			origin: OriginCaller,
+			call: RuntimeCall,
+			result_xcms_version: xcm::Version,
+		) -> Result<
+			xcm_runtime_apis::dry_run::CallDryRunEffects<RuntimeEvent>,
+			xcm_runtime_apis::dry_run::Error,
+		> {
+			PolkadotXcm::dry_run_call::<Runtime, xcm_config::XcmRouter, OriginCaller, RuntimeCall>(
+				origin,
+				call,
+				result_xcms_version,
+			)
+		}
+
+		fn dry_run_xcm(
+			origin_location: xcm::VersionedLocation,
+			xcm: xcm::VersionedXcm<RuntimeCall>,
+		) -> Result<
+			xcm_runtime_apis::dry_run::XcmDryRunEffects<RuntimeEvent>,
+			xcm_runtime_apis::dry_run::Error,
+		> {
+			PolkadotXcm::dry_run_xcm::<xcm_config::XcmRouter>(origin_location, xcm)
+		}
+	}
 }
 
 impl peaq_pallet_transaction::Config for Runtime {

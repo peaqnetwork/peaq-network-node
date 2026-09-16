@@ -148,6 +148,7 @@ polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot-sdk", 
 xcm = { package = "staging-xcm", git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
+xcm-runtime-apis = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 pallet-message-queue = { git = "https://github.com/paritytech/polkadot-sdk", tag = "polkadot-stable2603-6", default-features = false }
 

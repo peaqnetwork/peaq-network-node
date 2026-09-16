@@ -9746,6 +9746,7 @@ dependencies = [
  "staging-xcm-executor",
  "substrate-wasm-builder",
  "xc-asset-config",
+ "xcm-runtime-apis",
  "zenlink-protocol",
  "zenlink-protocol-runtime-api",
 ]
@@ -10371,6 +10372,7 @@ dependencies = [
  "staging-xcm-executor",
  "substrate-wasm-builder",
  "xc-asset-config",
+ "xcm-runtime-apis",
  "zenlink-protocol",
  "zenlink-protocol-runtime-api",
 ]

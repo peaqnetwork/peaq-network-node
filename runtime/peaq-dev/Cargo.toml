@@ -91,6 +91,7 @@ pallet-authorship = { workspace = true, default-features = false }
 xcm = { workspace = true, default-features = false }
 xcm-builder = { workspace = true, default-features = false }
 xcm-executor = { workspace = true, default-features = false }
+xcm-runtime-apis = { workspace = true, default-features = false }
 pallet-xcm = { workspace = true, default-features = false }
 pallet-message-queue = { workspace = true, default-features = false }
 cumulus-pallet-xcm = { workspace = true, default-features = false }
@@ -274,6 +275,7 @@ std = [
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",
+    "xcm-runtime-apis/std",
 	"cumulus-pallet-xcm/std",
 	"cumulus-pallet-xcmp-queue/std",
 	"orml-currencies/std",
