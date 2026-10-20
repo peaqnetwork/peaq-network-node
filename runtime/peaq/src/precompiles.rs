@@ -26,23 +26,35 @@ parameter_types! {
 	pub EVMAssetPrefix: &'static [u8] = ASSET_PRECOMPILE_ADDRESS_PREFIX;
 }
 
+/// Execution cost of one P256VERIFY call, in ref-time picoseconds.
+///
+/// 2.5 ms is derived from measuring this exact `p256` verify path compiled to
+/// wasm32 and executed under Cranelift (the runtime's execution mode): 2.79 ms
+/// median on a development machine, which the parachain-staking benchmark shows
+/// to be ~1.25x slower than the reference hardware, giving ~2.24 ms median and
+/// ~2.58 ms p90 reference-equivalent. A later run of the same harness measured 2.48 ms
+/// median (~1.98 ms reference-equivalent). 2.5 ms sits above the reference median but
+/// below the first run's p90. Note this is ~1.4x higher than the constant published for
+/// the same crate elsewhere; prefer a benchmark generated on peaq reference hardware
+/// once one exists.
+const P256_VERIFY_REF_TIME: u64 = 2_500_000_000;
+
 parameter_types! {
-	/// RIP-7212 P256VERIFY: 3450 EVM gas (spec constant, kept for tooling equivalence).
-	pub const P256VerifyGas: u64 = 3450;
-	/// The block-weight (DoS) meter is charged the REAL verify cost via
-	/// `record_external_cost`, NOT the 3450 gas -- 3450 is far below the cost of the
-	/// elliptic-curve work, so pricing the meter by gas alone would let a caller fill
-	/// blocks with underpriced verification.
+	/// P256VERIFY gas, derived from the measured cost instead of RIP-7212's 3450.
 	///
-	/// 2.5 ms is derived from measuring this exact `p256` verify path compiled to
-	/// wasm32 and executed under Cranelift (the runtime's execution mode): 2.79 ms
-	/// median on a development machine, which the parachain-staking benchmark shows
-	/// to be ~1.25x slower than the reference hardware, giving ~2.24 ms median and
-	/// ~2.58 ms p90 reference-equivalent. Rounded up for DoS headroom. Note this is
-	/// ~1.4x higher than the constant published for the same crate elsewhere; prefer
-	/// a benchmark generated on peaq reference hardware once one exists.
-	pub const P256VerifyWeight: Weight = Weight::from_parts(2_500_000_000, 0);
+	/// Only gas reaches the fee and the post-dispatch block weight: Frontier sizes both
+	/// from `max(used, pov, storage)` gas and does not count the ref time recorded through
+	/// `record_external_cost`. At 3450 gas a verify would pay for ~1/29 of the block time
+	/// it uses.
+	pub const P256VerifyGas: u64 = P256_VERIFY_REF_TIME.div_ceil(crate::WEIGHT_PER_GAS);
+	/// Still recorded as external cost, which caps the ref time a single transaction can
+	/// spend at what its gas limit allows.
+	pub const P256VerifyWeight: Weight = Weight::from_parts(P256_VERIFY_REF_TIME, 0);
 }
+
+// The fee must cover the measured execution cost.
+const _: () =
+	assert!(P256VerifyGas::get() * crate::WEIGHT_PER_GAS >= P256VerifyWeight::get().ref_time());
 
 /// ERC20 metadata for the native token.
 pub struct NativeErc20Metadata;
