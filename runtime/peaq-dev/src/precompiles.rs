@@ -85,9 +85,9 @@ const _: () =
 
 /// Execution cost of one Ed25519 verify call, in ref-time picoseconds.
 ///
-/// Measured the same way as P256VERIFY above (this `ed25519-dalek` verify path compiled
-/// to wasm32, run under Cranelift): 193 us median and 198 us worst of 7 runs on a
-/// development machine, ~155-158 us reference-equivalent at the same ~1.25x scaling.
+/// Measured the same way as P256VERIFY above (this `ed25519-dalek` `verify_strict` path
+/// compiled to wasm32, run under Cranelift): 209 us median and 217 us worst of 7 runs on a
+/// development machine, ~167-174 us reference-equivalent at the same ~1.25x scaling.
 /// Rounded up to 200 us for DoS headroom.
 const ED25519_VERIFY_REF_TIME: u64 = 200_000_000;
 

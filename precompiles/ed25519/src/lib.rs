@@ -23,7 +23,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, VerifyingKey};
 use fp_evm::{
 	ExitError, ExitSucceed, Precompile, PrecompileHandle, PrecompileOutput, PrecompileResult,
 };
@@ -65,10 +65,10 @@ impl<W: Get<Weight>, G: Get<u64>> Ed25519Verify<W, G> {
 			Ok(sig) => sig,
 			Err(_) => return false,
 		};
-		// Standard RFC 8032 verification via ed25519-dalek (cofactorless; rejects non-canonical
-		// s, so classic (R, s+L) malleability is blocked). NOTE: `verify` (not `verify_strict`)
-		// accepts small-order public keys -- callers must treat the pubkey as a trusted binding.
-		pk.verify(msg, &sig).is_ok()
+		// `verify_strict`: cofactorless RFC 8032 verification that also rejects small-order
+		// public keys and small-order R, and non-canonical s. Plain `verify` accepts a
+		// small-order key, under which one signature verifies every message.
+		pk.verify_strict(msg, &sig).is_ok()
 	}
 }
 
@@ -143,6 +143,28 @@ mod tests {
 			Verify::execute(&mut handle),
 			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
 		));
+	}
+
+	#[test]
+	fn test_weak_public_key_rejected() {
+		// Public key = the identity point (small order). With s = 1 and R = the base point,
+		// the cofactorless check s*B == R + k*A holds for every message, so one signature
+		// would "verify" anything under this key.
+		let mut identity = [0u8; 32];
+		identity[0] = 1;
+		// R = compressed Ed25519 base point (0x58 followed by 31 bytes of 0x66), s = 1.
+		let mut sig = [0x66u8; 64];
+		sig[0] = 0x58;
+		sig[32..].fill(0);
+		sig[32] = 1;
+
+		for msg in [[0u8; 32], [0xab; 32]] {
+			let mut input = Vec::with_capacity(128);
+			input.extend_from_slice(&msg);
+			input.extend_from_slice(&identity);
+			input.extend_from_slice(&sig);
+			assert!(run(input).is_empty(), "weak public key must not verify");
+		}
 	}
 
 	#[test]
