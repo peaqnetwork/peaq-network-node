@@ -45,6 +45,7 @@ fn selectors() {
 	assert!(PCall::eip2612_permit_selectors().contains(&0xd505accf));
 	assert!(PCall::eip2612_domain_separator_selectors().contains(&0x3644e515));
 	assert!(PCall::transfer_to_account_id_selectors().contains(&0xf088d916));
+	assert!(PCall::burn_selectors().contains(&0x42966c68));
 
 	assert_eq!(
 		crate::SELECTOR_LOG_TRANSFER,
@@ -93,6 +94,7 @@ fn modifiers() {
 			tester.test_default_modifier(PCall::eip2612_permit_selectors());
 			tester.test_view_modifier(PCall::eip2612_domain_separator_selectors());
 			tester.test_default_modifier(PCall::transfer_to_account_id_selectors());
+			tester.test_default_modifier(PCall::burn_selectors());
 		});
 }
 
@@ -314,6 +316,68 @@ fn transfer_not_enough_funds() {
 					Precompile1,
 					PCall::transfer { to: Address(Bob.into()), value: 1400.into() },
 				)
+				.execute_reverts(|output| {
+					from_utf8(output).unwrap().contains("Dispatched call failed with error: ") &&
+						from_utf8(output).unwrap().contains("FundsUnavailable")
+				});
+		});
+}
+
+#[test]
+fn burn() {
+	ExtBuilder::default()
+		.with_balances(vec![(CryptoAlith.into(), 1000), (Bob.into(), 2500)])
+		.build()
+		.execute_with(|| {
+			precompiles()
+				.prepare_test(CryptoAlith, Precompile1, PCall::burn { value: 400.into() })
+				// Skip the gas check
+				.expect_log(log3(
+					Precompile1,
+					SELECTOR_LOG_TRANSFER,
+					CryptoAlith,
+					H160::zero(),
+					solidity::encode_event_data(U256::from(400)),
+				))
+				.execute_returns(());
+
+			precompiles()
+				.prepare_test(
+					CryptoAlith,
+					Precompile1,
+					PCall::balance_of { owner: Address(CryptoAlith.into()) },
+				)
+				.expect_cost(0) // TODO: Test db read/write costs
+				.expect_no_logs()
+				.execute_returns(U256::from(600));
+
+			// Only the caller's balance is burned.
+			precompiles()
+				.prepare_test(
+					CryptoAlith,
+					Precompile1,
+					PCall::balance_of { owner: Address(Bob.into()) },
+				)
+				.expect_cost(0) // TODO: Test db read/write costs
+				.expect_no_logs()
+				.execute_returns(U256::from(2500));
+
+			precompiles()
+				.prepare_test(CryptoAlith, Precompile1, PCall::total_supply {})
+				.expect_cost(0) // TODO: Test db read/write costs
+				.expect_no_logs()
+				.execute_returns(U256::from(3100u64));
+		});
+}
+
+#[test]
+fn burn_not_enough_funds() {
+	ExtBuilder::default()
+		.with_balances(vec![(CryptoAlith.into(), 1000)])
+		.build()
+		.execute_with(|| {
+			precompiles()
+				.prepare_test(CryptoAlith, Precompile1, PCall::burn { value: 1400.into() })
 				.execute_reverts(|output| {
 					from_utf8(output).unwrap().contains("Dispatched call failed with error: ") &&
 						from_utf8(output).unwrap().contains("FundsUnavailable")

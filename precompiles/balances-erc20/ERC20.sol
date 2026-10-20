@@ -110,6 +110,17 @@ interface TransferToAccountIdNative {
     event TransferToAccountId(address indexed from, bytes32 indexed to, uint256 value);
 }
 
+/// @title Burnable extension of the ERC20 interface
+/// @dev see OpenZeppelin ERC20Burnable
+/// Peaq address : 0x0000000000000000000000000000000000000809
+interface IERC20Burnable {
+    /// @dev Destroys `value` tokens of the caller, reducing the total supply.
+    /// Emits Transfer(msg.sender, address(0), value).
+    /// @custom:selector 42966c68
+    /// @param value The amount of tokens to be burned.
+    function burn(uint256 value) external;
+}
+
 /// @title Native currency wrapper interface.
 /// @dev Allow compatibility with dApps expecting this precompile to be
 /// a WETH-like contract.
