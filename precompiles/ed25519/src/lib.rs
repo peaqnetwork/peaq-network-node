@@ -21,9 +21,13 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use core::marker::PhantomData;
 
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
-use fp_evm::{ExitSucceed, LinearCostPrecompile, PrecompileFailure};
+use fp_evm::{
+	ExitError, ExitSucceed, Precompile, PrecompileHandle, PrecompileOutput, PrecompileResult,
+};
+use frame_support::{traits::Get, weights::Weight};
 
 /// Ed25519 signature verification precompile (vendored from Frontier, adapted for peaq).
 ///
@@ -31,9 +35,18 @@ use fp_evm::{ExitSucceed, LinearCostPrecompile, PrecompileFailure};
 /// Output: a 32-byte big-endian `1` if the signature is valid, empty output otherwise --
 /// identical to P256VERIFY (RIP-7212). The call never reverts; malformed input (wrong
 /// length or bad key/signature encoding) is treated as an invalid signature (empty output).
-pub struct Ed25519Verify;
+///
+/// Costs are set by the runtime the same way as P256VERIFY: `G` gas per call, plus `W` recorded
+/// as external ref time.
+pub struct Ed25519Verify<W: Get<Weight>, G: Get<u64>>(PhantomData<(W, G)>);
 
-impl Ed25519Verify {
+impl<W: Get<Weight>, G: Get<u64>> Ed25519Verify<W, G> {
+	/// Charged on every call, whatever the input.
+	fn handle_cost(handle: &mut impl PrecompileHandle) -> Result<(), ExitError> {
+		handle.record_cost(G::get())?;
+		handle.record_external_cost(Some(W::get().ref_time()), None, None)
+	}
+
 	/// True iff `input` is a well-formed 128-byte `message || public_key || signature` blob
 	/// carrying a valid Ed25519 signature. Never panics: the length check guards the
 	/// fixed-width slicing, and every decode is fallible.
@@ -59,22 +72,19 @@ impl Ed25519Verify {
 	}
 }
 
-impl LinearCostPrecompile for Ed25519Verify {
-	// Frontier's upstream default (BASE=15, WORD=3) underprices an ed25519 verify ~100x vs
-	// its real CPU cost -> block-time DoS. Price at ecrecover parity: flat 3000 gas.
-	const BASE: u64 = 3000;
-	const WORD: u64 = 0;
+impl<W: Get<Weight>, G: Get<u64>> Precompile for Ed25519Verify<W, G> {
+	fn execute(handle: &mut impl PrecompileHandle) -> PrecompileResult {
+		Self::handle_cost(handle)?;
 
-	fn execute(input: &[u8], _: u64) -> Result<(ExitSucceed, Vec<u8>), PrecompileFailure> {
 		// Output matches P256VERIFY / RIP-7212: 32-byte big-endian 1 if valid, empty otherwise.
-		let output = if Self::is_valid(input) {
+		let output = if Self::is_valid(handle.input()) {
 			let mut out = [0u8; 32];
 			out[31] = 1;
 			out.to_vec()
 		} else {
 			Vec::new()
 		};
-		Ok((ExitSucceed::Returned, output))
+		Ok(PrecompileOutput { exit_status: ExitSucceed::Returned, output })
 	}
 }
 
@@ -82,6 +92,16 @@ impl LinearCostPrecompile for Ed25519Verify {
 mod tests {
 	use super::*;
 	use ed25519_dalek::{Signer, SigningKey};
+	use fp_evm::{Context, PrecompileFailure};
+	use frame_support::parameter_types;
+	use precompile_utils::testing::MockHandle;
+
+	parameter_types! {
+		pub const DummyWeight: Weight = Weight::from_parts(200_000_000, 0);
+		pub const DummyGas: u64 = 8000;
+	}
+
+	type Verify = Ed25519Verify<DummyWeight, DummyGas>;
 
 	fn valid_output() -> Vec<u8> {
 		let mut out = [0u8; 32];
@@ -89,12 +109,40 @@ mod tests {
 		out.to_vec()
 	}
 
+	fn prepare_handle(input: Vec<u8>, gas_limit: u64) -> MockHandle {
+		let context = Context {
+			address: Default::default(),
+			caller: Default::default(),
+			apparent_value: From::from(0),
+		};
+		let mut handle = MockHandle::new(Default::default(), context);
+		handle.input = input;
+		handle.gas_limit = gas_limit;
+		handle
+	}
+
+	/// Runs the precompile with exactly `DummyGas` available and checks it was all charged.
+	fn run(input: Vec<u8>) -> Vec<u8> {
+		let mut handle = prepare_handle(input, DummyGas::get());
+		let output = Verify::execute(&mut handle).expect("must not revert");
+		assert_eq!(output.exit_status, ExitSucceed::Returned);
+		assert_eq!(handle.gas_used, DummyGas::get());
+		output.output
+	}
+
 	#[test]
 	fn test_empty_input() {
-		// Malformed (too short) input -> empty output, NOT a revert.
-		let (exit, out) = Ed25519Verify::execute(&[], 1).expect("must not revert");
-		assert_eq!(exit, ExitSucceed::Returned);
-		assert!(out.is_empty());
+		// Malformed (too short) input -> empty output, NOT a revert. Gas is still charged.
+		assert!(run(Vec::new()).is_empty());
+	}
+
+	#[test]
+	fn test_out_of_gas() {
+		let mut handle = prepare_handle(Vec::new(), DummyGas::get() - 1);
+		assert!(matches!(
+			Verify::execute(&mut handle),
+			Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
+		));
 	}
 
 	#[test]
@@ -119,14 +167,12 @@ mod tests {
 		assert_eq!(input.len(), 128);
 
 		// valid -> 32-byte 0x..01
-		let (_, out) = Ed25519Verify::execute(&input, 1).expect("must not revert");
-		assert_eq!(out, valid_output());
+		assert_eq!(run(input.clone()), valid_output());
 
 		// oversized input (trailing byte) -> rejected -> empty
 		let mut input_long = input.clone();
 		input_long.push(0u8);
-		let (_, out) = Ed25519Verify::execute(&input_long, 1).expect("must not revert");
-		assert!(out.is_empty());
+		assert!(run(input_long).is_empty());
 
 		// wrong message -> invalid -> empty
 		let bad_msg: &[u8] = b"BAD_MESSAGE_mnopqrstuvwxyz123456";
@@ -134,7 +180,6 @@ mod tests {
 		input2.extend_from_slice(bad_msg);
 		input2.extend_from_slice(&public_key.to_bytes());
 		input2.extend_from_slice(&signature.to_bytes());
-		let (_, out) = Ed25519Verify::execute(&input2, 1).expect("must not revert");
-		assert!(out.is_empty());
+		assert!(run(input2).is_empty());
 	}
 }

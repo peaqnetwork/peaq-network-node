@@ -8,10 +8,15 @@ version = "0.1.0"
 [dependencies]
 ed25519-dalek = { workspace = true }
 fp-evm = { workspace = true, default-features = false }
+frame-support = { workspace = true, default-features = false }
+
+[dev-dependencies]
+precompile-utils = { workspace = true, features = [ "std", "testing" ] }
 
 [features]
 default = [ "std" ]
 std = [
 	"ed25519-dalek/std",
 	"fp-evm/std",
+	"frame-support/std",
 ]
