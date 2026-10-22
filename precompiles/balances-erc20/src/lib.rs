@@ -519,6 +519,38 @@ where
 		Ok(true)
 	}
 
+	#[precompile::public("burn(uint256)")]
+	fn burn(handle: &mut impl PrecompileHandle, value: U256) -> EvmResult {
+		handle.record_log_costs_manual(3, 32)?;
+
+		// Build call with origin.
+		{
+			let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+			let value = Self::u256_to_amount(value).in_field("value")?;
+
+			// Dispatch call (if enough gas).
+			// Burning never creates an account, so no storage growth needs to be accounted.
+			RuntimeHelper::<Runtime>::try_dispatch(
+				handle,
+				Some(origin).into(),
+				pallet_balances::Call::<Runtime, Instance>::burn { value, keep_alive: false },
+				0,
+			)?;
+		}
+
+		// ERC20 convention: a burn is a transfer to the zero address.
+		log3(
+			handle.context().address,
+			SELECTOR_LOG_TRANSFER,
+			handle.context().caller,
+			H160::zero(),
+			solidity::encode_event_data(value),
+		)
+		.record(handle)?;
+
+		Ok(())
+	}
+
 	#[allow(clippy::too_many_arguments)]
 	#[precompile::public("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")]
 	fn eip2612_permit(
