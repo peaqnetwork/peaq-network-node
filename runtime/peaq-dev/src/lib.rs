@@ -1198,6 +1198,7 @@ parameter_types! {
 	/// so each precompile added to `PeaqPrecompiles` from now on has to be listed here.
 	pub PrecompilesAddedAfterGenesis: Vec<H160> = vec![
 		H160::from_low_u64_be(256), // P256VERIFY
+		H160::from_low_u64_be(1027), // Ed25519 verify
 	];
 	/// Precompiles known to have no code on this chain that are deliberately left so.
 	pub PrecompilesAcceptedWithoutCode: Vec<H160> = vec![];
