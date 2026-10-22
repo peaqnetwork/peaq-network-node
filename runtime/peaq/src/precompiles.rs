@@ -6,6 +6,7 @@ use pallet_evm_precompile_balances_erc20::{Erc20BalancesPrecompile, Erc20Metadat
 use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
+use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_p256verify::P256Verify;
 use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
@@ -55,6 +56,26 @@ parameter_types! {
 // The fee must cover the measured execution cost.
 const _: () =
 	assert!(P256VerifyGas::get() * crate::WEIGHT_PER_GAS >= P256VerifyWeight::get().ref_time());
+
+/// Execution cost of one Ed25519 verify call, in ref-time picoseconds.
+///
+/// Measured the same way as P256VERIFY above (this `ed25519-dalek` `verify_strict` path
+/// compiled to wasm32, run under Cranelift): 209 us median and 217 us worst of 7 runs on a
+/// development machine, ~167-174 us reference-equivalent at the same ~1.25x scaling.
+/// Rounded up to 200 us for DoS headroom.
+const ED25519_VERIFY_REF_TIME: u64 = 200_000_000;
+
+parameter_types! {
+	/// Ed25519 verify gas, derived from the measured cost for the same reason as
+	/// `P256VerifyGas`.
+	pub const Ed25519VerifyGas: u64 = ED25519_VERIFY_REF_TIME.div_ceil(crate::WEIGHT_PER_GAS);
+	pub const Ed25519VerifyWeight: Weight = Weight::from_parts(ED25519_VERIFY_REF_TIME, 0);
+}
+
+// The fee must cover the measured execution cost.
+const _: () = assert!(
+	Ed25519VerifyGas::get() * crate::WEIGHT_PER_GAS >= Ed25519VerifyWeight::get().ref_time()
+);
 
 /// ERC20 metadata for the native token.
 pub struct NativeErc20Metadata;
@@ -119,6 +140,13 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<
 					AddressU64<1026>,
 					ECRecoverPublicKey,
+					(CallableByContract, CallableByPrecompile),
+				>,
+				// Ed25519 signature verification (peaq-specific address; Ed25519 has no ecosystem
+				// standard). Output matches P256VERIFY: 32-byte 1 = valid, empty = invalid.
+				PrecompileAt<
+					AddressU64<1027>,
+					Ed25519Verify<Ed25519VerifyWeight, Ed25519VerifyGas>,
 					(CallableByContract, CallableByPrecompile),
 				>,
 				PrecompileAt<

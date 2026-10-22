@@ -1219,6 +1219,7 @@ parameter_types! {
 	/// so each precompile added to `PeaqPrecompiles` from now on has to be listed here.
 	pub PrecompilesAddedAfterGenesis: Vec<H160> = vec![
 		H160::from_low_u64_be(256), // P256VERIFY
+		H160::from_low_u64_be(1027), // Ed25519 verify
 	];
 	/// Precompiles 0x800-0x809 were added after peaq's genesis and have no code on peaq, but they
 	/// have run without it for a long time, so giving them code changes how existing contracts see
