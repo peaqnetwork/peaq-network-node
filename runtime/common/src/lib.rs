@@ -18,6 +18,8 @@ pub mod wrapper;
 pub use wrapper::*;
 pub mod zenlink;
 pub use zenlink::*;
+pub mod precompile_code;
+pub use precompile_code::*;
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;

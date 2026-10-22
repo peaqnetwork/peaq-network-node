@@ -1,5 +1,5 @@
 use crate::xcm_config::XcmConfig;
-use frame_support::parameter_types;
+use frame_support::{parameter_types, weights::Weight};
 use pallet_evm_precompile_assets_erc20::Erc20AssetsPrecompileSet;
 use pallet_evm_precompile_assets_factory::AssetsFactoryPrecompile;
 use pallet_evm_precompile_balances_erc20::{Erc20BalancesPrecompile, Erc20Metadata};
@@ -7,6 +7,7 @@ use pallet_evm_precompile_batch::BatchPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_modexp::Modexp;
+use pallet_evm_precompile_p256verify::P256Verify;
 use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
 use pallet_evm_precompile_peaq_did::PeaqDIDPrecompile;
 use pallet_evm_precompile_peaq_rbac::PeaqRbacPrecompile;
@@ -51,6 +52,36 @@ parameter_types! {
 	pub EVMAssetPrefix: &'static [u8] = ASSET_PRECOMPILE_ADDRESS_PREFIX;
 }
 
+/// Execution cost of one P256VERIFY call, in ref-time picoseconds.
+///
+/// 2.5 ms is derived from measuring this exact `p256` verify path compiled to
+/// wasm32 and executed under Cranelift (the runtime's execution mode): 2.79 ms
+/// median on a development machine, which the parachain-staking benchmark shows
+/// to be ~1.25x slower than the reference hardware, giving ~2.24 ms median and
+/// ~2.58 ms p90 reference-equivalent. A later run of the same harness measured 2.48 ms
+/// median (~1.98 ms reference-equivalent). 2.5 ms sits above the reference median but
+/// below the first run's p90. Note this is ~1.4x higher than the constant published for
+/// the same crate elsewhere; prefer a benchmark generated on peaq reference hardware
+/// once one exists.
+const P256_VERIFY_REF_TIME: u64 = 2_500_000_000;
+
+parameter_types! {
+	/// P256VERIFY gas, derived from the measured cost instead of RIP-7212's 3450.
+	///
+	/// Only gas reaches the fee and the post-dispatch block weight: Frontier sizes both
+	/// from `max(used, pov, storage)` gas and does not count the ref time recorded through
+	/// `record_external_cost`. At 3450 gas a verify would pay for ~1/29 of the block time
+	/// it uses.
+	pub const P256VerifyGas: u64 = P256_VERIFY_REF_TIME.div_ceil(crate::WEIGHT_PER_GAS);
+	/// Still recorded as external cost, which caps the ref time a single transaction can
+	/// spend at what its gas limit allows.
+	pub const P256VerifyWeight: Weight = Weight::from_parts(P256_VERIFY_REF_TIME, 0);
+}
+
+// The fee must cover the measured execution cost.
+const _: () =
+	assert!(P256VerifyGas::get() * crate::WEIGHT_PER_GAS >= P256VerifyWeight::get().ref_time());
+
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
 /// 1024-2047 Precompiles that are not in Ethereum Mainnet but are neither Peaq-dev specific
@@ -72,6 +103,12 @@ pub type PeaqPrecompiles<R> = PrecompileSetBuilder<
 				PrecompileAt<AddressU64<7>, Bn128Mul, EthereumPrecompilesChecks>,
 				PrecompileAt<AddressU64<8>, Bn128Pairing, EthereumPrecompilesChecks>,
 				PrecompileAt<AddressU64<9>, Blake2F, EthereumPrecompilesChecks>,
+				// RIP-7212 secp256r1 (P-256) signature verification.
+				PrecompileAt<
+					AddressU64<256>,
+					P256Verify<P256VerifyWeight, P256VerifyGas>,
+					EthereumPrecompilesChecks,
+				>,
 				// Non-Moonbeam specific nor Ethereum precompiles :
 				PrecompileAt<
 					AddressU64<1024>,
