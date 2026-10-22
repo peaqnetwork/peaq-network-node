@@ -369,6 +369,7 @@ try-runtime = [
 	"inflation-manager/try-runtime",
 
 	"zenlink-protocol/try-runtime",
+	"runtime-common/try-runtime",
 ]
 
 # Enable metadata hash generation at compile time for the `CheckMetadataHash` extension.

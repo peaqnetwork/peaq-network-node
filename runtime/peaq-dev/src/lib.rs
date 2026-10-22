@@ -1193,10 +1193,27 @@ pub type UncheckedExtrinsic =
 pub type CheckedExtrinsic =
 	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 
+parameter_types! {
+	/// Precompiles added after genesis. Live chains have no revert code at these addresses,
+	/// so each precompile added to `PeaqPrecompiles` from now on has to be listed here.
+	pub PrecompilesAddedAfterGenesis: Vec<H160> = vec![
+		H160::from_low_u64_be(256), // P256VERIFY
+	];
+	/// Precompiles known to have no code on this chain that are deliberately left so.
+	pub PrecompilesAcceptedWithoutCode: Vec<H160> = vec![];
+	pub PrecompileAddresses: Vec<H160> = Precompiles::used_addresses_h160().collect();
+}
+
 // Migrations to apply on runtime upgrade
 pub type Migrations = (
 	// permanent
 	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
+	runtime_common::AddPrecompileRevertCode<
+		Runtime,
+		PrecompilesAddedAfterGenesis,
+		PrecompilesAcceptedWithoutCode,
+		PrecompileAddresses,
+	>,
 );
 
 /// Executive: handles dispatch to the various modules.
