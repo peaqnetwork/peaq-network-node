@@ -27,9 +27,10 @@ mod tests;
 use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
-	traits::Currency,
+	traits::{Currency, Get},
 };
 use pallet_evm::AddressMapping;
+use parity_scale_codec::MaxEncodedLen;
 use precompile_utils::prelude::*;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Dispatchable, StaticLookup};
@@ -39,6 +40,11 @@ type AccountIdOf<Runtime> = <Runtime as frame_system::Config>::AccountId;
 type BalanceOf<Runtime> = <<Runtime as parachain_staking::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
 >>::Balance;
+type CandidateOf<Runtime> = parachain_staking::types::Candidate<
+	AccountIdOf<Runtime>,
+	BalanceOf<Runtime>,
+	<Runtime as parachain_staking::Config>::MaxDelegatorsPerCollator,
+>;
 
 /// A precompile to wrap the functionality from parachain_staking.
 ///
@@ -60,20 +66,62 @@ where
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<parachain_staking::Call<Runtime>>,
-	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
-	AccountIdOf<Runtime>: From<[u8; 32]>,
+	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec + MaxEncodedLen,
+	AccountIdOf<Runtime>: From<[u8; 32]> + MaxEncodedLen,
 	[u8; 32]: From<AccountIdOf<Runtime>>,
 	H256: From<[u8; 32]>,
 	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
+	/// Charge gas for iterating the whole CandidatePool, before doing it.
+	///
+	/// `record_db_read` charges for exactly one DB read, with the given
+	/// value as its maximum encoded length in bytes. The previous code
+	/// called it once with 7200 (150 * (32 + 16)), so a pool of any size
+	/// paid for one read, no matter how many candidates were iterated.
+	/// `CandidatePool` is a `CountedStorageMap`, so `count()` is O(1);
+	/// charging upfront means a call with insufficient gas fails before
+	/// the O(N) iteration, instead of doing the work and failing after.
+	fn record_candidate_pool_reads(handle: &mut impl PrecompileHandle) -> EvmResult<()> {
+		let pool_size = parachain_staking::CandidatePool::<Runtime>::count();
+		// One read for the count itself (a u32 storage value).
+		handle.record_db_read::<Runtime>(4)?;
+		// One read per candidate, at the candidate's maximum encoded
+		// length. A candidate can hold up to MaxDelegatorsPerCollator
+		// delegators, so this is much larger than 48 bytes per candidate.
+		let candidate_len = CandidateOf::<Runtime>::max_encoded_len();
+		for _ in 0..pool_size {
+			handle.record_db_read::<Runtime>(candidate_len)?;
+		}
+		Ok(())
+	}
+
+	/// One read for the TopCandidates storage value: at most
+	/// MaxTopCandidates stakes, plus a compact length prefix.
+	fn record_top_candidates_read(handle: &mut impl PrecompileHandle) -> EvmResult<()> {
+		let stake_len = AccountIdOf::<Runtime>::max_encoded_len()
+			.saturating_add(BalanceOf::<Runtime>::max_encoded_len());
+		let max_top = <Runtime as parachain_staking::Config>::MaxTopCandidates::get() as usize;
+		handle.record_db_read::<Runtime>(stake_len.saturating_mul(max_top).saturating_add(4))?;
+		Ok(())
+	}
+
+	/// One read for the session validators storage value. In the peaq
+	/// runtime the validator set is bounded by the same collator
+	/// candidate bound, so MaxTopCandidates is used as the bound here.
+	fn record_validators_read(handle: &mut impl PrecompileHandle) -> EvmResult<()> {
+		let max_top = <Runtime as parachain_staking::Config>::MaxTopCandidates::get() as usize;
+		handle.record_db_read::<Runtime>(
+			AccountIdOf::<Runtime>::max_encoded_len().saturating_mul(max_top).saturating_add(4),
+		)?;
+		Ok(())
+	}
+
 	#[precompile::public("getCollatorList()")]
 	#[precompile::public("get_collator_list()")]
 	#[precompile::view]
 	fn get_collator_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
-		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
-		// we account for a theoretical 150 pool.
-
-		handle.record_db_read::<Runtime>(7200)?;
+		Self::record_candidate_pool_reads(handle)?;
+		Self::record_top_candidates_read(handle)?;
 
 		let all_collators = parachain_staking::CandidatePool::<Runtime>::iter()
 			.map(|(_id, stake_info)| CollatorInfo {
@@ -96,10 +144,8 @@ where
 	#[precompile::public("get_wait_list()")]
 	#[precompile::view]
 	fn get_wait_list(handle: &mut impl PrecompileHandle) -> EvmResult<Vec<CollatorInfo>> {
-		// CandidatePool: UnBoundedVec(AccountId(32) + Balance(16))
-		// we account for a theoretical 150 pool.
-
-		handle.record_db_read::<Runtime>(7200)?;
+		Self::record_candidate_pool_reads(handle)?;
+		Self::record_validators_read(handle)?;
 
 		let all_collators = parachain_staking::CandidatePool::<Runtime>::iter()
 			.map(|(_id, stake_info)| CollatorInfo {
