@@ -139,6 +139,12 @@ benchmarks! {
 		assert_eq!(<Round<T>>::get().current, 0u32);
 	}
 
+	// NOTE: the `on_initialize_round_update` benchmark was removed -- round rotation moved
+	// from this pallet's on_initialize to pallet_session (start_session), so on_initialize no
+	// longer advances the round and the old benchmark asserted behaviour that cannot happen.
+	// The WeightInfo::on_initialize_round_update method is left in place (now unused) rather
+	// than removed here, as that touches the trait contract beyond this change.
+
 	force_new_round {
 		let round = <Round<T>>::get();
 		let now = System::<T>::block_number();
@@ -611,6 +617,75 @@ benchmarks! {
 	// 	let state = <CandidatePool<T>>::get(&collator).unwrap();
 	// 	assert!(state.delegators.into_iter().any(|x| x.owner == delegator);
 	// }
+
+	// Session-boundary (snapshot) cost: at each rotation, prepare_delayed_rewards snapshots ALL
+	// selected collators (n), each carrying its delegators (m), into AtStake in ONE block -- the
+	// heaviest single block in the payout flow (payout_collator, by contrast, is one collator per
+	// block). Benchmarking this gives the 64x100 worst-case block weight/PoV for block-stuck
+	// analysis. NOTE: this measures pre-existing session-rotation code, not the restake feature.
+	prepare_delayed_rewards {
+		let n in (T::MinCollators::get()) .. T::MaxTopCandidates::get();
+		let m in 0 .. T::MaxDelegatorsPerCollator::get();
+
+		// n collators, each with m delegators, in the live CandidatePool
+		let candidates = setup_collator_candidates::<T>(n, None);
+		for (i, c) in candidates.iter().enumerate() {
+			fill_delegators::<T>(m, c.clone(), i.saturated_into::<u32>());
+		}
+
+		// seed the previous round (old_round = 1): each collator's snapshot + one authored
+		// block, so get_total_collator_staking_num has data to sum during the call
+		let old_round: u32 = 1;
+		for c in candidates.iter() {
+			let state = CandidatePool::<T>::get(c).unwrap();
+			AtStake::<T>::insert(old_round, c, state);
+			CollatorBlocks::<T>::insert(old_round, c, 1u32);
+		}
+		let pot = Pallet::<T>::account_id();
+		T::Currency::make_free_balance_be(&pot, T::MinCollatorCandidateStake::get());
+		// current round = old_round + 1: snapshots `candidates` into the new round and computes
+		// old_round's payout totals -- the heaviest per-block work in the whole flow
+		Round::<T>::mutate(|r| { r.current = old_round + 1; });
+	}: {
+		Pallet::<T>::prepare_delayed_rewards(&candidates, old_round + 1);
+	}
+	verify {
+		assert!(DelayedPayoutInfo::<T>::exists());
+	}
+
+	payout_collator {
+		let n in 0 .. T::MaxDelegatorsPerCollator::get();
+
+		// one authoring collator with `n` delegators (present in live state + the snapshot)
+		let candidates = setup_collator_candidates::<T>(T::MinCollators::get(), None);
+		let collator = candidates[0].clone();
+		fill_delegators::<T>(n, collator.clone(), 0u32);
+
+		// stand up the payout state for round 1: snapshot, one authored block, delayed info
+		let round: u32 = 1;
+		let state = CandidatePool::<T>::get(&collator).unwrap();
+		let total_stake = state.total;
+		AtStake::<T>::insert(round, &collator, state);
+		CollatorBlocks::<T>::insert(round, &collator, 1u32);
+
+		// fund the pot generously so every delegator earns a nonzero (restakeable) reward
+		let issuance = T::MinCollatorCandidateStake::get();
+		let pot = Pallet::<T>::account_id();
+		T::Currency::make_free_balance_be(&pot, issuance.saturating_add(issuance));
+		DelayedPayoutInfo::<T>::put(crate::types::DelayedPayoutInfoT {
+			round,
+			total_stake,
+			total_issuance: issuance,
+		});
+		// current round must be non-zero, else payout_collator early-returns
+		Round::<T>::mutate(|r| { r.current = round + 1; });
+	}: {
+		Pallet::<T>::payout_collator();
+	}
+	verify {
+		// the collator's snapshot was consumed (its delegators were paid + restaked)
+		assert!(AtStake::<T>::get(round, &collator).is_none());
+	}
 }
 
 impl_benchmark_test_suite!(
