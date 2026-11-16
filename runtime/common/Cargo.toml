@@ -1,6 +1,6 @@
 [package]
 name = "runtime-common"
-version = "4.0.0-polkadot-stable2603-6"
+version = "4.0.0-polkadot-stable2603-8"
 description = "A node of the peaq network."
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = "https://peaq.network/"

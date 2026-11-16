@@ -1,6 +1,6 @@
 [package]
 name = "peaq-primitives-xcm"
-version = "3.1.0-polkadot-stable2603-6"
+version = "3.1.0-polkadot-stable2603-8"
 authors = ["peaq network <https://github.com/peaqnetwork>"]
 homepage = 'https://peaq.network/'
 edition = "2021"
