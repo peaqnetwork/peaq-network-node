@@ -330,8 +330,9 @@ pub fn run() -> sc_cli::Result<()> {
 
 								let db = params.backend.expose_db();
 								let storage = params.backend.expose_storage();
+								let shared_trie_cache = params.backend.expose_shared_trie_cache();
 
-								cmd.run(config, params.client, db, storage)
+								cmd.run(config, params.client, db, storage, shared_trie_cache)
 							})
 						})
 					},
