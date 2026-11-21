@@ -17,7 +17,7 @@ name = "peaq-node"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies.substrate-build-script-utils]
-git = "file:///tmp/claude-1000/-home-jaypan-Work-peaq-peaq-eu-dpp-adapter/f0f1296d-9a73-467a-8bc7-c2145faf448a/scratchpad/sdk/polkadot-sdk"
+git = "https://github.com/peaqnetwork/polkadot-sdk"
 branch = "peaq-polkadot-stable2603-8"
 
 [dependencies]
