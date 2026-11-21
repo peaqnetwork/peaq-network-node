@@ -23,34 +23,37 @@
 - Two new Frontier config values keep the previous behaviour for those two settings. The EVM rule set itself changes, see Breaking. Verified later: AC-38.
   - `AllowUnprotectedTxs = true`: legacy transactions without a chain id are still accepted.
   - `TransactionGasLimit = None`: there is no per-transaction cap below the block gas limit.
-- The Ethereum runtime API changes. `call` and `create` take two new arguments, `authorization_list` and `state_override`. The `EVM.call`, `create` and `create2` extrinsics take `authorization_list`. Tools that call these directly must update their bindings.
+- The Ethereum runtime API changes. Tools that call these directly must update their bindings.
+  - `call` takes two new arguments, `authorization_list` and `state_override`.
+  - `create` takes one new argument, `authorization_list`.
+  - The `EVM.call`, `create` and `create2` extrinsics take `authorization_list`.
 - EVM error codes change. Clients that decode them by number must update.
-  - In Frontier's `TransactionValidationError`, which the transaction pool reports as a custom invalid-transaction code, `EmptyAuthorizationList` (10) and `AuthorizationListTooLarge` (11) are inserted, so `UnknownError` moves from 10 to 12.
+  - In Frontier's `TransactionValidationError`, which the transaction pool reports as a custom invalid-transaction code, `EmptyAuthorizationList` (10) and `AuthorizationListTooLarge` (11) are inserted, so `UnknownError` moves from 10 to 12. `TransactionGasLimitExceedsCap` is added as 13, and `GasLimitTooHigh` is renamed `GasLimitExceedsBlockLimit`.
   - In `pallet_evm::Error`, `GasLimitTooHigh` is renamed `GasLimitExceedsBlockLimit`, and `TransactionGasLimitExceedsCap` is added at the end. Existing indices do not change.
 - Transaction pool:
-  - The default `--pool-type` changes from `single-state` to `fork-aware`.
+  - The default `--pool-type` changes from `single-state` to `fork-aware`. `--pool-type single-state` restores the old pool.
   - The polkadot-sdk fork carries 4 upstream fixes on top of `stable2603-8`:
     - #11733: fixes a wrong in-block event.
     - #12433: maintain the pool on every block.
     - #11731: unban viewless transactions after mempool revalidation.
     - #12362: keep the order of same-priority transactions on re-org. This one is cherry-picked from `c49ececa`.
-- Log filters and subscriptions are now backed by Frontier's reorg-aware `LogsJournal`, with its default limits:
-  - 512 MiB in total.
-  - 10,000 logs and 4 MiB per entry.
-  - A block above the per-entry limit ends all log subscriptions.
+- Log filters and subscriptions are now backed by Frontier's reorg-aware `LogsJournal`, with its default limits.
+  - The journal holds entries; an entry is one new best block, together with the blocks a re-org retracts or enacts at that point. Each entry holds at most 10,000 logs, 4 MiB and 128 blocks, and the whole journal holds at most 512 MiB.
+  - An entry over its limit ends all log subscriptions.
+  - A polled filter (`eth_getFilterChanges`) whose position has dropped out of the journal is removed, and the call returns an error that says to recreate the filter.
+- `state_traceBlock` now runs through the parachain tracing executor. Stable2603 makes the node pass that executor in. It registers the proof-size extension the runtime needs, so traces match real execution.
 - EVM tracing host functions now take their `Vec<u8>` arguments as a fat pointer (`e35297f6`), as stable2603's `sp-runtime-interface` requires. A tracing node needs a binary from this branch to trace blocks of the new runtimes. Verified later: AC-34, which also traces pre-upgrade blocks.
 - XCM fees paid in foreign assets go through the ported `FixedRateOfForeignAsset` and `XcmFungibleFeeHandler` (`27d34bc5`). Verified later: AC-20 and AC-30.
 
 ### Added
 - Both runtimes expose `XcmPaymentApi`, which returns XCM fee and weight quotes, and `DryRunApi`, which simulates a call or XCM message (`ae7fbacc`). Verified later: AC-12.
-- The node serves `state_traceBlock`. It uses the parachain tracing executor, so traces include the proof-size extension the runtime needs.
 - Both runtimes implement `KeyToIncludeInRelayProof` (`2a555fee`).
 - Type-4 (EIP-7702) transactions are accepted, as part of Osaka (see Breaking). Verified later: AC-31.
 
 ### Breaking
 - **The EVM rule set moves from Cancun to Osaka.** Neither runtime overrides `pallet_evm::Config::config()`, so both use Frontier's default `Config::osaka()`. EIP-7702 and EIP-7623 follow upstream by the 2026-11-19 decision; CLZ and the modexp changes by the 2026-11-21 decision. What changes for contracts and wallets:
   - EIP-7702: EOAs can delegate to contract code through type-4 transactions.
-  - EIP-7623: a transaction with calldata has a minimum gas of 21000 + 10 per zero byte + 40 per non-zero byte of calldata. If the gas limit is below this floor, the transaction pool and block validation reject the transaction as gas limit too low. An accepted transaction is charged at least the floor.
+  - EIP-7623: a transaction with calldata has a minimum gas of 21000 + 10 per zero byte + 40 per non-zero byte of calldata. If the gas limit is below this floor, the transaction pool and block validation reject the transaction; the RPC error is `intrinsic gas too low`. An accepted transaction is charged at least the floor.
   - EIP-7939: a new `CLZ` opcode.
   - The modexp precompile (0x05) costs more under EIP-7883. The minimum goes from 200 to 500 gas, and larger inputs cost several times more than before.
   - Under EIP-7823, a modexp call with a base, exponent or modulus longer than 1024 bytes fails and consumes all remaining gas.
@@ -65,7 +68,8 @@
 - **Do not start a node with `--database auto`.** If the Frontier database needs the upgrade, `auto` may panic. It may also open an empty paritydb, in which case old EVM blocks and transactions return nothing and no error is reported. With the default rocksdb, a failed upgrade stops the node with an error.
 - **The relay token reserve is now Asset Hub (para 1000), not the relay chain.** This comes from ORML, which follows the upstream Asset Hub migration.
   - Send DOT to peaq through Asset Hub, not directly from the relay chain.
-  - Transfers from peaq to the relay chain and DOT transfers to sibling chains route through Asset Hub.
+  - A transfer from peaq to an account on the relay chain lands on the same account on Asset Hub, not on the relay chain.
+  - DOT transfers to sibling parachains are routed through Asset Hub.
   - Verified later: AC-18, AC-19.
 
 ### Known risks (accepted, not fixed on this branch)
