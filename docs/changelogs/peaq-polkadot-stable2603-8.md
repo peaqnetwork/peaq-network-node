@@ -39,9 +39,10 @@
     - #12362: keep the order of same-priority transactions on re-org. This one is cherry-picked from `c49ececa`.
 - Log filters and subscriptions are now backed by Frontier's reorg-aware `LogsJournal`, with its default limits.
   - The journal holds entries; an entry is one new best block, together with the blocks a re-org retracts or enacts at that point. Each entry holds at most 10,000 logs, 4 MiB and 128 blocks, and the whole journal holds at most 512 MiB.
+  - With these defaults the journal keeps only the last 128 entries (512 MiB / 4 MiB), which is about the last 128 best blocks.
   - An entry over its limit ends all log subscriptions.
-  - A polled filter (`eth_getFilterChanges`) whose position has dropped out of the journal is removed, and the call returns an error that says to recreate the filter.
-- `state_traceBlock` now runs through the parachain tracing executor. Stable2603 makes the node pass that executor in. It registers the proof-size extension the runtime needs, so traces match real execution.
+  - A polled filter (`eth_getFilterChanges`) that has not polled within those 128 entries, or that reaches an entry over its limit, is removed, and the call returns an error that says to recreate the filter. A recreated filter does not return the logs it missed; fetch them with `eth_getLogs`.
+- `state_traceBlock` now runs through the parachain tracing executor, which the node supplies to the RPC (new in stable2603). The executor registers the proof-size extension the runtime needs, so traces match real execution.
 - EVM tracing host functions now take their `Vec<u8>` arguments as a fat pointer (`e35297f6`), as stable2603's `sp-runtime-interface` requires. A tracing node needs a binary from this branch to trace blocks of the new runtimes. Verified later: AC-34, which also traces pre-upgrade blocks.
 - XCM fees paid in foreign assets go through the ported `FixedRateOfForeignAsset` and `XcmFungibleFeeHandler` (`27d34bc5`). Verified later: AC-20 and AC-30.
 
