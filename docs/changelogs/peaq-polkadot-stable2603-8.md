@@ -84,7 +84,7 @@
   - Exploiting this would require a private key for a contract address, which is not practical.
   - Check M-X5 compares the key counts of the two maps on mainnet. If they differ, a separate work unit adds the backfill migration.
 - **`FixedRateOfForeignAsset` has no unit tests.** `27d34bc5` removed the 399-line trader test file and did not port it. Coverage comes later, from AC-20.
-- **Sha3FIPS256 (0x400) uses Frontier's "laptop" weights** (`516,915 + 2,019 × n` ref_time), which were not measured on peaq hardware. AC-11 recorded "cannot be determined", because no benchmark in this runtime measures the precompile. Whether to keep these weights is open item 4 of the upgrade spec.
+- **Sha3FIPS256 (0x400) uses Frontier's "laptop" weights** (`516,915 + 2,019 × n` ref_time), which were not measured on peaq hardware. AC-11 recorded "cannot be determined", because no benchmark in this runtime measures the precompile. These weights are kept for this upgrade by the 2026-11-22 decision, and the price change goes into the upgrade announcement. Gas is derived from these weights, so if collators hash more slowly than the benchmark machine did, a block full of 0x400 calls can take longer than the block's intended EVM time budget.
 - **ORML `MultiCurrencyAdapter`** is disabled behind a feature gate that peaq does not enable (AC-79). Its known defects are mitigated by that gate, not fixed. This is an accepted risk: a runtime that enables the feature gets the defects back.
 - **Frontier DB version detection** has these gaps, in the fork's `client/db/src/kv/upgrade.rs` and in upstream code:
   - A 5-column database without a version file that already has some number mappings is treated as v3, and the remaining backfill is skipped.
