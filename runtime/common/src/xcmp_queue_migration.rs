@@ -17,7 +17,7 @@ use frame_support::{
 	traits::{DefensiveTruncateFrom, UncheckedOnRuntimeUpgrade},
 };
 #[cfg(feature = "try-runtime")]
-use parity_scale_codec::DecodeAll;
+use parity_scale_codec::{Compact, DecodeAll};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 /// Runs only when the on-chain version is 5, and sets it to 7.
@@ -41,11 +41,6 @@ pub mod v5 {
 		pub first_index: u16,
 		pub last_index: u16,
 	}
-
-	#[cfg(feature = "try-runtime")]
-	#[storage_alias]
-	pub type OutboundXcmpStatus<T: Config> =
-		StorageValue<Pallet<T>, Vec<OutboundChannelDetails>, ValueQuery>;
 }
 
 pub mod v7 {
@@ -98,11 +93,13 @@ impl<T: Config> UncheckedOnRuntimeUpgrade for UncheckedMigrateXcmpQueueV5ToV7<T>
 			BoundedVec::defensive_truncate_from(pre.iter().map(Into::into).collect())
 		};
 		// On a decode error the old bytes stay and `VersionedMigration` still sets version 7, so
-		// the pallet then reads the status as empty. Same as upstream; panicking instead would
-		// stall the chain at the upgrade block. Before a release, try-runtime on live state
-		// catches this case: `pre_upgrade` rejects non-v5 bytes (try-runtime 0.7 runs it
-		// whenever `--checks` includes pre-and-post; 0.10 only with `--disable-mbm-checks`),
-		// and the entire-state decode check fails on bytes left behind.
+		// the pallet then reads the status as empty. Pages and signals already queued for those
+		// channels are then never sent, and suspensions that siblings asked for are forgotten.
+		// Same as upstream; panicking instead would stall the chain at the upgrade block. Before
+		// a release, try-runtime on live state catches this case: `pre_upgrade` rejects non-v5
+		// bytes (try-runtime 0.7 runs it whenever `--checks` includes pre-and-post; 0.10 only
+		// with `--disable-mbm-checks`), and the entire-state decode check fails on bytes left
+		// behind.
 		if v7::OutboundXcmpStatus::<T>::translate(|pre| pre.map(translate)).is_err() {
 			frame_support::defensive!(
 				"unexpected error when translating OutboundXcmpStatus from v5 to v7"
@@ -120,7 +117,7 @@ impl<T: Config> UncheckedOnRuntimeUpgrade for UncheckedMigrateXcmpQueueV5ToV7<T>
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::TryRuntimeError> {
 		let raw =
-			frame_support::storage::unhashed::get_raw(&v5::OutboundXcmpStatus::<T>::hashed_key());
+			frame_support::storage::unhashed::get_raw(&v7::OutboundXcmpStatus::<T>::hashed_key());
 		let pre = match raw {
 			None => Vec::new(),
 			Some(bytes) => Vec::<v5::OutboundChannelDetails>::decode_all(&mut &bytes[..])
@@ -129,14 +126,30 @@ impl<T: Config> UncheckedOnRuntimeUpgrade for UncheckedMigrateXcmpQueueV5ToV7<T>
 		Ok(pre.encode())
 	}
 
-	/// Checks every channel came through unchanged apart from the two new fields, and that
-	/// the value decodes, with no bytes left over, as upstream's v7 type.
+	/// Checks that the value decodes, with no bytes left over, as upstream's v7 type, and that
+	/// every channel came through unchanged apart from the two new fields. The expected bytes
+	/// are built from the v5 bytes, not with the `From` the migration uses, so a wrong field
+	/// mapping fails here too.
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
 		let pre = Vec::<v5::OutboundChannelDetails>::decode_all(&mut &state[..])
 			.map_err(|_| "xcmp-queue v5->v7: cannot decode pre_upgrade state")?;
-		let expected: Vec<v7::OutboundChannelDetails> = pre.iter().map(Into::into).collect();
-		let post = v7::OutboundXcmpStatus::<T>::get().into_inner();
+		// A v7 entry is the v5 entry's bytes followed by `flags` and `queued_bytes`, both 0.
+		let mut expected = Compact(pre.len() as u32).encode();
+		for channel in &pre {
+			expected.extend(channel.encode());
+			expected.extend([0u8; 8]);
+		}
+
+		// An absent value reads as an empty list, which encodes as `[0]`.
+		let raw =
+			frame_support::storage::unhashed::get_raw(&v7::OutboundXcmpStatus::<T>::hashed_key())
+				.unwrap_or_else(|| Compact(0u32).encode());
+		let post = BoundedVec::<
+			cumulus_pallet_xcmp_queue::OutboundChannelDetails,
+			<T as Config>::MaxActiveOutboundChannels,
+		>::decode_all(&mut &raw[..])
+		.map_err(|_| "xcmp-queue v5->v7: OutboundXcmpStatus does not decode as upstream v7")?;
 		log::info!(
 			target: "runtime::xcmp-queue-migration",
 			"v5->v7: {} outbound channel(s) before, {} after",
@@ -144,19 +157,9 @@ impl<T: Config> UncheckedOnRuntimeUpgrade for UncheckedMigrateXcmpQueueV5ToV7<T>
 			post.len()
 		);
 		frame_support::ensure!(
-			post == expected,
+			raw == expected,
 			"xcmp-queue v5->v7: channels differ from v5 (changed or truncated)"
 		);
-
-		if let Some(bytes) =
-			frame_support::storage::unhashed::get_raw(&v7::OutboundXcmpStatus::<T>::hashed_key())
-		{
-			BoundedVec::<
-				cumulus_pallet_xcmp_queue::OutboundChannelDetails,
-				<T as Config>::MaxActiveOutboundChannels,
-			>::decode_all(&mut &bytes[..])
-			.map_err(|_| "xcmp-queue v5->v7: OutboundXcmpStatus does not decode as upstream v7")?;
-		}
 		Ok(())
 	}
 }
