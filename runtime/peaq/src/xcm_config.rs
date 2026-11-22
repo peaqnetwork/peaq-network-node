@@ -345,7 +345,8 @@ impl xcm_executor::Config for XcmConfig {
 	type HrmpChannelClosingHandler = ();
 	type HrmpNewChannelOpenRequestHandler = ();
 	type XcmEventEmitter = ();
-	type XcmRecorder = ();
+	// Without a recorder, DryRunApi::dry_run_call always returns local_xcm = None.
+	type XcmRecorder = PolkadotXcm;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
