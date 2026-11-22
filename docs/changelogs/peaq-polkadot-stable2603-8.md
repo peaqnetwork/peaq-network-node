@@ -45,6 +45,10 @@
 - `state_traceBlock` now runs through the parachain tracing executor, which the node supplies to the RPC (new in stable2603). The executor registers the proof-size extension the runtime needs, so traces match real execution.
 - EVM tracing host functions now take their `Vec<u8>` arguments as a fat pointer (`e35297f6`), as stable2603's `sp-runtime-interface` requires. A tracing node needs a binary from this branch to trace blocks of the new runtimes. Verified later: AC-34, which also traces pre-upgrade blocks.
 - XCM fees paid in foreign assets go through the ported `FixedRateOfForeignAsset` and `XcmFungibleFeeHandler` (`27d34bc5`). Verified later: AC-20 and AC-30.
+- The runtime upgrade migrates `cumulus_pallet_xcmp_queue` storage from version 5 to 7 in one step, with `MigrateXcmpQueueV5ToV7` (`ce93e60b`). Both runtimes have tests in `runtime/*/tests/xcmp_queue_migration.rs` (AC-13). Verified later: AC-14 (live state with channels added) and AC-66 (try-runtime on mainnet state).
+  - stable2603 adds `flags` and `queued_bytes` to `OutboundChannelDetails`. Without a migration, a non-empty `OutboundXcmpStatus` fails to decode and the on-chain version stays at 5.
+  - Upstream's `MigrateV5ToV6` already writes the v7 layout, so chaining it with `MigrateV6ToV7` misreads the data when there are two or more channels. peaq does not use that pair.
+  - Neither chain had outbound channels when read on 2026-11-13. On both chains the migration therefore only moves the storage version.
 
 ### Added
 - Both runtimes expose `XcmPaymentApi`, which returns XCM fee and weight quotes, and `DryRunApi`, which simulates a call or XCM message (`ae7fbacc`). Checked by AC-12 on a new local chain at block 0; the parts that need produced blocks are verified later by AC-81.
