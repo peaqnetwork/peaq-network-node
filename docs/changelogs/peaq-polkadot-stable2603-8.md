@@ -47,7 +47,11 @@
 - XCM fees paid in foreign assets go through the ported `FixedRateOfForeignAsset` and `XcmFungibleFeeHandler` (`27d34bc5`). Verified later: AC-20 and AC-30.
 
 ### Added
-- Both runtimes expose `XcmPaymentApi`, which returns XCM fee and weight quotes, and `DryRunApi`, which simulates a call or XCM message (`ae7fbacc`). Verified later: AC-12.
+- Both runtimes expose `XcmPaymentApi`, which returns XCM fee and weight quotes, and `DryRunApi`, which simulates a call or XCM message (`ae7fbacc`). Checked by AC-12 on a new local chain at block 0; the parts that need produced blocks are verified later by AC-81.
+  - `dry_run_call` returns the XCM a call executed locally in `local_xcm`. This needs the executor to record it, so both runtimes now set `XcmRecorder = PolkadotXcm` (`ea041908`). Recording is on only inside a dry run.
+  - `query_delivery_fees` returns `Err(Unimplemented)`, not an empty fee list. peaq charges no delivery fee, and the polkadot-sdk helper answers `Unimplemented` whenever the router's fee is not exactly one asset.
+  - Dry-run `emitted_events` leave out the events the XCM executor emits itself (`Sent`, `SendFailed`, `ProcessXcmError`), because `XcmEventEmitter` stays `()`.
+  - A dry run against block 0 returns no events, because `frame_system` records no events at genesis.
 - Both runtimes implement `KeyToIncludeInRelayProof` (`2a555fee`).
 - Type-4 (EIP-7702) transactions are accepted, as part of Osaka (see Breaking). Verified later: AC-31.
 
@@ -83,6 +87,7 @@
   - A contract stored without metadata is therefore not blocked as a transaction sender. This branch has no migration that backfills the metadata.
   - Exploiting this would require a private key for a contract address, which is not practical.
   - Check M-X5 compares the key counts of the two maps on mainnet. If they differ, a separate work unit adds the backfill migration.
+- **`DryRunApi` lets anyone run unmetered work on an RPC node.** A dry run dispatches any call from any origin, including Root, with no weight limit; for example `System::kill_prefix` with a large key count walks a whole storage prefix in one `state_call`. Nothing is written to the chain. Upstream runtimes such as Asset Hub expose the same API the same way. Public RPC nodes must set `--rpc-rate-limit`, `--rpc-max-request-size` and `--rpc-max-response-size`; the upgrade runbook must list them (AC-62).
 - **`FixedRateOfForeignAsset` has no unit tests.** `27d34bc5` removed the 399-line trader test file and did not port it. Coverage comes later, from AC-20.
 - **Sha3FIPS256 (0x400) uses Frontier's "laptop" weights** (`516,915 + 2,019 × n` ref_time), which were not measured on peaq hardware. AC-11 recorded "cannot be determined", because no benchmark in this runtime measures the precompile. These weights are kept for this upgrade by the 2026-11-22 decision, and the price change goes into the upgrade announcement. Gas is derived from these weights, so if collators hash more slowly than the benchmark machine did, a block full of 0x400 calls can take longer than the block's intended EVM time budget.
 - **ORML `MultiCurrencyAdapter`** is disabled behind a feature gate that peaq does not enable (AC-79). Its known defects are mitigated by that gate, not fixed. This is an accepted risk: a runtime that enables the feature gets the defects back.
