@@ -139,6 +139,21 @@ fn does_nothing_unless_on_chain_version_is_5() {
 	}
 }
 
+// The first run sets the version to 7, so a second run in a later upgrade must leave the
+// converted bytes alone.
+#[test]
+fn running_twice_changes_nothing_the_second_time() {
+	let pre = v5_channels();
+	let expected = upstream_v7(&pre);
+	with_v5_state(&pre, || {
+		MigrateXcmpQueueV5ToV7::<Runtime>::on_runtime_upgrade();
+		MigrateXcmpQueueV5ToV7::<Runtime>::on_runtime_upgrade();
+
+		assert_eq!(XcmpQueue::on_chain_storage_version(), StorageVersion::new(7));
+		assert_eq!(unhashed::get_raw(&status_key()).unwrap(), expected);
+	});
+}
+
 // One channel whose state byte (9) is not a valid `OutboundState`.
 const UNDECODABLE: [u8; 6] = [4, 0xe8, 0x03, 0, 0, 9];
 
