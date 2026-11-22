@@ -18,6 +18,7 @@ pub mod wrapper;
 pub use wrapper::*;
 pub mod zenlink;
 pub use zenlink::*;
+pub mod xcmp_queue_migration;
 
 // Contracts price units.
 pub const TOKEN_DECIMALS: u32 = 18;

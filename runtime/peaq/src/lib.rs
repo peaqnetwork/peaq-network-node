@@ -1236,13 +1236,20 @@ pub type CheckedExtrinsic =
 
 // Migrations to apply on runtime upgrade
 pub type Migrations = (
-	// stable2603: `pallet_session::DisabledValidators` changed from `Vec<u32>` to
+	// `pallet_session::DisabledValidators` changed from `Vec<u32>` to
 	// `Vec<(u32, OffenceSeverity)>` and the pallet's storage version went 0 -> 1.
-	// Without this the stored value fails to decode.
+	// That change is already in stable2503-4; peaq and agung are both at 1 on chain
+	// (read on 2026-11-13), so this is a no-op. Remove in the next release.
 	pallet_session::migrations::v1::MigrateV0ToV1<
 		Runtime,
 		pallet_session::migrations::v1::InitOffenceSeverity<Runtime>,
 	>,
+	// stable2603: `cumulus_pallet_xcmp_queue` storage version went 5 -> 7
+	// (`OutboundChannelDetails` gained `flags` and `queued_bytes`). Without this a
+	// non-empty `OutboundXcmpStatus` fails to decode and the on-chain version stays
+	// at 5. Not upstream's v6 + v7 pair: chained, they can misread 2+ channels (see
+	// the module docs). Remove once applied on both chains.
+	runtime_common::xcmp_queue_migration::MigrateXcmpQueueV5ToV7<Runtime>,
 	// permanent
 	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
 );

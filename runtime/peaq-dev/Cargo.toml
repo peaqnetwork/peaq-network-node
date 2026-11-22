@@ -321,6 +321,7 @@ evm-tracing = [
 
 try-runtime = [
 	"frame-try-runtime/try-runtime",
+	"runtime-common/try-runtime",
 	"frame-executive/try-runtime",
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",

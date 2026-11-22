@@ -12819,6 +12819,7 @@ name = "runtime-common"
 version = "4.0.0-polkadot-stable2603-8"
 dependencies = [
  "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
