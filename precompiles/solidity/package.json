@@ -1,0 +1,15 @@
+{
+  "name": "peaq-network-node",
+  "version": "0.0.1",
+  "description": "Peaq-network-node's solidity precompile interfaces and utilities",
+  "main": "index.js",
+  "directories": {},
+  "keywords": ["solidity", "interfaces", "precompile", "peaq", "peaq-network"],
+  "author": "peaq network",
+  "license": "Apache-2.0",
+  "homepage": "https://www.eotlabs.io/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peaqnetwork/peaq-network-node.git"
+  }
+}
