@@ -1,7 +1,8 @@
 //! Parachain Service<RuntimeApi> and ServiceFactory implementation.
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_consensus_aura::collators::lookahead::{
-	self as lookahead, Params as LookaheadParams,
+use cumulus_client_consensus_aura::collators::slot_based::{
+	self as slot_based, Params as SlotBasedParams, SlotBasedBlockImport as TSlotBasedBlockImport,
+	SlotBasedBlockImportHandle,
 };
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
@@ -78,8 +79,11 @@ type ParachainClient<RuntimeApi> = TFullClient<Block, RuntimeApi, ParachainExecu
 
 type ParachainBackend = TFullBackend<Block>;
 
+type SlotBasedBlockImport<RuntimeApi> =
+	TSlotBasedBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>;
+
 type FrontierBlockImport<RuntimeApi> =
-	TFrontierBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainClient<RuntimeApi>>;
+	TFrontierBlockImport<Block, SlotBasedBlockImport<RuntimeApi>, ParachainClient<RuntimeApi>>;
 
 type ParachainBlockImport<RuntimeApi> =
 	TParachainBlockImport<Block, FrontierBlockImport<RuntimeApi>, ParachainBackend>;
@@ -92,6 +96,7 @@ type Service<RuntimeApi> = PartialComponents<
 	sc_transaction_pool::TransactionPoolHandle<Block, ParachainClient<RuntimeApi>>,
 	(
 		ParachainBlockImport<RuntimeApi>,
+		Option<SlotBasedBlockImportHandle<Block>>,
 		Option<FilterPool>,
 		Option<Telemetry>,
 		Option<TelemetryWorkerHandle>,
@@ -227,7 +232,17 @@ where
 	.with_prometheus(config.prometheus_registry())
 	.build();
 
-	let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
+	// While the handle returned with it is alive, SlotBasedBlockImport executes every imported
+	// block that still needs executing (not this node's own blocks or state-synced ones, which
+	// arrive with their state changes), records its storage proof, hands the state changes down
+	// so the client does not execute the block again, and queues (block, proof) on an unbounded
+	// channel that only the slot-based collator reads. A node that does not author drops the
+	// handle here, before the first import; the import then passes blocks straight through and
+	// the client executes them as before.
+	let (slot_based_block_import, slot_based_handle) =
+		SlotBasedBlockImport::new(client.clone(), client.clone());
+	let slot_based_handle = config.role.is_authority().then_some(slot_based_handle);
+	let frontier_block_import = FrontierBlockImport::new(slot_based_block_import, client.clone());
 	let parachain_block_import = ParachainBlockImport::new(frontier_block_import, backend.clone());
 
 	let import_queue = fn_build_import_queue(
@@ -249,6 +264,7 @@ where
 		select_chain: (),
 		other: (
 			parachain_block_import,
+			slot_based_handle,
 			filter_pool,
 			telemetry,
 			telemetry_worker_handle,
@@ -296,7 +312,8 @@ where
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
-		+ cumulus_primitives_core::KeyToIncludeInRelayProof<Block>,
+		+ cumulus_primitives_core::KeyToIncludeInRelayProof<Block>
+		+ cumulus_primitives_core::RelayParentOffsetApi<Block>,
 	sc_client_api::StateBackendFor<ParachainBackend, Block>:
 		sc_client_api::backend::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
@@ -321,6 +338,7 @@ where
 		ParaId,
 		CollatorPair,
 		PeerId,
+		SlotBasedBlockImportHandle<Block>,
 	) -> Result<(), sc_service::Error>,
 {
 	let mut parachain_config = prepare_node_config(parachain_config);
@@ -331,6 +349,7 @@ where
 	)?;
 	let (
 		parachain_block_import,
+		slot_based_handle,
 		filter_pool,
 		mut telemetry,
 		telemetry_worker_handle,
@@ -600,10 +619,12 @@ where
 			params.keystore_container.keystore(),
 			id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
-			// The lookahead collator wants the RELAY chain's peer id, not the
-			// parachain's -- both the parachain template and polkadot-omni-node
-			// pass relay_chain_network.local_peer_id() here.
+			// The collator wants the RELAY chain's peer id, not the parachain's --
+			// both the parachain template and polkadot-omni-node pass
+			// relay_chain_network.local_peer_id() here.
 			relay_chain_network.local_peer_id(),
+			slot_based_handle
+				.expect("new_partial keeps the handle exactly when the node is an authority. qed"),
 		)?;
 	}
 
@@ -699,7 +720,8 @@ where
 		+ peaq_pallet_storage_rpc::PeaqStorageRuntimeApi<Block, AccountId>
 		+ zenlink_protocol_runtime_api::ZenlinkProtocolApi<Block, AccountId, ZenlinkAssetId>
 		+ cumulus_primitives_aura::AuraUnincludedSegmentApi<Block>
-		+ cumulus_primitives_core::KeyToIncludeInRelayProof<Block>,
+		+ cumulus_primitives_core::KeyToIncludeInRelayProof<Block>
+		+ cumulus_primitives_core::RelayParentOffsetApi<Block>,
 {
 	start_contracts_node_impl::<RuntimeApi, _, _>(
 		parachain_config,
@@ -753,7 +775,8 @@ where
 		 keystore,
 		 para_id,
 		 collator_key,
-		 collator_peer_id| {
+		 collator_peer_id,
+		 block_import_handle| {
 			let spawn_handle = task_manager.spawn_handle();
 
 			let proposer_factory = sc_basic_authorship::ProposerFactory::new(
@@ -763,10 +786,6 @@ where
 				prometheus_registry,
 				telemetry.clone(),
 			);
-
-			let overseer_handle = relay_chain_interface
-				.overseer_handle()
-				.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
 
 			let announce_block = {
 				let sync_service = sync_oracle.clone();
@@ -780,7 +799,7 @@ where
 				client.clone(),
 			);
 
-			let params = LookaheadParams {
+			let params = SlotBasedParams {
 				create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 				block_import: block_import.clone(),
 				para_client: client.clone(),
@@ -792,18 +811,23 @@ where
 				keystore,
 				collator_key,
 				para_id,
-				overseer_handle,
 				max_pov_percentage: Some(85),
 				relay_chain_slot_duration: Duration::from_secs(6),
 				collator_peer_id,
 				proposer: proposer_factory,
 				collator_service,
-				// We got around 1500ms for proposing
+				// 2000 ms as in polkadot-omni-node; slot-based also stops 1 s before the slot ends.
 				authoring_duration: Duration::from_millis(2000),
 				reinitialize: false,
+				// Same as polkadot-omni-node: start building 1s into the relay chain slot.
+				slot_offset: Duration::from_secs(1),
+				block_import_handle,
+				spawner: task_manager.spawn_essential_handle(),
+				export_pov: None,
 			};
 
-			let fut = lookahead::run::<
+			// Spawns its own essential tasks through `spawner`.
+			slot_based::run::<
 				Block,
 				sp_consensus_aura::sr25519::AuthorityPair,
 				_,
@@ -814,9 +838,8 @@ where
 				_,
 				_,
 				_,
+				_,
 			>(params);
-
-			task_manager.spawn_essential_handle().spawn("aura", None, fut);
 
 			Ok(())
 		},
