@@ -1250,6 +1250,12 @@ pub type Migrations = (
 	// at 5. Not upstream's v6 + v7 pair: chained, they can misread 2+ channels (see
 	// the module docs). Remove once applied on both chains.
 	runtime_common::xcmp_queue_migration::MigrateXcmpQueueV5ToV7<Runtime>,
+	// `xc_asset_config`'s three maps hold `VersionedLocation::V3` locations on mainnet.
+	// The pallet has not found them since it moved to V4 keys in 50f13f76 (2024-07),
+	// then to V5 in c7127802 (2025-05), so XCM fee rates and asset ids are not found.
+	// Converts them to V5 and sets the storage version to 3. Remove once applied on
+	// both chains.
+	xc_asset_config::migrations::MigrationXcmV5<Runtime>,
 	// permanent
 	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
 );
