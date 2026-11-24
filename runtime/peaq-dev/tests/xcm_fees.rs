@@ -1,9 +1,6 @@
 //! XCM execution fees on peaq-dev's `XcmConfig`. The behaviour these tests lock in: the trader
 //! moves the fee from the payer to the fee destination without minting or burning it, and a second
 //! `BuyExecution` in another asset is paid for and handed to `TakeRevenue` rather than dropped.
-//! Exception: for the native fee, total issuance currently falls by the fee, because
-//! `BlockRewardWrapper` drops the fee `Credit`. `native_fee_does_not_change_issuance` is
-//! `#[ignore]`d until that is fixed.
 
 use frame_support::traits::{fungible, fungibles};
 use peaq_dev_runtime::{
@@ -129,7 +126,6 @@ fn native_fee_goes_to_block_reward_pots() {
 }
 
 #[test]
-#[ignore = "known bug: BlockRewardWrapper drops the fee Credit, so total_issuance falls by the fee; remove this ignore once the wrapper is fixed"]
 fn native_fee_does_not_change_issuance() {
 	new_ext().execute_with(|| {
 		let issuance_before = native_issuance();

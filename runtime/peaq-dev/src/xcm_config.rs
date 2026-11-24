@@ -11,8 +11,8 @@ use frame_support::{
 	traits::{
 		fungible::Credit,
 		fungibles,
-		tokens::imbalance::UnsafeManualAccounting,
-		Contains, Everything, Imbalance, Nothing, OnUnbalanced, TransformOrigin,
+		tokens::imbalance::{UnsafeConstructorDestructor, UnsafeManualAccounting},
+		Contains, Everything, Nothing, OnUnbalanced, TransformOrigin,
 	},
 };
 use frame_system::EnsureRoot;
@@ -268,11 +268,19 @@ pub type PeaqXcmFungibleFeeHandler = XcmFungibleFeeHandler<
 // Make the wrapper for the BlockReward
 // Put here because NegativeImbalance::new is not implemented in the standard NegativeImbalance
 // trait
+//
+// `forget_imbalance` moves the fee out of the `Credit` and leaves the `Credit` at zero, so dropping
+// the `Credit` no longer lowers total issuance. The `NegativeImbalance` that BlockReward pays out
+// now carries the only copy of the fee. The hand-over is exact only because
+// `Credit<AccountId, Balances>` and `NegativeImbalance` both belong to the same `Balances` instance
+// and adjust the same `TotalIssuance`.
 pub struct BlockRewardWrapper;
 impl OnUnbalanced<Credit<AccountId, Balances>> for BlockRewardWrapper {
 	fn on_unbalanceds(mut fees_then_tips: impl Iterator<Item = Credit<AccountId, Balances>>) {
-		if let Some(fees) = fees_then_tips.next() {
-			<BlockReward as OnUnbalanced<_>>::on_unbalanced(NegativeImbalance::new(fees.peek()));
+		if let Some(mut fees) = fees_then_tips.next() {
+			<BlockReward as OnUnbalanced<_>>::on_unbalanced(NegativeImbalance::new(
+				fees.forget_imbalance(),
+			));
 		}
 	}
 
@@ -560,5 +568,82 @@ mod tests {
 		assert!(!is_reserve(peaq.clone(), Location::parent()));
 		assert!(!is_reserve(peaq.clone(), asset_hub));
 		assert!(!is_reserve(peaq, Location::new(1, [Parachain(3000)])));
+	}
+
+	// Calls `BlockRewardWrapper` directly with a `Credit` like the one `UsingComponents` hands
+	// over. The fee must reach the block-reward sinks in full without changing total issuance.
+	#[test]
+	fn block_reward_wrapper_pays_fee_to_sinks_without_changing_issuance() {
+		use frame_support::traits::fungible::{Balanced, Inspect};
+
+		sp_io::TestExternalities::default().execute_with(|| {
+			frame_system::Pallet::<Runtime>::set_block_number(1);
+			let sinks = <Runtime as pallet_block_reward::Config>::MigrationSinks::get();
+			let sink_accounts: Vec<AccountId> = sinks
+				.iter()
+				.map(|sink| pallet_block_reward::Pallet::<Runtime>::resolve(&sink.target))
+				.collect();
+			pallet_block_reward::Sinks::<Runtime>::put(
+				frame_support::BoundedVec::try_from(sinks).unwrap(),
+			);
+			let issuance = || <Balances as Inspect<AccountId>>::total_issuance();
+			let sinks_total = || {
+				sink_accounts
+					.iter()
+					.map(|who| <Balances as Inspect<AccountId>>::balance(who))
+					.sum::<Balance>()
+			};
+
+			// 70/30 does not split this evenly, so the last sink takes a remainder.
+			let fee: Balance = 1_000_000_000_000_007;
+			let credit = <Balances as Balanced<AccountId>>::issue(fee);
+			let (t1, sinks_before) = (issuance(), sinks_total());
+
+			BlockRewardWrapper::on_unbalanced(credit);
+
+			let (t2, sinks_after) = (issuance(), sinks_total());
+			assert_eq!(
+				t2,
+				t1,
+				"total issuance changed: T1={t1} T2={t2} fee={fee} T2-T1={} sinks received={}",
+				t2 as i128 - t1 as i128,
+				sinks_after - sinks_before
+			);
+			assert_eq!(sinks_after - sinks_before, fee, "the sinks together must receive the fee");
+		});
+	}
+
+	// With no block-reward sinks BlockReward burns the fee. The wrapper must not burn it a second
+	// time: total issuance falls by exactly the fee.
+	#[test]
+	fn block_reward_wrapper_burns_fee_once_when_there_are_no_sinks() {
+		use frame_support::traits::fungible::{Balanced, Inspect};
+
+		sp_io::TestExternalities::default().execute_with(|| {
+			frame_system::Pallet::<Runtime>::set_block_number(1);
+			pallet_block_reward::Sinks::<Runtime>::put(frame_support::BoundedVec::<
+				pallet_block_reward::Sink,
+				<Runtime as pallet_block_reward::Config>::MaxSinks,
+			>::default());
+			let issuance = || <Balances as Inspect<AccountId>>::total_issuance();
+
+			let fee: Balance = 1_000_000_000_000_007;
+			// Issuance well above the fee, so a drop of 2 x fee would show instead of saturating.
+			let holder: AccountId = [7u8; 32].into();
+			let funds = <Balances as Balanced<AccountId>>::issue(10 * fee);
+			assert!(<Balances as Balanced<AccountId>>::resolve(&holder, funds).is_ok());
+			let credit = <Balances as Balanced<AccountId>>::issue(fee);
+			let t1 = issuance();
+
+			BlockRewardWrapper::on_unbalanced(credit);
+
+			let t2 = issuance();
+			assert_eq!(
+				t1 - t2,
+				fee,
+				"the fee must be burned once: T1={t1} T2={t2} fee={fee} T2-T1={}",
+				t2 as i128 - t1 as i128
+			);
+		});
 	}
 }
