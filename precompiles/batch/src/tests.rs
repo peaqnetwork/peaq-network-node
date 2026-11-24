@@ -27,7 +27,11 @@ use frame_support::assert_ok;
 use pallet_evm::Call as EvmCall;
 use peaq_precompile_utils::*;
 use precompile_utils::{
-	evm::costs::call_cost, prelude::*, solidity::revert::revert_as_bytes, testing::*,
+	evm::costs::call_cost,
+	precompile_set::{get_address_type, AddressType},
+	prelude::*,
+	solidity::revert::revert_as_bytes,
+	testing::*,
 };
 use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::Dispatchable, DispatchError, DispatchErrorWithPostInfo, ModuleError};
@@ -1063,4 +1067,79 @@ fn batch_is_not_callable_by_dummy_code() {
 #[test]
 fn test_solidity_interface_has_all_function_selectors_documented_and_implemented() {
 	check_precompile_implements_solidity_interfaces(&["Batch.sol"], PCall::supports_selector)
+}
+
+// EIP-7702: an EOA that has delegated carries the 23-byte code `0xef0100 ++ <delegate address>`.
+// Upstream `get_address_type` only looks at the code length, so such an account counts as a
+// contract, and precompiles that refuse contract callers refuse it too. These tests record that
+// accepted upstream behaviour.
+
+/// Gives `delegated` the EIP-7702 delegation designator pointing at `delegate`, built by the
+/// pinned `evm` crate. `create_account` writes the code and its metadata together, as on chain.
+fn delegate_eoa(delegated: H160, delegate: H160) {
+	let code = evm::delegation::Delegation::new(delegate).to_bytes();
+	assert!(evm::delegation::is_delegation_designator(&code));
+	pallet_evm::Pallet::<Runtime>::create_account(delegated, code, None).expect("create_account");
+}
+
+fn empty_batch_all() -> PCall {
+	PCall::batch_all {
+		to: vec![].into(),
+		value: vec![].into(),
+		gas_limit: vec![].into(),
+		call_data: vec![].into(),
+	}
+}
+
+#[test]
+fn eip7702_delegated_eoa_is_a_contract() {
+	ExtBuilder::default().build().execute_with(|| {
+		let delegated: H160 = MockPeaqAccount::Alice.into();
+		delegate_eoa(delegated, MockPeaqAccount::Bob.into());
+
+		let mut handle = MockHandle::new(
+			MockPeaqAccount::EVMu1Account.into(),
+			fp_evm::Context {
+				address: MockPeaqAccount::EVMu1Account.into(),
+				caller: delegated,
+				apparent_value: U256::zero(),
+			},
+		);
+		assert_eq!(
+			get_address_type::<Runtime>(&mut handle, delegated).expect("OOG"),
+			AddressType::Contract
+		);
+	})
+}
+
+#[test]
+fn batch_refuses_eip7702_delegated_eoa_like_a_contract() {
+	ExtBuilder::default().build().execute_with(|| {
+		let delegated: H160 = MockPeaqAccount::Alice.into();
+		let contract: H160 = MockPeaqAccount::Charlie.into();
+		delegate_eoa(delegated, MockPeaqAccount::Bob.into());
+		pallet_evm::Pallet::<Runtime>::create_account(
+			contract,
+			vec![0x14, 0x60, 0x00, 0x60, 0x00, 0xfd],
+			None,
+		)
+		.expect("create_account");
+
+		for caller in [delegated, contract] {
+			precompiles()
+				.prepare_test(caller, MockPeaqAccount::EVMu1Account, empty_batch_all())
+				.with_subcall_handle(|_| panic!("there should be no subcall"))
+				.execute_reverts(|output| output == b"Function not callable by smart contracts");
+		}
+	})
+}
+
+#[test]
+fn batch_accepts_plain_eoa() {
+	ExtBuilder::default().build().execute_with(|| {
+		precompiles()
+			.prepare_test(MockPeaqAccount::David, MockPeaqAccount::EVMu1Account, empty_batch_all())
+			.with_subcall_handle(|_| panic!("there should be no subcall"))
+			.execute_returns(());
+	})
 }
