@@ -87,12 +87,16 @@
   - DOT transfers to sibling parachains are routed through Asset Hub.
   - Verified later: AC-18, AC-19.
 
+### Fixed
+- **XCM fees paid in PEAQ no longer lower `TotalIssuance`.**
+  - Before: `BlockRewardWrapper` (`runtime/*/src/xcm_config.rs`) gave the block-reward sinks a new imbalance equal to the fee and dropped the `Credit` that `UsingComponents` handed it. Dropping the `Credit` lowered `TotalIssuance` by the fee, so `TotalIssuance` fell below the sum of balances by every such fee. The PEAQ itself was not lost. The bug has been on mainnet since `aecb104c` (2025-06).
+  - Now: the wrapper moves the fee out of the `Credit` with `forget_imbalance` before passing it on, so the fee is counted once and `TotalIssuance` does not change.
+  - If the block-reward sink list is empty, the fee is now burned once. Before, it was burned twice.
+  - **Forward only.** The amount already under-counted on mainnet is not restored; this branch has no migration for it. The total is not measured yet. A follow-up item measures it from chain data before anyone decides whether to correct it.
+  - Until it is corrected, anything that reads `TotalIssuance` sees the lower figure, including the yearly inflation calculation in `pallet-inflation-manager`, ERC-20 `totalSupply` and block explorers.
+  - Indexers and alerts that watch events: a PEAQ-paid XCM fee no longer emits `Balances.BurnedDebt`.
+
 ### Known risks (accepted, not fixed on this branch)
-- **XCM fees paid in PEAQ under-count `TotalIssuance`.**
-  - This is pre-existing: it has been on mainnet since `aecb104c` (2025-06), and the code is unchanged by this port.
-  - `BlockRewardWrapper` (`runtime/*/src/xcm_config.rs`) drops the `Credit` that `UsingComponents` hands it, and dropping it lowers `TotalIssuance`. It then gives the sinks a new imbalance of the same amount.
-  - The PEAQ itself is not lost, but `TotalIssuance` ends up lower than the sum of balances by every such fee.
-  - A separate work unit fixes this before AC-30 runs.
 - **The EIP-3607 check now reads `AccountCodesMetadata`, not `AccountCodes`** (Frontier `92fc798`, `runner/stack.rs:240` and `frame/ethereum/src/lib.rs:610`).
   - A contract stored without metadata is therefore not blocked as a transaction sender. This branch has no migration that backfills the metadata.
   - Exploiting this would require a private key for a contract address, which is not practical.
