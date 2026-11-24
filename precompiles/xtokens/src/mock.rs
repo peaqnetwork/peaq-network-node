@@ -259,18 +259,31 @@ impl<Origin: OriginTrait> EnsureOrigin<Origin> for ConvertOriginToLocal {
 	}
 }
 
-pub struct DoNothingRouter;
-impl SendXcm for DoNothingRouter {
-	type Ticket = ();
+thread_local! {
+	static SENT_XCM: std::cell::RefCell<Vec<(Location, Xcm<()>)>> = Default::default();
+}
+
+/// Takes every `(destination, message)` the router delivered since the last call, in order.
+pub(crate) fn sent_xcm() -> Vec<(Location, Xcm<()>)> {
+	SENT_XCM.with(|sent| std::mem::take(&mut *sent.borrow_mut()))
+}
+
+/// Delivers nowhere, but records each `(destination, message)` so tests can check the route.
+pub struct RecordingRouter;
+impl SendXcm for RecordingRouter {
+	type Ticket = (Location, Xcm<()>);
 
 	fn validate(
-		_destination: &mut Option<Location>,
-		_message: &mut Option<Xcm<()>>,
+		destination: &mut Option<Location>,
+		message: &mut Option<Xcm<()>>,
 	) -> SendResult<Self::Ticket> {
-		Ok(((), Assets::new()))
+		let destination = destination.take().ok_or(SendError::MissingArgument)?;
+		let message = message.take().ok_or(SendError::MissingArgument)?;
+		Ok(((destination, message), Assets::new()))
 	}
 
-	fn deliver(_: Self::Ticket) -> Result<XcmHash, SendError> {
+	fn deliver(sent: Self::Ticket) -> Result<XcmHash, SendError> {
+		SENT_XCM.with(|all| all.borrow_mut().push(sent));
 		Ok(XcmHash::default())
 	}
 }
@@ -290,12 +303,14 @@ impl TransactAsset for DummyAssetTransactor {
 		Ok(())
 	}
 
+	// Puts the withdrawn asset into holding (backed by the SDK's mock credit), so messages built
+	// from holding, such as the reserve transfer's `WithdrawAsset`, carry the real asset.
 	fn withdraw_asset(
-		_what: &Asset,
+		what: &Asset,
 		_who: &Location,
 		_maybe_context: Option<&XcmContext>,
 	) -> Result<AssetsInHolding, XcmError> {
-		Ok(AssetsInHolding::new())
+		Ok(xcm_executor::test_helpers::mock_asset_to_holding(what.clone()))
 	}
 }
 
@@ -314,7 +329,7 @@ impl pallet_xcm::Config for Runtime {
 	type UniversalLocation = UniversalLocation;
 	type SendXcmOrigin = ConvertOriginToLocal;
 	type Weigher = xcm_builder::FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
-	type XcmRouter = DoNothingRouter;
+	type XcmRouter = RecordingRouter;
 	type XcmExecuteFilter = frame_support::traits::Everything;
 	type XcmExecutor = xcm_executor::XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = frame_support::traits::Everything;
@@ -340,7 +355,7 @@ impl pallet_xcm::Config for Runtime {
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
-	type XcmSender = DoNothingRouter;
+	type XcmSender = RecordingRouter;
 	type AssetTransactor = DummyAssetTransactor;
 	type OriginConverter = pallet_xcm::XcmPassthrough<RuntimeOrigin>;
 	type IsReserve = Everything;

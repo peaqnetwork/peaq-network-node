@@ -16,7 +16,8 @@
 
 use crate::{
 	mock::{
-		events, CurrencyIdToLocation, ExtBuilder, PCall, Precompiles, PrecompilesValue, Runtime,
+		events, sent_xcm, CurrencyIdToLocation, ExtBuilder, PCall, Precompiles, PrecompilesValue,
+		Runtime,
 	},
 	Currency, EvmAsset,
 };
@@ -25,7 +26,24 @@ use peaq_precompile_utils::*;
 use precompile_utils::{prelude::*, testing::*};
 use sp_core::U256;
 use sp_runtime::traits::Convert;
-use xcm::latest::{Asset, AssetId, Assets, Fungibility, Junction, Location};
+use xcm::latest::{Asset, AssetId, Assets, Fungibility, Instruction, Junction, Location};
+
+// A transfer of the relay token "to the reserve" goes to Asset Hub, not to the relay chain, and
+// withdraws the relay token there.
+fn assert_sent_relay_token_to_asset_hub() {
+	let sent = sent_xcm();
+	assert_eq!(sent.len(), 1, "{sent:?}");
+	let (dest, message) = &sent[0];
+	assert_eq!(dest, &Location::new(1, [Junction::Parachain(1000)]));
+	assert!(
+		message.0.iter().any(|instruction| matches!(
+			instruction,
+			Instruction::WithdrawAsset(assets)
+				if assets.inner().iter().any(|asset| asset.id == AssetId(Location::parent()))
+		)),
+		"{message:?}"
+	);
+}
 
 fn precompiles() -> Precompiles<Runtime> {
 	PrecompilesValue::get()
@@ -160,6 +178,7 @@ fn transfer_to_reserve_works() {
 			.into();
 			// Assert that the events vector contains the one expected
 			assert!(events().contains(&expected));
+			assert_sent_relay_token_to_asset_hub();
 		});
 }
 
@@ -371,6 +390,7 @@ fn transfer_multi_asset_to_reserve_works() {
 
 			// Assert that the events vector contains the one expected
 			assert!(events().contains(&expected));
+			assert_sent_relay_token_to_asset_hub();
 		});
 }
 #[test]
