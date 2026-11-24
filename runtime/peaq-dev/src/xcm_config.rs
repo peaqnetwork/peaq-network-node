@@ -531,3 +531,34 @@ impl pallet_message_queue::Config for Runtime {
 
 	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use frame_support::traits::ContainsPair;
+
+	fn is_reserve(asset: Location, origin: Location) -> bool {
+		// `PeaqLocationAbsolute` reads `ParachainInfo`, so this needs externalities.
+		sp_io::TestExternalities::default().execute_with(|| {
+			<<XcmConfig as xcm_executor::Config>::IsReserve as ContainsPair<Asset, Location>>::contains(
+				&(asset, 1u128).into(),
+				&origin,
+			)
+		})
+	}
+
+	// The relay token is trusted as a reserve asset only when it comes from Asset Hub, and PEAQ
+	// is never accepted as a reserve asset from another chain.
+	#[test]
+	fn relay_token_reserve_is_asset_hub_only() {
+		let relay_token = Location::parent();
+		let peaq = SelfReserveLocation::get();
+		let asset_hub = Location::new(1, [Parachain(1000)]);
+
+		assert!(!is_reserve(relay_token.clone(), Location::parent()));
+		assert!(is_reserve(relay_token, asset_hub.clone()));
+		assert!(!is_reserve(peaq.clone(), Location::parent()));
+		assert!(!is_reserve(peaq.clone(), asset_hub));
+		assert!(!is_reserve(peaq, Location::new(1, [Parachain(3000)])));
+	}
+}
