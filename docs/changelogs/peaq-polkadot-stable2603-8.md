@@ -5,13 +5,13 @@
 **PR**: none (this upgrade is pushed as branches, no GitHub PR)
 **Status**: in-review
 
-> Per-branch changelog fragment. It covers the node and both runtimes on this branch. It also covers the dependency forks the branch builds against: the peaqnetwork/polkadot-sdk fork, which is release `stable2603-8` plus 4 transaction-pool fixes, and 8 other dependency forks. Those forks have no changelog of their own for this upgrade, so their entries are recorded here.
+> Per-branch changelog fragment. It covers the node and both runtimes on this branch. It also covers the dependency forks the branch builds against: the peaqnetwork/polkadot-sdk fork, which is release `stable2603-8` plus 4 transaction-pool fixes and 1 slot-based collator fix, and 8 other dependency forks. Those forks have no changelog of their own for this upgrade, so their entries are recorded here.
 > Items marked "verified later" are checked by tests in the upgrade test plan that run after this branch is pushed. Until they pass, treat those items as expected behaviour, not measured behaviour. The identifiers `AC-n` and `M-Xn` name those tests.
 
 ### Changed
 - The node and both runtimes now build against polkadot-sdk `stable2603-8`. Before this they built against `stable2503-4`, which the `dev` branch still uses.
   - Dependencies come from `github.com/peaqnetwork` forks on branch `peaq-polkadot-stable2603-8`.
-  - Cargo.lock pins each fork to one commit. polkadot-sdk is pinned to `f53ad07a`.
+  - Cargo.lock pins each fork to one commit. polkadot-sdk is pinned to `3abc64ca`.
 - Building requires Rust 1.95.0. It was 1.82.0. Rust 1.96 breaks the link of the runtime wasm.
 - `peaq-node --version` now prints `4.0.1-polkadot-stable2603-8-<commit>`.
 - Runtime versions, counted from the port base `cbcb7a7d`:
@@ -103,6 +103,12 @@
   - try-runtime logs each map's entry count and how many entries are not v5, before and after. Verified later: AC-83 runs it on mainnet and agung state.
   - The migration is in the runtime's `Migrations` list only for this upgrade; remove it once both chains have applied it.
 
+- **A slot-based collator no longer stops its node when one read fails.**
+  - Before: in polkadot-sdk `stable2603-8`, the slot-based block builder (`cumulus/client/consensus/aura/src/collators/slot_based/block_builder_task.rs:416`, `:424`) left its loop when it could not build the inherent data, which reads relay state, or could not read the validation code hash from the parachain's own state. The loop runs as an essential task, so the whole node shut down. A relay call that came back with an error was enough.
+  - Now: the polkadot-sdk fork (`d1148f8d`) skips that slot and waits for the next one, like the loop's other skip paths and like the lookahead collator. A skipped slot builds no block and sends no collation. The error log lines are unchanged.
+  - Tests in the fork (`3abc64ca`, `slot_based::tests::block_builder_task_errors`) make each read fail once, then check that the task is still running and that the read is retried at least 3 s later, that is, not in the failing slot.
+  - The fork carries this fix on top of the 4 transaction-pool fixes. The diff of the two commits has patch-id `ff30d5f10fbb42472a8bf9e9947d13bae92b057e`.
+
 ### Known risks (accepted, not fixed on this branch)
 - **The EIP-3607 check now reads `AccountCodesMetadata`, not `AccountCodes`** (Frontier `92fc798`, `runner/stack.rs:240` and `frame/ethereum/src/lib.rs:610`).
   - A contract stored without metadata is therefore not blocked as a transaction sender. This branch has no migration that backfills the metadata.
@@ -110,7 +116,10 @@
   - Check M-X5 compares the key counts of the two maps on mainnet. If they differ, a separate work unit adds the backfill migration.
 - **`DryRunApi` lets anyone run unmetered work on an RPC node.** A dry run dispatches any call from any origin, including Root, with no weight limit; for example `System::kill_prefix` with a large key count walks a whole storage prefix in one `state_call`. Nothing is written to the chain. Upstream runtimes such as Asset Hub expose the same API the same way. Public RPC nodes must set `--rpc-rate-limit`, `--rpc-max-request-size` and `--rpc-max-response-size`; the upgrade runbook must list them (AC-62).
 - **The 6 foreign-asset fee rates that come back into force were set while mainnet ran a runtime from before `50f13f76` (`peaq-v0.0.7` or earlier) and were not reviewed for this upgrade.** Once `MigrationXcmV5` runs, `FixedRateOfForeignAsset` (`runtime/common/src/xcm_impls.rs`) charges XCM execution in these assets again, at the `units_per_second` read on 2026-11-22: asset 1000 (`PalletInstance(10)` on para 2004) 500000; 1002 and 1004, 50000; 1003, 5000; 1001 and 1005, 500. Not checked against each asset's decimals: at the lowest rates, execution paid in that asset may cost close to nothing. The peaq team decides each rate with a root call (`set_asset_units_per_second` or `remove_payment_asset`) before or together with enacting this runtime.
-- **A slot-based collator stops its node when one read fails.** In polkadot-sdk `stable2603-8`, the slot-based block builder leaves its loop when it cannot build the inherent data, which reads relay state, or cannot read the validation code hash from the parachain's own state (`block_builder_task.rs:416`, `:424`). It runs as an essential task, so the whole node shuts down. Lookahead gives up only that attempt and tries again at the next relay block. A relay call that comes back with an error is enough to trigger it. Until a separate work unit changes the SDK fork, run collators under a supervisor that restarts them, and alert on `Essential task` in the log.
+- **A slot-based collator whose reads keep failing stays up but authors no blocks.** Since `d1148f8d` (see Fixed), the two read errors skip the slot instead of shutting the node down, so an `Essential task` alert no longer catches them. Alert on the blocks each collator's Aura key authors (a collator that authors none for a while; this alert matters most), on the log lines `Could not fetch validation code hash` and `Could not create paras inherent data`, and on the count of `ERROR` lines for target `aura::cumulus`. The upgrade runbook lists these alerts (AC-62).
+- **The slot-based block builder still stops its node on some other errors.** For example, it ends when it cannot read the slot duration from the parachain runtime while waiting for the next slot (`block_builder_task.rs:213`). Keep running collators under a supervisor that restarts them, and keep the `Essential task` alert.
+- **The fork's code-hash fix has to be ported again when polkadot-sdk moves past `stable2603-8`.** Upstream #10477 (`6e8ca55095`; not in `polkadot-stable2603-8`, present in `polkadot-stable2609-2`) makes the inherent-data error non-fatal. Upstream master (`6e2a57b0`, 2026-11-24) still ends the task when the validation code hash is missing, and also ends it on "Failed to determine cores". At that upgrade, port the code-hash part of `d1148f8d` again or accept the shutdown, and decide the same for "Failed to determine cores".
+- **The fork's two block-builder tests can fail occasionally on a busy machine.** They use the real clock and check that the retry comes at least 3 s after the failing call; they do not check the slot number. If the machine is busy enough for the slot timer to fall behind, a correct build can fail them.
 - **Slot-based collators need monitoring the lookahead collator did not.**
   - The import channel to the collation task is unbounded (its backlog is `substrate_unbounded_channel_size{entity="SlotBasedBlockImportChannel"}`).
   - Block timing follows the local clock, so collators need NTP and a clock-skew alert.
