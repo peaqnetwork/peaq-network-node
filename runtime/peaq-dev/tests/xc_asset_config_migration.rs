@@ -212,3 +212,31 @@ fn does_nothing_at_storage_version_3() {
 		assert_eq!(XcAssetConfig::on_chain_storage_version(), StorageVersion::new(3));
 	});
 }
+
+// On agung before this upgrade, asset ids 201 and 202 had the same location in AssetIdToLocation
+// and AssetLocationToId held that location for 202 only. post_upgrade checks what the migration
+// did, so it must accept maps that already disagreed this way, and still reject a changed value.
+#[cfg(feature = "try-runtime")]
+#[test]
+fn post_upgrade_accepts_maps_that_disagreed_before_the_upgrade() {
+	let (asset_id, units_per_second, key) = MAINNET[0];
+	let orphan_asset_id = 999;
+	new_ext().execute_with(|| {
+		insert(asset_id, units_per_second, v3_location(key));
+		AssetIdToLocation::<Runtime>::insert(orphan_asset_id, v3_location(key));
+
+		let state = MigrationXcmV5::<Runtime>::pre_upgrade().unwrap();
+		MigrationXcmV5::<Runtime>::on_runtime_upgrade();
+		assert_eq!(MigrationXcmV5::<Runtime>::post_upgrade(state.clone()), Ok(()));
+
+		// A value the migration did not keep is still an error.
+		AssetLocationToId::<Runtime>::insert(
+			VersionedLocation::V5(v5_location(key)),
+			orphan_asset_id,
+		);
+		assert_eq!(
+			MigrationXcmV5::<Runtime>::post_upgrade(state),
+			Err("MigrationXcmV5: an AssetLocationToId value changed".into())
+		);
+	});
+}
