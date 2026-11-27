@@ -711,6 +711,19 @@ parameter_types! {
 	/// However, let us setup the value as 1 for now because we also has the did/storage bridge
 	/// [TODO] Need to check
 	pub GasLimitStorageGrowthRatio: u64 = 1;
+	/// Gas per byte of EVM log (data plus 32 bytes per topic). A transaction's effective gas is at
+	/// least its log bytes times this, so the block gas limit also bounds the log bytes in one
+	/// block: 72M / 36 = 2,000,000 bytes. Relay validators re-run a parachain block inside a wasm
+	/// heap (default 2080 pages, about 130 MiB, which agung's relay uses), and the logs are stored
+	/// several times while the block runs; a block with 4 MiB of logs already runs out of that heap,
+	/// every validator refuses the block and the chain stops. 2,000,000 bytes keeps a margin of
+	/// about 2. Precompile events count too (peaq-did, peaq-storage and peaq-rbac put the caller's
+	/// data in them). Only a transaction whose log bytes times 36 exceed the gas it used otherwise
+	/// pays more, up to 4.5 times the Ethereum price for its logs (36 instead of 8 gas per byte):
+	/// an ERC-20 Transfer event (128 bytes) comes to 4,608, below the 21,000 every transaction
+	/// uses, while an RBAC role name of 64 KiB needs about 2.4M gas. A transaction sent with a
+	/// fixed gas limit below its log bytes times 36 runs out of gas; eth_estimateGas includes it.
+	pub const GasLimitLogDataRatio: u64 = 36;
 	/// EIP-7825 per-transaction gas cap, new in stable2603. `None` keeps the
 	/// pre-2603 behaviour of no cap; adopting `Some(fp_evm::MAX_TRANSACTION_GAS_LIMIT)`
 	/// would be a consensus-breaking change and needs its own announced upgrade.
@@ -736,6 +749,7 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+	type GasLimitLogDataRatio = GasLimitLogDataRatio;
 	type TransactionGasLimit = TransactionGasLimit;
 	type Timestamp = Timestamp;
 	type WeightInfo = crate::weights::pallet_evm::WeightInfo<Runtime>;

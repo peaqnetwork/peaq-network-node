@@ -103,7 +103,7 @@ parachain-info = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch =
 parachains-common = { git = "https://github.com/peaqnetwork/polkadot-sdk", branch = "peaq-polkadot-stable2603-8", default-features = false }
 
 # Frontier
-fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
+fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
 # frontier stable2603 puts its SQL backend behind `default`; peaq only ever builds the
 # key-value backend (node/src/parachain/service.rs), so the default stays off here.
 # Cargo ignores `default-features = false` on a member unless the workspace sets it.
@@ -111,29 +111,29 @@ fc-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq
 # dropping the defaults to lose the SQL backend must add `rocksdb` back explicitly:
 # without it fc_db cannot open a RocksDb `DatabaseSource` and the node exits with
 # "Supported db sources: `auto` | `rocksdb` | `paritydb`" at startup.
-fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false, features = [ "rocksdb" ] }
-fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false, features = [ "rocksdb" ] }
-fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fp-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fp-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fp-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8" }
-fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false, features = ["serde"] }
-pallet-base-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-ethereum = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm-precompile-blake2 = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm-precompile-bn128 = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm-precompile-dispatch = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm-precompile-modexp = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm-precompile-sha3fips = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-pallet-evm-precompile-simple = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-precompile-utils = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
-precompile-utils-macro = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8", default-features = false }
+fc-db = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false, features = [ "rocksdb" ] }
+fc-mapping-sync = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false, features = [ "rocksdb" ] }
+fc-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fc-rpc-core = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fc-api = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fp-consensus = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fp-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fp-dynamic-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fc-storage = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound" }
+fp-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+fp-rpc = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+fp-self-contained = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false, features = ["serde"] }
+pallet-base-fee = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-ethereum = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm-precompile-blake2 = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm-precompile-bn128 = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm-precompile-dispatch = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm-precompile-modexp = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm-precompile-sha3fips = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+pallet-evm-precompile-simple = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+precompile-utils = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
+precompile-utils-macro = { git = "https://github.com/peaqnetwork/frontier", branch = "peaq-polkadot-stable2603-8-log-bound", default-features = false }
 
 # Open-Runtime-Module-Library
 orml-currencies = { git = "https://github.com/peaqnetwork/open-runtime-module-library", branch = "peaq-polkadot-stable2603-8", default-features = false }

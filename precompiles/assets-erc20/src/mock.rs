@@ -199,6 +199,7 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+	type GasLimitLogDataRatio = ();
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;

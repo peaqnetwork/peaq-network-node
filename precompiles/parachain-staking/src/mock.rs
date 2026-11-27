@@ -190,6 +190,7 @@ impl pallet_evm::Config for Test {
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
+	type GasLimitLogDataRatio = ();
 	type TransactionGasLimit = TransactionGasLimit;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Test>;
